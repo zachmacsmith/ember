@@ -11,7 +11,7 @@ A standardized, extensible benchmarking framework for comparing minor embedding 
 
 QEBench provides a clean, reproducible pipeline for benchmarking minor embedding algorithms across:
 
-- **Algorithms:** minorminer, ATOM, OCT variants, CHARME (RL) — all registered via a plugin system
+- **Algorithms:** minorminer variants, ATOM, OCT (fast-oct-reduce recommended), PSSA, CHARME (RL) — all registered via a plugin system
 - **Topologies:** 12 built-in D-Wave topologies (Chimera, Pegasus, Zephyr)
 - **Test graphs:** Pre-generated library of 100+ graphs across 7 categories
 - **Metrics:** embedding time, success rate, chain length, qubit/coupler usage, embedding validity
@@ -37,8 +37,10 @@ qeanalysis/                 # Post-benchmark analysis package (separate from qeb
 
 algorithms/                 # External algorithm implementations
 ├── atom/                   #   ATOM C++ source (fixed — see docs/atom_changes.md)
-├── charme/                 #   CHARME RL Python framework
-└── oct_based/              #   OCT C++ variants
+├── charme/                 #   CHARME RL Python framework (stub — needs trained model)
+├── charme-rl/              #   CHARME RL alternative source
+├── oct_based/              #   OCT C++ variants
+└── pssa_dwave/             #   PSSA Python package (editable install)
 
 test_graphs/                # Pre-generated graph JSON library
 ├── complete/               #   K4, K5, K6, K8, K10, K12, K15
@@ -83,9 +85,10 @@ This single script does everything:
 ### Manual setup
 
 ```bash
-pip install -r requirements.txt          # Python deps only (minorminer + clique work immediately)
-cd algorithms/atom     && make           # compile ATOM
-cd algorithms/oct_based && make build   # compile OCT variants
+pip install -r requirements.txt                      # Python deps (minorminer + clique work immediately)
+pip install -e algorithms/pssa_dwave/                # PSSA (pure Python, no compilation)
+cd algorithms/atom     && make                       # compile ATOM
+cd algorithms/oct_based && make build               # compile OCT variants
 ```
 
 ---
@@ -114,7 +117,7 @@ print(result.embedding_time)    # e.g. 0.012
 print(result.is_valid)          # True
 ```
 
-### 3. Batch Benchmark
+### 2. Batch Benchmark
 
 ```python
 from qebench import EmbeddingBenchmark
@@ -144,7 +147,7 @@ results/
     └── README.md       # human-readable summary
 ```
 
-### 4. Post-Benchmark Analysis
+### 3. Post-Benchmark Analysis
 
 Once a benchmark batch has run, pass its directory to `BenchmarkAnalysis` to generate all plots and tables automatically. `run_full_benchmark()` returns the batch directory path, so you can chain them directly:
 
@@ -197,7 +200,7 @@ See [`docs/analysis.md`](docs/analysis.md) for a detailed description of every a
 
 ---
 
-### 5. Load Test Graphs
+### 4. Load Test Graphs
 
 ```python
 from qebench import load_test_graphs
@@ -224,25 +227,39 @@ Graph IDs map to categories (see `test_graphs/REGISTRY.md`):
 
 ## Algorithm Status
 
+### minorminer variants (pure Python, no compilation)
+
 | Algorithm | Status | Notes |
 |-----------|--------|-------|
-| `minorminer` | ✅ Working | D-Wave heuristic — no compilation needed |
-| `minorminer-aggressive` | ✅ Working | CMR — more restarts, higher quality |
-| `minorminer-fast`       | ✅ Working | CMR — fewer restarts, faster |
-| `minorminer-chainlength`| ✅ Working | CMR — optimised for short chains |
-| `clique` | ✅ Working | `dwave_networkx.find_clique_embedding` |
-| `oct-triad` | ✅ Working | — |
-| `oct-triad-reduce` | ✅ Working | — |
-| `oct-fast-oct` | ✅ Working | Requires compiled OCT binary |
-| `oct-fast-oct-reduce` | ✅ Working | Requires compiled OCT binary |
+| `minorminer` | ✅ Working | Default heuristic — good balance of speed and quality |
+| `minorminer-aggressive` | ✅ Working | More restarts (`tries=50`) — higher quality, slower |
+| `minorminer-fast` | ✅ Working | Fewer restarts (`tries=3`) — fastest, lower quality |
+| `minorminer-chainlength` | ✅ Working | Optimised for short chains (`chainlength_patience=20`) |
+| `clique` | ✅ Working | Deterministic topology-aware baseline (`busclique`) |
+
+### OCT-Based (requires compiled binary)
+
+The OCT suite has six variants. **`oct-fast-oct-reduce` is the recommended OCT algorithm** — it consistently outperforms the others in both chain length and validity across all graph types. The others are registered but not recommended for primary benchmarking.
+
+| Algorithm | Status | Notes |
+|-----------|--------|-------|
+| `oct-fast-oct-reduce` | ✅ Working ⭐ | **Recommended** — best chain length, valid on general graphs |
+| `oct-fast-oct` | ✅ Working | Fast-OCT without chain reduction — superseded by reduce variant |
+| `oct-triad` | ✅ Working | Deterministic, 2 qubits/node — reliable but longer chains |
+| `oct-triad-reduce` | ⚠️ Often invalid | Chain reduction produces invalid embeddings on non-bipartite graphs |
 | `oct-hybrid-oct` | ⚠️ Often invalid | Valid only on bipartite graphs |
-| `oct-hybrid-oct-reduce` | ⚠️ Often invalid | Same as hybrid-oct |
-| `atom` | ✅ Fixed | C++ bugs fixed; see `docs/atom_changes.md` |
-| `charme` | ❌ Stub | RL framework — Python integration pending |
-| `pssa`               | Should work, need testing | PSSA — path-annealing SA, auto tmax, Chimera/Pegasus/Zephyr |
-| `pssa-weighted`      | Should work, need testing | PSSA with degree-weighted shifts — best for cubic/regular graphs |
-| `pssa-fast`          | Should work, need testing  | PSSA fast — tmax=50,000, good for large sweeps |
-| `pssa-thorough`      | Should work, need testing | PSSA thorough — tmax=2,000,000, best quality |
+| `oct-hybrid-oct-reduce` | ⚠️ Often invalid | Same limitation as hybrid-oct |
+
+### Other algorithms
+
+| Algorithm | Status | Notes |
+|-----------|--------|-------|
+| `atom` | ✅ Working | C++ binary; bugs fixed — see `docs/atom_changes.md` |
+| `pssa` | ✅ Working | Path-annealing SA; auto topology detection, auto tmax |
+| `pssa-weighted` | ✅ Working | Degree-weighted shifts — best for cubic/regular graphs |
+| `pssa-fast` | ✅ Working | `tmax=50,000` — good for large sweeps |
+| `pssa-thorough` | ✅ Working | `tmax=2,000,000` — best quality, slow |
+| `charme` | ❌ Stub | RL framework — requires pre-trained model + PyTorch |
 
 ---
 
@@ -325,8 +342,6 @@ pytest tests/ -v
 
 163 tests covering: `qebench` (imports, `benchmark_one`, `EmbeddingResult`, metrics, registry, graph selection, presets, graph loading, batch runner, results storage, topology registry) and `qeanalysis` (loader, summary tables, win rate, significance tests, plots, export, full integration).
 
-> **Note:** 15 tests are currently failing due to a `KeyError: 'links'` in `nx.node_link_graph` when loading saved test graph JSONs — a NetworkX version compatibility issue. See `TODO.md` (Active Bugs) for the fix.
-
 ---
 
 ## Metrics
@@ -351,7 +366,7 @@ See [`TODO.md`](TODO.md) for the full task tracker. Key upcoming work:
 
 - **QUBO problem generators** — Max-Cut, TSP, Job Shop, Graph Coloring (Paper 1)
 - **Graph characterization module** — treewidth, clustering, community structure (Paper 2)
-- **CHARME RL integration** — direct Python module import
+- **CHARME RL integration** — requires pre-trained model and PyTorch; not yet runnable
 - **Broken topology benchmarks** — simulate dead qubits
 - **Novel algorithm** — pathfinder-inspired embedding (Paper 3)
 
