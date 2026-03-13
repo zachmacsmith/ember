@@ -181,7 +181,7 @@ class TestEmbeddingResult:
         d = result.to_dict()
         expected_keys = {
             'algorithm', 'problem_name', 'topology_name', 'trial',
-            'success', 'embedding', 'embedding_time', 'is_valid',
+            'success', 'embedding', 'embedding_time', 'cpu_time', 'is_valid',
             'chain_lengths', 'max_chain_length', 'avg_chain_length',
             'total_qubits_used', 'total_couplers_used',
             'problem_nodes', 'problem_edges', 'problem_density',

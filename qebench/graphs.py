@@ -34,6 +34,7 @@ Usage:
     problems = load_test_graphs("*")               # everything
 """
 
+import hashlib
 import json
 import networkx as nx
 import numpy as np
@@ -426,6 +427,69 @@ def _generate_registry_doc(catalog: List[Dict]):
     return doc_path
 
 
+# ==============================================================================
+# MANIFEST
+# ==============================================================================
+
+MANIFEST_PATH = TEST_GRAPHS_DIR / "manifest.sha256"
+
+
+def generate_manifest(graph_dir: Path = TEST_GRAPHS_DIR,
+                      manifest_path: Path = MANIFEST_PATH) -> Path:
+    """Compute SHA-256 hashes for every graph JSON and write manifest file.
+
+    Format (two spaces between path and hash, matching sha256sum convention):
+        complete/K4.json  a3f2b8c9...
+        random/er_n10.json  7b1c3d5e...
+
+    Returns:
+        Path to the written manifest file.
+    """
+    entries = []
+    for json_file in sorted(graph_dir.rglob("*.json")):
+        rel = json_file.relative_to(graph_dir)
+        digest = hashlib.sha256(json_file.read_bytes()).hexdigest()
+        entries.append(f"{rel}  {digest}")
+
+    manifest_path.write_text("\n".join(entries) + "\n")
+    return manifest_path
+
+
+def verify_manifest(graph_dir: Path = TEST_GRAPHS_DIR,
+                    manifest_path: Path = MANIFEST_PATH) -> None:
+    """Verify every graph file matches its recorded SHA-256 hash.
+
+    Raises:
+        FileNotFoundError: if manifest does not exist.
+        RuntimeError: if any file is missing or its hash does not match.
+    """
+    if not manifest_path.exists():
+        raise FileNotFoundError(
+            f"Graph manifest not found: {manifest_path}\n"
+            "Run: python -m qebench.graphs  (or generate_all()) to regenerate it."
+        )
+
+    with open(manifest_path) as f:
+        lines = [l.strip() for l in f if l.strip()]
+
+    for line in lines:
+        parts = line.rsplit("  ", 1)
+        if len(parts) != 2:
+            continue
+        rel_str, expected = parts
+        target = graph_dir / rel_str
+        if not target.exists():
+            raise RuntimeError(f"Graph file missing: {target}")
+        actual = hashlib.sha256(target.read_bytes()).hexdigest()
+        if actual != expected:
+            raise RuntimeError(
+                f"Graph integrity check failed: {rel_str}\n"
+                f"  expected: {expected}\n"
+                f"  actual:   {actual}\n"
+                "The file has been modified. Re-run the graph generator to rebuild the manifest."
+            )
+
+
 def generate_all(sizes=None, densities=None, instances=3):
     """Generate the full standard test graph library and REGISTRY.md."""
     print("Generating test graph library...")
@@ -452,12 +516,14 @@ def generate_all(sizes=None, densities=None, instances=3):
     print(f"{len(graphs)} graphs")
     all_graphs.extend(graphs)
     
-    # Generate registry doc
+    # Generate registry doc and manifest
     catalog = list_test_graphs()
     doc_path = _generate_registry_doc(catalog)
-    
+    manifest_path = generate_manifest()
+
     print(f"\n✓ Generated {len(all_graphs)} graphs in {TEST_GRAPHS_DIR}/")
     print(f"✓ Registry: {doc_path}")
+    print(f"✓ Manifest: {manifest_path}")
     return all_graphs
 
 

@@ -7,6 +7,8 @@ Core usage:
     result = benchmark_one(source_graph, target_graph, "minorminer")
 """
 
+__version__ = "0.5.0"
+
 # Core benchmark function and result type
 from qebench.benchmark import (
     benchmark_one,
@@ -33,6 +35,8 @@ from qebench.graphs import (
     parse_graph_selection,
     load_presets,
     list_presets,
+    generate_manifest,
+    verify_manifest,
 )
 
 # Topology registry
@@ -66,6 +70,8 @@ __all__ = [
     "parse_graph_selection",
     "load_presets",
     "list_presets",
+    "generate_manifest",
+    "verify_manifest",
     # Topologies
     "TOPOLOGY_REGISTRY",
     "TopologyConfig",

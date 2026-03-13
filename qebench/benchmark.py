@@ -10,6 +10,11 @@ Batch runner:
 """
 
 import time
+try:
+    import resource as _resource
+    _HAS_RESOURCE = True
+except ImportError:
+    _HAS_RESOURCE = False
 import numpy as np
 import networkx as nx
 import json
@@ -24,7 +29,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 from qebench.registry import ALGORITHM_REGISTRY, validate_embedding, list_algorithms
-from qebench.graphs import load_test_graphs as _load_test_graphs, parse_graph_selection
+from qebench.graphs import load_test_graphs as _load_test_graphs, parse_graph_selection, verify_manifest
 from qebench.results import ResultsManager
 from qebench.topologies import get_topology, TOPOLOGY_REGISTRY
 
@@ -41,7 +46,8 @@ class EmbeddingResult:
     # Core result
     success: bool
     embedding: Optional[Dict] = None     # {source_node: [target_qubits, ...]}
-    embedding_time: float = 0.0
+    embedding_time: float = 0.0          # wall-clock seconds
+    cpu_time: float = 0.0                # CPU seconds (children for subprocess algos)
     is_valid: bool = False
     
     # Embedding quality metrics
@@ -153,22 +159,36 @@ def benchmark_one(source_graph: nx.Graph,
     )
     
     try:
+        uses_subprocess = getattr(algo, '_uses_subprocess', False)
+        if uses_subprocess and _HAS_RESOURCE:
+            _rusage_before = _resource.getrusage(_resource.RUSAGE_CHILDREN)
+        _cpu_start = time.process_time()
+
         result = algo.embed(source_graph, target_graph, timeout=timeout, **kwargs)
-        
+
+        _cpu_elapsed = time.process_time() - _cpu_start
+        if uses_subprocess and _HAS_RESOURCE:
+            _rusage_after = _resource.getrusage(_resource.RUSAGE_CHILDREN)
+            _cpu_elapsed = (
+                (_rusage_after.ru_utime - _rusage_before.ru_utime) +
+                (_rusage_after.ru_stime - _rusage_before.ru_stime)
+            )
+
         if result is None or 'embedding' not in result:
             return EmbeddingResult(
                 **fail_base,
                 embedding_time=timeout,
+                cpu_time=_cpu_elapsed,
                 error_message="No embedding found"
             )
-        
+
         emb = result['embedding']
         metrics = compute_embedding_metrics(emb, target_graph)
-        
+
         # Validate against the target graph the algorithm actually used
         validation_target = result.get('chimera_graph', target_graph)
         is_valid = validate_embedding(emb, source_graph, validation_target)
-        
+
         return EmbeddingResult(
             algorithm=algorithm,
             problem_name=problem_name,
@@ -177,6 +197,7 @@ def benchmark_one(source_graph: nx.Graph,
             success=True,
             embedding=emb,
             embedding_time=result['time'],
+            cpu_time=_cpu_elapsed,
             is_valid=is_valid,
             chain_lengths=metrics['chain_lengths'],
             max_chain_length=metrics['max_chain_length'],
@@ -187,7 +208,7 @@ def benchmark_one(source_graph: nx.Graph,
             problem_edges=n_edges,
             problem_density=density,
         )
-        
+
     except Exception as e:
         return EmbeddingResult(
             **fail_base,
@@ -307,6 +328,12 @@ class EmbeddingBenchmark:
                 from qeanalysis import BenchmarkAnalysis
                 BenchmarkAnalysis(batch_dir).generate_report()
         """
+        # Phase 1 integrity check — raises RuntimeError if any graph file has changed
+        try:
+            verify_manifest()
+        except FileNotFoundError:
+            pass  # manifest not yet generated; skip check
+
         # Multi-topology: loop over each topology
         if topologies:
             topo_list = [(name, get_topology(name), name) for name in topologies]
@@ -341,14 +368,32 @@ class EmbeddingBenchmark:
         total_warmup = len(problems) * len(valid_methods) * warmup_trials * len(topo_list)
         total_runs = total_measured + total_warmup
         current_run = 0
-        
+
+        topo_names_for_config = [t[2] for t in topo_list]
+
+        # Build config and create batch directory NOW — before any runs start —
+        # so config.json (with provenance) is on disk even if the run crashes.
+        config = {
+            'algorithms': valid_methods,
+            'graph_selection': graph_selection or 'custom',
+            'topologies': topo_names_for_config,
+            'n_trials': n_trials,
+            'warmup_trials': warmup_trials,
+            'timeout': timeout,
+            'n_problems': len(problems),
+            'n_algorithms': len(valid_methods),
+            'n_topologies': len(topo_list),
+            'total_measured_runs': total_measured,
+        }
+        if batch_note:
+            config['batch_note'] = batch_note
+        batch_dir = self.results_manager.create_batch(config, batch_note=batch_note)
+
         topo_str = f" × {len(topo_list)} topologies" if len(topo_list) > 1 else ""
         trials_str = f" × {n_trials} trials" if n_trials > 1 else ""
         warmup_str = f" (+ {warmup_trials} warm-up)" if warmup_trials > 0 else ""
         print(f"Starting benchmark: {len(problems)} problems × {len(valid_methods)} algorithms{topo_str}{trials_str}{warmup_str} = {total_runs} runs")
         print("=" * 80)
-        
-        topo_names_for_config = [t[2] for t in topo_list]
         
         for topo_label, target_graph, topo_name in topo_list:
             if len(topo_list) > 1:
@@ -390,7 +435,8 @@ class EmbeddingBenchmark:
                         
                         if result.success:
                             valid_str = " ✓valid" if result.is_valid else " ✗invalid"
-                            print(f"✓ {result.embedding_time:.3f}s, "
+                            print(f"✓ wall={result.embedding_time:.3f}s "
+                                  f"cpu={result.cpu_time:.3f}s, "
                                   f"avg_chain={result.avg_chain_length:.2f}, "
                                   f"qubits={result.total_qubits_used}{valid_str}")
                         else:
@@ -398,23 +444,7 @@ class EmbeddingBenchmark:
         
         print("\n" + "=" * 80)
         print("Benchmark complete!")
-        
-        # Save results via ResultsManager
-        config = {
-            'algorithms': valid_methods,
-            'graph_selection': graph_selection or 'custom',
-            'topologies': topo_names_for_config,
-            'n_trials': n_trials,
-            'warmup_trials': warmup_trials,
-            'timeout': timeout,
-            'n_problems': len(problems),
-            'n_algorithms': len(valid_methods),
-            'n_topologies': len(topo_list),
-            'total_measured_runs': total_measured,
-        }
-        if batch_note:
-            config['batch_note'] = batch_note
-        batch_dir = self.results_manager.create_batch(config, batch_note=batch_note)
+
         self.results_manager.save_results(self.results, batch_dir, config=config)
         return batch_dir
     

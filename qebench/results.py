@@ -11,9 +11,12 @@ Handles:
 
 import json
 import os
+import platform
+import sys
+import subprocess as _subprocess
 import numpy as np
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Optional
 
@@ -65,9 +68,27 @@ class ResultsManager:
         # Save config if provided
         if config:
             config['batch_name'] = batch_name
-            config['timestamp'] = datetime.now().isoformat()
+            config['timestamp'] = datetime.now(timezone.utc).isoformat()
             if batch_note:
                 config['batch_note'] = batch_note
+            try:
+                deps = _subprocess.check_output(
+                    [sys.executable, "-m", "pip", "freeze"],
+                    stderr=_subprocess.DEVNULL
+                ).decode()
+            except Exception:
+                deps = ""
+            try:
+                from qebench import __version__ as _qebench_version
+            except Exception:
+                _qebench_version = "unknown"
+            config['provenance'] = {
+                'python_version': sys.version,
+                'platform': platform.platform(),
+                'processor': platform.processor(),
+                'dependencies': deps,
+                'qebench_version': _qebench_version,
+            }
             with open(batch_dir / "config.json", 'w') as f:
                 json.dump(config, f, indent=2)
         
