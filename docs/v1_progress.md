@@ -4,6 +4,13 @@ Reverse-chronological. One entry per session or logical unit of work.
 
 ---
 
+**2026-03-14 — Multiprocessing + SHA-256 seed derivation**
+- **`n_workers` parameter** added to `run_full_benchmark()` (default 1). When `n_workers > 1`, a flat task list is pushed onto a `multiprocessing.Queue`; N worker processes each pull tasks and append results to their own `workers/worker_{pid}.jsonl`. Warmup trials are skipped with a warning in parallel mode.
+- **Display record pattern:** workers never print. Each worker pushes a lightweight completion record (algorithm, problem, trial, status, wall_time, avg_chain_length) onto a `result_queue`; the main process reads it and drives all output — verbose per-trial lines when `verbose=True`, an ASCII progress bar otherwise. `verbose` defaults to `True` for `n_workers=1` and `False` for `n_workers>1`.
+- **SHA-256 seed derivation:** replaced `random.Random` RNG with `_derive_seed(root_seed, algorithm, problem_name, topology_name, trial)` — each task's seed is keyed on the full task identity via SHA-256, so seeds are independent of execution order and stable across Python versions. Warmup seeds use negative trial indices to avoid collisions with measured trials.
+- **`self.results` reconstruction:** after workers join, the parallel path reads all `worker_*.jsonl` files and reconstructs `EmbeddingResult` objects so `save_results()` / `summary.csv` / `README.md` work unchanged.
+- Reference snapshot regenerated for new SHA-256 seed values; 38/38 smoke checks pass.
+
 **2026-03-14 — SQLite-backed storage with per-worker JSONL files**
 - **Two-phase write pattern:** each measured trial is appended to `workers/worker_{pid}.jsonl` immediately after completion (no locking needed — one file per process). After all trials complete, `compile_batch()` consolidates all JSONL files into `results.db`.
 - **`qebench/compile.py`** — new module, exports `compile_batch(batch_dir)`. Reads `workers/worker_*.jsonl`, creates `results.db` (SQLite, WAL mode) with tables: `runs`, `embeddings`, `partial_embeddings`, `graphs`, `batches`, `suspensions` (stub), `layer4_flags` (stub). Inserts per worker file in a single transaction, enforces a `UNIQUE(algorithm, problem_name, topology_name, trial, seed)` constraint, builds indexes and runs `ANALYZE` after all inserts. Also exports `runs.csv` from SQLite for backward compatibility with `qeanalysis`.
