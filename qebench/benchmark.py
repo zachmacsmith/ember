@@ -9,10 +9,10 @@ Batch runner:
     bench.run_full_benchmark(graph_selection="quick", methods=["minorminer"])
 """
 
+import hashlib
 import multiprocessing
 import os
 import time
-import random as _random
 try:
     import resource as _resource
     _HAS_RESOURCE = True
@@ -298,6 +298,73 @@ def benchmark_one(source_graph: nx.Graph,
         )
 
 
+def _derive_seed(root_seed: int, algorithm: str, problem_name: str,
+                 topology_name: str, trial: int) -> int:
+    """Derive a deterministic per-trial seed via SHA-256.
+
+    Uses the root seed and the full task identity so that:
+    - Seeds are independent of execution order — safe for parallel workers.
+    - Same (root_seed, task) always produces the same trial seed.
+    - SHA-256, not Python hash(), so values are stable across interpreter runs.
+
+    Returns a 32-bit unsigned integer.
+    """
+    key = f"{root_seed}:{algorithm}:{problem_name}:{topology_name}:{trial}"
+    digest = hashlib.sha256(key.encode()).digest()
+    return int.from_bytes(digest[:4], 'big')
+
+
+def _worker_process(task_queue: multiprocessing.Queue,
+                    result_queue: multiprocessing.Queue,
+                    workers_dir_str: str,
+                    batch_id: str) -> None:
+    """Worker process: consume tasks, write JSONL, push display records.
+
+    Pulls (source_graph, target_graph, algo_name, timeout, problem_name,
+           topo_name, trial, trial_seed) tuples from task_queue until it
+    receives a None sentinel, then exits.
+
+    Workers never print anything — all output is driven by the main process
+    reading result_queue.
+    """
+    worker_file = Path(workers_dir_str) / f"worker_{os.getpid()}.jsonl"
+    while True:
+        task = task_queue.get()
+        if task is None:  # sentinel — this worker's share is done
+            break
+        (source_graph, target_graph, algo_name, timeout,
+         problem_name, topo_name, trial, trial_seed) = task
+
+        result = benchmark_one(
+            source_graph, target_graph, algo_name,
+            timeout=timeout, problem_name=problem_name,
+            topology_name=topo_name, trial=trial, seed=trial_seed,
+        )
+
+        # Full result → JSONL (the durable record)
+        with open(worker_file, "a") as wf:
+            rec = result.to_jsonl_dict()
+            rec['seed'] = trial_seed
+            rec['batch_id'] = batch_id
+            wf.write(json.dumps(rec) + "\n")
+
+        # Lightweight display record → result queue (main process only prints)
+        result_queue.put({
+            'algorithm':        algo_name,
+            'problem_name':     problem_name,
+            'topology_name':    topo_name,
+            'trial':            trial,
+            'status':           result.status,
+            'success':          result.success,
+            'wall_time':        result.wall_time,
+            'cpu_time':         result.cpu_time,
+            'total_qubits_used': result.total_qubits_used,
+            'avg_chain_length': result.avg_chain_length,
+            'is_valid':         result.is_valid,
+            'error':            result.error,
+        })
+
+
 class EmbeddingBenchmark:
     """Main benchmarking framework — batch runner built on benchmark_one()."""
     
@@ -385,7 +452,9 @@ class EmbeddingBenchmark:
                           topology_name: str = "",
                           topologies: Optional[List[str]] = None,
                           batch_note: str = "",
-                          seed: int = 42):
+                          seed: int = 42,
+                          n_workers: int = 1,
+                          verbose: bool = None):
         """
         Run complete benchmark suite.
 
@@ -400,11 +469,14 @@ class EmbeddingBenchmark:
             topologies: List of registered topology names for multi-topology runs.
                         Overrides target_graph/topology_name if provided.
             batch_note: Human-readable note describing this run.
-            seed: Master seed for the run. A random.Random RNG is seeded with
-                  this value and used to draw an independent seed for every
-                  benchmark_one() call, keeping the full run reproducible while
-                  giving each (problem, algorithm, topology, trial) combination a
-                  distinct seed. Default 42.
+            seed: Master seed. Each (algorithm, problem, topology, trial) gets a
+                  deterministic 32-bit seed derived via SHA-256 from this master
+                  seed and the full task identity, so seeds are independent of
+                  execution order and stable across Python versions. Default 42.
+            n_workers: Number of parallel worker processes. Default 1 (sequential).
+                       Warmup trials are skipped with a warning when n_workers > 1.
+            verbose: Print per-trial output. Default: True when n_workers==1,
+                     False (progress bar) when n_workers > 1.
 
         Returns:
             Path to the batch directory where results were saved, or None if no
@@ -421,6 +493,9 @@ class EmbeddingBenchmark:
         except FileNotFoundError:
             pass  # manifest not yet generated; skip check
 
+        if verbose is None:
+            verbose = (n_workers == 1)
+
         # Multi-topology: loop over each topology
         if topologies:
             topo_list = [(name, get_topology(name), name) for name in topologies]
@@ -431,6 +506,7 @@ class EmbeddingBenchmark:
                 "No topology specified. Either pass target_graph to __init__ "
                 "or use topologies=['chimera_4x4x4', ...] in run_full_benchmark."
             )
+
         # Resolve problems
         if problems is None:
             selection = graph_selection or "*"
@@ -439,23 +515,27 @@ class EmbeddingBenchmark:
                 print(f"⚠️  No graphs matched selection '{selection}'. "
                       f"Run: python generate_test_graphs.py")
                 return
-        
+
         # Resolve methods from registry
         available = list(ALGORITHM_REGISTRY.keys())
         if methods is None:
             methods = available
-        
+
         valid_methods = [m for m in methods if m in ALGORITHM_REGISTRY]
         missing = set(methods) - set(valid_methods)
         if missing:
             print(f"⚠️  Unknown algorithms (skipped): {missing}")
             print(f"   Available: {available}")
-        
+
         total_measured = len(problems) * len(valid_methods) * n_trials * len(topo_list)
         total_warmup = len(problems) * len(valid_methods) * warmup_trials * len(topo_list)
-        total_runs = total_measured + total_warmup
-        current_run = 0
 
+        if n_workers > 1 and warmup_trials > 0:
+            print(f"⚠️  Warmup trials skipped (not supported with n_workers > 1).")
+            total_warmup = 0
+            warmup_trials = 0
+
+        total_runs = total_measured + total_warmup
         topo_names_for_config = [t[2] for t in topo_list]
 
         # Build config and create batch directory NOW — before any runs start —
@@ -475,77 +555,156 @@ class EmbeddingBenchmark:
         if batch_note:
             config['batch_note'] = batch_note
         batch_dir = self.results_manager.create_batch(config, batch_note=batch_note)
+        batch_id = batch_dir.name
 
-        # Create workers/ directory up front — each run appends to its own PID file
         workers_dir = batch_dir / "workers"
         workers_dir.mkdir(exist_ok=True)
-        _worker_file = workers_dir / f"worker_{os.getpid()}.jsonl"
 
         topo_str = f" × {len(topo_list)} topologies" if len(topo_list) > 1 else ""
         trials_str = f" × {n_trials} trials" if n_trials > 1 else ""
         warmup_str = f" (+ {warmup_trials} warm-up)" if warmup_trials > 0 else ""
-        print(f"Starting benchmark: {len(problems)} problems × {len(valid_methods)} algorithms{topo_str}{trials_str}{warmup_str} = {total_runs} runs")
+        workers_str = f" [{n_workers} workers]" if n_workers > 1 else ""
+        print(f"Starting benchmark: {len(problems)} problems × {len(valid_methods)} algorithms{topo_str}{trials_str}{warmup_str} = {total_runs} runs{workers_str}")
         print("=" * 80)
 
-        # One RNG seeded from the master seed. Every benchmark_one() call draws
-        # its own independent seed from this RNG, so each (problem, algo, topo,
-        # trial) gets a distinct seed while the full run is reproducible.
-        _rng = _random.Random(seed)
+        # ── Sequential path (n_workers == 1) ───────────────────────────────────
+        if n_workers == 1:
+            worker_file = workers_dir / f"worker_{os.getpid()}.jsonl"
+            current_run = 0
 
-        for _, target_graph, topo_name in topo_list:
-            if len(topo_list) > 1:
-                print(f"\n{'='*80}")
-                print(f"Topology: {topo_name} ({target_graph.number_of_nodes()} qubits, "
-                      f"{target_graph.number_of_edges()} couplers)")
-                print(f"{'='*80}")
+            for _, target_graph, topo_name in topo_list:
+                if len(topo_list) > 1:
+                    print(f"\n{'='*80}")
+                    print(f"Topology: {topo_name} ({target_graph.number_of_nodes()} qubits, "
+                          f"{target_graph.number_of_edges()} couplers)")
+                    print(f"{'='*80}")
 
-            for problem_name, source_graph in problems:
-                print(f"\nProblem: {problem_name} (n={source_graph.number_of_nodes()}, "
-                      f"e={source_graph.number_of_edges()})")
+                for problem_name, source_graph in problems:
+                    if verbose:
+                        print(f"\nProblem: {problem_name} (n={source_graph.number_of_nodes()}, "
+                              f"e={source_graph.number_of_edges()})")
 
-                for algo_name in valid_methods:
-                    # Warm-up trials (results discarded)
-                    for w in range(warmup_trials):
-                        current_run += 1
-                        print(f"  [{current_run}/{total_runs}] Warm-up {algo_name} [{w+1}/{warmup_trials}]...", end=" ")
-                        benchmark_one(
-                            source_graph, target_graph, algo_name,
-                            timeout=timeout, problem_name=problem_name,
-                            topology_name=topo_name, trial=-1,
-                            seed=_rng.randint(0, 2**31 - 1),
-                        )
-                        print("(discarded)")
+                    for algo_name in valid_methods:
+                        # Warm-up trials (results discarded) — seed uses negative trial index
+                        for w in range(warmup_trials):
+                            current_run += 1
+                            warmup_seed = _derive_seed(seed, algo_name, problem_name, topo_name, -(w + 1))
+                            if verbose:
+                                print(f"  [{current_run}/{total_runs}] Warm-up {algo_name} [{w+1}/{warmup_trials}]...", end=" ")
+                            benchmark_one(
+                                source_graph, target_graph, algo_name,
+                                timeout=timeout, problem_name=problem_name,
+                                topology_name=topo_name, trial=-1,
+                                seed=warmup_seed,
+                            )
+                            if verbose:
+                                print("(discarded)")
 
-                    # Measured trials
-                    for trial in range(n_trials):
-                        current_run += 1
-                        trial_str = f" [trial {trial+1}/{n_trials}]" if n_trials > 1 else ""
-                        topo_tag = f" [{topo_name}]" if len(topo_list) > 1 else ""
-                        print(f"  [{current_run}/{total_runs}] Running {algo_name}{trial_str}{topo_tag}...", end=" ")
-                        trial_seed = _rng.randint(0, 2**31 - 1)
-                        result = benchmark_one(
-                            source_graph, target_graph, algo_name,
-                            timeout=timeout, problem_name=problem_name,
-                            topology_name=topo_name, trial=trial,
-                            seed=trial_seed,
-                        )
+                        # Measured trials — trial number is part of seed derivation
+                        for trial in range(n_trials):
+                            current_run += 1
+                            trial_seed = _derive_seed(seed, algo_name, problem_name, topo_name, trial)
+                            trial_str = f" [trial {trial+1}/{n_trials}]" if n_trials > 1 else ""
+                            topo_tag = f" [{topo_name}]" if len(topo_list) > 1 else ""
+                            if verbose:
+                                print(f"  [{current_run}/{total_runs}] Running {algo_name}{trial_str}{topo_tag}...", end=" ")
+                            result = benchmark_one(
+                                source_graph, target_graph, algo_name,
+                                timeout=timeout, problem_name=problem_name,
+                                topology_name=topo_name, trial=trial,
+                                seed=trial_seed,
+                            )
 
-                        self.results.append(result)
-                        with open(_worker_file, "a") as _wf:
-                            record = result.to_jsonl_dict()
-                            record['seed'] = trial_seed
-                            record['batch_id'] = batch_dir.name
-                            _wf.write(json.dumps(record) + "\n")
+                            self.results.append(result)
+                            with open(worker_file, "a") as wf:
+                                rec = result.to_jsonl_dict()
+                                rec['seed'] = trial_seed
+                                rec['batch_id'] = batch_id
+                                wf.write(json.dumps(rec) + "\n")
 
-                        if result.success:
-                            valid_str = " ✓valid" if result.is_valid else " ✗invalid"
-                            print(f"✓ wall={result.wall_time:.3f}s "
-                                  f"cpu={result.cpu_time:.3f}s, "
-                                  f"avg_chain={result.avg_chain_length:.2f}, "
-                                  f"qubits={result.total_qubits_used}{valid_str}")
-                        else:
-                            print(f"✗ Failed: {result.error}")
-        
+                            if verbose:
+                                if result.success:
+                                    valid_str = " ✓valid" if result.is_valid else " ✗invalid"
+                                    print(f"✓ wall={result.wall_time:.3f}s "
+                                          f"cpu={result.cpu_time:.3f}s, "
+                                          f"avg_chain={result.avg_chain_length:.2f}, "
+                                          f"qubits={result.total_qubits_used}{valid_str}")
+                                else:
+                                    print(f"✗ Failed: {result.error}")
+
+        # ── Parallel path (n_workers > 1) ──────────────────────────────────────
+        else:
+            task_queue: multiprocessing.Queue = multiprocessing.Queue()
+            result_queue: multiprocessing.Queue = multiprocessing.Queue()
+
+            # Build flat task list — seed for each task is fully determined by
+            # (root_seed, algorithm, problem, topology, trial), so it is
+            # independent of dispatch order and identical for any n_workers.
+            tasks = []
+            for _, target_graph, topo_name in topo_list:
+                for problem_name, source_graph in problems:
+                    for algo_name in valid_methods:
+                        for trial in range(n_trials):
+                            trial_seed = _derive_seed(seed, algo_name, problem_name, topo_name, trial)
+                            tasks.append((source_graph, target_graph, algo_name, timeout,
+                                          problem_name, topo_name, trial, trial_seed))
+
+            for task in tasks:
+                task_queue.put(task)
+            for _ in range(n_workers):
+                task_queue.put(None)  # one sentinel per worker
+
+            # Spawn worker processes
+            worker_procs = []
+            for _ in range(n_workers):
+                p = multiprocessing.Process(
+                    target=_worker_process,
+                    args=(task_queue, result_queue, str(workers_dir), batch_id),
+                )
+                p.start()
+                worker_procs.append(p)
+
+            # Display loop — main process is the only one that prints
+            completed = 0
+            n_tasks = len(tasks)
+            while completed < n_tasks:
+                display = result_queue.get()
+                completed += 1
+                if verbose:
+                    algo = display['algorithm']
+                    prob = display['problem_name']
+                    trial = display['trial']
+                    if display['success']:
+                        print(f"  [{completed}/{n_tasks}] {algo} / {prob} trial {trial}: "
+                              f"✓ wall={display['wall_time']:.3f}s "
+                              f"avg_chain={display['avg_chain_length']:.2f}")
+                    else:
+                        print(f"  [{completed}/{n_tasks}] {algo} / {prob} trial {trial}: "
+                              f"✗ {display['status']}")
+                else:
+                    pct = int(40 * completed / n_tasks)
+                    bar = '#' * pct + '-' * (40 - pct)
+                    print(f"\r  [{bar}] {completed}/{n_tasks}", end="", flush=True)
+
+            if not verbose:
+                print()  # newline after progress bar
+
+            for p in worker_procs:
+                p.join()
+
+            # Reconstruct self.results from JSONL files for save_results()
+            valid_fields = set(EmbeddingResult.__dataclass_fields__.keys())
+            for jf in sorted(workers_dir.glob("worker_*.jsonl")):
+                with open(jf) as fh:
+                    for line in fh:
+                        line = line.strip()
+                        if line:
+                            rec = json.loads(line)
+                            self.results.append(
+                                EmbeddingResult(**{k: v for k, v in rec.items()
+                                                   if k in valid_fields})
+                            )
+
         print("\n" + "=" * 80)
         print("Benchmark complete!")
 

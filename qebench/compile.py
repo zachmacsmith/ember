@@ -90,12 +90,10 @@ CREATE TABLE IF NOT EXISTS embeddings (
     total_qubits_used     INTEGER
 );
 
-CREATE TABLE IF NOT EXISTS partial_embeddings (
-    run_id                TEXT PRIMARY KEY REFERENCES runs(run_id),
-    embedding_json        TEXT,
-    n_chains              INTEGER,
-    total_qubits_used     INTEGER
-);
+-- partial_embeddings: stub — benchmark_one() discards the partial embedding
+-- (sets raw_embedding = None) before constructing EmbeddingResult, so no data
+-- ever reaches the JSONL. Populate once benchmark_one() is updated to preserve
+-- the partial chain assignment on TIMEOUT runs.
 
 CREATE TABLE IF NOT EXISTS suspensions (
     id                            INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -281,7 +279,7 @@ def compile_batch(batch_dir: Union[str, Path]) -> Path:
                     )
                     total_inserted += 1
 
-                    # ── embeddings / partial_embeddings ───────────────────────
+                    # ── embeddings ────────────────────────────────────────────
                     if embedding and _bool_int(rec.get("success")):
                         emb_json = json.dumps(embedding)
                         con.execute(
@@ -295,19 +293,8 @@ def compile_batch(batch_dir: Union[str, Path]) -> Path:
                                 rec.get("total_qubits_used"),
                             ),
                         )
-                    elif embedding and _bool_int(rec.get("partial")):
-                        emb_json = json.dumps(embedding)
-                        con.execute(
-                            """INSERT OR IGNORE INTO partial_embeddings
-                               (run_id, embedding_json, n_chains, total_qubits_used)
-                               VALUES (?, ?, ?, ?)""",
-                            (
-                                run_id,
-                                emb_json,
-                                len(embedding),
-                                rec.get("total_qubits_used"),
-                            ),
-                        )
+                    # partial_embeddings: not written — benchmark_one() nulls
+                    # raw_embedding on TIMEOUT before the result is constructed.
 
                 except sqlite3.IntegrityError:
                     duplicate_count += 1
