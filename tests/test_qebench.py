@@ -3,14 +3,23 @@ Comprehensive test suite for the qebench package.
 
 Covers:
 - benchmark_one() standalone function (the atomic unit)
-- EmbeddingResult dataclass and serialization
+- EmbeddingResult dataclass and serialization (spec 1.3/1.4 fields, to_jsonl_dict)
 - compute_embedding_metrics() standalone function
 - Algorithm registry (discovery, validation, registration)
 - Graph loading (selection parsing, presets, file loading)
 - EmbeddingBenchmark batch runner (warmup, multi-trial, topology tagging)
 - Package-level imports (qebench __init__.py re-exports)
+- _derive_seed() — determinism, per-trial uniqueness, warmup isolation
+- validate_layer1() — five structural checks (unit + integration)
+- validate_layer2() — six type/format checks (unit + integration)
+- ValidationResult dataclass and bool() protocol
+- BatchLogger — log directory setup, per-run files, footer format, WARNING routing
+- compile_batch() — SQLite schema, UNIQUE constraint, embeddings table, runs.csv
+- Seeding behaviour — distinct per-trial seeds, determinism across runs
+- Multiprocessing — n_workers > 1 produces correct results and seeds
 """
 import json
+import numpy as np
 import pytest
 import networkx as nx
 import dwave_networkx as dnx
@@ -831,3 +840,827 @@ class TestTopologyRegistry:
         assert "chimera_4x4x4" in topo_names
         assert "pegasus_4" in topo_names
         assert len(bench.results) == 2  # 1 graph × 1 algo × 2 topologies
+
+
+# =============================================================================
+# Additional fixtures for validation / logging / seeding tests
+# =============================================================================
+
+@pytest.fixture
+def small_target():
+    """6-node target graph used for deterministic validation tests.
+
+    Chain-internal edges:  0-1, 2-3, 4-5
+    Cross-chain edges:     0-2, 1-4, 3-5
+
+    Valid K3 embedding:  {0: [0,1],  1: [2,3],  2: [4,5]}
+    Source edge (0,1): {0,1} ↔ {2,3} via 0-2  ✓
+    Source edge (0,2): {0,1} ↔ {4,5} via 1-4  ✓
+    Source edge (1,2): {2,3} ↔ {4,5} via 3-5  ✓
+    """
+    G = nx.Graph()
+    G.add_nodes_from(range(6))
+    G.add_edges_from([(0,1),(2,3),(4,5),(0,2),(1,4),(3,5)])
+    return G
+
+
+@pytest.fixture
+def K3():
+    return nx.complete_graph(3)
+
+
+# Helper: register a one-shot mock algorithm, run benchmark_one, clean up.
+def _run_mock_algo(source, target, result_dict):
+    from qebench.registry import ALGORITHM_REGISTRY, EmbeddingAlgorithm
+    from qebench.benchmark import benchmark_one
+
+    class _Mock(EmbeddingAlgorithm):
+        def embed(self, src, tgt, timeout=60.0, **kw):
+            return result_dict
+
+    ALGORITHM_REGISTRY['__test_mock__'] = _Mock()
+    try:
+        return benchmark_one(source, target, '__test_mock__')
+    finally:
+        ALGORITHM_REGISTRY.pop('__test_mock__', None)
+
+
+# =============================================================================
+# _derive_seed()
+# =============================================================================
+
+class TestDeriveSeed:
+    """Tests for the SHA-256 per-trial seed derivation function."""
+
+    def test_deterministic(self):
+        from qebench.benchmark import _derive_seed
+        s1 = _derive_seed(42, "minorminer", "K4", "chimera", 0)
+        s2 = _derive_seed(42, "minorminer", "K4", "chimera", 0)
+        assert s1 == s2
+
+    def test_different_trials_give_different_seeds(self):
+        from qebench.benchmark import _derive_seed
+        seeds = [_derive_seed(42, "minorminer", "K4", "chimera", t) for t in range(5)]
+        assert len(set(seeds)) == 5
+
+    def test_different_problems_give_different_seeds(self):
+        from qebench.benchmark import _derive_seed
+        s_k4 = _derive_seed(42, "minorminer", "K4", "chimera", 0)
+        s_k8 = _derive_seed(42, "minorminer", "K8", "chimera", 0)
+        assert s_k4 != s_k8
+
+    def test_different_algorithms_give_different_seeds(self):
+        from qebench.benchmark import _derive_seed
+        s1 = _derive_seed(42, "minorminer", "K4", "chimera", 0)
+        s2 = _derive_seed(42, "clique", "K4", "chimera", 0)
+        assert s1 != s2
+
+    def test_different_root_seeds_give_different_seeds(self):
+        from qebench.benchmark import _derive_seed
+        s1 = _derive_seed(42, "minorminer", "K4", "chimera", 0)
+        s2 = _derive_seed(99, "minorminer", "K4", "chimera", 0)
+        assert s1 != s2
+
+    def test_returns_32bit_unsigned_int(self):
+        from qebench.benchmark import _derive_seed
+        s = _derive_seed(42, "minorminer", "K4", "chimera", 0)
+        assert isinstance(s, int)
+        assert 0 <= s < 2**32
+
+    def test_warmup_seeds_distinct_from_measured(self):
+        """Warmup uses negative trial indices — must not collide with trials 0–N."""
+        from qebench.benchmark import _derive_seed
+        measured = {_derive_seed(42, "minorminer", "K4", "chimera", t) for t in range(5)}
+        warmup   = {_derive_seed(42, "minorminer", "K4", "chimera", -(w+1)) for w in range(3)}
+        assert measured.isdisjoint(warmup)
+
+
+# =============================================================================
+# ValidationResult dataclass
+# =============================================================================
+
+class TestValidationResult:
+    """Tests for the ValidationResult dataclass."""
+
+    def test_passed_true_defaults(self):
+        from qebench.validation import ValidationResult
+        vr = ValidationResult(passed=True)
+        assert vr.passed is True
+        assert vr.check_name is None
+        assert vr.detail is None
+
+    def test_passed_false_fields(self):
+        from qebench.validation import ValidationResult
+        vr = ValidationResult(passed=False, check_name="coverage", detail="missing node 5")
+        assert vr.passed is False
+        assert vr.check_name == "coverage"
+        assert vr.detail == "missing node 5"
+
+    def test_bool_protocol(self):
+        from qebench.validation import ValidationResult
+        assert bool(ValidationResult(passed=True)) is True
+        assert bool(ValidationResult(passed=False, check_name="x", detail="y")) is False
+
+
+# =============================================================================
+# validate_layer1() — structural checks
+# =============================================================================
+
+class TestValidateLayer1:
+    """Unit tests for each of the five Layer 1 structural checks."""
+
+    def test_valid_embedding_passes(self, small_target, K3):
+        from qebench.validation import validate_layer1
+        result = validate_layer1({0:[0,1], 1:[2,3], 2:[4,5]}, K3, small_target)
+        assert result.passed is True
+        assert result.check_name is None
+        assert result.detail is None
+
+    def test_coverage_missing_source_vertex(self, small_target, K3):
+        from qebench.validation import validate_layer1
+        result = validate_layer1({0:[0,1], 1:[2,3]}, K3, small_target)  # missing 2
+        assert result.passed is False
+        assert result.check_name == "coverage"
+        assert "2" in result.detail
+
+    def test_non_empty_chains_empty_chain_rejected(self, small_target, K3):
+        from qebench.validation import validate_layer1
+        result = validate_layer1({0:[0,1], 1:[], 2:[4,5]}, K3, small_target)
+        assert result.passed is False
+        assert result.check_name == "non_empty_chains"
+
+    def test_connectivity_disconnected_chain_rejected(self, small_target, K3):
+        """Nodes 0 and 3 are not adjacent in small_target → chain [0,3] is disconnected."""
+        from qebench.validation import validate_layer1
+        # 0 connects to {1,2}; 3 connects to {2,5}. chain_set={0,3}: BFS from 0
+        # finds {1,2} ∩ {0,3} = {} → not connected.
+        result = validate_layer1({0:[0,3], 1:[2], 2:[4,5]}, K3, small_target)
+        assert result.passed is False
+        assert result.check_name == "connectivity"
+        assert "3" in result.detail  # unreachable node mentioned
+
+    def test_connectivity_single_node_chain_trivially_passes(self, small_target, K3):
+        """Single-node chains bypass the BFS; should not cause connectivity failure."""
+        from qebench.validation import validate_layer1
+        # {0:[0], 1:[2,3], 2:[4,5]} — chain 0 has one node, trivially connected.
+        # Edge (0,1): {0} and {2,3}: 0's nbrs={1,2}, 2 ∈ {2,3} ✓
+        # Edge (0,2): {0} and {4,5}: 0's nbrs={1,2}, neither ∈ {4,5}. → edge_preservation fail
+        result = validate_layer1({0:[0], 1:[2,3], 2:[4,5]}, K3, small_target)
+        # Connectivity must not be the failure (if it fails it's edge_preservation)
+        assert result.check_name != "connectivity"
+
+    def test_disjointness_shared_qubit_rejected(self, small_target, K3):
+        """Qubit 1 in both chain 0 and chain 1 → disjointness failure.
+
+        Chains {0:[0,1], 1:[1,4], 2:[4,5]} — all connected (0-1, 1-4, 4-5 edges)
+        so connectivity passes and disjointness is checked.
+        """
+        from qebench.validation import validate_layer1
+        result = validate_layer1({0:[0,1], 1:[1,4], 2:[4,5]}, K3, small_target)
+        assert result.passed is False
+        assert result.check_name == "disjointness"
+        assert "1" in result.detail  # shared qubit mentioned
+
+    def test_edge_preservation_no_cross_chain_edge(self, small_target, K3):
+        """Chain 1=[3] has no target-graph neighbor in chain 0={0,1}.
+
+        Source edge (0,1): 0's nbrs={1,2}, 1's nbrs={0,4}. Neither 2 nor 4 is 3.
+        3's nbrs={2,5}. Neither is in {0,1}. → edge_preservation failure.
+        """
+        from qebench.validation import validate_layer1
+        result = validate_layer1({0:[0,1], 1:[3], 2:[4,5]}, K3, small_target)
+        assert result.passed is False
+        assert result.check_name == "edge_preservation"
+
+    def test_checks_run_in_order_coverage_before_connectivity(self, small_target, K3):
+        """When coverage fails, connectivity is never checked."""
+        from qebench.validation import validate_layer1
+        result = validate_layer1({0:[0,1]}, K3, small_target)  # missing nodes 1 and 2
+        assert result.check_name == "coverage"
+
+
+# =============================================================================
+# validate_layer2() — type/format checks
+# =============================================================================
+
+class TestValidateLayer2:
+    """Unit tests for each of the six Layer 2 type and format checks."""
+
+    def _valid(self, small_target, K3):
+        from qebench.validation import validate_layer2
+        return validate_layer2(
+            {'success': True, 'embedding': {0:[0,1], 1:[2,3], 2:[4,5]}, 'time': 0.5},
+            K3, small_target,
+        )
+
+    def test_valid_result_passes(self, small_target, K3):
+        assert self._valid(small_target, K3).passed is True
+
+    def test_extra_embedding_key_rejected(self, small_target, K3):
+        from qebench.validation import validate_layer2
+        result = validate_layer2(
+            {'success': True, 'embedding': {0:[0,1], 1:[2,3], 2:[4,5], 99:[0]}, 'time': 0.5},
+            K3, small_target,
+        )
+        assert result.passed is False
+        assert result.check_name == "key_validity"
+        assert "99" in result.detail
+
+    def test_missing_embedding_key_rejected(self, small_target, K3):
+        from qebench.validation import validate_layer2
+        result = validate_layer2(
+            {'success': True, 'embedding': {0:[0,1], 1:[2,3]}, 'time': 0.5},  # missing 2
+            K3, small_target,
+        )
+        assert result.passed is False
+        assert result.check_name == "key_validity"
+
+    def test_qubit_not_in_target_rejected(self, small_target, K3):
+        from qebench.validation import validate_layer2
+        result = validate_layer2(
+            {'success': True, 'embedding': {0:[0,999], 1:[2,3], 2:[4,5]}, 'time': 0.5},
+            K3, small_target,
+        )
+        assert result.passed is False
+        assert result.check_name == "value_validity"
+
+    def test_numpy_int64_key_rejected(self, small_target, K3):
+        from qebench.validation import validate_layer2
+        emb = {np.int64(0):[0,1], np.int64(1):[2,3], np.int64(2):[4,5]}
+        result = validate_layer2({'success': True, 'embedding': emb, 'time': 0.5},
+                                 K3, small_target)
+        assert result.passed is False
+        assert result.check_name == "type_correctness"
+        assert "int64" in result.detail
+
+    def test_numpy_int64_qubit_rejected(self, small_target, K3):
+        from qebench.validation import validate_layer2
+        emb = {0: [np.int64(0), np.int64(1)], 1:[2,3], 2:[4,5]}
+        result = validate_layer2({'success': True, 'embedding': emb, 'time': 0.5},
+                                 K3, small_target)
+        assert result.passed is False
+        assert result.check_name == "type_correctness"
+
+    def test_tuple_chain_rejected(self, small_target, K3):
+        from qebench.validation import validate_layer2
+        emb = {0: (0, 1), 1:[2,3], 2:[4,5]}
+        result = validate_layer2({'success': True, 'embedding': emb, 'time': 0.5},
+                                 K3, small_target)
+        assert result.passed is False
+        assert result.check_name == "chain_format"
+        assert "tuple" in result.detail
+
+    def test_nan_wall_time_rejected(self, small_target, K3):
+        from qebench.validation import validate_layer2
+        result = validate_layer2(
+            {'success': True, 'embedding': {0:[0,1], 1:[2,3], 2:[4,5]}, 'time': float('nan')},
+            K3, small_target,
+        )
+        assert result.passed is False
+        assert result.check_name == "wall_time_validity"
+
+    def test_zero_wall_time_rejected(self, small_target, K3):
+        from qebench.validation import validate_layer2
+        result = validate_layer2(
+            {'success': True, 'embedding': {0:[0,1], 1:[2,3], 2:[4,5]}, 'time': 0.0},
+            K3, small_target,
+        )
+        assert result.passed is False
+        assert result.check_name == "wall_time_validity"
+
+    def test_negative_wall_time_rejected(self, small_target, K3):
+        from qebench.validation import validate_layer2
+        result = validate_layer2(
+            {'success': True, 'embedding': {0:[0,1], 1:[2,3], 2:[4,5]}, 'time': -1.0},
+            K3, small_target,
+        )
+        assert result.passed is False
+        assert result.check_name == "wall_time_validity"
+
+    def test_cpu_time_exceeding_wall_times_cores_rejected(self, small_target, K3):
+        import os
+        from qebench.validation import validate_layer2
+        n_cores = os.cpu_count() or 1
+        result = validate_layer2(
+            {'success': True, 'embedding': {0:[0,1], 1:[2,3], 2:[4,5]},
+             'time': 1.0, 'cpu_time': n_cores * 10.0},   # physically impossible
+            K3, small_target,
+        )
+        assert result.passed is False
+        assert result.check_name == "cpu_time_plausibility"
+
+    def test_absent_time_key_skips_time_check(self, small_target, K3):
+        """No 'time' key in result — wall-time check must not run."""
+        from qebench.validation import validate_layer2
+        result = validate_layer2(
+            {'success': True, 'embedding': {0:[0,1], 1:[2,3], 2:[4,5]}},
+            K3, small_target,
+        )
+        assert result.passed is True
+
+    def test_empty_embedding_skips_embedding_checks(self, small_target, K3):
+        """Empty embedding (failure path) must not trigger key/type/chain checks."""
+        from qebench.validation import validate_layer2
+        result = validate_layer2(
+            {'success': False, 'embedding': {}, 'time': 1.0},
+            K3, small_target,
+        )
+        assert result.passed is True
+
+
+# =============================================================================
+# Validation integration — benchmark_one returns correct status + error format
+# =============================================================================
+
+class TestValidationIntegration:
+    """Verify Layer 1/2 failures produce correct EmbeddingResult fields."""
+
+    def test_layer2_failure_sets_invalid_output_status(self, small_target, K3):
+        emb = {np.int64(0):[0,1], np.int64(1):[2,3], np.int64(2):[4,5]}
+        result = _run_mock_algo(K3, small_target,
+                                {'success': True, 'embedding': emb, 'time': 0.01})
+        assert result.status == 'INVALID_OUTPUT'
+        assert result.success is False
+
+    def test_layer2_error_contains_layer_and_check(self, small_target, K3):
+        emb = {np.int64(0):[0,1], np.int64(1):[2,3], np.int64(2):[4,5]}
+        result = _run_mock_algo(K3, small_target,
+                                {'success': True, 'embedding': emb, 'time': 0.01})
+        assert "Layer 2" in result.error
+        assert "type_correctness" in result.error
+
+    def test_layer2_error_includes_original_claim(self, small_target, K3):
+        emb = {np.int64(0):[0,1], np.int64(1):[2,3], np.int64(2):[4,5]}
+        result = _run_mock_algo(K3, small_target,
+                                {'success': True, 'embedding': emb, 'time': 0.01})
+        assert "Algorithm claimed success=True" in result.error
+        assert "embedding_size=3" in result.error
+
+    def test_layer1_failure_sets_invalid_output_status(self, small_target, K3):
+        """Shared qubit in embedding → Layer 1 disjointness → INVALID_OUTPUT."""
+        result = _run_mock_algo(K3, small_target,
+                                {'success': True,
+                                 'embedding': {0:[0,1], 1:[1,4], 2:[4,5]},
+                                 'time': 0.01})
+        assert result.status == 'INVALID_OUTPUT'
+        assert result.success is False
+
+    def test_layer1_error_contains_layer_and_check(self, small_target, K3):
+        result = _run_mock_algo(K3, small_target,
+                                {'success': True,
+                                 'embedding': {0:[0,1], 1:[1,4], 2:[4,5]},
+                                 'time': 0.01})
+        assert "Layer 1" in result.error
+        assert "disjointness" in result.error
+
+    def test_layer1_error_includes_original_claim(self, small_target, K3):
+        result = _run_mock_algo(K3, small_target,
+                                {'success': True,
+                                 'embedding': {0:[0,1], 1:[1,4], 2:[4,5]},
+                                 'time': 0.01})
+        assert "Algorithm claimed success=True" in result.error
+        assert "embedding_size=3" in result.error
+
+    def test_valid_mock_succeeds(self, small_target, K3):
+        result = _run_mock_algo(K3, small_target,
+                                {'success': True,
+                                 'embedding': {0:[0,1], 1:[2,3], 2:[4,5]},
+                                 'time': 0.01})
+        assert result.status == 'SUCCESS'
+        assert result.success is True
+        assert result.is_valid is True
+
+
+# =============================================================================
+# BatchLogger
+# =============================================================================
+
+class TestBatchLogger:
+    """Tests for the BatchLogger and capture_run() context manager."""
+
+    def test_setup_creates_log_directories(self, tmp_path):
+        from qebench.loggers import BatchLogger
+        logger = BatchLogger(tmp_path, "test_batch")
+        logger.setup()
+        assert (tmp_path / "logs" / "runs").is_dir()
+        assert (tmp_path / "logs" / "runner").is_dir()
+        logger.teardown()
+
+    def test_setup_is_idempotent(self, tmp_path):
+        from qebench.loggers import BatchLogger
+        logger = BatchLogger(tmp_path, "test_batch")
+        logger.setup()
+        logger.setup()  # second call must not raise
+        logger.teardown()
+
+    def test_runner_log_file_created_with_batch_id(self, tmp_path):
+        from qebench.loggers import BatchLogger
+        logger = BatchLogger(tmp_path, "batch_XYZ")
+        logger.setup()
+        logger.info("hello from test")
+        logger.teardown()
+        log_file = tmp_path / "logs" / "runner" / "batch_XYZ.log"
+        assert log_file.exists()
+        assert "hello from test" in log_file.read_text()
+
+    def test_run_log_path_encodes_all_components(self, tmp_path):
+        from qebench.loggers import BatchLogger
+        logger = BatchLogger(tmp_path, "b")
+        logger.setup()
+        p = logger.run_log_path("minorminer", "K4_test", 3, 99999)
+        assert "minorminer" in p.name
+        assert "K4_test" in p.name
+        assert "3" in p.name
+        assert "99999" in p.name
+        logger.teardown()
+
+    def test_capture_run_redirects_stdout(self, tmp_path):
+        import sys
+        from qebench.loggers import capture_run
+        log_path = tmp_path / "capture_test.log"
+        with capture_run(log_path):
+            print("captured_output_marker")
+        assert "captured_output_marker" in log_path.read_text()
+
+    def test_capture_run_restores_streams_after_exception(self, tmp_path):
+        import sys
+        from qebench.loggers import capture_run
+        original_stdout = sys.stdout
+        log_path = tmp_path / "exc_test.log"
+        try:
+            with capture_run(log_path):
+                raise RuntimeError("deliberate error")
+        except RuntimeError:
+            pass
+        assert sys.stdout is original_stdout
+
+    def test_append_footer_writes_required_fields(self, tmp_path, chimera, K4):
+        from qebench import benchmark_one
+        from qebench.loggers import BatchLogger
+        result = benchmark_one(K4, chimera, "minorminer")
+        logger = BatchLogger(tmp_path, "b")
+        logger.setup()
+        log_path = logger.run_log_path("minorminer", "K4", 0, 42)
+        logger.append_footer(log_path, result)
+        logger.teardown()
+        content = log_path.read_text()
+        assert "--- RUNNER DIAGNOSTICS ---" in content
+        assert "status:" in content
+        assert "success:" in content
+        assert "wall_time:" in content
+        assert "cpu_time:" in content
+
+    def test_full_batch_creates_per_run_log_files(self, tmp_path, chimera):
+        from qebench import EmbeddingBenchmark
+        bench = EmbeddingBenchmark(chimera, results_dir=str(tmp_path))
+        bench.run_full_benchmark(
+            graph_selection="1", methods=["minorminer"], n_trials=2
+        )
+        batch_dirs = [d for d in tmp_path.iterdir() if d.is_dir() and d.name.startswith('batch_')]
+        batch_dir = batch_dirs[0]
+        log_files = list((batch_dir / "logs" / "runs").glob("*.log"))
+        assert len(log_files) == 2
+        for lf in log_files:
+            assert "--- RUNNER DIAGNOSTICS ---" in lf.read_text()
+
+    def test_invalid_output_logged_at_warning_in_runner_log(self, tmp_path, small_target, K3):
+        """INVALID_OUTPUT runs must appear as WARNING in the runner log file."""
+        from qebench.registry import ALGORITHM_REGISTRY, EmbeddingAlgorithm
+        from qebench import EmbeddingBenchmark
+
+        class BadTypeAlgo(EmbeddingAlgorithm):
+            def embed(self, src, tgt, timeout=60.0, **kw):
+                # numpy.int64 keys — Layer 2 type_correctness failure
+                return {'success': True,
+                        'embedding': {np.int64(k): [v] for k, v in
+                                      zip(src.nodes(), tgt.nodes())},
+                        'time': 0.01}
+
+        ALGORITHM_REGISTRY['__bad_type_test__'] = BadTypeAlgo()
+        try:
+            bench = EmbeddingBenchmark(small_target, results_dir=str(tmp_path))
+            bench.run_full_benchmark(
+                problems=[("K3", K3)], methods=["__bad_type_test__"], n_trials=1
+            )
+        finally:
+            ALGORITHM_REGISTRY.pop('__bad_type_test__', None)
+
+        batch_dirs = [d for d in tmp_path.iterdir() if d.is_dir() and d.name.startswith('batch_')]
+        runner_logs = list((batch_dirs[0] / "logs" / "runner").glob("*.log"))
+        content = runner_logs[0].read_text()
+        assert "WARNING" in content
+        assert "INVALID_OUTPUT" in content
+
+
+# =============================================================================
+# compile_batch() — SQLite storage
+# =============================================================================
+
+class TestCompileBatch:
+    """Tests for compile_batch() SQLite pipeline."""
+
+    def _run_and_get_batch(self, tmp_path, chimera, K4, n_trials=1):
+        from qebench import EmbeddingBenchmark
+        bench = EmbeddingBenchmark(chimera, results_dir=str(tmp_path))
+        bench.run_full_benchmark(
+            problems=[("K4", K4)], methods=["minorminer"],
+            n_trials=n_trials, seed=42,
+        )
+        batch_dirs = [d for d in tmp_path.iterdir()
+                      if d.is_dir() and d.name.startswith('batch_')]
+        return batch_dirs[0]
+
+    def test_results_db_created(self, tmp_path, chimera, K4):
+        batch_dir = self._run_and_get_batch(tmp_path, chimera, K4)
+        assert (batch_dir / "results.db").exists()
+
+    def test_runs_table_contains_expected_columns(self, tmp_path, chimera, K4):
+        import sqlite3
+        batch_dir = self._run_and_get_batch(tmp_path, chimera, K4)
+        with sqlite3.connect(batch_dir / "results.db") as conn:
+            cols = {d[1] for d in conn.execute("PRAGMA table_info(runs)").fetchall()}
+        for expected_col in ('algorithm', 'problem_name', 'topology_name',
+                             'trial', 'seed', 'status', 'success',
+                             'wall_time', 'avg_chain_length', 'total_qubits_used'):
+            assert expected_col in cols, f"Missing column: {expected_col}"
+
+    def test_seed_stored_in_runs_table(self, tmp_path, chimera, K4):
+        import sqlite3
+        batch_dir = self._run_and_get_batch(tmp_path, chimera, K4)
+        with sqlite3.connect(batch_dir / "results.db") as conn:
+            row = conn.execute("SELECT seed FROM runs").fetchone()
+        assert row is not None
+        assert isinstance(row[0], int)
+
+    def test_embeddings_table_populated_for_success(self, tmp_path, chimera, K4):
+        import sqlite3
+        batch_dir = self._run_and_get_batch(tmp_path, chimera, K4)
+        with sqlite3.connect(batch_dir / "results.db") as conn:
+            count = conn.execute("SELECT COUNT(*) FROM embeddings").fetchone()[0]
+        assert count >= 1
+
+    def test_batches_table_has_one_row(self, tmp_path, chimera, K4):
+        import sqlite3
+        batch_dir = self._run_and_get_batch(tmp_path, chimera, K4)
+        with sqlite3.connect(batch_dir / "results.db") as conn:
+            count = conn.execute("SELECT COUNT(*) FROM batches").fetchone()[0]
+        assert count == 1
+
+    def test_graphs_table_populated(self, tmp_path, chimera, K4):
+        import sqlite3
+        batch_dir = self._run_and_get_batch(tmp_path, chimera, K4)
+        with sqlite3.connect(batch_dir / "results.db") as conn:
+            count = conn.execute("SELECT COUNT(*) FROM graphs").fetchone()[0]
+        assert count >= 1
+
+    def test_runs_csv_exported_with_correct_row_count(self, tmp_path, chimera, K4):
+        import pandas as pd
+        batch_dir = self._run_and_get_batch(tmp_path, chimera, K4, n_trials=3)
+        df = pd.read_csv(batch_dir / "runs.csv")
+        assert len(df) == 3
+        assert 'algorithm' in df.columns
+        assert 'status' in df.columns
+        assert 'embedding' not in df.columns   # embeddings excluded from CSV
+
+    def test_unique_constraint_prevents_duplicate_rows(self, tmp_path, chimera, K4):
+        """Running compile_batch a second time must not insert duplicate rows."""
+        import sqlite3
+        from qebench.compile import compile_batch
+        batch_dir = self._run_and_get_batch(tmp_path, chimera, K4)
+        compile_batch(batch_dir)   # second pass
+        with sqlite3.connect(batch_dir / "results.db") as conn:
+            count = conn.execute("SELECT COUNT(*) FROM runs").fetchone()[0]
+        assert count == 1   # still 1, not 2
+
+
+# =============================================================================
+# Seeding behaviour in the batch runner
+# =============================================================================
+
+class TestSeedingBehavior:
+    """Tests for deterministic, per-trial, order-independent seed derivation."""
+
+    def _collect_seeds(self, results_dir, chimera, K4, n_trials, seed=42):
+        from qebench import EmbeddingBenchmark
+        bench = EmbeddingBenchmark(chimera, results_dir=str(results_dir))
+        bench.run_full_benchmark(
+            problems=[("K4", K4)], methods=["minorminer"],
+            n_trials=n_trials, seed=seed,
+        )
+        batch_dirs = sorted(results_dir.iterdir())
+        batch_dir = [d for d in batch_dirs if d.name.startswith('batch_')][0]
+        seeds = []
+        for jf in sorted((batch_dir / "workers").glob("worker_*.jsonl")):
+            with open(jf) as f:
+                for line in f:
+                    seeds.append(json.loads(line.strip())['seed'])
+        return sorted(seeds)
+
+    def test_seed_stored_in_worker_jsonl(self, tmp_path, chimera, K4):
+        from qebench import EmbeddingBenchmark
+        bench = EmbeddingBenchmark(chimera, results_dir=str(tmp_path))
+        bench.run_full_benchmark(
+            problems=[("K4", K4)], methods=["minorminer"], n_trials=1, seed=42
+        )
+        batch_dirs = [d for d in tmp_path.iterdir() if d.is_dir() and d.name.startswith('batch_')]
+        jfiles = sorted((batch_dirs[0] / "workers").glob("worker_*.jsonl"))
+        with open(jfiles[0]) as f:
+            rec = json.loads(f.readline())
+        assert 'seed' in rec
+        assert isinstance(rec['seed'], int)
+
+    def test_multi_trial_seeds_are_all_distinct(self, tmp_path, chimera, K4):
+        seeds = self._collect_seeds(tmp_path, chimera, K4, n_trials=5)
+        assert len(set(seeds)) == 5
+
+    def test_same_root_seed_produces_same_per_trial_seeds(self, tmp_path, chimera, K4):
+        """Two sequential runs with the same root seed must produce identical seeds."""
+        dir1 = tmp_path / "run1"; dir1.mkdir()
+        dir2 = tmp_path / "run2"; dir2.mkdir()
+        seeds1 = self._collect_seeds(dir1, chimera, K4, n_trials=3, seed=42)
+        seeds2 = self._collect_seeds(dir2, chimera, K4, n_trials=3, seed=42)
+        assert seeds1 == seeds2
+
+    def test_different_root_seeds_produce_different_trial_seeds(self, tmp_path, chimera, K4):
+        dir1 = tmp_path / "a"; dir1.mkdir()
+        dir2 = tmp_path / "b"; dir2.mkdir()
+        seeds_42 = self._collect_seeds(dir1, chimera, K4, n_trials=2, seed=42)
+        seeds_99 = self._collect_seeds(dir2, chimera, K4, n_trials=2, seed=99)
+        assert seeds_42 != seeds_99
+
+
+# =============================================================================
+# Multiprocessing — n_workers > 1
+# =============================================================================
+
+class TestMultiprocessing:
+    """Tests for the parallel execution path."""
+
+    def test_parallel_produces_correct_result_count(self, tmp_path, chimera):
+        from qebench import EmbeddingBenchmark
+        bench = EmbeddingBenchmark(chimera, results_dir=str(tmp_path))
+        bench.run_full_benchmark(
+            graph_selection="1-2", methods=["minorminer"], n_trials=2, n_workers=2
+        )
+        assert len(bench.results) == 4  # 2 graphs × 1 algo × 2 trials
+
+    def test_parallel_results_stored_in_db(self, tmp_path, chimera):
+        import sqlite3
+        from qebench import EmbeddingBenchmark
+        bench = EmbeddingBenchmark(chimera, results_dir=str(tmp_path))
+        bench.run_full_benchmark(
+            graph_selection="1-2", methods=["minorminer"], n_trials=1, n_workers=2
+        )
+        batch_dirs = [d for d in tmp_path.iterdir() if d.is_dir() and d.name.startswith('batch_')]
+        with sqlite3.connect(batch_dirs[0] / "results.db") as conn:
+            count = conn.execute("SELECT COUNT(*) FROM runs").fetchone()[0]
+        assert count == 2
+
+    def test_parallel_and_sequential_produce_same_seeds(self, tmp_path, chimera):
+        """Parallel run with same root seed must assign identical per-trial seeds."""
+        from qebench import EmbeddingBenchmark
+
+        def get_seed_map(results_dir, n_workers):
+            bench = EmbeddingBenchmark(chimera, results_dir=str(results_dir))
+            bench.run_full_benchmark(
+                graph_selection="1-2", methods=["minorminer"],
+                n_trials=1, seed=42, n_workers=n_workers,
+            )
+            batch_dirs = [d for d in results_dir.iterdir()
+                          if d.is_dir() and d.name.startswith('batch_')]
+            seed_map = {}
+            for jf in sorted((batch_dirs[0] / "workers").glob("worker_*.jsonl")):
+                with open(jf) as f:
+                    for line in f:
+                        rec = json.loads(line.strip())
+                        seed_map[(rec['algorithm'], rec['problem_name'], rec['trial'])] = rec['seed']
+            return seed_map
+
+        dir_seq = tmp_path / "seq"; dir_seq.mkdir()
+        dir_par = tmp_path / "par"; dir_par.mkdir()
+        assert get_seed_map(dir_seq, n_workers=1) == get_seed_map(dir_par, n_workers=2)
+
+    def test_warmup_skipped_with_n_workers_gt_1(self, tmp_path, chimera, capsys):
+        from qebench import EmbeddingBenchmark
+        bench = EmbeddingBenchmark(chimera, results_dir=str(tmp_path))
+        bench.run_full_benchmark(
+            graph_selection="1", methods=["minorminer"],
+            n_trials=1, n_workers=2, warmup_trials=3,
+        )
+        captured = capsys.readouterr()
+        assert "warmup" in captured.out.lower() or "Warmup" in captured.out
+        assert len(bench.results) == 1  # only measured trial stored
+
+
+# =============================================================================
+# EmbeddingResult spec (status, algorithm_version, counters, to_jsonl_dict)
+# =============================================================================
+
+class TestEmbeddingResultSpec:
+    """Tests for EmbeddingResult field values and serialization methods."""
+
+    def test_successful_result_has_success_status(self, chimera, K4):
+        from qebench import benchmark_one
+        result = benchmark_one(K4, chimera, "minorminer")
+        assert result.status == 'SUCCESS'
+
+    def test_status_on_timed_out_result(self, chimera):
+        """A very tight timeout on a hard graph should produce a non-SUCCESS status."""
+        from qebench import benchmark_one
+        K20 = nx.complete_graph(20)
+        result = benchmark_one(K20, chimera, "minorminer", timeout=0.001)
+        assert result.status in ('FAILURE', 'TIMEOUT', 'CRASH')
+        assert result.success is False
+
+    def test_all_status_values_are_valid(self, chimera):
+        """status field must always be one of the defined enum strings."""
+        from qebench import benchmark_one
+        valid_statuses = {'SUCCESS', 'FAILURE', 'TIMEOUT', 'CRASH', 'OOM', 'INVALID_OUTPUT'}
+        for g in [nx.complete_graph(4), nx.complete_graph(25)]:
+            result = benchmark_one(g, chimera, "minorminer", timeout=0.5)
+            assert result.status in valid_statuses
+
+    def test_algorithm_version_populated(self, chimera, K4):
+        from qebench import benchmark_one
+        result = benchmark_one(K4, chimera, "minorminer")
+        assert result.algorithm_version is not None
+        assert isinstance(result.algorithm_version, str)
+        assert result.algorithm_version != ""
+
+    def test_cpu_time_is_non_negative(self, chimera, K4):
+        from qebench import benchmark_one
+        result = benchmark_one(K4, chimera, "minorminer")
+        assert result.cpu_time >= 0.0
+
+    def test_operation_counters_default_to_none(self, chimera, K4):
+        """minorminer does not report counters — all four must be None."""
+        from qebench import benchmark_one
+        result = benchmark_one(K4, chimera, "minorminer")
+        assert result.target_node_visits is None
+        assert result.cost_function_evaluations is None
+        assert result.embedding_state_mutations is None
+        assert result.overlap_qubit_iterations is None
+
+    def test_to_jsonl_dict_embedding_stored_as_nested_dict(self, chimera, K4):
+        """to_jsonl_dict() must store embedding as dict, NOT a JSON string."""
+        from qebench import benchmark_one
+        result = benchmark_one(K4, chimera, "minorminer")
+        d = result.to_jsonl_dict()
+        assert isinstance(d['embedding'], dict)    # nested dict, not a JSON string
+        for key in d['embedding']:
+            assert isinstance(key, str)            # keys serialised as strings
+            int(key)                               # must be convertible back to int
+
+    def test_to_jsonl_dict_includes_chain_lengths(self, chimera, K4):
+        from qebench import benchmark_one
+        result = benchmark_one(K4, chimera, "minorminer")
+        d = result.to_jsonl_dict()
+        assert 'chain_lengths' in d
+        assert isinstance(d['chain_lengths'], list)
+        assert len(d['chain_lengths']) == 4   # K4 has 4 nodes
+
+    def test_to_dict_embedding_stored_as_json_string(self, chimera, K4):
+        """to_dict() (CSV path) must store embedding as a JSON string."""
+        from qebench import benchmark_one
+        result = benchmark_one(K4, chimera, "minorminer")
+        d = result.to_dict()
+        assert isinstance(d['embedding'], str)
+        parsed = json.loads(d['embedding'])
+        assert isinstance(parsed, dict)
+        assert len(parsed) == 4
+
+
+# =============================================================================
+# New public API imports
+# =============================================================================
+
+class TestNewModuleImports:
+    """Verify new modules added in v1 are importable from their canonical paths."""
+
+    def test_import_validate_layer1(self):
+        from qebench.validation import validate_layer1
+        assert callable(validate_layer1)
+
+    def test_import_validate_layer2(self):
+        from qebench.validation import validate_layer2
+        assert callable(validate_layer2)
+
+    def test_import_validation_result(self):
+        from qebench.validation import ValidationResult
+        assert ValidationResult is not None
+
+    def test_import_batch_logger(self):
+        from qebench.loggers import BatchLogger
+        assert BatchLogger is not None
+
+    def test_import_capture_run(self):
+        from qebench.loggers import capture_run
+        assert callable(capture_run)
+
+    def test_import_compile_batch(self):
+        from qebench.compile import compile_batch
+        assert callable(compile_batch)
+
+    def test_import_derive_seed(self):
+        from qebench.benchmark import _derive_seed
+        assert callable(_derive_seed)
