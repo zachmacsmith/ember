@@ -32,7 +32,7 @@ def overall_summary(df: pd.DataFrame) -> pd.DataFrame:
         algorithm, n_trials, n_success, success_rate, valid_rate,
         time_mean, time_std, time_median, cv_time,
         chain_mean, chain_std, chain_median,
-        max_chain_mean, qubits_mean, qubit_overhead_mean,
+        max_chain_mean, max_chain_std, qubits_mean, qubit_overhead_mean,
         coupler_overhead_mean
 
     Quality metrics (time_*, chain_*, ...) are over successful trials only.
@@ -61,6 +61,7 @@ def overall_summary(df: pd.DataFrame) -> pd.DataFrame:
             row['chain_std']   = float(success_grp['avg_chain_length'].std())
             row['chain_median']= float(success_grp['avg_chain_length'].median())
             row['max_chain_mean'] = float(success_grp['max_chain_length'].mean())
+            row['max_chain_std']  = float(success_grp['max_chain_length'].std())
             row['qubits_mean'] = float(success_grp['total_qubits_used'].mean())
 
             if 'qubit_overhead_ratio' in success_grp.columns:
@@ -74,7 +75,7 @@ def overall_summary(df: pd.DataFrame) -> pd.DataFrame:
         else:
             for col in ['time_mean', 'time_std', 'time_median', 'cv_time',
                         'chain_mean', 'chain_std', 'chain_median',
-                        'max_chain_mean', 'qubits_mean',
+                        'max_chain_mean', 'max_chain_std', 'qubits_mean',
                         'qubit_overhead_mean', 'coupler_overhead_mean']:
                 row[col] = float('nan')
 

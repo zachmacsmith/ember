@@ -4,6 +4,68 @@ Reverse-chronological. One entry per session or logical unit of work.
 
 ---
 
+**2026-03-14 — qeanalysis: intersection comparison chart + max chain length additions**
+- **`overall_summary()` in `qeanalysis/summary.py`** — added `max_chain_std` column alongside the existing `max_chain_mean`. Both are computed over successful trials only; NaN when no successes.
+- **`plot_graph_indexed_chain()` in `qeanalysis/plots.py`** — added `metric` parameter (default `'avg_chain_length'`). Fully backward compatible. When `metric='max_chain_length'`, saves as `max_chain_length.png`. NaN rows (pre-SQLite batches without `max_chain_length`) are silently dropped before plotting. Internal helper `_draw_chain_dots_categorical` updated with the same `metric` param.
+- **`plot_max_chain_distribution()`** — new function in `plots.py`. Overlaid KDE of `max_chain_length` per algorithm. Same structure as `plot_chain_distribution()`; saves to `figures/distributions/max_chain_length_kde.png`. Gracefully degrades to empty plot if column absent.
+- **`plot_intersection_comparison(df, algo_a, algo_b)`** — new function in `plots.py`. Saves to `figures/pairwise/intersection_{A}_vs_{B}.png`. Grouped bar chart for five metrics: `avg_chain_length`, `max_chain_length`, `wall_time`, `total_qubits_used`, `qubit_overhead_ratio`. Each metric normalised to the better algorithm's intersection value (1.0 = equal, > 1.0 = worse). Ghost bars (alpha=0.22, same colour) rendered behind solid bars to show unfiltered means across all successful runs — makes the skew effect from filtering visible. Raw values annotated on solid bars (rotated 45°, compact format). Reference dashed line at 1.0. Bottom annotation shows intersection N and per-algo success counts. Degrades gracefully to empty plot if no shared data.
+- **`generate_report()`** — now generates 12 graph-indexed plots (4 metrics × 3 x_modes, up from 9) and 1 `max_chain_length_kde.png`; calls `plot_intersection_comparison` for every algorithm pair.
+- **Smoke test** updated: `EXPECTED_FIGURES` now includes `distributions/max_chain_length_kde.png`, 3 × `graph_indexed/*/max_chain_length.png`, and 3 × `pairwise/intersection_*_vs_*.png`. Check count rises from 62 to 70.
+- 245/245 `test_qebench.py` + `test_qeanalysis.py` tests pass.
+
+**2026-03-14 — qeanalysis: remove shared_graph_filter from graph-indexed chain plot**
+- `plot_graph_indexed_chain()` previously filtered to only graphs where all algorithms succeeded before plotting, to avoid "unfair" comparisons. Removed this filter entirely. Absence of an algorithm at a given x-position is itself the signal — algorithms that fail on harder/larger graphs simply won't appear there, which is the key comparative insight. Updated docstring and titles accordingly.
+- `BenchmarkAnalysis._write_report_md()` updated to reflect the new description.
+- 82/82 unit tests continue to pass.
+
+**2026-03-14 — qeanalysis: smoke test output structure fixes**
+- `tests/smoke_full_pipeline.py` rewrote `EXPECTED_FIGURES` from 8 flat names to 25 subdir-qualified paths matching the actual subdirectory layout (`distributions/`, `scaling/`, `pairwise/`, `success/`, `topology/`, `graph_indexed/{by_graph_id,by_n_nodes,by_density}/`).
+- Added `EXPECTED_STATS` list for `statistics/` outputs (`significance_tests.csv`, `friedman_test.txt`, `correlation_matrix.csv`, `win_rate_matrix.csv`).
+- Updated `EXPECTED_TABLES` filenames and CHECK 6 to use `summary_dir` / `statistics_dir` / `report.md` rather than the old `tables/README.md` names.
+- Fixed `chain_length_by_category.png` → `avg_chain_length_by_category.png` (plot function generates the metric-prefixed filename).
+- 62/62 smoke checks pass.
+
+**2026-03-14 — qeanalysis overhaul: graph-indexed plots, new output structure, filters**
+- **`qeanalysis/filters.py`** — new module. `shared_graph_filter(df, algorithms)` returns rows where every specified algorithm has ≥1 success per graph. Used for fair multi-algorithm comparisons.
+- **`qeanalysis/plots.py`** — major additions:
+  - Colorblind-safe palette (`sns.color_palette('colorblind', 6)`) + per-algo marker shapes; both built once and passed to all plots for cross-figure consistency.
+  - **Graph-indexed dot plots** (3 functions × 3 x_modes = 9 new plots): `plot_graph_indexed_chain`, `plot_graph_indexed_time`, `plot_graph_indexed_success`. x_modes: `by_graph_id` (categorical, section labels by graph category), `by_n_nodes` (numeric, deterministic jitter), `by_density` (numeric). Shows per-trial dots + per-graph mean diamonds.
+  - `plot_win_rate_matrix()` — heatmap of pairwise win rates between algorithms.
+  - `plot_success_heatmap()`, `plot_success_by_nodes()`, `plot_success_by_density()` — success rate visualisations.
+  - Fixed category label coordinate bug in `_draw_chain_dots_categorical`: was using data y-coordinate with the axes transform; replaced with fixed axes coordinate `1.02`.
+  - All plot functions write to subdirectories within `figures/` (`distributions/`, `scaling/`, `pairwise/`, `success/`, `topology/`, `graph_indexed/`).
+- **`qeanalysis/__init__.py`** — `generate_report()` rewritten: `summary/` replaces `tables/`; new `statistics/` directory for significance tests + Friedman + correlation; palette computed once and passed to all plots; `report.md` replaces `README.md`; `_write_report_md()` documents every output file.
+- **`qebench/compile.py`** — added `chain_length_std` column to `runs` table (computed from the `chain_lengths` list via `statistics.stdev`); added `ALTER TABLE` migration for existing DBs that predate this column.
+- **Tests** updated: fixture writes `results.db` via `pandas.to_sql`; directory/file assertions updated for new `summary/`/`statistics/` layout.
+
+**2026-03-14 — qeanalysis loader: SQLite as primary source**
+- `qeanalysis/loader.py` rewritten to read from `results.db` (SQLite) as the primary source, falling back to `runs.csv` for legacy batches. Eliminates the CSV round-trip and aligns with the `compile_batch()` pipeline.
+- `_load_from_db(db_path, batch_id)`: reads `runs` table filtered by `batch_id` via `pd.read_sql_query`; coerces `success`, `is_valid`, `partial` INTEGER columns to Python `bool`.
+- `_load_config_from_db(db_path, batch_id)`: reads `config_json` from the `batches` table as a fallback when `config.json` is absent.
+- Test fixture updated to write `results.db` (SQLite) so integration tests exercise the new path. Fixed stale column names in fixture (`embedding_time` → `wall_time`, `error_message` → `error`). Added `test_load_batch_reads_sqlite` asserting correct row count and bool dtype.
+- 243/243 tests pass.
+
+**2026-03-14 — Expand test suite to 163 tests covering all v1 features**
+- Added 79 new tests across 10 new test classes in `tests/test_qebench.py`:
+  - **`TestDeriveSeed`** — determinism, per-trial uniqueness, 32-bit range, warmup index isolation.
+  - **`TestValidationResult`** — `bool()` protocol, field defaults.
+  - **`TestValidateLayer1`** — unit test for each of 5 structural checks, check ordering (stops at first failure).
+  - **`TestValidateLayer2`** — unit test for each of 6 type/format checks including `numpy.int64` detection, tuple chains, NaN/zero/negative wall time, CPU plausibility.
+  - **`TestValidationIntegration`** — `benchmark_one()` produces correct status + error message format (`Layer X [check] + original claim`) for both layers.
+  - **`TestBatchLogger`** — directory setup idempotency, runner log content, per-run log naming, `capture_run()` redirect + exception safety, footer fields, WARNING routing for `INVALID_OUTPUT`.
+  - **`TestCompileBatch`** — `results.db` schema (runs/embeddings/graphs/batches tables), seed stored in DB, UNIQUE constraint prevents duplicates, `runs.csv` export.
+  - **`TestSeedingBehavior`** — seed in JSONL, distinct per-trial, deterministic across runs.
+  - **`TestMultiprocessing`** — correct result count, DB storage, seeds match sequential, warmup-skipped warning.
+  - **`TestEmbeddingResultSpec`** — status values, `algorithm_version`, `cpu_time`, counter defaults, `to_jsonl_dict` (nested dict embedding) vs `to_dict` (JSON string embedding).
+  - **`TestNewModuleImports`** — `validate_layer1/2`, `ValidationResult`, `BatchLogger`, `capture_run`, `compile_batch`, `_derive_seed` all importable.
+- 163/163 tests pass.
+
+**2026-03-14 — benchmark wall time measurement**
+- `run_full_benchmark()` in `qebench/benchmark.py` measures total batch wall time with `time.perf_counter()`. Timer starts just before the first trial runs.
+- Sequential path (`n_workers=1`, `verbose=False`): `\r` progress bar with elapsed time shown during the run (identical pattern to the parallel path).
+- Both paths: after all trials complete, prints a separator and `Total wall time: X.Xs (Nh Mm Ss)` human-readable summary.
+- `batch_wall_time` (rounded to 3 decimal places) is written back to `config.json` after runs complete and before `compile_batch()` runs, so it is available to `qeanalysis` via the loaded config.
+
 **2026-03-14 — Layer 2 type/format validation + original-output logging + validation test script**
 - **`validate_layer2(result, source_graph, target_graph)`** added to `qebench/validation.py`. Six checks in order (stops at first failure): (1) key validity — no extra/missing source-graph keys in embedding; (2) value validity — all chain qubits exist in target graph; (3) type correctness — embedding keys and chain values are plain Python `int` (`type(x) is int`, not `isinstance`, so `numpy.int64` is rejected); (4) chain format — chains are `list` objects (not set/tuple/ndarray); (5) wall time validity — if `result['time']` present, must be a positive finite float; (6) CPU time plausibility — if `result['cpu_time']` present, must be ≥0 and ≤ `wall_time × os.cpu_count()`.
 - **Runs before Layer 1** on every result, even failures. Type errors would cause Layer 1 to raise exceptions rather than return a clean INVALID_OUTPUT.

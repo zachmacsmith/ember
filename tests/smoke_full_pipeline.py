@@ -11,7 +11,7 @@ What it exercises:
   4. workers/ directory populated with per-process JSONL files
   5. summary.csv present and non-empty
   6. BenchmarkAnalysis.generate_report() runs without error
-  7. Expected output files exist: figures/ + tables/ populated
+  7. Expected output files exist: figures/ (subdirs) + summary/ + statistics/ populated
   8. results.db has correct number of rows and key columns
   9. All row statuses are valid enum values
  10. At least one algorithm succeeds on every graph in each topology
@@ -73,20 +73,63 @@ TIMEOUT    = 30.0
 
 VALID_STATUSES = {"SUCCESS", "INVALID_OUTPUT", "TIMEOUT", "CRASH", "OOM", "FAILURE"}
 
+# Paths relative to figures/ — subdirectory layout produced by generate_report()
 EXPECTED_FIGURES = [
-    "heatmap_avg_chain_length.png",
-    "heatmap_wall_time.png",
-    "distribution_avg_chain_length.png",
-    "chain_length_distribution.png",
-    "consistency_cv.png",
-    "scaling_avg_chain_length_vs_problem_nodes.png",
+    # distributions/
+    "distributions/chain_length_kde.png",
+    "distributions/max_chain_length_kde.png",
+    "distributions/chain_length_violin.png",
+    "distributions/embedding_time_violin.png",
+    "distributions/avg_chain_length_by_category.png",
+    "distributions/consistency_cv.png",
+    # scaling/
+    "scaling/scaling_avg_chain_length_vs_problem_nodes.png",
+    "scaling/scaling_wall_time_vs_problem_nodes.png",
+    "scaling/density_hardness_avg_chain_length.png",
+    # pairwise/
+    "pairwise/win_rate_matrix.png",
+    # success/
+    "success/success_rate_heatmap.png",
+    "success/success_rate_by_nodes.png",
+    "success/success_rate_by_density.png",
+    # topology/
+    "topology/topology_comparison_avg_chain_length.png",
+    # root figures/
     "pareto_wall_time_vs_avg_chain_length.png",
-    "topology_comparison_avg_chain_length.png",
+    # graph_indexed/
+    "graph_indexed/by_graph_id/chain_length.png",
+    "graph_indexed/by_graph_id/max_chain_length.png",
+    "graph_indexed/by_graph_id/embedding_time.png",
+    "graph_indexed/by_graph_id/success.png",
+    "graph_indexed/by_n_nodes/chain_length.png",
+    "graph_indexed/by_n_nodes/max_chain_length.png",
+    "graph_indexed/by_n_nodes/embedding_time.png",
+    "graph_indexed/by_n_nodes/success.png",
+    "graph_indexed/by_density/chain_length.png",
+    "graph_indexed/by_density/max_chain_length.png",
+    "graph_indexed/by_density/embedding_time.png",
+    "graph_indexed/by_density/success.png",
+    # pairwise intersection comparisons (all 3 pairs from METHODS sorted)
+    "pairwise/intersection_clique_vs_minorminer.png",
+    "pairwise/intersection_clique_vs_minorminer-fast.png",
+    "pairwise/intersection_minorminer_vs_minorminer-fast.png",
 ]
 
+# Tables are now written to summary/ (renamed from tables/)
 EXPECTED_TABLES = [
     "overall_summary.csv",
     "overall_summary.tex",
+    "rank_table_chain.csv",
+    "rank_table_chain.tex",
+    "pairwise_comparison.csv",
+    "pairwise_comparison.tex",
+]
+
+EXPECTED_STATS = [
+    "significance_tests.csv",
+    "friedman_test.txt",
+    "correlation_matrix.csv",
+    "win_rate_matrix.csv",
 ]
 
 # Reference snapshot location
@@ -312,11 +355,13 @@ with tempfile.TemporaryDirectory(prefix="qebench_smoke_") as tmpdir:
     section("CHECK 6: Analysis output files")
 
     if report_dir is not None:
-        figures_dir = Path(report_dir) / "figures"
-        tables_dir  = Path(report_dir) / "tables"
+        figures_dir   = Path(report_dir) / "figures"
+        summary_dir   = Path(report_dir) / "summary"
+        statistics_dir = Path(report_dir) / "statistics"
 
-        check(figures_dir.is_dir(), f"figures/ not created: {figures_dir}")
-        check(tables_dir.is_dir(),  f"tables/ not created: {tables_dir}")
+        check(figures_dir.is_dir(),    f"figures/ not created: {figures_dir}")
+        check(summary_dir.is_dir(),    f"summary/ not created: {summary_dir}")
+        check(statistics_dir.is_dir(), f"statistics/ not created: {statistics_dir}")
 
         for fname in EXPECTED_FIGURES:
             p = figures_dir / fname
@@ -324,13 +369,18 @@ with tempfile.TemporaryDirectory(prefix="qebench_smoke_") as tmpdir:
             print(f"  {'✓' if p.exists() else '✗'}  figures/{fname}")
 
         for fname in EXPECTED_TABLES:
-            p = tables_dir / fname
+            p = summary_dir / fname
             check(p.exists(), f"Missing table: {fname}")
-            print(f"  {'✓' if p.exists() else '✗'}  tables/{fname}")
+            print(f"  {'✓' if p.exists() else '✗'}  summary/{fname}")
 
-        readme = Path(report_dir) / "README.md"
-        check(readme.exists(), "README.md not written by generate_report()")
-        print(f"  {'✓' if readme.exists() else '✗'}  README.md")
+        for fname in EXPECTED_STATS:
+            p = statistics_dir / fname
+            check(p.exists(), f"Missing stat output: {fname}")
+            print(f"  {'✓' if p.exists() else '✗'}  statistics/{fname}")
+
+        report_md = Path(report_dir) / "report.md"
+        check(report_md.exists(), "report.md not written by generate_report()")
+        print(f"  {'✓' if report_md.exists() else '✗'}  report.md")
 
     # ── CHECK 7: Reference snapshot comparison ────────────────────────────────
 

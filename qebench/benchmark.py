@@ -627,6 +627,7 @@ class EmbeddingBenchmark:
         workers_str = f" [{n_workers} workers]" if n_workers > 1 else ""
         print(f"Starting benchmark: {len(problems)} problems × {len(valid_methods)} algorithms{topo_str}{trials_str}{warmup_str} = {total_runs} runs{workers_str}")
         print("=" * 80)
+        _batch_start = time.perf_counter()
 
         # ── Sequential path (n_workers == 1) ───────────────────────────────────
         if n_workers == 1:
@@ -697,6 +698,14 @@ class EmbeddingBenchmark:
                                           f"qubits={result.total_qubits_used}{valid_str}")
                                 else:
                                     print(f"✗ Failed: {result.error}")
+                            else:
+                                pct = int(40 * current_run / total_runs)
+                                bar = '#' * pct + '-' * (40 - pct)
+                                elapsed = time.perf_counter() - _batch_start
+                                print(f"\r  [{bar}] {current_run}/{total_runs}  {elapsed:.0f}s elapsed", end="", flush=True)
+
+            if not verbose:
+                print()  # newline after progress bar
 
         # ── Parallel path (n_workers > 1) ──────────────────────────────────────
         else:
@@ -752,7 +761,8 @@ class EmbeddingBenchmark:
                 else:
                     pct = int(40 * completed / n_tasks)
                     bar = '#' * pct + '-' * (40 - pct)
-                    print(f"\r  [{bar}] {completed}/{n_tasks}", end="", flush=True)
+                    elapsed = time.perf_counter() - _batch_start
+                    print(f"\r  [{bar}] {completed}/{n_tasks}  {elapsed:.0f}s elapsed", end="", flush=True)
 
             if not verbose:
                 print()  # newline after progress bar
@@ -773,13 +783,27 @@ class EmbeddingBenchmark:
                                                    if k in valid_fields})
                             )
 
+        batch_wall_time = time.perf_counter() - _batch_start
+
         print("\n" + "=" * 80)
         print("Benchmark complete!")
 
+        m, s = divmod(int(batch_wall_time), 60)
+        h, m = divmod(m, 60)
+        time_str = f"{h}h {m}m {s}s" if h else f"{m}m {s}s" if m else f"{s}s"
+        print(f"Total wall time: {batch_wall_time:.1f}s ({time_str})")
+
         n_success = sum(1 for r in self.results if r.success)
         batch_logger.info(
-            f"Batch {batch_id} complete: {n_success}/{len(self.results)} succeeded"
+            f"Batch {batch_id} complete: {n_success}/{len(self.results)} succeeded "
+            f"in {batch_wall_time:.1f}s"
         )
+
+        # Persist total wall time in config.json
+        config['batch_wall_time'] = round(batch_wall_time, 3)
+        config_path = batch_dir / "config.json"
+        with open(config_path, 'w') as f:
+            json.dump(config, f, indent=2)
 
         compile_batch(batch_dir)
         batch_logger.teardown()
