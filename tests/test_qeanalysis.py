@@ -543,11 +543,12 @@ class TestPlots:
         assert isinstance(fig, plt.Figure)
 
     def test_plot_save_creates_file(self, sample_df, tmp_path):
-        """Verify that save=True actually writes a file."""
+        """Verify that save=True writes into the correct subdirectory."""
         from qeanalysis.plots import plot_heatmap
         plot_heatmap(sample_df, 'avg_chain_length',
                      output_dir=tmp_path, save=True)
-        saved = list(tmp_path.glob('*.png'))
+        # heatmap saves to figures/distributions/ relative to output_dir
+        saved = list((tmp_path / 'figures' / 'distributions').glob('*.png'))
         assert len(saved) == 1
 
 
@@ -670,31 +671,50 @@ class TestBenchmarkAnalysis:
 
         assert output_dir.exists()
         assert (output_dir / 'figures').exists()
-        assert (output_dir / 'tables').exists()
-        assert (output_dir / 'README.md').exists()
+        assert (output_dir / 'summary').exists()
+        assert (output_dir / 'statistics').exists()
+        assert (output_dir / 'report.md').exists()
+
+    def test_generate_report_subdir_structure(self, batch_dir, tmp_path):
+        from qeanalysis import BenchmarkAnalysis
+        an = BenchmarkAnalysis(batch_dir, output_root=str(tmp_path))
+        an.generate_report()
+        for subdir in ('distributions', 'scaling', 'pairwise', 'success', 'topology'):
+            assert (an.figures_dir / subdir).exists(), f"figures/{subdir}/ missing"
+        for x_mode in ('by_graph_id', 'by_n_nodes', 'by_density'):
+            assert (an.figures_dir / 'graph_indexed' / x_mode).exists()
 
     def test_generate_report_produces_figures(self, batch_dir, tmp_path):
         from qeanalysis import BenchmarkAnalysis
         an = BenchmarkAnalysis(batch_dir, output_root=str(tmp_path))
         an.generate_report()
-        figures = list((an.figures_dir).glob('*.png'))
+        # Figures go into subdirectories — use rglob
+        figures = list(an.figures_dir.rglob('*.png'))
         assert len(figures) > 0
 
     def test_generate_report_produces_tables(self, batch_dir, tmp_path):
         from qeanalysis import BenchmarkAnalysis
         an = BenchmarkAnalysis(batch_dir, output_root=str(tmp_path))
         an.generate_report()
-        csvs = list((an.tables_dir).glob('*.csv'))
-        texs = list((an.tables_dir).glob('*.tex'))
+        csvs = list(an.summary_dir.glob('*.csv'))
+        texs = list(an.summary_dir.glob('*.tex'))
         assert len(csvs) > 0
         assert len(texs) > 0
 
-    def test_generate_report_readme_content(self, batch_dir, tmp_path):
+    def test_generate_report_produces_statistics(self, batch_dir, tmp_path):
         from qeanalysis import BenchmarkAnalysis
         an = BenchmarkAnalysis(batch_dir, output_root=str(tmp_path))
         an.generate_report()
-        readme = (an.output_dir / 'README.md').read_text()
-        assert 'batch_test' in readme
+        assert (an.statistics_dir / 'correlation_matrix.csv').exists()
+        assert (an.statistics_dir / 'win_rate_matrix.csv').exists()
+
+    def test_generate_report_report_md_content(self, batch_dir, tmp_path):
+        from qeanalysis import BenchmarkAnalysis
+        an = BenchmarkAnalysis(batch_dir, output_root=str(tmp_path))
+        an.generate_report()
+        report = (an.output_dir / 'report.md').read_text()
+        assert 'batch_test' in report
+        assert 'graph_indexed' in report
 
     def test_export_latex_method(self, batch_dir, tmp_path):
         from qeanalysis import BenchmarkAnalysis

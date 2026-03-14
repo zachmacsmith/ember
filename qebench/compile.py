@@ -69,6 +69,7 @@ CREATE TABLE IF NOT EXISTS runs (
     partial                       INTEGER,
     avg_chain_length              REAL,
     max_chain_length              INTEGER,
+    chain_length_std              REAL,
     total_qubits_used             INTEGER,
     total_couplers_used           INTEGER,
     problem_nodes                 INTEGER,
@@ -187,6 +188,12 @@ def compile_batch(batch_dir: Union[str, Path]) -> Path:
 
     con = sqlite3.connect(db_path)
     con.executescript(_DDL)
+    # Migrate: add chain_length_std if absent (DBs created before this version)
+    try:
+        con.execute("ALTER TABLE runs ADD COLUMN chain_length_std REAL")
+        con.commit()
+    except sqlite3.OperationalError:
+        pass  # column already exists
 
     # Insert or ignore batches row (started_at from config timestamp if available)
     con.execute(
@@ -230,6 +237,12 @@ def compile_batch(batch_dir: Union[str, Path]) -> Path:
                 # ── runs table ────────────────────────────────────────────────
                 run_id = str(uuid.uuid4())
                 embedding = rec.get("embedding")
+                # chain_length_std: compute from chain_lengths list in JSONL
+                _chain_lengths = rec.get("chain_lengths") or []
+                _chain_length_std = (
+                    float(__import__('statistics').stdev(_chain_lengths))
+                    if len(_chain_lengths) >= 2 else 0.0
+                )
                 try:
                     con.execute(
                         """INSERT INTO runs (
@@ -238,14 +251,14 @@ def compile_batch(batch_dir: Union[str, Path]) -> Path:
                                problem_name, topology_name, trial, seed,
                                wall_time, cpu_time,
                                status, success, is_valid, partial,
-                               avg_chain_length, max_chain_length,
+                               avg_chain_length, max_chain_length, chain_length_std,
                                total_qubits_used, total_couplers_used,
                                problem_nodes, problem_edges, problem_density,
                                target_node_visits, cost_function_evaluations,
                                embedding_state_mutations, overlap_qubit_iterations,
                                error, created_at
                            ) VALUES (
-                               ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
+                               ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
                            )""",
                         (
                             run_id,
@@ -264,6 +277,7 @@ def compile_batch(batch_dir: Union[str, Path]) -> Path:
                             _bool_int(rec.get("partial")),
                             rec.get("avg_chain_length"),
                             rec.get("max_chain_length"),
+                            _chain_length_std,
                             rec.get("total_qubits_used"),
                             rec.get("total_couplers_used"),
                             rec.get("problem_nodes"),
@@ -352,7 +366,7 @@ def _export_runs_csv(db_path: Path, batch_dir: Path) -> None:
         """SELECT
                algorithm, problem_name, topology_name, trial, seed,
                wall_time, cpu_time, status, success, is_valid, partial,
-               avg_chain_length, max_chain_length,
+               avg_chain_length, max_chain_length, chain_length_std,
                total_qubits_used, total_couplers_used,
                problem_nodes, problem_edges, problem_density,
                target_node_visits, cost_function_evaluations,
