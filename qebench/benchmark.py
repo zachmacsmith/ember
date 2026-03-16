@@ -333,6 +333,23 @@ def benchmark_one(source_graph: nx.Graph,
         )
 
 
+def _reseed_globals(trial_seed: int) -> None:
+    """Seed Python and NumPy global RNGs to the per-trial seed.
+
+    Called by the runner immediately before every embed() invocation so that
+    algorithms using random/numpy.random without explicit seeding still produce
+    deterministic results.  Algorithms that seed their own RNG from kwargs
+    are unaffected — this just closes the gap for ones that don't.
+    """
+    import random
+    random.seed(trial_seed)
+    try:
+        import numpy as np
+        np.random.seed(trial_seed % (2**32))
+    except ImportError:
+        pass
+
+
 def _derive_seed(root_seed: int, algorithm: str, problem_name: str,
                  topology_name: str, trial: int) -> int:
     """Derive a deterministic per-trial seed via SHA-256.
@@ -374,6 +391,7 @@ def _worker_process(task_queue: multiprocessing.Queue,
          problem_name, topo_name, trial, trial_seed) = task
 
         log_path = run_log_path(logs_runs_dir, algo_name, problem_name, trial, trial_seed)
+        _reseed_globals(trial_seed)
         with capture_run(log_path):
             result = benchmark_one(
                 source_graph, target_graph, algo_name,
@@ -653,6 +671,7 @@ class EmbeddingBenchmark:
                             warmup_seed = _derive_seed(seed, algo_name, problem_name, topo_name, -(w + 1))
                             if verbose:
                                 print(f"  [{current_run}/{total_runs}] Warm-up {algo_name} [{w+1}/{warmup_trials}]...", end=" ")
+                            _reseed_globals(warmup_seed)
                             benchmark_one(
                                 source_graph, target_graph, algo_name,
                                 timeout=timeout, problem_name=problem_name,
@@ -672,6 +691,7 @@ class EmbeddingBenchmark:
                                 print(f"  [{current_run}/{total_runs}] Running {algo_name}{trial_str}{topo_tag}...", end=" ")
 
                             log_path = batch_logger.run_log_path(algo_name, problem_name, trial, trial_seed)
+                            _reseed_globals(trial_seed)
                             with capture_run(log_path):
                                 result = benchmark_one(
                                     source_graph, target_graph, algo_name,
