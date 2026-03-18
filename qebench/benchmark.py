@@ -21,21 +21,17 @@ except ImportError:
 import numpy as np
 import networkx as nx
 import json
-import pandas as pd
-from typing import Dict, List, Tuple, Any, Optional
+from typing import Dict, List, Tuple, Optional
 from dataclasses import dataclass, asdict, field
-from collections import defaultdict
-import matplotlib.pyplot as plt
-import seaborn as sns
 from pathlib import Path
 import warnings
 warnings.filterwarnings('ignore')
 
-from qebench.registry import ALGORITHM_REGISTRY, list_algorithms
+from qebench.registry import ALGORITHM_REGISTRY
 from qebench.validation import validate_layer1, validate_layer2
-from qebench.graphs import load_test_graphs as _load_test_graphs, parse_graph_selection, verify_manifest
+from qebench.graphs import load_test_graphs as _load_test_graphs
 from qebench.results import ResultsManager
-from qebench.topologies import get_topology, TOPOLOGY_REGISTRY
+from qebench.topologies import get_topology
 from qebench.compile import compile_batch
 from qebench.loggers import BatchLogger, capture_run, run_log_path
 
@@ -562,12 +558,6 @@ class EmbeddingBenchmark:
                 from qeanalysis import BenchmarkAnalysis
                 BenchmarkAnalysis(batch_dir).generate_report()
         """
-        # Phase 1 integrity check — raises RuntimeError if any graph file has changed
-        try:
-            verify_manifest()
-        except FileNotFoundError:
-            pass  # manifest not yet generated; skip check
-
         if verbose is None:
             verbose = (n_workers == 1)
 
@@ -832,188 +822,3 @@ class EmbeddingBenchmark:
         self.results_manager.save_results(self.results, batch_dir, config=config)
         return batch_dir
     
-    @property
-    def results_dir(self):
-        """For backward compatibility with generate_report plot paths."""
-        return self.results_manager.results_dir
-    
-    def generate_report(self):
-        """Generate comprehensive analysis and visualizations"""
-        if not self.results:
-            print("No results to analyze!")
-            return
-        
-        df = pd.DataFrame([r.to_dict() for r in self.results])
-        
-        # Create visualizations
-        self._plot_success_rates(df)
-        self._plot_embedding_times(df)
-        self._plot_chain_lengths(df)
-        self._plot_scalability(df)
-        self._generate_summary_statistics(df)
-    
-    def _plot_success_rates(self, df: pd.DataFrame):
-        """Plot success rates by method"""
-        fig, ax = plt.subplots(figsize=(10, 6))
-        
-        success_rates = df.groupby('algorithm')['success'].mean() * 100
-        success_rates.plot(kind='bar', ax=ax, color='steelblue')
-        
-        ax.set_ylabel('Success Rate (%)')
-        ax.set_xlabel('Method')
-        ax.set_title('Embedding Success Rates by Method')
-        ax.set_ylim([0, 105])
-        ax.grid(axis='y', alpha=0.3)
-        
-        plt.tight_layout()
-        plt.savefig(self.results_dir / 'success_rates.png', dpi=300)
-        print(f"Success rate plot saved to {self.results_dir / 'success_rates.png'}")
-        plt.close()
-    
-    def _plot_embedding_times(self, df: pd.DataFrame):
-        """Plot embedding time distributions"""
-        fig, ax = plt.subplots(figsize=(12, 6))
-        
-        successful_df = df[df['success'] == True]
-        
-        if len(successful_df) > 0:
-            successful_df.boxplot(column='embedding_time', by='algorithm', ax=ax)
-            ax.set_ylabel('Embedding Time (seconds)')
-            ax.set_xlabel('Method')
-            ax.set_title('Embedding Time Distribution (Successful Embeddings Only)')
-            plt.suptitle('')  # Remove default title
-            ax.grid(axis='y', alpha=0.3)
-            
-            plt.tight_layout()
-            plt.savefig(self.results_dir / 'embedding_times.png', dpi=300)
-            print(f"Embedding time plot saved to {self.results_dir / 'embedding_times.png'}")
-            plt.close()
-    
-    def _plot_chain_lengths(self, df: pd.DataFrame):
-        """Plot chain length comparisons"""
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
-        
-        successful_df = df[df['success'] == True]
-        
-        if len(successful_df) > 0:
-            # Average chain length
-            successful_df.boxplot(column='avg_chain_length', by='algorithm', ax=ax1)
-            ax1.set_ylabel('Average Chain Length')
-            ax1.set_xlabel('Method')
-            ax1.set_title('Average Chain Length Distribution')
-            
-            # Max chain length
-            successful_df.boxplot(column='max_chain_length', by='algorithm', ax=ax2)
-            ax2.set_ylabel('Maximum Chain Length')
-            ax2.set_xlabel('Method')
-            ax2.set_title('Maximum Chain Length Distribution')
-            
-            plt.suptitle('')
-            plt.tight_layout()
-            plt.savefig(self.results_dir / 'chain_lengths.png', dpi=300)
-            print(f"Chain length plot saved to {self.results_dir / 'chain_lengths.png'}")
-            plt.close()
-    
-    def _plot_scalability(self, df: pd.DataFrame):
-        """Plot scalability analysis"""
-        fig, ax = plt.subplots(figsize=(12, 6))
-        
-        successful_df = df[df['success'] == True]
-        
-        if len(successful_df) > 0:
-            for method in successful_df['algorithm'].unique():
-                method_df = successful_df[successful_df['algorithm'] == method]
-                grouped = method_df.groupby('problem_nodes')['embedding_time'].mean()
-                ax.plot(grouped.index, grouped.values, marker='o', label=method, linewidth=2)
-            
-            ax.set_xlabel('Problem Size (number of nodes)')
-            ax.set_ylabel('Average Embedding Time (seconds)')
-            ax.set_title('Scalability: Embedding Time vs Problem Size')
-            ax.legend()
-            ax.grid(alpha=0.3)
-            
-            plt.tight_layout()
-            plt.savefig(self.results_dir / 'scalability.png', dpi=300)
-            print(f"Scalability plot saved to {self.results_dir / 'scalability.png'}")
-            plt.close()
-    
-    def _generate_summary_statistics(self, df: pd.DataFrame):
-        """Generate and save summary statistics"""
-        summary = []
-        
-        for method in df['algorithm'].unique():
-            method_df = df[df['algorithm'] == method]
-            successful_df = method_df[method_df['success'] == True]
-            
-            stats = {
-                'Method': method,
-                'Total Runs': len(method_df),
-                'Successful': len(successful_df),
-                'Success Rate (%)': len(successful_df) / len(method_df) * 100,
-                'Avg Time (s)': successful_df['embedding_time'].mean() if len(successful_df) > 0 else None,
-                'Std Time (s)': successful_df['embedding_time'].std() if len(successful_df) > 0 else None,
-                'Avg Chain Length': successful_df['avg_chain_length'].mean() if len(successful_df) > 0 else None,
-                'Avg Max Chain': successful_df['max_chain_length'].mean() if len(successful_df) > 0 else None,
-                'Avg Qubits Used': successful_df['total_qubits_used'].mean() if len(successful_df) > 0 else None
-            }
-            summary.append(stats)
-        
-        summary_df = pd.DataFrame(summary)
-        summary_path = self.results_dir / 'summary_statistics.csv'
-        summary_df.to_csv(summary_path, index=False)
-        
-        print(f"\nSummary statistics saved to {summary_path}")
-        print("\n" + "=" * 80)
-        print("SUMMARY STATISTICS")
-        print("=" * 80)
-        print(summary_df.to_string(index=False))
-
-
-def create_chimera_graph(m: int = 4, n: int = 4, t: int = 4) -> nx.Graph:
-    """
-    Create a Chimera graph (D-Wave topology)
-    
-    Args:
-        m, n: Grid dimensions
-        t: Number of qubits per unit cell
-        
-    Returns:
-        NetworkX graph representing Chimera topology
-    """
-    try:
-        import dwave_networkx as dnx
-        return dnx.chimera_graph(m, n, t)
-    except ImportError:
-        print("Warning: dwave_networkx not installed, creating simplified Chimera")
-        # Simplified version if dwave_networkx not available
-        G = nx.Graph()
-        # This is a simplified placeholder - install dwave_networkx for real Chimera
-        G.add_nodes_from(range(m * n * t * 2))
-        return G
-
-
-if __name__ == "__main__":
-    # Example usage
-    print("Minor Embedding Benchmarking Framework")
-    print("=" * 80)
-    
-    # Create target hardware graph (Chimera 4x4)
-    target_graph = create_chimera_graph(4, 4, 4)
-    print(f"Target graph: Chimera 4×4 with {target_graph.number_of_nodes()} qubits")
-    
-    # Initialize benchmark
-    benchmark = EmbeddingBenchmark(target_graph, results_dir="./benchmark_results")
-    
-    # Generate test problems
-    problems = benchmark.generate_test_problems(
-        sizes=[4, 6, 8, 10],
-        densities=[0.3, 0.5, 0.7],
-        instances_per_config=3
-    )
-    print(f"Generated {len(problems)} test problems")
-    
-    # Run benchmark (only minorminer is implemented, others are placeholders)
-    benchmark.run_full_benchmark(problems, timeout=30.0, methods=['minorminer'])
-    
-    # Generate analysis report
-    benchmark.generate_report()
