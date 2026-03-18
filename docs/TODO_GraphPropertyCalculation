@@ -1,0 +1,135 @@
+# Graph Property Computation — Feature Specification
+
+---
+
+## Overview
+
+A standalone script `compute_graph_properties.py` scans all graphs in `test_graphs/`, computes missing properties for each, and writes them back to the JSON files in-place. Properties that already exist in the file are skipped. The user controls which properties are computed via a parameter list, allowing incremental computation for expensive properties.
+
+---
+
+## Invocation
+
+```python
+compute_graph_properties(
+    properties=['algebraic_connectivity', 'clique_number'],  # None = all
+    graph_selection="*",    # standard selection syntax — default all
+    overwrite=False,        # if True, recompute even if already present
+)
+```
+
+Called as a standalone script or imported function. Not part of the benchmark runner.
+
+---
+
+## Storage Format
+
+Properties are written into a top-level `"properties"` key in the graph JSON, alongside the existing `"metadata"` and `"graph"` keys:
+
+```json
+{
+  "id": 100,
+  "name": "random_n6_d0.2_i0",
+  "metadata": {...},
+  "graph": {...},
+  "properties": {
+    "n_vertices": 6,
+    "n_edges": 7,
+    "density": 0.4667,
+    "avg_degree": 2.333,
+    "max_degree": 3,
+    "min_degree": 1,
+    "degree_std": 0.745,
+    "avg_clustering": 0.111,
+    "global_clustering": 0.143,
+    "n_triangles": 1,
+    "algebraic_connectivity": 0.382,
+    "avg_shortest_path_length": 2.133,
+    "diameter": 3,
+    "girth": 3,
+    "is_planar": true,
+    "is_bipartite": false,
+    "is_connected": true,
+    "is_regular": false,
+    "n_connected_components": 1,
+    "largest_component_fraction": 1.0,
+    "degree_assortativity": -0.214,
+    "degeneracy": 2,
+    "treewidth_upper": 2,
+    "clique_number": 3,
+    "clique_lower_bound": 3,
+    "source_problem": null,
+    "computed_at": "2026-03-17T14:22:01"
+  }
+}
+```
+
+`computed_at` is a per-property-batch timestamp written each time the script runs and adds properties. If properties were computed in multiple passes, the timestamp reflects the most recent pass.
+
+---
+
+## Per-Property Computation Rules
+
+| Property | Method | Condition for `None` |
+|----------|--------|----------------------|
+| `n_vertices`, `n_edges`, `density`, `avg_degree`, `max_degree`, `min_degree`, `degree_std` | Direct from graph | Never `None` |
+| `avg_clustering` | `nx.average_clustering()` | Never `None` |
+| `global_clustering` | `nx.transitivity()` | Never `None` |
+| `n_triangles` | `sum(nx.triangles().values()) / 3` | Never `None` |
+| `is_connected` | `nx.is_connected()` | Never `None` |
+| `is_regular` | all degrees equal | Never `None` |
+| `n_connected_components` | `nx.number_connected_components()` | Never `None` |
+| `largest_component_fraction` | largest component size / n_vertices | Never `None` |
+| `is_bipartite` | `nx.is_bipartite()` | Never `None` |
+| `degree_assortativity` | `nx.degree_assortativity_coefficient()` | `None` if fewer than 2 edges |
+| `degeneracy` | k-core peeling, `max(nx.core_number().values())` | Never `None` |
+| `is_planar` | `nx.check_planarity()` | Never `None` |
+| `algebraic_connectivity` | `nx.algebraic_connectivity()` via scipy sparse eigensolver | `None` if graph is disconnected |
+| `avg_shortest_path_length` | `nx.average_shortest_path_length()` | `None` if graph is disconnected |
+| `diameter` | `nx.diameter()` exact via BFS | `None` if graph is disconnected |
+| `girth` | `nx.girth()` | `None` if graph is acyclic |
+| `treewidth_upper` | `nx.treewidth_min_degree()` greedy heuristic | Never `None` |
+| `clique_number` | `nx.graph_clique_number()` exact | `None` if n > 50 and density ≥ 0.3 — intractable risk |
+| `clique_lower_bound` | greedy approximation via `nx.find_cliques()` truncated | Never `None` |
+
+---
+
+## Skip Logic
+
+For each graph file, for each requested property:
+
+1. Load the JSON
+2. Check if `"properties"` key exists and contains the requested property key
+3. If present and `overwrite=False` — skip, do not recompute
+4. If absent or `overwrite=True` — compute and write back
+
+The file is only written if at least one property was newly computed. Files with all requested properties already present are not touched.
+
+---
+
+## Progress Reporting
+
+Prints one line per graph as it is processed:
+
+```
+[  1/312]  graph_100  random_n6_d0.2_i0     algebraic_connectivity=0.382  diameter=3
+[  2/312]  graph_101  random_n8_d0.2_i0     algebraic_connectivity=0.291  diameter=4
+[  3/312]  graph_102  random_n6_d0.5_i0     (all requested properties already present, skipped)
+```
+
+On completion:
+
+```
+Computed properties for 289 / 312 graphs (23 skipped — already present).
+Total time: 4m 12s
+
+⚠️  REMEMBER TO UPDATE GRAPH HASH MANIFEST
+```
+
+The warning is always printed regardless of how many graphs were updated. It is the caller's responsibility to run the manifest update — this script does not do it automatically, since the caller may want to run multiple property passes before regenerating the manifest.
+
+---
+
+## Error Handling
+
+If computation of a single property fails (e.g. scipy not installed, unexpected graph structure), the error is caught, logged with the graph ID and property name, and the script continues with the next graph. At the end, a summary of all failures is printed before the manifest warning. The graph file is not written if any property in the current batch failed — partial writes would leave inconsistent state.

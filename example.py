@@ -2,6 +2,7 @@ from qebench import EmbeddingBenchmark
 from qeanalysis import BenchmarkAnalysis
 
 
+
 bench = EmbeddingBenchmark(target_graph=None)
 direc = bench.run_full_benchmark(
     graph_selection='100-130',

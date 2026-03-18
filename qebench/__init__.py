@@ -15,6 +15,8 @@ from qebench.benchmark import (
     compute_embedding_metrics,
     EmbeddingResult,
     EmbeddingBenchmark,
+    load_benchmark,
+    delete_benchmark,
 )
 
 # Results storage
@@ -57,6 +59,8 @@ __all__ = [
     "compute_embedding_metrics",
     "EmbeddingResult",
     "EmbeddingBenchmark",
+    "load_benchmark",
+    "delete_benchmark",
     # Results
     "ResultsManager",
     # Registry

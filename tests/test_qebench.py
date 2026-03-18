@@ -597,13 +597,17 @@ class TestResultsManager:
         assert len(set(names)) == 3  # all unique
 
     def test_latest_symlink_points_to_newest(self, tmp_path):
+        """latest symlink is created in results_dir after move_to_output()."""
         from qebench.results import ResultsManager
-        mgr = ResultsManager(str(tmp_path))
-        mgr.create_batch()
-        batch2 = mgr.create_batch()
-        latest = tmp_path / "latest"
+        results_dir = tmp_path / "results"
+        mgr = ResultsManager(str(results_dir))
+        b1 = mgr.create_batch()
+        b2 = mgr.create_batch()
+        mgr.move_to_output(b1)
+        mgr.move_to_output(b2)
+        latest = results_dir / "latest"
         assert latest.is_symlink()
-        assert latest.resolve().name == batch2.name
+        assert latest.resolve().name == b2.name
 
     def test_config_json_saved(self, tmp_path):
         from qebench.results import ResultsManager
@@ -1664,3 +1668,808 @@ class TestNewModuleImports:
     def test_import_derive_seed(self):
         from qebench.benchmark import _derive_seed
         assert callable(_derive_seed)
+
+    def test_import_load_benchmark(self):
+        from qebench import load_benchmark
+        assert callable(load_benchmark)
+
+    def test_import_delete_benchmark(self):
+        from qebench import delete_benchmark
+        assert callable(delete_benchmark)
+
+    def test_import_checkpoint_functions(self):
+        from qebench.checkpoint import (
+            write_checkpoint, read_checkpoint, delete_checkpoint,
+            completed_seeds_from_jsonl, scan_incomplete_runs,
+        )
+        for fn in (write_checkpoint, read_checkpoint, delete_checkpoint,
+                   completed_seeds_from_jsonl, scan_incomplete_runs):
+            assert callable(fn)
+
+
+# =============================================================================
+# Checkpoint module — write/read/delete and JSONL scan
+# =============================================================================
+
+class TestCheckpoint:
+    """Tests for qebench/checkpoint.py — all five exported functions."""
+
+    def test_write_and_read_roundtrip(self, tmp_path):
+        from qebench.checkpoint import write_checkpoint, read_checkpoint
+        batch_dir = tmp_path / "batch_test"
+        batch_dir.mkdir()
+        unfinished = [("minorminer", "K4", "chimera_4x4x4", 1, 99999)]
+        write_checkpoint(batch_dir, unfinished, total_tasks=5, completed_count=4)
+        cp = read_checkpoint(batch_dir)
+        assert cp is not None
+        assert cp['total_tasks'] == 5
+        assert cp['completed_count'] == 4
+        assert cp['resume_count'] == 0
+        assert len(cp['unfinished_tasks']) == 1
+        t = cp['unfinished_tasks'][0]
+        assert t['algo_name'] == 'minorminer'
+        assert t['problem_name'] == 'K4'
+        assert t['topo_name'] == 'chimera_4x4x4'
+        assert t['trial'] == 1
+        assert t['trial_seed'] == 99999
+
+    def test_checkpoint_has_cancelled_at_timestamp(self, tmp_path):
+        from qebench.checkpoint import write_checkpoint, read_checkpoint
+        batch_dir = tmp_path / "batch"
+        batch_dir.mkdir()
+        write_checkpoint(batch_dir, [], total_tasks=0, completed_count=0)
+        cp = read_checkpoint(batch_dir)
+        assert 'cancelled_at' in cp
+        assert 'T' in cp['cancelled_at']  # ISO-8601 format includes 'T' separator
+
+    def test_resume_count_stored(self, tmp_path):
+        from qebench.checkpoint import write_checkpoint, read_checkpoint
+        batch_dir = tmp_path / "batch"
+        batch_dir.mkdir()
+        write_checkpoint(batch_dir, [], total_tasks=3, completed_count=3, resume_count=2)
+        cp = read_checkpoint(batch_dir)
+        assert cp['resume_count'] == 2
+
+    def test_read_checkpoint_returns_none_if_absent(self, tmp_path):
+        from qebench.checkpoint import read_checkpoint
+        assert read_checkpoint(tmp_path) is None
+
+    def test_delete_checkpoint_removes_file(self, tmp_path):
+        from qebench.checkpoint import write_checkpoint, delete_checkpoint, read_checkpoint
+        batch_dir = tmp_path / "batch"
+        batch_dir.mkdir()
+        write_checkpoint(batch_dir, [], total_tasks=0, completed_count=0)
+        assert read_checkpoint(batch_dir) is not None
+        delete_checkpoint(batch_dir)
+        assert read_checkpoint(batch_dir) is None
+
+    def test_delete_checkpoint_noop_if_absent(self, tmp_path):
+        from qebench.checkpoint import delete_checkpoint
+        delete_checkpoint(tmp_path)  # must not raise
+
+    def test_completed_seeds_from_empty_workers(self, tmp_path):
+        from qebench.checkpoint import completed_seeds_from_jsonl
+        assert completed_seeds_from_jsonl(tmp_path) == set()
+
+    def test_completed_seeds_from_missing_workers_dir(self, tmp_path):
+        from qebench.checkpoint import completed_seeds_from_jsonl
+        result = completed_seeds_from_jsonl(tmp_path / "nonexistent")
+        assert result == set()
+
+    def test_completed_seeds_reads_valid_jsonl(self, tmp_path):
+        import json
+        from qebench.checkpoint import completed_seeds_from_jsonl
+        workers_dir = tmp_path / "workers"
+        workers_dir.mkdir()
+        rec = {
+            'algorithm': 'minorminer', 'problem_name': 'K4',
+            'topology_name': 'chimera', 'seed': 12345, 'trial': 0,
+        }
+        (workers_dir / "worker_1.jsonl").write_text(json.dumps(rec) + "\n")
+        seeds = completed_seeds_from_jsonl(tmp_path)
+        assert ('minorminer', 'K4', 'chimera', 12345) in seeds
+
+    def test_completed_seeds_strips_truncated_last_line(self, tmp_path):
+        """A partially-written last line (crash mid-write) is not counted."""
+        import json
+        from qebench.checkpoint import completed_seeds_from_jsonl
+        workers_dir = tmp_path / "workers"
+        workers_dir.mkdir()
+        good = json.dumps({
+            'algorithm': 'algo', 'problem_name': 'prob',
+            'topology_name': 'topo', 'seed': 1,
+        })
+        truncated = '{"algorithm": "other", "problem_name": "x"'  # incomplete
+        (workers_dir / "worker_1.jsonl").write_text(good + "\n" + truncated)
+        seeds = completed_seeds_from_jsonl(tmp_path)
+        assert ('algo', 'prob', 'topo', 1) in seeds
+        assert len(seeds) == 1  # truncated line not included
+
+    def test_completed_seeds_aggregates_multiple_workers(self, tmp_path):
+        """Seeds from multiple worker JSONL files are all returned."""
+        import json
+        from qebench.checkpoint import completed_seeds_from_jsonl
+        workers_dir = tmp_path / "workers"
+        workers_dir.mkdir()
+        for i in range(3):
+            rec = {
+                'algorithm': 'algo', 'problem_name': f'prob{i}',
+                'topology_name': 'topo', 'seed': i * 100,
+            }
+            (workers_dir / f"worker_{i}.jsonl").write_text(json.dumps(rec) + "\n")
+        seeds = completed_seeds_from_jsonl(tmp_path)
+        assert len(seeds) == 3
+        assert ('algo', 'prob0', 'topo', 0) in seeds
+        assert ('algo', 'prob2', 'topo', 200) in seeds
+
+    def test_scan_incomplete_runs_returns_empty_for_nonexistent_dir(self, tmp_path):
+        from qebench.checkpoint import scan_incomplete_runs
+        assert scan_incomplete_runs(tmp_path / "nonexistent") == []
+
+    def test_scan_incomplete_runs_finds_checkpoint_batch(self, tmp_path):
+        from qebench.checkpoint import scan_incomplete_runs, write_checkpoint
+        batch_dir = tmp_path / "batch_2026-03-17_10-00-00"
+        batch_dir.mkdir()
+        (batch_dir / "config.json").write_text('{"algorithms": ["mm"], "n_trials": 1}')
+        write_checkpoint(batch_dir, [("algo", "prob", "topo", 0, 42)],
+                         total_tasks=5, completed_count=4)
+        runs = scan_incomplete_runs(tmp_path)
+        assert len(runs) == 1
+        assert runs[0]['batch_id'] == 'batch_2026-03-17_10-00-00'
+        assert runs[0]['has_checkpoint'] is True
+        assert runs[0]['checkpoint']['completed_count'] == 4
+
+    def test_scan_incomplete_runs_detects_crashed_batch(self, tmp_path):
+        """A batch with no checkpoint.json is reported as crashed."""
+        from qebench.checkpoint import scan_incomplete_runs
+        batch_dir = tmp_path / "batch_2026-03-17_11-00-00"
+        batch_dir.mkdir()
+        (batch_dir / "config.json").write_text('{"algorithms": ["mm"]}')
+        # No checkpoint.json written
+        runs = scan_incomplete_runs(tmp_path)
+        assert len(runs) == 1
+        assert runs[0]['has_checkpoint'] is False
+        assert runs[0]['checkpoint'] is None
+
+    def test_scan_incomplete_runs_counts_jsonl_lines(self, tmp_path):
+        """jsonl_lines reflects how many result lines exist in workers/."""
+        import json
+        from qebench.checkpoint import scan_incomplete_runs
+        batch_dir = tmp_path / "batch_2026-03-17_12-00-00"
+        batch_dir.mkdir()
+        (batch_dir / "config.json").write_text('{"algorithms": ["mm"]}')
+        workers_dir = batch_dir / "workers"
+        workers_dir.mkdir()
+        lines = [json.dumps({'algorithm': 'mm'}) for _ in range(7)]
+        (workers_dir / "worker_1.jsonl").write_text("\n".join(lines) + "\n")
+        runs = scan_incomplete_runs(tmp_path)
+        assert runs[0]['jsonl_lines'] == 7
+
+    def test_scan_incomplete_runs_sorted_most_recent_first(self, tmp_path):
+        """Batches should be returned newest-first."""
+        from qebench.checkpoint import scan_incomplete_runs
+        for name in ["batch_2026-01-01_00-00-00", "batch_2026-03-01_00-00-00",
+                     "batch_2026-02-01_00-00-00"]:
+            d = tmp_path / name
+            d.mkdir()
+            (d / "config.json").write_text('{}')
+        runs = scan_incomplete_runs(tmp_path)
+        assert runs[0]['batch_id'] == 'batch_2026-03-01_00-00-00'
+        assert runs[-1]['batch_id'] == 'batch_2026-01-01_00-00-00'
+
+    def test_scan_skips_dirs_without_config_json(self, tmp_path):
+        """Directories without config.json are not valid batches."""
+        from qebench.checkpoint import scan_incomplete_runs
+        d = tmp_path / "batch_2026-03-17_13-00-00"
+        d.mkdir()
+        # No config.json
+        runs = scan_incomplete_runs(tmp_path)
+        assert runs == []
+
+
+# =============================================================================
+# ResultsManager directory structure (runs_unfinished/ → results/)
+# =============================================================================
+
+class TestResultsManagerDirectory:
+    """Tests for the new two-directory model in ResultsManager."""
+
+    def test_create_batch_creates_in_unfinished_dir(self, tmp_path):
+        from qebench.results import ResultsManager
+        results_dir = tmp_path / "results"
+        mgr = ResultsManager(str(results_dir))
+        batch_dir = mgr.create_batch()
+        assert batch_dir.parent == mgr.unfinished_dir
+        assert not (results_dir / batch_dir.name).exists()
+
+    def test_unfinished_dir_default_is_sibling_to_results(self, tmp_path):
+        from qebench.results import ResultsManager
+        results_dir = tmp_path / "results"
+        mgr = ResultsManager(str(results_dir))
+        assert mgr.unfinished_dir == tmp_path / "runs_unfinished"
+
+    def test_unfinished_dir_is_created_automatically(self, tmp_path):
+        from qebench.results import ResultsManager
+        mgr = ResultsManager(str(tmp_path / "results"))
+        assert mgr.unfinished_dir.is_dir()
+
+    def test_move_to_output_moves_batch(self, tmp_path):
+        from qebench.results import ResultsManager
+        mgr = ResultsManager(str(tmp_path / "results"))
+        batch_dir = mgr.create_batch()
+        batch_name = batch_dir.name
+        final = mgr.move_to_output(batch_dir)
+        assert final == mgr.results_dir / batch_name
+        assert final.exists()
+        assert not batch_dir.exists()  # moved out of unfinished
+
+    def test_move_to_output_with_custom_output_dir(self, tmp_path):
+        from qebench.results import ResultsManager
+        custom_out = tmp_path / "custom_output"
+        mgr = ResultsManager(str(tmp_path / "results"))
+        batch_dir = mgr.create_batch()
+        final = mgr.move_to_output(batch_dir, output_dir=custom_out)
+        assert final.parent == custom_out
+        assert final.exists()
+
+    def test_move_to_output_creates_latest_symlink(self, tmp_path):
+        from qebench.results import ResultsManager
+        results_dir = tmp_path / "results"
+        mgr = ResultsManager(str(results_dir))
+        batch_dir = mgr.create_batch()
+        mgr.move_to_output(batch_dir)
+        assert (results_dir / "latest").is_symlink()
+
+    def test_latest_symlink_tracks_most_recent_move(self, tmp_path):
+        from qebench.results import ResultsManager
+        results_dir = tmp_path / "results"
+        mgr = ResultsManager(str(results_dir))
+        b1 = mgr.create_batch()
+        b2 = mgr.create_batch()
+        mgr.move_to_output(b1)
+        mgr.move_to_output(b2)
+        latest = results_dir / "latest"
+        assert latest.resolve().name == b2.name
+
+    def test_create_batch_does_not_appear_in_results_dir(self, tmp_path):
+        """results_dir must stay empty until move_to_output is called."""
+        from qebench.results import ResultsManager
+        results_dir = tmp_path / "results"
+        mgr = ResultsManager(str(results_dir))
+        mgr.create_batch()
+        mgr.create_batch()
+        batch_dirs = [d for d in results_dir.iterdir()
+                      if d.is_dir() and d.name.startswith('batch_')]
+        assert len(batch_dirs) == 0
+
+
+# =============================================================================
+# run_full_benchmark v2 — new config fields, staging, output_dir
+# =============================================================================
+
+class TestRunFullBenchmarkV2:
+    """Tests for the features added in the checkpoint/resume overhaul."""
+
+    def _get_batch_dir(self, results_dir):
+        """Return the single batch dir inside results_dir."""
+        dirs = [d for d in results_dir.iterdir()
+                if d.is_dir() and d.name.startswith('batch_')]
+        assert len(dirs) == 1, f"Expected 1 batch dir, found: {dirs}"
+        return dirs[0]
+
+    def test_seed_stored_in_config(self, tmp_path, chimera):
+        from qebench import EmbeddingBenchmark
+        results_dir = tmp_path / "results"
+        bench = EmbeddingBenchmark(chimera, results_dir=str(results_dir))
+        bench.run_full_benchmark(
+            graph_selection="1", methods=["minorminer"], n_trials=1, seed=77
+        )
+        batch_dir = self._get_batch_dir(results_dir)
+        with open(batch_dir / "config.json") as f:
+            config = json.load(f)
+        assert config['seed'] == 77
+
+    def test_n_workers_stored_in_config(self, tmp_path, chimera):
+        from qebench import EmbeddingBenchmark
+        results_dir = tmp_path / "results"
+        bench = EmbeddingBenchmark(chimera, results_dir=str(results_dir))
+        bench.run_full_benchmark(
+            graph_selection="1", methods=["minorminer"], n_trials=1, n_workers=1
+        )
+        batch_dir = self._get_batch_dir(results_dir)
+        with open(batch_dir / "config.json") as f:
+            config = json.load(f)
+        assert config['n_workers'] == 1
+
+    def test_batch_wall_time_in_config(self, tmp_path, chimera):
+        from qebench import EmbeddingBenchmark
+        results_dir = tmp_path / "results"
+        bench = EmbeddingBenchmark(chimera, results_dir=str(results_dir))
+        bench.run_full_benchmark(
+            graph_selection="1", methods=["minorminer"], n_trials=1
+        )
+        batch_dir = self._get_batch_dir(results_dir)
+        with open(batch_dir / "config.json") as f:
+            config = json.load(f)
+        assert 'batch_wall_time' in config
+        assert config['batch_wall_time'] > 0
+
+    def test_custom_problems_serialized_in_config(self, tmp_path, chimera, K4):
+        """When graph_selection=None (custom problems), config gets custom_problems key."""
+        from qebench import EmbeddingBenchmark
+        results_dir = tmp_path / "results"
+        bench = EmbeddingBenchmark(chimera, results_dir=str(results_dir))
+        bench.run_full_benchmark(
+            problems=[("myK4", K4)], methods=["minorminer"], n_trials=1
+        )
+        batch_dir = self._get_batch_dir(results_dir)
+        with open(batch_dir / "config.json") as f:
+            config = json.load(f)
+        assert 'custom_problems' in config
+        assert len(config['custom_problems']) == 1
+        assert config['custom_problems'][0]['name'] == 'myK4'
+        assert 'graph' in config['custom_problems'][0]
+
+    def test_graph_selection_does_not_add_custom_problems(self, tmp_path, chimera):
+        """graph_selection='1' should NOT write custom_problems to config."""
+        from qebench import EmbeddingBenchmark
+        results_dir = tmp_path / "results"
+        bench = EmbeddingBenchmark(chimera, results_dir=str(results_dir))
+        bench.run_full_benchmark(
+            graph_selection="1", methods=["minorminer"], n_trials=1
+        )
+        batch_dir = self._get_batch_dir(results_dir)
+        with open(batch_dir / "config.json") as f:
+            config = json.load(f)
+        assert 'custom_problems' not in config
+
+    def test_batch_not_in_unfinished_after_successful_run(self, tmp_path, chimera):
+        """After a successful run, runs_unfinished/ must be empty."""
+        from qebench import EmbeddingBenchmark
+        results_dir = tmp_path / "results"
+        bench = EmbeddingBenchmark(chimera, results_dir=str(results_dir))
+        bench.run_full_benchmark(
+            graph_selection="1", methods=["minorminer"], n_trials=1
+        )
+        unfinished_dir = tmp_path / "runs_unfinished"
+        remaining = list(unfinished_dir.glob("batch_*")) if unfinished_dir.exists() else []
+        assert len(remaining) == 0
+
+    def test_return_value_is_in_results_dir(self, tmp_path, chimera):
+        from qebench import EmbeddingBenchmark
+        results_dir = tmp_path / "results"
+        bench = EmbeddingBenchmark(chimera, results_dir=str(results_dir))
+        final = bench.run_full_benchmark(
+            graph_selection="1", methods=["minorminer"], n_trials=1
+        )
+        assert final is not None
+        assert final.parent == results_dir
+        assert final.exists()
+
+    def test_output_dir_override(self, tmp_path, chimera):
+        """output_dir param routes the completed batch to a custom location."""
+        from qebench import EmbeddingBenchmark
+        custom_out = tmp_path / "custom_results"
+        bench = EmbeddingBenchmark(chimera, results_dir=str(tmp_path / "default_results"))
+        bench.run_full_benchmark(
+            graph_selection="1", methods=["minorminer"], n_trials=1,
+            output_dir=str(custom_out),
+        )
+        assert any(custom_out.glob("batch_*"))
+        assert not any((tmp_path / "default_results").glob("batch_*"))
+
+
+# =============================================================================
+# load_benchmark — resume from checkpoint, crashed run, all-done
+# =============================================================================
+
+@pytest.fixture
+def fake_unfinished_batch(tmp_path):
+    """A fake batch in runs_unfinished/ with all 1 trial already done (checkpoint = 0 remaining).
+
+    Uses a real benchmark_one result so compile_batch can process the JSONL.
+    """
+    import dwave_networkx as dnx
+    from qebench import benchmark_one
+    from qebench.benchmark import _derive_seed
+    from qebench.checkpoint import write_checkpoint
+
+    chimera = dnx.chimera_graph(4, 4, 4)
+    K4 = nx.complete_graph(4)
+
+    unfinished_dir = tmp_path / "runs_unfinished"
+    unfinished_dir.mkdir()
+    batch_name = "batch_2026-03-17_20-00-00"
+    batch_dir = unfinished_dir / batch_name
+    batch_dir.mkdir()
+    workers_dir = batch_dir / "workers"
+    workers_dir.mkdir()
+
+    seed = 42
+    trial_seed = _derive_seed(seed, "clique", "K4", "chimera_4x4x4", 0)
+    result = benchmark_one(
+        K4, chimera, "clique",
+        problem_name="K4", topology_name="chimera_4x4x4", trial=0
+    )
+    rec = result.to_jsonl_dict()
+    rec['seed'] = trial_seed
+    rec['batch_id'] = batch_name
+    (workers_dir / "worker_test.jsonl").write_text(json.dumps(rec) + "\n")
+
+    config = {
+        'algorithms': ['clique'],
+        'topologies': ['chimera_4x4x4'],
+        'n_trials': 1, 'warmup_trials': 0,
+        'timeout': 60.0, 'seed': seed, 'n_workers': 1,
+        'graph_selection': 'custom',
+        'custom_problems': [
+            {'name': 'K4', 'graph': nx.node_link_data(K4, edges="links")}
+        ],
+        'batch_name': batch_name,
+        'timestamp': '2026-03-17T20:00:00+00:00',
+    }
+    (batch_dir / "config.json").write_text(json.dumps(config, indent=2))
+
+    # Checkpoint: 0 unfinished tasks — all done
+    write_checkpoint(batch_dir, [], total_tasks=1, completed_count=1)
+
+    return batch_dir, tmp_path
+
+
+@pytest.fixture
+def fake_partial_batch(tmp_path):
+    """Batch with trial 0 done and trial 1 in the checkpoint as remaining."""
+    import dwave_networkx as dnx
+    from qebench import benchmark_one
+    from qebench.benchmark import _derive_seed
+    from qebench.checkpoint import write_checkpoint
+
+    chimera = dnx.chimera_graph(4, 4, 4)
+    K4 = nx.complete_graph(4)
+
+    unfinished_dir = tmp_path / "runs_unfinished"
+    unfinished_dir.mkdir()
+    batch_name = "batch_2026-03-17_21-00-00"
+    batch_dir = unfinished_dir / batch_name
+    batch_dir.mkdir()
+    workers_dir = batch_dir / "workers"
+    workers_dir.mkdir()
+
+    seed = 42
+    trial_seed_0 = _derive_seed(seed, "clique", "K4", "chimera_4x4x4", 0)
+    trial_seed_1 = _derive_seed(seed, "clique", "K4", "chimera_4x4x4", 1)
+
+    # Trial 0 is done
+    result = benchmark_one(
+        K4, chimera, "clique",
+        problem_name="K4", topology_name="chimera_4x4x4", trial=0
+    )
+    rec = result.to_jsonl_dict()
+    rec['seed'] = trial_seed_0
+    rec['batch_id'] = batch_name
+    (workers_dir / "worker_test.jsonl").write_text(json.dumps(rec) + "\n")
+
+    config = {
+        'algorithms': ['clique'],
+        'topologies': ['chimera_4x4x4'],
+        'n_trials': 2, 'warmup_trials': 0,
+        'timeout': 60.0, 'seed': seed, 'n_workers': 1,
+        'graph_selection': 'custom',
+        'custom_problems': [
+            {'name': 'K4', 'graph': nx.node_link_data(K4, edges="links")}
+        ],
+        'batch_name': batch_name,
+        'timestamp': '2026-03-17T21:00:00+00:00',
+    }
+    (batch_dir / "config.json").write_text(json.dumps(config, indent=2))
+
+    # Trial 1 is still pending
+    write_checkpoint(
+        batch_dir,
+        [("clique", "K4", "chimera_4x4x4", 1, trial_seed_1)],
+        total_tasks=2, completed_count=1,
+    )
+
+    return batch_dir, tmp_path
+
+
+@pytest.fixture
+def fake_crashed_batch(tmp_path):
+    """Batch with trial 0 done in JSONL but NO checkpoint.json (crashed run)."""
+    import dwave_networkx as dnx
+    from qebench import benchmark_one
+    from qebench.benchmark import _derive_seed
+
+    chimera = dnx.chimera_graph(4, 4, 4)
+    K4 = nx.complete_graph(4)
+
+    unfinished_dir = tmp_path / "runs_unfinished"
+    unfinished_dir.mkdir()
+    batch_name = "batch_2026-03-17_22-00-00"
+    batch_dir = unfinished_dir / batch_name
+    batch_dir.mkdir()
+    workers_dir = batch_dir / "workers"
+    workers_dir.mkdir()
+
+    seed = 42
+    trial_seed_0 = _derive_seed(seed, "clique", "K4", "chimera_4x4x4", 0)
+
+    result = benchmark_one(
+        K4, chimera, "clique",
+        problem_name="K4", topology_name="chimera_4x4x4", trial=0
+    )
+    rec = result.to_jsonl_dict()
+    rec['seed'] = trial_seed_0
+    rec['batch_id'] = batch_name
+    (workers_dir / "worker_test.jsonl").write_text(json.dumps(rec) + "\n")
+
+    config = {
+        'algorithms': ['clique'],
+        'topologies': ['chimera_4x4x4'],
+        'n_trials': 2, 'warmup_trials': 0,
+        'timeout': 60.0, 'seed': seed, 'n_workers': 1,
+        'graph_selection': 'custom',
+        'custom_problems': [
+            {'name': 'K4', 'graph': nx.node_link_data(K4, edges="links")}
+        ],
+        'batch_name': batch_name,
+        'timestamp': '2026-03-17T22:00:00+00:00',
+    }
+    (batch_dir / "config.json").write_text(json.dumps(config, indent=2))
+    # No checkpoint.json — simulates a crash
+
+    return batch_dir, tmp_path
+
+
+class TestLoadBenchmark:
+    """Tests for load_benchmark() — discovery, all-done, resume, and crashed-run paths."""
+
+    def test_returns_none_for_no_incomplete_runs(self, tmp_path):
+        from qebench import load_benchmark
+        result = load_benchmark(
+            batch_id="nonexistent",
+            unfinished_dir=str(tmp_path / "runs_unfinished"),
+            output_dir=str(tmp_path / "results"),
+        )
+        assert result is None
+
+    def test_invalid_batch_id_raises(self, tmp_path, fake_unfinished_batch):
+        from qebench import load_benchmark
+        _, base = fake_unfinished_batch
+        with pytest.raises(ValueError, match="No incomplete run"):
+            load_benchmark(
+                batch_id="does_not_exist",
+                unfinished_dir=str(base / "runs_unfinished"),
+                output_dir=str(base / "results"),
+            )
+
+    def test_all_done_path_compiles_and_moves(self, fake_unfinished_batch):
+        """Checkpoint with 0 remaining tasks: compile + move, no new trials run."""
+        import sqlite3
+        from qebench import load_benchmark
+        batch_dir, base = fake_unfinished_batch
+        output_dir = base / "results"
+        final = load_benchmark(
+            batch_id=batch_dir.name,
+            unfinished_dir=str(base / "runs_unfinished"),
+            output_dir=str(output_dir),
+        )
+        assert final is not None
+        assert final.parent == output_dir
+        assert (final / "results.db").exists()
+        # Original staging dir should be gone
+        assert not batch_dir.exists()
+        # Checkpoint should be deleted after successful compile
+        assert not (final / "checkpoint.json").exists()
+        # DB must have exactly 1 row
+        with sqlite3.connect(final / "results.db") as conn:
+            rows = conn.execute("SELECT algorithm FROM runs").fetchall()
+        assert len(rows) == 1
+        assert rows[0][0] == 'clique'
+
+    def test_resume_from_checkpoint_completes_batch(self, fake_partial_batch):
+        """Resume a cleanly cancelled run (checkpoint present, 1 task remaining)."""
+        import sqlite3
+        from qebench import load_benchmark
+        batch_dir, base = fake_partial_batch
+        output_dir = base / "results"
+        final = load_benchmark(
+            batch_id=batch_dir.name,
+            unfinished_dir=str(base / "runs_unfinished"),
+            output_dir=str(output_dir),
+        )
+        assert final is not None
+        assert final.parent == output_dir
+        assert (final / "results.db").exists()
+        assert not batch_dir.exists()
+        # Both trials (0 and 1) should be in the DB
+        with sqlite3.connect(final / "results.db") as conn:
+            rows = conn.execute("SELECT trial FROM runs ORDER BY trial").fetchall()
+        assert len(rows) == 2
+        assert rows[0][0] == 0
+        assert rows[1][0] == 1
+
+    def test_resume_crashed_run_from_jsonl(self, fake_crashed_batch):
+        """Resume a crashed run (no checkpoint.json) by deriving tasks from JSONL."""
+        import sqlite3
+        from qebench import load_benchmark
+        batch_dir, base = fake_crashed_batch
+        output_dir = base / "results"
+        final = load_benchmark(
+            batch_id=batch_dir.name,
+            unfinished_dir=str(base / "runs_unfinished"),
+            output_dir=str(output_dir),
+        )
+        assert final is not None
+        assert (final / "results.db").exists()
+        assert not batch_dir.exists()
+        # Trial 0 (from JSONL) + trial 1 (re-run) = 2 rows total
+        with sqlite3.connect(final / "results.db") as conn:
+            rows = conn.execute("SELECT trial FROM runs ORDER BY trial").fetchall()
+        assert len(rows) == 2
+
+    def test_resume_increments_resume_count(self, fake_partial_batch):
+        """After a successful resume, the checkpoint is deleted (not incremented)."""
+        from qebench import load_benchmark
+        from qebench.checkpoint import read_checkpoint
+        batch_dir, base = fake_partial_batch
+        final = load_benchmark(
+            batch_id=batch_dir.name,
+            unfinished_dir=str(base / "runs_unfinished"),
+            output_dir=str(base / "results"),
+        )
+        # On success, checkpoint is deleted
+        assert final is not None
+        assert not (final / "checkpoint.json").exists()
+
+    def test_n_workers_override(self, fake_partial_batch):
+        """n_workers kwarg overrides the value stored in config."""
+        import sqlite3
+        from qebench import load_benchmark
+        batch_dir, base = fake_partial_batch
+        # Run with n_workers=2 even though config says 1
+        final = load_benchmark(
+            batch_id=batch_dir.name,
+            unfinished_dir=str(base / "runs_unfinished"),
+            output_dir=str(base / "results"),
+            n_workers=2,
+        )
+        assert final is not None
+        assert (final / "results.db").exists()
+        # Still produces both trials regardless of n_workers value
+        with sqlite3.connect(final / "results.db") as conn:
+            count = conn.execute("SELECT COUNT(*) FROM runs").fetchone()[0]
+        assert count == 2
+
+
+# =============================================================================
+# delete_benchmark — force delete and summary display
+# =============================================================================
+
+class TestDeleteBenchmark:
+    """Tests for delete_benchmark() — force mode, summary, and guard rails."""
+
+    def _make_batch(self, base, name="batch_2026-03-17_20-00-00",
+                    note="", n_done=3, n_total=5, has_checkpoint=True):
+        """Write a minimal fake batch directory in runs_unfinished/."""
+        from qebench.checkpoint import write_checkpoint
+        unfinished_dir = base / "runs_unfinished"
+        unfinished_dir.mkdir(exist_ok=True)
+        batch_dir = unfinished_dir / name
+        batch_dir.mkdir()
+        config = {'algorithms': ['minorminer'], 'n_trials': n_total}
+        if note:
+            config['batch_note'] = note
+        (batch_dir / "config.json").write_text(json.dumps(config))
+        if has_checkpoint:
+            write_checkpoint(batch_dir, [], total_tasks=n_total, completed_count=n_done)
+        return batch_dir
+
+    def test_returns_false_for_no_incomplete_runs(self, tmp_path):
+        from qebench import delete_benchmark
+        result = delete_benchmark(
+            batch_id="nonexistent",
+            unfinished_dir=str(tmp_path / "runs_unfinished"),
+            force=True,
+        )
+        assert result is False
+
+    def test_invalid_batch_id_raises(self, tmp_path):
+        from qebench import delete_benchmark
+        self._make_batch(tmp_path)
+        with pytest.raises(ValueError, match="No incomplete run"):
+            delete_benchmark(
+                batch_id="batch_does_not_exist",
+                unfinished_dir=str(tmp_path / "runs_unfinished"),
+                force=True,
+            )
+
+    def test_force_deletes_without_prompt(self, tmp_path):
+        from qebench import delete_benchmark
+        batch_dir = self._make_batch(tmp_path)
+        result = delete_benchmark(
+            batch_id=batch_dir.name,
+            unfinished_dir=str(tmp_path / "runs_unfinished"),
+            force=True,
+        )
+        assert result is True
+        assert not batch_dir.exists()
+
+    def test_force_deletes_crashed_run(self, tmp_path):
+        """force=True works on runs without a checkpoint (crashed)."""
+        from qebench import delete_benchmark
+        batch_dir = self._make_batch(tmp_path, has_checkpoint=False)
+        result = delete_benchmark(
+            batch_id=batch_dir.name,
+            unfinished_dir=str(tmp_path / "runs_unfinished"),
+            force=True,
+        )
+        assert result is True
+        assert not batch_dir.exists()
+
+    def test_does_not_touch_completed_results_dir(self, tmp_path):
+        """delete_benchmark only looks in runs_unfinished/, never in results/."""
+        from qebench import delete_benchmark
+        # A batch with same name in results/ must survive
+        results_dir = tmp_path / "results"
+        results_dir.mkdir()
+        protected = results_dir / "batch_2026-03-17_20-00-00"
+        protected.mkdir()
+        (protected / "config.json").write_text('{}')
+
+        self._make_batch(tmp_path)
+        delete_benchmark(
+            batch_id="batch_2026-03-17_20-00-00",
+            unfinished_dir=str(tmp_path / "runs_unfinished"),
+            force=True,
+        )
+        assert protected.exists()  # results/ untouched
+
+    def test_force_true_returns_true(self, tmp_path):
+        from qebench import delete_benchmark
+        batch_dir = self._make_batch(tmp_path, n_done=10, n_total=10)
+        result = delete_benchmark(
+            batch_id=batch_dir.name,
+            unfinished_dir=str(tmp_path / "runs_unfinished"),
+            force=True,
+        )
+        assert result is True
+
+    def test_size_reported_for_batch_with_files(self, tmp_path, capsys):
+        """disk size string appears in the printed summary."""
+        from qebench import delete_benchmark
+        batch_dir = self._make_batch(tmp_path, n_done=2, n_total=4)
+        # Add a file so size > 0
+        (batch_dir / "extra.txt").write_text("a" * 1024)
+        delete_benchmark(
+            batch_id=batch_dir.name,
+            unfinished_dir=str(tmp_path / "runs_unfinished"),
+            force=True,
+        )
+        captured = capsys.readouterr()
+        # Summary should mention KB or bytes — just check size string present
+        assert "B" in captured.out  # "KB", "MB", "GB", or just "B"
+
+    def test_progress_in_summary(self, tmp_path, capsys):
+        """Progress fraction (done/total) appears in printed summary."""
+        from qebench import delete_benchmark
+        batch_dir = self._make_batch(tmp_path, n_done=7, n_total=20)
+        delete_benchmark(
+            batch_id=batch_dir.name,
+            unfinished_dir=str(tmp_path / "runs_unfinished"),
+            force=True,
+        )
+        captured = capsys.readouterr()
+        assert "7" in captured.out
+        assert "20" in captured.out
+
+    def test_batch_note_in_summary(self, tmp_path, capsys):
+        from qebench import delete_benchmark
+        batch_dir = self._make_batch(tmp_path, note="my test run")
+        delete_benchmark(
+            batch_id=batch_dir.name,
+            unfinished_dir=str(tmp_path / "runs_unfinished"),
+            force=True,
+        )
+        captured = capsys.readouterr()
+        assert "my test run" in captured.out
