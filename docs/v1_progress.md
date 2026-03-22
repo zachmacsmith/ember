@@ -4,6 +4,38 @@ Reverse-chronological. One entry per session or logical unit of work.
 
 ---
 
+**2026-03-22 — Test graph generation infrastructure + repo reorganisation**
+
+### Test graph generation (`test_graphs_generation/`) — excluded from git, local use only
+
+New standalone module for generating, screening, and characterising candidate test graphs before they enter the validated `test_graphs/` library. All scripts live in `test_graphs_generation/`; generated JSON files are excluded from git (regenerated on demand).
+
+- **`generate_graphs.py`** — centralised graph generation registry. `REGISTRY` maps 48 type names to `(generator_fn, [param_names])`. `generate_graphs(type, **params)` generates the cartesian product of all supplied parameter value lists and saves each to `generated_graphs/<type>/<id>_<name>.json` in node-link JSON format. IDs are 15-digit integers derived from a SHA-256 hash of type, parameters, and UTC microsecond timestamp. CLI: `python generate_graphs.py <type> --param values...` or `--list`. Types span: structured (complete, bipartite, grid, cycle, path, star, wheel, binary_tree, hypercube, turan, circulant, johnson, kneser, generalized_petersen, sudoku), named fixed-size graphs (petersen, dodecahedral, icosahedral, moebius_kantor, heawood, pappus, desargues, bull, butterfly, wagner), random (erdos_renyi, barabasi_albert, regular, watts_strogatz, sbm, random_planar, random_tree), physics lattice (triangular_lattice, honeycomb, cubic_lattice, king_graph, frustrated_square), network science (lfr_benchmark, random_geometric), application (spin_glass, weak_strong_cluster, power_grid), and QUBO interaction graphs (mis_qubo, matching_qubo, portfolio_qubo).
+
+- **`check_graph_feasibility.py`** — analytical impossibility screening against chimera_16x16x4, pegasus_16, zephyr_12. Checks node_count and edge_count in order (short-circuits on first failure). Accepts a graph type name (checks all graphs in `generated_graphs/<type>/`) or `"*"` for all types. Outputs a CSV with one row per (graph, topology): `graph_type`, `graph_name`, `graph_id`, `topology`, `source_nodes`, `target_nodes`, `source_edges`, `target_edges`, `embeddable`, `failed_check`. Sorted by graph_type → graph_name → topology. Output defaults to `test_graphs_generation/feasibility_results.csv` regardless of working directory.
+
+- **`find_boundaries.py`** — binary-search boundary finder. For each type in `SEARCH_CONFIG`, binary-searches the primary size-driving integer parameter (n, depth, k, …) while holding secondary parameters fixed at representative values from a `fixed_grid`. For each (type, fixed_params, topology) triple, finds the last feasible and first infeasible primary parameter value. Saves the last-feasible graph to `generated_graphs/boundary_graphs/`. Outputs `boundaries_summary.csv`. Named (fixed-size) graphs are checked trivially without search. CLI: `python find_boundaries.py` (all types) or `--types complete cycle ...`. Initial `hi` doubled up to 6× if not yet infeasible; if still feasible after 6 doublings the boundary is recorded as not reached.
+
+- **`graph_boundaries.md`** — discovered analytical impossibility boundaries per graph type per topology, with notes on which limits bind (node_count vs edge_count) and where boundaries were not yet reached.
+
+- **Supporting docs:** `graph_standard.md` (parameter definitions for all types), `graph_difficulty.md` (implementation difficulty classification), `graphs_application.md` (physics/application graph descriptions).
+
+- **Generated graphs:** structured single-parameter types swept to n ≈ 500 (complete K_2–K_500, cycle C_3–C_5000, path P_2–P_5000, star/wheel to n=5000, binary_tree depth 1–12, hypercube Q_1–Q_12, sudoku n=2–5). All named graphs generated once. 217 JSON files, ~99 MB total — excluded from git.
+
+### `qebench/topologies.py`
+
+- **zephyr_12 fix:** built-in Zephyr registrations were capped at size 8. Added zephyr_12 (4,800 nodes, 45,864 edges) matching current D-Wave Advantage2 hardware.
+
+### Repo reorganisation
+
+- `EMBER_developer_guide.md` → `docs/EMBER_developer_guide.md`
+- Added to `docs/`: `EMBER_roadmap.md`, `TODO_graphFeasibility`, `TODO_newAlgorithms.md`, `TODO_newAlgorithmsORder`
+- Added `docs/Finished/`: completed TODO docs (checkpointing, executetasks, faultyQubits, logger features, output validation, SQL/multithreading, new analysis)
+- Added `archived/Algorithm_Contract.md`
+- `.gitignore`: added `runs_unfinished/`, `Curr_experiments/`, `test_graphs_generation/`
+
+---
+
 **2026-03-19 — Faulty qubit simulation**
 
 - **`qebench/faults.py`** — new standalone module. Single public function `simulate_faults(topology, fault_rate, fault_seed, faulty_nodes, faulty_couplers) -> nx.Graph`. Mode inferred from arguments: random (`fault_rate > 0`), explicit (`faulty_nodes`/`faulty_couplers`), or no-op (all defaults). Returns a copy, never a view.
