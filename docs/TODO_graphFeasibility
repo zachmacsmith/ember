@@ -1,0 +1,137 @@
+# Graph Library Generation Methodology
+
+---
+
+## Overview
+
+Parameter sweep domains are defined analytically using hard impossibility proofs, then refined empirically with a fast MinorMiner screen. Final inclusion requires at least one successful embedding in a full validation sweep. All checks are run against all three topologies and stored as graph metadata.
+
+---
+
+## Step 1 — Analytical Domain Definition
+
+Two checks constitute mathematical proofs of impossibility. If either fires, no embedding exists regardless of algorithm or chain length. Zero false exclusions.
+
+**Check 1 — Node count**
+
+```
+|V(source)| > |V(target)|  →  provably unembeddable
+```
+
+Hard ceilings: Zephyr 15 = 2,880 nodes, Pegasus 16 = 5,627 nodes, Chimera 16×16×4 = 2,048 nodes.
+
+**Check 2 — Edge count**
+
+```
+|E(source)| > |E(target)|  →  provably unembeddable
+```
+
+Each source edge requires at least one target edge between corresponding chains. Hard ceilings: Zephyr 15 ≈ 14,000 edges, Pegasus 16 ≈ 40,000 edges, Chimera 16×16×4 ≈ 8,000 edges.
+
+For ER graphs this is computable directly from parameters without generating the graph:
+
+```
+|E(source)| = n(n-1)/2 × p  ≤  |E(target)|
+```
+
+This gives a concrete feasibility surface over (n, p) for each topology before generating anything.
+
+**Check 3 — Clique minor bound**
+
+```
+clique_minor_number(source) > clique_minor_number(target)  →  provably unembeddable
+```
+
+Known values: Pegasus 16 = K_15, Chimera 16×16×4 = K_64. Zephyr 15 value requires verification before use. This check rarely fires within a well-designed parameter sweep but is included for completeness.
+
+**Application:** Run all three checks analytically against Zephyr 15 (largest topology) to define the outer boundary of each parameter sweep. Graphs that pass Zephyr checks are then checked against Pegasus 16 and Chimera 16×16×4 and labelled per topology:
+
+```json
+"embeddability": {
+    "zephyr_15":  "possible",
+    "pegasus_16": "possible",
+    "chimera_16": "impossible_edge_count"
+}
+```
+
+Only graphs with `possible` on a given topology enter the validation sweep for that topology.
+
+---
+
+## Step 2 — Coarse Empirical Screen
+
+Before committing to the full parameter sweep, run a fast MinorMiner screen on a coarse grid of parameter combinations at the edges of the analytically-defined domain:
+
+- 1 attempt per graph, 10s timeout
+- Sample the boundary of the parameter space, not the full grid
+- If success rate is near zero across a parameter region, trim the sweep boundary there
+
+This takes minutes and replaces speculative soft heuristics with actual data. The goal is not inclusion/exclusion — it is identifying where the practical embeddability frontier lies so the full sweep doesn't waste time generating thousands of candidates that cluster in an uninteresting region.
+
+Note: average degree alone is not a useful ceiling because it ignores available target space. A source graph with high average degree but few nodes can embed easily in a large topology via longer chains. The edge count check already captures the meaningful constraint analytically.
+
+---
+
+## Step 3 — Full Candidate Generation
+
+Generate the full parameter sweep for each graph type within the refined domain. Store candidates in a staging directory. Do not assign IDs yet.
+
+Compute and store all graph properties before validation — needed to interpret results.
+
+For random graph types, use **3 seeds per parameter combination** (5 for near-boundary combinations where variance is high). Seeds sample distinct instances from the distribution defined by the parameters — 3 is sufficient to confirm behaviour is consistent across instances rather than an artefact of one particular graph.
+
+---
+
+## Step 4 — Full Validation Sweep
+
+Run MinorMiner on every candidate against each topology where `embeddability = possible`:
+
+- 50 independent attempts per (graph, topology) pair
+- 60s timeout per attempt
+- **Include the graph if at least one attempt succeeds**
+
+Inclusion is based on demonstrated embeddability, not success rate statistics. A graph that embeds once in 50 tries is genuinely embeddable and belongs in the library. Success rate across the 50 attempts is stored as metadata for analysis — it characterises difficulty but does not gate inclusion.
+
+Record per (graph, topology):
+- `mm_success_rate` — fraction of 50 attempts that succeeded
+- `mm_best_chain_length` — shortest chain length found across all successes
+- `mm_avg_chain_length` — mean chain length across successful attempts
+
+---
+
+## Step 5 — Difficulty Classification
+
+Classify each (graph, topology) pair from validation results. Stored as metadata, not used for exclusion:
+
+| Class | Criterion |
+|-------|-----------|
+| `trivial` | success_rate = 1.0, chain lengths near optimal |
+| `easy` | success_rate > 0.8 |
+| `medium` | success_rate 0.3–0.8 |
+| `hard` | success_rate 0.05–0.3 |
+| `near_threshold` | success_rate > 0 but < 0.05 |
+| `unproven` | success_rate = 0, no impossibility proof |
+
+`unproven` graphs remain in the library. A graph that no current algorithm can embed but is not provably unembeddable is a scientifically honest data point — it may be solved by future algorithms and its inclusion does not bias any algorithm comparison.
+
+---
+
+## Step 6 — ID Assignment and Library Commit
+
+1. Sort candidates within each type by canonical ordering (n ascending, density ascending, seed ascending)
+2. Assign IDs sequentially within each type's allocated range
+3. Move validated candidates from staging into `test_graphs/`
+4. Run `compute_graph_properties` on the full library
+5. Commit `library_index.json` — maps every ID to type, parameters, per-topology embeddability label, difficulty class, and MinorMiner validation statistics
+6. Define hardware-tier presets from `library_index.json` — `chimera_feasible`, `pegasus_feasible`, `zephyr_feasible` contain all graphs with at least one successful embedding on that topology
+7. **Update graph hash manifest**
+
+---
+
+## Topology Reference
+
+| Topology | Nodes | Edges | Max Clique Minor |
+|----------|-------|-------|-----------------|
+| Chimera 16×16×4 | 2,048 | ~8,000 | K_64 |
+| Pegasus 16 | 5,627 | ~40,000 | K_15 |
+| Zephyr 15 | 2,880 | ~14,000 | verify before use |
