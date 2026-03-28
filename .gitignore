@@ -41,41 +41,41 @@ external/oct_based/test_triad*
 external/oct_based/data/input/
 external/oct_based/data/output/
 
-# Compiled C++ binaries (algorithms/ — legacy locations)
-algorithms/atom/main
-algorithms/atom/main_debug
-algorithms/atom/main_asan
-algorithms/atom/main_o1
-algorithms/**/*.dSYM/
+# Compiled C++ binaries (archived/algorithms/ — legacy locations)
+archived/algorithms/atom/main
+archived/algorithms/atom/main_debug
+archived/algorithms/atom/main_asan
+archived/algorithms/atom/main_o1
+archived/algorithms/**/*.dSYM/
 *.dSYM/
 
 # OCT temporary output / debug files
-algorithms/oct_based/oct_out_*
-algorithms/oct_based/test_oct_*
-algorithms/oct_based/test_triad*
-algorithms/oct_based/dbg_*
-algorithms/oct_based/embedding/driver
+archived/algorithms/oct_based/oct_out_*
+archived/algorithms/oct_based/test_oct_*
+archived/algorithms/oct_based/test_triad*
+archived/algorithms/oct_based/dbg_*
+archived/algorithms/oct_based/embedding/driver
 
 # CHARME compiled binaries (rebuild with make)
-algorithms/charme/atom/atom
-algorithms/charme/atom/atom_full
-algorithms/charme/atom/atom_full_degree
-algorithms/charme/atom/atom_full_random
-algorithms/charme/atom/atom_system
-algorithms/charme/atom/embedding/driver
-algorithms/charme/atom/embedding/driver.exe
-algorithms/charme/atom/atom_with_check_expand/atom_system
-algorithms/charme/ours/atom
-algorithms/charme/ours/atom_full
-algorithms/charme/ours/atom_full_degree
-algorithms/charme/ours/atom_full_random
-algorithms/charme/ours/atom_system
-algorithms/charme/ours/embedding/driver
-algorithms/charme/ours/embedding/driver.exe
-algorithms/charme/ours/atom_with_check_expand/atom_system
+archived/algorithms/charme/atom/atom
+archived/algorithms/charme/atom/atom_full
+archived/algorithms/charme/atom/atom_full_degree
+archived/algorithms/charme/atom/atom_full_random
+archived/algorithms/charme/atom/atom_system
+archived/algorithms/charme/atom/embedding/driver
+archived/algorithms/charme/atom/embedding/driver.exe
+archived/algorithms/charme/atom/atom_with_check_expand/atom_system
+archived/algorithms/charme/ours/atom
+archived/algorithms/charme/ours/atom_full
+archived/algorithms/charme/ours/atom_full_degree
+archived/algorithms/charme/ours/atom_full_random
+archived/algorithms/charme/ours/atom_system
+archived/algorithms/charme/ours/embedding/driver
+archived/algorithms/charme/ours/embedding/driver.exe
+archived/algorithms/charme/ours/atom_with_check_expand/atom_system
 
 # PyTorch model checkpoints / training artifacts
-algorithms/charme/training_data/minorminer_results.pth
+archived/algorithms/charme/training_data/minorminer_results.pth
 
 # OS / IDE
 .DS_Store
