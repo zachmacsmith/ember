@@ -1460,7 +1460,8 @@ def load_benchmark(batch_id: Optional[str] = None,
                    output_dir: Optional[str] = None,
                    n_workers: Optional[int] = None,
                    verbose: bool = None,
-                   cancel_delay: float = 5.0) -> Optional[Path]:
+                   cancel_delay: float = 5.0,
+                   confirm: bool = True) -> Optional[Path]:
     """Resume an incomplete or crashed benchmark run.
 
     Scans runs_unfinished/ for incomplete batches. With no arguments, lists
@@ -1478,6 +1479,11 @@ def load_benchmark(batch_id: Optional[str] = None,
                    stored in the original run's config.json.
         verbose: Per-trial output. Default: True when n_workers==1.
         cancel_delay: Seconds to drain results on cancel (parallel only).
+        confirm: When True (default), prompt the user before resuming if
+                 batch_id is not provided. Set False for programmatic use:
+                 if exactly one incomplete run exists it is resumed without
+                 prompting; if multiple exist a ValueError is raised (pass
+                 batch_id to resolve the ambiguity).
 
     Returns:
         Path to the completed batch directory, or the staging batch directory
@@ -1514,13 +1520,20 @@ def load_benchmark(batch_id: Optional[str] = None,
     elif len(incomplete_runs) == 1:
         selected = incomplete_runs[0]
         print(f"Found 1 incomplete run: {selected['batch_id']}")
-        try:
-            ans = input("Resume it? [Y/n] ").strip().lower()
-        except (EOFError, KeyboardInterrupt):
-            return None
-        if ans not in ('', 'y', 'yes'):
-            return None
+        if confirm:
+            try:
+                ans = input("Resume it? [Y/n] ").strip().lower()
+            except (EOFError, KeyboardInterrupt):
+                return None
+            if ans not in ('', 'y', 'yes'):
+                return None
     else:
+        if not confirm:
+            raise ValueError(
+                f"Multiple incomplete runs found; pass batch_id= to resume "
+                f"non-interactively. Available: "
+                f"{[r['batch_id'] for r in incomplete_runs]}"
+            )
         # Show discovery table
         print("\nIncomplete benchmark runs:")
         print("-" * 72)
@@ -1796,6 +1809,12 @@ def delete_benchmark(batch_id: Optional[str] = None,
     elif len(incomplete_runs) == 1:
         selected = incomplete_runs[0]
     else:
+        if force:
+            raise ValueError(
+                f"Multiple incomplete runs found; pass batch_id= to delete "
+                f"non-interactively. Available: "
+                f"{[r['batch_id'] for r in incomplete_runs]}"
+            )
         print("\nIncomplete benchmark runs:")
         print("-" * 72)
         for i, run in enumerate(incomplete_runs, 1):
