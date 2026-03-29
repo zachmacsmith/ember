@@ -18,6 +18,7 @@ Initial public release.
   `results`, `algos`, `config`, `install-binary`, `version`.
 - `ember run [experiment.yaml]` — run a benchmark from a YAML file or CLI flags.
   Writes `<name>_resolved.yaml` recording the exact parameters used.
+  `--analyze` flag automatically invokes `ember-qc-analysis` post-run if installed.
 - `ember resume [batch_id]` — resume an incomplete run; interactive list when no ID given.
   `--delete` / `--delete-all` subflags for cleaning up incomplete runs.
 - `ember graphs list / presets` — list bundled test graphs and named presets.
@@ -28,7 +29,9 @@ Initial public release.
   availability status. Stubs for `add / remove / validate / reset`.
 - `ember config show / get / set / reset / path` — full config management with coercion
   and validation.
-- `ember install-binary [atom|oct]` — stub; lists install status.
+- `ember install-binary [atom|oct]` — download and install pre-built C++ binaries from
+  GitHub releases. Detects platform automatically (`linux/x86_64`, `darwin/x86_64`,
+  `darwin/arm64`). Supports `--version`, `--force`, `--list`.
 - `ember version` — print package version.
 
 **Algorithm system**
@@ -63,8 +66,9 @@ Initial public release.
   hash, size_bytes) bundled with the package.
 - `load_graph(graph_id: int)` — three-layer lookup: local cache → bundled files →
   remote download (Phase 2 stub). Verifies SHA-256 on each layer.
-- `load_manifest()`, `generate_manifest()`, `verify_manifest()` — manifest access and
-  integrity checking.
+- `load_manifest()`, `verify_manifest()` — manifest access and integrity checking.
+- `scripts/generate_manifest.py` — developer script to regenerate `manifest.json` after
+  adding or modifying graphs (not part of the installed package API).
 - `ember graphs fetch / cache / status` CLI stubs registered and discoverable.
 
 **Benchmark runner**
@@ -186,12 +190,12 @@ Initial public release.
   user data directory. Warning messages point to `ember install-binary`.
 
 **Developer tooling**
-- `compute_graph_properties.py` standalone script — computes 25 structural graph
-  properties and writes them back into graph JSON files in-place.
+- `scripts/compute_graph_properties.py` — computes 25 structural graph properties and
+  writes them back into graph JSON files in-place.
+- `scripts/generate_manifest.py` — regenerates `manifest.json` from the graph library.
 - `test_graphs_generation/` infrastructure: `generate_graphs.py` (48 graph types),
   `check_graph_feasibility.py`, `find_boundaries.py`.
-- `smoke_phase1.py`, `smoke_full_pipeline.py`, `smoke_test_warnings.py`,
-  `tests/test_validation_layers.py`.
+- `smoke_phase1.py`, `smoke_full_pipeline.py`, `smoke_test_warnings.py`.
 - Reference snapshot regression system: deterministic output columns stored in
   `tests/reference_data/smoke_reference.csv`; `UPDATE_REFERENCE=1` to refresh.
 
@@ -242,6 +246,12 @@ Initial public release.
   NetworkX 3.6.
 - **`verify_manifest()` scope** — now called from inside `load_test_graphs()` and checks
   only the graphs selected for the current run, not the entire library.
+- **PSSA missing `time` key** — all four PSSA variants now return `time` (elapsed
+  seconds) in every code path, matching the algorithm contract.
+- **PSSA timeout not respected** — `pssa()` now accepts a `deadline` parameter and
+  checks wall time every 1000 iterations; `_PSSABase.embed()` computes and passes the
+  deadline from the `timeout` kwarg, replacing the previous behaviour where the algorithm
+  ran to completion regardless of timeout.
 
 ### Known Issues
 
@@ -252,7 +262,6 @@ Initial public release.
 - **`ember config reset` / `ember results delete` crash in non-interactive environments**
   — `EOFError` not caught in `cmd_config_reset` and `cmd_results_delete`. Workaround:
   use `ember config set` individually or remove the config file manually.
-- **`ember install-binary`** — stub only; not yet implemented.
 - **`ember graphs fetch / cache / status`** — stubs only; Phase 2.
 - **Custom algorithm registration** (`ember algos add / remove / validate / reset`) —
   stubs only; not yet implemented.
