@@ -28,7 +28,42 @@ ember version
 
 ---
 
-## 2. Check what is available
+## 2. Check your configuration
+
+Before running anything, confirm the defaults:
+
+```bash
+ember config show
+```
+
+Output:
+
+```
+Key                  Value          Source
+-------------------  -------------  --------
+output_dir           (not set)      default
+default_workers      1              default
+default_timeout      60.0           default
+default_topology     (not set)      default
+default_graphs       (not set)      default
+default_n_trials     1              default
+default_warmup_trials 0             default
+default_seed         42             default
+default_fault_rate   0.0            default
+log_level            WARNING        default
+```
+
+`output_dir` being unset means results are written to `./results/` relative to your **current working directory** when you run `ember run`. Change it to a permanent location with:
+
+```bash
+ember config set output_dir ~/results
+```
+
+Run `ember config show` at any time if results appear in an unexpected location — it will tell you exactly which directory `ember` is writing to and where each setting came from.
+
+---
+
+## 3. Check what is available
 
 EMBER ships with several algorithms. Some require optional binaries.
 
@@ -46,7 +81,7 @@ minorminer-fast        ✓
 minorminer-aggressive  ✓
 minorminer-chainlength ✓
 clique                 ✓
-pssa                   ✓           known bug: disconnected chains
+pssa                   ✓
 atom                   ✗           run: ember install-binary atom
 oct-fast-oct           ✗           run: ember install-binary oct
 charme                 ✗           pip install ember-qc[charme]
@@ -56,9 +91,9 @@ For this tutorial, `minorminer` and `clique` are sufficient.
 
 ---
 
-## 3. List the graph library
+## 4. List the graph library
 
-EMBER includes 167 bundled test graphs. To see them:
+EMBER includes a graph library covering structured and random graph types. To see them:
 
 ```bash
 ember graphs list
@@ -68,7 +103,7 @@ ember graphs presets                  # named presets like "quick", "diverse"
 
 ---
 
-## 4. Check hardware topologies
+## 5. Check hardware topologies
 
 ```bash
 ember topologies list
@@ -83,7 +118,7 @@ chimera_4x4x4     chimera      128     352
 chimera_16x16x4   chimera    2,048   6,016
 pegasus_4         pegasus      594   2,816
 pegasus_16        pegasus    5,640  40,484
-zephyr_4          zephyr       512   4,096
+zephyr_4          zephyr       272   2,016
 zephyr_12         zephyr     4,800  45,864
 ```
 
@@ -91,7 +126,7 @@ For this tutorial we use `pegasus_16` — the topology that matches D-Wave's Adv
 
 ---
 
-## 5. Write an experiment file
+## 6. Write an experiment file
 
 Create a file called `experiment.yaml`:
 
@@ -118,9 +153,11 @@ What each key means:
 - `timeout` — seconds allowed per trial before marking TIMEOUT
 - `seed` — master seed for reproducibility; all trial seeds are derived from this
 
+See [experiment-yaml.md](experiment-yaml.md) for the full key reference including defaults.
+
 ---
 
-## 6. Run the benchmark
+## 7. Run the benchmark
 
 ```bash
 ember run experiment.yaml
@@ -135,17 +172,19 @@ my_first_benchmark  [pegasus_16]  ███████████████�
 When complete:
 
 ```
-Results written to: /path/to/results/my_first_benchmark_2026-03-28_14-30-00
+Results written to: results/my_first_benchmark_2026-03-28_14-30-00
 ```
 
-Two files are written alongside the results:
+**Where are my results?** By default, results are written to `./results/` relative to your current directory. To use a different location, set `output_dir` in config (step 2) or pass `--output-dir` to `ember run`.
+
+Two files are also written alongside the results:
 
 - `experiment.yaml` — verbatim copy of your input
-- `experiment_resolved.yaml` — all parameters as actually used, including defaults that were filled in
+- `experiment_resolved.yaml` — all parameters as actually used, including filled-in defaults
 
 ---
 
-## 7. View results
+## 8. View results
 
 ```bash
 ember results list
@@ -172,17 +211,19 @@ clique          100%        4.0         4.0        16.0      0.1
 
 ---
 
-## 8. Understand the output directory
+## 9. Understand the output directory
 
 ```
 results/my_first_benchmark_2026-03-28_14-30-00/
-├── config.json       — all run parameters + environment provenance
-├── results.db        — SQLite database with all trial data
-├── runs.csv          — every trial as a CSV row (for spreadsheets/pandas)
-├── summary.csv       — grouped averages per (algorithm, topology)
-├── README.md         — human-readable batch summary
+├── config.json              — all run parameters + environment provenance
+├── results.db               — SQLite database with all trial data
+├── runs.csv                 — every trial as a CSV row (for spreadsheets/pandas)
+├── summary.csv              — grouped averages per (algorithm, topology)
+├── README.md                — human-readable batch summary
+├── experiment.yaml          — copy of your input file
+├── experiment_resolved.yaml — fully resolved parameters used
 └── workers/
-    └── worker_*.jsonl  — raw per-trial records written during the run
+    └── worker_*.jsonl         — raw per-trial records written during the run
 ```
 
 To load results into Python:
@@ -195,9 +236,36 @@ df = pd.read_sql("SELECT * FROM runs", con)
 print(df[["algorithm", "problem_name", "success", "avg_chain_length"]].head())
 ```
 
+See [results-schema.md](results-schema.md) for all column definitions.
+
 ---
 
-## 9. Generate an analysis report (optional)
+## 10. Configuration and priority
+
+EMBER resolves every setting from four sources in this order (highest wins):
+
+1. **CLI flag** — `ember run experiment.yaml --workers 4 --timeout 30`
+2. **YAML key** — field in your experiment file
+3. **Environment variable** — `EMBER_WORKERS=4`, `EMBER_OUTPUT_DIR=/results`
+4. **Stored config** — set with `ember config set key value`
+5. **Package default** — built-in fallback
+
+This means: if you set `default_workers: 4` in your YAML, it overrides the stored config. If you pass `--workers 8` on the CLI, that overrides the YAML. Run `ember config show` to check what is currently stored.
+
+**Common configuration tasks:**
+
+```bash
+ember config set output_dir ~/results          # permanent output location
+ember config set default_workers 8             # run 8 trials in parallel
+ember config set default_timeout 120.0         # allow 2 min per trial
+ember config set default_seed 42               # same seed for all experiments
+```
+
+**Workers guidance:** Use `workers: 1` (the default) when debugging — single-worker mode makes failures easier to diagnose because errors appear directly in the terminal. Increase workers once the experiment is validated and you need throughput.
+
+---
+
+## 11. Generate an analysis report (optional)
 
 If you installed `ember-qc-analysis`:
 
@@ -206,7 +274,7 @@ ember-analysis stage results/my_first_benchmark_2026-03-28_14-30-00
 ember-analysis report
 ```
 
-Or do it in one step from the benchmark run:
+Or run analysis automatically after the benchmark:
 
 ```bash
 ember run experiment.yaml --analyze
@@ -222,11 +290,12 @@ See [analysis-getting-started.md](analysis-getting-started.md) for more.
 
 ---
 
-## 10. Next steps
+## 12. Next steps
 
-- **Larger experiments** — add more algorithms and graphs to your YAML; set `workers: 8` to parallelise
 - **Resume interrupted runs** — `ember resume` if a benchmark is cancelled or crashes
-- **Change the output directory** — `ember config set output_dir ~/results`
 - **Full YAML reference** — [experiment-yaml.md](experiment-yaml.md)
 - **All CLI flags** — [cli-reference.md](cli-reference.md)
+- **Results database schema** — [results-schema.md](results-schema.md)
 - **Custom algorithms** — [custom-algorithms.md](custom-algorithms.md)
+- **Reproducibility** — [reproducibility.md](reproducibility.md)
+- **Troubleshooting** — [troubleshooting.md](troubleshooting.md)

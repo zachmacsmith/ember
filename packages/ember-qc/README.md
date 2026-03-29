@@ -100,10 +100,10 @@ ember graphs presets                  # all named presets
 | `minorminer-aggressive` | ✓ included | tries=50 |
 | `minorminer-chainlength` | ✓ included | chainlength_patience=20 |
 | `clique` | ✓ included | Clique embedding via busclique |
-| `pssa` | ⚠ included | Known bug: disconnected chains on all test graphs — avoid for now |
-| `pssa-weighted` | ⚠ included | Same known bug |
-| `pssa-fast` | ⚠ included | Same known bug |
-| `pssa-thorough` | ⚠ included | Same known bug |
+| `pssa` | ✓ included | Path-annealing SA; auto topology detection |
+| `pssa-weighted` | ✓ included | Degree-weighted shifts — best for regular graphs |
+| `pssa-fast` | ✓ included | tmax=50,000 — good for large sweeps |
+| `pssa-thorough` | ✓ included | tmax=2,000,000 — highest quality, slow |
 | `charme` | optional | `pip install ember-qc[charme]` + PyTorch |
 | `atom` | optional | `ember install-binary atom` |
 | `oct-triad` | optional | `ember install-binary oct` |
@@ -154,7 +154,7 @@ Place the file in the user algorithms directory to have it loaded automatically:
 ember algos dir    # shows the directory path
 ```
 
-See `docs/EMBER_developer_guide.md` for the full algorithm contract specification.
+See the [algorithm contract](https://github.com/zachmacsmith/ember/blob/main/docs/algorithm-contract.md) and [custom algorithms guide](https://github.com/zachmacsmith/ember/blob/main/docs/custom-algorithms.md) for the full specification.
 
 ---
 
@@ -312,11 +312,25 @@ No D-Wave account or quantum hardware required.
 
 ---
 
+## Documentation
+
+Full documentation: [github.com/zachmacsmith/ember/tree/main/docs](https://github.com/zachmacsmith/ember/tree/main/docs)
+
+| Document | Description |
+|---|---|
+| [Getting Started](https://github.com/zachmacsmith/ember/blob/main/docs/getting-started.md) | Full tutorial with examples |
+| [Experiment YAML Reference](https://github.com/zachmacsmith/ember/blob/main/docs/experiment-yaml.md) | All YAML keys and defaults |
+| [CLI Reference](https://github.com/zachmacsmith/ember/blob/main/docs/cli-reference.md) | All `ember` commands and flags |
+| [Results Schema](https://github.com/zachmacsmith/ember/blob/main/docs/results-schema.md) | Database tables and column definitions |
+| [Custom Algorithms](https://github.com/zachmacsmith/ember/blob/main/docs/custom-algorithms.md) | Writing and registering custom algorithms |
+| [Reproducibility](https://github.com/zachmacsmith/ember/blob/main/docs/reproducibility.md) | Seeding, resolved YAML, checkpointing |
+| [Troubleshooting](https://github.com/zachmacsmith/ember/blob/main/docs/troubleshooting.md) | Common problems and fixes |
+
+---
+
 ## Contributing
 
-Contributions are welcome. To add a new algorithm, see `docs/EMBER_developer_guide.md`.
-
-Please open an issue before submitting a pull request for significant changes.
+Contributions are welcome. Please open an issue before submitting a pull request for significant changes.
 
 ---
 
