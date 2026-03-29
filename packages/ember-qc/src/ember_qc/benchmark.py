@@ -1437,7 +1437,7 @@ def _run_post_analysis(batch_dir: Path) -> None:
     #   2. Default: analysis/ sibling to the batch directory
     output_root = None
     try:
-        from ember_qc_analysis.config import get as _acfg
+        from ember_qc_analysis._config import resolve as _acfg
         cfg_dir = _acfg("output_dir")
         if cfg_dir:
             output_root = Path(cfg_dir)
