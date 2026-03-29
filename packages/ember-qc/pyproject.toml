@@ -51,7 +51,7 @@ Repository = "https://github.com/Unmolsharma/Quantum_Embedding_benchmark"
 [project.optional-dependencies]
 # Pulls in the companion analysis package and its plotting dependencies
 analysis = [
-    "ember-qc-analysis>=0.5.0",
+    "ember-qc-analysis>=0.0.1",
 ]
 # CHARME algorithm (PyTorch GNN approach)
 charme = [
