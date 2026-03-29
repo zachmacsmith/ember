@@ -1,9 +1,9 @@
 """
-qeanalysis/summary.py
-=====================
+ember_qc_analysis/summary.py
+============================
 Aggregate table computations for benchmarking results.
 
-All functions accept the derived DataFrame produced by qeanalysis.loader.load_batch()
+All functions accept the derived DataFrame produced by ember_qc_analysis.loader.load_batch()
 and return a tidy pandas DataFrame ready for display or export.
 
 Quality metrics (chain length, timing, qubit counts) are always computed on

@@ -1,7 +1,7 @@
 """
-qeanalysis/loader.py
-====================
-Load a qebench batch directory into a DataFrame ready for analysis.
+ember_qc_analysis/loader.py
+============================
+Load an ember-qc batch directory into a DataFrame ready for analysis.
 
 Primary source: results.db (SQLite) — the authoritative store written by compile_batch().
 Fallback:       runs.csv — for batches produced before the SQLite pipeline.

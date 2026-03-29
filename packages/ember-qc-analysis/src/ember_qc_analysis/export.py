@@ -1,6 +1,6 @@
 """
-qeanalysis/export.py
-=====================
+ember_qc_analysis/export.py
+============================
 LaTeX table generation and bulk export utilities.
 
 All functions operate on regular pandas DataFrames and write .tex / .csv files.

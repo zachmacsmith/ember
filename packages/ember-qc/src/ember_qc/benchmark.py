@@ -1029,7 +1029,8 @@ class EmbeddingBenchmark:
                           fault_rate: float = 0.0,
                           fault_seed: Optional[int] = None,
                           faulty_nodes=None,
-                          faulty_couplers=None):
+                          faulty_couplers=None,
+                          analyze: bool = False):
         """
         Run complete benchmark suite.
 
@@ -1413,7 +1414,45 @@ class EmbeddingBenchmark:
         _print_warn_summary(exec_result.warning_registry, final_dir / "logs")
         print(f"Results: {final_dir.resolve()}")
         print("=" * 80)
+        if analyze:
+            _run_post_analysis(final_dir)
         return final_dir
+
+
+def _run_post_analysis(batch_dir: Path) -> None:
+    """Run ember-qc-analysis on a completed batch if the package is installed."""
+    try:
+        from ember_qc_analysis import BenchmarkAnalysis
+    except ImportError:
+        print(
+            "\nNote: ember-qc-analysis is not installed. "
+            "To auto-generate analysis, run:\n"
+            "  pip install ember-qc-analysis\n"
+            "  or: pip install ember-qc[analysis]"
+        )
+        return
+
+    # Resolve output root:
+    #   1. ember-qc-analysis config output_dir (if set)
+    #   2. Default: analysis/ sibling to the batch directory
+    output_root = None
+    try:
+        from ember_qc_analysis.config import get as _acfg
+        cfg_dir = _acfg("output_dir")
+        if cfg_dir:
+            output_root = Path(cfg_dir)
+    except Exception:
+        pass
+
+    if output_root is None:
+        output_root = batch_dir.parent / "analysis"
+
+    print(f"\nRunning analysis → {(output_root / batch_dir.name).resolve()}")
+    try:
+        an = BenchmarkAnalysis(str(batch_dir), output_root=str(output_root))
+        an.generate_report()
+    except Exception as e:
+        print(f"Analysis failed: {e}")
 
 
 def load_benchmark(batch_id: Optional[str] = None,

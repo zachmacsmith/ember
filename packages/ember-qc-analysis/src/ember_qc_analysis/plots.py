@@ -1,7 +1,7 @@
 """
-qeanalysis/plots.py
-====================
-All visualizations for qeanalysis.
+ember_qc_analysis/plots.py
+==========================
+All visualizations for ember_qc_analysis.
 
 Design principles
 -----------------

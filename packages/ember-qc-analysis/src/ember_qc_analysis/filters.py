@@ -1,6 +1,6 @@
 """
-qeanalysis/filters.py
-=====================
+ember_qc_analysis/filters.py
+============================
 DataFrame filter utilities for analysis.
 
 These are query concerns, not plotting concerns — filters are implemented

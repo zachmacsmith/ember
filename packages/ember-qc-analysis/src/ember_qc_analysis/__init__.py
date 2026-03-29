@@ -1,13 +1,13 @@
 """
-qeanalysis — Post-benchmark analysis package for QEBench
-=========================================================
+ember_qc_analysis — Post-benchmark analysis package for ember-qc
+=================================================================
 
-Separate from qebench: requires only pandas/numpy/scipy/matplotlib.
+Separate from ember-qc: requires only pandas/numpy/scipy/matplotlib.
 No D-Wave stack or C++ binaries needed.
 
 Typical workflow
 ----------------
-    from qeanalysis import BenchmarkAnalysis
+    from ember_qc_analysis import BenchmarkAnalysis
 
     an = BenchmarkAnalysis("results/batch_2026-02-24_14-30-00/")
     an.generate_report()   # runs everything; writes to analysis/<batch-name>/

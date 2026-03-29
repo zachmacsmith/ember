@@ -73,6 +73,7 @@ def _build_resolved_params(args: argparse.Namespace, yaml_params: dict) -> dict:
         "fault_seed":     args.fault_seed,
         "note":           args.note,
         "output_dir":     args.output_dir,
+        "analyze":        args.analyze,
     }
     for key, val in cli_overrides.items():
         if val is not None:
@@ -103,6 +104,7 @@ def _build_resolved_params(args: argparse.Namespace, yaml_params: dict) -> dict:
     p.setdefault("faulty_couplers", None)
     p.setdefault("note",            "")
     p.setdefault("output_dir",      _cfg("output_dir"))
+    p.setdefault("analyze",         False)
 
     # default_topology from config is a single string; normalise to list
     if "topologies" in p and isinstance(p["topologies"], str):
@@ -184,6 +186,7 @@ def cmd_run(args: argparse.Namespace) -> None:
         fault_seed=params["fault_seed"],
         faulty_nodes=params["faulty_nodes"],
         faulty_couplers=params["faulty_couplers"],
+        analyze=params["analyze"],
     )
 
     if final_dir is None:
@@ -643,6 +646,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_run.add_argument("--fault-seed",  type=int,          default=None, dest="fault_seed")
     p_run.add_argument("--output-dir",  metavar="PATH",    default=None, dest="output_dir")
     p_run.add_argument("--note",        metavar="TEXT",    default=None)
+    p_run.add_argument("--analyze",     action="store_true", default=False,
+                       help="run ember-qc-analysis on the completed batch")
     p_run.set_defaults(func=cmd_run)
 
     # -- resume --------------------------------------------------------------

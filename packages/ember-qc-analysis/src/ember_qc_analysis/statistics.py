@@ -1,9 +1,9 @@
 """
-qeanalysis/statistics.py
-========================
+ember_qc_analysis/statistics.py
+================================
 Statistical comparison functions for benchmarking results.
 
-All functions accept the derived DataFrame from qeanalysis.loader.load_batch().
+All functions accept the derived DataFrame from ember_qc_analysis.loader.load_batch().
 
 Design for extensibility
 -------------------------
