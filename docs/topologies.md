@@ -1,157 +1,130 @@
-# Topology Registry
+# Hardware Topologies
 
-QEBench provides a registry of hardware topologies representing real D-Wave quantum annealing architectures. Topologies are generated on first use and cached in memory.
-
-## Built-In Topologies
-
-### Chimera
-
-The Chimera topology was used in D-Wave's earlier machines (D-Wave 2000Q and prior). It consists of a grid of K₄,₄ unit cells with inter-cell couplers.
-
-| Name | Params | Qubits | Edges | Notes |
-|------|--------|--------|-------|-------|
-| `chimera_4x4x4` | m=4, n=4, t=4 | 128 | 352 | Small test size |
-| `chimera_8x8x4` | m=8, n=8, t=4 | 512 | 1,472 | Medium |
-| `chimera_12x12x4` | m=12, n=12, t=4 | 1,152 | 3,360 | Large |
-| `chimera_16x16x4` | m=16, n=16, t=4 | 2,048 | 6,016 | D-Wave 2000Q |
-
-**Generator:** `dwave_networkx.chimera_graph(m, n, t)`
+EMBER benchmarks minor embedding onto D-Wave quantum annealing hardware topologies. Three topology families are registered: Chimera, Pegasus, and Zephyr.
 
 ---
 
-### Pegasus
+## Chimera
 
-The Pegasus topology is used in D-Wave Advantage systems. It has significantly higher connectivity than Chimera (degree 15 vs. degree 6), enabling more efficient embeddings.
+Chimera is the topology used in D-Wave 2000Q and earlier processors. It is a bipartite grid of unit cells, each a complete bipartite graph K_{4,4}.
 
-| Name | Params | Qubits | Edges | Notes |
-|------|--------|--------|-------|-------|
-| `pegasus_4` | m=4 | 264 | 1,604 | Small test size |
-| `pegasus_6` | m=6 | 680 | 4,484 | Medium |
-| `pegasus_8` | m=8 | 1,288 | 8,804 | Large |
-| `pegasus_16` | m=16 | 5,640 | 40,484 | D-Wave Advantage |
+**Structure:** An `m×n×t` Chimera graph has `2·m·n·t` nodes arranged in a grid of `m×n` unit cells, each containing `2t` qubits. Standard processors use `t=4`.
 
-**Generator:** `dwave_networkx.pegasus_graph(m)`
+**Properties:**
+- Degree: most nodes have degree `t + t` = `2t` (connections within the cell plus to adjacent cells); boundary nodes have lower degree
+- Bipartite within each unit cell
+- Regular structure makes embedding patterns predictable
 
----
+| Name | Nodes | Edges | Description |
+|---|---|---|---|
+| `chimera_4x4x4` | 128 | 352 | Small test topology |
+| `chimera_8x8x4` | 512 | 1,472 | Medium |
+| `chimera_12x12x4` | 1,152 | 3,360 | Large |
+| `chimera_16x16x4` | 2,048 | 6,016 | Full D-Wave 2000Q |
 
-### Zephyr
-
-The Zephyr topology is used in D-Wave Advantage2 systems. It has even higher connectivity than Pegasus (degree 20), representing the latest quantum annealing hardware.
-
-| Name | Params | Qubits | Edges | Notes |
-|------|--------|--------|-------|-------|
-| `zephyr_2` | m=2 | 160 | 1,224 | Small test size |
-| `zephyr_4` | m=4 | 576 | 5,032 | Medium |
-| `zephyr_6` | m=6 | 1,248 | 11,400 | Large |
-| `zephyr_8` | m=8 | 2,176 | 20,328 | Advantage2 prototype |
-
-**Generator:** `dwave_networkx.zephyr_graph(m)`
+**When to use:** Chimera is the best-studied topology with the most published embedding results. Use it for comparisons with prior work or when running the ATOM algorithm (Chimera-only).
 
 ---
 
-## Usage
+## Pegasus
 
-### Single Topology
+Pegasus is the topology used in D-Wave Advantage processors. It improves on Chimera by adding internal couplers within each unit cell and additional long-range connections.
 
-```python
-from qebench import get_topology, EmbeddingBenchmark
+**Structure:** Pegasus graphs have a complex irregular structure. A Pegasus(m) graph has `24(m-1)² + 3(m-1)` nodes. The standard D-Wave Advantage uses `m=16`.
 
-chimera = get_topology("chimera_4x4x4")
-bench = EmbeddingBenchmark(target_graph=chimera)
-bench.run_full_benchmark(graph_selection="quick", methods=["minorminer"])
-```
+**Properties:**
+- Average degree: approximately 15 (versus ~6 in Chimera)
+- Much higher connectivity makes embedding generally easier
+- Non-bipartite structure — more algorithm-friendly than Chimera
 
-### Multi-Topology Comparison
+| Name | Nodes | Edges | Description |
+|---|---|---|---|
+| `pegasus_4` | 594 | 2,816 | Small test topology |
+| `pegasus_6` | 1,394 | 7,286 | Medium |
+| `pegasus_8` | 2,574 | 14,056 | Large |
+| `pegasus_16` | 5,640 | 40,484 | Full D-Wave Advantage |
 
-```python
-bench = EmbeddingBenchmark()
-bench.run_full_benchmark(
-    graph_selection="quick",
-    methods=["minorminer", "clique"],
-    topologies=["chimera_4x4x4", "pegasus_4", "zephyr_2"],
-    n_trials=5,
-    batch_note="Cross-topology comparison"
-)
-```
+**When to use:** Pegasus is the current D-Wave standard. Use `pegasus_16` for results directly applicable to the D-Wave Advantage processor.
 
-### Listing Topologies
+---
 
-```python
-from qebench import list_topologies, list_topology_families, topology_info
+## Zephyr
 
-# All topology names
-print(list_topologies())
+Zephyr is the topology introduced in D-Wave Advantage2. It further increases connectivity over Pegasus.
 
-# Filter by family
-print(list_topologies(family="pegasus"))
-# ['pegasus_4', 'pegasus_6', 'pegasus_8', 'pegasus_16']
+**Structure:** A Zephyr(m) graph has `4m(2m+1)` nodes. The planned full processor uses `m=12`.
 
-# All families
-print(list_topology_families())
-# ['chimera', 'pegasus', 'zephyr']
+**Properties:**
+- Average degree: approximately 20
+- Highest connectivity of the three families
+- Relatively few published embedding results — a good target for new research
 
-# Formatted table
-print(topology_info())
-```
+| Name | Nodes | Edges | Description |
+|---|---|---|---|
+| `zephyr_2` | 56 | 336 | Minimal test topology |
+| `zephyr_4` | 272 | 2,016 | Small |
+| `zephyr_6` | 600 | 5,040 | Medium |
+| `zephyr_8` | 1,040 | 9,360 | Large |
+| `zephyr_12` | 4,800 | 45,864 | Projected full processor |
 
-### Topology Details
+**When to use:** Zephyr results are most relevant for forward-looking comparisons and hardware planning for the Advantage2 generation.
 
-```python
-from qebench import get_topology_config
+---
 
-config = get_topology_config("pegasus_16")
-print(config.name)         # 'pegasus_16'
-print(config.family)       # 'pegasus'
-print(config.params)       # {'m': 16}
-print(config.description)  # 'Pegasus P16 (D-Wave Advantage)'
+## Listing topologies
+
+```bash
+ember topologies list
+ember topologies list --family pegasus
+ember topologies info
 ```
 
 ---
 
-## Registering Custom Topologies
+## Using topologies in experiments
+
+```yaml
+topologies:
+  - pegasus_16
+  - chimera_16x16x4
+```
+
+When multiple topologies are listed, EMBER benchmarks every (algorithm, graph, topology) triple. Results are grouped by topology in the output.
+
+---
+
+## Registering custom topologies
+
+You can register additional topology variants in Python:
 
 ```python
-import networkx as nx
-from qebench import register_topology
-
-# Hypothetical topology
-register_topology(
-    name="hex_lattice_10x10",
-    family="custom",
-    generator=lambda: nx.hexagonal_lattice_graph(10, 10),
-    params={"rows": 10, "cols": 10},
-    description="10×10 hexagonal lattice"
-)
-
-# Broken hardware (simulate dead qubits)
+from ember_qc.topologies import register_topology
 import dwave_networkx as dnx
-import random
-
-def make_broken_pegasus():
-    g = dnx.pegasus_graph(16)
-    dead = random.sample(list(g.nodes()), k=int(0.05 * g.number_of_nodes()))
-    g.remove_nodes_from(dead)
-    return g
 
 register_topology(
-    name="pegasus_16_broken_5pct",
-    family="pegasus_broken",
-    generator=make_broken_pegasus,
-    params={"m": 16, "dead_pct": 0.05},
-    description="Pegasus P16 with 5% dead qubits"
+    name="my_pegasus",
+    family="pegasus",
+    generator=lambda: dnx.pegasus_graph(12),
+    params={"m": 12},
+    description="Custom Pegasus-12 topology",
 )
 ```
 
+After registration, `"my_pegasus"` is available as a topology name in YAML and CLI.
+
 ---
 
-## Algorithm Compatibility
+## Algorithm compatibility
 
-| Algorithm | Chimera | Pegasus | Zephyr | Custom |
-|-----------|---------|---------|--------|--------|
-| `minorminer` | ✅ | ✅ | ✅ | ✅ |
-| `clique` | ✅ | ✅ | ✅ | ⚠️ |
-| `oct-triad` | ✅ | ❌ | ❌ | ❌ |
-| `oct-fast-oct` | ✅ | ❌ | ❌ | ❌ |
-| `atom` | ✅ | ❌ | ❌ | ❌ |
+Some algorithms are restricted to specific topology families:
 
-> **Note:** OCT-suite algorithms use Chimera's bipartite structure internally and only work with Chimera topologies. MinorMiner and clique embedding work on any topology.
+| Algorithm | Supported topologies |
+|---|---|
+| `minorminer` | all |
+| `clique` | all |
+| `pssa` | chimera, pegasus, zephyr |
+| `atom` | chimera only |
+| `oct-*` | chimera only |
+| `charme` | all (when available) |
+
+Incompatible (algorithm, topology) pairs are silently skipped before the run starts. EMBER logs a `TOPOLOGY_INCOMPATIBLE` warning for each skipped pair.
