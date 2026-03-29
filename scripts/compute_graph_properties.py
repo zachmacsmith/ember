@@ -18,7 +18,7 @@ Usage (as a script):
     python compute_graph_properties.py --selection "1-60" --overwrite
 
 After running, regenerate the manifest:
-    from qebench import generate_manifest; generate_manifest()
+    python scripts/generate_manifest.py
 """
 
 import argparse
@@ -358,7 +358,7 @@ def compute_graph_properties(
     print(f"Total time: {time_str}")
     print()
     print("⚠️  REMEMBER TO UPDATE GRAPH HASH MANIFEST")
-    print("   from qebench import generate_manifest; generate_manifest()")
+    print("   python scripts/generate_manifest.py")
 
 
 # ---------------------------------------------------------------------------

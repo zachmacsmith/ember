@@ -42,7 +42,6 @@ from ember_qc.load_graphs import (
     load_presets,
     list_presets,
     load_manifest,
-    generate_manifest,
     verify_manifest,
 )
 
@@ -84,7 +83,6 @@ __all__ = [
     "list_presets",
     "load_graph",
     "load_manifest",
-    "generate_manifest",
     "verify_manifest",
     # Fault simulation
     "simulate_faults",
