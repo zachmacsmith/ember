@@ -44,9 +44,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/Unmolsharma/Quantum_Embedding_benchmark"
-Repository = "https://github.com/Unmolsharma/Quantum_Embedding_benchmark"
-"Bug Tracker" = "https://github.com/Unmolsharma/Quantum_Embedding_benchmark/issues"
+Homepage = "https://github.com/zachmacsmith/ember"
+Repository = "https://github.com/zachmacsmith/ember"
+"Bug Tracker" = "https://github.com/zachmacsmith/ember/issues"
 
 [project.optional-dependencies]
 # Pulls in the companion analysis package and its plotting dependencies

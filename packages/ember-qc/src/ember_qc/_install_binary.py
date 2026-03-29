@@ -41,7 +41,7 @@ from typing import Optional, Tuple
 # GitHub repo that hosts release assets.
 # Override with EMBER_GITHUB_REPO if you fork or mirror.
 _GITHUB_REPO: str = os.environ.get(
-    "EMBER_GITHUB_REPO", "Unmolsharma/Quantum_Embedding_benchmark"
+    "EMBER_GITHUB_REPO", "zachmacsmith/ember"
 )
 
 # Maps (sys.platform, normalised machine) → asset suffix used in binary names.

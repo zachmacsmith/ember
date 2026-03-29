@@ -2,7 +2,7 @@
 
 **Extensive Benchmark for Evaluation and Reproducible comparison of quantum annealing embedding algorithms.**
 
-[![CI](https://github.com/Unmolsharma/Quantum_Embedding_benchmark/actions/workflows/ci.yml/badge.svg)](https://github.com/Unmolsharma/Quantum_Embedding_benchmark/actions/workflows/ci.yml)
+[![CI](https://github.com/zachmacsmith/ember/actions/workflows/ci.yml/badge.svg)](https://github.com/zachmacsmith/ember/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ---
@@ -240,6 +240,7 @@ Environment variables take precedence over stored config, which takes precedence
 
 ```
 ember run <experiment.yaml> [flags]    Run a benchmark
+ember run --analyze                    Run benchmark and generate analysis report
 ember resume [batch_id]                Resume an interrupted run
 ember results list                     List completed runs
 ember results show <batch_id>          Show run summary
@@ -270,6 +271,12 @@ pip install ember-qc[analysis]
 `ember-qc-analysis` has no quantum dependencies and can be installed on any machine.
 It provides tools for loading, comparing, and visualising benchmark results from EMBER
 output directories.
+
+To automatically generate an analysis report after a benchmark run:
+
+```bash
+ember run experiment.yaml --analyze
+```
 
 ---
 
