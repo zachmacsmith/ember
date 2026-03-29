@@ -29,6 +29,11 @@ from pathlib import Path
 import networkx as nx
 import pytest
 
+pytestmark = pytest.mark.skipif(
+    pytest.importorskip("minorminer", reason="minorminer not installed") is None,
+    reason="minorminer not installed",
+)
+
 # ---------------------------------------------------------------------------
 # Configuration — fixed inline problems, never driven by the graph suite
 # ---------------------------------------------------------------------------

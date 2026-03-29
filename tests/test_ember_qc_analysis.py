@@ -1275,8 +1275,8 @@ class TestCLIParserStructure:
     def test_plots_short_flags(self):
         from ember_qc_analysis.cli import build_parser
         parser = build_parser()
-        args = parser.parse_args(["plots", "-i", "/in", "-o", "/out", "-f", "svg"])
-        # -i is not on plots but -o and -f should work
+        args = parser.parse_args(["plots", "-o", "/out", "-f", "svg"])
+        # -o and -f are the short flags on plots; -i is not a plots argument
         assert args.output_dir == "/out"
         assert args.format == "svg"
 

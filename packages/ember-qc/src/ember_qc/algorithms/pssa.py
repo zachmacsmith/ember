@@ -320,9 +320,10 @@ def pssa(
     H:        nx.Graph,
     gp:       Dict[int, List[NodeH]],
     schedule: DWaveSchedule,
-    weighted: bool          = False,
-    seed:     Optional[int] = None,
-    verbose:  bool          = False,
+    weighted: bool           = False,
+    seed:     Optional[int]  = None,
+    verbose:  bool           = False,
+    deadline: Optional[float] = None,
 ) -> Tuple[Phi, int]:
     """PSSA Algorithm 1 (Sugie et al. 2020) for D-Wave hardware."""
     if seed is not None:
@@ -353,6 +354,8 @@ def pssa(
     log_every = max(1, tmax // 10)
 
     for t in range(tmax):
+        if deadline is not None and t % 1000 == 0 and time.time() > deadline:
+            break
         T  = schedule.temperature(t)
         ps = schedule.ps(t)
         pa = schedule.pa(t)
@@ -671,13 +674,14 @@ class ImprovedPSSA:
             print(f"Guiding pattern: {len(self.gp)} super vertices")
             print(self.schedule.summary())
 
-    def run(self, I: nx.Graph) -> PSSAResult:
+    def run(self, I: nx.Graph, deadline: Optional[float] = None) -> PSSAResult:
         t0  = time.perf_counter()
         m_I = I.number_of_edges()
 
         phi_pssa, _ = pssa(
             I, self.H, self.gp, self.schedule,
             weighted=self.weighted, seed=self.seed, verbose=self.verbose,
+            deadline=deadline,
         )
         phi_final = terminal_search(phi_pssa, I, self.H)
         inv_final = invert(phi_final)
@@ -730,8 +734,11 @@ class _PSSABase(EmbeddingAlgorithm):
 
     def embed(self, source_graph, target_graph, **kwargs) -> dict:
         seed     = kwargs.get('seed', None)
+        timeout  = kwargs.get('timeout', 60.0)
         topology = self._detect_topology(target_graph)
         size     = self._detect_size(target_graph, topology)
+        start    = time.time()
+        deadline = start + timeout if timeout is not None else None
         try:
             algo = ImprovedPSSA(
                 topology=topology,
@@ -742,18 +749,19 @@ class _PSSABase(EmbeddingAlgorithm):
                 seed=seed,
                 verbose=False,
             )
-            result = algo.run(source_graph)
+            result = algo.run(source_graph, deadline=deadline)
 
+            elapsed = time.time() - start
             if not result.success:
-                return {'embedding': {}, 'status': 'FAILURE'}
+                return {'embedding': {}, 'time': elapsed, 'status': 'FAILURE'}
 
             # Cast to plain Python ints — no numpy types in embedding
             embedding = {int(k): [int(v) for v in chain] for k, chain in result.phi.items()}
-            return {'embedding': embedding}
+            return {'embedding': embedding, 'time': elapsed}
 
         except Exception as e:
             _logger.error("pssa error: %s", e)
-            return {'embedding': {}, 'status': 'FAILURE', 'error': str(e)}
+            return {'embedding': {}, 'time': time.time() - start, 'status': 'FAILURE', 'error': str(e)}
 
     def _detect_topology(self, H: nx.Graph) -> str:
         data = H.graph
