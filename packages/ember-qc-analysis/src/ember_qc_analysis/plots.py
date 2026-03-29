@@ -88,7 +88,7 @@ def plot_heatmap(df: pd.DataFrame,
 
     Only successful trials are included.
     """
-    from qeanalysis.summary import summary_by_category
+    from ember_qc_analysis.summary import summary_by_category
     pivot = summary_by_category(df, metric)
 
     if pivot.empty:
@@ -588,7 +588,7 @@ def plot_chain_distribution(df: pd.DataFrame,
 def plot_win_rate_matrix(df, metric='avg_chain_length', lower_is_better=True,
                          output_dir=None, save=False):
     """Heatmap of pairwise win rates between algorithms."""
-    from qeanalysis.statistics import win_rate_matrix
+    from ember_qc_analysis.statistics import win_rate_matrix
     wm = win_rate_matrix(df, metric, lower_is_better)
     if wm.empty:
         fig, ax = plt.subplots()
@@ -705,7 +705,7 @@ def _graph_jitter(graph_id: str, magnitude: float) -> float:
 
 def _category_of(problem_name: str) -> str:
     """Quick category lookup without importing loader (avoids circular)."""
-    from qeanalysis.loader import infer_category
+    from ember_qc_analysis.loader import infer_category
     return infer_category(problem_name)
 
 

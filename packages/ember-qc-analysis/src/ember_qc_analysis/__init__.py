@@ -37,13 +37,13 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from qeanalysis.loader    import load_batch, infer_category
-from qeanalysis.summary   import overall_summary, summary_by_category, rank_table
-from qeanalysis.statistics import (
+from ember_qc_analysis.loader    import load_batch, infer_category
+from ember_qc_analysis.summary   import overall_summary, summary_by_category, rank_table
+from ember_qc_analysis.statistics import (
     win_rate_matrix, significance_tests, friedman_test,
     correlation_matrix, density_hardness_summary,
 )
-from qeanalysis.plots import (
+from ember_qc_analysis.plots import (
     build_algo_palette,
     plot_heatmap, plot_scaling, plot_density_hardness,
     plot_pareto, plot_distributions, plot_head_to_head,
@@ -55,8 +55,8 @@ from qeanalysis.plots import (
     plot_graph_indexed_success,
     plot_max_chain_distribution, plot_intersection_comparison,
 )
-from qeanalysis.export import df_to_latex, export_tables
-from qeanalysis.filters import shared_graph_filter
+from ember_qc_analysis.export import df_to_latex, export_tables
+from ember_qc_analysis.filters import shared_graph_filter
 
 
 __all__ = [
