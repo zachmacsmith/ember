@@ -217,7 +217,7 @@ def benchmark_one(source_graph: nx.Graph,
             return EmbeddingResult(
                 **fail_base,
                 status='FAILURE',
-                wall_time=timeout,
+                wall_time=_wall_elapsed,
                 cpu_time=_cpu_elapsed,
                 algorithm_version=algo_version,
                 error="Algorithm returned None",
