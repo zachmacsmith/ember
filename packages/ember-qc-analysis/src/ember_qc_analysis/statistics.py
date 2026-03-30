@@ -280,14 +280,19 @@ def correlation_matrix(df: pd.DataFrame,
             x = success_df[gp].dropna()
             y = success_df[em].dropna()
             common_idx = x.index.intersection(y.index)
-            if len(common_idx) < 3:
+            x_c = x.loc[common_idx]
+            y_c = y.loc[common_idx]
+            if len(common_idx) < 3 or x_c.std() == 0 or y_c.std() == 0:
+                # Correlation is undefined when either input is constant or
+                # there are too few points — return NaN rather than letting
+                # scipy emit a ConstantInputWarning.
                 row[gp] = np.nan
             else:
                 # Use [0] rather than tuple unpacking: scipy >= 1.9 returns a
                 # named result object (SpearmanrResult / PearsonRResult) for
                 # the 2-variable case; [0] is the correlation coefficient on
                 # both old and new scipy without relying on __iter__ semantics.
-                r = corr_fn(x.loc[common_idx], y.loc[common_idx])[0]
+                r = corr_fn(x_c, y_c)[0]
                 row[gp] = float(r)
         data[em] = row
 
