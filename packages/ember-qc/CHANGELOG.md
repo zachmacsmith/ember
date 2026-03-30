@@ -5,6 +5,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.9.1] - 2026-03-30
+
+### Added
+
+- `verbose` is now a configurable setting. Set with `ember config set default_verbose true`
+  or via the `EMBER_VERBOSE` environment variable. The CLI `ember run` command gains
+  `--verbose` / `--no-verbose` flags to override the config for a single run. When not
+  configured, the previous automatic behaviour is preserved: verbose when `n_workers == 1`,
+  progress bar otherwise.
+
+---
+
 ## [0.9.0] - 2026-03-29
 
 Pre-release hardening for v1.0.0.
@@ -17,13 +29,16 @@ Pre-release hardening for v1.0.0.
   not recognized as a docstring).
 - Fixed `benchmark_one()` reporting `wall_time=timeout` instead of actual elapsed time
   when an algorithm returns `None`.
+- Fixed `compute_embedding_metrics()` O(n²) coupler counting: replaced the nested-loop
+  approach with a neighbor-intersection walk (O(n × d)), eliminating a significant
+  performance bottleneck on large embeddings.
 - Fixed `validate_layer2()` check ordering: chain format check now runs before
   value/type checks, preventing misleading validation failure messages.
-- Fixed unsafe `.astype(bool)` on nullable SQLite columns in `compile.py` and
-  `loader.py` — `NaN` (from `NULL`) no longer silently converts to `True`.
+- Fixed unsafe `.astype(bool)` on nullable SQLite columns in `compile.py` — `NaN`
+  (from `NULL`) no longer silently converts to `True`.
 - Fixed `validate_embedding()` in `registry.py` — now delegates to `validate_layer1()`
   with proper logging instead of duplicating logic with a bare `print()`.
-- Removed emoji characters from `results.py` output for compatibility with terminals
+- Removed emoji characters from all runner output for compatibility with terminals
   lacking Unicode support.
 - Fixed `_next_batch_name()` using local time while `config.json` timestamp used UTC;
   both now use UTC consistently.
@@ -33,12 +48,14 @@ Pre-release hardening for v1.0.0.
 
 ### Changed
 
+- `load_benchmark()` and `delete_benchmark()` accept a `confirm: bool = True` parameter.
+  When `confirm=False` (programmatic use), single-run cases proceed without prompting;
+  multiple-run ambiguity raises `ValueError` instead of showing an interactive list.
 - Added Python 3.9 and 3.13 to `pyproject.toml` classifiers (matches `requires-python`).
-- `generate_report(fmt=...)` parameter now plumbed through to all plot functions.
-- `spearmanr` result access uses `[0]` indexing instead of tuple unpacking for
-  compatibility with scipy >= 1.9.
-- `_load_from_db()` in analysis loader now enumerates columns explicitly instead of
-  `SELECT *`, with `PRAGMA table_info` fallback for older databases.
+
+### Changed
+
+- Added Python 3.9 and 3.13 to `pyproject.toml` classifiers (matches `requires-python`).
 
 ## [0.5.0] - 2026-03-28
 

@@ -108,6 +108,13 @@ CONFIG_SCHEMA: Dict[str, Dict[str, Any]] = {
         "type":     str,
         "description": "Logging verbosity (DEBUG, INFO, WARNING, ERROR, CRITICAL).",
     },
+    "default_verbose": {
+        "default":  None,
+        "env_var":  "EMBER_VERBOSE",
+        "type":     (bool, type(None)),
+        "description": "Print per-trial output. True = verbose, False = progress bar, "
+                       "null = auto (verbose when n_workers == 1).",
+    },
 }
 
 _SENTINEL = object()  # used to distinguish "not passed" from None

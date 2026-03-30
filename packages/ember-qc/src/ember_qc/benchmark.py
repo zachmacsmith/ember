@@ -1081,7 +1081,9 @@ class EmbeddingBenchmark:
             # KeyboardInterrupt (Ctrl+C) are supported.
         """
         if verbose is None:
-            verbose = (n_workers == 1)
+            from ember_qc.config import get as _cfg
+            cfg_verbose = _cfg("default_verbose")
+            verbose = cfg_verbose if cfg_verbose is not None else (n_workers == 1)
 
         # Multi-topology: loop over each topology
         if topologies:
@@ -1590,7 +1592,9 @@ def load_benchmark(batch_id: Optional[str] = None,
     graph_selection = config.get('graph_selection', 'custom')
 
     if verbose is None:
-        verbose = (n_workers == 1)
+        from ember_qc.config import get as _cfg
+        cfg_verbose = _cfg("default_verbose")
+        verbose = cfg_verbose if cfg_verbose is not None else (n_workers == 1)
 
     # Reconstruct problems
     if 'custom_problems' in config:

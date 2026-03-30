@@ -74,6 +74,7 @@ def _build_resolved_params(args: argparse.Namespace, yaml_params: dict) -> dict:
         "note":           args.note,
         "output_dir":     args.output_dir,
         "analyze":        args.analyze,
+        "verbose":        args.verbose,
     }
     for key, val in cli_overrides.items():
         if val is not None:
@@ -100,6 +101,7 @@ def _build_resolved_params(args: argparse.Namespace, yaml_params: dict) -> dict:
     p.setdefault("n_workers",       _cfg("default_workers"))
     p.setdefault("fault_rate",      _cfg("default_fault_rate"))
     p.setdefault("fault_seed",      None)
+    p.setdefault("verbose",         _cfg("default_verbose"))
     p.setdefault("faulty_nodes",    None)
     p.setdefault("faulty_couplers", None)
     p.setdefault("note",            "")
@@ -187,6 +189,7 @@ def cmd_run(args: argparse.Namespace) -> None:
         faulty_nodes=params["faulty_nodes"],
         faulty_couplers=params["faulty_couplers"],
         analyze=params["analyze"],
+        verbose=params["verbose"],
     )
 
     if final_dir is None:
@@ -647,6 +650,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_run.add_argument("--note",        metavar="TEXT",    default=None)
     p_run.add_argument("--analyze",     action="store_true", default=False,
                        help="run ember-qc-analysis on the completed batch")
+    verbose_group = p_run.add_mutually_exclusive_group()
+    verbose_group.add_argument("--verbose",    dest="verbose", action="store_const", const=True,  default=None,
+                               help="print per-trial output (overrides config)")
+    verbose_group.add_argument("--no-verbose", dest="verbose", action="store_const", const=False,
+                               help="use progress bar instead of per-trial output (overrides config)")
     p_run.set_defaults(func=cmd_run)
 
     # -- resume --------------------------------------------------------------
