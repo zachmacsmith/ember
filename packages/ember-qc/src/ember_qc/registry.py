@@ -152,30 +152,20 @@ class EmbeddingAlgorithm(ABC):
 
 def validate_embedding(embedding: Dict[int, list], source_graph: nx.Graph,
                        target_graph: nx.Graph) -> bool:
-    """Validate that an embedding is a correct minor embedding."""
+    """Validate that an embedding is a correct minor embedding.
+
+    Delegates to :func:`ember_qc.validation.validate_layer1`, which is the
+    canonical implementation. Returns True if all structural checks pass,
+    False otherwise (validation errors are logged at WARNING level, not printed).
+    """
+    from ember_qc.validation import validate_layer1
     try:
-        if set(embedding.keys()) != set(source_graph.nodes()):
-            return False
-        if any(not chain for chain in embedding.values()):
-            return False
-        all_target_nodes: set = set()
-        for chain in embedding.values():
-            all_target_nodes.update(chain)
-        if not all_target_nodes.issubset(set(target_graph.nodes())):
-            return False
-        if len(all_target_nodes) != sum(len(c) for c in embedding.values()):
-            return False
-        for chain in embedding.values():
-            if len(chain) > 1:
-                if not nx.is_connected(target_graph.subgraph(chain)):
-                    return False
-        for u, v in source_graph.edges():
-            cu, cv = set(embedding[u]), set(embedding[v])
-            if not any(target_graph.has_edge(a, b) for a in cu for b in cv):
-                return False
-        return True
+        result = validate_layer1(embedding, source_graph, target_graph)
+        if not result.passed:
+            logger.warning("validate_embedding: %s — %s", result.check_name, result.detail)
+        return result.passed
     except Exception as e:
-        print(f"Validation error: {e}")
+        logger.error("validate_embedding: unexpected error: %s", e)
         return False
 
 
