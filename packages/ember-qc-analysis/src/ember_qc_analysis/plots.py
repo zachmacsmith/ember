@@ -69,11 +69,13 @@ def build_algo_palette(algorithms) -> dict:
 
 # ── Save helper ──────────────────────────────────────────────────────────────────
 
-def _maybe_save(fig, output_dir, filename, save, subdir=None):
+def _maybe_save(fig, output_dir, filename, save, subdir=None, fmt='png'):
     if save and output_dir is not None:
         target = Path(output_dir) / subdir if subdir else Path(output_dir)
         target.mkdir(parents=True, exist_ok=True)
-        fig.savefig(target / filename, dpi=150, bbox_inches='tight')
+        # Use fmt to override the extension so callers don't need to change their filenames
+        out_name = Path(filename).stem + '.' + fmt
+        fig.savefig(target / out_name, dpi=150, bbox_inches='tight')
     plt.close(fig)
 
 
@@ -83,7 +85,8 @@ def plot_heatmap(df: pd.DataFrame,
                  metric: str = 'avg_chain_length',
                  algo_palette=None,
                  output_dir=None,
-                 save: bool = False) -> plt.Figure:
+                 save: bool = False,
+                 fmt: str = 'png') -> plt.Figure:
     """Heatmap: algorithm (rows) × graph category (columns), cell = mean metric.
 
     Only successful trials are included.
@@ -95,7 +98,7 @@ def plot_heatmap(df: pd.DataFrame,
         fig, ax = plt.subplots()
         ax.text(0.5, 0.5, 'No data', ha='center', va='center')
         _maybe_save(fig, output_dir, f'{metric}_by_category.png', save,
-                    subdir='figures/distributions')
+                    subdir='figures/distributions', fmt=fmt)
         return fig
 
     fig, ax = plt.subplots(figsize=(max(6, pivot.shape[1] * 1.4),
@@ -110,7 +113,7 @@ def plot_heatmap(df: pd.DataFrame,
     ax.set_ylabel('Algorithm')
     plt.tight_layout()
     _maybe_save(fig, output_dir, f'{metric}_by_category.png', save,
-                subdir='figures/distributions')
+                subdir='figures/distributions', fmt=fmt)
     return fig
 
 
@@ -122,7 +125,8 @@ def plot_scaling(df: pd.DataFrame,
                  log: bool = False,
                  algo_palette=None,
                  output_dir=None,
-                 save: bool = False) -> plt.Figure:
+                 save: bool = False,
+                 fmt: str = 'png') -> plt.Figure:
     """Line plot: metric vs x (aggregated across trials), one line per algorithm.
 
     Mean ± 1 std shaded ribbon.  Only successful trials included.
@@ -132,7 +136,7 @@ def plot_scaling(df: pd.DataFrame,
         fig, ax = plt.subplots()
         ax.text(0.5, 0.5, 'No successful trials', ha='center', va='center')
         _maybe_save(fig, output_dir, f'scaling_{metric}_vs_{x}.png', save,
-                    subdir='figures/scaling')
+                    subdir='figures/scaling', fmt=fmt)
         return fig
 
     palette = algo_palette or _algo_palette(success_df['algorithm'].unique())
@@ -159,7 +163,7 @@ def plot_scaling(df: pd.DataFrame,
     ax.grid(alpha=0.3)
     plt.tight_layout()
     _maybe_save(fig, output_dir, f'scaling_{metric}_vs_{x}.png', save,
-                subdir='figures/scaling')
+                subdir='figures/scaling', fmt=fmt)
     return fig
 
 
@@ -169,7 +173,8 @@ def plot_density_hardness(df: pd.DataFrame,
                           metric: str = 'avg_chain_length',
                           algo_palette=None,
                           output_dir=None,
-                          save: bool = False) -> plt.Figure:
+                          save: bool = False,
+                          fmt: str = 'png') -> plt.Figure:
     """Line plot: metric vs graph density for random graphs, one line per (algo, n).
 
     Only graphs with category=='random' are included.
@@ -180,7 +185,7 @@ def plot_density_hardness(df: pd.DataFrame,
     if rand_df.empty:
         ax.text(0.5, 0.5, 'No random graph data', ha='center', va='center')
         _maybe_save(fig, output_dir, f'density_hardness_{metric}.png', save,
-                    subdir='figures/scaling')
+                    subdir='figures/scaling', fmt=fmt)
         return fig
 
     palette = algo_palette or _algo_palette(rand_df['algorithm'].unique())
@@ -206,7 +211,7 @@ def plot_density_hardness(df: pd.DataFrame,
     ax.grid(alpha=0.3)
     plt.tight_layout()
     _maybe_save(fig, output_dir, f'density_hardness_{metric}.png', save,
-                subdir='figures/scaling')
+                subdir='figures/scaling', fmt=fmt)
     return fig
 
 
@@ -230,7 +235,8 @@ def plot_pareto(df: pd.DataFrame,
                 y: str = 'avg_chain_length',
                 algo_palette=None,
                 output_dir=None,
-                save: bool = False) -> plt.Figure:
+                save: bool = False,
+                fmt: str = 'png') -> plt.Figure:
     """Scatter: one point per (algorithm, problem), Pareto frontier highlighted.
 
     Uses per-problem mean across successful trials.
@@ -240,7 +246,7 @@ def plot_pareto(df: pd.DataFrame,
         fig, ax = plt.subplots()
         ax.text(0.5, 0.5, 'No successful trials', ha='center', va='center')
         _maybe_save(fig, output_dir, f'pareto_{x}_vs_{y}.png', save,
-                    subdir='figures')
+                    subdir='figures', fmt=fmt)
         return fig
 
     agg = success_df.groupby(['algorithm', 'problem_name'])[[x, y]].mean().reset_index()
@@ -267,7 +273,7 @@ def plot_pareto(df: pd.DataFrame,
     ax.grid(alpha=0.3)
     plt.tight_layout()
     _maybe_save(fig, output_dir, f'pareto_{x}_vs_{y}.png', save,
-                subdir='figures')
+                subdir='figures', fmt=fmt)
     return fig
 
 
@@ -277,7 +283,8 @@ def plot_distributions(df: pd.DataFrame,
                        metric: str = 'avg_chain_length',
                        algo_palette=None,
                        output_dir=None,
-                       save: bool = False) -> plt.Figure:
+                       save: bool = False,
+                       fmt: str = 'png') -> plt.Figure:
     """Violin plot of `metric` per algorithm (successful trials only)."""
     success_df = df[df['success']].copy()
     if success_df.empty or metric not in success_df.columns:
@@ -289,7 +296,7 @@ def plot_distributions(df: pd.DataFrame,
             fname = 'embedding_time_violin.png'
         else:
             fname = f'distribution_{metric}.png'
-        _maybe_save(fig, output_dir, fname, save, subdir='figures/distributions')
+        _maybe_save(fig, output_dir, fname, save, subdir='figures/distributions', fmt=fmt)
         return fig
 
     palette = algo_palette or _algo_palette(success_df['algorithm'].unique())
@@ -316,7 +323,7 @@ def plot_distributions(df: pd.DataFrame,
         fname = 'embedding_time_violin.png'
     else:
         fname = f'distribution_{metric}.png'
-    _maybe_save(fig, output_dir, fname, save, subdir='figures/distributions')
+    _maybe_save(fig, output_dir, fname, save, subdir='figures/distributions', fmt=fmt)
     return fig
 
 
@@ -328,7 +335,8 @@ def plot_head_to_head(df: pd.DataFrame,
                       metric: str = 'avg_chain_length',
                       algo_palette=None,
                       output_dir=None,
-                      save: bool = False) -> plt.Figure:
+                      save: bool = False,
+                      fmt: str = 'png') -> plt.Figure:
     """Scatter: per-problem mean metric for algo_a (x) vs algo_b (y).
 
     Points below the diagonal → algo_a wins (lower is better for most metrics).
@@ -347,14 +355,14 @@ def plot_head_to_head(df: pd.DataFrame,
         ax.text(0.5, 0.5, f'Missing data for {algo_a} or {algo_b}',
                 ha='center', va='center')
         _maybe_save(fig, output_dir, f'scatter_{algo_a}_vs_{algo_b}.png', save,
-                    subdir='figures/pairwise')
+                    subdir='figures/pairwise', fmt=fmt)
         return fig
 
     common = per_problem[[algo_a, algo_b]].dropna()
     if common.empty:
         ax.text(0.5, 0.5, 'No paired problems', ha='center', va='center')
         _maybe_save(fig, output_dir, f'scatter_{algo_a}_vs_{algo_b}.png', save,
-                    subdir='figures/pairwise')
+                    subdir='figures/pairwise', fmt=fmt)
         return fig
 
     ax.scatter(common[algo_a], common[algo_b], alpha=0.7, s=50,
@@ -377,7 +385,7 @@ def plot_head_to_head(df: pd.DataFrame,
     ax.set_aspect('equal', 'box')
     plt.tight_layout()
     _maybe_save(fig, output_dir, f'scatter_{algo_a}_vs_{algo_b}.png', save,
-                subdir='figures/pairwise')
+                subdir='figures/pairwise', fmt=fmt)
     return fig
 
 
@@ -386,7 +394,8 @@ def plot_head_to_head(df: pd.DataFrame,
 def plot_consistency(df: pd.DataFrame,
                      algo_palette=None,
                      output_dir=None,
-                     save: bool = False) -> plt.Figure:
+                     save: bool = False,
+                     fmt: str = 'png') -> plt.Figure:
     """Two-panel bar chart: coefficient of variation of time and chain length per algo.
 
     Lower CV → more consistent.  Computed per (algo, problem) pair, then averaged.
@@ -425,7 +434,7 @@ def plot_consistency(df: pd.DataFrame,
     plt.suptitle('Algorithm consistency (lower CV = more consistent)')
     plt.tight_layout()
     _maybe_save(fig, output_dir, 'consistency_cv.png', save,
-                subdir='figures/distributions')
+                subdir='figures/distributions', fmt=fmt)
     return fig
 
 
@@ -435,7 +444,8 @@ def plot_topology_comparison(df: pd.DataFrame,
                               metric: str = 'avg_chain_length',
                               algo_palette=None,
                               output_dir=None,
-                              save: bool = False) -> plt.Figure:
+                              save: bool = False,
+                              fmt: str = 'png') -> plt.Figure:
     """Grouped bar chart: metric per (algorithm × topology).
 
     Meaningful when results span multiple topologies.
@@ -476,7 +486,7 @@ def plot_topology_comparison(df: pd.DataFrame,
     ax.grid(axis='y', alpha=0.3)
     plt.tight_layout()
     _maybe_save(fig, output_dir, f'topology_comparison_{metric}.png', save,
-                subdir='figures/topology')
+                subdir='figures/topology', fmt=fmt)
     return fig
 
 
@@ -486,7 +496,8 @@ def plot_problem_deep_dive(df: pd.DataFrame,
                             problem_name: str,
                             algo_palette=None,
                             output_dir=None,
-                            save: bool = False) -> plt.Figure:
+                            save: bool = False,
+                            fmt: str = 'png') -> plt.Figure:
     """Two-panel bar chart for a single problem: time and chain length per algorithm."""
     prob_df = df[df['problem_name'] == problem_name].copy()
 
@@ -496,7 +507,7 @@ def plot_problem_deep_dive(df: pd.DataFrame,
         for ax in (ax1, ax2):
             ax.text(0.5, 0.5, f'No data for {problem_name}', ha='center', va='center')
         _maybe_save(fig, output_dir, f'deep_dive_{problem_name}.png', save,
-                    subdir='figures')
+                    subdir='figures', fmt=fmt)
         return fig
 
     success_df = prob_df[prob_df['success']]
@@ -542,7 +553,7 @@ def plot_problem_deep_dive(df: pd.DataFrame,
     plt.suptitle(f'Deep dive: {problem_name}')
     plt.tight_layout()
     fname = f'deep_dive_{problem_name.replace("/", "_")}.png'
-    _maybe_save(fig, output_dir, fname, save, subdir='figures')
+    _maybe_save(fig, output_dir, fname, save, subdir='figures', fmt=fmt)
     return fig
 
 
@@ -551,14 +562,15 @@ def plot_problem_deep_dive(df: pd.DataFrame,
 def plot_chain_distribution(df: pd.DataFrame,
                              algo_palette=None,
                              output_dir=None,
-                             save: bool = False) -> plt.Figure:
+                             save: bool = False,
+                             fmt: str = 'png') -> plt.Figure:
     """Overlaid KDE of avg_chain_length per algorithm (successful trials only)."""
     success_df = df[df['success']].copy()
     if success_df.empty:
         fig, ax = plt.subplots()
         ax.text(0.5, 0.5, 'No successful trials', ha='center', va='center')
         _maybe_save(fig, output_dir, 'chain_length_kde.png', save,
-                    subdir='figures/distributions')
+                    subdir='figures/distributions', fmt=fmt)
         return fig
 
     palette = algo_palette or _algo_palette(success_df['algorithm'].unique())
@@ -579,21 +591,21 @@ def plot_chain_distribution(df: pd.DataFrame,
     ax.grid(alpha=0.3)
     plt.tight_layout()
     _maybe_save(fig, output_dir, 'chain_length_kde.png', save,
-                subdir='figures/distributions')
+                subdir='figures/distributions', fmt=fmt)
     return fig
 
 
 # ── 11. Win rate matrix ──────────────────────────────────────────────────────────
 
 def plot_win_rate_matrix(df, metric='avg_chain_length', lower_is_better=True,
-                         output_dir=None, save=False):
+                         output_dir=None, save=False, fmt='png'):
     """Heatmap of pairwise win rates between algorithms."""
     from ember_qc_analysis.statistics import win_rate_matrix
     wm = win_rate_matrix(df, metric, lower_is_better)
     if wm.empty:
         fig, ax = plt.subplots()
         ax.text(0.5, 0.5, 'No data', ha='center', va='center')
-        _maybe_save(fig, output_dir, 'win_rate_matrix.png', save, subdir='figures/pairwise')
+        _maybe_save(fig, output_dir, 'win_rate_matrix.png', save, subdir='figures/pairwise', fmt=fmt)
         return fig
     fig, ax = plt.subplots(figsize=(max(5, len(wm) * 1.2), max(4, len(wm) * 1.0)))
     # Convert to percent for display
@@ -603,13 +615,13 @@ def plot_win_rate_matrix(df, metric='avg_chain_length', lower_is_better=True,
                 cbar_kws={'label': '% problems won'})
     ax.set_title(f'Win rate matrix ({metric.replace("_"," ")})\n(row algo wins against col algo)')
     plt.tight_layout()
-    _maybe_save(fig, output_dir, 'win_rate_matrix.png', save, subdir='figures/pairwise')
+    _maybe_save(fig, output_dir, 'win_rate_matrix.png', save, subdir='figures/pairwise', fmt=fmt)
     return fig
 
 
 # ── 12. Success heatmap ──────────────────────────────────────────────────────────
 
-def plot_success_heatmap(df, output_dir=None, save=False):
+def plot_success_heatmap(df, output_dir=None, save=False, fmt='png'):
     """Heatmap: algorithm × graph, cell = success rate across trials."""
     algos = sorted(df['algorithm'].unique())
     graphs = sorted(df['problem_name'].unique())
@@ -636,13 +648,13 @@ def plot_success_heatmap(df, output_dir=None, save=False):
     ax.set_ylabel('Algorithm')
     plt.xticks(rotation=45, ha='right', fontsize=7)
     plt.tight_layout()
-    _maybe_save(fig, output_dir, 'success_rate_heatmap.png', save, subdir='figures/success')
+    _maybe_save(fig, output_dir, 'success_rate_heatmap.png', save, subdir='figures/success', fmt=fmt)
     return fig
 
 
 # ── 13. Success by nodes ─────────────────────────────────────────────────────────
 
-def plot_success_by_nodes(df, algo_palette=None, output_dir=None, save=False):
+def plot_success_by_nodes(df, algo_palette=None, output_dir=None, save=False, fmt='png'):
     """Line plot: success rate vs n_nodes per algorithm."""
     palette = algo_palette or _algo_palette(df['algorithm'].unique())
     markers = _algo_markers(df['algorithm'].unique())
@@ -661,13 +673,13 @@ def plot_success_by_nodes(df, algo_palette=None, output_dir=None, save=False):
     ax.legend(framealpha=0.9, bbox_to_anchor=(1.02, 1), loc='upper left')
     ax.grid(alpha=0.3)
     plt.tight_layout()
-    _maybe_save(fig, output_dir, 'success_rate_by_nodes.png', save, subdir='figures/success')
+    _maybe_save(fig, output_dir, 'success_rate_by_nodes.png', save, subdir='figures/success', fmt=fmt)
     return fig
 
 
 # ── 14. Success by density ───────────────────────────────────────────────────────
 
-def plot_success_by_density(df, algo_palette=None, output_dir=None, save=False):
+def plot_success_by_density(df, algo_palette=None, output_dir=None, save=False, fmt='png'):
     """Line plot: success rate vs problem_density per algorithm."""
     palette = algo_palette or _algo_palette(df['algorithm'].unique())
     markers = _algo_markers(df['algorithm'].unique())
@@ -690,7 +702,7 @@ def plot_success_by_density(df, algo_palette=None, output_dir=None, save=False):
     ax.legend(framealpha=0.9, bbox_to_anchor=(1.02, 1), loc='upper left')
     ax.grid(alpha=0.3)
     plt.tight_layout()
-    _maybe_save(fig, output_dir, 'success_rate_by_density.png', save, subdir='figures/success')
+    _maybe_save(fig, output_dir, 'success_rate_by_density.png', save, subdir='figures/success', fmt=fmt)
     return fig
 
 
@@ -786,7 +798,7 @@ def _add_category_labels(ax, graphs, categories):
 
 def plot_graph_indexed_chain(df, x_mode='by_graph_id', algo_palette=None,
                               metric='avg_chain_length',
-                              output_dir=None, save=False):
+                              output_dir=None, save=False, fmt='png'):
     """Dot plot: chain length metric per graph instance.
 
     x_mode:  'by_graph_id' (categorical) | 'by_n_nodes' (numeric) | 'by_density' (numeric)
@@ -807,7 +819,7 @@ def plot_graph_indexed_chain(df, x_mode='by_graph_id', algo_palette=None,
         fig, ax = plt.subplots()
         ax.text(0.5, 0.5, 'No successful trials', ha='center', va='center')
         _maybe_save(fig, output_dir, fname, save,
-                    subdir=f'figures/graph_indexed/{x_mode}')
+                    subdir=f'figures/graph_indexed/{x_mode}', fmt=fmt)
         return fig
 
     algos = sorted(success_df['algorithm'].unique())
@@ -886,14 +898,14 @@ def plot_graph_indexed_chain(df, x_mode='by_graph_id', algo_palette=None,
 
     plt.tight_layout()
     _maybe_save(fig, output_dir, fname, save,
-                subdir=f'figures/graph_indexed/{x_mode}')
+                subdir=f'figures/graph_indexed/{x_mode}', fmt=fmt)
     return fig
 
 
 # ── 16. Graph-indexed embedding time ────────────────────────────────────────────
 
 def plot_graph_indexed_time(df, x_mode='by_graph_id', algo_palette=None,
-                             output_dir=None, save=False):
+                             output_dir=None, save=False, fmt='png'):
     """Dot plot: wall_time per graph instance, log scale.
 
     Timeout runs appear at the timeout ceiling with a distinct marker (triangle up).
@@ -903,7 +915,7 @@ def plot_graph_indexed_time(df, x_mode='by_graph_id', algo_palette=None,
         fig, ax = plt.subplots()
         ax.text(0.5, 0.5, 'No data', ha='center', va='center')
         _maybe_save(fig, output_dir, 'embedding_time.png', save,
-                    subdir=f'figures/graph_indexed/{x_mode}')
+                    subdir=f'figures/graph_indexed/{x_mode}', fmt=fmt)
         return fig
 
     algos = sorted(df['algorithm'].unique())
@@ -973,13 +985,13 @@ def plot_graph_indexed_time(df, x_mode='by_graph_id', algo_palette=None,
               framealpha=0.9, fontsize=8)
     plt.tight_layout()
     _maybe_save(fig, output_dir, 'embedding_time.png', save,
-                subdir=f'figures/graph_indexed/{x_mode}')
+                subdir=f'figures/graph_indexed/{x_mode}', fmt=fmt)
     return fig
 
 
 # ── 17. Graph-indexed success ────────────────────────────────────────────────────
 
-def plot_graph_indexed_success(df, x_mode='by_graph_id', output_dir=None, save=False):
+def plot_graph_indexed_success(df, x_mode='by_graph_id', output_dir=None, save=False, fmt='png'):
     """Success rate heatmap: algorithm × graph, with same x-ordering as other variants.
 
     Note: for by_n_nodes and by_density x_modes, graphs are still shown as categorical
@@ -1014,7 +1026,7 @@ def plot_graph_indexed_success(df, x_mode='by_graph_id', output_dir=None, save=F
     ax.set_ylabel('Algorithm')
     plt.tight_layout()
     _maybe_save(fig, output_dir, 'success.png', save,
-                subdir=f'figures/graph_indexed/{x_mode}')
+                subdir=f'figures/graph_indexed/{x_mode}', fmt=fmt)
     return fig
 
 
@@ -1023,7 +1035,8 @@ def plot_graph_indexed_success(df, x_mode='by_graph_id', output_dir=None, save=F
 def plot_max_chain_distribution(df: pd.DataFrame,
                                  algo_palette=None,
                                  output_dir=None,
-                                 save: bool = False) -> plt.Figure:
+                                 save: bool = False,
+                                 fmt: str = 'png') -> plt.Figure:
     """Overlaid KDE of max_chain_length per algorithm (successful trials only).
 
     Batches that predate the max_chain_length column will have NaN values;
@@ -1037,7 +1050,7 @@ def plot_max_chain_distribution(df: pd.DataFrame,
         fig, ax = plt.subplots()
         ax.text(0.5, 0.5, 'No max_chain_length data', ha='center', va='center')
         _maybe_save(fig, output_dir, 'max_chain_length_kde.png', save,
-                    subdir='figures/distributions')
+                    subdir='figures/distributions', fmt=fmt)
         return fig
 
     palette = algo_palette or _algo_palette(success_df['algorithm'].unique())
@@ -1060,7 +1073,7 @@ def plot_max_chain_distribution(df: pd.DataFrame,
     ax.grid(alpha=0.3)
     plt.tight_layout()
     _maybe_save(fig, output_dir, 'max_chain_length_kde.png', save,
-                subdir='figures/distributions')
+                subdir='figures/distributions', fmt=fmt)
     return fig
 
 
@@ -1071,7 +1084,8 @@ def plot_intersection_comparison(df: pd.DataFrame,
                                   algo_b: str,
                                   algo_palette=None,
                                   output_dir=None,
-                                  save: bool = False) -> plt.Figure:
+                                  save: bool = False,
+                                  fmt: str = 'png') -> plt.Figure:
     """Grouped bar chart comparing two algorithms on their shared-success graphs.
 
     For each of five metrics the figure shows:
@@ -1149,7 +1163,7 @@ def plot_intersection_comparison(df: pd.DataFrame,
         ax.text(0.5, 0.5, f'No shared data for {algo_a} vs {algo_b}',
                 ha='center', va='center')
         fname = f'intersection_{algo_a}_vs_{algo_b}.png'
-        _maybe_save(fig, output_dir, fname, save, subdir='figures/pairwise')
+        _maybe_save(fig, output_dir, fname, save, subdir='figures/pairwise', fmt=fmt)
         return fig
 
     fig, ax = plt.subplots(figsize=(max(9, n_metrics * 2.0), 6))
@@ -1224,5 +1238,5 @@ def plot_intersection_comparison(df: pd.DataFrame,
     plt.tight_layout(rect=[0, 0.07, 1, 1])
 
     fname = f'intersection_{algo_a}_vs_{algo_b}.png'
-    _maybe_save(fig, output_dir, fname, save, subdir='figures/pairwise')
+    _maybe_save(fig, output_dir, fname, save, subdir='figures/pairwise', fmt=fmt)
     return fig

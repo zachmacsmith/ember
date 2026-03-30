@@ -470,8 +470,8 @@ Custom embedding algorithm template for ember-qc.
 Contract:
   - Subclass EmbeddingAlgorithm and implement embed().
   - Return {'embedding': {node: [qubits], ...}} on success.
-  - Return {'embedding': {}, 'status': 'FAILURE'} on failure.
-  - Never return None.
+  - Return {'embedding': {}, 'status': 'FAILURE'} on failure (preferred).
+  - Returning None is also accepted and produces a FAILURE result.
   - Register with @register_algorithm("your-algo-name").
 """
 from ember_qc.registry import EmbeddingAlgorithm, register_algorithm
@@ -485,8 +485,7 @@ class MyAlgorithm(EmbeddingAlgorithm):
     def version(self) -> str:
         return "1.0.0"
 
-    def embed(self, source_graph, target_graph, **kwargs):
-        timeout = kwargs.get("timeout", 60.0)
+    def embed(self, source_graph, target_graph, timeout=60.0, **kwargs):
         seed = kwargs.get("seed", 42)
 
         # Your embedding logic here.

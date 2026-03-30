@@ -27,7 +27,7 @@ def _next_batch_name(base_dir: Path) -> str:
     Format: batch_YYYY-MM-DD_HH-MM-SS
     If that already exists (multiple runs in same second), appends _2, _3, etc.
     """
-    now = datetime.now()
+    now = datetime.now(timezone.utc)
     base = f"batch_{now.strftime('%Y-%m-%d_%H-%M-%S')}"
     candidate = base
     counter = 2
@@ -157,7 +157,7 @@ class ResultsManager:
         self._save_summary(results, batch_dir)
         self._save_readme(results, batch_dir, config)
 
-        print(f"\n📁 Results saved to {batch_dir}/")
+        print(f"\nResults saved to {batch_dir}/")
         print(f"   ├── README.md    (human-readable summary)")
         print(f"   ├── config.json  (machine-readable settings)")
         print(f"   ├── results.db   (SQLite — runs, embeddings, graphs, batches)")

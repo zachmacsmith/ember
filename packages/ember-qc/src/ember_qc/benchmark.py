@@ -429,7 +429,7 @@ def _print_warn_summary(warn_registry: dict, log_dir: Path) -> None:
     if total == 0:
         return
 
-    print(f"\n⚠️  Warnings ({total} total):")
+    print(f"\nWarnings ({total} total):")
 
     if 'TOPOLOGY_INCOMPATIBLE' in warn_registry:
         entry = warn_registry['TOPOLOGY_INCOMPATIBLE']
@@ -705,13 +705,13 @@ def _execute_tasks(
 
                 if verbose:
                     if result.success:
-                        valid_str = " ✓valid" if result.is_valid else " ✗invalid"
-                        print(f"✓ wall={result.wall_time:.3f}s "
+                        valid_str = " [valid]" if result.is_valid else " [invalid]"
+                        print(f"[ok] wall={result.wall_time:.3f}s "
                               f"cpu={result.cpu_time:.3f}s, "
                               f"avg_chain={result.avg_chain_length:.2f}, "
                               f"qubits={result.total_qubits_used}{valid_str}")
                     else:
-                        print(f"✗ Failed: {result.error}")
+                        print(f"[fail] {result.error}")
                 else:
                     pct = int(40 * done_count / max(n_tasks, 1))
                     bar = '#' * pct + '-' * (40 - pct)
@@ -778,11 +778,11 @@ def _execute_tasks(
                     trial = display['trial']
                     if display['success']:
                         print(f"  [{completed_display}/{n_tasks}] {algo} / {prob} "
-                              f"trial {trial}: ✓ wall={display['wall_time']:.3f}s "
+                              f"trial {trial}: [ok] wall={display['wall_time']:.3f}s "
                               f"avg_chain={display['avg_chain_length']:.2f}")
                     else:
                         print(f"  [{completed_display}/{n_tasks}] {algo} / {prob} "
-                              f"trial {trial}: ✗ {display['status']}")
+                              f"trial {trial}: [fail] {display['status']}")
                 else:
                     pct = int(40 * completed_display / max(n_tasks, 1))
                     bar = '#' * pct + '-' * (40 - pct)
@@ -981,7 +981,7 @@ class EmbeddingBenchmark:
             if problems:
                 return problems
             # Fall through to on-the-fly generation if no graphs on disk
-            print("⚠️  No pre-generated graphs found. Generating on the fly.")
+            print("Warning: No pre-generated graphs found. Generating on the fly.")
             print("   Run: python generate_test_graphs.py")
         
         # Legacy on-the-fly generation
@@ -1192,7 +1192,7 @@ class EmbeddingBenchmark:
                 if not nx.is_connected(faulted):
                     n_comp = nx.number_connected_components(faulted)
                     _disconnected_topos[topo_name] = n_comp
-                    print(f"⚠️  Fault simulation produced a disconnected topology: "
+                    print(f"Warning: Fault simulation produced a disconnected topology: "
                           f"{topo_name} ({n_comp} connected components).")
                 faulted_topo_list.append((label, faulted, topo_name))
             topo_list = faulted_topo_list
@@ -1202,7 +1202,7 @@ class EmbeddingBenchmark:
             selection = graph_selection or "*"
             problems = _load_test_graphs(selection)
             if not problems:
-                print(f"⚠️  No graphs matched selection '{selection}'. "
+                print(f"Warning: No graphs matched selection '{selection}'. "
                       f"Run: python generate_test_graphs.py")
                 return None
 
@@ -1214,7 +1214,7 @@ class EmbeddingBenchmark:
         valid_methods = [m for m in methods if m in ALGORITHM_REGISTRY]
         missing = set(methods) - set(valid_methods)
         if missing:
-            print(f"⚠️  Unknown algorithms (skipped): {missing}")
+            print(f"Warning: Unknown algorithms (skipped): {missing}")
             print(f"   Available: {available}")
 
         # Pre-run availability check — fail fast before any work starts
@@ -1240,7 +1240,7 @@ class EmbeddingBenchmark:
                     _topo_incompat_entries.append((algo_name, topo_name, n_skip))
 
         if _topo_incompat_entries:
-            print("⚠️  Pre-run checks:")
+            print("Warning: Pre-run checks:")
             for algo_name, topo_name, n_skip in _topo_incompat_entries:
                 print(f"   {algo_name} is not compatible with topology {topo_name}"
                       f" — {n_skip:,} trials skipped.")
@@ -1250,7 +1250,7 @@ class EmbeddingBenchmark:
         total_warmup = len(problems) * n_compatible_combos * warmup_trials
 
         if n_workers > 1 and warmup_trials > 0:
-            print(f"⚠️  Warmup trials skipped (not supported with n_workers > 1).")
+            print(f"Warning: Warmup trials skipped (not supported with n_workers > 1).")
             total_warmup = 0
             warmup_trials = 0
 
@@ -1555,7 +1555,7 @@ def load_benchmark(batch_id: Optional[str] = None,
             else:
                 jsonl = run['jsonl_lines']
                 print(f"[{i}]  {run['batch_id']}{note_str}")
-                print(f"     ✗ no checkpoint — crashed or still running  "
+                print(f"     [no checkpoint] crashed or still running  "
                       f"{jsonl} JSONL lines on disk")
         print()
 
@@ -1829,7 +1829,7 @@ def delete_benchmark(batch_id: Optional[str] = None,
                 print(f"     {done}/{total} trials complete")
             else:
                 print(f"[{i}]  {run['batch_id']}{note_str}")
-                print(f"     ✗ no checkpoint — crashed or still running  "
+                print(f"     [no checkpoint] crashed or still running  "
                       f"{run['jsonl_lines']} JSONL lines on disk")
         print()
         while True:

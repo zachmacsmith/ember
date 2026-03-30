@@ -89,7 +89,7 @@ __all__ = [
 # ── BenchmarkAnalysis ─────────────────────────────────────────────────────────
 
 class BenchmarkAnalysis:
-    """Main entry point for analysing a single qebench batch.
+    """Main entry point for analysing a single ember-qc batch.
 
     Args:
         batch_dir:    Path to the batch directory (contains results.db or
@@ -355,99 +355,99 @@ class BenchmarkAnalysis:
         _run('chain_length_kde',
              lambda: plot_chain_distribution(
                  self._df, algo_palette=palette,
-                 output_dir=self.output_dir, save=True))
+                 output_dir=self.output_dir, save=True, fmt=fmt))
         _run('max_chain_length_kde',
              lambda: plot_max_chain_distribution(
                  self._df, algo_palette=palette,
-                 output_dir=self.output_dir, save=True))
+                 output_dir=self.output_dir, save=True, fmt=fmt))
         _run('chain_length_violin',
              lambda: plot_distributions(
                  self._df, 'avg_chain_length', algo_palette=palette,
-                 output_dir=self.output_dir, save=True))
+                 output_dir=self.output_dir, save=True, fmt=fmt))
         _run('embedding_time_violin',
              lambda: plot_distributions(
                  self._df, 'wall_time', algo_palette=palette,
-                 output_dir=self.output_dir, save=True))
+                 output_dir=self.output_dir, save=True, fmt=fmt))
         _run('chain_length_by_category',
              lambda: plot_heatmap(
                  self._df, 'avg_chain_length', algo_palette=palette,
-                 output_dir=self.output_dir, save=True))
+                 output_dir=self.output_dir, save=True, fmt=fmt))
         _run('consistency_cv',
              lambda: plot_consistency(
                  self._df, algo_palette=palette,
-                 output_dir=self.output_dir, save=True))
+                 output_dir=self.output_dir, save=True, fmt=fmt))
 
         # ── Scaling plots ─────────────────────────────────────────────────
         _run('chain_length_vs_nodes',
              lambda: plot_scaling(
                  self._df, 'avg_chain_length', 'problem_nodes',
-                 algo_palette=palette, output_dir=self.output_dir, save=True))
+                 algo_palette=palette, output_dir=self.output_dir, save=True, fmt=fmt))
         _run('time_vs_nodes',
              lambda: plot_scaling(
                  self._df, 'wall_time', 'problem_nodes',
-                 algo_palette=palette, output_dir=self.output_dir, save=True))
+                 algo_palette=palette, output_dir=self.output_dir, save=True, fmt=fmt))
         _run('density_hardness',
              lambda: plot_density_hardness(
                  self._df, algo_palette=palette,
-                 output_dir=self.output_dir, save=True))
+                 output_dir=self.output_dir, save=True, fmt=fmt))
 
         # ── Pairwise plots ────────────────────────────────────────────────
         _run('win_rate_matrix',
              lambda: plot_win_rate_matrix(
-                 self._df, output_dir=self.output_dir, save=True))
+                 self._df, output_dir=self.output_dir, save=True, fmt=fmt))
         for a, b in itertools.combinations(algos, 2):
             _run(f'scatter_{a}_vs_{b}',
                  lambda a=a, b=b: plot_head_to_head(
-                     self._df, a, b, output_dir=self.output_dir, save=True))
+                     self._df, a, b, output_dir=self.output_dir, save=True, fmt=fmt))
             _run(f'intersection_{a}_vs_{b}',
                  lambda a=a, b=b: plot_intersection_comparison(
                      self._df, a, b, algo_palette=palette,
-                     output_dir=self.output_dir, save=True))
+                     output_dir=self.output_dir, save=True, fmt=fmt))
 
         # ── Success plots ─────────────────────────────────────────────────
         _run('success_rate_heatmap',
              lambda: plot_success_heatmap(
-                 self._df, output_dir=self.output_dir, save=True))
+                 self._df, output_dir=self.output_dir, save=True, fmt=fmt))
         _run('success_rate_by_nodes',
              lambda: plot_success_by_nodes(
                  self._df, algo_palette=palette,
-                 output_dir=self.output_dir, save=True))
+                 output_dir=self.output_dir, save=True, fmt=fmt))
         _run('success_rate_by_density',
              lambda: plot_success_by_density(
                  self._df, algo_palette=palette,
-                 output_dir=self.output_dir, save=True))
+                 output_dir=self.output_dir, save=True, fmt=fmt))
 
         # ── Graph-indexed plots (3 x_modes × 4 metrics = 12 plots) ──────
         for x_mode in ('by_graph_id', 'by_n_nodes', 'by_density'):
             _run(f'graph_indexed/{x_mode}/chain_length',
                  lambda xm=x_mode: plot_graph_indexed_chain(
                      self._df, xm, algo_palette=palette,
-                     output_dir=self.output_dir, save=True))
+                     output_dir=self.output_dir, save=True, fmt=fmt))
             _run(f'graph_indexed/{x_mode}/max_chain_length',
                  lambda xm=x_mode: plot_graph_indexed_chain(
                      self._df, xm, algo_palette=palette,
                      metric='max_chain_length',
-                     output_dir=self.output_dir, save=True))
+                     output_dir=self.output_dir, save=True, fmt=fmt))
             _run(f'graph_indexed/{x_mode}/embedding_time',
                  lambda xm=x_mode: plot_graph_indexed_time(
                      self._df, xm, algo_palette=palette,
-                     output_dir=self.output_dir, save=True))
+                     output_dir=self.output_dir, save=True, fmt=fmt))
             _run(f'graph_indexed/{x_mode}/success',
                  lambda xm=x_mode: plot_graph_indexed_success(
                      self._df, xm,
-                     output_dir=self.output_dir, save=True))
+                     output_dir=self.output_dir, save=True, fmt=fmt))
 
         # ── Topology comparison ───────────────────────────────────────────
         _run('topology_comparison',
              lambda: plot_topology_comparison(
                  self._df, algo_palette=palette,
-                 output_dir=self.output_dir, save=True))
+                 output_dir=self.output_dir, save=True, fmt=fmt))
 
         # ── Pareto frontier ───────────────────────────────────────────────
         _run('pareto_frontier',
              lambda: plot_pareto(
                  self._df, algo_palette=palette,
-                 output_dir=self.output_dir, save=True))
+                 output_dir=self.output_dir, save=True, fmt=fmt))
 
         # ── Summary tables → summary/ ─────────────────────────────────────
         try:
