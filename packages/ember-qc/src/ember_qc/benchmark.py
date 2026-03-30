@@ -930,9 +930,6 @@ class EmbeddingBenchmark:
     
     def __init__(self, target_graph: nx.Graph = None, results_dir: str = "./results",
                  unfinished_dir: Optional[str] = None):
-        from ember_qc._paths import get_user_unfinished_dir as _unfinished_dir
-        if unfinished_dir is None:
-            unfinished_dir = str(_unfinished_dir())
         """
         Initialize benchmark.
 
@@ -943,6 +940,9 @@ class EmbeddingBenchmark:
             unfinished_dir: Staging directory for in-progress/cancelled batches.
                             Default: runs_unfinished/ sibling to results_dir.
         """
+        from ember_qc._paths import get_user_unfinished_dir as _unfinished_dir
+        if unfinished_dir is None:
+            unfinished_dir = str(_unfinished_dir())
         self.target_graph = target_graph
         self.results_manager = ResultsManager(results_dir, unfinished_dir=unfinished_dir)
         self.results: List[EmbeddingResult] = []

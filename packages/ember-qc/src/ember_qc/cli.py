@@ -26,7 +26,7 @@ from typing import Optional
 
 
 # ---------------------------------------------------------------------------
-# YAML helpers (PyYAML is not a declared dependency — degrade gracefully)
+# YAML helpers
 # ---------------------------------------------------------------------------
 
 import yaml
