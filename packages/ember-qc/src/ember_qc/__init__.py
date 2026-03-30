@@ -7,7 +7,7 @@ Core usage:
     result = benchmark_one(source_graph, target_graph, "minorminer")
 """
 
-__version__ = "0.5.0"
+__version__ = "0.9.0"
 
 # Core benchmark function and result type
 from ember_qc.benchmark import (

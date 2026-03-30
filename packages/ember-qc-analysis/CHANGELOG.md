@@ -5,6 +5,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.9.0] - 2026-03-29
+
+Pre-release hardening for v1.0.0.
+
+### Fixed
+
+- Fixed `spearmanr` result access: uses `[0]` indexing instead of tuple unpacking for
+  compatibility with scipy >= 1.9 (`SpearmanrResult` named tuple).
+- Fixed unsafe `.astype(bool)` on nullable SQLite columns in `loader.py` — `NaN`
+  (from `NULL`) no longer silently converts to `True`.
+- Fixed `generate_report(fmt=...)` parameter being accepted but never passed to plot
+  functions — all plots now respect the caller's format choice.
+- Fixed `_load_from_db()` using `SELECT *` — now enumerates columns explicitly with
+  `PRAGMA table_info` fallback for older databases.
+
+### Changed
+
+- Added Python 3.9 and 3.13 to `pyproject.toml` classifiers (matches `requires-python`).
+- Updated `BenchmarkAnalysis` docstring from "qebench" to "ember-qc".
+- Added inline comment clarifying `correlation_matrix` DataFrame construction.
+
 ## [0.0.1] - 2026-03-28
 
 Initial PyPI placeholder release to reserve the package name.

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ember-qc"
-version = "0.5.0"
+version = "0.9.0"
 description = "Quantum minor-embedding benchmark suite for D-Wave hardware topologies"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -53,7 +53,7 @@ Repository = "https://github.com/zachmacsmith/ember"
 [project.optional-dependencies]
 # Pulls in the companion analysis package and its plotting dependencies
 analysis = [
-    "ember-qc-analysis>=0.0.1",
+    "ember-qc-analysis>=0.9.0",
 ]
 # CHARME algorithm (PyTorch GNN approach)
 charme = [

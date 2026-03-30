@@ -5,6 +5,41 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.9.0] - 2026-03-29
+
+Pre-release hardening for v1.0.0.
+
+### Fixed
+
+- Removed global `warnings.filterwarnings('ignore')` that silenced all warnings for
+  the entire Python process on import.
+- Fixed `EmbeddingBenchmark.__init__` docstring placement (was after executable code,
+  not recognized as a docstring).
+- Fixed `benchmark_one()` reporting `wall_time=timeout` instead of actual elapsed time
+  when an algorithm returns `None`.
+- Fixed `validate_layer2()` check ordering: chain format check now runs before
+  value/type checks, preventing misleading validation failure messages.
+- Fixed unsafe `.astype(bool)` on nullable SQLite columns in `compile.py` and
+  `loader.py` — `NaN` (from `NULL`) no longer silently converts to `True`.
+- Fixed `validate_embedding()` in `registry.py` — now delegates to `validate_layer1()`
+  with proper logging instead of duplicating logic with a bare `print()`.
+- Removed emoji characters from `results.py` output for compatibility with terminals
+  lacking Unicode support.
+- Fixed `_next_batch_name()` using local time while `config.json` timestamp used UTC;
+  both now use UTC consistently.
+- Fixed stale comment in `cli.py` claiming PyYAML is not a declared dependency (it is).
+- Fixed algorithm template: `embed()` signature now includes `timeout` parameter; docs
+  clarify that returning `None` is accepted.
+
+### Changed
+
+- Added Python 3.9 and 3.13 to `pyproject.toml` classifiers (matches `requires-python`).
+- `generate_report(fmt=...)` parameter now plumbed through to all plot functions.
+- `spearmanr` result access uses `[0]` indexing instead of tuple unpacking for
+  compatibility with scipy >= 1.9.
+- `_load_from_db()` in analysis loader now enumerates columns explicitly instead of
+  `SELECT *`, with `PRAGMA table_info` fallback for older databases.
+
 ## [0.5.0] - 2026-03-28
 
 Initial public release.
