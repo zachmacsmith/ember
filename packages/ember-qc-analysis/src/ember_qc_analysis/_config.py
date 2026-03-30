@@ -163,7 +163,7 @@ def resolve(key: str, explicit: Any = _SENTINEL) -> Any:
 
 def get_output_dir(batch_dir: Path, explicit: Optional[str] = None) -> Path:
     """
-    Resolve the output directory for analysis outputs.
+    Resolve the output directory for analysis outputs (non-interactive).
 
     Priority:
       1. explicit arg (--output-dir flag)
@@ -175,6 +175,90 @@ def get_output_dir(batch_dir: Path, explicit: Optional[str] = None) -> Path:
     if resolved:
         return Path(resolved)
     return batch_dir / "analysis"
+
+
+def resolve_output_dir(
+    batch_dir: Path,
+    explicit: Optional[str] = None,
+    prompt: bool = True,
+) -> Path:
+    """
+    Resolve the output directory, offering an interactive prompt when nothing
+    is configured and prompt=True.
+
+    Priority:
+      1. explicit arg (--output-dir flag)
+      2. EMBER_ANALYSIS_OUTPUT_DIR env var
+      3. Stored output_dir config
+      4. Interactive prompt with three options (when prompt=True)
+      5. Fallback: batch_dir/analysis/
+
+    The three prompt options are:
+      [1] Alongside ember-qc results — uses ember-qc's configured output_dir
+          as the base (e.g. ~/results/analysis/), or ./analysis/ if ember-qc
+          is not configured.
+      [2] Custom path — user enters a path; offered the chance to save it.
+      [3] Inside batch directory — batch_dir/analysis/ (no save).
+    """
+    resolved = resolve("output_dir", explicit=explicit if explicit is not None else _SENTINEL)
+    if resolved:
+        return Path(resolved)
+
+    if not prompt:
+        return batch_dir / "analysis"
+
+    # Nothing configured — show three-option prompt
+    ember_base = _discover_emberqc_output_dir()
+    if ember_base:
+        option1_path  = ember_base / "analysis"
+        option1_label = f"Alongside ember-qc results:  {option1_path}/"
+    else:
+        option1_path  = Path.cwd() / "analysis"
+        option1_label = f"Current working directory:   {option1_path}/"
+
+    option3_path = batch_dir / "analysis"
+
+    print()
+    print("No output directory configured for ember-analysis.")
+    print("Where should analysis outputs be written?\n")
+    print(f"  [1]  {option1_label}")
+    print(f"  [2]  Custom path")
+    print(f"  [3]  Inside batch directory: {option3_path}/  (no save)")
+    print()
+
+    chosen: Optional[Path] = None
+    while chosen is None:
+        try:
+            choice = input("Choice [1/2/3]: ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print()
+            return option3_path
+        if choice == "1":
+            chosen = option1_path
+        elif choice == "2":
+            try:
+                raw = input("Enter path: ").strip()
+            except (EOFError, KeyboardInterrupt):
+                print()
+                return option3_path
+            if raw:
+                chosen = Path(raw).expanduser()
+        elif choice == "3":
+            return option3_path
+        else:
+            print("Please enter 1, 2, or 3.")
+
+    # Offer to save choices 1 and 2
+    try:
+        ans = input(f"Save '{chosen}' as default output directory? [Y/n] ").strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        ans = ""
+    if ans in ("", "y", "yes"):
+        set_config("output_dir", str(chosen))
+        print(f"Saved. To change later: ember-analysis config set output_dir <path>")
+
+    print()
+    return chosen
 
 
 # ---------------------------------------------------------------------------

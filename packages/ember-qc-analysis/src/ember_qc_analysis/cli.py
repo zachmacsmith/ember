@@ -26,7 +26,7 @@ from typing import Optional
 
 from ember_qc_analysis._config import (
     DEFAULTS, ENV_VARS, load_config, set_config, get_config, reset_config,
-    resolve, resolve_input_dir, get_output_dir,
+    resolve, resolve_input_dir, get_output_dir, resolve_output_dir,
     is_valid_batch, validate_batch,
 )
 from ember_qc_analysis._paths import get_user_config_path
@@ -157,7 +157,7 @@ def cmd_report(args: argparse.Namespace) -> None:
     from ember_qc_analysis import BenchmarkAnalysis
 
     batch_dir = _resolve_active_batch()
-    output_root = get_output_dir(batch_dir, explicit=getattr(args, "output_dir", None))
+    output_root = resolve_output_dir(batch_dir, explicit=getattr(args, "output_dir", None))
     fmt = getattr(args, "format", None) or resolve("fig_format")
     overwrite = getattr(args, "overwrite", False)
 
@@ -194,7 +194,7 @@ def cmd_plots(args: argparse.Namespace) -> None:
         sys.exit(1)
 
     batch_dir = _resolve_active_batch()
-    output_root = get_output_dir(batch_dir, explicit=getattr(args, "output_dir", None))
+    output_root = resolve_output_dir(batch_dir, explicit=getattr(args, "output_dir", None))
     fmt = getattr(args, "format", None) or resolve("fig_format")
     overwrite = getattr(args, "overwrite", False)
 
@@ -210,7 +210,7 @@ def cmd_tables(args: argparse.Namespace) -> None:
     from ember_qc_analysis import BenchmarkAnalysis
 
     batch_dir = _resolve_active_batch()
-    output_root = get_output_dir(batch_dir, explicit=getattr(args, "output_dir", None))
+    output_root = resolve_output_dir(batch_dir, explicit=getattr(args, "output_dir", None))
     overwrite = getattr(args, "overwrite", False)
 
     an = BenchmarkAnalysis(str(batch_dir), output_root=str(output_root))
@@ -253,7 +253,7 @@ def cmd_stats(args: argparse.Namespace) -> None:
     from ember_qc_analysis import BenchmarkAnalysis
 
     batch_dir = _resolve_active_batch()
-    output_root = get_output_dir(batch_dir, explicit=getattr(args, "output_dir", None))
+    output_root = resolve_output_dir(batch_dir, explicit=getattr(args, "output_dir", None))
     overwrite = getattr(args, "overwrite", False)
 
     an = BenchmarkAnalysis(str(batch_dir), output_root=str(output_root))
