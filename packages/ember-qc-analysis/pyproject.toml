@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ember-qc-analysis"
-version = "0.9.1"
+version = "0.9.2"
 description = "Post-benchmark analysis, plots, and statistics for ember-qc results"
 readme = "README.md"
 license = { file = "LICENSE" }

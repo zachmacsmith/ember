@@ -5,23 +5,52 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.9.2] - 2026-03-30
+
+### Fixed
+
+- Fixed `ConstantInputWarning` from scipy in `correlation_matrix`: columns with zero
+  variance now return `NaN` instead of triggering a warning.
+
+### Changed
+
+- CLI commands (`report`, `plots`, `tables`, `stats`) now prompt the user to choose an
+  output directory when none is configured, instead of silently writing into the batch
+  directory. Three options are offered: alongside ember-qc results, a custom path, or
+  inside the batch directory. Choices 1 and 2 offer to save as the default.
+- `resolve_output_dir()` added to `_config.py` for interactive resolution; the existing
+  `get_output_dir()` is unchanged for non-interactive / library use.
+
+---
+
+## [0.9.1] - 2026-03-30
+
+Patch release — changelog corrections only. No code changes.
+
+---
+
 ## [0.9.0] - 2026-03-29
 
 Pre-release hardening for v1.0.0.
 
 ### Fixed
 
-- Fixed `spearmanr` result access: uses `[0]` indexing instead of tuple unpacking for
-  compatibility with scipy >= 1.9 (`SpearmanrResult` named tuple).
+- Fixed `spearmanr` / `pearsonr` result access: uses `[0]` indexing instead of tuple
+  unpacking for compatibility with scipy >= 1.9 (`SpearmanrResult` / `PearsonRResult`
+  named result objects).
 - Fixed unsafe `.astype(bool)` on nullable SQLite columns in `loader.py` — `NaN`
   (from `NULL`) no longer silently converts to `True`.
 - Fixed `generate_report(fmt=...)` parameter being accepted but never passed to plot
-  functions — all plots now respect the caller's format choice.
-- Fixed `_load_from_db()` using `SELECT *` — now enumerates columns explicitly with
-  `PRAGMA table_info` fallback for older databases.
+  functions — all 19 `plot_*` functions now accept and respect `fmt`.
+- Fixed `_load_from_db()` using `SELECT *` — columns are now selected explicitly using
+  `PRAGMA table_info(runs)`, keeping backward compatibility with older database schemas.
+- Fixed `correlation_matrix` transposed semantics: result is now correctly shaped
+  `(graph_props × embed_metrics)` as documented.
 
 ### Changed
 
+- `resolve_input_dir()` added to `_config.py`: interactive prompt discovers ember-qc's
+  configured output directory and offers session-only or persistent use as the input dir.
 - Added Python 3.9 and 3.13 to `pyproject.toml` classifiers (matches `requires-python`).
 - Updated `BenchmarkAnalysis` docstring from "qebench" to "ember-qc".
 - Added inline comment clarifying `correlation_matrix` DataFrame construction.
