@@ -37,10 +37,13 @@ jobs:
         include:
           - os: ubuntu-latest
             platform: linux-x86_64
-          - os: macos-13
+            arch_flag: ""
+          - os: macos-latest
             platform: darwin-x86_64
+            arch_flag: "-arch x86_64"
           - os: macos-latest
             platform: darwin-arm64
+            arch_flag: ""
 
     runs-on: ${{ matrix.os }}
 
@@ -50,13 +53,13 @@ jobs:
       - name: Compile atom
         run: |
           cd external/atom
-          g++ -O3 utilities/src/*.cpp main.cpp -std=c++11 -o atom-${{ matrix.platform }} -pthread
+          g++ -O3 ${{ matrix.arch_flag }} utilities/src/*.cpp main.cpp -std=c++11 -o atom-${{ matrix.platform }} -pthread
           file atom-${{ matrix.platform }}
 
       - name: Compile oct
         run: |
           cd external/oct_based
-          g++ -std=c++11 -O2 embedding/*/src/*.cpp embedding/driver.cpp -o oct-${{ matrix.platform }}
+          g++ -std=c++11 -O2 ${{ matrix.arch_flag }} embedding/*/src/*.cpp embedding/driver.cpp -o oct-${{ matrix.platform }}
           file oct-${{ matrix.platform }}
 
       - name: Upload binaries to GitHub release
