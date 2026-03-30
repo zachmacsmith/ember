@@ -194,12 +194,13 @@ def validate_layer2(result: dict,
     1. **Key validity** — all embedding keys are node IDs present in the source
        graph. No extra keys (spurious output), no missing keys (caught again by
        Layer 1 coverage, but here we catch the case with extras).
-    2. **Value validity** — all qubit IDs in every chain exist in the target graph.
-    3. **Type correctness** — all embedding keys and every qubit in every chain
+    2. **Chain format** — all chains are Python ``list`` objects. ``set``,
+       ``tuple``, and ``numpy.ndarray`` are invalid even if their contents pass.
+       Runs before value/type checks so those can iterate chains directly.
+    3. **Value validity** — all qubit IDs in every chain exist in the target graph.
+    4. **Type correctness** — all embedding keys and every qubit in every chain
        are plain Python ``int``. ``numpy.int64`` and other integer-like types are
        rejected — they break JSON serialization and database storage silently.
-    4. **Chain format** — all chains are Python ``list`` objects. ``set``,
-       ``tuple``, and ``numpy.ndarray`` are invalid even if their contents pass.
     5. **Wall time validity** — if the algorithm reports a wall time
        (``result['time']`` is present), it must be a positive, finite ``float``.
        Rejects NaN, infinity, zero, and negative values.
@@ -247,8 +248,23 @@ def validate_layer2(result: dict,
             )
 
         for src, chain in embedding.items():
+            # ── Check 4: Chain format (moved first) ────────────────────────────
+            # Must run before checks 2 & 3 so they can iterate chain directly
+            # without a fallback. A numpy array or tuple would otherwise pass
+            # checks 2 & 3 vacuously (via the old `else []` guard) and only
+            # fail here — giving a misleading validation order.
+            if not isinstance(chain, list):
+                return ValidationResult(
+                    passed=False,
+                    check_name="chain_format",
+                    detail=(
+                        f"chain for source vertex {src!r} is {type(chain).__name__!r}, "
+                        f"expected list (set, tuple, and numpy arrays are invalid)"
+                    ),
+                )
+
             # ── Check 2: Value validity ─────────────────────────────────────────
-            for qubit in chain if isinstance(chain, (list, tuple, set)) else []:
+            for qubit in chain:
                 if qubit not in target_nodes:
                     return ValidationResult(
                         passed=False,
@@ -269,7 +285,7 @@ def validate_layer2(result: dict,
                         f"expected plain Python int (numpy.int64 and similar are invalid)"
                     ),
                 )
-            for qubit in chain if isinstance(chain, (list, tuple, set)) else []:
+            for qubit in chain:
                 if type(qubit) is not int:
                     return ValidationResult(
                         passed=False,
@@ -279,17 +295,6 @@ def validate_layer2(result: dict,
                             f"{type(qubit).__name__!r}, expected plain Python int"
                         ),
                     )
-
-            # ── Check 4: Chain format ───────────────────────────────────────────
-            if not isinstance(chain, list):
-                return ValidationResult(
-                    passed=False,
-                    check_name="chain_format",
-                    detail=(
-                        f"chain for source vertex {src!r} is {type(chain).__name__!r}, "
-                        f"expected list (set, tuple, and numpy arrays are invalid)"
-                    ),
-                )
 
     # ── Check 5: Wall time validity ─────────────────────────────────────────────
     if 'time' in result:

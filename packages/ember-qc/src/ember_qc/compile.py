@@ -379,9 +379,10 @@ def _export_runs_csv(db_path: Path, batch_dir: Path) -> None:
         params=(db_path.parent.name,),
     )
     con.close()
-    # Coerce boolean columns back to Python bool strings for CSV compat
+    # Coerce 0/1 integer columns to bool, preserving NULL as empty.
+    # .astype(bool) is unsafe: NaN (from NULL) converts to True rather than NA.
     for col in ("success", "is_valid", "partial"):
-        df[col] = df[col].astype(bool)
+        df[col] = df[col].apply(lambda x: bool(x) if pd.notna(x) else None)
     df.to_csv(batch_dir / "runs.csv", index=False)
 
 

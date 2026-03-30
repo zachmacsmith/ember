@@ -128,12 +128,15 @@ def compute_embedding_metrics(embedding: Dict[int, list],
     
     all_qubits = set()
     coupler_count = 0
-    
+
     for chain in embedding.values():
         all_qubits.update(chain)
-        for i in range(len(chain)):
-            for j in range(i + 1, len(chain)):
-                if target_graph.has_edge(chain[i], chain[j]):
+        chain_set = set(chain)
+        seen: set = set()
+        for qubit in chain:
+            seen.add(qubit)
+            for neighbor in target_graph.neighbors(qubit):
+                if neighbor in chain_set and neighbor not in seen:
                     coupler_count += 1
     
     return {
