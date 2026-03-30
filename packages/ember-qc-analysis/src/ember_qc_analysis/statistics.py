@@ -283,10 +283,17 @@ def correlation_matrix(df: pd.DataFrame,
             if len(common_idx) < 3:
                 row[gp] = np.nan
             else:
-                r, _ = corr_fn(x.loc[common_idx], y.loc[common_idx])
+                # Use [0] rather than tuple unpacking: scipy >= 1.9 returns a
+                # named result object (SpearmanrResult / PearsonRResult) for
+                # the 2-variable case; [0] is the correlation coefficient on
+                # both old and new scipy without relying on __iter__ semantics.
+                r = corr_fn(x.loc[common_idx], y.loc[common_idx])[0]
                 row[gp] = float(r)
         data[em] = row
 
+    # data is {embed_metric: {graph_prop: r_value}}
+    # pd.DataFrame(data) → columns = embed_metrics, index = graph_props
+    # → shape (len(graph_props) × len(embed_metrics)) as documented
     result = pd.DataFrame(data, index=graph_props)
     return result
 

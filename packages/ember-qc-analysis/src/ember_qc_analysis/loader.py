@@ -121,17 +121,38 @@ def _validate_columns(df: pd.DataFrame) -> None:
 def _load_from_db(db_path: Path, batch_id: str) -> pd.DataFrame:
     """Read all runs for batch_id from results.db into a DataFrame."""
     con = sqlite3.connect(db_path)
+
+    # Enumerate the columns we want, in stable order.  Only select those that
+    # actually exist in the table so the loader works with databases produced
+    # by older ember-qc versions that predate some columns.
+    _DESIRED_COLS = [
+        'batch_id', 'algorithm', 'algorithm_version',
+        'problem_name', 'topology_name', 'trial', 'seed',
+        'wall_time', 'cpu_time', 'status', 'success', 'is_valid', 'partial',
+        'avg_chain_length', 'max_chain_length', 'chain_length_std',
+        'total_qubits_used', 'total_couplers_used',
+        'problem_nodes', 'problem_edges', 'problem_density',
+        'target_node_visits', 'cost_function_evaluations',
+        'embedding_state_mutations', 'overlap_qubit_iterations',
+        'error', 'created_at',
+    ]
+    existing_cols = {row[1] for row in con.execute("PRAGMA table_info(runs)")}
+    select_cols = [c for c in _DESIRED_COLS if c in existing_cols]
+    cols_sql = ', '.join(select_cols)
+
     df = pd.read_sql_query(
-        "SELECT * FROM runs WHERE batch_id = ? ORDER BY topology_name, algorithm, problem_name, trial",
+        f"SELECT {cols_sql} FROM runs WHERE batch_id = ?"
+        " ORDER BY topology_name, algorithm, problem_name, trial",
         con,
         params=(batch_id,),
     )
     con.close()
 
-    # SQLite stores booleans as INTEGER; coerce to Python bool
+    # SQLite stores booleans as INTEGER (0/1) or NULL.
+    # astype(bool) is unsafe: NaN (from NULL) converts to True.
     for col in ('success', 'is_valid', 'partial'):
         if col in df.columns:
-            df[col] = df[col].astype(bool)
+            df[col] = df[col].apply(lambda x: bool(x) if pd.notna(x) else None)
 
     return df
 
