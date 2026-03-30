@@ -241,10 +241,11 @@ def cmd_resume(args: argparse.Namespace) -> None:
         delete_benchmark(batch_id=args.batch_id or None)
         return
 
+    from ember_qc.config import get as _cfg
     load_benchmark(
         batch_id=args.batch_id or None,
         n_workers=args.workers or None,
-        output_dir=args.output_dir or None,
+        output_dir=args.output_dir or _cfg("output_dir"),
     )
 
 
