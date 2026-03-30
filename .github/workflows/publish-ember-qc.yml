@@ -5,6 +5,9 @@ on:
     tags:
       - 'ember-qc-v*'
 
+permissions:
+  contents: write
+
 jobs:
   publish-pypi:
     runs-on: ubuntu-latest
@@ -19,6 +22,7 @@ jobs:
         run: |
           pip install build twine
           python -m build packages/ember-qc/ --outdir dist/
+          ls -la dist/
 
       - name: Upload to PyPI
         run: twine upload dist/*
@@ -28,6 +32,7 @@ jobs:
 
   build-binaries:
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
@@ -46,11 +51,13 @@ jobs:
         run: |
           cd external/atom
           g++ -O3 utilities/src/*.cpp main.cpp -std=c++11 -o atom-${{ matrix.platform }} -pthread
+          file atom-${{ matrix.platform }}
 
       - name: Compile oct
         run: |
           cd external/oct_based
           g++ -std=c++11 -O2 embedding/*/src/*.cpp embedding/driver.cpp -o oct-${{ matrix.platform }}
+          file oct-${{ matrix.platform }}
 
       - name: Upload binaries to GitHub release
         uses: softprops/action-gh-release@v2
@@ -58,5 +65,3 @@ jobs:
           files: |
             external/atom/atom-${{ matrix.platform }}
             external/oct_based/oct-${{ matrix.platform }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
