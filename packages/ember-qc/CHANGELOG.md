@@ -5,6 +5,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.0.1] - 2026-04-06
+
+### Changed
+
+- Updated `README.md`, `docs/graph-library.md`, `docs/cli-reference.md`, and
+  `docs/getting-started.md` to reflect the 1.0.0 graph library overhaul: new ID
+  ranges, 36 graph types, 13 presets, full `ember graphs` CLI reference, and
+  corrected quick-start example using the `installed` preset.
+
+---
+
 ## [1.0.0] - 2026-04-06
 
 ### Added

@@ -3,11 +3,12 @@
 **Extensive Benchmark for Evaluation and Reproducible comparison of quantum annealing embedding algorithms.**
 
 [![CI](https://github.com/zachmacsmith/ember/actions/workflows/ci.yml/badge.svg)](https://github.com/zachmacsmith/ember/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/ember-qc.svg)](https://pypi.org/project/ember-qc/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ---
 
-EMBER is a benchmarking framework for comparing minor embedding algorithms on quantum annealing hardware topologies. It provides a standardised experiment interface, a diverse graph library spanning structured, random, and physics-motivated problem types, and reproducible execution infrastructure with seeding, checkpointing, and result collection.
+EMBER is a benchmarking framework for comparing minor embedding algorithms on quantum annealing hardware topologies. It provides a standardised experiment interface, a diverse graph library of 31,083 graphs spanning structured, random, and physics-motivated problem types, and reproducible execution infrastructure with seeding, checkpointing, and result collection.
 
 ---
 
@@ -37,7 +38,7 @@ name: quick_comparison
 algorithms:
   - minorminer
   - clique
-graphs: "1-60"
+graphs: installed
 topologies:
   - pegasus_16
 trials: 3
@@ -68,25 +69,66 @@ ember config set output_dir /path/to/results
 
 ## Graph Library
 
-EMBER includes a graph library covering structured, random, and application-motivated graph types:
+EMBER ships with 37 graphs bundled for offline use and provides on-demand access to a library of **31,083 graphs** across 36 types hosted on HuggingFace. Graphs not bundled are downloaded automatically and cached locally on first use.
 
-| ID Range | Type | Description |
-|---|---|---|
-| 1–7 | Complete | K4 through K15 |
-| 11–16 | Bipartite | K_{m,n} variants |
-| 21–26 | Grid | 2D rectangular grids |
-| 31–36 | Cycle | C5 through C30 |
-| 41–45 | Tree | Binary and ternary trees |
-| 51–53 | Special | Petersen, dodecahedral, icosahedral |
-| 100–159 | Erdős–Rényi | Random graphs across node counts and densities |
-| 200+ | NP problems | Graph-theoretic NP problem instances |
+### Graph types
 
-Graphs are selected using a range expression:
+| Family | Types | Count | n range |
+|---|---|---|---|
+| Structured | complete, bipartite, grid, cycle, path, star, wheel, turan | 1,148 | 2–5,640 |
+| Algebraic | circulant, generalized_petersen, hypercube, johnson, kneser | 1,259 | 4–5,640 |
+| Trees | binary_tree, tree | 38 | 3–5,461 |
+| Random | random_er, barabasi_albert, regular, watts_strogatz, sbm, lfr_benchmark, random_planar | 23,969 | 3–5,640 |
+| Physics lattice | triangular_lattice, kagome, honeycomb, king_graph, frustrated_square, shastry_sutherland, cubic_lattice, bcc_lattice | 820 | 4–6,119 |
+| Physics models | spin_glass, weak_strong_cluster, planted_solution | 3,670 | 10–5,640 |
+| Hardware | hardware_native | 42 | 8–4,928 |
+| Special | named_special, sudoku | 14 | 5–65,536 |
+
+### Browsing and installing graphs
 
 ```bash
-ember graphs list                     # all available graphs
-ember graphs list --filter "1-60"     # preview a selection
-ember graphs presets                  # all named presets
+ember graphs list                        # overview: all types with ID ranges and counts
+ember graphs list complete               # all complete graphs with node/edge counts
+ember graphs list -a                     # installed types only
+ember graphs info 1004                   # full metadata for graph ID 1004
+ember graphs search --type random_er --max-nodes 20
+ember graphs presets                     # all named presets with graph counts
+```
+
+### Installing graphs
+
+```bash
+ember graphs install benchmark           # install the benchmark preset (~82 graphs)
+ember graphs install 1000-1055           # install all complete graphs
+ember graphs install "5550-5600, !5575"  # install a range with exclusions
+ember graphs install --dry-run default   # preview without downloading
+```
+
+### Presets
+
+| Preset | Count | Description |
+|---|---|---|
+| `installed` | 37 | Bundled with the package — always available offline |
+| `quick` | 12 | One smallest graph per main type |
+| `default` | 36 | One small representative per type |
+| `diverse` | 31 | Hand-picked across all types, varied n |
+| `benchmark` | 82 | Curated for algorithm benchmarking, n=3–100 |
+| `structured` | 2,568 | All deterministic/algebraic types |
+| `lattice` | 820 | All physics lattice types |
+| `physics` | 4,490 | Lattices + spin_glass + weak_strong_cluster + planted_solution |
+| `hardware_native` | 42 | Hardware topology graphs |
+| `named_special` | 12 | Petersen, Tutte, Chvátal, etc. |
+| `small` | 617 | All graphs with n ≤ 10 |
+| `all` | 31,083 | Everything |
+
+### Cache management
+
+```bash
+ember graphs cache                       # disk usage summary by type
+ember graphs cache delete benchmark      # remove specific graphs
+ember graphs cache delete --all          # wipe entire cache
+ember graphs verify                      # SHA-256 integrity check on all cached graphs
+ember graphs verify --fix                # re-download any corrupt files
 ```
 
 ---
@@ -239,21 +281,29 @@ Environment variables take precedence over stored config, which takes precedence
 ## CLI Reference
 
 ```
-ember run <experiment.yaml> [flags]    Run a benchmark
-ember run --analyze                    Run benchmark and generate analysis report
-ember resume [batch_id]                Resume an interrupted run
-ember results list                     List completed runs
-ember results show <batch_id>          Show run summary
-ember graphs list [--filter SPEC]      List available graphs
-ember graphs presets                   List named presets
-ember topologies list [--family F]     List hardware topologies
-ember topologies info                  Show topology details
-ember algos list [--available]         List algorithms and availability
-ember algos template                   Print algorithm template
-ember algos dir                        Print user algorithms directory
-ember config show/set/get/reset/path   Manage configuration
-ember install-binary <atom|oct>        Install compiled algorithm binaries
-ember version                          Show package version
+ember run <experiment.yaml> [flags]       Run a benchmark
+ember run --analyze                       Run benchmark and generate analysis report
+ember resume [batch_id]                   Resume an interrupted run
+
+ember graphs list [TYPE] [-a]             List graph types or graphs of a type
+ember graphs info <id>                    Show full metadata for a graph
+ember graphs install <spec>               Download graphs to local cache
+ember graphs presets                      List named presets with graph counts
+ember graphs search [--type T] [filters]  Search manifest by property
+ember graphs cache                        Show cache disk usage
+ember graphs cache delete <spec|--all>    Remove graphs from cache
+ember graphs verify [--fix]               Verify and repair cached graphs
+
+ember results list                        List completed runs
+ember results show <batch_id>             Show run summary
+ember topologies list [--family F]        List hardware topologies
+ember topologies info                     Show topology details
+ember algos list [--available]            List algorithms and availability
+ember algos template                      Print algorithm template
+ember algos dir                           Print user algorithms directory
+ember config show/set/get/reset/path      Manage configuration
+ember install-binary <atom|oct>           Install compiled algorithm binaries
+ember version                             Show package version
 ```
 
 ---

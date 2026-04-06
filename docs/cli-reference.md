@@ -38,7 +38,7 @@ CLI flags override YAML values. YAML values override stored config. Stored confi
 ember run experiment.yaml
 
 # Entirely from flags
-ember run --algorithms minorminer,clique --graphs "1-60" --topologies pegasus_16 --trials 5
+ember run --algorithms minorminer,clique --graphs installed --topologies pegasus_16 --trials 5
 
 # Override specific YAML keys
 ember run experiment.yaml --trials 10 --workers 4
@@ -82,23 +82,61 @@ Incomplete runs live in `runs_unfinished/` (a sibling of your `results/` directo
 
 ## ember graphs
 
-List test graphs and named presets.
+Manage and browse the graph library of 31,083 graphs across 36 types. Graphs bundled with the package are always available offline; all others are downloaded from HuggingFace and cached locally on first use.
 
 ### ember graphs list
 
 ```
-ember graphs list [--filter SPEC]
+ember graphs list [TYPE] [-a]
 ```
+
+| Argument / Flag | Description |
+|---|---|
+| `TYPE` | Graph type name (e.g. `complete`, `random_er`); omit for type-level overview |
+| `-a` / `--available` | Show only types or graphs that are installed locally |
+
+```bash
+ember graphs list                    # type overview: ID ranges, total count, installed count
+ember graphs list complete           # all complete graphs with node/edge counts
+ember graphs list random_er          # all Erdos-Renyi graphs
+ember graphs list -a                 # installed types only
+ember graphs list complete -a        # installed complete graphs only
+```
+
+### ember graphs info
+
+```
+ember graphs info ID
+```
+
+Prints full metadata for a single graph: ID, name, type, nodes, edges, density, topology hints, and whether it is installed.
+
+```bash
+ember graphs info 1004               # K6 complete graph
+ember graphs info 37760              # Petersen graph
+```
+
+### ember graphs install
+
+```
+ember graphs install SPEC [--dry-run]
+```
+
+Downloads graphs matching `SPEC` from HuggingFace and saves them to the local cache.
 
 | Flag | Description |
 |---|---|
-| `--filter SPEC` | Selection string or preset name to preview |
+| `--dry-run` | Show what would be downloaded without downloading |
 
 ```bash
-ember graphs list                    # all 167 graphs
-ember graphs list --filter "1-60"    # filtered subset
-ember graphs list --filter quick     # named preset
+ember graphs install benchmark       # install the benchmark preset (~82 graphs)
+ember graphs install physics         # install all physics graphs (~4490 graphs)
+ember graphs install 1000-1055       # install all complete graphs
+ember graphs install "5550-5600, !5575"  # range with exclusions
+ember graphs install --dry-run default   # preview without downloading
 ```
+
+See [graph-library.md](graph-library.md) for selection syntax and all preset names.
 
 ### ember graphs presets
 
@@ -106,7 +144,64 @@ ember graphs list --filter quick     # named preset
 ember graphs presets
 ```
 
-Lists all named presets with their selection strings. See [graph-library.md](graph-library.md).
+Lists all named presets with their resolved graph counts.
+
+```bash
+ember graphs presets
+```
+
+### ember graphs search
+
+```
+ember graphs search [filters]
+```
+
+Search the manifest by graph properties without loading any files.
+
+| Flag | Description |
+|---|---|
+| `--type TYPE` | Filter by graph type (e.g. `random_er`, `complete`) |
+| `--min-nodes N` | Minimum node count |
+| `--max-nodes N` | Maximum node count |
+| `--topology TOPO` | Filter by topology hint (e.g. `chimera`, `pegasus`) |
+| `-a` / `--available` | Installed graphs only |
+
+```bash
+ember graphs search --type random_er --max-nodes 20
+ember graphs search --topology chimera --min-nodes 50 --max-nodes 200
+ember graphs search --type complete -a    # installed complete graphs only
+```
+
+### ember graphs cache
+
+```
+ember graphs cache
+ember graphs cache delete SPEC [--all]
+```
+
+```bash
+ember graphs cache                       # disk usage summary by type
+ember graphs cache delete benchmark      # remove graphs matching a preset or selection
+ember graphs cache delete 1000-1055      # remove a range
+ember graphs cache delete --all          # wipe entire cache (prompts confirmation)
+```
+
+### ember graphs verify
+
+```
+ember graphs verify [--fix]
+```
+
+Runs SHA-256 integrity checks on all cached graphs.
+
+| Flag | Description |
+|---|---|
+| `--fix` | Re-download any files that fail the integrity check |
+
+```bash
+ember graphs verify                      # check all cached graphs
+ember graphs verify --fix                # repair corrupt or missing files
+```
 
 ---
 

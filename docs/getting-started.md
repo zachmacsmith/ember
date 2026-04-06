@@ -91,15 +91,40 @@ For this tutorial, `minorminer` and `clique` are sufficient.
 
 ---
 
-## 4. List the graph library
+## 4. Explore the graph library
 
-EMBER includes a graph library covering structured and random graph types. To see them:
+EMBER provides access to **31,083 graphs** across 36 types. 37 graphs are bundled with the package for offline use; all others are downloaded on demand and cached locally.
 
 ```bash
+# Type overview: all 36 types with ID ranges and counts
 ember graphs list
-ember graphs list --filter "1-10"    # preview a specific range
-ember graphs presets                  # named presets like "quick", "diverse"
+
+# All graphs of one type
+ember graphs list complete
+ember graphs list random_er
+
+# Installed types/graphs only
+ember graphs list -a
+
+# Full metadata for a single graph
+ember graphs info 1004
+
+# Search by property
+ember graphs search --type complete --max-nodes 20
+
+# List all named presets with resolved counts
+ember graphs presets
 ```
+
+To install additional graphs before running a benchmark:
+
+```bash
+ember graphs install benchmark       # ~82 graphs curated for benchmarking
+ember graphs install 1000-1055       # all complete graphs
+ember graphs install --dry-run default   # preview without downloading
+```
+
+See [graph-library.md](graph-library.md) for the full type table, ID ranges, selection syntax, and all presets.
 
 ---
 
@@ -135,7 +160,7 @@ name: my_first_benchmark
 algorithms:
   - minorminer
   - clique
-graphs: "quick"
+graphs: installed
 topologies:
   - pegasus_16
 trials: 3
@@ -147,11 +172,13 @@ What each key means:
 
 - `name` — label for this experiment; used in the output directory name
 - `algorithms` — which algorithms to compare
-- `graphs` — a preset name or ID range (see [graph-library.md](graph-library.md))
+- `graphs` — a preset name or selection expression (see [graph-library.md](graph-library.md))
 - `topologies` — hardware topology to embed onto
 - `trials` — how many independent trials per (algorithm, graph, topology) combination
 - `timeout` — seconds allowed per trial before marking TIMEOUT
 - `seed` — master seed for reproducibility; all trial seeds are derived from this
+
+The `installed` preset runs only the 37 graphs bundled with the package — no downloads needed. To run more graphs, use `benchmark`, `diverse`, or any selection expression.
 
 See [experiment-yaml.md](experiment-yaml.md) for the full key reference including defaults.
 
@@ -193,7 +220,7 @@ ember results list
 ```
 Batch ID                                    Algorithms         Graphs  Trials
 ------------------------------------------  -----------------  ------  ------
-my_first_benchmark_2026-03-28_14-30-00      minorminer, clique      6       3
+my_first_benchmark_2026-03-28_14-30-00      minorminer, clique     37       3
 ```
 
 ```bash
@@ -293,6 +320,7 @@ See [analysis-getting-started.md](analysis-getting-started.md) for more.
 ## 12. Next steps
 
 - **Resume interrupted runs** — `ember resume` if a benchmark is cancelled or crashes
+- **Graph library** — [graph-library.md](graph-library.md) — all 36 types, ID ranges, presets, selection syntax
 - **Full YAML reference** — [experiment-yaml.md](experiment-yaml.md)
 - **All CLI flags** — [cli-reference.md](cli-reference.md)
 - **Results database schema** — [results-schema.md](results-schema.md)
