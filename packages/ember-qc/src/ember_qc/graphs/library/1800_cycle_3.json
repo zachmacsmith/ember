@@ -1,0 +1,1 @@
+{"id":1800,"name":"cycle_3","category":"cycle","generated_at":"2026-04-02T18:00:37Z","num_nodes":3,"num_edges":3,"density":1.0,"metadata":{"type":"cycle","n":3,"topologies":["chimera","pegasus","zephyr"]},"graph":{"directed":false,"multigraph":false,"graph":{},"nodes":[{"id":0},{"id":1},{"id":2}],"links":[{"source":0,"target":1},{"source":0,"target":2},{"source":1,"target":2}]}}

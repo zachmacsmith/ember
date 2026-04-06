@@ -1,0 +1,1 @@
+{"id":2000,"name":"path_3","category":"path","generated_at":"2026-04-02T18:00:37Z","num_nodes":3,"num_edges":2,"density":0.666667,"metadata":{"type":"path","n":3,"topologies":["chimera","pegasus","zephyr"]},"graph":{"directed":false,"multigraph":false,"graph":{},"nodes":[{"id":0},{"id":1},{"id":2}],"links":[{"source":0,"target":1},{"source":1,"target":2}]}}

@@ -8,7 +8,7 @@ Entry point: `ember-qc` (configured in pyproject.toml).
 Subcommand groups:
   ember run          — run a benchmark (from YAML or flags)
   ember resume       — resume an unfinished benchmark
-  ember graphs       — list test graphs and presets
+  ember graphs       — browse and manage the graph library
   ember topologies   — list registered hardware topologies
   ember results      — list, inspect, and delete completed batches
   ember algos        — manage algorithms (list, add, remove, validate, template)
@@ -43,23 +43,13 @@ def _write_yaml(data: dict, path: Path) -> None:
 
 
 def _resolved_yaml_name(yaml_path: Optional[Path]) -> str:
-    """Return the filename for the resolved YAML."""
     if yaml_path is None:
         return "experiment_resolved.yaml"
-    stem = yaml_path.stem
-    return f"{stem}_resolved.yaml"
+    return f"{yaml_path.stem}_resolved.yaml"
 
 
 def _build_resolved_params(args: argparse.Namespace, yaml_params: dict) -> dict:
-    """
-    Merge YAML params with CLI flag overrides into a clean reproducible dict.
-    CLI flags that were not explicitly set (still at their argparse default)
-    do not override YAML values.
-    """
-    # Start from YAML (or empty if no YAML)
     p = dict(yaml_params)
-
-    # Apply CLI overrides only when explicitly provided
     cli_overrides = {
         "algorithms":     args.algorithms,
         "graphs":         args.graphs,
@@ -79,19 +69,12 @@ def _build_resolved_params(args: argparse.Namespace, yaml_params: dict) -> dict:
     for key, val in cli_overrides.items():
         if val is not None:
             p[key] = val
-
-    # Normalise algorithms to a list
     if "algorithms" in p and isinstance(p["algorithms"], str):
         p["algorithms"] = [a.strip() for a in p["algorithms"].split(",")]
-
-    # Normalise topologies to a list
     if "topologies" in p and isinstance(p["topologies"], str):
         p["topologies"] = [t.strip() for t in p["topologies"].split(",")]
-
-    # Fill in fallbacks: user config (stored/env) then package defaults.
-    # config.get() already implements the env-var → stored → default chain.
     from ember_qc.config import get as _cfg
-    p.setdefault("algorithms",      None)    # None → all registered
+    p.setdefault("algorithms",      None)
     p.setdefault("graphs",          _cfg("default_graphs") or "*")
     p.setdefault("topologies",      _cfg("default_topology"))
     p.setdefault("n_trials",        _cfg("default_n_trials"))
@@ -107,30 +90,17 @@ def _build_resolved_params(args: argparse.Namespace, yaml_params: dict) -> dict:
     p.setdefault("note",            "")
     p.setdefault("output_dir",      _cfg("output_dir"))
     p.setdefault("analyze",         False)
-
-    # default_topology from config is a single string; normalise to list
     if "topologies" in p and isinstance(p["topologies"], str):
         p["topologies"] = [t.strip() for t in p["topologies"].split(",")]
-
     return p
 
 
 def _write_resolved_yaml(params: dict, final_dir: Path, yaml_path: Optional[Path],
                          actual_warmup: Optional[int] = None) -> None:
-    """
-    Write the resolved experiment YAML to final_dir.
-
-    actual_warmup: if run_full_benchmark zeroed warmup_trials (n_workers > 1),
-                   pass the actual value used so the YAML is accurate.
-    """
-    resolved = {k: v for k, v in params.items()
-                if k not in ("output_dir",)}   # output_dir is bookkeeping, not an input
-
+    resolved = {k: v for k, v in params.items() if k not in ("output_dir",)}
     if actual_warmup is not None:
         resolved["warmup_trials"] = actual_warmup
-
-    out_name = _resolved_yaml_name(yaml_path)
-    _write_yaml(resolved, final_dir / out_name)
+    _write_yaml(resolved, final_dir / _resolved_yaml_name(yaml_path))
 
 
 # ---------------------------------------------------------------------------
@@ -152,8 +122,6 @@ def cmd_run(args: argparse.Namespace) -> None:
         yaml_params = _load_yaml(yaml_path)
 
     params = _build_resolved_params(args, yaml_params)
-
-    # Resolve topologies → list of (label, graph, name)
     topo_names = params["topologies"] or list_topologies()
     topo_list = []
     for name in topo_names:
@@ -164,12 +132,8 @@ def cmd_run(args: argparse.Namespace) -> None:
             print(f"error: unknown topology '{name}'. Run: ember topologies list")
             sys.exit(1)
 
-    # Use first topology's graph as the target_graph for EmbeddingBenchmark.
-    # run_full_benchmark handles the full topo_list internally.
     target_graph = topo_list[0][1]
-
     bench = EmbeddingBenchmark(target_graph)
-
     n_workers = params["n_workers"]
     warmup_trials = params["warmup_trials"]
 
@@ -193,17 +157,13 @@ def cmd_run(args: argparse.Namespace) -> None:
     )
 
     if final_dir is None:
-        # Cancelled — batch is in runs_unfinished/, no output dir yet
         return
 
-    # Copy original YAML verbatim
     if yaml_path is not None:
         shutil.copy2(yaml_path, final_dir / yaml_path.name)
 
-    # warmup may have been zeroed by run_full_benchmark when n_workers > 1
     actual_warmup = 0 if (n_workers > 1 and warmup_trials > 0) else warmup_trials
     _write_resolved_yaml(params, final_dir, yaml_path, actual_warmup=actual_warmup)
-
     print(f"Results: {final_dir}")
 
 
@@ -253,63 +213,265 @@ def cmd_resume(args: argparse.Namespace) -> None:
 # ember graphs
 # ---------------------------------------------------------------------------
 
+def _fmt_bytes(n: int) -> str:
+    """Human-readable byte size."""
+    for unit in ("B", "KB", "MB", "GB"):
+        if n < 1024:
+            return f"{n:.1f} {unit}"
+        n /= 1024
+    return f"{n:.1f} TB"
+
+
 def cmd_graphs_list(args: argparse.Namespace) -> None:
-    from ember_qc.load_graphs import list_test_graphs, parse_graph_selection
+    """ember graphs list [TYPE] [-a]
 
-    graphs = list_test_graphs()
-    if not graphs:
-        print("No test graphs found. Check your test_graphs/ directory.")
-        return
+    Without TYPE: overview table of all graph types with ID ranges and counts.
+    With TYPE:    all graphs of that type with per-graph node/edge counts.
+    -a flag:      restrict to installed graphs / types only.
+    """
+    from ember_qc.load_graphs import list_graph_types, list_graphs_of_type
 
-    if args.filter:
-        try:
-            ids = parse_graph_selection(args.filter)
-            graphs = [g for g in graphs if g["id"] in ids]
-        except Exception as e:
-            print(f"error parsing filter '{args.filter}': {e}")
-            sys.exit(1)
+    category = getattr(args, "category", None)
+    installed_only = getattr(args, "installed", False)
 
-    print(f"{'ID':>6}  {'Name':<40}  {'Nodes':>6}  {'Edges':>7}")
-    print("-" * 65)
-    for g in graphs:
-        print(f"{g['id']:>6}  {g['name']:<40}  {g.get('nodes', '?'):>6}  {g.get('edges', '?'):>7}")
-    print(f"\n{len(graphs)} graph(s)")
+    if category:
+        graphs = list_graphs_of_type(category, installed_only=installed_only)
+        if not graphs:
+            suffix = " (installed only)" if installed_only else ""
+            print(f"No graphs found for type '{category}'{suffix}.")
+            return
+        print(f"\n  {'ID':>6}  {'Name':<45}  {'Nodes':>6}  {'Edges':>7}  Inst")
+        print("  " + "-" * 74)
+        for g in graphs:
+            inst = "✓" if g["installed"] else " "
+            print(f"  {g['id']:>6}  {g['name']:<45}  "
+                  f"{g['nodes']:>6}  {g['edges']:>7}  {inst}")
+        print(f"\n  {len(graphs)} graph(s) in '{category}'")
+    else:
+        types = list_graph_types(installed_only=installed_only)
+        if not types:
+            print("No graph types found in manifest.")
+            return
+        total     = sum(t["total"]     for t in types)
+        installed = sum(t["installed"] for t in types)
+        print(f"\n  {'Type':<25}  {'ID Range':<14}  {'Total':>7}  {'Installed':>9}")
+        print("  " + "-" * 62)
+        for t in types:
+            id_range = f"{t['id_start']}–{t['id_end']}"
+            print(f"  {t['category']:<25}  {id_range:<14}  "
+                  f"{t['total']:>7}  {t['installed']:>9}")
+        print(f"\n  {len(types)} types · {total:,} total · {installed:,} installed")
+
+
+def cmd_graphs_info(args: argparse.Namespace) -> None:
+    """ember graphs info <ID> — full metadata for one graph."""
+    from ember_qc.load_graphs import graph_info, GRAPHS_DIR, _cache_path
+
+    try:
+        entry = graph_info(args.graph_id)
+    except KeyError as e:
+        print(f"error: {e}")
+        sys.exit(1)
+
+    nodes = entry.get("nodes", entry.get("num_nodes", "?"))
+    edges = entry.get("edges", entry.get("num_edges", "?"))
+    topos = ", ".join(entry.get("topologies", []) or ["unknown"])
+
+    print(f"\n  ID:         {entry['id']}")
+    print(f"  Name:       {entry['name']}")
+    print(f"  Category:   {entry.get('category', '?')}")
+    print(f"  Nodes:      {nodes}")
+    print(f"  Edges:      {edges}")
+    print(f"  Density:    {entry.get('density', '?')}")
+    print(f"  Topologies: {topos}")
+
+    # Try to find the file: cache first, then bundled
+    json_path = None
+    try:
+        p = _cache_path(args.graph_id, entry["name"])
+        if p.exists():
+            json_path = p
+    except Exception:
+        pass
+    if json_path is None and GRAPHS_DIR.exists():
+        for candidate in GRAPHS_DIR.rglob("*.json"):
+            prefix = candidate.stem.split("_", 1)[0]
+            try:
+                if int(prefix) == args.graph_id:
+                    json_path = candidate
+                    break
+            except ValueError:
+                continue
+
+    if json_path is not None:
+        with open(json_path, "r", encoding="utf-8") as f:
+            file_data = json.load(f)
+        meta = {k: v for k, v in file_data.get("metadata", {}).items()
+                if k != "topologies"}
+        print(f"  Installed:  yes")
+        if meta:
+            print(f"  Parameters:")
+            for k, v in meta.items():
+                print(f"    {k}: {v}")
+    else:
+        print(f"  Installed:  no")
+
+
+def cmd_graphs_install(args: argparse.Namespace) -> None:
+    """ember graphs install <SPEC> [--dry-run] — download graphs to cache."""
+    from ember_qc.load_graphs import install_graphs, parse_graph_selection, \
+        _manifest_by_id, _cache_path
+
+    selection = getattr(args, "selection", None)
+    if not selection:
+        print("error: provide a selection string, ID range, or preset name.")
+        print("  Examples:  ember graphs install 1000-1099")
+        print("             ember graphs install complete")
+        print("             ember graphs install quick")
+        sys.exit(1)
+
+    manifest = _manifest_by_id()
+    ids = parse_graph_selection(selection)
+    if -1 in ids:
+        ids = set(manifest.keys())
+
+    if getattr(args, "dry_run", False):
+        to_download = [
+            gid for gid in sorted(ids)
+            if (entry := manifest.get(gid))
+            and not _cache_path(gid, entry["name"]).exists()
+        ]
+        already = len(ids & set(manifest.keys())) - len(to_download)
+        est_bytes = sum(manifest[gid].get("size_bytes", 0) for gid in to_download)
+        print(f"Would download {len(to_download):,} graph(s) "
+              f"({_fmt_bytes(est_bytes)} estimated, {already:,} already cached).")
+    else:
+        # verbose=False suppresses the built-in summary; we print our own with size.
+        # Progress lines ("Downloading…", "Cached to…") come from _download_graph()
+        # directly and are unaffected by verbose.
+        downloaded = install_graphs(selection, verbose=False)
+        total_bytes = sum(
+            _cache_path(gid, manifest[gid]["name"]).stat().st_size
+            for gid in downloaded
+            if manifest.get(gid) and _cache_path(gid, manifest[gid]["name"]).exists()
+        )
+        already = len(ids & set(manifest.keys())) - len(downloaded)
+        print(f"Done. Downloaded: {len(downloaded):,} ({_fmt_bytes(total_bytes)}), "
+              f"already available: {already:,}.")
 
 
 def cmd_graphs_presets(args: argparse.Namespace) -> None:
-    from ember_qc.load_graphs import list_presets
+    """ember graphs presets — list named selection presets with resolved counts."""
+    from ember_qc.load_graphs import list_presets, _manifest_by_id, parse_graph_selection
+
     presets = list_presets()
     if not presets:
         print("No presets found.")
         return
-    print(f"{'Preset':<20}  Selection")
-    print("-" * 60)
+    manifest = _manifest_by_id()
+    print(f"\n  {'Preset':<20}  {'Graphs':>7}  Selection")
+    print("  " + "-" * 65)
     for name, spec in sorted(presets.items()):
-        print(f"{name:<20}  {spec}")
+        try:
+            ids = parse_graph_selection(spec)
+            count = len(manifest) if -1 in ids else len(ids & set(manifest.keys()))
+        except Exception:
+            count = "?"
+        print(f"  {name:<20}  {str(count):>7}  {spec}")
 
 
-def cmd_graphs_status(_: argparse.Namespace) -> None:
-    print("ember graphs status: not yet implemented")
+def cmd_graphs_cache(args: argparse.Namespace) -> None:
+    """ember graphs cache — summary of the local graph cache."""
+    from ember_qc.load_graphs import cache_summary
+
+    s = cache_summary()
+    print(f"\n  Installed: {s['total_installed']:,} graphs")
+    print(f"  Size:      {_fmt_bytes(s['total_bytes'])}")
+    if s["by_category"]:
+        print(f"\n  {'Type':<25}  {'Count':>7}  Size")
+        print("  " + "-" * 48)
+        for cat, info in sorted(s["by_category"].items(),
+                                 key=lambda x: x[1]["count"], reverse=True):
+            print(f"  {cat:<25}  {info['count']:>7}  {_fmt_bytes(info['bytes'])}")
 
 
-def cmd_graphs_fetch(_: argparse.Namespace) -> None:
-    print("ember graphs fetch: not yet implemented")
+def cmd_graphs_cache_delete(args: argparse.Namespace) -> None:
+    """ember graphs cache delete [SPEC] [--all] — remove graphs from cache."""
+    from ember_qc.load_graphs import delete_from_cache, cache_summary, \
+        _manifest_by_id, _cache_path, parse_graph_selection
+
+    if getattr(args, "all", False):
+        before = cache_summary()
+        try:
+            ans = input("Delete entire graph cache? [y/N] ").strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            print("\nAborted.")
+            return
+        if ans not in ("y", "yes"):
+            print("Aborted.")
+            return
+        deleted = delete_from_cache(delete_all=True)
+        print(f"Deleted {deleted:,} graph(s), freed {_fmt_bytes(before['total_bytes'])}.")
+    elif getattr(args, "selection", None):
+        # Measure sizes before deletion
+        manifest = _manifest_by_id()
+        ids = parse_graph_selection(args.selection)
+        if -1 in ids:
+            ids = set(manifest.keys())
+        freed_bytes = sum(
+            _cache_path(gid, manifest[gid]["name"]).stat().st_size
+            for gid in ids
+            if manifest.get(gid) and _cache_path(gid, manifest[gid]["name"]).exists()
+        )
+        deleted = delete_from_cache(selection=args.selection)
+        print(f"Deleted {deleted:,} graph(s), freed {_fmt_bytes(freed_bytes)}.")
+    else:
+        print("error: provide a selection string or --all.")
+        sys.exit(1)
 
 
-def cmd_graphs_cache_list(_: argparse.Namespace) -> None:
-    print("ember graphs cache list: not yet implemented")
+def cmd_graphs_verify(args: argparse.Namespace) -> None:
+    """ember graphs verify [--fix] — check cached graphs against manifest hashes."""
+    from ember_qc.load_graphs import verify_cache
+
+    print("Verifying cached graphs...")
+    result = verify_cache(fix=getattr(args, "fix", False))
+    ok      = len(result["ok"])
+    corrupt = len(result["corrupt"])
+
+    print(f"  OK:      {ok:,}")
+    print(f"  Corrupt: {corrupt:,}")
+    if corrupt:
+        for gid in result["corrupt"]:
+            print(f"    ID {gid}")
+        if not getattr(args, "fix", False):
+            print("\n  Re-run with --fix to re-download corrupt files.")
+    sys.exit(1 if corrupt > 0 else 0)
 
 
-def cmd_graphs_cache_size(_: argparse.Namespace) -> None:
-    print("ember graphs cache size: not yet implemented")
+def cmd_graphs_search(args: argparse.Namespace) -> None:
+    """ember graphs search — filter graphs by property (reads manifest only)."""
+    from ember_qc.load_graphs import search_graphs
 
-
-def cmd_graphs_cache_clear(_: argparse.Namespace) -> None:
-    print("ember graphs cache clear: not yet implemented")
-
-
-def cmd_graphs_cache_verify(_: argparse.Namespace) -> None:
-    print("ember graphs cache verify: not yet implemented")
+    results = search_graphs(
+        category=getattr(args, "type", None),
+        min_nodes=getattr(args, "min_nodes", None),
+        max_nodes=getattr(args, "max_nodes", None),
+        min_edges=getattr(args, "min_edges", None),
+        max_edges=getattr(args, "max_edges", None),
+        topology=getattr(args, "topology", None),
+        installed_only=getattr(args, "installed", False),
+    )
+    if not results:
+        print("No graphs match the given filters.")
+        return
+    print(f"\n  {'ID':>6}  {'Type':<20}  {'Name':<35}  {'Nodes':>6}  {'Edges':>7}  Inst")
+    print("  " + "-" * 82)
+    for g in results:
+        inst = "✓" if g["installed"] else " "
+        print(f"  {g['id']:>6}  {g['category']:<20}  {g['name']:<35}  "
+              f"{g['nodes']:>6}  {g['edges']:>7}  {inst}")
+    print(f"\n  {len(results):,} graph(s) matched")
 
 
 # ---------------------------------------------------------------------------
@@ -321,10 +483,11 @@ def cmd_topologies_list(args: argparse.Namespace) -> None:
 
     names = list_topologies(family=args.family or None)
     if not names:
-        msg = f"No topologies found" + (f" for family '{args.family}'" if args.family else "")
+        msg = "No topologies found"
+        if args.family:
+            msg += f" for family '{args.family}'"
         print(msg)
         return
-
     print(f"{'Name':<30}  {'Family':<12}  Description")
     print("-" * 80)
     for name in names:
@@ -353,12 +516,10 @@ def cmd_results_list(args: argparse.Namespace) -> None:
     if not results_dir.exists():
         print(f"No results directory found at: {results_dir.resolve()}")
         return
-
     batches = sorted(results_dir.glob("batch_*"), reverse=True)
     if not batches:
         print(f"No completed batches in: {results_dir.resolve()}")
         return
-
     print(f"{'Batch':<35}  {'Algorithms':<30}  {'Trials':>7}")
     print("-" * 78)
     for b in batches:
@@ -366,35 +527,30 @@ def cmd_results_list(args: argparse.Namespace) -> None:
         if cfg_path.exists():
             with open(cfg_path) as f:
                 cfg = json.load(f)
-            algos = ", ".join(cfg.get("algorithms", []))[:28]
+            algos  = ", ".join(cfg.get("algorithms", []))[:28]
             trials = cfg.get("total_measured_runs", "?")
         else:
-            algos = "?"
-            trials = "?"
+            algos, trials = "?", "?"
         print(f"{b.name:<35}  {algos:<30}  {str(trials):>7}")
-
     print(f"\n{len(batches)} batch(es) in {results_dir.resolve()}")
 
 
 def cmd_results_show(args: argparse.Namespace) -> None:
     results_dir = _find_results_dir(args)
-    batch_dir = results_dir / args.batch_id
+    batch_dir   = results_dir / args.batch_id
     if not batch_dir.exists():
         print(f"error: batch not found: {batch_dir}")
         sys.exit(1)
-
-    summary = batch_dir / "summary.csv"
     config_path = batch_dir / "config.json"
-
     if config_path.exists():
         with open(config_path) as f:
             cfg = json.load(f)
         print("=== Config ===")
         for k, v in cfg.items():
-            if k not in ("custom_problems",):   # skip large serialised graphs
+            if k not in ("custom_problems",):
                 print(f"  {k}: {v}")
         print()
-
+    summary = batch_dir / "summary.csv"
     if summary.exists():
         print("=== Summary ===")
         print(summary.read_text())
@@ -404,11 +560,10 @@ def cmd_results_show(args: argparse.Namespace) -> None:
 
 def cmd_results_delete(args: argparse.Namespace) -> None:
     results_dir = _find_results_dir(args)
-    batch_dir = results_dir / args.batch_id
+    batch_dir   = results_dir / args.batch_id
     if not batch_dir.exists():
         print(f"error: batch not found: {batch_dir}")
         sys.exit(1)
-
     confirm = input(f"Delete {batch_dir.name}? [y/N] ").strip().lower()
     if confirm != "y":
         print("Aborted.")
@@ -423,27 +578,22 @@ def cmd_results_delete(args: argparse.Namespace) -> None:
 
 def cmd_algos_list(args: argparse.Namespace) -> None:
     from ember_qc.registry import ALGORITHM_REGISTRY
-
     for name, algo in sorted(ALGORITHM_REGISTRY.items()):
         ok, reason = algo.is_available()
-        is_custom = getattr(algo, "_is_custom", False)
-
+        is_custom  = getattr(algo, "_is_custom", False)
         if args.available and not ok:
             continue
         if args.custom and not is_custom:
             continue
-
-        tag = "[custom]" if is_custom else ""
+        tag    = "[custom]" if is_custom else ""
         status = "available" if ok else f"unavailable — {reason}"
-        ver = algo.version if hasattr(algo, "version") else "?"
+        ver    = algo.version if hasattr(algo, "version") else "?"
         print(f"  {name:<30}  {ver:<8}  {status}  {tag}")
-
     print(f"\n({len(ALGORITHM_REGISTRY)} registered)")
 
 
 def cmd_algos_add(args: argparse.Namespace) -> None:
-    print("ember algos add: not yet implemented (custom algorithm registration pending).")
-    print("See: TODO_userConfig.md §3")
+    print("ember algos add: not yet implemented.")
 
 
 def cmd_algos_remove(args: argparse.Namespace) -> None:
@@ -470,13 +620,6 @@ def cmd_algos_dir(args: argparse.Namespace) -> None:
 _ALGO_TEMPLATE = '''\
 """
 Custom embedding algorithm template for ember-qc.
-
-Contract:
-  - Subclass EmbeddingAlgorithm and implement embed().
-  - Return {'embedding': {node: [qubits], ...}} on success.
-  - Return {'embedding': {}, 'status': 'FAILURE'} on failure (preferred).
-  - Returning None is also accepted and produces a FAILURE result.
-  - Register with @register_algorithm("your-algo-name").
 """
 from ember_qc.registry import EmbeddingAlgorithm, register_algorithm
 
@@ -491,15 +634,9 @@ class MyAlgorithm(EmbeddingAlgorithm):
 
     def embed(self, source_graph, target_graph, timeout=60.0, **kwargs):
         seed = kwargs.get("seed", 42)
-
-        # Your embedding logic here.
-        # source_graph: networkx.Graph — the logical problem graph
-        # target_graph: networkx.Graph — the hardware topology graph
         embedding = {}
-
         if not embedding:
             return {"embedding": {}, "status": "FAILURE"}
-
         return {"embedding": embedding}
 '''
 
@@ -514,9 +651,9 @@ def cmd_config_show(args: argparse.Namespace) -> None:
     print(f"{'Key':<20}  {'Value':<30}  {'Source':<10}  Env var")
     print("-" * 80)
     for key, info in state.items():
-        val = str(info["value"]) if info["value"] is not None else "null"
-        src = info["source"]
-        env = info["env_var"]
+        val  = str(info["value"]) if info["value"] is not None else "null"
+        src  = info["source"]
+        env  = info["env_var"]
         flag = "  *" if src == "env" else ""
         print(f"  {key:<20}  {val:<30}  {src:<10}  {env}{flag}")
     print("\n* = environment variable override active")
@@ -536,13 +673,10 @@ def cmd_config_set(args: argparse.Namespace) -> None:
     from ember_qc.config import set_value, CONFIG_SCHEMA
     key = args.key
     raw = args.value
-
     if key not in CONFIG_SCHEMA:
         valid = ", ".join(sorted(CONFIG_SCHEMA))
         print(f"error: unknown key '{key}'. Valid keys: {valid}")
         sys.exit(1)
-
-    # Coerce the string value to the expected type
     expected = CONFIG_SCHEMA[key]["type"]
     try:
         if isinstance(expected, tuple) and type(None) in expected:
@@ -550,16 +684,16 @@ def cmd_config_set(args: argparse.Namespace) -> None:
                 coerced = None
             else:
                 non_none = [t for t in expected if t is not type(None)]
-                coerced = non_none[0](raw) if non_none else raw
+                coerced  = non_none[0](raw) if non_none else raw
         elif expected is bool:
             coerced = raw.lower() in ("true", "1", "yes")
         else:
             coerced = expected(raw)
     except (ValueError, TypeError):
-        tn = expected.__name__ if not isinstance(expected, tuple) else " | ".join(t.__name__ for t in expected)
+        tn = (expected.__name__ if not isinstance(expected, tuple)
+              else " | ".join(t.__name__ for t in expected))
         print(f"error: '{key}' expects {tn}, got: {raw!r}")
         sys.exit(1)
-
     set_value(key, coerced)
     print(f"{key} = {coerced}")
 
@@ -590,7 +724,6 @@ def cmd_config_path(args: argparse.Namespace) -> None:
 def cmd_install_binary(args: argparse.Namespace) -> None:
     from ember_qc._install_binary import install_binary
     if args.name is None:
-        # No binary name and no --list: show status table as a helpful default.
         from ember_qc._install_binary import list_binaries
         list_binaries()
         return
@@ -633,83 +766,93 @@ def build_parser() -> argparse.ArgumentParser:
 
     # -- run -----------------------------------------------------------------
     p_run = sub.add_parser("run", help="run a benchmark")
-    p_run.add_argument("experiment", nargs="?", metavar="experiment.yaml",
-                       help="YAML experiment file (optional)")
-    p_run.add_argument("--graphs",      metavar="SPEC",    default=None)
-    p_run.add_argument("--algorithms",  metavar="NAMES",   default=None,
-                       help="comma-separated algorithm names")
-    p_run.add_argument("--topologies",  metavar="NAMES",   default=None,
-                       help="comma-separated topology names")
-    p_run.add_argument("--trials",      type=int,          default=None)
-    p_run.add_argument("--warmup",      type=int,          default=None)
-    p_run.add_argument("--timeout",     type=float,        default=None)
-    p_run.add_argument("--seed",        type=int,          default=None)
-    p_run.add_argument("--workers",     type=int,          default=None)
-    p_run.add_argument("--fault-rate",  type=float,        default=None, dest="fault_rate")
-    p_run.add_argument("--fault-seed",  type=int,          default=None, dest="fault_seed")
-    p_run.add_argument("--output-dir",  metavar="PATH",    default=None, dest="output_dir")
-    p_run.add_argument("--note",        metavar="TEXT",    default=None)
-    p_run.add_argument("--analyze",     action="store_true", default=False,
-                       help="run ember-qc-analysis on the completed batch")
-    verbose_group = p_run.add_mutually_exclusive_group()
-    verbose_group.add_argument("--verbose",    dest="verbose", action="store_const", const=True,  default=None,
-                               help="print per-trial output (overrides config)")
-    verbose_group.add_argument("--no-verbose", dest="verbose", action="store_const", const=False,
-                               help="use progress bar instead of per-trial output (overrides config)")
+    p_run.add_argument("experiment", nargs="?", metavar="experiment.yaml")
+    p_run.add_argument("--graphs",      metavar="SPEC",  default=None)
+    p_run.add_argument("--algorithms",  metavar="NAMES", default=None)
+    p_run.add_argument("--topologies",  metavar="NAMES", default=None)
+    p_run.add_argument("--trials",      type=int,        default=None)
+    p_run.add_argument("--warmup",      type=int,        default=None)
+    p_run.add_argument("--timeout",     type=float,      default=None)
+    p_run.add_argument("--seed",        type=int,        default=None)
+    p_run.add_argument("--workers",     type=int,        default=None)
+    p_run.add_argument("--fault-rate",  type=float,      default=None, dest="fault_rate")
+    p_run.add_argument("--fault-seed",  type=int,        default=None, dest="fault_seed")
+    p_run.add_argument("--output-dir",  metavar="PATH",  default=None, dest="output_dir")
+    p_run.add_argument("--note",        metavar="TEXT",  default=None)
+    p_run.add_argument("--analyze",     action="store_true", default=False)
+    vg = p_run.add_mutually_exclusive_group()
+    vg.add_argument("--verbose",    dest="verbose", action="store_const", const=True,  default=None)
+    vg.add_argument("--no-verbose", dest="verbose", action="store_const", const=False)
     p_run.set_defaults(func=cmd_run)
 
     # -- resume --------------------------------------------------------------
     p_res = sub.add_parser("resume", help="resume or manage unfinished benchmarks")
-    p_res.add_argument("batch_id", nargs="?", metavar="BATCH_ID",
-                       help="batch directory name; omit to select interactively")
+    p_res.add_argument("batch_id", nargs="?", metavar="BATCH_ID")
     p_res.add_argument("--workers",    type=int, default=None)
     p_res.add_argument("--output-dir", metavar="PATH", default=None, dest="output_dir")
-    p_res.add_argument("--delete",     action="store_true", default=False,
-                       help="delete an unfinished run instead of resuming it")
-    p_res.add_argument("--delete-all", action="store_true", default=False,
-                       dest="delete_all",
-                       help="delete all unfinished runs (prompts for confirmation)")
+    p_res.add_argument("--delete",     action="store_true", default=False)
+    p_res.add_argument("--delete-all", action="store_true", default=False, dest="delete_all")
     p_res.set_defaults(func=cmd_resume)
 
     # -- graphs --------------------------------------------------------------
-    p_graphs = sub.add_parser("graphs", help="list test graphs and presets")
+    p_graphs = sub.add_parser("graphs", help="browse and manage the graph library")
     gs = p_graphs.add_subparsers(dest="graphs_cmd")
     p_graphs.set_defaults(func=lambda _: p_graphs.print_help())
 
-    p_gl = gs.add_parser("list", help="list available test graphs")
-    p_gl.add_argument("--filter", metavar="SPEC", default=None,
-                      help="selection string or preset name")
+    # list [TYPE] [-a]
+    p_gl = gs.add_parser("list",
+                         help="list graph types or graphs within a type")
+    p_gl.add_argument("category", nargs="?", metavar="TYPE", default=None,
+                      help="graph type to drill into (e.g. complete, random_er)")
+    p_gl.add_argument("-a", "--installed", action="store_true", default=False,
+                      help="show only installed graphs / types")
     p_gl.set_defaults(func=cmd_graphs_list)
 
+    # info <ID>
+    p_gi = gs.add_parser("info", help="full metadata for a single graph")
+    p_gi.add_argument("graph_id", type=int, metavar="ID")
+    p_gi.set_defaults(func=cmd_graphs_info)
+
+    # install <SPEC> [--dry-run]
+    p_ginstall = gs.add_parser("install", help="download graphs to local cache")
+    p_ginstall.add_argument("selection", nargs="?", metavar="SPEC/PRESET",
+                             help="ID range, selection string, or preset name")
+    p_ginstall.add_argument("--dry-run", action="store_true", default=False,
+                             dest="dry_run")
+    p_ginstall.set_defaults(func=cmd_graphs_install)
+
+    # presets
     p_gp = gs.add_parser("presets", help="list named graph presets")
     p_gp.set_defaults(func=cmd_graphs_presets)
 
-    p_gst = gs.add_parser("status", help="show graph library status [stub]")
-    p_gst.set_defaults(func=cmd_graphs_status)
+    # verify [--fix]
+    p_gv = gs.add_parser("verify",
+                         help="verify cached graphs against manifest hashes")
+    p_gv.add_argument("--fix", action="store_true", default=False,
+                      help="re-download corrupt files automatically")
+    p_gv.set_defaults(func=cmd_graphs_verify)
 
-    p_gf = gs.add_parser("fetch", help="pre-download graphs to local cache [stub]")
-    p_gf.add_argument("selection", nargs="?", metavar="SPEC", default=None)
-    p_gf.add_argument("--preset", metavar="NAME", default=None)
-    p_gf.add_argument("--type",   metavar="TYPE", default=None)
-    p_gf.add_argument("--all",    action="store_true", default=False)
-    p_gf.set_defaults(func=cmd_graphs_fetch)
+    # search
+    p_gs = gs.add_parser("search",
+                         help="filter graphs by property (manifest only, no download)")
+    p_gs.add_argument("--type",      metavar="TYPE", default=None, dest="type")
+    p_gs.add_argument("--topology",  metavar="TOPO", default=None)
+    p_gs.add_argument("--min-nodes", metavar="N",    type=int, default=None, dest="min_nodes")
+    p_gs.add_argument("--max-nodes", metavar="N",    type=int, default=None, dest="max_nodes")
+    p_gs.add_argument("--min-edges", metavar="N",    type=int, default=None, dest="min_edges")
+    p_gs.add_argument("--max-edges", metavar="N",    type=int, default=None, dest="max_edges")
+    p_gs.add_argument("-a", "--installed", action="store_true", default=False)
+    p_gs.set_defaults(func=cmd_graphs_search)
 
-    p_gc = gs.add_parser("cache", help="manage local graph cache [stub]")
+    # cache [delete]
+    p_gc = gs.add_parser("cache", help="cache summary and management")
     gcs  = p_gc.add_subparsers(dest="cache_cmd")
-    p_gc.set_defaults(func=lambda _: p_gc.print_help())
+    p_gc.set_defaults(func=cmd_graphs_cache)
 
-    p_gcl = gcs.add_parser("list",   help="list cached graphs [stub]")
-    p_gcl.set_defaults(func=cmd_graphs_cache_list)
-
-    p_gcsz = gcs.add_parser("size",  help="show cache disk usage [stub]")
-    p_gcsz.set_defaults(func=cmd_graphs_cache_size)
-
-    p_gcc = gcs.add_parser("clear",  help="delete cached graphs [stub]")
-    p_gcc.add_argument("selection", nargs="?", metavar="SPEC", default=None)
-    p_gcc.set_defaults(func=cmd_graphs_cache_clear)
-
-    p_gcv = gcs.add_parser("verify", help="verify cached graph hashes [stub]")
-    p_gcv.set_defaults(func=cmd_graphs_cache_verify)
+    p_gcd = gcs.add_parser("delete", help="remove graphs from cache")
+    p_gcd.add_argument("selection", nargs="?", metavar="SPEC")
+    p_gcd.add_argument("--all", action="store_true", default=False)
+    p_gcd.set_defaults(func=cmd_graphs_cache_delete)
 
     # -- topologies ----------------------------------------------------------
     p_topos = sub.add_parser("topologies", help="list hardware topologies")
@@ -748,8 +891,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_algos.set_defaults(func=lambda _: p_algos.print_help())
 
     p_al = als.add_parser("list", help="list registered algorithms")
-    p_al.add_argument("--available", action="store_true", help="available only")
-    p_al.add_argument("--custom",    action="store_true", help="custom only")
+    p_al.add_argument("--available", action="store_true")
+    p_al.add_argument("--custom",    action="store_true")
     p_al.set_defaults(func=cmd_algos_list)
 
     p_aa = als.add_parser("add",      help="add a custom algorithm file")
@@ -760,11 +903,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_arm.add_argument("name")
     p_arm.set_defaults(func=cmd_algos_remove)
 
-    p_av = als.add_parser("validate", help="validate a file against the algorithm contract")
+    p_av = als.add_parser("validate", help="validate against the algorithm contract")
     p_av.add_argument("file")
     p_av.set_defaults(func=cmd_algos_validate)
 
-    p_at = als.add_parser("template", help="print an algorithm template to stdout")
+    p_at = als.add_parser("template", help="print an algorithm template")
     p_at.set_defaults(func=cmd_algos_template)
 
     p_ar = als.add_parser("reset",    help="remove all custom algorithms")
@@ -778,36 +921,27 @@ def build_parser() -> argparse.ArgumentParser:
     cs = p_config.add_subparsers(dest="config_cmd")
     p_config.set_defaults(func=lambda _: p_config.print_help())
 
-    p_cshow = cs.add_parser("show",  help="show all config keys and their sources")
-    p_cshow.set_defaults(func=cmd_config_show)
+    cs.add_parser("show",  help="show all config keys").set_defaults(func=cmd_config_show)
 
-    p_cget = cs.add_parser("get",    help="print the resolved value for a key")
+    p_cget = cs.add_parser("get", help="print value for a key")
     p_cget.add_argument("key")
     p_cget.set_defaults(func=cmd_config_get)
 
-    p_cset = cs.add_parser("set",    help="set a config value")
+    p_cset = cs.add_parser("set", help="set a config value")
     p_cset.add_argument("key")
     p_cset.add_argument("value")
     p_cset.set_defaults(func=cmd_config_set)
 
-    p_creset = cs.add_parser("reset", help="delete config file, revert to defaults")
-    p_creset.set_defaults(func=cmd_config_reset)
-
-    p_cpath = cs.add_parser("path",  help="print path to config file")
-    p_cpath.set_defaults(func=cmd_config_path)
+    cs.add_parser("reset", help="reset all keys to defaults").set_defaults(func=cmd_config_reset)
+    cs.add_parser("path",  help="print path to config file").set_defaults(func=cmd_config_path)
 
     # -- install-binary ------------------------------------------------------
     p_ib = sub.add_parser("install-binary",
                           help="download and install pre-built C++ binaries")
-    p_ib.add_argument("name", nargs="?", choices=["atom", "oct"],
-                      help="binary to install (atom or oct)")
-    p_ib.add_argument("--version", metavar="X.Y.Z", dest="binary_version",
-                      default=None,
-                      help="pin a specific release version (default: latest)")
-    p_ib.add_argument("--force", action="store_true", default=False,
-                      help="overwrite an already-installed binary")
-    p_ib.add_argument("--list", action="store_true", dest="list_binaries",
-                      help="show all binaries and their install status")
+    p_ib.add_argument("name", nargs="?", choices=["atom", "oct"])
+    p_ib.add_argument("--version", metavar="X.Y.Z", dest="binary_version", default=None)
+    p_ib.add_argument("--force",   action="store_true", default=False)
+    p_ib.add_argument("--list",    action="store_true", dest="list_binaries")
     p_ib.set_defaults(func=lambda args: cmd_install_binary_list(args)
                       if args.list_binaries else cmd_install_binary(args))
 
@@ -820,7 +954,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> None:
     parser = build_parser()
-    args = parser.parse_args()
+    args   = parser.parse_args()
     args.func(args)
 
 

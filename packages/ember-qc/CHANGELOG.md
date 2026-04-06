@@ -5,6 +5,84 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.0.0] - 2026-04-06
+
+### Added
+
+**Graph library — 31,083 graphs across 36 types**
+
+- Full graph library hosted on HuggingFace (`zachmacsmith/ember-graphs`), covering
+  structured, random, physics-lattice, and hardware-native topologies.
+- 37 graphs bundled with the package spanning 35 types for offline use; the rest
+  are downloaded on demand and cached locally.
+- New graph types: `hardware_native` (Chimera/Pegasus/Zephyr identity-embeddable
+  topologies), `planted_solution` (random subgraphs of hardware graphs), `named_special`
+  (Petersen, Tutte, House, Chvátal, McGee, Franklin), `triangular_lattice`, `kagome`,
+  `honeycomb`, `king_graph`, `frustrated_square`, `shastry_sutherland`, `cubic_lattice`,
+  `bcc_lattice`, `weak_strong_cluster`, `spin_glass`, `random_planar`, `lfr_benchmark`,
+  `sbm`, plus extensions to existing structured and random types up to n ≈ 5,000+.
+- `manifest.json` updated to abbreviated key format (`n`, `e`, `d`, `h`, `sz`, `p`,
+  `topo`) — reduces file size; `_normalize_entry()` expands keys transparently at load time.
+
+**`load_graphs.py` — three-layer loader**
+
+- Layer 1: local user cache (`~/.local/share/ember-qc/graphs/`).
+- Layer 2: bundled package files (`ember_qc/graphs/library/{id}_{name}.json`).
+- Layer 3: remote download from HuggingFace with atomic write (temp + rename) and
+  SHA-256 prefix verification before caching.
+- `_hf_subdir()`: routes download URLs to the correct HF subdirectory; handles the
+  `watts_strogatz_k{k}/` split used to stay under HF's 10,000 files-per-directory limit.
+- `_hash_ok()`: accepts both full 64-char SHA-256 and the 16-char prefix stored in
+  the manifest; used at every integrity-check site.
+- `_bundled_id_set()` / `_is_installed()`: new helpers that count both bundled and
+  cached files as "installed" — fixes `list_graph_types()`, `list_graphs_of_type()`,
+  and `graph_info()` which previously reported 0 installed graphs despite bundled files.
+- New public functions: `list_graph_types()`, `list_graphs_of_type()`, `graph_info()`,
+  `install_graphs()`, `cache_summary()`, `delete_from_cache()`, `verify_cache()`,
+  `search_graphs()`.
+- `load_test_graphs()`: pre-filters by node count against the manifest before
+  downloading, avoiding unnecessary network requests.
+- All graph selection — CLI install, cache delete, benchmark loader — goes through
+  the same `parse_graph_selection()`, so `"1000-1010, !1005"`, preset names, and
+  `"*"` work identically everywhere.
+
+**`ember graphs` CLI — full subcommand suite**
+
+- `ember graphs list` — type overview: ID ranges, total count, installed count.
+- `ember graphs list <type>` — per-graph table with nodes, edges, installed status.
+- `ember graphs list -a` — restrict to installed types/graphs only.
+- `ember graphs info <id>` — full metadata; reads live from file when installed.
+- `ember graphs install <spec>` — download by ID range, selection string, or preset;
+  `--dry-run` previews without downloading.
+- `ember graphs presets` — lists all named presets with resolved graph counts.
+- `ember graphs search` — filter by `--type`, `--topology`, `--min-nodes`,
+  `--max-nodes`, `--min-edges`, `--max-edges`, `-a`.
+- `ember graphs cache` — disk usage summary with per-type breakdown.
+- `ember graphs cache delete <spec>` — remove specific graphs; `--all` wipes cache.
+- `ember graphs verify` — SHA-256 integrity check on all cached graphs;
+  `--fix` re-downloads and repairs corrupt files.
+
+**Presets (`graphs/presets.csv`)**
+
+- 13 named presets replacing the old ID-based set: `all`, `installed`, `quick` (12),
+  `default` (36), `diverse` (31), `benchmark` (82), `structured` (2,568),
+  `lattice` (820), `physics` (4,490), `hardware_native` (42), `named_special` (12),
+  `small` (617).
+
+### Fixed
+
+- **Bundled library mismatch**: 20 files in `graphs/library/` had IDs that were
+  reassigned to different graph types during the library ID overhaul. Loading any of
+  them would raise `RuntimeError: Bundled graph ... failed integrity check`. All 20
+  removed; replaced with correct small examples for the previously uncovered types.
+- **`list_graph_types()` / `list_graphs_of_type()` / `graph_info()` always reported
+  installed=0**: these functions only checked the user cache directory, ignoring the
+  37 graphs bundled with the package. Fixed via new `_bundled_id_set()` helper.
+- **`load_graphs.py` module docstring** incorrectly described the library structure as
+  `library/<category>/<id>_<name>.json` (old nested layout); corrected to flat
+  `library/{id}_{name}.json`.
+
+
 ## [0.9.1] - 2026-03-30
 
 ### Added

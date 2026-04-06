@@ -77,6 +77,18 @@ archived/algorithms/charme/ours/atom_with_check_expand/atom_system
 # PyTorch model checkpoints / training artifacts
 archived/algorithms/charme/training_data/minorminer_results.pth
 
+# Full graph library data (large, hosted on HuggingFace — regenerate with upload.py)
+external/graph_library/fullLibary/
+
+# Generated graph instances (large JSON files — regenerate with scripts/generated_graphs/)
+scripts/generated_graphs/New_Generation/libary/
+scripts/generated_graphs/Previous_Generation/
+
+# One-shot library maintenance scripts (no longer needed)
+scripts/fix_random_planar_ids.py
+scripts/generate_missing_graphs.py
+scripts/reassign_graph_ids.py
+
 # OS / IDE
 .DS_Store
 .idea/
