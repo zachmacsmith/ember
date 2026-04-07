@@ -51,7 +51,18 @@ CONFIG_SCHEMA: Dict[str, Dict[str, Any]] = {
         "env_var":  "EMBER_OUTPUT_DIR",
         "type":     (str, type(None)),
         "description": "Directory where benchmark results are written. "
-                       "Null means the current working directory at run time.",
+                       "Null means ./results/ in the current working directory.",
+    },
+    "unfinished_dir": {
+        "default":  "default",
+        "env_var":  "EMBER_UNFINISHED_DIR",
+        "type":     (str, type(None)),
+        "description": (
+            "Where in-progress and paused benchmark runs are staged. "
+            "\"default\" — platform user data dir (~/.local/share/ember-qc/runs_unfinished/ on Linux). "
+            "\"child\" — .runs_unfinished/ folder next to the output_dir, guaranteed same filesystem. "
+            "Any other value is treated as an explicit directory path."
+        ),
     },
     "default_workers": {
         "default":  1,
@@ -363,6 +374,35 @@ def show() -> Dict[str, Dict[str, Any]]:
             "description": schema["description"],
         }
     return result
+
+
+def resolve_unfinished_dir(setting: Optional[str], output_dir: Optional[str] = None) -> Path:
+    """Resolve the staging directory for in-progress runs.
+
+    Parameters
+    ----------
+    setting : value of the ``unfinished_dir`` config key, or None.
+        ``None`` / ``"default"`` — platform user data dir.
+        ``"child"``              — ``.runs_unfinished/`` next to *output_dir*,
+                                   guaranteeing same-filesystem atomic moves.
+        Anything else            — treated as an explicit directory path.
+    output_dir : resolved output directory (needed for ``"child"`` mode).
+    """
+    if not setting or setting == "default":
+        from ember_qc._paths import get_user_unfinished_dir
+        return get_user_unfinished_dir()
+    if setting == "child":
+        if output_dir:
+            return Path(output_dir) / ".runs_unfinished"
+        # output_dir unknown — fall back to user data dir with a warning
+        logger.warning(
+            "ember-qc: unfinished_dir=\"child\" requires output_dir to be set; "
+            "falling back to platform user data dir."
+        )
+        from ember_qc._paths import get_user_unfinished_dir
+        return get_user_unfinished_dir()
+    # Explicit path
+    return Path(setting)
 
 
 def resolve_output_dir(explicit: Optional[str] = None) -> Optional[Path]:

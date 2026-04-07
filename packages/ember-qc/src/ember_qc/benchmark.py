@@ -595,6 +595,8 @@ def _execute_tasks(
     cancel_trigger=None,
     elapsed_offset: float = 0.0,
     cancel_delay: float = 5.0,
+    completed_offset: int = 0,
+    total_tasks: int = 0,
 ) -> ExecutionResult:
     """Execute a flat list of measured tasks — the shared run loop for all paths.
 
@@ -634,6 +636,16 @@ def _execute_tasks(
     _start = time.perf_counter()
     _cancelled = False
     n_tasks = len(tasks)
+    # For display: show progress relative to the full batch (including already-done tasks)
+    _display_total = total_tasks if total_tasks > n_tasks else n_tasks
+    _display_offset = completed_offset  # tasks already done before this session
+
+    def _bar(done: int) -> str:
+        """Render a progress bar relative to the full batch."""
+        display_done = _display_offset + done
+        pct = int(40 * display_done / max(_display_total, 1))
+        bar = '#' * pct + '-' * (40 - pct)
+        return f"[{bar}] {display_done}/{_display_total}"
 
     # Cancel detection — keypress listener or caller-supplied trigger
     _cancel_flag = threading.Event()
@@ -652,6 +664,9 @@ def _execute_tasks(
         done_count = 0
         prev_topo: Optional[str] = None
         prev_prob: Optional[str] = None
+        if not verbose:
+            # Print initial bar so user sees state immediately (before any trial completes)
+            print(f"\r  {_bar(0)}  {elapsed_offset:.0f}s elapsed", end="", flush=True)
 
         try:
             for task in tasks:
@@ -713,11 +728,9 @@ def _execute_tasks(
                     else:
                         print(f"[fail] {result.error}")
                 else:
-                    pct = int(40 * done_count / max(n_tasks, 1))
-                    bar = '#' * pct + '-' * (40 - pct)
                     elapsed = elapsed_offset + (time.perf_counter() - _start)
-                    print(f"\r  [{bar}] {done_count}/{n_tasks}  "
-                          f"{elapsed:.0f}s elapsed", end="", flush=True)
+                    print(f"\r  {_bar(done_count)}  {elapsed:.0f}s elapsed",
+                          end="", flush=True)
 
         except KeyboardInterrupt:
             _cancel_flag.set()
@@ -749,6 +762,9 @@ def _execute_tasks(
             worker_procs.append(p)
 
         completed_display = 0
+        if not verbose:
+            # Print initial bar so user sees state immediately (before any trial completes)
+            print(f"\r  {_bar(0)}  {elapsed_offset:.0f}s elapsed", end="", flush=True)
         try:
             while completed_display < n_tasks:
                 if _is_cancelled():
@@ -784,11 +800,9 @@ def _execute_tasks(
                         print(f"  [{completed_display}/{n_tasks}] {algo} / {prob} "
                               f"trial {trial}: [fail] {display['status']}")
                 else:
-                    pct = int(40 * completed_display / max(n_tasks, 1))
-                    bar = '#' * pct + '-' * (40 - pct)
                     elapsed = elapsed_offset + (time.perf_counter() - _start)
-                    print(f"\r  [{completed_display}/{n_tasks}] [{bar}]  "
-                          f"{elapsed:.0f}s elapsed", end="", flush=True)
+                    print(f"\r  {_bar(completed_display)}  {elapsed:.0f}s elapsed",
+                          end="", flush=True)
         except KeyboardInterrupt:
             _cancel_flag.set()
 
@@ -943,9 +957,9 @@ class EmbeddingBenchmark:
             unfinished_dir: Staging directory for in-progress/cancelled batches.
                             Default: runs_unfinished/ sibling to results_dir.
         """
-        from ember_qc._paths import get_user_unfinished_dir as _unfinished_dir
         if unfinished_dir is None:
-            unfinished_dir = str(_unfinished_dir())
+            from ember_qc.config import get as _cfg, resolve_unfinished_dir as _resolve_ud
+            unfinished_dir = str(_resolve_ud(_cfg("unfinished_dir"), output_dir=results_dir))
         self.target_graph = target_graph
         self.results_manager = ResultsManager(results_dir, unfinished_dir=unfinished_dir)
         self.results: List[EmbeddingResult] = []
@@ -1084,6 +1098,17 @@ class EmbeddingBenchmark:
             from ember_qc.config import get as _cfg
             cfg_verbose = _cfg("default_verbose")
             verbose = cfg_verbose if cfg_verbose is not None else (n_workers == 1)
+
+        # Validate and create output directory early — fail before any work begins
+        # rather than crashing at save time after a long run.
+        if output_dir is not None:
+            try:
+                Path(output_dir).mkdir(parents=True, exist_ok=True)
+            except OSError as e:
+                raise OSError(
+                    f"Cannot create output directory '{output_dir}': {e}. "
+                    "Check the path and permissions before starting a benchmark run."
+                ) from e
 
         # Multi-topology: loop over each topology
         if topologies:
@@ -1274,6 +1299,7 @@ class EmbeddingBenchmark:
             'n_algorithms': len(valid_methods),
             'n_topologies': len(topo_list),
             'total_measured_runs': total_measured,
+            'output_dir': str(Path(output_dir).resolve()) if output_dir else None,
             'fault_rate': fault_rate,
             'fault_seed': fault_seed,
             'faulty_nodes': (
@@ -1409,10 +1435,12 @@ class EmbeddingBenchmark:
         with open(config_path, 'w') as f:
             json.dump(config, f, indent=2)
         compile_batch(batch_dir)
+        # Write summary/README into staging dir BEFORE moving — if the move fails,
+        # the batch is fully intact in runs_unfinished/ and recoverable via resume.
+        self.results_manager.save_results(self.results, batch_dir, config=config)
         batch_logger.teardown()
         _out = Path(output_dir) if output_dir else None
         final_dir = self.results_manager.move_to_output(batch_dir, output_dir=_out)
-        self.results_manager.save_results(self.results, final_dir, config=config)
         _print_warn_summary(exec_result.warning_registry, final_dir / "logs")
         print(f"Results: {final_dir.resolve()}")
         print("=" * 80)
@@ -1463,7 +1491,8 @@ def load_benchmark(batch_id: Optional[str] = None,
                    n_workers: Optional[int] = None,
                    verbose: bool = None,
                    cancel_delay: float = 5.0,
-                   confirm: bool = True) -> Optional[Path]:
+                   confirm: bool = True,
+                   analyze: bool = False) -> Optional[Path]:
     """Resume an incomplete or crashed benchmark run.
 
     Scans runs_unfinished/ for incomplete batches. With no arguments, lists
@@ -1498,12 +1527,12 @@ def load_benchmark(batch_id: Optional[str] = None,
         When no argument is passed it prints the discovery table and accepts
         a selection by number from input().
     """
-    # Resolve staging directory
+    # Resolve staging directory: explicit arg > config > platform default
     if unfinished_dir:
         _unfinished = Path(unfinished_dir)
     else:
-        from ember_qc._paths import get_user_unfinished_dir
-        _unfinished = get_user_unfinished_dir()
+        from ember_qc.config import get as _cfg, resolve_unfinished_dir as _resolve_ud
+        _unfinished = _resolve_ud(_cfg("unfinished_dir"), output_dir=output_dir)
 
     incomplete_runs = scan_incomplete_runs(_unfinished)
     if not incomplete_runs:
@@ -1591,10 +1620,24 @@ def load_benchmark(batch_id: Optional[str] = None,
     topo_names = config.get('topologies', [])
     graph_selection = config.get('graph_selection', 'custom')
 
+    # Resolve output_dir: explicit arg > saved in config > default (./results/)
+    if output_dir is None:
+        output_dir = config.get('output_dir')  # absolute path saved at run start
+
     if verbose is None:
         from ember_qc.config import get as _cfg
         cfg_verbose = _cfg("default_verbose")
         verbose = cfg_verbose if cfg_verbose is not None else (n_workers == 1)
+
+    # Validate and create output directory early — fail before execution begins.
+    if output_dir is not None:
+        try:
+            Path(output_dir).mkdir(parents=True, exist_ok=True)
+        except OSError as e:
+            raise OSError(
+                f"Cannot create output directory '{output_dir}': {e}. "
+                "Check the path and permissions before resuming a benchmark run."
+            ) from e
 
     # Reconstruct problems
     if 'custom_problems' in config:
@@ -1666,15 +1709,20 @@ def load_benchmark(batch_id: Optional[str] = None,
           f"{n_remaining} remaining")
     print(f"  n_workers={n_workers}, timeout={timeout}s")
 
-    # If all tasks already done, just compile and move
+    # If all tasks already done (e.g. crashed at save time), compile and save
     if n_remaining == 0:
-        print("All tasks already complete. Compiling...")
+        print("All tasks already complete. Compiling and saving results...")
         compile_batch(batch_dir)
         delete_checkpoint(batch_dir)
-        _results_root = Path(output_dir) if output_dir else (_unfinished.parent / "results")
+        workers_dir = batch_dir / "workers"
+        all_results = _load_results_from_jsonl(workers_dir)
+        _results_root = Path(output_dir) if output_dir else Path("./results")
         _rm = ResultsManager(str(_results_root), unfinished_dir=str(_unfinished))
+        _rm.save_results(all_results, batch_dir, config=config)
         final_dir = _rm.move_to_output(batch_dir)
-        print(f"Batch moved to: {final_dir}")
+        print(f"Results: {final_dir.resolve()}")
+        if analyze:
+            _run_post_analysis(final_dir)
         return final_dir
 
     # Increment resume_count in checkpoint at start of resume
@@ -1705,6 +1753,7 @@ def load_benchmark(batch_id: Optional[str] = None,
         remaining_tasks, batch_dir, batch_logger,
         n_workers=n_workers, verbose=verbose, timeout=timeout,
         elapsed_offset=elapsed_offset, cancel_delay=cancel_delay,
+        completed_offset=n_already_done, total_tasks=len(all_tasks),
     )
 
     # Read all results from JSONL (original session + this session)
@@ -1728,6 +1777,7 @@ def load_benchmark(batch_id: Optional[str] = None,
         n_done = len(all_tasks) - len(exec_result.unfinished_tasks)
         print(f"\nCancelled. {n_done}/{len(all_tasks)} trials complete.")
         print(f"Checkpoint saved. Resume again with: load_benchmark()")
+        _print_warn_summary(exec_result.warning_registry, batch_dir / "logs")
         return batch_dir
 
     # ── Normal completion of resume ────────────────────────────────────────────
@@ -1741,17 +1791,27 @@ def load_benchmark(batch_id: Optional[str] = None,
     m, s = divmod(int(batch_wall_time), 60)
     h, m = divmod(m, 60)
     time_str = f"{h}h {m}m {s}s" if h else f"{m}m {s}s" if m else f"{s}s"
-    print(f"\nResume complete! Total wall time: {batch_wall_time:.1f}s ({time_str})")
+    print("\n" + "=" * 80)
+    print("Benchmark complete!")
+    print(f"Total wall time: {batch_wall_time:.1f}s ({time_str})")
+
+    config['batch_wall_time'] = round(batch_wall_time, 3)
+    config_path = batch_dir / "config.json"
+    with open(config_path, 'w') as f:
+        json.dump(config, f, indent=2)
 
     compile_batch(batch_dir)
     delete_checkpoint(batch_dir)
-    batch_logger.teardown()
-
-    _results_root = Path(output_dir) if output_dir else (_unfinished.parent / "results")
+    _results_root = Path(output_dir) if output_dir else Path("./results")
     _rm = ResultsManager(str(_results_root), unfinished_dir=str(_unfinished))
+    _rm.save_results(all_results, batch_dir, config=config)
+    batch_logger.teardown()
     final_dir = _rm.move_to_output(batch_dir)
-    _rm.save_results(all_results, final_dir, config=config)
     _print_warn_summary(exec_result.warning_registry, final_dir / "logs")
+    print(f"Results: {final_dir.resolve()}")
+    print("=" * 80)
+    if analyze:
+        _run_post_analysis(final_dir)
     return final_dir
 
 

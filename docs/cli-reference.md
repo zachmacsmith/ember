@@ -360,6 +360,7 @@ Prints the path to the config file.
 | Key | Type | Default | Description |
 |---|---|---|---|
 | `output_dir` | string | `./results/` | Default output directory for benchmark results |
+| `unfinished_dir` | string | `"default"` | Where paused/in-progress runs are staged. `"default"` = platform user data dir. `"child"` = `.runs_unfinished/` folder inside `output_dir` (recommended on servers — guaranteed same filesystem). Any other value is treated as an explicit path. |
 | `default_workers` | int | `1` | Default parallel worker count |
 | `default_timeout` | float | `60.0` | Default per-trial timeout in seconds |
 | `default_topology` | string | `chimera_16x16x4` | Default hardware topology |
@@ -374,6 +375,7 @@ Prints the path to the config file.
 | Variable | Config key |
 |---|---|
 | `EMBER_OUTPUT_DIR` | `output_dir` |
+| `EMBER_UNFINISHED_DIR` | `unfinished_dir` |
 | `EMBER_WORKERS` | `default_workers` |
 | `EMBER_TIMEOUT` | `default_timeout` |
 | `EMBER_TOPOLOGY` | `default_topology` |

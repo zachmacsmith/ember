@@ -206,6 +206,9 @@ def cmd_resume(args: argparse.Namespace) -> None:
         batch_id=args.batch_id or None,
         n_workers=args.workers or None,
         output_dir=args.output_dir or _cfg("output_dir"),
+        unfinished_dir=_cfg("unfinished_dir") or None,
+        verbose=args.verbose,
+        analyze=args.analyze,
     )
 
 
@@ -790,8 +793,12 @@ def build_parser() -> argparse.ArgumentParser:
     p_res.add_argument("batch_id", nargs="?", metavar="BATCH_ID")
     p_res.add_argument("--workers",    type=int, default=None)
     p_res.add_argument("--output-dir", metavar="PATH", default=None, dest="output_dir")
+    p_res.add_argument("--analyze",    action="store_true", default=False)
     p_res.add_argument("--delete",     action="store_true", default=False)
     p_res.add_argument("--delete-all", action="store_true", default=False, dest="delete_all")
+    rvg = p_res.add_mutually_exclusive_group()
+    rvg.add_argument("--verbose",    dest="verbose", action="store_const", const=True,  default=None)
+    rvg.add_argument("--no-verbose", dest="verbose", action="store_const", const=False)
     p_res.set_defaults(func=cmd_resume)
 
     # -- graphs --------------------------------------------------------------

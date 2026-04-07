@@ -5,6 +5,53 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.0.2] - 2026-04-06
+
+### Added
+
+- **`unfinished_dir` config key** — controls where in-progress benchmark runs are staged.
+  Three modes: `"default"` (platform user data dir, e.g. `~/.local/share/ember-qc/runs_unfinished/`),
+  `"child"` (`.runs_unfinished/` inside the output directory — guarantees same filesystem for
+  atomic renames on servers), or any explicit directory path. Set via
+  `ember config set unfinished_dir child` or `EMBER_UNFINISHED_DIR` environment variable.
+- **`--verbose` / `--no-verbose` / `--analyze` flags** on `ember resume`, matching the flags
+  already available on `ember run`.
+
+### Fixed
+
+- **Output directory crash** — `run_full_benchmark` now validates and creates the output
+  directory at run start (fail-fast). Previously the run completed all trials then crashed
+  with `OSError` when trying to save, losing all results.
+- **Cross-filesystem move data loss** — `ResultsManager.move_to_output` rewritten to use
+  atomic `Path.rename` first (same filesystem), falling back to explicit `copytree` + `rmtree`
+  with proper error recovery. The copy is verified before the source is removed; any copy
+  failure leaves the run fully intact in staging for recovery via `ember resume`.
+- **Write-before-move** — all output files (`results.db`, `summary.csv`, `README.md`,
+  `runs.csv`) are now written into the staging directory before `move_to_output` is called.
+  A move failure no longer causes data loss.
+- **Stale destination cleanup** — `move_to_output` removes any stale destination directory
+  left by a previous failed move before attempting the rename/copy.
+- **Post-move existence check** — `move_to_output` raises `RuntimeError` if the destination
+  directory does not exist after the move, making silent failures detectable.
+- **Resume output directory** — `output_dir` is now saved as an absolute path in `config.json`
+  at run start. `load_benchmark` reads it back so resumed runs save to the correct location
+  rather than falling back to the ember-qc user data directory.
+- **Resume progress bar** — `ember resume` now shows the progress bar immediately (before the
+  first trial completes) and displays the correct total context, e.g. `[45/100]` instead of
+  `[0/30]`, so resumed runs show overall progress rather than only the remaining portion.
+- **Resume with zero remaining tasks** — when all trials completed but the batch was not yet
+  compiled (crash during save), `load_benchmark` now compiles and saves results correctly
+  instead of silently returning without producing output files.
+- **Resume completion output** — `load_benchmark` now prints the same completion summary as
+  `run_full_benchmark`: wall time, results path, warning summary, and closing banner.
+- **`unfinished_dir` fallback** — `EmbeddingBenchmark.__init__` and `load_benchmark` now
+  both use `resolve_unfinished_dir` from `config.py` so the fallback location is always
+  consistent with the config setting.
+- **`results.py` save safety net** — `save_results` now calls `batch_dir.mkdir(parents=True,
+  exist_ok=True)` before writing, preventing `OSError` if the staging directory was removed.
+
+---
+
 ## [1.0.1] - 2026-04-06
 
 ### Changed

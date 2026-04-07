@@ -135,7 +135,37 @@ class ResultsManager:
         dest_root.mkdir(exist_ok=True, parents=True)
         dest = dest_root / batch_dir.name
 
-        shutil.move(str(batch_dir), str(dest))
+        # Remove any stale dest from a previous failed run so shutil.move cannot
+        # nest batch_dir inside it instead of renaming to it.
+        if dest.exists():
+            shutil.rmtree(str(dest))
+
+        try:
+            # Try atomic rename first (same filesystem).
+            batch_dir.rename(dest)
+        except OSError:
+            # Cross-filesystem: copy then remove source explicitly so we control
+            # error handling at each step and never lose data silently.
+            try:
+                shutil.copytree(str(batch_dir), str(dest))
+            except Exception as copy_err:
+                # Copy failed — clean up any partial destination and leave the
+                # source intact so the run can be recovered with ember resume.
+                if dest.exists():
+                    shutil.rmtree(str(dest), ignore_errors=True)
+                raise RuntimeError(
+                    f"Failed to copy batch '{batch_dir.name}' to '{dest_root}': {copy_err}. "
+                    f"The run data is still in runs_unfinished/ and can be resumed."
+                ) from copy_err
+            # Copy succeeded — now remove the source.
+            shutil.rmtree(str(batch_dir))
+
+        if not dest.is_dir():
+            raise RuntimeError(
+                f"move_to_output: expected batch at '{dest}' after move but it does not "
+                f"exist. Check filesystem permissions and disk space."
+            )
+
         self._update_latest_symlink(dest, dest_root)
         return dest
 
@@ -153,6 +183,9 @@ class ResultsManager:
         """
         if not results:
             return
+
+        batch_dir = Path(batch_dir)
+        batch_dir.mkdir(parents=True, exist_ok=True)
 
         self._save_summary(results, batch_dir)
         self._save_readme(results, batch_dir, config)
