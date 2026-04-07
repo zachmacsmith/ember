@@ -35,6 +35,7 @@ Public API:
     generate_manifest(graph_dir, manifest_path)       -> Path  [authoring tool]
 """
 
+import functools
 import hashlib
 import json
 import shutil
@@ -73,6 +74,7 @@ def _hf_subdir(category: str, filename: str) -> str:
 # MANIFEST
 # ==============================================================================
 
+@functools.lru_cache(maxsize=None)
 def load_manifest() -> Dict:
     """Load and return the bundled manifest.json.
 
@@ -136,10 +138,17 @@ def _hash_ok(actual_hex: str, expected: str) -> bool:
     return actual_hex.startswith(expected) if len(expected) < 64 else actual_hex == expected
 
 
+@functools.lru_cache(maxsize=None)
 def _manifest_by_id() -> Dict[int, Dict]:
     """Return manifest entries keyed by graph ID, with keys normalised to full names."""
     manifest = load_manifest()
     return {entry["id"]: _normalize_entry(entry) for entry in manifest.get("graphs", [])}
+
+
+@functools.lru_cache(maxsize=None)
+def _manifest_by_name() -> Dict[str, Dict]:
+    """Return manifest entries keyed by graph name, with keys normalised to full names."""
+    return {entry["name"]: entry for entry in _manifest_by_id().values()}
 
 
 def verify_manifest(files: Optional[List[Tuple[int, Path]]] = None,

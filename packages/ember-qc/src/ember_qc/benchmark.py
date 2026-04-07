@@ -407,6 +407,29 @@ def _algo_topo_compatible(algo_name: str, topo_name: str) -> bool:
     return any(topo_lower.startswith(s.lower()) for s in supported)
 
 
+def _graph_topo_compatible(problem_name: str, source_graph, target_graph,
+                           topo_name: str) -> bool:
+    """Return True if source_graph is potentially embeddable in target_graph.
+
+    Checks the graph's manifest topology list (prefix match) if the graph is
+    in the library.  Falls back to a size check (nodes and edges must both fit)
+    for custom graphs not present in the manifest.
+    """
+    try:
+        from ember_qc.load_graphs import _manifest_by_name
+        entry = _manifest_by_name().get(problem_name)
+        if entry is not None:
+            compatible_topos = entry.get('topologies', [])
+            if compatible_topos:
+                topo_lower = topo_name.lower()
+                return any(topo_lower.startswith(t.lower()) for t in compatible_topos)
+    except Exception:
+        pass
+    # Custom graph or not in manifest: size is a necessary condition for embedding
+    return (source_graph.number_of_nodes() <= target_graph.number_of_nodes() and
+            source_graph.number_of_edges() <= target_graph.number_of_edges())
+
+
 def _print_warn_summary(warn_registry: dict, log_dir: Path) -> None:
     """Print the end-of-run warning summary block. No-op if registry is empty."""
     if not warn_registry:
@@ -1272,8 +1295,29 @@ class EmbeddingBenchmark:
                 print(f"   {algo_name} is not compatible with topology {topo_name}"
                       f" — {n_skip:,} trials skipped.")
 
+        # Pre-run graph-topology compatibility check — skip graphs that are too
+        # large or explicitly marked incompatible with a topology in the manifest.
+        _incompat_graph_topo: set = set()  # (problem_name, topo_name) to skip
+        for _, target_graph, topo_name in topo_list:
+            for problem_name, source_graph in problems:
+                if not _graph_topo_compatible(problem_name, source_graph,
+                                              target_graph, topo_name):
+                    _incompat_graph_topo.add((problem_name, topo_name))
+
+        n_graph_topo_skipped = 0
+        if _incompat_graph_topo:
+            for problem_name, topo_name in _incompat_graph_topo:
+                n_compat_algos = sum(
+                    1 for a in valid_methods
+                    if (a, topo_name) not in _incompatible_pairs
+                )
+                n_graph_topo_skipped += n_compat_algos * n_trials
+            print(f"Pre-run: {len(_incompat_graph_topo):,} graph/topology pair(s) skipped "
+                  f"(graph incompatible with topology) — "
+                  f"{n_graph_topo_skipped:,} trials skipped before run.")
+
         n_compatible_combos = len(valid_methods) * len(topo_list) - len(_incompatible_pairs)
-        total_measured = len(problems) * n_compatible_combos * n_trials
+        total_measured = len(problems) * n_compatible_combos * n_trials - n_graph_topo_skipped
         total_warmup = len(problems) * n_compatible_combos * warmup_trials
 
         if n_workers > 1 and warmup_trials > 0:
@@ -1350,6 +1394,8 @@ class EmbeddingBenchmark:
         all_tasks = []
         for _, target_graph, topo_name in topo_list:
             for problem_name, source_graph in problems:
+                if (problem_name, topo_name) in _incompat_graph_topo:
+                    continue
                 for algo_name in valid_methods:
                     if (algo_name, topo_name) in _incompatible_pairs:
                         continue
@@ -1362,6 +1408,8 @@ class EmbeddingBenchmark:
         if warmup_trials > 0 and n_workers == 1:
             for _, target_graph, topo_name in topo_list:
                 for problem_name, source_graph in problems:
+                    if (problem_name, topo_name) in _incompat_graph_topo:
+                        continue
                     for algo_name in valid_methods:
                         if (algo_name, topo_name) in _incompatible_pairs:
                             continue
@@ -1666,10 +1714,19 @@ def load_benchmark(batch_id: Optional[str] = None,
             f"Available: {list(ALGORITHM_REGISTRY.keys())}"
         )
 
+    # Rebuild graph-topology incompatibility set (same logic as run_full_benchmark).
+    _incompat_graph_topo_resume: set = set()
+    for _, target_graph, topo_name in topo_list:
+        for problem_name, source_graph in problems:
+            if not _graph_topo_compatible(problem_name, source_graph, target_graph, topo_name):
+                _incompat_graph_topo_resume.add((problem_name, topo_name))
+
     # Build full task list (same order as original run) — 7-element tuple.
     all_tasks = []
     for _, target_graph, topo_name in topo_list:
         for problem_name, source_graph in problems:
+            if (problem_name, topo_name) in _incompat_graph_topo_resume:
+                continue
             for algo_name in algorithms:
                 for trial in range(n_trials):
                     trial_seed = _derive_seed(seed, algo_name, problem_name, topo_name, trial)

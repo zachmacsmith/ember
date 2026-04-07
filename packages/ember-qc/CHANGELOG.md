@@ -5,6 +5,45 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.0.4] - 2026-04-07
+
+### Added
+
+- **Graph-topology compatibility pre-filter** — before any trials run, ember
+  now checks whether each graph is compatible with each topology being
+  benchmarked. Incompatible pairs are skipped entirely; no trials are launched
+  and no timeouts are wasted. At full library scale, 7,149 of 31,083 graphs are
+  incompatible with Chimera — without this filter those trials would all timeout.
+
+  Compatibility is resolved in two layers:
+  1. **Manifest topology field** — every library graph has a precomputed
+     `topologies` list (e.g. `["pegasus", "zephyr"]`) stored in `manifest.json`.
+     Checked via prefix match (`"chimera_16x16x4"` matches `"chimera"`), the
+     same style as the existing algorithm-topology check.
+  2. **Size fallback** — for custom (user-supplied) graphs not in the manifest,
+     falls back to a necessary-condition size check: the problem graph must have
+     no more nodes *and* no more edges than the target topology.
+
+  A pre-run summary line is printed reporting how many graph/topology pairs and
+  trials were skipped. `total_measured_runs` in `config.json` and the progress
+  bar reflect the actual planned trial count rather than the inflated total.
+  The same filter is applied when rebuilding the task list in `load_benchmark`
+  (resume) for consistency.
+
+- **Manifest lookup cache** — `_manifest_by_name()` added to `load_graphs.py`:
+  a `lru_cache`-backed dict of `name → manifest entry` built once from the
+  already-cached `_manifest_by_id()`. Zero cost after first call.
+
+- **Manifest and manifest-by-id caching** (`lru_cache`) — `load_manifest()` and
+  `_manifest_by_id()` are now decorated with `@functools.lru_cache(maxsize=None)`
+  so the manifest JSON is parsed only once per process and the 31,083-entry
+  normalised dict is built only once. Previously both were recomputed on every
+  `load_graph()` call — with 4,490 physics graphs this caused ~139 million
+  redundant `_normalize_entry` calls before a single trial ran (visible as a
+  multi-minute hang at startup).
+
+---
+
 ## [1.0.3] - 2026-04-07
 
 ### Fixed
