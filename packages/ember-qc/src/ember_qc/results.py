@@ -207,18 +207,19 @@ class ResultsManager:
             rows.append(d)
 
         df = pd.DataFrame(rows)
-        group_cols = ['algorithm', 'problem_name', 'topology_name']
+        group_cols = ['algorithm', 'graph_id', 'topology_name']
 
         summary_rows = []
         for group_key, group_df in df.groupby(group_cols):
-            algo, problem, topo = group_key
+            algo, gid, topo = group_key
             n = len(group_df)
             successful = group_df[group_df['success'] == True]
             n_success = len(successful)
 
             row = {
                 'algorithm': algo,
-                'problem_name': problem,
+                'graph_id': gid,
+                'graph_name': group_df['graph_name'].iloc[0],
                 'topology_name': topo,
                 'n_trials': n,
                 'n_success': n_success,
@@ -262,7 +263,7 @@ class ResultsManager:
         n_success = sum(1 for r in results if r.success)
         n_valid = sum(1 for r in results if r.is_valid)
         algorithms = sorted(set(r.algorithm for r in results))
-        problems = sorted(set(r.problem_name for r in results))
+        problems = sorted(set(r.graph_name for r in results))
         topologies = sorted(set(r.topology_name for r in results if r.topology_name))
 
         lines = [f"# {batch_name}\n"]

@@ -26,7 +26,7 @@ Selection — by ID string or preset name:
 
 Public API:
     load_graph(graph_id)                              -> nx.Graph
-    load_test_graphs(selection, max_nodes, min_nodes) -> List[(name, graph)]
+    load_test_graphs(selection, max_nodes, min_nodes) -> List[(graph_id, name, graph)]
     list_test_graphs()                                -> List[Dict]
     parse_graph_selection(spec)                       -> Set[int]
     load_presets()                                    -> Dict[str, str]
@@ -149,6 +149,73 @@ def _manifest_by_id() -> Dict[int, Dict]:
 def _manifest_by_name() -> Dict[str, Dict]:
     """Return manifest entries keyed by graph name, with keys normalised to full names."""
     return {entry["name"]: entry for entry in _manifest_by_id().values()}
+
+
+@functools.lru_cache(maxsize=None)
+def _graph_dedup_info() -> tuple:
+    """Compute duplicate and name-collision sets from the manifest (cached).
+
+    Returns a 2-tuple:
+        skip_to_canonical (Dict[int, int]):
+            Maps each redundant graph ID to the canonical ID that represents it.
+            Used for lazy deduplication: skip a duplicate only when its canonical
+            counterpart is also present in the current selection.
+            Canonical = lowest ID in each group.
+            Cause: same graph (identical nodes / edges / parameters) assigned
+            multiple IDs during library generation.
+
+        name_collision_ids (frozenset[int]):
+            IDs of graphs whose manifest name is shared by at least one other
+            graph with different structure (different nodes, edges, or parameters).
+            Benchmark results use graph_id (not graph_name) as the unique key,
+            so name collisions do not cause data loss — this set is informational.
+            Cause: a generation parameter (e.g. edge density p) was omitted from
+            the naming template.
+    """
+    from collections import defaultdict
+
+    manifest = _manifest_by_id()
+
+    # Group all IDs by name
+    by_name: Dict[str, List[int]] = defaultdict(list)
+    for gid, entry in manifest.items():
+        by_name[entry["name"]].append(gid)
+
+    def _fingerprint(entry: dict) -> tuple:
+        p = entry.get("parameters", {})
+        return (entry["nodes"], entry["edges"], tuple(sorted(p.items())))
+
+    skip_to_canonical: Dict[int, int] = {}
+    name_collision_ids: set = set()
+
+    for name, gids in by_name.items():
+        if len(gids) < 2:
+            continue
+
+        # Partition by structural fingerprint
+        fp_groups: Dict[tuple, List[int]] = defaultdict(list)
+        for gid in gids:
+            fp_groups[_fingerprint(manifest[gid])].append(gid)
+
+        if len(fp_groups) == 1:
+            # All identical → true structural duplicates: keep lowest ID
+            ordered = sorted(gids)
+            canonical = ordered[0]
+            for dup_id in ordered[1:]:
+                skip_to_canonical[dup_id] = canonical
+        else:
+            # Multiple distinct structures share a name → naming bug
+            name_collision_ids.update(gids)
+
+            # Within each structurally-identical sub-group, still deduplicate
+            for fp, sub_gids in fp_groups.items():
+                if len(sub_gids) > 1:
+                    ordered = sorted(sub_gids)
+                    canonical = ordered[0]
+                    for dup_id in ordered[1:]:
+                        skip_to_canonical[dup_id] = canonical
+
+    return skip_to_canonical, frozenset(name_collision_ids)
 
 
 def verify_manifest(files: Optional[List[Tuple[int, Path]]] = None,
@@ -357,6 +424,13 @@ def load_graph(graph_id: int) -> nx.Graph:
             "Run 'ember graphs list' to see all available graphs."
         )
 
+    # Redirect structural duplicates to their canonical ID (identical graph,
+    # lower ID). This ensures only one copy is ever downloaded/cached.
+    # When duplicates are later removed from the manifest, this becomes a no-op.
+    skip_to_canonical, _ = _graph_dedup_info()
+    if graph_id in skip_to_canonical:
+        return load_graph(skip_to_canonical[graph_id])
+
     entry = manifest[graph_id]
     expected_hash = entry.get("hash", "")
 
@@ -514,7 +588,7 @@ def parse_graph_selection(spec: str) -> Set[int]:
 
 def load_test_graphs(selection: str = "*",
                      max_nodes: Optional[int] = None,
-                     min_nodes: Optional[int] = None) -> List[Tuple[str, nx.Graph]]:
+                     min_nodes: Optional[int] = None) -> List[Tuple[int, str, nx.Graph]]:
     """Load test graphs by selection string.
 
     Graphs not bundled with the package are downloaded from HuggingFace
@@ -526,7 +600,8 @@ def load_test_graphs(selection: str = "*",
         min_nodes: Only include graphs with at least this many nodes.
 
     Returns:
-        List of (name, graph) tuples sorted by ID.
+        List of (graph_id, name, graph) tuples sorted by ID.
+        graph_id is the manifest integer ID; 0 for custom/non-manifest graphs.
     """
     selected_ids = parse_graph_selection(selection)
     is_wildcard  = -1 in selected_ids
@@ -549,6 +624,14 @@ def load_test_graphs(selection: str = "*",
                 continue
             filtered.add(gid)
         selected_ids = filtered
+
+    # Deduplicate: skip a redundant ID when its canonical is also selected.
+    # Once duplicates are removed from the manifest this becomes a no-op.
+    skip_to_canonical, _ = _graph_dedup_info()
+    selected_ids = {
+        gid for gid in selected_ids
+        if gid not in skip_to_canonical or skip_to_canonical[gid] not in selected_ids
+    }
 
     results: List[Tuple[int, str, nx.Graph]] = []
     loaded_files: List[Tuple[int, Path]] = []
@@ -589,7 +672,7 @@ def load_test_graphs(selection: str = "*",
         verify_manifest(files=loaded_files)
 
     results.sort(key=lambda x: x[0])
-    return [(name, graph) for _, name, graph in results]
+    return [(gid, name, graph) for gid, name, graph in results]
 
 
 def list_test_graphs() -> List[Dict]:

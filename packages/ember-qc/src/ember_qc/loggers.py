@@ -44,16 +44,16 @@ class _ListHandler(logging.Handler):
 
 # ── Per-run log helpers ─────────────────────────────────────────────────────────
 
-def run_log_path(logs_runs_dir: Path, algorithm: str, problem_name: str,
+def run_log_path(logs_runs_dir: Path, algorithm: str, graph_name: str,
                  trial: int, seed: int) -> Path:
     """Return the path for a per-run log file.
 
-    All four components of the identifying tuple (algorithm, problem_name, trial,
+    All four components of the identifying tuple (algorithm, graph_name, trial,
     seed) are encoded in the filename so they are recoverable without querying
     the database — useful when the database is unavailable or corrupt.
     """
     safe_algo = algorithm.replace('/', '_').replace(' ', '_')
-    safe_prob = problem_name.replace('/', '_').replace(' ', '_')
+    safe_prob = graph_name.replace('/', '_').replace(' ', '_')
     return logs_runs_dir / f"{safe_algo}__{safe_prob}__{trial}__{seed}.log"
 
 
@@ -90,7 +90,7 @@ class BatchLogger:
     """Runner-level structured logger for one benchmark batch.
 
     Handles two concerns:
-    - Per-run log files: one file per (algorithm, problem_name, trial, seed)
+    - Per-run log files: one file per (algorithm, graph_name, trial, seed)
       written to ``logs/runs/`` within the batch directory. Captures algorithm
       stdout/stderr via the ``capture_run()`` context manager, plus a runner
       diagnostic footer appended after ``embed()`` returns.
@@ -203,10 +203,10 @@ class BatchLogger:
 
     # ── Per-run log helpers ─────────────────────────────────────────────────────
 
-    def run_log_path(self, algorithm: str, problem_name: str,
+    def run_log_path(self, algorithm: str, graph_name: str,
                      trial: int, seed: int) -> Path:
         """Return the path for a specific per-run log file."""
-        return run_log_path(self.logs_runs_dir, algorithm, problem_name, trial, seed)
+        return run_log_path(self.logs_runs_dir, algorithm, graph_name, trial, seed)
 
     def append_footer(self, log_path: Path, result) -> None:
         """Append a runner diagnostic footer to a per-run log file.
@@ -235,7 +235,7 @@ class BatchLogger:
         if not self._logger:
             return
         msg = (
-            f"{result.algorithm} / {result.problem_name} "
+            f"{result.algorithm} / {result.graph_name} "
             f"trial={result.trial} seed={trial_seed} "
             f"→ {result.status} wall={result.wall_time:.3f}s"
         )
@@ -249,12 +249,12 @@ class BatchLogger:
 
         The display record is the lightweight dict pushed by worker processes
         onto the result queue. It must contain at minimum: algorithm,
-        problem_name, trial, status, wall_time, and optionally seed and error.
+        graph_name, trial, status, wall_time, and optionally seed and error.
         """
         if not self._logger:
             return
         msg = (
-            f"{display['algorithm']} / {display['problem_name']} "
+            f"{display['algorithm']} / {display['graph_name']} "
             f"trial={display['trial']} seed={display.get('seed', '?')} "
             f"→ {display['status']} wall={display['wall_time']:.3f}s"
         )

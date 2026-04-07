@@ -48,7 +48,8 @@ class EmbeddingResult:
     """Result from a single embedding attempt."""
     # Identification
     algorithm: str
-    problem_name: str
+    graph_name: str         # human-readable label (may duplicate across graphs)
+    graph_id: int           # manifest ID (unique); 0 for custom/non-manifest graphs
     topology_name: str
     trial: int
 
@@ -152,22 +153,24 @@ def benchmark_one(source_graph: nx.Graph,
                   target_graph: nx.Graph,
                   algorithm: str,
                   timeout: float = 60.0,
-                  problem_name: str = "",
+                  graph_name: str = "",
+                  graph_id: int = 0,
                   topology_name: str = "",
                   trial: int = 0,
                   **kwargs) -> EmbeddingResult:
     """Run a single embedding benchmark. The atomic unit of the framework.
-    
+
     Args:
         source_graph: Problem graph to embed.
         target_graph: Hardware topology graph.
         algorithm: Name of registered algorithm (e.g., "minorminer").
         timeout: Max seconds for this attempt.
-        problem_name: Label for this problem (e.g., "K10").
+        graph_name: Human-readable label for this problem (e.g., "K10").
+        graph_id: Manifest integer ID; 0 for custom/non-manifest graphs.
         topology_name: Label for the hardware (e.g., "chimera_4x4x4").
         trial: Which trial number (metadata only).
         **kwargs: Forwarded to algorithm.embed() for hyperparameter control.
-    
+
     Returns:
         EmbeddingResult with the embedding, metrics, and validation.
     """
@@ -178,16 +181,17 @@ def benchmark_one(source_graph: nx.Graph,
             f"Available: {list(ALGORITHM_REGISTRY.keys())}"
         )
     algo = ALGORITHM_REGISTRY[algorithm]
-    
+
     # Problem metadata
     n_nodes = source_graph.number_of_nodes()
     n_edges = source_graph.number_of_edges()
     density = (2 * n_edges / (n_nodes * (n_nodes - 1))) if n_nodes > 1 else 0.0
-    
+
     # Common fields for failure results
     fail_base = dict(
         algorithm=algorithm,
-        problem_name=problem_name,
+        graph_name=graph_name,
+        graph_id=graph_id,
         topology_name=topology_name,
         trial=trial,
         success=False,
@@ -281,7 +285,8 @@ def benchmark_one(source_graph: nx.Graph,
             metrics = compute_embedding_metrics(raw_embedding, validation_target)
             return EmbeddingResult(
                 algorithm=algorithm,
-                problem_name=problem_name,
+                graph_name=graph_name,
+                graph_id=graph_id,
                 topology_name=topology_name,
                 trial=trial,
                 success=True,
@@ -356,7 +361,7 @@ def _reseed_globals(trial_seed: int) -> None:
         pass
 
 
-def _derive_seed(root_seed: int, algorithm: str, problem_name: str,
+def _derive_seed(root_seed: int, algorithm: str, graph_id: int,
                  topology_name: str, trial: int) -> int:
     """Derive a deterministic per-trial seed via SHA-256.
 
@@ -367,7 +372,7 @@ def _derive_seed(root_seed: int, algorithm: str, problem_name: str,
 
     Returns a 32-bit unsigned integer.
     """
-    key = f"{root_seed}:{algorithm}:{problem_name}:{topology_name}:{trial}"
+    key = f"{root_seed}:{algorithm}:{graph_id}:{topology_name}:{trial}"
     digest = hashlib.sha256(key.encode()).digest()
     return int.from_bytes(digest[:4], 'big')
 
@@ -407,25 +412,26 @@ def _algo_topo_compatible(algo_name: str, topo_name: str) -> bool:
     return any(topo_lower.startswith(s.lower()) for s in supported)
 
 
-def _graph_topo_compatible(problem_name: str, source_graph, target_graph,
+def _graph_topo_compatible(graph_id: int, source_graph, target_graph,
                            topo_name: str) -> bool:
     """Return True if source_graph is potentially embeddable in target_graph.
 
     Checks the graph's manifest topology list (prefix match) if the graph is
     in the library.  Falls back to a size check (nodes and edges must both fit)
-    for custom graphs not present in the manifest.
+    for custom graphs (graph_id == 0) not present in the manifest.
     """
-    try:
-        from ember_qc.load_graphs import _manifest_by_name
-        entry = _manifest_by_name().get(problem_name)
-        if entry is not None:
-            compatible_topos = entry.get('topologies', [])
-            if compatible_topos:
-                topo_lower = topo_name.lower()
-                return any(topo_lower.startswith(t.lower()) for t in compatible_topos)
-    except Exception:
-        pass
-    # Custom graph or not in manifest: size is a necessary condition for embedding
+    if graph_id:
+        try:
+            from ember_qc.load_graphs import _manifest_by_id
+            entry = _manifest_by_id().get(graph_id)
+            if entry is not None:
+                compatible_topos = entry.get('topologies', [])
+                if compatible_topos:
+                    topo_lower = topo_name.lower()
+                    return any(topo_lower.startswith(t.lower()) for t in compatible_topos)
+        except Exception:
+            pass
+    # Custom graph or no topology annotation: size is a necessary condition
     return (source_graph.number_of_nodes() <= target_graph.number_of_nodes() and
             source_graph.number_of_edges() <= target_graph.number_of_edges())
 
@@ -566,9 +572,9 @@ def _compute_postrun_warnings(results: List[EmbeddingResult]) -> dict:
     _prob_topo_seen: set = set()
     _prob_topo_success: set = set()
     for r in results:
-        _prob_topo_seen.add((r.problem_name, r.topology_name))
+        _prob_topo_seen.add((r.graph_name, r.topology_name))
         if r.success:
-            _prob_topo_success.add((r.problem_name, r.topology_name))
+            _prob_topo_success.add((r.graph_name, r.topology_name))
     _all_failed = sorted(
         (p, t) for (p, t) in _prob_topo_seen if (p, t) not in _prob_topo_success
     )
@@ -630,8 +636,8 @@ def _execute_tasks(
     topology compatibility checking, compile_batch, checkpoint writing, or
     self.results population. Those belong to the caller.
 
-    Task tuple format: (source_graph, target_graph, algo_name, problem_name,
-                        topo_name, trial, trial_seed)
+    Task tuple format: (source_graph, target_graph, algo_name, graph_id,
+                        graph_name, topo_name, trial, trial_seed)
     timeout is uniform across all tasks and passed as a top-level parameter.
 
     Args:
@@ -696,7 +702,7 @@ def _execute_tasks(
                 if _is_cancelled():
                     raise KeyboardInterrupt
 
-                source_graph, target_graph, algo_name, problem_name, topo_name, trial, trial_seed = task
+                source_graph, target_graph, algo_name, graph_id, graph_name, topo_name, trial, trial_seed = task
 
                 # Transition detection: print topo/problem headers in verbose mode
                 if verbose:
@@ -707,19 +713,19 @@ def _execute_tasks(
                         print(f"{'='*80}")
                         prev_topo = topo_name
                         prev_prob = None
-                    if problem_name != prev_prob:
-                        print(f"\nProblem: {problem_name} "
-                              f"(n={source_graph.number_of_nodes()}, "
+                    if graph_name != prev_prob:
+                        print(f"\nProblem: {graph_name} "
+                              f"(id={graph_id}, n={source_graph.number_of_nodes()}, "
                               f"e={source_graph.number_of_edges()})")
-                        prev_prob = problem_name
+                        prev_prob = graph_name
                     print(f"  [{done_count+1}/{n_tasks}] Running {algo_name}...", end=" ")
 
-                log_path = batch_logger.run_log_path(algo_name, problem_name, trial, trial_seed)
+                log_path = batch_logger.run_log_path(algo_name, graph_name, trial, trial_seed)
                 _reseed_globals(trial_seed)
                 with capture_run(log_path):
                     result = benchmark_one(
                         source_graph, target_graph, algo_name,
-                        timeout=timeout, problem_name=problem_name,
+                        timeout=timeout, graph_name=graph_name, graph_id=graph_id,
                         topology_name=topo_name, trial=trial, seed=trial_seed,
                     )
                 batch_logger.append_footer(log_path, result)
@@ -813,7 +819,7 @@ def _execute_tasks(
 
                 if verbose:
                     algo = display['algorithm']
-                    prob = display['problem_name']
+                    prob = display['graph_name']
                     trial = display['trial']
                     if display['success']:
                         print(f"  [{completed_display}/{n_tasks}] {algo} / {prob} "
@@ -865,8 +871,8 @@ def _execute_tasks(
         completed_seeds = completed_seeds_from_jsonl(batch_dir)
         unfinished_tasks = [
             t for t in tasks
-            if (t[2], t[3], t[4], t[6]) not in completed_seeds
-            # indices: (algo_name, problem_name, topo_name, trial_seed)
+            if (t[2], t[3], t[5], t[7]) not in completed_seeds
+            # indices: (algo_name, graph_id, topo_name, trial_seed)
         ]
         done_count = n_tasks - len(unfinished_tasks)
 
@@ -891,10 +897,10 @@ def _worker_process(task_queue: multiprocessing.Queue,
                     timeout: float) -> None:
     """Worker process: consume tasks, write JSONL, push display records.
 
-    Pulls (source_graph, target_graph, algo_name, problem_name, topo_name,
-           trial, trial_seed) tuples from task_queue until it receives a
-    None sentinel, then exits. timeout is uniform across all tasks and
-    passed as a top-level argument rather than stored in each tuple.
+    Pulls (source_graph, target_graph, algo_name, graph_id, graph_name,
+           topo_name, trial, trial_seed) tuples from task_queue until it
+    receives a None sentinel, then exits. timeout is uniform across all tasks
+    and passed as a top-level argument rather than stored in each tuple.
 
     Workers never print anything — all output is driven by the main process
     reading result_queue. Algorithm stdout/stderr is captured to a per-run
@@ -915,14 +921,14 @@ def _worker_process(task_queue: multiprocessing.Queue,
         if task is None:  # sentinel — this worker's share is done
             break
         (source_graph, target_graph, algo_name,
-         problem_name, topo_name, trial, trial_seed) = task
+         graph_id, graph_name, topo_name, trial, trial_seed) = task
 
-        log_path = run_log_path(logs_runs_dir, algo_name, problem_name, trial, trial_seed)
+        log_path = run_log_path(logs_runs_dir, algo_name, graph_name, trial, trial_seed)
         _reseed_globals(trial_seed)
         with capture_run(log_path):
             result = benchmark_one(
                 source_graph, target_graph, algo_name,
-                timeout=timeout, problem_name=problem_name,
+                timeout=timeout, graph_name=graph_name, graph_id=graph_id,
                 topology_name=topo_name, trial=trial, seed=trial_seed,
             )
 
@@ -950,7 +956,7 @@ def _worker_process(task_queue: multiprocessing.Queue,
         # Lightweight display record → result queue (main process only prints)
         result_queue.put({
             'algorithm':        algo_name,
-            'problem_name':     problem_name,
+            'graph_name':       graph_name,
             'topology_name':    topo_name,
             'trial':            trial,
             'seed':             trial_seed,
@@ -1256,6 +1262,13 @@ class EmbeddingBenchmark:
                       f"Run: python generate_test_graphs.py")
                 return None
 
+        # Normalize user-supplied problems to (graph_id, name, graph) triples.
+        # Legacy callers pass (name, graph) 2-tuples; assign graph_id=0 for those.
+        problems = [
+            p if len(p) == 3 else (0, p[0], p[1])
+            for p in problems
+        ]
+
         # Resolve methods from registry
         available = list(ALGORITHM_REGISTRY.keys())
         if methods is None:
@@ -1297,16 +1310,16 @@ class EmbeddingBenchmark:
 
         # Pre-run graph-topology compatibility check — skip graphs that are too
         # large or explicitly marked incompatible with a topology in the manifest.
-        _incompat_graph_topo: set = set()  # (problem_name, topo_name) to skip
+        _incompat_graph_topo: set = set()  # (graph_id, topo_name) to skip
         for _, target_graph, topo_name in topo_list:
-            for problem_name, source_graph in problems:
-                if not _graph_topo_compatible(problem_name, source_graph,
+            for graph_id, graph_name, source_graph in problems:
+                if not _graph_topo_compatible(graph_id, source_graph,
                                               target_graph, topo_name):
-                    _incompat_graph_topo.add((problem_name, topo_name))
+                    _incompat_graph_topo.add((graph_id, topo_name))
 
         n_graph_topo_skipped = 0
         if _incompat_graph_topo:
-            for problem_name, topo_name in _incompat_graph_topo:
+            for graph_id, topo_name in _incompat_graph_topo:
                 n_compat_algos = sum(
                     1 for a in valid_methods
                     if (a, topo_name) not in _incompatible_pairs
@@ -1360,8 +1373,8 @@ class EmbeddingBenchmark:
         # Serialize custom problems into config so they can be reconstructed on resume
         if graph_selection is None or graph_selection == 'custom':
             config['custom_problems'] = [
-                {'name': name, 'graph': nx.node_link_data(g, edges="links")}
-                for name, g in problems
+                {'name': graph_name, 'graph': nx.node_link_data(g, edges="links")}
+                for _, graph_name, g in problems
             ]
         if batch_note:
             config['batch_note'] = batch_note
@@ -1393,39 +1406,49 @@ class EmbeddingBenchmark:
         # Build flat task list — 7-element tuple (timeout excluded, passed uniformly).
         all_tasks = []
         for _, target_graph, topo_name in topo_list:
-            for problem_name, source_graph in problems:
-                if (problem_name, topo_name) in _incompat_graph_topo:
+            for graph_id, graph_name, source_graph in problems:
+                if (graph_id, topo_name) in _incompat_graph_topo:
                     continue
                 for algo_name in valid_methods:
                     if (algo_name, topo_name) in _incompatible_pairs:
                         continue
                     for trial in range(n_trials):
-                        trial_seed = _derive_seed(seed, algo_name, problem_name, topo_name, trial)
+                        trial_seed = _derive_seed(seed, algo_name, graph_id, topo_name, trial)
                         all_tasks.append((source_graph, target_graph, algo_name,
-                                          problem_name, topo_name, trial, trial_seed))
+                                          graph_id, graph_name, topo_name, trial, trial_seed))
 
         # Warmup: caller-owned, sequential only (n_workers > 1 disables warmup upstream).
         if warmup_trials > 0 and n_workers == 1:
             for _, target_graph, topo_name in topo_list:
-                for problem_name, source_graph in problems:
-                    if (problem_name, topo_name) in _incompat_graph_topo:
+                for graph_id, graph_name, source_graph in problems:
+                    if (graph_id, topo_name) in _incompat_graph_topo:
                         continue
                     for algo_name in valid_methods:
                         if (algo_name, topo_name) in _incompatible_pairs:
                             continue
                         for w in range(warmup_trials):
-                            warmup_seed = _derive_seed(seed, algo_name, problem_name,
+                            warmup_seed = _derive_seed(seed, algo_name, graph_id,
                                                        topo_name, -(w + 1))
                             if verbose:
                                 print(f"  Warm-up {algo_name} [{w+1}/{warmup_trials}]...", end=" ")
                             _reseed_globals(warmup_seed)
                             benchmark_one(
                                 source_graph, target_graph, algo_name,
-                                timeout=timeout, problem_name=problem_name,
+                                timeout=timeout, graph_name=graph_name, graph_id=graph_id,
                                 topology_name=topo_name, trial=-1, seed=warmup_seed,
                             )
                             if verbose:
                                 print("(discarded)")
+
+        # Use the actual task count now that all_tasks is built — more accurate
+        # than the formula-based total_measured (which can be off if graph loading
+        # silently skipped files or names collide across the filtering sets).
+        total_measured = len(all_tasks)
+        total_runs = total_measured + total_warmup
+        config['total_measured_runs'] = total_measured
+        config_path = batch_dir / 'config.json'
+        with open(config_path, 'w') as f:
+            json.dump(config, f, indent=2)
 
         topo_str = f" × {len(topo_list)} topologies" if len(topo_list) > 1 else ""
         trials_str = f" × {n_trials} trials" if n_trials > 1 else ""
@@ -1690,7 +1713,7 @@ def load_benchmark(batch_id: Optional[str] = None,
     # Reconstruct problems
     if 'custom_problems' in config:
         problems = [
-            (p['name'], nx.node_link_graph(p['graph'], edges="links"))
+            (0, p['name'], nx.node_link_graph(p['graph'], edges="links"))
             for p in config['custom_problems']
         ]
     else:
@@ -1700,6 +1723,11 @@ def load_benchmark(batch_id: Optional[str] = None,
                 f"No graphs matched selection '{graph_selection}'. "
                 f"Cannot resume batch {batch_dir.name}."
             )
+        # Normalize legacy 2-tuples just in case
+        problems = [
+            p if len(p) == 3 else (0, p[0], p[1])
+            for p in problems
+        ]
 
     # Reconstruct topology list
     topo_list = [(name, get_topology(name), name) for name in topo_names]
@@ -1717,42 +1745,58 @@ def load_benchmark(batch_id: Optional[str] = None,
     # Rebuild graph-topology incompatibility set (same logic as run_full_benchmark).
     _incompat_graph_topo_resume: set = set()
     for _, target_graph, topo_name in topo_list:
-        for problem_name, source_graph in problems:
-            if not _graph_topo_compatible(problem_name, source_graph, target_graph, topo_name):
-                _incompat_graph_topo_resume.add((problem_name, topo_name))
+        for graph_id, graph_name, source_graph in problems:
+            if not _graph_topo_compatible(graph_id, source_graph, target_graph, topo_name):
+                _incompat_graph_topo_resume.add((graph_id, topo_name))
 
-    # Build full task list (same order as original run) — 7-element tuple.
+    # Build full task list (same order as original run) — 8-element tuple.
     all_tasks = []
     for _, target_graph, topo_name in topo_list:
-        for problem_name, source_graph in problems:
-            if (problem_name, topo_name) in _incompat_graph_topo_resume:
+        for graph_id, graph_name, source_graph in problems:
+            if (graph_id, topo_name) in _incompat_graph_topo_resume:
                 continue
             for algo_name in algorithms:
                 for trial in range(n_trials):
-                    trial_seed = _derive_seed(seed, algo_name, problem_name, topo_name, trial)
+                    trial_seed = _derive_seed(seed, algo_name, graph_id, topo_name, trial)
                     all_tasks.append((source_graph, target_graph, algo_name,
-                                      problem_name, topo_name, trial, trial_seed))
+                                      graph_id, graph_name, topo_name, trial, trial_seed))
 
     # Determine which tasks remain
     checkpoint = read_checkpoint(batch_dir)
+    # Always scan JSONL — used as the authoritative completed set in both paths.
+    # In the checkpoint path this catches tasks written to JSONL by workers
+    # after the checkpoint was saved but before the cancel-drain completed
+    # (race condition in parallel mode that would otherwise cause duplicates).
+    completed_seeds = completed_seeds_from_jsonl(batch_dir)
     if checkpoint:
         resume_count = checkpoint.get('resume_count', 0)
         stored_unfinished = checkpoint.get('unfinished_tasks', [])
-        unfinished_set = {
-            (t['algo_name'], t['problem_name'], t['topo_name'], t['trial'], t['trial_seed'])
-            for t in stored_unfinished
-        }
-        remaining_tasks = [
-            t for t in all_tasks
-            if (t[2], t[3], t[4], t[5], t[6]) in unfinished_set
-        ]
+        # Legacy checkpoints (pre-v1.1) stored problem_name instead of graph_id.
+        # If graph_id is absent, fall through to JSONL-only recovery.
+        _has_graph_id = stored_unfinished and 'graph_id' in stored_unfinished[0]
+        if _has_graph_id:
+            unfinished_set = {
+                (t['algo_name'], t['graph_id'], t['topo_name'], t['trial'], t['trial_seed'])
+                for t in stored_unfinished
+            }
+            remaining_tasks = [
+                t for t in all_tasks
+                if (t[2], t[3], t[5], t[6], t[7]) in unfinished_set
+                and (t[2], t[3], t[5], t[7]) not in completed_seeds
+            ]
+        else:
+            # Legacy checkpoint — graph_id not available; fall back to JSONL
+            print("  Note: legacy checkpoint format detected — resuming from JSONL.")
+            remaining_tasks = [
+                t for t in all_tasks
+                if (t[2], t[3], t[5], t[7]) not in completed_seeds
+            ]
     else:
-        # Crashed run — derive from JSONL
+        # Crashed run — derive entirely from JSONL
         resume_count = 0
-        completed_seeds = completed_seeds_from_jsonl(batch_dir)
         remaining_tasks = [
             t for t in all_tasks
-            if (t[2], t[3], t[4], t[6]) not in completed_seeds
+            if (t[2], t[3], t[5], t[7]) not in completed_seeds
         ]
 
     n_remaining = len(remaining_tasks)

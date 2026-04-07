@@ -5,6 +5,74 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.1.0] - 2026-04-07
+
+### Changed (breaking)
+
+- **Graph ID as unique benchmark key** — `problem_name` has been replaced by
+  `graph_id` (integer manifest ID) + `graph_name` (human-readable label) throughout
+  the entire pipeline. `graph_id` is definitionally unique across the library,
+  eliminating silent result loss caused by graphs sharing the same name.
+
+  - `load_test_graphs()` now returns `List[Tuple[int, str, nx.Graph]]`
+    (`graph_id`, `name`, `graph`) instead of `List[Tuple[str, nx.Graph]]`.
+    User-supplied problems (2-tuples) are accepted and normalised automatically
+    with `graph_id = 0`.
+  - `EmbeddingResult.problem_name` renamed to `graph_name`; `graph_id: int`
+    field added.
+  - `benchmark_one()` parameters `problem_name` → `graph_name`, `graph_id` added.
+  - `_derive_seed()` now keys on `graph_id` instead of `problem_name`; seeds
+    for identical tasks will differ from v1.0.x runs.
+  - `results.db` schema: `graphs` table primary key is now `(graph_id, graph_name)`;
+    `runs` table replaces `problem_name` with `graph_id` + `graph_name`; UNIQUE
+    constraint is `(algorithm, graph_id, graph_name, topology_name, trial, seed)`.
+    Old databases can still be recompiled (`problem_name` falls back gracefully).
+  - `runs.csv` export includes `graph_id` and `graph_name` instead of `problem_name`.
+
+- **Structural graph deduplication** — `load_test_graphs()` silently skips
+  duplicate graph IDs (identical graph re-issued with a different ID during
+  library generation) when the canonical (lowest) ID is also in the selection.
+  `load_graph()` redirects duplicate IDs to their canonical counterpart, so
+  only one copy is ever downloaded or cached. Both behaviours become no-ops if
+  duplicates are later removed from the manifest.
+
+- **`_graph_topo_compatible` uses graph ID** — topology lookup is now a direct
+  `_manifest_by_id` call instead of a name-based lookup, removing the need for
+  any name-parsing heuristics.
+
+### Fixed
+
+- Legacy checkpoint format (pre-v1.1) is handled gracefully on resume: if
+  checkpoint tasks lack a `graph_id` key, ember falls back to JSONL-only
+  recovery and prints a notice rather than crashing with a `KeyError`.
+
+---
+
+## [1.0.5] - 2026-04-07
+
+### Fixed
+
+- **Duplicate results on resume** — in parallel mode, workers write results
+  directly to their `worker_{pid}.jsonl` files independently of the result
+  queue. When the user cancels, the main process drains the queue for
+  `cancel_delay` seconds, but a worker can write to JSONL and enqueue a result
+  faster than the drain consumes it. Any result written to JSONL but not yet
+  consumed from the queue when the drain ends was being recorded as "unfinished"
+  in the checkpoint, causing it to run again on resume and produce a duplicate
+  JSONL entry that `compile_batch` would skip. Fixed by always scanning the
+  JSONL files when loading a checkpoint and excluding any task already present
+  in JSONL from the remaining set, regardless of what the checkpoint says.
+
+- **"Starting benchmark" run count off by a small amount** — `total_measured`
+  was computed from a formula before `all_tasks` was built, so edge cases
+  (silently skipped graph load failures, name collisions across filter sets)
+  could make the displayed count differ from the actual task count. Now
+  `total_measured` is set to `len(all_tasks)` after the task list is fully
+  built, and `config.json` is updated accordingly. The progress bar and
+  checkpoint now always reflect the exact planned trial count.
+
+---
+
 ## [1.0.4] - 2026-04-07
 
 ### Added

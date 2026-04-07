@@ -154,7 +154,7 @@ def test_db_required_columns(batch_dir):
     cols = {d[1] for d in con.execute("PRAGMA table_info(runs)").fetchall()}
     con.close()
     required = {
-        "algorithm", "algorithm_version", "problem_name", "topology_name",
+        "algorithm", "algorithm_version", "graph_id", "graph_name", "topology_name",
         "trial", "seed", "wall_time", "cpu_time",
         "status", "success", "is_valid", "partial",
         "avg_chain_length", "max_chain_length",

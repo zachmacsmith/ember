@@ -17,7 +17,7 @@ from typing import Dict, List, Optional, Set, Tuple
 
 def write_checkpoint(
     batch_dir: Path,
-    unfinished_tasks: List[Tuple[str, str, str, int, int]],
+    unfinished_tasks: List[Tuple[str, int, str, str, str, int, int]],
     total_tasks: int,
     completed_count: int,
     resume_count: int = 0,
@@ -26,7 +26,8 @@ def write_checkpoint(
 
     Args:
         batch_dir: The batch directory (in runs_unfinished/).
-        unfinished_tasks: List of (algo_name, problem_name, topo_name, trial, trial_seed).
+        unfinished_tasks: Task tuples (source_graph, target_graph, algo_name,
+            graph_id, graph_name, topo_name, trial, trial_seed).
         total_tasks: Total number of measured tasks in the full run.
         completed_count: Number of tasks completed before cancellation.
         resume_count: How many times this run has been resumed (0 on first cancel).
@@ -37,11 +38,12 @@ def write_checkpoint(
     checkpoint = {
         'unfinished_tasks': [
             {
-                'algo_name': t[0],
-                'problem_name': t[1],
-                'topo_name': t[2],
-                'trial': t[3],
-                'trial_seed': t[4],
+                'algo_name': t[2],
+                'graph_id':  t[3],
+                'graph_name': t[4],
+                'topo_name': t[5],
+                'trial':     t[6],
+                'trial_seed': t[7],
             }
             for t in unfinished_tasks
         ],
@@ -72,16 +74,16 @@ def delete_checkpoint(batch_dir: Path) -> None:
         cp_path.unlink()
 
 
-def completed_seeds_from_jsonl(batch_dir: Path) -> Set[Tuple[str, str, str, int]]:
-    """Collect completed (algo, problem, topo, seed) tuples from worker JSONL files.
+def completed_seeds_from_jsonl(batch_dir: Path) -> Set[Tuple[str, int, str, int]]:
+    """Collect completed (algo, graph_id, topo, seed) tuples from worker JSONL files.
 
     Used for crashed-run recovery when no checkpoint.json exists. Strips
     potentially truncated final lines (incomplete writes at crash time).
 
     Returns:
-        Set of (algorithm, problem_name, topology_name, seed) tuples.
+        Set of (algorithm, graph_id, topology_name, seed) tuples.
     """
-    completed: Set[Tuple[str, str, str, int]] = set()
+    completed: Set[Tuple[str, int, str, int]] = set()
     workers_dir = batch_dir / 'workers'
     if not workers_dir.exists():
         return completed
@@ -108,7 +110,7 @@ def completed_seeds_from_jsonl(batch_dir: Path) -> Set[Tuple[str, str, str, int]
                 rec = json.loads(line)
                 completed.add((
                     rec.get('algorithm', ''),
-                    rec.get('problem_name', ''),
+                    rec.get('graph_id', 0),
                     rec.get('topology_name', ''),
                     rec.get('seed', -1),
                 ))

@@ -46,10 +46,12 @@ CREATE TABLE IF NOT EXISTS batches (
 );
 
 CREATE TABLE IF NOT EXISTS graphs (
-    problem_name          TEXT PRIMARY KEY,
+    graph_id              INTEGER NOT NULL,
+    graph_name            TEXT NOT NULL,
     problem_nodes         INTEGER,
     problem_edges         INTEGER,
-    problem_density       REAL
+    problem_density       REAL,
+    PRIMARY KEY (graph_id, graph_name)
 );
 
 CREATE TABLE IF NOT EXISTS runs (
@@ -57,7 +59,8 @@ CREATE TABLE IF NOT EXISTS runs (
     batch_id                      TEXT REFERENCES batches(batch_id),
     algorithm                     TEXT,
     algorithm_version             TEXT,
-    problem_name                  TEXT REFERENCES graphs(problem_name),
+    graph_id                      INTEGER,
+    graph_name                    TEXT,
     topology_name                 TEXT,
     trial                         INTEGER,
     seed                          INTEGER,
@@ -81,7 +84,7 @@ CREATE TABLE IF NOT EXISTS runs (
     overlap_qubit_iterations      INTEGER,
     error                         TEXT,
     created_at                    TEXT,
-    UNIQUE(algorithm, problem_name, topology_name, trial, seed)
+    UNIQUE(algorithm, graph_id, graph_name, topology_name, trial, seed)
 );
 
 CREATE TABLE IF NOT EXISTS embeddings (
@@ -100,7 +103,8 @@ CREATE TABLE IF NOT EXISTS suspensions (
     id                            INTEGER PRIMARY KEY AUTOINCREMENT,
     batch_id                      TEXT,
     algorithm                     TEXT,
-    problem_name                  TEXT,
+    graph_id                      INTEGER,
+    graph_name                    TEXT,
     suspended_at                  TEXT,
     trigger_status                TEXT,
     rate_at_suspension            REAL,
@@ -113,7 +117,8 @@ CREATE TABLE IF NOT EXISTS layer4_flags (
     batch_id                      TEXT,
     check_name                    TEXT,
     algorithm                     TEXT,
-    problem_name                  TEXT,
+    graph_id                      INTEGER,
+    graph_name                    TEXT,
     detail_json                   TEXT,
     flagged_at                    TEXT
 );
@@ -121,9 +126,9 @@ CREATE TABLE IF NOT EXISTS layer4_flags (
 
 _INDEX_DDL = """
 CREATE INDEX IF NOT EXISTS idx_runs_batch        ON runs(batch_id);
-CREATE INDEX IF NOT EXISTS idx_runs_algo_problem ON runs(algorithm, problem_name);
+CREATE INDEX IF NOT EXISTS idx_runs_algo_graph   ON runs(algorithm, graph_id);
 CREATE INDEX IF NOT EXISTS idx_runs_status       ON runs(status);
-CREATE INDEX IF NOT EXISTS idx_runs_problem      ON runs(problem_name);
+CREATE INDEX IF NOT EXISTS idx_runs_graph        ON runs(graph_id);
 """
 
 
@@ -188,12 +193,19 @@ def compile_batch(batch_dir: Union[str, Path]) -> Path:
 
     con = sqlite3.connect(db_path)
     con.executescript(_DDL)
-    # Migrate: add chain_length_std if absent (DBs created before this version)
-    try:
-        con.execute("ALTER TABLE runs ADD COLUMN chain_length_std REAL")
-        con.commit()
-    except sqlite3.OperationalError:
-        pass  # column already exists
+    # Migrate: add columns absent in older DB versions
+    for _migration in [
+        "ALTER TABLE runs ADD COLUMN chain_length_std REAL",
+        "ALTER TABLE runs ADD COLUMN graph_id INTEGER",
+        "ALTER TABLE runs ADD COLUMN graph_name TEXT",
+        "ALTER TABLE graphs ADD COLUMN graph_id INTEGER",
+        "ALTER TABLE graphs ADD COLUMN graph_name TEXT",
+    ]:
+        try:
+            con.execute(_migration)
+            con.commit()
+        except sqlite3.OperationalError:
+            pass  # column already exists
 
     # Insert or ignore batches row (started_at from config timestamp if available)
     con.execute(
@@ -222,12 +234,15 @@ def compile_batch(batch_dir: Union[str, Path]) -> Path:
         with con:
             for rec in records:
                 # ── graphs table (upsert-or-ignore) ───────────────────────────
+                _graph_id   = rec.get("graph_id", 0) or 0
+                _graph_name = rec.get("graph_name") or rec.get("problem_name", "")
                 con.execute(
                     """INSERT OR IGNORE INTO graphs
-                       (problem_name, problem_nodes, problem_edges, problem_density)
-                       VALUES (?, ?, ?, ?)""",
+                       (graph_id, graph_name, problem_nodes, problem_edges, problem_density)
+                       VALUES (?, ?, ?, ?, ?)""",
                     (
-                        rec.get("problem_name"),
+                        _graph_id,
+                        _graph_name,
                         rec.get("problem_nodes"),
                         rec.get("problem_edges"),
                         rec.get("problem_density"),
@@ -248,7 +263,7 @@ def compile_batch(batch_dir: Union[str, Path]) -> Path:
                         """INSERT INTO runs (
                                run_id, batch_id,
                                algorithm, algorithm_version,
-                               problem_name, topology_name, trial, seed,
+                               graph_id, graph_name, topology_name, trial, seed,
                                wall_time, cpu_time,
                                status, success, is_valid, partial,
                                avg_chain_length, max_chain_length, chain_length_std,
@@ -258,14 +273,15 @@ def compile_batch(batch_dir: Union[str, Path]) -> Path:
                                embedding_state_mutations, overlap_qubit_iterations,
                                error, created_at
                            ) VALUES (
-                               ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
+                               ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
                            )""",
                         (
                             run_id,
                             rec.get("batch_id", batch_id),
                             rec.get("algorithm"),
                             rec.get("algorithm_version"),
-                            rec.get("problem_name"),
+                            _graph_id,
+                            _graph_name,
                             rec.get("topology_name"),
                             rec.get("trial"),
                             rec.get("seed"),
@@ -364,7 +380,7 @@ def _export_runs_csv(db_path: Path, batch_dir: Path) -> None:
     con = sqlite3.connect(db_path)
     df = pd.read_sql_query(
         """SELECT
-               algorithm, problem_name, topology_name, trial, seed,
+               algorithm, graph_id, graph_name, topology_name, trial, seed,
                wall_time, cpu_time, status, success, is_valid, partial,
                avg_chain_length, max_chain_length, chain_length_std,
                total_qubits_used, total_couplers_used,
@@ -374,7 +390,7 @@ def _export_runs_csv(db_path: Path, batch_dir: Path) -> None:
                algorithm_version, error
            FROM runs
            WHERE batch_id = ?
-           ORDER BY topology_name, algorithm, problem_name, trial""",
+           ORDER BY topology_name, algorithm, graph_id, trial""",
         con,
         params=(db_path.parent.name,),
     )
