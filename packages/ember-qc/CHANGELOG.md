@@ -5,6 +5,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.0.3] - 2026-04-07
+
+### Fixed
+
+- **Tilde not expanded in `output_dir` paths** — paths containing `~` (e.g.
+  `~/ember_results` set via `ember config set output_dir ~/ember_results`) were
+  treated as a literal `~` directory name instead of the user's home directory,
+  producing paths like `/home/user/~/ember_results/`. Added `.expanduser()` to
+  all `Path(output_dir)` calls in `benchmark.py` and `config.py`.
+- **"Results saved to \<staging path\>"** — `save_results()` printed the
+  pre-move staging directory path rather than the final output location. Removed
+  that header line; callers already print `Results: <final_dir>` after
+  `move_to_output()`. The file-tree lines are still printed.
+
+---
+
 ## [1.0.2] - 2026-04-06
 
 ### Added
