@@ -539,6 +539,8 @@ def parse_graph_selection(spec: str) -> Set[int]:
         Set of selected graph IDs. Returns {-1} for wildcard "*".
     """
     spec = spec.strip()
+    # Normalize en dash (–) and em dash (—) to hyphen — macOS autocorrects these
+    spec = spec.replace('\u2013', '-').replace('\u2014', '-')
 
     presets = load_presets()
     if spec in presets:

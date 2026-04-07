@@ -5,6 +5,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.1.2] - 2026-04-07
+
+### Fixed
+
+- `parse_graph_selection()` now normalises en dashes (–) and em dashes (—)
+  to hyphens before parsing.  macOS autocorrects the hyphen in range specs
+  like `5550-8802` to an en dash in some input contexts, causing a
+  `ValueError: Invalid ID or unknown preset`.
+
+---
+
 ## [1.1.1] - 2026-04-07
 
 ### Fixed
