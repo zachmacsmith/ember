@@ -5,6 +5,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.1.1] - 2026-04-07
+
+### Fixed
+
+- Updated `docs/results-schema.md`, `docs/reproducibility.md`, and
+  `docs/getting-started.md` to reflect the v1.1.0 schema change: `problem_name`
+  replaced by `graph_id` + `graph_name` in column tables, uniqueness constraint,
+  seed formula, and code examples.
+
+---
+
 ## [1.1.0] - 2026-04-07
 
 ### Changed (breaking)

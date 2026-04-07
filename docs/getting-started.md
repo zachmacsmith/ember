@@ -260,7 +260,7 @@ import sqlite3, pandas as pd
 
 con = sqlite3.connect("results/my_first_benchmark_.../results.db")
 df = pd.read_sql("SELECT * FROM runs", con)
-print(df[["algorithm", "problem_name", "success", "avg_chain_length"]].head())
+print(df[["algorithm", "graph_name", "success", "avg_chain_length"]].head())
 ```
 
 See [results-schema.md](results-schema.md) for all column definitions.

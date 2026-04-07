@@ -18,7 +18,8 @@ One row per trial. This is the primary table for analysis.
 | `batch_id` | TEXT FK | References `batches.batch_id` |
 | `algorithm` | TEXT | Algorithm name as registered (e.g. `minorminer`, `clique`) |
 | `algorithm_version` | TEXT | Version string reported by the algorithm |
-| `problem_name` | TEXT FK | References `graphs.problem_name` |
+| `graph_id` | INTEGER | Manifest graph ID; `0` for custom (user-supplied) graphs |
+| `graph_name` | TEXT | Human-readable graph label (e.g. `complete_K8`) |
 | `topology_name` | TEXT | Topology name (e.g. `pegasus_16`) |
 | `trial` | INTEGER | Trial index within this (algorithm, problem, topology) combination (0-indexed) |
 | `seed` | INTEGER | Per-trial seed derived from master seed |
@@ -43,7 +44,7 @@ One row per trial. This is the primary table for analysis.
 | `error` | TEXT | Error message if `status=CRASH` or `status=INVALID_OUTPUT` |
 | `created_at` | TEXT | ISO-8601 timestamp when this row was inserted |
 
-**Uniqueness constraint:** `(algorithm, problem_name, topology_name, trial, seed)` — duplicate rows are silently ignored during batch compilation.
+**Uniqueness constraint:** `(algorithm, graph_id, graph_name, topology_name, trial, seed)` — duplicate rows are silently ignored during batch compilation.
 
 **Interpreting status values:**
 
@@ -86,7 +87,8 @@ One row per unique source graph. Values are duplicated from `runs` for convenien
 
 | Column | Type | Description |
 |---|---|---|
-| `problem_name` | TEXT PK | Graph identifier (e.g. `complete_K8`) |
+| `graph_id` | INTEGER | Manifest graph ID; `0` for custom graphs (part of composite PK) |
+| `graph_name` | TEXT | Human-readable graph label (part of composite PK) |
 | `problem_nodes` | INTEGER | Number of nodes |
 | `problem_edges` | INTEGER | Number of edges |
 | `problem_density` | REAL | Edge density |
@@ -115,7 +117,7 @@ One row per algorithm suspension event. EMBER suspends an algorithm when its fai
 | `id` | INTEGER PK | Auto-increment |
 | `batch_id` | TEXT | Batch where suspension occurred |
 | `algorithm` | TEXT | Suspended algorithm |
-| `problem_name` | TEXT | Problem that triggered suspension |
+| `graph_name` | TEXT | Graph that triggered suspension |
 | `suspended_at` | TEXT | ISO-8601 timestamp |
 | `trigger_status` | TEXT | Status that triggered suspension (`TIMEOUT`, `CRASH`, etc.) |
 | `rate_at_suspension` | REAL | Failure rate at the time of suspension |

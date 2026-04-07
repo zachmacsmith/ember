@@ -35,7 +35,7 @@ The resolved YAML captures:
 EMBER derives per-trial seeds deterministically from the master `seed` using SHA-256:
 
 ```
-trial_seed = SHA-256("{seed}:{algorithm}:{problem_name}:{topology_name}:{trial}")[:4]
+trial_seed = SHA-256("{seed}:{algorithm}:{graph_id}:{topology_name}:{trial}")[:4]
 ```
 
 Properties of this scheme:
@@ -68,7 +68,7 @@ ember resume <batch_id>         # specific run
 
 **Crash:** No checkpoint is written. Resume scans the `workers/*.jsonl` files to determine which tasks completed (identified by their seeds) and re-executes the rest.
 
-In both cases, the resumed run produces identical results to an uninterrupted run. The `compile_batch()` step deduplicates by `(algorithm, problem_name, topology_name, trial_seed)` before writing to SQLite, so partially-written tasks cannot produce duplicate rows.
+In both cases, the resumed run produces identical results to an uninterrupted run. The `compile_batch()` step deduplicates by `(algorithm, graph_id, graph_name, topology_name, trial_seed)` before writing to SQLite, so partially-written tasks cannot produce duplicate rows.
 
 ---
 
