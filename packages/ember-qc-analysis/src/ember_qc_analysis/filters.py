@@ -17,7 +17,7 @@ from typing import List, Optional, Set, Tuple
 
 VALID_CATEGORIES = frozenset({
     'complete', 'bipartite', 'grid', 'cycle',
-    'tree', 'random', 'special', 'other',
+    'tree', 'random', 'random_planar', 'special', 'other',
 })
 
 

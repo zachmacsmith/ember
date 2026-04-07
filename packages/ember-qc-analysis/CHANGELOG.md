@@ -5,6 +5,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.10.3] - 2026-04-07
+
+### Added
+
+- **`random_planar` graph category** — graphs with names starting with
+  `planar_` are now classified as `'random_planar'` rather than `'other'`.
+  This category is recognised by `--graph-type random_planar` and is included
+  in the `graph_categories` parameter of `plot_size_density_heatmap()`,
+  allowing random-planar graphs to be visualised on the size-density heatmap
+  independently from Erdős-Rényi random graphs.
+
+---
+
 ## [0.10.2] - 2026-04-07
 
 ### Added

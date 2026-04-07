@@ -628,7 +628,7 @@ def build_parser() -> argparse.ArgumentParser:
                                '(preset names require ember-qc to be installed)')
     p_report.add_argument("--graph-type", metavar="TYPE", default=None, dest="graph_type",
                           help="restrict analysis to one graph category: "
-                               "complete, bipartite, grid, cycle, tree, random, special, other")
+                               "complete, bipartite, grid, cycle, tree, random, random_planar, special, other")
     p_report.set_defaults(func=cmd_report)
 
     # -- plots ---------------------------------------------------------------
@@ -645,7 +645,7 @@ def build_parser() -> argparse.ArgumentParser:
                          help='restrict to a graph subset, e.g. "1-100" or "quick"')
     p_plots.add_argument("--graph-type", metavar="TYPE", default=None, dest="graph_type",
                          help="restrict to one graph category: "
-                              "complete, bipartite, grid, cycle, tree, random, special, other")
+                              "complete, bipartite, grid, cycle, tree, random, random_planar, special, other")
     p_plots.set_defaults(func=cmd_plots)
 
     # -- tables --------------------------------------------------------------
