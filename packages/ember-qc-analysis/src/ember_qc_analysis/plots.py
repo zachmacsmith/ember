@@ -249,7 +249,7 @@ def plot_pareto(df: pd.DataFrame,
                     subdir='figures', fmt=fmt)
         return fig
 
-    agg = success_df.groupby(['algorithm', 'problem_name'])[[x, y]].mean().reset_index()
+    agg = success_df.groupby(['algorithm', 'graph_name'])[[x, y]].mean().reset_index()
     palette = algo_palette or _algo_palette(agg['algorithm'].unique())
 
     fig, ax = plt.subplots(figsize=(9, 6))
@@ -344,7 +344,7 @@ def plot_head_to_head(df: pd.DataFrame,
     success_df = df[df['success']].copy()
     per_problem = (
         success_df
-        .groupby(['algorithm', 'problem_name'])[metric]
+        .groupby(['algorithm', 'graph_name'])[metric]
         .mean()
         .unstack(level='algorithm')
     )
@@ -405,7 +405,7 @@ def plot_consistency(df: pd.DataFrame,
 
     def _mean_cv(metric):
         cv_per_prob = (
-            success_df.groupby(['algorithm', 'problem_name'])[metric]
+            success_df.groupby(['algorithm', 'graph_name'])[metric]
             .agg(lambda s: s.std() / s.mean() if s.mean() != 0 and len(s) >= 2 else np.nan)
         )
         return cv_per_prob.groupby('algorithm').mean()
@@ -493,20 +493,20 @@ def plot_topology_comparison(df: pd.DataFrame,
 # ── 9. Problem deep dive ─────────────────────────────────────────────────────────
 
 def plot_problem_deep_dive(df: pd.DataFrame,
-                            problem_name: str,
+                            graph_name: str,
                             algo_palette=None,
                             output_dir=None,
                             save: bool = False,
                             fmt: str = 'png') -> plt.Figure:
     """Two-panel bar chart for a single problem: time and chain length per algorithm."""
-    prob_df = df[df['problem_name'] == problem_name].copy()
+    prob_df = df[df['graph_name'] == graph_name].copy()
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
 
     if prob_df.empty:
         for ax in (ax1, ax2):
-            ax.text(0.5, 0.5, f'No data for {problem_name}', ha='center', va='center')
-        _maybe_save(fig, output_dir, f'deep_dive_{problem_name}.png', save,
+            ax.text(0.5, 0.5, f'No data for {graph_name}', ha='center', va='center')
+        _maybe_save(fig, output_dir, f'deep_dive_{graph_name}.png', save,
                     subdir='figures', fmt=fmt)
         return fig
 
@@ -533,7 +533,7 @@ def plot_problem_deep_dive(df: pd.DataFrame,
         bars = ax.bar(algos, vals, color=colors, alpha=0.9,
                       yerr=errs, capsize=4)
         ax.set_ylabel(ylabel)
-        ax.set_title(f'{ylabel}\n({problem_name})')
+        ax.set_title(f'{ylabel}\n({graph_name})')
         ax.grid(axis='y', alpha=0.3)
         plt.setp(ax.get_xticklabels(), rotation=20, ha='right')
 
@@ -550,9 +550,9 @@ def plot_problem_deep_dive(df: pd.DataFrame,
                         h * 1.02, annot,
                         ha='center', va='bottom', fontsize=7)
 
-    plt.suptitle(f'Deep dive: {problem_name}')
+    plt.suptitle(f'Deep dive: {graph_name}')
     plt.tight_layout()
-    fname = f'deep_dive_{problem_name.replace("/", "_")}.png'
+    fname = f'deep_dive_{graph_name.replace("/", "_")}.png'
     _maybe_save(fig, output_dir, fname, save, subdir='figures', fmt=fmt)
     return fig
 
@@ -624,14 +624,14 @@ def plot_win_rate_matrix(df, metric='avg_chain_length', lower_is_better=True,
 def plot_success_heatmap(df, output_dir=None, save=False, fmt='png'):
     """Heatmap: algorithm × graph, cell = success rate across trials."""
     algos = sorted(df['algorithm'].unique())
-    graphs = sorted(df['problem_name'].unique())
+    graphs = sorted(df['graph_name'].unique())
 
     # Build rate matrix
     data = pd.DataFrame(index=algos, columns=graphs, dtype=float)
     annot = pd.DataFrame(index=algos, columns=graphs, dtype=str)
     for algo in algos:
         for graph in graphs:
-            sub = df[(df['algorithm'] == algo) & (df['problem_name'] == graph)]
+            sub = df[(df['algorithm'] == algo) & (df['graph_name'] == graph)]
             n_total = len(sub)
             n_ok = int(sub['success'].sum())
             data.loc[algo, graph] = n_ok / n_total if n_total > 0 else float('nan')
@@ -715,10 +715,10 @@ def _graph_jitter(graph_id: str, magnitude: float) -> float:
     return float(rng.uniform(-magnitude, magnitude))
 
 
-def _category_of(problem_name: str) -> str:
+def _category_of(graph_name: str) -> str:
     """Quick category lookup without importing loader (avoids circular)."""
     from ember_qc_analysis.loader import infer_category
-    return infer_category(problem_name)
+    return infer_category(graph_name)
 
 
 def _draw_chain_dots_categorical(ax, df, graphs, algos, palette, markers,
@@ -732,7 +732,7 @@ def _draw_chain_dots_categorical(ax, df, graphs, algos, palette, markers,
         xs_trial, ys_trial = [], []
         xs_mean, ys_mean = [], []
         for g in graphs:
-            gdf = adf[adf['problem_name'] == g]
+            gdf = adf[adf['graph_name'] == g]
             if gdf.empty:
                 continue
             vals = gdf[metric].dropna()
@@ -827,7 +827,7 @@ def plot_graph_indexed_chain(df, x_mode='by_graph_id', algo_palette=None,
     markers = _algo_markers(algos)
 
     filt_df = success_df
-    graphs = sorted(filt_df['problem_name'].unique())
+    graphs = sorted(filt_df['graph_name'].unique())
     n_graphs = len(graphs)
     n_algos = len(algos)
 
@@ -876,13 +876,13 @@ def plot_graph_indexed_chain(df, x_mode='by_graph_id', algo_palette=None,
         for algo in algos:
             adf = filt_df[filt_df['algorithm'] == algo]
             # Per-trial dots
-            x_trial = [row[x_col] + _graph_jitter(row['problem_name'], jitter_mag)
+            x_trial = [row[x_col] + _graph_jitter(row['graph_name'], jitter_mag)
                        for _, row in adf.iterrows()]
             ax.scatter(x_trial, adf[metric],
                        color=palette[algo], marker=markers[algo],
                        alpha=0.35, s=25, zorder=2)
             # Per-graph mean
-            means = adf.groupby('problem_name').agg(
+            means = adf.groupby('graph_name').agg(
                 {x_col: 'first', metric: 'mean'}
             )
             x_mean = [xv + _graph_jitter(gid, jitter_mag)
@@ -925,7 +925,7 @@ def plot_graph_indexed_time(df, x_mode='by_graph_id', algo_palette=None,
     timeout_val = df['wall_time'].max() * 1.05
 
     if x_mode == 'by_graph_id':
-        graphs = sorted(df['problem_name'].unique())
+        graphs = sorted(df['graph_name'].unique())
         n_graphs = len(graphs)
         width = max(14, n_graphs * 0.55)
         fig, ax = plt.subplots(figsize=(width, 5))
@@ -935,7 +935,7 @@ def plot_graph_indexed_time(df, x_mode='by_graph_id', algo_palette=None,
         for algo in algos:
             adf = df[df['algorithm'] == algo]
             for g in graphs:
-                gdf = adf[adf['problem_name'] == g]
+                gdf = adf[adf['graph_name'] == g]
                 if gdf.empty:
                     continue
                 for _, row in gdf.iterrows():
@@ -966,7 +966,7 @@ def plot_graph_indexed_time(df, x_mode='by_graph_id', algo_palette=None,
             for _, row in adf.iterrows():
                 is_timeout = row.get('is_timeout', False)
                 mk = '^' if is_timeout else markers_map[algo]
-                jx = row[x_col] + _graph_jitter(str(row['problem_name']), jitter_mag)
+                jx = row[x_col] + _graph_jitter(str(row['graph_name']), jitter_mag)
                 ax.scatter(jx, row['wall_time'],
                            color=palette[algo], marker=mk,
                            alpha=0.5 if not is_timeout else 0.9,
@@ -998,14 +998,14 @@ def plot_graph_indexed_success(df, x_mode='by_graph_id', output_dir=None, save=F
     positions (same ordering as by_graph_id) since success is binary.
     """
     algos = sorted(df['algorithm'].unique())
-    graphs = sorted(df['problem_name'].unique())
+    graphs = sorted(df['graph_name'].unique())
 
     data = np.full((len(algos), len(graphs)), np.nan)
     annot = np.empty((len(algos), len(graphs)), dtype=object)
 
     for i, algo in enumerate(algos):
         for j, graph in enumerate(graphs):
-            sub = df[(df['algorithm'] == algo) & (df['problem_name'] == graph)]
+            sub = df[(df['algorithm'] == algo) & (df['graph_name'] == graph)]
             n = len(sub)
             k = int(sub['success'].sum())
             data[i, j] = k / n if n > 0 else np.nan
@@ -1112,18 +1112,18 @@ def plot_intersection_comparison(df: pd.DataFrame,
     success_df = df[df['success']].copy()
 
     # Graphs where each algorithm succeeded
-    a_graphs = set(success_df[success_df['algorithm'] == algo_a]['problem_name'].unique())
-    b_graphs = set(success_df[success_df['algorithm'] == algo_b]['problem_name'].unique())
+    a_graphs = set(success_df[success_df['algorithm'] == algo_a]['graph_name'].unique())
+    b_graphs = set(success_df[success_df['algorithm'] == algo_b]['graph_name'].unique())
     shared_graphs = a_graphs & b_graphs
     N = len(shared_graphs)
 
-    n_problems = df['problem_name'].nunique()
+    n_problems = df['graph_name'].nunique()
 
     palette = algo_palette or _algo_palette([algo_a, algo_b])
     color_a = palette.get(algo_a, _CB_PALETTE[0])
     color_b = palette.get(algo_b, _CB_PALETTE[1])
 
-    intersection_df = success_df[success_df['problem_name'].isin(shared_graphs)]
+    intersection_df = success_df[success_df['graph_name'].isin(shared_graphs)]
 
     # Collect per-metric data (only metrics with data in both algos)
     metrics_data = []

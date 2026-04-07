@@ -134,7 +134,7 @@ def rank_table(df: pd.DataFrame,
     # Per-problem mean metric per algorithm (successful trials only)
     per_problem = (
         df[df['success']]
-        .groupby(['algorithm', 'problem_name'])[metric]
+        .groupby(['algorithm', 'graph_name'])[metric]
         .mean()
         .unstack(level='algorithm')
     )

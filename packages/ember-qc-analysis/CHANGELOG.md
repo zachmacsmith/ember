@@ -5,6 +5,31 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.10.0] - 2026-04-07
+
+Schema alignment with ember-qc v1.1.0 — **breaking change**.
+
+### Changed
+
+- `problem_name` column replaced by `graph_id` (INTEGER, manifest ID; 0 for custom
+  graphs) and `graph_name` (TEXT, human-readable label) throughout all modules.
+  - `loader.py`: `_REQUIRED_COLUMNS` and `_DESIRED_COLS` updated; `ORDER BY` now uses
+    `graph_id`; `_derive_columns` keys `category` off `graph_name`; `infer_category`
+    parameter renamed accordingly.
+  - `filters.py`, `summary.py`, `statistics.py`: all groupby/filter operations now
+    use `graph_name`.
+  - `plots.py`: all per-graph operations use `graph_name`; `plot_problem_deep_dive`
+    parameter renamed to `graph_name`.
+  - `__init__.py`: `plot_problem_deep_dive(graph_name=...)` and report string updated.
+
+### Added
+
+- Backward-compat shim in `load_batch()`: if the loaded DataFrame has `problem_name`
+  but not `graph_name` (pre-v1.1.0 batch), the column is silently renamed and
+  `graph_id` is set to 0. Old batches continue to load without errors.
+
+---
+
 ## [0.9.2] - 2026-03-30
 
 ### Fixed

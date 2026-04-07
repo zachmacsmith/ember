@@ -26,12 +26,12 @@ from typing import Dict, List, Optional, Tuple
 def _per_problem_means(df: pd.DataFrame, metric: str) -> pd.DataFrame:
     """Per-problem mean of `metric` for each algorithm (successful trials only).
 
-    Returns a DataFrame indexed by problem_name, columns = algorithm names.
+    Returns a DataFrame indexed by graph_name, columns = algorithm names.
     NaN where an algorithm had no successful trial on that problem.
     """
     return (
         df[df['success']]
-        .groupby(['algorithm', 'problem_name'])[metric]
+        .groupby(['algorithm', 'graph_name'])[metric]
         .mean()
         .unstack(level='algorithm')
     )

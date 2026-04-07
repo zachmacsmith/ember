@@ -215,9 +215,9 @@ class BenchmarkAnalysis:
         return plot_topology_comparison(self._df, metric,
                                         output_dir=self.output_dir, save=save)
 
-    def plot_problem_deep_dive(self, problem_name: str,
+    def plot_problem_deep_dive(self, graph_name: str,
                                 save: bool = True) -> plt.Figure:
-        return plot_problem_deep_dive(self._df, problem_name,
+        return plot_problem_deep_dive(self._df, graph_name,
                                       output_dir=self.output_dir, save=save)
 
     def plot_chain_distribution(self, save: bool = True) -> plt.Figure:
@@ -511,7 +511,7 @@ class BenchmarkAnalysis:
             f'# Analysis Report: {self.batch_name}\n',
             f'Batch note: {self._config.get("batch_note", "—")}\n',
             f'Algorithms: {", ".join(sorted(self._df["algorithm"].unique()))}\n',
-            f'Problems: {self._df["problem_name"].nunique()}',
+            f'Problems: {self._df["graph_name"].nunique()}',
             f'  |  Topologies: {", ".join(sorted(self._df["topology_name"].dropna().unique()))}\n',
             '\n---\n',
             '## Figures\n',

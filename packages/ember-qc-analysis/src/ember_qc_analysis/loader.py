@@ -7,7 +7,7 @@ Primary source: results.db (SQLite) — the authoritative store written by compi
 Fallback:       runs.csv — for batches produced before the SQLite pipeline.
 
 Adds derived columns not stored in the database:
-  category              — graph family inferred from problem_name prefix
+  category              — graph family inferred from graph_name prefix
   qubit_overhead_ratio  — total_qubits_used / problem_nodes
   coupler_overhead_ratio — total_couplers_used / problem_edges
   max_to_avg_chain_ratio — max_chain_length / avg_chain_length
@@ -25,7 +25,7 @@ from typing import Dict, Tuple
 # ── Schema ─────────────────────────────────────────────────────────────────────
 
 _REQUIRED_COLUMNS = frozenset({
-    'algorithm', 'problem_name', 'topology_name', 'trial',
+    'algorithm', 'graph_id', 'graph_name', 'topology_name', 'trial',
     'success', 'is_valid', 'wall_time',
     'avg_chain_length', 'max_chain_length',
     'total_qubits_used', 'total_couplers_used',
@@ -38,8 +38,8 @@ _SPECIAL_GRAPHS = frozenset({'petersen', 'dodecahedral', 'icosahedral'})
 
 # ── Category inference ──────────────────────────────────────────────────────────
 
-def infer_category(problem_name: str) -> str:
-    """Return the graph category for a problem_name string.
+def infer_category(graph_name: str) -> str:
+    """Return the graph category for a graph_name string.
 
     Rules (case-insensitive prefix match):
         K<digits>         → complete
@@ -51,7 +51,7 @@ def infer_category(problem_name: str) -> str:
         random_*          → random
         anything else     → other
     """
-    name = problem_name.strip().lower()
+    name = graph_name.strip().lower()
     if name in _SPECIAL_GRAPHS:
         return 'special'
     if name.startswith('k') and len(name) > 1 and name[1:].isdigit():
@@ -75,7 +75,7 @@ def _derive_columns(df: pd.DataFrame, timeout: float = 60.0) -> pd.DataFrame:
     df = df.copy()
 
     # Category
-    df['category'] = df['problem_name'].apply(infer_category)
+    df['category'] = df['graph_name'].apply(infer_category)
 
     # Qubit overhead ratio
     df['qubit_overhead_ratio'] = np.where(
@@ -127,7 +127,7 @@ def _load_from_db(db_path: Path, batch_id: str) -> pd.DataFrame:
     # by older ember-qc versions that predate some columns.
     _DESIRED_COLS = [
         'batch_id', 'algorithm', 'algorithm_version',
-        'problem_name', 'topology_name', 'trial', 'seed',
+        'graph_id', 'graph_name', 'topology_name', 'trial', 'seed',
         'wall_time', 'cpu_time', 'status', 'success', 'is_valid', 'partial',
         'avg_chain_length', 'max_chain_length', 'chain_length_std',
         'total_qubits_used', 'total_couplers_used',
@@ -142,7 +142,7 @@ def _load_from_db(db_path: Path, batch_id: str) -> pd.DataFrame:
 
     df = pd.read_sql_query(
         f"SELECT {cols_sql} FROM runs WHERE batch_id = ?"
-        " ORDER BY topology_name, algorithm, problem_name, trial",
+        " ORDER BY topology_name, algorithm, graph_id, trial",
         con,
         params=(batch_id,),
     )
@@ -227,6 +227,12 @@ def load_batch(batch_dir) -> Tuple[pd.DataFrame, Dict]:
         raise FileNotFoundError(
             f"No results.db or runs.csv found in {batch_dir}"
         )
+
+    # ── Backward compat: pre-v1.1.0 batches used 'problem_name' ───────────────
+    if 'graph_name' not in df.columns and 'problem_name' in df.columns:
+        df = df.rename(columns={'problem_name': 'graph_name'})
+    if 'graph_id' not in df.columns:
+        df['graph_id'] = 0
 
     # ── Validate schema ────────────────────────────────────────────────────────
     _validate_columns(df)
