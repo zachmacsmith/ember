@@ -5,6 +5,37 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.10.2] - 2026-04-07
+
+### Added
+
+- **`plot_size_density_heatmap()`** — 2-D heatmap of graph size (nodes, x-axis)
+  × density (y-axis) coloured by a configurable metric.  Supports four metrics:
+  - `avg_chain_length` (default) — mean over successful trials per cell
+  - `max_chain_length` — mean max chain over successful trials per cell
+  - `qubit_overhead_ratio` — mean qubit overhead over successful trials per cell
+  - `success_rate` — fraction of trials that succeeded per cell; with one trial
+    per graph, this is the fraction of distinct (n, density) graphs that
+    embedded successfully, giving a valid rate estimate when ≥ 2 graphs share
+    a cell
+
+  Colourmap is auto-selected per metric (red=bad for chain/qubit, green=good
+  for success rate).  Accepts `node_bin_size` / `density_bin_size` to coarsen
+  the grid, `algo` to restrict to one algorithm, `vmin`/`vmax`/`cmap` overrides.
+  Defaults to `graph_categories=['random']` (Erdős-Rényi graphs).
+
+  Added to `BenchmarkAnalysis.plot_size_density_heatmap()`,
+  `generate_report()` (4 variants in the scaling group), and the `scaling`
+  CLI plot group.
+
+### Fixed
+
+- `infer_category()` now classifies graph names starting with `er_` as
+  `'random'` (Erdős-Rényi graphs from the ember-qc library are named
+  `er_n{n}_p{p}_s{seed}` and were previously falling through to `'other'`).
+
+---
+
 ## [0.10.1] - 2026-04-07
 
 ### Added

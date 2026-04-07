@@ -215,7 +215,198 @@ def plot_density_hardness(df: pd.DataFrame,
     return fig
 
 
-# ── 4. Pareto frontier ───────────────────────────────────────────────────────────
+# ── 4. Size × density heatmap ───────────────────────────────────────────────────
+
+_HEATMAP_METRICS = frozenset({
+    'avg_chain_length', 'max_chain_length', 'qubit_overhead_ratio', 'success_rate',
+})
+
+# Colormaps: for chain/qubit metrics lower is better → red=high=bad.
+# For success_rate higher is better → green=high=good.
+_HEATMAP_CMAPS = {
+    'avg_chain_length':    'RdYlGn_r',
+    'max_chain_length':    'RdYlGn_r',
+    'qubit_overhead_ratio':'RdYlGn_r',
+    'success_rate':        'RdYlGn',
+}
+
+_HEATMAP_LABELS = {
+    'avg_chain_length':    'Average chain length (qubits)',
+    'max_chain_length':    'Max chain length (qubits)',
+    'qubit_overhead_ratio':'Qubit overhead ratio',
+    'success_rate':        'Success rate',
+}
+
+
+def plot_size_density_heatmap(
+    df: pd.DataFrame,
+    metric: str = 'avg_chain_length',
+    graph_categories: Optional[List[str]] = None,
+    algo: Optional[str] = None,
+    node_bin_size: Optional[int] = None,
+    density_bin_size: Optional[float] = None,
+    vmin: Optional[float] = None,
+    vmax: Optional[float] = None,
+    cmap: Optional[str] = None,
+    algo_palette=None,
+    output_dir=None,
+    save: bool = False,
+    fmt: str = 'png',
+) -> plt.Figure:
+    """2-D heatmap: graph size (nodes, x) × density (y), coloured by a metric.
+
+    Each cell shows the mean of ``metric`` across all graphs and trials that
+    fall within that (nodes, density) combination.  Best used with random ER
+    graphs (``category == 'random'``) where size and density are both explicit
+    parameters.
+
+    When ``metric='success_rate'`` the mean is computed over *all* rows
+    (including failures) so partial-success cells reflect the true rate.
+    All other metrics are averaged over successful trials only.
+
+    With one trial per graph, success rate per cell is the fraction of
+    distinct graphs at that (n, density) point that produced a valid
+    embedding — a meaningful estimate as long as ≥ 2 graphs share the cell.
+
+    Args:
+        df:               Derived DataFrame from ``load_batch()``.
+        metric:           One of ``'avg_chain_length'``, ``'max_chain_length'``,
+                          ``'qubit_overhead_ratio'``, ``'success_rate'``.
+        graph_categories: Categories to include.  Defaults to ``['random']``
+                          (Erdős-Rényi graphs).
+        algo:             Restrict to one algorithm.  ``None`` averages over
+                          all algorithms present in the filtered data.
+        node_bin_size:    Bin width for the node axis (e.g. ``5`` groups nodes
+                          10–14, 15–19, …).  ``None`` uses exact node counts.
+        density_bin_size: Bin width for the density axis (e.g. ``0.05``).
+                          ``None`` uses exact density values (rounded to 3 dp).
+        vmin, vmax:       Colour-scale limits.  Defaults to data range.
+        cmap:             Matplotlib colormap name.  Auto-selected per metric
+                          when ``None``.
+        algo_palette:     Ignored (accepted for API consistency).
+        output_dir:       Base output directory.
+        save:             Write to disk when ``True``.
+        fmt:              Image format (``'png'``, ``'pdf'``, ``'svg'``).
+
+    Returns:
+        matplotlib Figure.
+    """
+    if metric not in _HEATMAP_METRICS:
+        raise ValueError(
+            f"metric must be one of {sorted(_HEATMAP_METRICS)}, got {metric!r}"
+        )
+
+    # ── Filter ────────────────────────────────────────────────────────────────
+    if graph_categories is None:
+        graph_categories = ['random']
+
+    fdf = df[df['category'].isin(graph_categories)].copy()
+
+    fname_suffix = f'size_density_{metric}'
+    fig, ax = plt.subplots(figsize=(12, 6))
+
+    if fdf.empty:
+        ax.text(0.5, 0.5,
+                f'No data for categories: {graph_categories}',
+                ha='center', va='center', transform=ax.transAxes)
+        _maybe_save(fig, output_dir, f'{fname_suffix}.png', save,
+                    subdir='figures/scaling', fmt=fmt)
+        return fig
+
+    if algo is not None:
+        fdf = fdf[fdf['algorithm'] == algo]
+        if fdf.empty:
+            ax.text(0.5, 0.5, f'No data for algorithm {algo!r}',
+                    ha='center', va='center', transform=ax.transAxes)
+            _maybe_save(fig, output_dir, f'{fname_suffix}.png', save,
+                        subdir='figures/scaling', fmt=fmt)
+            return fig
+
+    # ── Aggregate metric ──────────────────────────────────────────────────────
+    is_success = metric == 'success_rate'
+    if is_success:
+        agg_df = fdf.copy()
+        agg_col = 'success'
+    else:
+        if metric not in fdf.columns:
+            raise ValueError(f"Column '{metric}' not found in DataFrame.")
+        agg_df = fdf[fdf['success']].copy()
+        agg_col = metric
+
+    if agg_df.empty:
+        ax.text(0.5, 0.5, 'No successful trials in filtered data',
+                ha='center', va='center', transform=ax.transAxes)
+        _maybe_save(fig, output_dir, f'{fname_suffix}.png', save,
+                    subdir='figures/scaling', fmt=fmt)
+        return fig
+
+    # ── Bin axes ──────────────────────────────────────────────────────────────
+    if node_bin_size is not None:
+        lo = (int(agg_df['problem_nodes'].min()) // node_bin_size) * node_bin_size
+        hi = (int(agg_df['problem_nodes'].max()) // node_bin_size + 1) * node_bin_size
+        bins = list(range(lo, hi + node_bin_size, node_bin_size))
+        labels = [b + node_bin_size // 2 for b in bins[:-1]]
+        agg_df['_x'] = pd.cut(
+            agg_df['problem_nodes'], bins=bins, labels=labels,
+        ).astype(float)
+    else:
+        agg_df['_x'] = agg_df['problem_nodes'].astype(float)
+
+    if density_bin_size is not None:
+        lo = (agg_df['problem_density'].min() // density_bin_size) * density_bin_size
+        hi = min(1.0 + density_bin_size,
+                 (agg_df['problem_density'].max() // density_bin_size + 1) * density_bin_size)
+        d_bins = list(np.arange(lo, hi + density_bin_size / 2, density_bin_size))
+        d_labels = [round(b + density_bin_size / 2, 4) for b in d_bins[:-1]]
+        agg_df['_y'] = pd.cut(
+            agg_df['problem_density'], bins=d_bins, labels=d_labels,
+        ).astype(float)
+    else:
+        agg_df['_y'] = agg_df['problem_density'].round(3)
+
+    agg_df = agg_df.dropna(subset=['_x', '_y'])
+
+    # ── Pivot ─────────────────────────────────────────────────────────────────
+    pivot = (
+        agg_df.groupby(['_y', '_x'], observed=True)[agg_col]
+        .mean()
+        .unstack(level='_x')
+    )
+    pivot = pivot.sort_index(ascending=True).sort_index(axis=1, ascending=True)
+
+    X = pivot.columns.values.astype(float)
+    Y = pivot.index.values.astype(float)
+    Z = pivot.values  # shape: (n_densities, n_nodes)
+
+    # ── Plot ──────────────────────────────────────────────────────────────────
+    chosen_cmap = cmap or _HEATMAP_CMAPS[metric]
+    cmap_obj = plt.get_cmap(chosen_cmap).copy()
+    cmap_obj.set_bad('lightgray')   # NaN cells shown in gray
+
+    im = ax.pcolormesh(X, Y, Z, cmap=cmap_obj, vmin=vmin, vmax=vmax,
+                       shading='nearest')
+
+    cb = plt.colorbar(im, ax=ax)
+    cb.set_label(_HEATMAP_LABELS.get(metric, metric))
+
+    ax.set_xlabel('Number of nodes')
+    ax.set_ylabel('Density')
+
+    cats_str = ', '.join(graph_categories)
+    algo_str = f' — {algo}' if algo else ' — all algorithms'
+    ax.set_title(
+        f'{_HEATMAP_LABELS.get(metric, metric)} '
+        f'vs graph size and density\n({cats_str}{algo_str})'
+    )
+
+    plt.tight_layout()
+    algo_tag = f'_{algo}' if algo else ''
+    _maybe_save(fig, output_dir, f'{fname_suffix}{algo_tag}.png', save,
+                subdir='figures/scaling', fmt=fmt)
+    return fig
+
+
+# ── 5. Pareto frontier ───────────────────────────────────────────────────────────
 
 def _pareto_front(points: np.ndarray) -> np.ndarray:
     """Return boolean mask of Pareto-optimal points (minimise both dimensions)."""

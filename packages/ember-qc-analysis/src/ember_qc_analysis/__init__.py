@@ -46,6 +46,7 @@ from ember_qc_analysis.statistics import (
 from ember_qc_analysis.plots import (
     build_algo_palette,
     plot_heatmap, plot_scaling, plot_density_hardness,
+    plot_size_density_heatmap,
     plot_pareto, plot_distributions, plot_head_to_head,
     plot_consistency, plot_topology_comparison,
     plot_problem_deep_dive, plot_chain_distribution,
@@ -71,6 +72,7 @@ __all__ = [
     # Plots
     'build_algo_palette',
     'plot_heatmap', 'plot_scaling', 'plot_density_hardness',
+    'plot_size_density_heatmap',
     'plot_pareto', 'plot_distributions', 'plot_head_to_head',
     'plot_consistency', 'plot_topology_comparison',
     'plot_problem_deep_dive', 'plot_chain_distribution',
@@ -236,6 +238,24 @@ class BenchmarkAnalysis:
                                save: bool = True) -> plt.Figure:
         return plot_density_hardness(self._df, metric,
                                      output_dir=self.output_dir, save=save)
+
+    def plot_size_density_heatmap(self,
+                                   metric: str = 'avg_chain_length',
+                                   graph_categories: Optional[List[str]] = None,
+                                   algo: Optional[str] = None,
+                                   node_bin_size: Optional[int] = None,
+                                   density_bin_size: Optional[float] = None,
+                                   vmin: Optional[float] = None,
+                                   vmax: Optional[float] = None,
+                                   cmap: Optional[str] = None,
+                                   save: bool = True) -> plt.Figure:
+        return plot_size_density_heatmap(
+            self._df, metric=metric,
+            graph_categories=graph_categories, algo=algo,
+            node_bin_size=node_bin_size, density_bin_size=density_bin_size,
+            vmin=vmin, vmax=vmax, cmap=cmap,
+            output_dir=self.output_dir, save=save,
+        )
 
     def plot_pareto(self, x: str = 'wall_time',
                     y: str = 'avg_chain_length',
@@ -438,6 +458,12 @@ class BenchmarkAnalysis:
              lambda: plot_density_hardness(
                  self._df, algo_palette=palette,
                  output_dir=self.output_dir, save=True, fmt=fmt))
+        for _sdh_metric in ('avg_chain_length', 'max_chain_length',
+                             'qubit_overhead_ratio', 'success_rate'):
+            _run(f'size_density_{_sdh_metric}',
+                 lambda m=_sdh_metric: plot_size_density_heatmap(
+                     self._df, metric=m,
+                     output_dir=self.output_dir, save=True, fmt=fmt))
 
         # ── Pairwise plots ────────────────────────────────────────────────
         _run('win_rate_matrix',

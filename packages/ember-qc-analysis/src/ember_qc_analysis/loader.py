@@ -62,6 +62,7 @@ def infer_category(graph_name: str) -> str:
         ('cycle_',     'cycle'),
         ('tree_',      'tree'),
         ('random_',    'random'),
+        ('er_',        'random'),   # Erdős-Rényi (random_er type)
     ]:
         if name.startswith(prefix):
             return category

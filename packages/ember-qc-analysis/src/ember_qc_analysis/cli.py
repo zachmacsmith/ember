@@ -357,7 +357,7 @@ def _generate_with_skip(
             build_algo_palette,
             plot_chain_distribution, plot_max_chain_distribution,
             plot_distributions, plot_heatmap, plot_consistency,
-            plot_scaling, plot_density_hardness,
+            plot_scaling, plot_density_hardness, plot_size_density_heatmap,
             plot_win_rate_matrix, plot_head_to_head, plot_intersection_comparison,
             plot_success_heatmap, plot_success_by_nodes, plot_success_by_density,
             plot_graph_indexed_chain, plot_graph_indexed_time, plot_graph_indexed_success,
@@ -392,6 +392,8 @@ def _generate_with_skip(
                 _run("chain_length_vs_nodes", lambda: plot_scaling(df, "avg_chain_length", "problem_nodes", algo_palette=palette, output_dir=an.output_dir, save=True))
                 _run("time_vs_nodes",         lambda: plot_scaling(df, "wall_time", "problem_nodes", algo_palette=palette, output_dir=an.output_dir, save=True))
                 _run("density_hardness",      lambda: plot_density_hardness(df, algo_palette=palette, output_dir=an.output_dir, save=True))
+                for _m in ("avg_chain_length", "max_chain_length", "qubit_overhead_ratio", "success_rate"):
+                    _run(f"size_density_{_m}", lambda m=_m: plot_size_density_heatmap(df, metric=m, output_dir=an.output_dir, save=True))
 
             elif group == "pairwise":
                 (an.figures_dir / "pairwise").mkdir(parents=True, exist_ok=True)
