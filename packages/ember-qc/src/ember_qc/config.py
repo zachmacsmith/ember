@@ -413,7 +413,7 @@ def resolve_output_dir(explicit: Optional[str] = None) -> Optional[Path]:
     Returns None when no output dir is configured (caller uses CWD / default).
     """
     raw = get("output_dir", explicit=explicit if explicit is not None else _SENTINEL)
-    return Path(raw) if raw is not None else None
+    return Path(raw).expanduser() if raw is not None else None
 
 
 # ---------------------------------------------------------------------------

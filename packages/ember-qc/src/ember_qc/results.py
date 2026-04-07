@@ -190,7 +190,6 @@ class ResultsManager:
         self._save_summary(results, batch_dir)
         self._save_readme(results, batch_dir, config)
 
-        print(f"\nResults saved to {batch_dir}/")
         print(f"   ├── README.md    (human-readable summary)")
         print(f"   ├── config.json  (machine-readable settings)")
         print(f"   ├── results.db   (SQLite — runs, embeddings, graphs, batches)")

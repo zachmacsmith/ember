@@ -1103,7 +1103,7 @@ class EmbeddingBenchmark:
         # rather than crashing at save time after a long run.
         if output_dir is not None:
             try:
-                Path(output_dir).mkdir(parents=True, exist_ok=True)
+                Path(output_dir).expanduser().mkdir(parents=True, exist_ok=True)
             except OSError as e:
                 raise OSError(
                     f"Cannot create output directory '{output_dir}': {e}. "
@@ -1299,7 +1299,7 @@ class EmbeddingBenchmark:
             'n_algorithms': len(valid_methods),
             'n_topologies': len(topo_list),
             'total_measured_runs': total_measured,
-            'output_dir': str(Path(output_dir).resolve()) if output_dir else None,
+            'output_dir': str(Path(output_dir).expanduser().resolve()) if output_dir else None,
             'fault_rate': fault_rate,
             'fault_seed': fault_seed,
             'faulty_nodes': (
@@ -1439,7 +1439,7 @@ class EmbeddingBenchmark:
         # the batch is fully intact in runs_unfinished/ and recoverable via resume.
         self.results_manager.save_results(self.results, batch_dir, config=config)
         batch_logger.teardown()
-        _out = Path(output_dir) if output_dir else None
+        _out = Path(output_dir).expanduser() if output_dir else None
         final_dir = self.results_manager.move_to_output(batch_dir, output_dir=_out)
         _print_warn_summary(exec_result.warning_registry, final_dir / "logs")
         print(f"Results: {final_dir.resolve()}")
@@ -1632,7 +1632,7 @@ def load_benchmark(batch_id: Optional[str] = None,
     # Validate and create output directory early — fail before execution begins.
     if output_dir is not None:
         try:
-            Path(output_dir).mkdir(parents=True, exist_ok=True)
+            Path(output_dir).expanduser().mkdir(parents=True, exist_ok=True)
         except OSError as e:
             raise OSError(
                 f"Cannot create output directory '{output_dir}': {e}. "
@@ -1716,7 +1716,7 @@ def load_benchmark(batch_id: Optional[str] = None,
         delete_checkpoint(batch_dir)
         workers_dir = batch_dir / "workers"
         all_results = _load_results_from_jsonl(workers_dir)
-        _results_root = Path(output_dir) if output_dir else Path("./results")
+        _results_root = Path(output_dir).expanduser() if output_dir else Path("./results")
         _rm = ResultsManager(str(_results_root), unfinished_dir=str(_unfinished))
         _rm.save_results(all_results, batch_dir, config=config)
         final_dir = _rm.move_to_output(batch_dir)
@@ -1802,7 +1802,7 @@ def load_benchmark(batch_id: Optional[str] = None,
 
     compile_batch(batch_dir)
     delete_checkpoint(batch_dir)
-    _results_root = Path(output_dir) if output_dir else Path("./results")
+    _results_root = Path(output_dir).expanduser() if output_dir else Path("./results")
     _rm = ResultsManager(str(_results_root), unfinished_dir=str(_unfinished))
     _rm.save_results(all_results, batch_dir, config=config)
     batch_logger.teardown()
