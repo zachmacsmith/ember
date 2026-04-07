@@ -165,11 +165,12 @@ def cmd_report(args: argparse.Namespace) -> None:
     print(f"Output: {output_root}")
 
     an = BenchmarkAnalysis(str(batch_dir), output_root=str(output_root))
+    _apply_filter_args(an, args)
 
     if overwrite:
         an.generate_report(fmt=fmt)
     else:
-        _generate_with_skip(an, fmt=fmt, groups=None, output_root=output_root)
+        _generate_with_skip(an, fmt=fmt, groups=None, output_root=an.output_dir)
 
 
 # ---------------------------------------------------------------------------
@@ -199,7 +200,8 @@ def cmd_plots(args: argparse.Namespace) -> None:
     overwrite = getattr(args, "overwrite", False)
 
     an = BenchmarkAnalysis(str(batch_dir), output_root=str(output_root))
-    _generate_with_skip(an, fmt=fmt, groups=groups, output_root=output_root, overwrite=overwrite)
+    _apply_filter_args(an, args)
+    _generate_with_skip(an, fmt=fmt, groups=groups, output_root=an.output_dir, overwrite=overwrite)
 
 
 # ---------------------------------------------------------------------------
@@ -214,6 +216,7 @@ def cmd_tables(args: argparse.Namespace) -> None:
     overwrite = getattr(args, "overwrite", False)
 
     an = BenchmarkAnalysis(str(batch_dir), output_root=str(output_root))
+    _apply_filter_args(an, args)
     summary_dir = an.summary_dir
     summary_dir.mkdir(parents=True, exist_ok=True)
 
@@ -242,7 +245,7 @@ def cmd_tables(args: argparse.Namespace) -> None:
         print(f"Tables failed: {e}")
         sys.exit(1)
 
-    _print_summary(generated, skipped, output_root)
+    _print_summary(generated, skipped, an.output_dir)
 
 
 # ---------------------------------------------------------------------------
@@ -257,6 +260,7 @@ def cmd_stats(args: argparse.Namespace) -> None:
     overwrite = getattr(args, "overwrite", False)
 
     an = BenchmarkAnalysis(str(batch_dir), output_root=str(output_root))
+    _apply_filter_args(an, args)
     stats_dir = an.statistics_dir
     stats_dir.mkdir(parents=True, exist_ok=True)
 
@@ -292,7 +296,32 @@ def cmd_stats(args: argparse.Namespace) -> None:
     _csv("win_rate_matrix",     lambda: an.win_rate_matrix())
     _txt("friedman_test",       an.friedman_test)
 
-    _print_summary(generated, skipped, output_root)
+    _print_summary(generated, skipped, an.output_dir)
+
+
+# ---------------------------------------------------------------------------
+# Graph filter helper
+# ---------------------------------------------------------------------------
+
+def _apply_filter_args(an, args) -> None:
+    """Apply --graphs / --graph-type filters to a BenchmarkAnalysis instance.
+
+    Modifies *an* in place.  Prints a summary line on success.
+    Calls sys.exit(1) on bad specs.
+    """
+    graphs_spec = getattr(args, "graphs", None)
+    graph_type  = getattr(args, "graph_type", None)
+    if not graphs_spec and not graph_type:
+        return
+    try:
+        an.filter_graphs(graphs=graphs_spec, graph_type=graph_type)
+    except (ValueError, RuntimeError) as e:
+        print(f"error: {e}")
+        sys.exit(1)
+    n_graphs = an.df["graph_name"].nunique()
+    n_rows   = len(an.df)
+    print(f"Filter active: {n_graphs} graph(s), {n_rows} row(s)")
+    print(f"Output subfolder: {an._filter_subdir}")
 
 
 # ---------------------------------------------------------------------------
@@ -591,6 +620,13 @@ def build_parser() -> argparse.ArgumentParser:
     p_report.add_argument("-f", "--format",     metavar="FMT",  default=None, dest="format",
                           choices=["png", "pdf", "svg"])
     p_report.add_argument("--overwrite", action="store_true", default=False)
+    p_report.add_argument("--graphs", metavar="SPEC", default=None,
+                          help='restrict analysis to a graph subset, e.g. "1-100", '
+                               '"1-60,!35", or a preset name like "quick" '
+                               '(preset names require ember-qc to be installed)')
+    p_report.add_argument("--graph-type", metavar="TYPE", default=None, dest="graph_type",
+                          help="restrict analysis to one graph category: "
+                               "complete, bipartite, grid, cycle, tree, random, special, other")
     p_report.set_defaults(func=cmd_report)
 
     # -- plots ---------------------------------------------------------------
@@ -603,18 +639,31 @@ def build_parser() -> argparse.ArgumentParser:
     p_plots.add_argument("--list",     action="store_true", default=False,
                          help="list available plot groups")
     p_plots.add_argument("--overwrite", action="store_true", default=False)
+    p_plots.add_argument("--graphs", metavar="SPEC", default=None,
+                         help='restrict to a graph subset, e.g. "1-100" or "quick"')
+    p_plots.add_argument("--graph-type", metavar="TYPE", default=None, dest="graph_type",
+                         help="restrict to one graph category: "
+                              "complete, bipartite, grid, cycle, tree, random, special, other")
     p_plots.set_defaults(func=cmd_plots)
 
     # -- tables --------------------------------------------------------------
     p_tables = sub.add_parser("tables", help="run summary table generation")
     p_tables.add_argument("-o", "--output-dir", metavar="PATH", default=None, dest="output_dir")
     p_tables.add_argument("--overwrite", action="store_true", default=False)
+    p_tables.add_argument("--graphs", metavar="SPEC", default=None,
+                          help='restrict to a graph subset, e.g. "1-100" or "quick"')
+    p_tables.add_argument("--graph-type", metavar="TYPE", default=None, dest="graph_type",
+                          help="restrict to one graph category")
     p_tables.set_defaults(func=cmd_tables)
 
     # -- stats ---------------------------------------------------------------
     p_stats = sub.add_parser("stats", help="run statistical analysis")
     p_stats.add_argument("-o", "--output-dir", metavar="PATH", default=None, dest="output_dir")
     p_stats.add_argument("--overwrite", action="store_true", default=False)
+    p_stats.add_argument("--graphs", metavar="SPEC", default=None,
+                         help='restrict to a graph subset, e.g. "1-100" or "quick"')
+    p_stats.add_argument("--graph-type", metavar="TYPE", default=None, dest="graph_type",
+                         help="restrict to one graph category")
     p_stats.set_defaults(func=cmd_stats)
 
     # -- batches -------------------------------------------------------------

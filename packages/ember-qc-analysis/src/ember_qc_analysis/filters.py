@@ -8,8 +8,154 @@ here so they can be tested independently and reused consistently across
 plot functions and statistical analyses.
 """
 
+import re
 import pandas as pd
-from typing import List, Optional
+from typing import List, Optional, Set, Tuple
+
+
+# ── Graph category constants ─────────────────────────────────────────────────
+
+VALID_CATEGORIES = frozenset({
+    'complete', 'bipartite', 'grid', 'cycle',
+    'tree', 'random', 'special', 'other',
+})
+
+
+# ── Graph ID selection parsing ───────────────────────────────────────────────
+
+def parse_graph_ids(spec: str) -> Set[int]:
+    """Parse a graph selection string into a set of integer IDs.
+
+    Tries to delegate to ``ember_qc.load_graphs.parse_graph_selection`` when
+    ember-qc is installed, which enables named presets (e.g. ``"quick"``,
+    ``"benchmark"``).  Falls back to a built-in parser for numeric specs.
+
+    Supported syntax (built-in parser):
+        ``"*"``         — wildcard; returns ``{-1}`` (sentinel for "all graphs")
+        ``"5"``         — single ID
+        ``"1-10"``      — inclusive range
+        ``"1-10,!5"``   — range with exclusion
+        ``"1,3,7-12"``  — comma-separated mix
+
+    Args:
+        spec: Selection string.
+
+    Returns:
+        Set of integer IDs.  ``{-1}`` is a sentinel meaning "no ID filter".
+
+    Raises:
+        ValueError: if a token cannot be parsed and ember-qc is not available
+            to interpret it as a preset name.
+    """
+    spec = spec.strip()
+
+    # Try ember-qc's full parser (supports presets, negation, *)
+    try:
+        from ember_qc.load_graphs import parse_graph_selection
+        return parse_graph_selection(spec)
+    except ImportError:
+        pass  # ember-qc not installed — fall back to built-in parser
+    except Exception as exc:
+        raise ValueError(f"ember-qc could not parse graph spec {spec!r}: {exc}") from exc
+
+    # Built-in parser — handles integers, ranges, exclusions, wildcard
+    if spec == '*':
+        return {-1}
+
+    includes: Set[int] = set()
+    excludes: Set[int] = set()
+
+    for token in re.split(r'[,&]', spec):
+        token = token.strip()
+        if not token:
+            continue
+        exclude = token.startswith('!')
+        if exclude:
+            token = token[1:].strip()
+
+        if '-' in token:
+            parts = token.split('-', 1)
+            try:
+                lo, hi = int(parts[0]), int(parts[1])
+            except ValueError:
+                raise ValueError(
+                    f"Cannot parse graph range {token!r}. "
+                    "Use integers and ranges (e.g. '1-10'). "
+                    "Preset names require ember-qc to be installed."
+                ) from None
+            rng = set(range(lo, hi + 1))
+            (excludes if exclude else includes).update(rng)
+        else:
+            try:
+                val = int(token)
+            except ValueError:
+                raise ValueError(
+                    f"Cannot parse graph token {token!r}. "
+                    "Use integers and ranges (e.g. '1-10'). "
+                    "Preset names require ember-qc to be installed."
+                ) from None
+            (excludes if exclude else includes).add(val)
+
+    return includes - excludes
+
+
+def apply_graph_filter(
+    df: pd.DataFrame,
+    graphs: Optional[str] = None,
+    graph_type: Optional[str] = None,
+) -> Tuple[pd.DataFrame, str]:
+    """Filter a runs DataFrame to a subset of graphs.
+
+    Args:
+        df:          Derived DataFrame from ``load_batch()``.
+        graphs:      Graph selection string (e.g. ``"1-10"``, ``"1-60,!35"``,
+                     ``"quick"``).  Preset names require ember-qc to be
+                     installed.  ``"*"`` or ``None`` means no ID filter.
+        graph_type:  Graph category name (e.g. ``"random"``, ``"bipartite"``).
+                     See :data:`VALID_CATEGORIES` for the full list.
+
+    Returns:
+        ``(filtered_df, filter_slug)`` where ``filter_slug`` is a
+        filesystem-safe string describing the active filter (empty string when
+        no filter is applied).  The slug is used by ``BenchmarkAnalysis`` to
+        route output into a named subdirectory.
+
+    Raises:
+        ValueError: for unknown graph IDs spec tokens or invalid category names.
+    """
+    filtered = df
+    parts: List[str] = []
+
+    # ── ID filter ─────────────────────────────────────────────────────────────
+    if graphs:
+        ids = parse_graph_ids(graphs)
+        if ids != {-1}:   # {-1} is the wildcard sentinel — no filtering
+            # Warn if the entire DataFrame uses graph_id=0 (pre-v1.1 batches)
+            if 'graph_id' in filtered.columns and (filtered['graph_id'] == 0).all():
+                import warnings
+                warnings.warn(
+                    "All rows have graph_id=0 (pre-v1.1 batch or custom-only run). "
+                    "--graphs filter operates on graph_id and will remove all rows.",
+                    stacklevel=2,
+                )
+            filtered = filtered[filtered['graph_id'].isin(ids)]
+            # Build a readable slug (sanitise commas/spaces → underscores)
+            slug_spec = re.sub(r'[,&\s]+', '_', graphs.strip()).strip('_')
+            parts.append(f"graphs_{slug_spec}")
+
+    # ── Category filter ───────────────────────────────────────────────────────
+    if graph_type:
+        cat = graph_type.lower()
+        if cat not in VALID_CATEGORIES:
+            raise ValueError(
+                f"Unknown graph type {graph_type!r}. "
+                f"Valid types: {', '.join(sorted(VALID_CATEGORIES))}"
+            )
+        filtered = filtered[filtered['category'] == cat]
+        parts.append(f"type_{cat}")
+
+    slug = '__'.join(parts)
+    return filtered.copy(), slug
 
 
 def shared_graph_filter(df: pd.DataFrame,

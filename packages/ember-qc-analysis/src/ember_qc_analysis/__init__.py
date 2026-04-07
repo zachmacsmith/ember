@@ -56,7 +56,7 @@ from ember_qc_analysis.plots import (
     plot_max_chain_distribution, plot_intersection_comparison,
 )
 from ember_qc_analysis.export import df_to_latex, export_tables
-from ember_qc_analysis.filters import shared_graph_filter
+from ember_qc_analysis.filters import shared_graph_filter, apply_graph_filter, parse_graph_ids
 
 
 __all__ = [
@@ -82,7 +82,7 @@ __all__ = [
     # Export
     'df_to_latex', 'export_tables',
     # Filters
-    'shared_graph_filter',
+    'shared_graph_filter', 'apply_graph_filter', 'parse_graph_ids',
 ]
 
 
@@ -103,6 +103,7 @@ class BenchmarkAnalysis:
         self._batch_dir = Path(batch_dir)
         self._df, self._config = load_batch(self._batch_dir)
         self._output_root = Path(output_root)
+        self._filter_subdir: str = ''   # set by filter_graphs(); appended to output_dir
 
     # ── Properties ────────────────────────────────────────────────────────────
 
@@ -120,7 +121,8 @@ class BenchmarkAnalysis:
 
     @property
     def output_dir(self) -> Path:
-        return self._output_root / self.batch_name
+        base = self._output_root / self.batch_name
+        return base / self._filter_subdir if self._filter_subdir else base
 
     @property
     def figures_dir(self) -> Path:
@@ -138,6 +140,52 @@ class BenchmarkAnalysis:
     @property
     def statistics_dir(self) -> Path:
         return self.output_dir / 'statistics'
+
+    # ── Graph filtering ───────────────────────────────────────────────────────
+
+    def filter_graphs(
+        self,
+        graphs: Optional[str] = None,
+        graph_type: Optional[str] = None,
+    ) -> 'BenchmarkAnalysis':
+        """Restrict all subsequent analyses to a subset of graphs.
+
+        Sets ``self._df`` to the filtered rows and routes all output into a
+        named subdirectory (e.g. ``analysis/<batch>/graphs_1-10__type_random/``).
+        Can be called multiple times; each call further narrows the selection
+        and appends to the subfolder name.
+
+        Args:
+            graphs:     Graph selection string (e.g. ``"1-10"``, ``"1-60,!35"``,
+                        ``"quick"``).  Preset names require ember-qc to be
+                        installed.  ``"*"`` or ``None`` means no ID filter.
+            graph_type: Graph category (``"random"``, ``"complete"``,
+                        ``"bipartite"``, ``"grid"``, ``"cycle"``, ``"tree"``,
+                        ``"special"``, ``"other"``).
+
+        Returns:
+            ``self``, for method chaining::
+
+                an = BenchmarkAnalysis("results/batch/")
+                an.filter_graphs(graphs="1-20", graph_type="random")
+                an.generate_report()
+
+        Raises:
+            ValueError: for unrecognised graph spec tokens or category names.
+            RuntimeError: if the filter removes all rows from the DataFrame.
+        """
+        filtered, slug = apply_graph_filter(self._df, graphs=graphs, graph_type=graph_type)
+        if filtered.empty:
+            raise RuntimeError(
+                f"Graph filter graphs={graphs!r} graph_type={graph_type!r} "
+                "produced an empty DataFrame — no matching rows."
+            )
+        self._df = filtered
+        if slug:
+            self._filter_subdir = (
+                f"{self._filter_subdir}__{slug}" if self._filter_subdir else slug
+            )
+        return self
 
     # ── Summary tables ────────────────────────────────────────────────────────
 

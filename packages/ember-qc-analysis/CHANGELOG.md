@@ -5,6 +5,40 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.10.1] - 2026-04-07
+
+### Added
+
+- **Graph subset filtering** — all four analysis commands (`report`, `plots`,
+  `tables`, `stats`) now accept two new flags:
+
+  - `--graphs SPEC` — restrict analysis to a selection of graphs by ID.
+    Supports integers, inclusive ranges, exclusions, and comma-separated
+    combinations (e.g. `"1-100"`, `"1-60,!35"`, `"1,5,10-20"`).  Named
+    presets (e.g. `"quick"`, `"benchmark"`) are also accepted when ember-qc
+    is installed.  `"*"` is a no-op wildcard.
+  - `--graph-type TYPE` — restrict to a single graph category
+    (`complete`, `bipartite`, `grid`, `cycle`, `tree`, `random`, `special`,
+    `other`).
+
+  Both flags compose (AND semantics).  When either flag is active, all output
+  is written into a named subdirectory of the normal analysis folder so the
+  unfiltered run is never overwritten:
+
+  ```
+  analysis/<batch>/                      ← full run (unchanged)
+  analysis/<batch>/graphs_1-100/         ← --graphs 1-100
+  analysis/<batch>/type_random/          ← --graph-type random
+  analysis/<batch>/graphs_1-100__type_random/  ← both flags
+  ```
+
+- **`parse_graph_ids(spec)`** and **`apply_graph_filter(df, graphs, graph_type)`**
+  added to `ember_qc_analysis.filters` and exported from the top-level package.
+- **`BenchmarkAnalysis.filter_graphs(graphs, graph_type)`** method — applies the
+  filter in-place and routes output to the correct subfolder.  Supports chaining.
+
+---
+
 ## [0.10.0] - 2026-04-07
 
 Schema alignment with ember-qc v1.1.0 — **breaking change**.
