@@ -812,21 +812,36 @@ def plot_win_rate_matrix(df, metric='avg_chain_length', lower_is_better=True,
 
 # ── 12. Success heatmap ──────────────────────────────────────────────────────────
 
+_MAX_GRAPH_HEATMAP = 300  # beyond this a per-graph heatmap is unreadable
+
+
 def plot_success_heatmap(df, output_dir=None, save=False, fmt='png'):
     """Heatmap: algorithm × graph, cell = success rate across trials."""
     algos = sorted(df['algorithm'].unique())
     graphs = sorted(df['graph_name'].unique())
 
-    # Build rate matrix
-    data = pd.DataFrame(index=algos, columns=graphs, dtype=float)
-    annot = pd.DataFrame(index=algos, columns=graphs, dtype=str)
-    for algo in algos:
-        for graph in graphs:
-            sub = df[(df['algorithm'] == algo) & (df['graph_name'] == graph)]
-            n_total = len(sub)
-            n_ok = int(sub['success'].sum())
-            data.loc[algo, graph] = n_ok / n_total if n_total > 0 else float('nan')
-            annot.loc[algo, graph] = f'{n_ok}/{n_total}' if n_total <= 5 else f'{n_ok/n_total:.0%}'
+    if len(graphs) > _MAX_GRAPH_HEATMAP:
+        fig, ax = plt.subplots(figsize=(8, 2))
+        ax.text(0.5, 0.5,
+                f'Too many graphs ({len(graphs):,}) for per-graph heatmap.\n'
+                'Use plot_success_by_nodes() or plot_success_by_density() instead.',
+                ha='center', va='center', fontsize=10)
+        ax.axis('off')
+        _maybe_save(fig, output_dir, 'success_rate_heatmap.png', save,
+                    subdir='figures/success', fmt=fmt)
+        return fig
+
+    # Vectorised: groupby instead of O(algos × graphs) nested loop
+    agg = df.groupby(['algorithm', 'graph_name'])['success'].agg(
+        n_ok='sum', n_total='count'
+    ).reset_index()
+    agg['rate'] = agg['n_ok'] / agg['n_total'].replace(0, float('nan'))
+    agg['label'] = agg.apply(
+        lambda r: f"{int(r.n_ok)}/{int(r.n_total)}"
+        if r.n_total <= 5 else f"{r.rate:.0%}", axis=1
+    )
+    data  = agg.pivot(index='algorithm', columns='graph_name', values='rate').reindex(index=algos, columns=graphs)
+    annot = agg.pivot(index='algorithm', columns='graph_name', values='label').reindex(index=algos, columns=graphs).fillna('')
 
     width = max(10, len(graphs) * 0.5)
     height = max(3, len(algos) * 0.8) + 1
@@ -918,21 +933,19 @@ def _draw_chain_dots_categorical(ax, df, graphs, algos, palette, markers,
     x_pos = {g: i for i, g in enumerate(graphs)}
     categories = [_category_of(g) for g in graphs]
 
+    graph_set = set(graphs)
     for algo in algos:
-        adf = df[df['algorithm'] == algo]
-        xs_trial, ys_trial = [], []
-        xs_mean, ys_mean = [], []
-        for g in graphs:
-            gdf = adf[adf['graph_name'] == g]
-            if gdf.empty:
-                continue
-            vals = gdf[metric].dropna()
-            if vals.empty:
-                continue
-            xs_trial.extend([x_pos[g]] * len(vals))
-            ys_trial.extend(vals.tolist())
-            xs_mean.append(x_pos[g])
-            ys_mean.append(vals.mean())
+        adf = df[(df['algorithm'] == algo) & df['graph_name'].isin(graph_set)].copy()
+        adf = adf.dropna(subset=[metric])
+        if adf.empty:
+            continue
+        adf['_x'] = adf['graph_name'].map(x_pos)
+        adf = adf.dropna(subset=['_x'])
+        xs_trial = adf['_x'].tolist()
+        ys_trial = adf[metric].tolist()
+        means = adf.groupby('_x')[metric].mean()
+        xs_mean = means.index.tolist()
+        ys_mean = means.values.tolist()
         ax.scatter(xs_trial, ys_trial,
                    color=palette[algo], marker=markers[algo],
                    alpha=0.35, s=20, zorder=2)
@@ -1191,16 +1204,29 @@ def plot_graph_indexed_success(df, x_mode='by_graph_id', output_dir=None, save=F
     algos = sorted(df['algorithm'].unique())
     graphs = sorted(df['graph_name'].unique())
 
-    data = np.full((len(algos), len(graphs)), np.nan)
-    annot = np.empty((len(algos), len(graphs)), dtype=object)
+    if len(graphs) > _MAX_GRAPH_HEATMAP:
+        fig, ax = plt.subplots(figsize=(8, 2))
+        ax.text(0.5, 0.5,
+                f'Too many graphs ({len(graphs):,}) for per-graph heatmap.\n'
+                'Use plot_success_by_nodes() or plot_success_by_density() instead.',
+                ha='center', va='center', fontsize=10)
+        ax.axis('off')
+        _maybe_save(fig, output_dir, 'success.png', save,
+                    subdir=f'figures/graph_indexed/{x_mode}', fmt=fmt)
+        return fig
 
-    for i, algo in enumerate(algos):
-        for j, graph in enumerate(graphs):
-            sub = df[(df['algorithm'] == algo) & (df['graph_name'] == graph)]
-            n = len(sub)
-            k = int(sub['success'].sum())
-            data[i, j] = k / n if n > 0 else np.nan
-            annot[i, j] = f'{k}/{n}'
+    # Vectorised: groupby instead of O(algos × graphs) nested loop
+    agg = df.groupby(['algorithm', 'graph_name'])['success'].agg(
+        n_ok='sum', n_total='count'
+    ).reset_index()
+    agg['rate'] = agg['n_ok'] / agg['n_total'].replace(0, float('nan'))
+    agg['label'] = agg.apply(lambda r: f"{int(r.n_ok)}/{int(r.n_total)}", axis=1)
+
+    rate_pivot  = agg.pivot(index='algorithm', columns='graph_name', values='rate').reindex(index=algos, columns=graphs)
+    annot_pivot = agg.pivot(index='algorithm', columns='graph_name', values='label').reindex(index=algos, columns=graphs).fillna('')
+
+    data  = rate_pivot.values
+    annot = annot_pivot.values
 
     width = max(10, len(graphs) * 0.5)
     height = max(3, len(algos) * 0.9) + 1

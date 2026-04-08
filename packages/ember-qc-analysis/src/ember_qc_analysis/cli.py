@@ -154,8 +154,6 @@ def cmd_unstage(args: argparse.Namespace) -> None:
 # ---------------------------------------------------------------------------
 
 def cmd_report(args: argparse.Namespace) -> None:
-    from ember_qc_analysis import BenchmarkAnalysis
-
     batch_dir = _resolve_active_batch()
     output_root = resolve_output_dir(batch_dir, explicit=getattr(args, "output_dir", None))
     fmt = getattr(args, "format", None) or resolve("fig_format")
@@ -164,6 +162,7 @@ def cmd_report(args: argparse.Namespace) -> None:
     print(f"Batch:  {batch_dir.name}")
     print(f"Output: {output_root}")
     print("Loading data...", flush=True)
+    from ember_qc_analysis import BenchmarkAnalysis
     an = BenchmarkAnalysis(str(batch_dir), output_root=str(output_root))
     print(f"  {len(an.df):,} rows loaded")
     _apply_filter_args(an, args)
@@ -179,8 +178,6 @@ def cmd_report(args: argparse.Namespace) -> None:
 # ---------------------------------------------------------------------------
 
 def cmd_plots(args: argparse.Namespace) -> None:
-    from ember_qc_analysis import BenchmarkAnalysis
-
     if args.list:
         print(f"{'Group':<15}  Description")
         print("-" * 55)
@@ -201,6 +198,7 @@ def cmd_plots(args: argparse.Namespace) -> None:
     overwrite = getattr(args, "overwrite", False)
 
     print("Loading data...", flush=True)
+    from ember_qc_analysis import BenchmarkAnalysis
     an = BenchmarkAnalysis(str(batch_dir), output_root=str(output_root))
     print(f"  {len(an.df):,} rows loaded")
     _apply_filter_args(an, args)
@@ -212,13 +210,12 @@ def cmd_plots(args: argparse.Namespace) -> None:
 # ---------------------------------------------------------------------------
 
 def cmd_tables(args: argparse.Namespace) -> None:
-    from ember_qc_analysis import BenchmarkAnalysis
-
     batch_dir = _resolve_active_batch()
     output_root = resolve_output_dir(batch_dir, explicit=getattr(args, "output_dir", None))
     overwrite = getattr(args, "overwrite", False)
 
     print("Loading data...", flush=True)
+    from ember_qc_analysis import BenchmarkAnalysis
     an = BenchmarkAnalysis(str(batch_dir), output_root=str(output_root))
     print(f"  {len(an.df):,} rows loaded")
     _apply_filter_args(an, args)
@@ -258,13 +255,12 @@ def cmd_tables(args: argparse.Namespace) -> None:
 # ---------------------------------------------------------------------------
 
 def cmd_stats(args: argparse.Namespace) -> None:
-    from ember_qc_analysis import BenchmarkAnalysis
-
     batch_dir = _resolve_active_batch()
     output_root = resolve_output_dir(batch_dir, explicit=getattr(args, "output_dir", None))
     overwrite = getattr(args, "overwrite", False)
 
     print("Loading data...", flush=True)
+    from ember_qc_analysis import BenchmarkAnalysis
     an = BenchmarkAnalysis(str(batch_dir), output_root=str(output_root))
     print(f"  {len(an.df):,} rows loaded")
     _apply_filter_args(an, args)

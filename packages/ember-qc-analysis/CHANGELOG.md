@@ -5,6 +5,35 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.10.6] - 2026-04-07
+
+### Fixed
+
+- `plot_success_heatmap`, `plot_graph_indexed_success`, and
+  `_draw_chain_dots_categorical` all used nested `algos × graphs` loops with
+  a full DataFrame scan inside each iteration — O(N²) in the number of
+  graphs.  With 30,000+ graphs this caused multi-minute hangs.  All three now
+  use vectorised `groupby` + `pivot` / `.map()` operations instead.
+- `plot_success_heatmap` and `plot_graph_indexed_success` now return a
+  readable placeholder figure (instead of hanging) when the graph count
+  exceeds 300, since a 300+-column heatmap is not useful visually.
+
+---
+
+## [0.10.5] - 2026-04-07
+
+### Fixed
+
+- `report`, `plots`, `tables`, and `stats` commands now print `"Loading data..."`
+  before importing seaborn/matplotlib, not after.  Previously the deferred
+  `from ember_qc_analysis import BenchmarkAnalysis` import (which pulls in
+  seaborn, matplotlib, scipy, numpy) was the first line of each command
+  function, causing a silent 5–15 s hang before any output appeared.  The
+  import is now moved to just before instantiation so batch/output info and
+  the loading message print immediately on startup.
+
+---
+
 ## [0.10.4] - 2026-04-07
 
 ### Added
