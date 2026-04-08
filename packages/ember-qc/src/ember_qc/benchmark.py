@@ -1478,7 +1478,7 @@ class EmbeddingBenchmark:
         if exec_result.cancelled:
             write_checkpoint(
                 batch_dir,
-                unfinished_tasks=[(t[2], t[3], t[4], t[5], t[6]) for t in exec_result.unfinished_tasks],
+                unfinished_tasks=exec_result.unfinished_tasks,
                 total_tasks=len(all_tasks),
                 completed_count=exec_result.completed_count,
             )
@@ -1869,7 +1869,7 @@ def load_benchmark(batch_id: Optional[str] = None,
     if exec_result.cancelled:
         write_checkpoint(
             batch_dir,
-            unfinished_tasks=[(t[2], t[3], t[4], t[5], t[6]) for t in exec_result.unfinished_tasks],
+            unfinished_tasks=exec_result.unfinished_tasks,
             total_tasks=len(all_tasks),
             completed_count=len(all_tasks) - len(exec_result.unfinished_tasks),
             resume_count=resume_count + 1,

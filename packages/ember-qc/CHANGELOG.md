@@ -5,6 +5,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.1.3] - 2026-04-07
+
+### Fixed
+
+- Pressing `q` to cancel a running benchmark no longer crashes with
+  `IndexError: tuple index out of range` when writing the checkpoint.
+  `write_checkpoint()` expects the full 8-element task tuple
+  `(source_graph, target_graph, algo_name, graph_id, graph_name, topo_name, trial, trial_seed)`
+  and indexes into it starting at position 2; the two call sites in
+  `benchmark.py` were incorrectly pre-slicing the tuples down to 5 elements
+  before passing them.  Both call sites now pass the raw tuples unchanged.
+
+---
+
 ## [1.1.2] - 2026-04-07
 
 ### Fixed
