@@ -5,6 +5,30 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.1.9] - 2026-04-08
+
+### Fixed
+
+- **CI / Linux binaries** (`.github/workflows/publish-ember-qc.yml`):
+  pre-compiled Linux binaries shipped in v1.1.6 – v1.1.8 were built on
+  `ubuntu-latest` (= ubuntu-24.04, glibc 2.39 / GLIBCXX 3.4.32) and failed to
+  load on any older Linux with errors like
+  `version 'GLIBC_2.38' not found (required by …/atom/main)` and
+  `version 'GLIBCXX_3.4.32' not found`.  This made ATOM and all OCT variants
+  appear to fail 100 % of trials on Debian 12 / Ubuntu 22.04 servers even
+  though macOS worked.  Fix: the Linux matrix entry now pins
+  `os: ubuntu-22.04` (glibc 2.35 baseline, compatible with Debian 12 and
+  newer) and both compile commands add `-static-libstdc++ -static-libgcc` so
+  the libstdc++ dependency is baked into the binary and future runner bumps
+  cannot reintroduce GLIBCXX skew.  An `objdump -T` verification step prints
+  the required symbol versions after each Linux compile, so any future
+  baseline creep is visible in CI output before release.
+- No code changes in the package itself — this release exists to publish
+  rebuilt, portable Linux binaries through the existing tag-triggered
+  workflow.
+
+---
+
 ## [1.1.8] - 2026-04-07
 
 ### Added

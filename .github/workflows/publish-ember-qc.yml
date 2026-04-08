@@ -35,15 +35,21 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
+          # Linux: pin to ubuntu-22.04 (glibc 2.35, GLIBCXX 3.4.30) so binaries
+          # load on Debian 12 / Ubuntu 22.04+ servers.  Static-link libstdc++
+          # and libgcc so future runner bumps don't silently break portability.
+          - os: ubuntu-22.04
             platform: linux-x86_64
             arch_flag: ""
+            static_flags: "-static-libstdc++ -static-libgcc"
           - os: macos-latest
             platform: darwin-x86_64
             arch_flag: "-arch x86_64"
+            static_flags: ""
           - os: macos-latest
             platform: darwin-arm64
             arch_flag: ""
+            static_flags: ""
 
     runs-on: ${{ matrix.os }}
 
@@ -53,14 +59,22 @@ jobs:
       - name: Compile atom
         run: |
           cd external/atom
-          g++ -O3 ${{ matrix.arch_flag }} utilities/src/*.cpp main.cpp -std=c++11 -o atom-${{ matrix.platform }} -pthread
+          g++ -O3 ${{ matrix.arch_flag }} utilities/src/*.cpp main.cpp -std=c++11 -o atom-${{ matrix.platform }} -pthread ${{ matrix.static_flags }}
           file atom-${{ matrix.platform }}
 
       - name: Compile oct
         run: |
           cd external/oct_based
-          g++ -std=c++11 -O2 ${{ matrix.arch_flag }} embedding/*/src/*.cpp embedding/driver.cpp -o oct-${{ matrix.platform }}
+          g++ -std=c++11 -O2 ${{ matrix.arch_flag }} embedding/*/src/*.cpp embedding/driver.cpp -o oct-${{ matrix.platform }} ${{ matrix.static_flags }}
           file oct-${{ matrix.platform }}
+
+      - name: Verify Linux binary portability
+        if: matrix.platform == 'linux-x86_64'
+        run: |
+          echo "== atom =="
+          objdump -T external/atom/atom-${{ matrix.platform }} | grep -E 'GLIBC|GLIBCXX' | awk '{print $5}' | sort -u || true
+          echo "== oct =="
+          objdump -T external/oct_based/oct-${{ matrix.platform }} | grep -E 'GLIBC|GLIBCXX' | awk '{print $5}' | sort -u || true
 
       - name: Upload binaries to GitHub release
         uses: softprops/action-gh-release@v2
