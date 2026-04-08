@@ -5,6 +5,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.1.5] - 2026-04-07
+
+### Fixed
+
+- `_load_results_from_jsonl()` now skips malformed JSONL lines instead of
+  raising `json.JSONDecodeError`.  Previously, a line corrupted by a mid-run
+  crash (e.g. server reboot) would be correctly skipped by
+  `completed_seeds_from_jsonl()` during task-list recovery, causing the task
+  to be re-run and its new result appended to the same file — but the old
+  corrupted line would remain mid-file and crash the final compile step when
+  `_load_results_from_jsonl()` processed it.
+
+---
+
 ## [1.1.4] - 2026-04-07
 
 ### Fixed

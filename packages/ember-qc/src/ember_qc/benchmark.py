@@ -535,12 +535,16 @@ def _load_results_from_jsonl(workers_dir: Path) -> List[EmbeddingResult]:
         with open(jf) as fh:
             for line in fh:
                 line = line.strip()
-                if line:
+                if not line:
+                    continue
+                try:
                     rec = json.loads(line)
-                    results.append(
-                        EmbeddingResult(**{k: v for k, v in rec.items()
-                                          if k in valid_fields})
-                    )
+                except json.JSONDecodeError:
+                    continue
+                results.append(
+                    EmbeddingResult(**{k: v for k, v in rec.items()
+                                      if k in valid_fields})
+                )
     return results
 
 
