@@ -986,11 +986,19 @@ class EmbeddingBenchmark:
             unfinished_dir: Staging directory for in-progress/cancelled batches.
                             Default: runs_unfinished/ sibling to results_dir.
         """
-        if unfinished_dir is None:
-            from ember_qc.config import get as _cfg, resolve_unfinished_dir as _resolve_ud
-            unfinished_dir = str(_resolve_ud(_cfg("unfinished_dir"), output_dir=results_dir))
+        # Store the raw setting so run_full_benchmark can resolve it against the
+        # real output_dir (which isn't known yet at __init__ time).  "child" and
+        # "default" are sentinel values that must be resolved via
+        # resolve_unfinished_dir(); treating them as literal paths is wrong.
+        from ember_qc.config import get as _cfg
+        self._unfinished_dir_setting: Optional[str] = (
+            unfinished_dir if unfinished_dir is not None else _cfg("unfinished_dir")
+        )
+        self._default_results_dir: str = results_dir
         self.target_graph = target_graph
-        self.results_manager = ResultsManager(results_dir, unfinished_dir=unfinished_dir)
+        # Deferred: ResultsManager is created in run_full_benchmark once the real
+        # output_dir is known, so "child" resolves correctly.
+        self.results_manager: Optional[ResultsManager] = None
         self.results: List[EmbeddingResult] = []
         
     def generate_test_problems(self, sizes: List[int] = None, 
@@ -1138,6 +1146,17 @@ class EmbeddingBenchmark:
                     f"Cannot create output directory '{output_dir}': {e}. "
                     "Check the path and permissions before starting a benchmark run."
                 ) from e
+
+        # Create ResultsManager now that the real output_dir is known, so
+        # "child" resolves to output_dir/.runs_unfinished/ rather than a path
+        # relative to the __init__-time placeholder.
+        from ember_qc.config import resolve_unfinished_dir as _resolve_ud
+        _effective_results_dir = output_dir or self._default_results_dir
+        _resolved_ud = str(_resolve_ud(self._unfinished_dir_setting, output_dir=_effective_results_dir))
+        self.results_manager = ResultsManager(
+            _effective_results_dir,
+            unfinished_dir=_resolved_ud,
+        )
 
         # Multi-topology: loop over each topology
         if topologies:
@@ -1598,12 +1617,10 @@ def load_benchmark(batch_id: Optional[str] = None,
         When no argument is passed it prints the discovery table and accepts
         a selection by number from input().
     """
-    # Resolve staging directory: explicit arg > config > platform default
-    if unfinished_dir:
-        _unfinished = Path(unfinished_dir)
-    else:
-        from ember_qc.config import get as _cfg, resolve_unfinished_dir as _resolve_ud
-        _unfinished = _resolve_ud(_cfg("unfinished_dir"), output_dir=output_dir)
+    # Resolve staging directory: always go through resolve_unfinished_dir so
+    # sentinel values like "child" and "default" are handled correctly.
+    from ember_qc.config import resolve_unfinished_dir as _resolve_ud
+    _unfinished = _resolve_ud(unfinished_dir, output_dir=output_dir)
 
     incomplete_runs = scan_incomplete_runs(_unfinished)
     if not incomplete_runs:
@@ -1918,6 +1935,7 @@ def load_benchmark(batch_id: Optional[str] = None,
 
 def delete_benchmark(batch_id: Optional[str] = None,
                      unfinished_dir: Optional[str] = None,
+                     output_dir: Optional[str] = None,
                      force: bool = False) -> bool:
     """Delete an incomplete benchmark run from runs_unfinished/.
 
@@ -1951,11 +1969,8 @@ def delete_benchmark(batch_id: Optional[str] = None,
     import shutil
     from datetime import datetime, timezone
 
-    if unfinished_dir:
-        _unfinished = Path(unfinished_dir)
-    else:
-        from ember_qc._paths import get_user_unfinished_dir
-        _unfinished = get_user_unfinished_dir()
+    from ember_qc.config import resolve_unfinished_dir as _resolve_ud
+    _unfinished = _resolve_ud(unfinished_dir, output_dir=output_dir)
 
     incomplete_runs = scan_incomplete_runs(_unfinished)
     if not incomplete_runs:

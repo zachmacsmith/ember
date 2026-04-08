@@ -5,6 +5,32 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.1.4] - 2026-04-07
+
+### Fixed
+
+- `unfinished_dir = "child"` (and `"default"`) now work correctly end-to-end.
+  Three related bugs were fixed:
+
+  1. **Write path** — `EmbeddingBenchmark.__init__` was resolving `"child"`
+     against a placeholder `results_dir="./results"` before the real
+     `output_dir` was known, staging cancelled runs in `./results/.runs_unfinished/`
+     relative to CWD rather than `output_dir/.runs_unfinished/`.
+     `ResultsManager` creation is now deferred to `run_full_benchmark()` where
+     the real `output_dir` is available.
+
+  2. **Read path** — `load_benchmark()` and `delete_benchmark()` treated any
+     non-empty `unfinished_dir` string as a literal `Path()`, so `"child"` and
+     `"default"` were looked up as literal directory names.  Both now go through
+     `resolve_unfinished_dir()` unconditionally.
+
+  3. **CLI resume** — `cmd_resume` hardcoded `get_user_unfinished_dir()` for
+     the `--delete-all` path, ignoring config.  All three resume code paths now
+     share a single resolved staging directory derived from config.
+     `delete_benchmark` gains an `output_dir` parameter to support `"child"` mode.
+
+---
+
 ## [1.1.3] - 2026-04-07
 
 ### Fixed

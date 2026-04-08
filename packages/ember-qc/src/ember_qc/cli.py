@@ -173,12 +173,15 @@ def cmd_run(args: argparse.Namespace) -> None:
 
 def cmd_resume(args: argparse.Namespace) -> None:
     from ember_qc.benchmark import load_benchmark, delete_benchmark
-    from ember_qc._paths import get_user_unfinished_dir
     from ember_qc.checkpoint import scan_incomplete_runs
+    from ember_qc.config import get as _cfg, resolve_unfinished_dir as _resolve_ud
+
+    _out_dir   = args.output_dir or _cfg("output_dir")
+    _ud_setting = _cfg("unfinished_dir")
+    _unfinished = _resolve_ud(_ud_setting, output_dir=_out_dir)
 
     if args.delete_all:
-        unfinished_dir = get_user_unfinished_dir()
-        runs = scan_incomplete_runs(unfinished_dir)
+        runs = scan_incomplete_runs(_unfinished)
         if not runs:
             print("No unfinished runs found.")
             return
@@ -194,19 +197,19 @@ def cmd_resume(args: argparse.Namespace) -> None:
             print("Aborted.")
             return
         for r in runs:
-            delete_benchmark(batch_id=r["batch_id"], force=True)
+            delete_benchmark(batch_id=r["batch_id"], unfinished_dir=str(_unfinished), force=True)
         return
 
     if args.delete:
-        delete_benchmark(batch_id=args.batch_id or None)
+        delete_benchmark(batch_id=args.batch_id or None,
+                         unfinished_dir=str(_unfinished))
         return
 
-    from ember_qc.config import get as _cfg
     load_benchmark(
         batch_id=args.batch_id or None,
         n_workers=args.workers or None,
-        output_dir=args.output_dir or _cfg("output_dir"),
-        unfinished_dir=_cfg("unfinished_dir") or None,
+        output_dir=_out_dir,
+        unfinished_dir=_ud_setting,
         verbose=args.verbose,
         analyze=args.analyze,
     )
