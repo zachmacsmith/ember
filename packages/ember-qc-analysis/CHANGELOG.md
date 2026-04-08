@@ -5,6 +5,26 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.10.7] - 2026-04-07
+
+### Changed
+
+- `plot_size_density_heatmap()` now produces substantially more readable output:
+  - **Default binning** — `node_bin_size` defaults to `10` (was `None`) and
+    `density_bin_size` defaults to `0.05` (was `None`), so cells are wide
+    enough to see without explicit configuration.
+  - **Gaussian smoothing** — new `smooth=True` / `smooth_sigma=1.0` parameters
+    apply NaN-aware Gaussian smoothing across cells (values and weights
+    smoothed separately, then divided) so sparse regions blend into smooth
+    gradients rather than isolated specks.
+  - **X-axis auto-clip** — the x-axis is clipped to the column range that
+    actually contains data, eliminating the wide empty space that appeared
+    when large graphs mostly failed.
+  - **Larger figure** — default figure size increased from `(12, 6)` to
+    `(16, 8)`.
+
+---
+
 ## [0.10.6] - 2026-04-07
 
 ### Fixed

@@ -243,8 +243,10 @@ def plot_size_density_heatmap(
     metric: str = 'avg_chain_length',
     graph_categories: Optional[List[str]] = None,
     algo: Optional[str] = None,
-    node_bin_size: Optional[int] = None,
-    density_bin_size: Optional[float] = None,
+    node_bin_size: Optional[int] = 10,
+    density_bin_size: Optional[float] = 0.05,
+    smooth: bool = True,
+    smooth_sigma: float = 1.0,
     vmin: Optional[float] = None,
     vmax: Optional[float] = None,
     cmap: Optional[str] = None,
@@ -276,10 +278,17 @@ def plot_size_density_heatmap(
                           (Erdős-Rényi graphs).
         algo:             Restrict to one algorithm.  ``None`` averages over
                           all algorithms present in the filtered data.
-        node_bin_size:    Bin width for the node axis (e.g. ``5`` groups nodes
-                          10–14, 15–19, …).  ``None`` uses exact node counts.
-        density_bin_size: Bin width for the density axis (e.g. ``0.05``).
-                          ``None`` uses exact density values (rounded to 3 dp).
+        node_bin_size:    Bin width for the node axis.  Defaults to ``10``
+                          (groups nodes 0–9, 10–19, …).  ``None`` uses exact
+                          node counts (may produce very thin cells).
+        density_bin_size: Bin width for the density axis.  Defaults to
+                          ``0.05`` (20 bands from 0–1).  ``None`` uses exact
+                          density values (rounded to 3 dp).
+        smooth:           Apply Gaussian smoothing across cells before
+                          plotting.  Helps reveal gradients when coverage
+                          is sparse.  Default ``True``.
+        smooth_sigma:     Standard deviation for the Gaussian kernel in
+                          cell units.  Default ``1.0``.
         vmin, vmax:       Colour-scale limits.  Defaults to data range.
         cmap:             Matplotlib colormap name.  Auto-selected per metric
                           when ``None``.
@@ -303,7 +312,7 @@ def plot_size_density_heatmap(
     fdf = df[df['category'].isin(graph_categories)].copy()
 
     fname_suffix = f'size_density_{metric}'
-    fig, ax = plt.subplots(figsize=(12, 6))
+    fig, ax = plt.subplots(figsize=(16, 8))
 
     if fdf.empty:
         ax.text(0.5, 0.5,
@@ -378,6 +387,17 @@ def plot_size_density_heatmap(
     Y = pivot.index.values.astype(float)
     Z = pivot.values  # shape: (n_densities, n_nodes)
 
+    # ── Gaussian smoothing (NaN-aware) ────────────────────────────────────────
+    if smooth and smooth_sigma > 0:
+        from scipy.ndimage import gaussian_filter
+        # Treat NaN as 0-weight; smooth values and weights separately then divide
+        Z_filled = np.where(np.isnan(Z), 0.0, Z)
+        W        = (~np.isnan(Z)).astype(float)
+        Z_sm     = gaussian_filter(Z_filled, sigma=smooth_sigma)
+        W_sm     = gaussian_filter(W,        sigma=smooth_sigma)
+        with np.errstate(invalid='ignore'):
+            Z = np.where(W_sm > 0.05, Z_sm / W_sm, np.nan)
+
     # ── Plot ──────────────────────────────────────────────────────────────────
     chosen_cmap = cmap or _HEATMAP_CMAPS[metric]
     cmap_obj = plt.get_cmap(chosen_cmap).copy()
@@ -388,6 +408,13 @@ def plot_size_density_heatmap(
 
     cb = plt.colorbar(im, ax=ax)
     cb.set_label(_HEATMAP_LABELS.get(metric, metric))
+
+    # Clip x-axis to the range that actually has data — avoids wide empty space
+    # on the right when most large graphs failed (success_rate case)
+    valid_cols = np.where(~np.all(np.isnan(Z), axis=0))[0]
+    if valid_cols.size:
+        x_margin = (X[1] - X[0]) if len(X) > 1 else 5.0
+        ax.set_xlim(X[valid_cols[0]] - x_margin, X[valid_cols[-1]] + x_margin)
 
     ax.set_xlabel('Number of nodes')
     ax.set_ylabel('Density')
