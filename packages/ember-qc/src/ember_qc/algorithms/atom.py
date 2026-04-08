@@ -90,6 +90,18 @@ class AtomAlgorithm(EmbeddingAlgorithm):
                     except ValueError:
                         continue
 
+            if result.returncode != 0:
+                stderr_snippet = (result.stderr or '').strip()[:300]
+                logger.error(
+                    "ATOM binary exited with code %d. stderr: %s",
+                    result.returncode, stderr_snippet or '<empty>',
+                )
+                return {
+                    'embedding': {}, 'time': elapsed,
+                    'success': False, 'status': 'CRASH',
+                    'error': f"ATOM binary exit code {result.returncode}: {stderr_snippet}",
+                }
+
             if not embedding:
                 return {'embedding': {}, 'time': elapsed, 'success': False, 'status': 'FAILURE'}
 

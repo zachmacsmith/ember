@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ember-qc"
-version = "1.1.6"
+version = "1.1.8"
 description = "Quantum minor-embedding benchmark suite for D-Wave hardware topologies"
 readme = "README.md"
 license = { file = "LICENSE" }

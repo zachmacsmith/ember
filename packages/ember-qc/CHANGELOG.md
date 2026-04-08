@@ -5,6 +5,46 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.1.8] - 2026-04-07
+
+### Added
+
+- **`ember doctor`** — new CLI command that diagnoses binary algorithm
+  health on the current machine.  For each algorithm it reports:
+  - Binary path and whether the file exists
+  - Architecture match (`file` output vs `platform.machine()`) — catches
+    Mac-compiled binaries deployed to a Linux server
+  - Shared library dependencies (`ldd` on Linux, `otool -L` on macOS) with
+    specific fix hints for common missing libraries (`libgomp1`, `libstdc++6`)
+  - Working-directory writability check (OCT writes temp files there)
+  - End-to-end **smoke test**: embeds K₄ → C(4,4,4) with a 30 s timeout and
+    reports success/failure with elapsed time or the exact error
+  - `--algo NAME` flag to restrict the check to one algorithm
+
+---
+
+## [1.1.7] - 2026-04-07
+
+### Fixed
+
+- **OCT** (`algorithms/oct.py`): All OCT variants now declare
+  `supported_topologies = ['chimera']` (matching ATOM).  Previously OCT was
+  not skipped for non-Chimera topologies; when run against a Pegasus target
+  `_infer_chimera_dims()` silently fell back to a 4×4×4 placeholder, producing
+  embeddings with wrong qubit labels that always failed layer-1 validation —
+  the root cause of 100 % failure on Pegasus benchmarks.
+- **OCT** (`algorithms/oct.py`): `subprocess.returncode` is now checked after
+  the OCT binary returns.  A non-zero exit (binary crash, missing shared
+  library, wrong architecture, etc.) is now logged at ERROR level with the
+  first 300 chars of stderr and recorded with `status='CRASH'`, making server
+  environment issues immediately diagnosable instead of silently appearing as
+  `FAILURE` with an empty embedding.
+- **ATOM** (`algorithms/atom.py`): Same `returncode` check and CRASH status
+  added so binary execution failures on the server are clearly surfaced in
+  logs and results.
+
+---
+
 ## [1.1.6] - 2026-04-07
 
 ### Added

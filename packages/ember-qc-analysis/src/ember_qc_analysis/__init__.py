@@ -230,8 +230,9 @@ class BenchmarkAnalysis:
 
     def plot_scaling(self, metric: str = 'wall_time',
                      x: str = 'problem_nodes', log: bool = False,
+                     bin_size: Optional[int] = None,
                      save: bool = True) -> plt.Figure:
-        return plot_scaling(self._df, metric, x, log,
+        return plot_scaling(self._df, metric, x, log, bin_size,
                             output_dir=self.output_dir, save=save)
 
     def plot_density_hardness(self, metric: str = 'avg_chain_length',

@@ -123,13 +123,23 @@ def plot_scaling(df: pd.DataFrame,
                  metric: str = 'wall_time',
                  x: str = 'problem_nodes',
                  log: bool = False,
+                 bin_size: Optional[int] = None,
                  algo_palette=None,
                  output_dir=None,
                  save: bool = False,
                  fmt: str = 'png') -> plt.Figure:
-    """Line plot: metric vs x (aggregated across trials), one line per algorithm.
+    """Scatter + smoothed trend: metric vs x, one trace per algorithm.
 
-    Mean ± 1 std shaded ribbon.  Only successful trials included.
+    Raw trial points are shown as a light scatter; the trend line is the
+    binned mean with a ±1 std ribbon.  Binning avoids the extreme zigzag
+    produced when hundreds of unique x values each have only one or two
+    trials.  Only successful trials are included.
+
+    Args:
+        bin_size: Width of x-axis bins used for the trend line.  Defaults
+                  to ``None``, which auto-selects roughly 40 bins across
+                  the observed data range.  Pass an explicit integer (e.g.
+                  ``bin_size=10``) to override.
     """
     success_df = df[df['success']].copy()
     if success_df.empty:
@@ -140,17 +150,42 @@ def plot_scaling(df: pd.DataFrame,
         return fig
 
     palette = algo_palette or _algo_palette(success_df['algorithm'].unique())
-    fig, ax = plt.subplots(figsize=(9, 5))
+    fig, ax = plt.subplots(figsize=(12, 5))
 
     for algo, grp in success_df.groupby('algorithm'):
-        agg = grp.groupby(x)[metric].agg(['mean', 'std']).reset_index()
-        agg['std'] = agg['std'].fillna(0)
         color = palette[algo]
-        ax.plot(agg[x], agg['mean'], marker='o', label=algo, color=color, linewidth=2)
-        ax.fill_between(agg[x],
+        xvals = grp[x].dropna()
+        if xvals.empty:
+            continue
+
+        # ── Auto bin size ─────────────────────────────────────────────────
+        x_min, x_max = float(xvals.min()), float(xvals.max())
+        effective_bin = bin_size or max(1, int((x_max - x_min) / 40))
+
+        # ── Raw scatter (light, behind trend) ─────────────────────────────
+        ax.scatter(grp[x], grp[metric],
+                   alpha=0.12, s=6, color=color, linewidths=0)
+
+        # ── Binned mean ± 1 std ───────────────────────────────────────────
+        lo = (int(x_min) // effective_bin) * effective_bin
+        hi = (int(x_max) // effective_bin + 1) * effective_bin
+        bins = np.arange(lo, hi + effective_bin, effective_bin)
+        centers = (bins[:-1] + bins[1:]) / 2.0
+
+        grp = grp.copy()
+        grp['_bin'] = pd.cut(grp[x], bins=bins, labels=centers).astype(float)
+        agg = (grp.groupby('_bin', observed=True)[metric]
+               .agg(mean='mean', std='std', n='count')
+               .reset_index())
+        agg['std'] = agg['std'].fillna(0)
+        agg = agg[agg['n'] > 0].dropna(subset=['mean'])
+
+        ax.plot(agg['_bin'], agg['mean'],
+                color=color, linewidth=2, label=algo)
+        ax.fill_between(agg['_bin'],
                         agg['mean'] - agg['std'],
                         agg['mean'] + agg['std'],
-                        alpha=0.15, color=color)
+                        alpha=0.18, color=color)
 
     if log:
         ax.set_xscale('log')

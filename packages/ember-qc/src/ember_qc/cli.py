@@ -746,6 +746,175 @@ def cmd_install_binary_list(args: argparse.Namespace) -> None:
 
 
 # ---------------------------------------------------------------------------
+# ember doctor
+# ---------------------------------------------------------------------------
+
+def cmd_doctor(args: argparse.Namespace) -> None:
+    """Diagnose binary algorithm availability and correctness on this machine."""
+    import platform
+    import shutil
+    import subprocess
+    import time
+    from pathlib import Path
+
+    import dwave_networkx as dnx
+    import networkx as nx
+
+    from ember_qc import __version__
+    from ember_qc.registry import ALGORITHM_REGISTRY
+
+    _OK  = "✓"
+    _BAD = "✗"
+    _sys = platform.system()
+    _mach = platform.machine()
+
+    print("ember doctor — system diagnostics")
+    print("=" * 54)
+    print(f"  Platform : {_sys} {_mach}")
+    print(f"  Python   : {platform.python_version()}")
+    print(f"  ember-qc : {__version__}")
+    print()
+
+    # Tiny smoke-test graphs: K4 embeds into any C(4,4,*) easily.
+    _source = nx.complete_graph(4)
+    _target = dnx.chimera_graph(4, 4, 4)
+
+    # Track which binary paths we've already run the ldd/file checks on so
+    # we don't repeat for every OCT variant.
+    _checked_binaries: set = set()
+
+    algo_filter = getattr(args, 'algo', None)
+    any_printed = False
+
+    for name, cls in sorted(ALGORITHM_REGISTRY.items()):
+        if algo_filter and name != algo_filter:
+            continue
+
+        ok, reason = cls.is_available()
+        uses_subprocess = getattr(cls, '_uses_subprocess', False)
+
+        if not uses_subprocess:
+            sym = _OK if ok else _BAD
+            suffix = "" if ok else f": {reason}"
+            print(f"  {name:<22} {sym} pure Python{suffix}")
+            any_printed = True
+            continue
+
+        # --- subprocess-based binary algorithm ---
+        any_printed = True
+        print(f"\n  {name}")
+
+        # Resolve binary path
+        binary_fn = getattr(cls, '_binary', None)
+        binary_path: Path | None = None
+        if callable(binary_fn):
+            binary_path = Path(binary_fn())
+        elif binary_fn is not None:
+            binary_path = Path(binary_fn)
+
+        if binary_path is None:
+            print(f"    binary      : unknown")
+        else:
+            print(f"    binary      : {binary_path}")
+
+            if not binary_path.exists():
+                print(f"    status      : {_BAD} binary not found")
+                install_name = name.split('_')[0]
+                print(f"    fix         : ember install-binary {install_name}")
+                continue
+
+            bp_str = str(binary_path)
+
+            # Architecture + shared-library checks (once per unique binary)
+            if bp_str not in _checked_binaries:
+                _checked_binaries.add(bp_str)
+
+                # `file` — architecture
+                if shutil.which("file"):
+                    r = subprocess.run(["file", bp_str],
+                                       capture_output=True, text=True)
+                    file_out = r.stdout.strip()
+                    # Decide if the arch matches
+                    arch_ok = True
+                    lo = file_out.lower()
+                    if _sys == "Linux":
+                        if "x86-64" in file_out and _mach not in ("x86_64", "amd64"):
+                            arch_ok = False
+                        elif "aarch64" in lo and _mach not in ("arm64", "aarch64"):
+                            arch_ok = False
+                        elif "arm" in lo and "aarch64" not in lo and _mach == "x86_64":
+                            arch_ok = False
+                    elif _sys == "Darwin":
+                        if "arm64" in lo and _mach != "arm64":
+                            arch_ok = False
+                        elif "x86_64" in lo and _mach not in ("x86_64", "i386"):
+                            arch_ok = False
+                    sym = _OK if arch_ok else _BAD
+                    print(f"    architecture: {sym} {file_out}")
+                    if not arch_ok:
+                        print(f"    fix         : reinstall binary for {_sys} {_mach}")
+
+                # Shared library check
+                if _sys == "Linux" and shutil.which("ldd"):
+                    r = subprocess.run(["ldd", bp_str],
+                                       capture_output=True, text=True)
+                    missing = [ln.strip() for ln in r.stdout.splitlines()
+                               if "not found" in ln.lower()]
+                    if missing:
+                        print(f"    ldd         : {_BAD} missing shared libraries:")
+                        for m in missing:
+                            print(f"                  {m}")
+                        if any("libgomp" in m for m in missing):
+                            print(f"                  fix: sudo apt install libgomp1")
+                        if any("libstdc++" in m for m in missing):
+                            print(f"                  fix: sudo apt install libstdc++6")
+                    else:
+                        print(f"    ldd         : {_OK} all shared libraries found")
+                elif _sys == "Darwin" and shutil.which("otool"):
+                    r = subprocess.run(["otool", "-L", bp_str],
+                                       capture_output=True, text=True)
+                    lines = [ln.strip() for ln in r.stdout.splitlines()[1:]
+                             if ln.strip()]
+                    missing = [ln for ln in lines if "not found" in ln.lower()]
+                    if missing:
+                        print(f"    otool       : {_BAD} missing dylibs:")
+                        for m in missing:
+                            print(f"                  {m}")
+                    else:
+                        print(f"    otool -L    : {_OK} {len(lines)} dylib(s) found")
+
+                # Writable working directory (OCT writes temp files there)
+                work_dir = binary_path.parent.parent  # oct_dir convention
+                can_write = os.access(str(work_dir), os.W_OK)
+                sym = _OK if can_write else _BAD
+                print(f"    work dir    : {sym} {'writable' if can_write else 'NOT writable'} ({work_dir})")
+
+        # --- Smoke test: embed K4 into C(4,4,4) ---
+        print(f"    smoke test  : ", end="", flush=True)
+        try:
+            t0 = time.monotonic()
+            instance = cls()
+            result = instance.embed(_source, _target, timeout=30.0)
+            elapsed = time.monotonic() - t0
+            emb = result.get('embedding') or {}
+            status = result.get('status', 'FAILURE')
+            error  = result.get('error', '')
+            if emb:
+                print(f"{_OK} embedded K4 → C(4,4,4) in {elapsed:.2f}s")
+            else:
+                detail = f": {error}" if error else ""
+                print(f"{_BAD} {status}{detail}")
+        except Exception as exc:
+            print(f"{_BAD} exception: {exc}")
+
+    if not any_printed:
+        print(f"  (no algorithms match filter {algo_filter!r})")
+
+    print()
+    print("Done.")
+
+
+# ---------------------------------------------------------------------------
 # ember version
 # ---------------------------------------------------------------------------
 
@@ -944,6 +1113,17 @@ def build_parser() -> argparse.ArgumentParser:
 
     cs.add_parser("reset", help="reset all keys to defaults").set_defaults(func=cmd_config_reset)
     cs.add_parser("path",  help="print path to config file").set_defaults(func=cmd_config_path)
+
+    # -- doctor --------------------------------------------------------------
+    p_doc = sub.add_parser(
+        "doctor",
+        help="check binary algorithms are installed and working on this machine",
+    )
+    p_doc.add_argument(
+        "--algo", metavar="NAME", default=None,
+        help="restrict check to one algorithm (default: all)",
+    )
+    p_doc.set_defaults(func=cmd_doctor)
 
     # -- install-binary ------------------------------------------------------
     p_ib = sub.add_parser("install-binary",

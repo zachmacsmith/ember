@@ -55,6 +55,7 @@ def _make_oct_class(algo_name: str, extra_flags: list, desc: str, supports_seed:
         __doc__ = desc
         _uses_subprocess = True
         _supports_seed = supports_seed
+        supported_topologies = ['chimera']
         _binary = staticmethod(_resolve_oct_binary)
         _install_instruction = "Run: ember install-binary oct"
 
@@ -109,12 +110,24 @@ def _make_oct_class(algo_name: str, extra_flags: list, desc: str, supports_seed:
                        '-o', out_base] + flags
 
                 try:
-                    subprocess.run(cmd, capture_output=True, text=True,
-                                   timeout=timeout, cwd=str(oct_dir))
+                    proc = subprocess.run(cmd, capture_output=True, text=True,
+                                          timeout=timeout, cwd=str(oct_dir))
                     elapsed = time.time() - start_time
                 except subprocess.TimeoutExpired:
                     return {'embedding': {}, 'time': time.time() - start_time,
                             'success': False, 'status': 'TIMEOUT'}
+
+                if proc.returncode != 0:
+                    stderr_snippet = (proc.stderr or '').strip()[:300]
+                    logger.error(
+                        "OCT binary exited with code %d. stderr: %s",
+                        proc.returncode, stderr_snippet or '<empty>',
+                    )
+                    return {
+                        'embedding': {}, 'time': elapsed,
+                        'success': False, 'status': 'CRASH',
+                        'error': f"OCT binary exit code {proc.returncode}: {stderr_snippet}",
+                    }
 
                 emb_file = out_base + ".embedding"
                 embedding = {}

@@ -5,6 +5,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.10.10] - 2026-04-07
+
+### Changed
+
+- `plot_scaling()` completely reworked — previous version connected every
+  unique x value with a line, producing extreme zigzag when there are many
+  graphs with distinct node counts and few trials each.  New behaviour:
+  - Raw trial points drawn as a light scatter (alpha 0.12, small dots)
+  - Trend line is the **binned mean** over ~40 equal-width x-axis bins
+  - ±1 std ribbon around the binned mean
+  - Auto bin size: `max(1, (x_max − x_min) / 40)`; override with
+    `bin_size=N`
+  - Figure width increased to 12 inches
+
+---
+
 ## [0.10.9] - 2026-04-07
 
 ### Changed
