@@ -5,6 +5,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.1.6] - 2026-04-07
+
+### Added
+
+- `load_test_graphs()` now shows an inline progress bar when loading 50 or
+  more graphs.  For large selections (30,000+) the load + integrity-verify
+  phase could take several minutes with no output; the bar updates on every
+  graph loaded and switches to a "Verifying integrity…" message during the
+  SHA-256 pass, finishing with a total count and elapsed time.
+
+---
+
 ## [1.1.5] - 2026-04-07
 
 ### Fixed

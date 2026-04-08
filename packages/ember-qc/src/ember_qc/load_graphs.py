@@ -41,6 +41,7 @@ import json
 import shutil
 import sys
 import tempfile
+import time
 import urllib.error
 import urllib.request
 import networkx as nx
@@ -635,8 +636,20 @@ def load_test_graphs(selection: str = "*",
         if gid not in skip_to_canonical or skip_to_canonical[gid] not in selected_ids
     }
 
+    total = len(selected_ids)
+    _show_progress = total >= 50
+    _t0 = time.monotonic()
+
+    def _bar(n: int) -> str:
+        pct = int(40 * n / max(total, 1))
+        return f"[{'#' * pct}{'-' * (40 - pct)}] {n:,}/{total:,}"
+
+    if _show_progress:
+        print(f"Loading {total:,} graphs...", flush=True)
+
     results: List[Tuple[int, str, nx.Graph]] = []
     loaded_files: List[Tuple[int, Path]] = []
+    n_loaded = 0
 
     # First, satisfy from bundled files
     bundled_ids: Set[int] = set()
@@ -656,6 +669,9 @@ def load_test_graphs(selection: str = "*",
             results.append((gid, name, graph))
             loaded_files.append((gid, json_file))
             bundled_ids.add(gid)
+            n_loaded += 1
+            if _show_progress:
+                print(f"\r  {_bar(n_loaded)}", end="", flush=True)
 
     # Download any remaining IDs not found in bundle
     remaining = selected_ids - bundled_ids
@@ -667,13 +683,24 @@ def load_test_graphs(selection: str = "*",
             try:
                 graph = load_graph(gid)
                 results.append((gid, entry["name"], graph))
+                n_loaded += 1
+                if _show_progress:
+                    print(f"\r  {_bar(n_loaded)}", end="", flush=True)
             except Exception as e:
                 print(f"  Warning: could not load graph {gid}: {e}", file=sys.stderr)
 
     if loaded_files and MANIFEST_PATH.exists():
+        if _show_progress:
+            print(f"\r  Verifying integrity ({n_loaded:,} files)...{' ' * 20}",
+                  end="", flush=True)
         verify_manifest(files=loaded_files)
 
     results.sort(key=lambda x: x[0])
+
+    if _show_progress:
+        elapsed = time.monotonic() - _t0
+        print(f"\r  Loaded {len(results):,} graphs in {elapsed:.1f}s{' ' * 30}")
+
     return [(gid, name, graph) for gid, name, graph in results]
 
 
