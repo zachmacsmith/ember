@@ -5,6 +5,33 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.10.9] - 2026-04-07
+
+### Changed
+
+- Per-algorithm size-density heatmaps now share a **common x-axis range**
+  (clipped to the highest node count where any algorithm succeeded) and a
+  **common colour scale** (global min/max across all successful rows for that
+  metric; fixed 0–1 for `success_rate`), so plots for different algorithms
+  from the same run are directly visually comparable.
+- `plot_size_density_heatmap()` gains an `x_max` parameter to explicitly set
+  the right edge of the node axis (used by the above normalisation logic).
+- `BenchmarkAnalysis.plot_size_density_heatmap()` wrapper now also accepts
+  `x_max`.
+
+---
+
+## [0.10.8] - 2026-04-07
+
+### Changed
+
+- `plot_size_density_heatmap()` / `cmd_plots scaling` / `generate_report()` now
+  generate one heatmap per algorithm (saved as
+  `size_density_<metric>_<algo>.png`) in addition to the combined
+  all-algorithms heatmap.
+
+---
+
 ## [0.10.7] - 2026-04-07
 
 ### Changed

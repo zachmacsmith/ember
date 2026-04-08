@@ -247,13 +247,14 @@ class BenchmarkAnalysis:
                                    density_bin_size: Optional[float] = None,
                                    vmin: Optional[float] = None,
                                    vmax: Optional[float] = None,
+                                   x_max: Optional[float] = None,
                                    cmap: Optional[str] = None,
                                    save: bool = True) -> plt.Figure:
         return plot_size_density_heatmap(
             self._df, metric=metric,
             graph_categories=graph_categories, algo=algo,
             node_bin_size=node_bin_size, density_bin_size=density_bin_size,
-            vmin=vmin, vmax=vmax, cmap=cmap,
+            vmin=vmin, vmax=vmax, x_max=x_max, cmap=cmap,
             output_dir=self.output_dir, save=save,
         )
 
@@ -466,6 +467,21 @@ class BenchmarkAnalysis:
                  lambda m=_sdh_metric: plot_size_density_heatmap(
                      self._df, metric=m,
                      output_dir=self.output_dir, save=True, fmt=fmt))
+            # Compute shared x and colour limits so per-algo plots are comparable
+            _rcat = self._df[self._df['category'] == 'random']
+            _succ = _rcat[_rcat['success']]
+            _sdh_xmax = float(_succ['problem_nodes'].max()) if not _succ.empty else None
+            if _sdh_metric == 'success_rate':
+                _sdh_vmin, _sdh_vmax = 0.0, 1.0
+            else:
+                _col = _succ[_sdh_metric].dropna() if _sdh_metric in _succ.columns else pd.Series(dtype=float)
+                _sdh_vmin = float(_col.min()) if not _col.empty else None
+                _sdh_vmax = float(_col.max()) if not _col.empty else None
+            for _sdh_algo in algos:
+                _run(f'size_density_{_sdh_metric}_{_sdh_algo}',
+                     lambda m=_sdh_metric, a=_sdh_algo, xmax=_sdh_xmax, vlo=_sdh_vmin, vhi=_sdh_vmax: plot_size_density_heatmap(
+                         self._df, metric=m, algo=a, x_max=xmax, vmin=vlo, vmax=vhi,
+                         output_dir=self.output_dir, save=True, fmt=fmt))
 
         # ── Pairwise plots ────────────────────────────────────────────────
         _run('win_rate_matrix',

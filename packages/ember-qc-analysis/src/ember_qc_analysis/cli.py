@@ -399,6 +399,18 @@ def _generate_with_skip(
                 _run("density_hardness",      lambda: plot_density_hardness(df, algo_palette=palette, output_dir=an.output_dir, save=True))
                 for _m in ("avg_chain_length", "max_chain_length", "qubit_overhead_ratio", "success_rate"):
                     _run(f"size_density_{_m}", lambda m=_m: plot_size_density_heatmap(df, metric=m, output_dir=an.output_dir, save=True))
+                    # Shared axis/colour limits so per-algo plots are visually comparable
+                    _rcat = df[df['category'] == 'random']
+                    _succ = _rcat[_rcat['success']]
+                    _shared_xmax = float(_succ['problem_nodes'].max()) if not _succ.empty else None
+                    if _m == 'success_rate':
+                        _shared_vmin, _shared_vmax = 0.0, 1.0
+                    else:
+                        _col = _succ[_m].dropna() if _m in _succ.columns else pd.Series(dtype=float)
+                        _shared_vmin = float(_col.min()) if not _col.empty else None
+                        _shared_vmax = float(_col.max()) if not _col.empty else None
+                    for _a in algos:
+                        _run(f"size_density_{_m}_{_a}", lambda m=_m, a=_a, xmax=_shared_xmax, vlo=_shared_vmin, vhi=_shared_vmax: plot_size_density_heatmap(df, metric=m, algo=a, x_max=xmax, vmin=vlo, vmax=vhi, output_dir=an.output_dir, save=True))
 
             elif group == "pairwise":
                 (an.figures_dir / "pairwise").mkdir(parents=True, exist_ok=True)

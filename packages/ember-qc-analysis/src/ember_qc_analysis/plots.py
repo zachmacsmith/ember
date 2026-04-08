@@ -249,6 +249,7 @@ def plot_size_density_heatmap(
     smooth_sigma: float = 1.0,
     vmin: Optional[float] = None,
     vmax: Optional[float] = None,
+    x_max: Optional[float] = None,
     cmap: Optional[str] = None,
     algo_palette=None,
     output_dir=None,
@@ -290,6 +291,12 @@ def plot_size_density_heatmap(
         smooth_sigma:     Standard deviation for the Gaussian kernel in
                           cell units.  Default ``1.0``.
         vmin, vmax:       Colour-scale limits.  Defaults to data range.
+                          Pass the same values to all per-algorithm plots so
+                          colour scales are comparable.
+        x_max:            Override the right edge of the x-axis (node count).
+                          Pass the same value to all per-algorithm plots so
+                          they share the same x range for easy comparison.
+                          ``None`` auto-clips to the rightmost column with data.
         cmap:             Matplotlib colormap name.  Auto-selected per metric
                           when ``None``.
         algo_palette:     Ignored (accepted for API consistency).
@@ -410,11 +417,14 @@ def plot_size_density_heatmap(
     cb.set_label(_HEATMAP_LABELS.get(metric, metric))
 
     # Clip x-axis to the range that actually has data — avoids wide empty space
-    # on the right when most large graphs failed (success_rate case)
+    # on the right when most large graphs failed (success_rate case).
+    # If x_max is given (shared across per-algo plots) use that as the right
+    # edge so all heatmaps for the same metric are visually comparable.
     valid_cols = np.where(~np.all(np.isnan(Z), axis=0))[0]
     if valid_cols.size:
         x_margin = (X[1] - X[0]) if len(X) > 1 else 5.0
-        ax.set_xlim(X[valid_cols[0]] - x_margin, X[valid_cols[-1]] + x_margin)
+        x_right = float(x_max) if x_max is not None else X[valid_cols[-1]]
+        ax.set_xlim(X[valid_cols[0]] - x_margin, x_right + x_margin)
 
     ax.set_xlabel('Number of nodes')
     ax.set_ylabel('Density')
