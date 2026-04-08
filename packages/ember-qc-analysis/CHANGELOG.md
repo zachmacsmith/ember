@@ -5,6 +5,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.10.4] - 2026-04-07
+
+### Added
+
+- All four CLI commands (`report`, `plots`, `tables`, `stats`) now print
+  `"Loading data..."` before reading the SQLite database and `"N rows loaded"`
+  immediately after, so large batches no longer appear to hang on startup.
+- `report` and `plots` now print `"  Generating X... done"` (or `failed: …`)
+  for each plot as it runs, giving continuous feedback during long plot
+  generation passes.
+
+---
+
 ## [0.10.3] - 2026-04-07
 
 ### Added

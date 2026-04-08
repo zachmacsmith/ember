@@ -413,11 +413,13 @@ class BenchmarkAnalysis:
         generated_stats   = []
 
         def _run(label, fn):
+            print(f"  Generating {label}...", end="", flush=True)
             try:
                 fn()
                 generated_figures.append(label)
+                print(" done")
             except Exception as e:
-                print(f"  [plot] {label}: {e}")
+                print(f" failed: {e}")
 
         # ── Distribution plots ────────────────────────────────────────────
         _run('chain_length_kde',

@@ -163,8 +163,9 @@ def cmd_report(args: argparse.Namespace) -> None:
 
     print(f"Batch:  {batch_dir.name}")
     print(f"Output: {output_root}")
-
+    print("Loading data...", flush=True)
     an = BenchmarkAnalysis(str(batch_dir), output_root=str(output_root))
+    print(f"  {len(an.df):,} rows loaded")
     _apply_filter_args(an, args)
 
     if overwrite:
@@ -199,7 +200,9 @@ def cmd_plots(args: argparse.Namespace) -> None:
     fmt = getattr(args, "format", None) or resolve("fig_format")
     overwrite = getattr(args, "overwrite", False)
 
+    print("Loading data...", flush=True)
     an = BenchmarkAnalysis(str(batch_dir), output_root=str(output_root))
+    print(f"  {len(an.df):,} rows loaded")
     _apply_filter_args(an, args)
     _generate_with_skip(an, fmt=fmt, groups=groups, output_root=an.output_dir, overwrite=overwrite)
 
@@ -215,7 +218,9 @@ def cmd_tables(args: argparse.Namespace) -> None:
     output_root = resolve_output_dir(batch_dir, explicit=getattr(args, "output_dir", None))
     overwrite = getattr(args, "overwrite", False)
 
+    print("Loading data...", flush=True)
     an = BenchmarkAnalysis(str(batch_dir), output_root=str(output_root))
+    print(f"  {len(an.df):,} rows loaded")
     _apply_filter_args(an, args)
     summary_dir = an.summary_dir
     summary_dir.mkdir(parents=True, exist_ok=True)
@@ -259,7 +264,9 @@ def cmd_stats(args: argparse.Namespace) -> None:
     output_root = resolve_output_dir(batch_dir, explicit=getattr(args, "output_dir", None))
     overwrite = getattr(args, "overwrite", False)
 
+    print("Loading data...", flush=True)
     an = BenchmarkAnalysis(str(batch_dir), output_root=str(output_root))
+    print(f"  {len(an.df):,} rows loaded")
     _apply_filter_args(an, args)
     stats_dir = an.statistics_dir
     stats_dir.mkdir(parents=True, exist_ok=True)
@@ -370,11 +377,13 @@ def _generate_with_skip(
 
         def _run(label, fn):
             nonlocal generated
+            print(f"  Generating {label}...", end="", flush=True)
             try:
                 fn()
                 generated += 1
+                print(" done")
             except Exception as e:
-                print(f"  [{label}]: {e}")
+                print(f" failed: {e}")
 
         for group in groups:
             if group == "distributions":
