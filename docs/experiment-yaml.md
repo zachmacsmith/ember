@@ -178,13 +178,23 @@ note: "after fixing pssa seed handling"
 
 ### `fault_rate`
 
-**Type:** float (0.0–1.0)
+**Type:** float, list of floats, or mapping (0.0–1.0)
 **Default:** `0.0` (no faults)
 **Description:** Fraction of hardware nodes to remove from each topology before embedding. Simulates faulty qubits.
 
 ```yaml
 fault_rate: 0.03    # 3% of qubits disabled
 ```
+
+To sweep multiple fault rates in a single batch, pass a list. Each
+(topology, rate) pair becomes a virtual topology named
+`topology@fr=0.05` in the results:
+
+```yaml
+fault_rate: [0.0, 0.01, 0.05, 0.10, 0.20]
+```
+
+Or via CLI: `--fault-rate 0.0,0.01,0.05,0.10,0.20`
 
 To set different rates per topology, use a mapping:
 

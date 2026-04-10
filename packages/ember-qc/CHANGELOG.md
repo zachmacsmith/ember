@@ -5,6 +5,42 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.2.0] - 2026-04-10
+
+### Added
+
+- **Fault-rate sweep** (`--fault-rate` list support): `--fault-rate` now
+  accepts a comma-separated list of floats (e.g. `--fault-rate 0.0,0.01,
+  0.05,0.10,0.20`) to sweep multiple fault rates in a single batch.
+  Each (topology, rate) pair becomes a virtual topology named
+  `topology@fr=0.05` in the results, so all rates are benchmarked
+  together and results group naturally by topology and fault rate.
+
+  Also supported in YAML via `fault_rate: [0.0, 0.01, 0.05, 0.10]`.
+
+  Fault seeds are derived deterministically per (topology, rate) pair
+  via SHA-256 from the master fault seed, ensuring reproducibility and
+  independence across rates.
+
+  Usage:
+  ```bash
+  ember run experiment.yaml --fault-rate 0.0,0.01,0.05,0.10,0.20
+  ```
+
+- **`parse_topology_name()` utility** (`benchmark.py`): public function
+  to split virtual topology names into `(base_topology, fault_rate)`.
+  E.g. `parse_topology_name("chimera_16x16x4@fr=0.05")` returns
+  `("chimera_16x16x4", 0.05)`.
+
+### Removed
+
+- **`runs.csv` export**: new batches no longer generate `runs.csv`.
+  The SQLite `results.db` is the sole data store. Old batches that
+  only have `runs.csv` continue to work via the analysis loader's
+  fallback path.
+
+---
+
 ## [1.1.12] - 2026-04-09
 
 ### Added

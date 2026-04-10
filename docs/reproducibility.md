@@ -113,7 +113,6 @@ results/my_batch/
 ├── config.json              # parameters + provenance
 ├── experiment_resolved.yaml # exact config to reproduce this run
 ├── results.db               # all trial data
-├── runs.csv                 # same data as CSV
 ├── summary.csv              # grouped statistics
 └── README.md                # human-readable summary
 ```

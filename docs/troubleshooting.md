@@ -27,7 +27,7 @@ ember run experiment.yaml --output-dir /tmp/my_results
 
 ## All trials are TIMEOUT
 
-**Symptom:** Every trial in `runs.csv` has `status=TIMEOUT`.
+**Symptom:** Every trial in `results.db` has `status=TIMEOUT`.
 
 **Causes:**
 

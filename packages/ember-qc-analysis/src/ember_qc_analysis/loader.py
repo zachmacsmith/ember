@@ -15,6 +15,7 @@ Adds derived columns not stored in the database:
 """
 
 import json
+import re
 import sqlite3
 import numpy as np
 import pandas as pd
@@ -35,36 +36,104 @@ _REQUIRED_COLUMNS = frozenset({
 # Special-graph names (not prefix-detectable)
 _SPECIAL_GRAPHS = frozenset({'petersen', 'dodecahedral', 'icosahedral'})
 
+# Prefix → category fallback table covering all 36 manifest families.
+# Used only when the manifest ID-lookup is unavailable (legacy / custom data).
+_PREFIX_CATEGORY: list = [
+    # Random / probabilistic
+    ('random_er',            'random_er'),
+    ('random_planar',        'random_planar'),
+    ('random_',              'random'),
+    ('er_',                  'random_er'),
+    ('barabasi_albert_',     'barabasi_albert'),
+    ('watts_strogatz_',      'watts_strogatz'),
+    ('sbm_',                 'sbm'),
+    ('lfr_benchmark_',       'lfr_benchmark'),
+    ('planted_',             'planted_solution'),
+    ('weak_strong_cluster_', 'weak_strong_cluster'),
+    # Lattice / physics
+    ('grid_',                'grid'),
+    ('honeycomb_',           'honeycomb'),
+    ('triangular_lattice_',  'triangular_lattice'),
+    ('kagome_',              'kagome'),
+    ('frustrated_square_',   'frustrated_square'),
+    ('king_graph_',          'king_graph'),
+    ('cubic_lattice_',       'cubic_lattice'),
+    ('bcc_lattice_',         'bcc_lattice'),
+    ('shastry_sutherland_',  'shastry_sutherland'),
+    ('spin_glass_',          'spin_glass'),
+    # Structured / regular
+    ('regular_',             'regular'),
+    ('circulant_',           'circulant'),
+    ('hypercube_',           'hypercube'),
+    ('johnson_',             'johnson'),
+    ('kneser_',              'kneser'),
+    ('turan_',               'turan'),
+    ('generalized_petersen_','generalized_petersen'),
+    ('hardware_native_',     'hardware_native'),
+    ('named_special_',       'special'),
+    ('sudoku_',              'sudoku'),
+    # Simple families
+    ('bipartite_',           'bipartite'),
+    ('complete_',            'complete'),
+    ('cycle_',               'cycle'),
+    ('path_',                'path'),
+    ('star_',                'star'),
+    ('wheel_',               'wheel'),
+    ('binary_tree_',         'binary_tree'),
+    ('tree_',                'tree'),
+]
+
+
+# ── Manifest ID → type map (loaded once on first use) ───────────────────────────
+
+_MANIFEST_ID_TYPE: dict = {}
+_MANIFEST_LOADED: bool = False
+
+
+def _get_manifest_id_type() -> dict:
+    """Return {graph_id: type_string} from the ember-qc manifest, or {} if
+    ember-qc is not installed or the manifest cannot be read."""
+    global _MANIFEST_ID_TYPE, _MANIFEST_LOADED
+    if _MANIFEST_LOADED:
+        return _MANIFEST_ID_TYPE
+    _MANIFEST_LOADED = True
+    try:
+        # ember-qc ships manifest.json as package data
+        try:
+            from importlib.resources import files
+            manifest_path = files("ember_qc.graphs").joinpath("manifest.json")
+            raw = manifest_path.read_text(encoding="utf-8")
+        except Exception:
+            # Fallback: locate manifest relative to ember_qc package file
+            import importlib.util
+            spec = importlib.util.find_spec("ember_qc")
+            if spec and spec.origin:
+                p = Path(spec.origin).parent / "graphs" / "manifest.json"
+                raw = p.read_text(encoding="utf-8")
+            else:
+                return _MANIFEST_ID_TYPE
+        data = json.loads(raw)
+        _MANIFEST_ID_TYPE = {g["id"]: g["type"] for g in data.get("graphs", [])}
+    except Exception:
+        pass  # ember-qc not installed or manifest format changed — use fallback
+    return _MANIFEST_ID_TYPE
+
 
 # ── Category inference ──────────────────────────────────────────────────────────
 
 def infer_category(graph_name: str) -> str:
     """Return the graph category for a graph_name string.
 
-    Rules (case-insensitive prefix match):
-        K<digits>         → complete
-        bipartite_*       → bipartite
-        grid_*            → grid
-        cycle_*           → cycle
-        tree_*            → tree
-        petersen / dodecahedral / icosahedral → special
-        random_*          → random
-        anything else     → other
+    Used as a fallback when the manifest ID-lookup is unavailable.
+    Covers all 36 manifest families via prefix matching.
     """
     name = graph_name.strip().lower()
     if name in _SPECIAL_GRAPHS:
         return 'special'
+    # K<digits> → complete
     if name.startswith('k') and len(name) > 1 and name[1:].isdigit():
         return 'complete'
-    for prefix, category in [
-        ('bipartite_', 'bipartite'),
-        ('grid_',      'grid'),
-        ('cycle_',     'cycle'),
-        ('tree_',      'tree'),
-        ('random_',    'random'),
-        ('er_',        'random'),        # Erdős-Rényi (random_er type)
-        ('planar_',    'random_planar'), # random planar graphs
-    ]:
+    for prefix, category in _PREFIX_CATEGORY:
         if name.startswith(prefix):
             return category
     return 'other'
@@ -76,8 +145,17 @@ def _derive_columns(df: pd.DataFrame, timeout: float = 60.0) -> pd.DataFrame:
     """Add computed columns to a runs DataFrame (modifies a copy)."""
     df = df.copy()
 
-    # Category
-    df['category'] = df['graph_name'].apply(infer_category)
+    # Category — prefer manifest lookup via graph_id (covers all 36 families
+    # exactly); fall back to name-prefix inference for legacy / custom graphs.
+    id_type_map = _get_manifest_id_type()
+    if id_type_map and 'graph_id' in df.columns:
+        df['category'] = (
+            df['graph_id']
+            .map(id_type_map)
+            .fillna(df['graph_name'].apply(infer_category))
+        )
+    else:
+        df['category'] = df['graph_name'].apply(infer_category)
 
     # Qubit overhead ratio
     df['qubit_overhead_ratio'] = np.where(
@@ -102,6 +180,22 @@ def _derive_columns(df: pd.DataFrame, timeout: float = 60.0) -> pd.DataFrame:
 
     # Timeout flag (allow 5% tolerance)
     df['is_timeout'] = df['wall_time'] >= (timeout * 0.95)
+
+    # Base topology and fault rate — parsed from virtual topology names
+    # like "chimera_16x16x4@fr=0.05".  Pure string operation on the
+    # topology_name column already in memory; no extra DB queries.
+    _fr_re = re.compile(r'^(.+)@fr=([0-9.]+(?:e[+-]?\d+)?)$')
+
+    def _parse_base(name: str) -> str:
+        m = _fr_re.match(name)
+        return m.group(1) if m else name
+
+    def _parse_fr(name: str) -> float:
+        m = _fr_re.match(name)
+        return float(m.group(2)) if m else 0.0
+
+    df['base_topology'] = df['topology_name'].map(_parse_base)
+    df['fault_rate'] = df['topology_name'].map(_parse_fr)
 
     return df
 

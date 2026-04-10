@@ -13,7 +13,7 @@
 |---|---|
 | [experiment-yaml.md](experiment-yaml.md) | Complete reference for every key in an experiment YAML file, with types, defaults, and examples. |
 | [cli-reference.md](cli-reference.md) | Every `ember` command and flag. One section per command group, with full flag tables. |
-| [results-schema.md](results-schema.md) | `results.db` table definitions, `runs.csv` column list, `config.json` structure. |
+| [results-schema.md](results-schema.md) | `results.db` table definitions, `config.json` structure, `summary.csv` format. |
 | [graph-library.md](graph-library.md) | Graph ID ranges, types, selection syntax, and named presets. |
 | [topologies.md](topologies.md) | Chimera, Pegasus, Zephyr: node counts, edge counts, structural properties, algorithm compatibility. |
 | [reproducibility.md](reproducibility.md) | How EMBER ensures reproducible results: seeding, resolved YAML, checkpointing, versioning. |

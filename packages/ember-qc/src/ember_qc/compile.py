@@ -156,15 +156,14 @@ def _read_jsonl(path: Path) -> list:
 # ── Core consolidation ─────────────────────────────────────────────────────────
 
 def compile_batch(batch_dir: Union[str, Path]) -> Path:
-    """Consolidate worker JSONL files into SQLite and export runs.csv.
+    """Consolidate worker JSONL files into SQLite.
 
     Steps:
       1. Read all workers/worker_*.jsonl files.
       2. Create results.db with the full schema.
       3. Insert records (one transaction per worker file).
       4. Build indexes and ANALYZE.
-      5. Export runs.csv for backward compatibility with qeanalysis.
-      6. Parquet telemetry — stub (not yet implemented).
+      5. Parquet telemetry — stub (not yet implemented).
 
     Args:
         batch_dir: Path to a batch directory produced by EmbeddingBenchmark.
@@ -363,9 +362,6 @@ def compile_batch(batch_dir: Union[str, Path]) -> Path:
     if duplicate_count:
         print(f"  compile_batch: {duplicate_count} duplicate record(s) skipped")
 
-    # ── Export runs.csv (backward compat with qeanalysis) ─────────────────────
-    _export_runs_csv(db_path, batch_dir)
-
     # ── Parquet telemetry — stub ───────────────────────────────────────────────
     # Not yet implemented: algorithms do not yet emit per-stage telemetry.
     # When instrumented runs are available, read records with a 'stages' key
@@ -374,32 +370,6 @@ def compile_batch(batch_dir: Union[str, Path]) -> Path:
     print(f"  compile_batch: {total_inserted} run(s) written → {db_path.name}")
     return db_path
 
-
-def _export_runs_csv(db_path: Path, batch_dir: Path) -> None:
-    """Export the runs table as runs.csv for qeanalysis backward compatibility."""
-    con = sqlite3.connect(db_path)
-    df = pd.read_sql_query(
-        """SELECT
-               algorithm, graph_id, graph_name, topology_name, trial, seed,
-               wall_time, cpu_time, status, success, is_valid, partial,
-               avg_chain_length, max_chain_length, chain_length_std,
-               total_qubits_used, total_couplers_used,
-               problem_nodes, problem_edges, problem_density,
-               target_node_visits, cost_function_evaluations,
-               embedding_state_mutations, overlap_qubit_iterations,
-               algorithm_version, error
-           FROM runs
-           WHERE batch_id = ?
-           ORDER BY topology_name, algorithm, graph_id, trial""",
-        con,
-        params=(db_path.parent.name,),
-    )
-    con.close()
-    # Coerce 0/1 integer columns to bool, preserving NULL as empty.
-    # .astype(bool) is unsafe: NaN (from NULL) converts to True rather than NA.
-    for col in ("success", "is_valid", "partial"):
-        df[col] = df[col].apply(lambda x: bool(x) if pd.notna(x) else None)
-    df.to_csv(batch_dir / "runs.csv", index=False)
 
 
 # ── CLI entry point ────────────────────────────────────────────────────────────

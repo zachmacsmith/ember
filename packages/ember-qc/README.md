@@ -210,7 +210,6 @@ results/
 ├── batch_2026-03-28_14-30-00/
 │   ├── config.json       — run parameters and environment provenance
 │   ├── results.db        — SQLite: runs, embeddings, graphs, batches tables
-│   ├── runs.csv          — every trial as a row (exported from SQLite)
 │   ├── summary.csv       — grouped averages ± std dev per (algorithm, topology)
 │   ├── README.md         — human-readable batch summary
 │   └── workers/
@@ -284,6 +283,7 @@ Environment variables take precedence over stored config, which takes precedence
 ```
 ember run <experiment.yaml> [flags]       Run a benchmark
 ember run --analyze                       Run benchmark and generate analysis report
+ember run --fault-rate 0.0,0.01,0.05      Sweep multiple fault rates in one batch
 ember resume [batch_id]                   Resume an interrupted run
 
 ember graphs list [TYPE] [-a]             List graph types or graphs of a type

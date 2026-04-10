@@ -26,9 +26,10 @@ except ImportError:
 import numpy as np
 import networkx as nx
 import json
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, Union
 from dataclasses import dataclass, asdict, field
 from pathlib import Path
+import re as _re
 from ember_qc.registry import ALGORITHM_REGISTRY
 from ember_qc.validation import validate_layer1, validate_layer2
 from ember_qc.faults import simulate_faults
@@ -41,6 +42,23 @@ from ember_qc.checkpoint import (
     write_checkpoint, read_checkpoint, delete_checkpoint,
     completed_seeds_from_jsonl, scan_incomplete_runs,
 )
+
+
+_FR_SUFFIX_RE = _re.compile(r'^(.+)@fr=([0-9.]+(?:e[+-]?\d+)?)$')
+
+
+def parse_topology_name(name: str) -> tuple:
+    """Parse a (possibly virtual) topology name into (base_topology, fault_rate).
+
+    >>> parse_topology_name('chimera_16x16x4')
+    ('chimera_16x16x4', 0.0)
+    >>> parse_topology_name('chimera_16x16x4@fr=0.05')
+    ('chimera_16x16x4', 0.05)
+    """
+    m = _FR_SUFFIX_RE.match(name)
+    if m:
+        return m.group(1), float(m.group(2))
+    return name, 0.0
 
 
 @dataclass
@@ -1081,7 +1099,7 @@ class EmbeddingBenchmark:
                           verbose: bool = None,
                           output_dir: Optional[str] = None,
                           cancel_delay: float = 5.0,
-                          fault_rate: float = 0.0,
+                          fault_rate: Union[float, List[float]] = 0.0,
                           fault_seed: Optional[int] = None,
                           faulty_nodes=None,
                           faulty_couplers=None,
@@ -1115,7 +1133,11 @@ class EmbeddingBenchmark:
             fault_rate: Fraction of topology qubits to remove randomly before
                         running. Must be in [0, 1]. Applied once per topology;
                         all trials share the same faulted graph. Default 0.0
-                        (no faults).
+                        (no faults).  When a list of floats is provided
+                        (e.g. [0.0, 0.01, 0.05, 0.10]), the topology list is
+                        expanded so each (topology, rate) pair becomes a
+                        virtual topology named "topology@fr=0.05", enabling a
+                        full fault-rate sweep within a single batch.
             fault_seed: Seed for random fault generation. Only used when
                         fault_rate > 0.
             faulty_nodes: Explicit list of qubit IDs to remove from the
@@ -1172,6 +1194,37 @@ class EmbeddingBenchmark:
                 "No topology specified. Either pass target_graph to __init__ "
                 "or use topologies=['chimera_4x4x4', ...] in run_full_benchmark."
             )
+
+        # ── Fault-rate sweep expansion ─────────────────────────────────────────
+        # When fault_rate is a list (e.g. [0.0, 0.01, 0.05, 0.10, 0.20]),
+        # expand topo_list so each (topology, rate) pair becomes a virtual
+        # topology named  "chimera_16x16x4@fr=0.05".  The rest of the pipeline
+        # (task generation, execution, results DB) is topology-name-aware, so
+        # results naturally group by virtual topology.
+        if isinstance(fault_rate, (list, tuple)):
+            expanded = []
+            _sweep_fr: dict = {}   # virtual_topo_name -> rate
+            _sweep_fs: dict = {}   # virtual_topo_name -> derived fault seed
+            _base_fs = fault_seed if fault_seed is not None else seed
+            for label, tg, topo_name in topo_list:
+                for rate in fault_rate:
+                    rate = float(rate)
+                    if rate == 0.0:
+                        vname = topo_name
+                    else:
+                        vname = f"{topo_name}@fr={rate:.4g}"
+                    expanded.append((vname, tg.copy(), vname))
+                    _sweep_fr[vname] = rate
+                    # Derive a deterministic fault seed per (topology, rate) so
+                    # results are reproducible and independent across rates.
+                    import hashlib
+                    _fs_hash = hashlib.sha256(
+                        f"{topo_name}:{rate}:{_base_fs}".encode()
+                    ).digest()
+                    _sweep_fs[vname] = int.from_bytes(_fs_hash[:4], "big")
+            topo_list = expanded
+            fault_rate = _sweep_fr   # convert to dict for downstream resolution
+            fault_seed = _sweep_fs   # per-virtual-topology seeds
 
         # ── Fault simulation ───────────────────────────────────────────────────
         # Applied once per topology before task list construction.

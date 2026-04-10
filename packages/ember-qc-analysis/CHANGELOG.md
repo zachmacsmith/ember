@@ -5,6 +5,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.11.0] - 2026-04-10
+
+### Added
+
+- **`base_topology` and `fault_rate` derived columns**: the loader now
+  parses virtual topology names (e.g. `chimera_16x16x4@fr=0.05`) into
+  `base_topology` (`chimera_16x16x4`) and `fault_rate` (`0.05`) columns.
+  Always present — defaults to the full topology name and `0.0` for
+  non-faulted runs.  Enables filtering by base topology across fault
+  rates: `df[df['base_topology'] == 'chimera_16x16x4']`.
+
+- **Batch note in `batches list`**: `ember-a batches list` now displays
+  the batch note in a column after status, truncated to 40 characters.
+
+---
+
 ## [0.10.10] - 2026-04-07
 
 ### Changed

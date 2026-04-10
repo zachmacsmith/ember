@@ -41,8 +41,27 @@ PLOT_GROUPS = {
     "scaling":       "Performance scaling with graph size",
     "pairwise":      "Algorithm pairwise comparisons",
     "success":       "Success rate analysis",
-    "graph-indexed": "Metrics indexed by graph ID",
+    "graph-indexed": "Metrics indexed by graph ID  (slow on large runs)",
     "topology":      "Performance by hardware topology",
+}
+
+# Named presets — ordered subsets of PLOT_GROUPS.
+# Use --preset NAME on report/plots to select one.
+# 'large' is the default for `report` (omits graph-indexed which is very slow
+# on runs with thousands of graphs).
+PLOT_PRESETS: dict[str, list[str]] = {
+    "large":    ["distributions", "scaling", "pairwise", "success", "topology"],
+    "full":     list(PLOT_GROUPS.keys()),   # everything inc. graph-indexed
+    "quick":    ["distributions", "success"],
+    "topology": ["topology", "success", "scaling"],
+    "paper":    ["distributions", "scaling", "pairwise", "success", "topology"],
+}
+_PRESET_DESCRIPTIONS = {
+    "large":    "all plots except graph-indexed  [default for report]",
+    "full":     "every plot group including graph-indexed",
+    "quick":    "distributions + success only — fast sanity check",
+    "topology": "topology comparison focus: topology, success, scaling",
+    "paper":    "publication-ready set: no graph-indexed, no raw scatter",
 }
 
 
@@ -50,45 +69,119 @@ PLOT_GROUPS = {
 # Batch resolution helpers
 # ---------------------------------------------------------------------------
 
-def _resolve_active_batch(input_dir_explicit: Optional[str] = None) -> Path:
+def _list_batches(input_dir: Path) -> list:
+    """Return valid batch directories sorted newest-first (by mtime, then name).
+
+    Index 0 = most recent batch, so -b 1 always means 'the latest run'.
+    """
+    batches = [d for d in input_dir.iterdir() if is_valid_batch(d)]
+    return sorted(batches, key=lambda d: (d.stat().st_mtime, d.name), reverse=True)
+
+
+def _resolve_batch_spec(spec: str) -> Path:
+    """Resolve a batch specifier to an absolute Path.
+
+    Accepted forms (tried in order):
+      1. Absolute path or relative path that exists as-is.
+      2. Integer N → the Nth batch (1-based) from sorted batches in input_dir.
+      3. Exact directory name inside input_dir.
+      4. Unique prefix match against batch names in input_dir.
+
+    Exits with a helpful error message on failure.
+    """
+    # 1. Direct path
+    p = Path(spec).expanduser()
+    if p.exists():
+        return p.resolve()
+
+    # Need input_dir for all remaining forms
+    input_dir = resolve_input_dir(prompt=True)
+    batches = _list_batches(input_dir)
+
+    if not batches:
+        print(f"No valid batches found in: {input_dir}")
+        print("Run: ember run to create a batch first.")
+        sys.exit(1)
+
+    # 2. Integer index
+    try:
+        idx = int(spec)
+        if 1 <= idx <= len(batches):
+            return batches[idx - 1]
+        print(f"error: batch index {idx} out of range (1–{len(batches)})")
+        print(_batch_index_list(batches))
+        sys.exit(1)
+    except ValueError:
+        pass
+
+    # 3. Exact name
+    exact = input_dir / spec
+    if exact.exists() and is_valid_batch(exact):
+        return exact.resolve()
+
+    # 4. Prefix match
+    matches = [b for b in batches if b.name.startswith(spec)]
+    if len(matches) == 1:
+        return matches[0]
+    if len(matches) > 1:
+        print(f"error: '{spec}' matches multiple batches:")
+        for m in matches:
+            print(f"  {m.name}")
+        sys.exit(1)
+
+    print(f"error: no batch found matching '{spec}' in {input_dir}")
+    print(_batch_index_list(batches))
+    sys.exit(1)
+
+
+def _batch_index_list(batches: list) -> str:
+    """Return a numbered list of batches for display in error messages."""
+    lines = ["Available batches:"]
+    for i, b in enumerate(batches, 1):
+        lines.append(f"  {i:>3}.  {b.name}")
+    return "\n".join(lines)
+
+
+def _resolve_active_batch(
+    spec: Optional[str] = None,
+    input_dir_explicit: Optional[str] = None,
+) -> Path:
     """
     Resolve the active batch, with fallback logic per spec §4.3.
 
     Priority:
-      1. active_batch from config
-      2. If input_dir is set and contains exactly one batch → use it
-      3. If input_dir is set and contains multiple batches → error with list
+      0. --batch / -b spec passed directly (number, name, or path)
+      1. active_batch from config (staged batch)
+      2. If input_dir contains exactly one batch → use it automatically
+      3. If input_dir contains multiple batches → error with numbered list
       4. If input_dir is not set → ember-qc discovery prompt, then error
     """
+    # 0. Explicit spec from --batch flag
+    if spec:
+        return _resolve_batch_spec(spec)
+
     # 1. Staged batch
     active = resolve("active_batch")
     if active:
         p = Path(active)
         if not p.exists():
             print(f"Warning: staged batch no longer exists: {p}")
-            print("Run: ember-analysis stage <path>")
+            print("Run: ember-analysis stage <path|number|name>")
             sys.exit(1)
         return p
 
     # 2+3+4. Fall back to input_dir
     input_dir = resolve_input_dir(explicit=input_dir_explicit, prompt=True)
-    batches = [d for d in sorted(input_dir.iterdir()) if is_valid_batch(d)]
+    batches = _list_batches(input_dir)
 
     if not batches:
         print(f"No valid batches found in: {input_dir}")
-        print("Run: ember-analysis stage <batch_path>")
+        print("Run: ember-analysis stage <path|number|name>")
         sys.exit(1)
 
-    if len(batches) == 1:
-        print(f"Using batch: {batches[0].name}")
-        return batches[0]
-
-    # Multiple batches — require explicit staging
-    print(f"Multiple batches found in {input_dir}. Stage one first:")
-    for b in batches:
-        print(f"  {b.name}")
-    print("\nRun: ember-analysis stage <batch_path>")
-    sys.exit(1)
+    # Default to most recent batch (index 0 = newest after reverse-mtime sort)
+    print(f"Using most recent batch: {batches[0].name}")
+    return batches[0]
 
 
 def _read_batch_config(batch_dir: Path) -> dict:
@@ -114,7 +207,7 @@ def _batch_status(batch_dir: Path) -> str:
 # ---------------------------------------------------------------------------
 
 def cmd_stage(args: argparse.Namespace) -> None:
-    path = Path(args.batch_dir).resolve()
+    path = _resolve_batch_spec(args.batch_dir)
     try:
         validate_batch(path)
     except ValueError as e:
@@ -150,27 +243,61 @@ def cmd_unstage(args: argparse.Namespace) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Group / preset resolution
+# ---------------------------------------------------------------------------
+
+def _resolve_groups(args: argparse.Namespace, default_preset: str = "large") -> list[str]:
+    """Return the ordered list of plot groups to generate.
+
+    Resolution order:
+      1. Explicit group names passed as positional args (plots subcommand only)
+      2. --preset NAME
+      3. default_preset ('large' for report, 'full' for bare plots)
+
+    Exits with an error on unknown group or preset names.
+    """
+    explicit_groups = getattr(args, "groups", None) or []
+    preset_name = getattr(args, "preset", None)
+
+    if explicit_groups:
+        # Validate individual group names
+        unknown = [g for g in explicit_groups if g not in PLOT_GROUPS]
+        if unknown:
+            print(f"error: unknown plot group(s): {', '.join(unknown)}")
+            print(f"Valid groups: {', '.join(PLOT_GROUPS)}")
+            sys.exit(1)
+        return explicit_groups
+
+    if preset_name:
+        if preset_name not in PLOT_PRESETS:
+            print(f"error: unknown preset '{preset_name}'")
+            print(f"Valid presets: {', '.join(PLOT_PRESETS)}")
+            sys.exit(1)
+        return list(PLOT_PRESETS[preset_name])
+
+    return list(PLOT_PRESETS[default_preset])
+
+
+# ---------------------------------------------------------------------------
 # ember-analysis report
 # ---------------------------------------------------------------------------
 
 def cmd_report(args: argparse.Namespace) -> None:
-    batch_dir = _resolve_active_batch()
+    batch_dir = _resolve_active_batch(spec=getattr(args, "batch", None))
     output_root = resolve_output_dir(batch_dir, explicit=getattr(args, "output_dir", None))
     fmt = getattr(args, "format", None) or resolve("fig_format")
     overwrite = getattr(args, "overwrite", False)
+    groups = _resolve_groups(args)
 
-    print(f"Batch:  {batch_dir.name}")
-    print(f"Output: {output_root}")
+    print(f"Batch:   {batch_dir.name}")
+    print(f"Output:  {output_root}")
+    print(f"Preset:  {getattr(args, 'preset', 'large')}  ({', '.join(groups)})")
     print("Loading data...", flush=True)
     from ember_qc_analysis import BenchmarkAnalysis
     an = BenchmarkAnalysis(str(batch_dir), output_root=str(output_root))
     print(f"  {len(an.df):,} rows loaded")
     _apply_filter_args(an, args)
-
-    if overwrite:
-        an.generate_report(fmt=fmt)
-    else:
-        _generate_with_skip(an, fmt=fmt, groups=None, output_root=an.output_dir)
+    _generate_with_skip(an, fmt=fmt, groups=groups, output_root=an.output_dir, overwrite=overwrite)
 
 
 # ---------------------------------------------------------------------------
@@ -180,19 +307,21 @@ def cmd_report(args: argparse.Namespace) -> None:
 def cmd_plots(args: argparse.Namespace) -> None:
     if args.list:
         print(f"{'Group':<15}  Description")
-        print("-" * 55)
+        print("-" * 60)
         for name, desc in PLOT_GROUPS.items():
             print(f"  {name:<13}  {desc}")
+        print()
+        print(f"{'Preset':<12}  Groups")
+        print("-" * 60)
+        for name, desc in _PRESET_DESCRIPTIONS.items():
+            grps = ", ".join(PLOT_PRESETS[name])
+            print(f"  {name:<10}  {desc}")
+            print(f"  {'':10}  → {grps}")
         return
 
-    groups = args.groups or list(PLOT_GROUPS.keys())
-    unknown = [g for g in groups if g not in PLOT_GROUPS]
-    if unknown:
-        print(f"error: unknown plot group(s): {', '.join(unknown)}")
-        print(f"Valid groups: {', '.join(PLOT_GROUPS)}")
-        sys.exit(1)
+    groups = _resolve_groups(args)
 
-    batch_dir = _resolve_active_batch()
+    batch_dir = _resolve_active_batch(spec=getattr(args, "batch", None))
     output_root = resolve_output_dir(batch_dir, explicit=getattr(args, "output_dir", None))
     fmt = getattr(args, "format", None) or resolve("fig_format")
     overwrite = getattr(args, "overwrite", False)
@@ -210,7 +339,7 @@ def cmd_plots(args: argparse.Namespace) -> None:
 # ---------------------------------------------------------------------------
 
 def cmd_tables(args: argparse.Namespace) -> None:
-    batch_dir = _resolve_active_batch()
+    batch_dir = _resolve_active_batch(spec=getattr(args, "batch", None))
     output_root = resolve_output_dir(batch_dir, explicit=getattr(args, "output_dir", None))
     overwrite = getattr(args, "overwrite", False)
 
@@ -255,7 +384,7 @@ def cmd_tables(args: argparse.Namespace) -> None:
 # ---------------------------------------------------------------------------
 
 def cmd_stats(args: argparse.Namespace) -> None:
-    batch_dir = _resolve_active_batch()
+    batch_dir = _resolve_active_batch(spec=getattr(args, "batch", None))
     output_root = resolve_output_dir(batch_dir, explicit=getattr(args, "output_dir", None))
     overwrite = getattr(args, "overwrite", False)
 
@@ -468,15 +597,17 @@ def cmd_batches_list(args: argparse.Namespace) -> None:
 
     active = resolve("active_batch")
 
-    print(f"\n{'Batch':<35}  {'Algorithms':<30}  {'Trials':>7}  Status")
-    print("-" * 85)
+    print(f"\n{'Batch':<35}  {'Algorithms':<30}  {'Trials':>7}  {'Status':<12}  Note")
+    print("-" * 110)
     for b in batches:
         cfg = _read_batch_config(b)
         algos = ", ".join(cfg.get("algorithms", []))[:28] or "?"
         trials = str(cfg.get("total_measured_runs", "?"))
         status = _batch_status(b)
         marker = " *" if active and Path(active) == b else ""
-        print(f"  {b.name:<33}  {algos:<30}  {trials:>7}  {status}{marker}")
+        note = cfg.get("batch_note", "") or ""
+        note_display = (note[:40] + "…") if len(note) > 41 else note
+        print(f"  {b.name:<33}  {algos:<30}  {trials:>7}  {status:<12}{marker}  {note_display}")
 
     print(f"\n{len(batches)} batch(es) in {input_dir.resolve()}")
     if active:
@@ -626,17 +757,34 @@ def build_parser() -> argparse.ArgumentParser:
 
     # -- stage ---------------------------------------------------------------
     p_stage = sub.add_parser("stage", help="set active batch context")
-    p_stage.add_argument("batch_dir", metavar="BATCH_DIR")
+    p_stage.add_argument(
+        "batch_dir", metavar="BATCH|PATH",
+        help="batch number (1-based), directory name, name prefix, or full path",
+    )
     p_stage.set_defaults(func=cmd_stage)
 
     # -- unstage -------------------------------------------------------------
     p_unstage = sub.add_parser("unstage", help="clear active batch context")
     p_unstage.set_defaults(func=cmd_unstage)
 
+    _batch_help = (
+        "batch number (1-based, newest first), directory name, name prefix, "
+        "or full path — overrides any staged batch for this invocation only"
+    )
+    _preset_help = (
+        f"plot preset: {', '.join(PLOT_PRESETS)}  "
+        "(use --list on plots to see group contents)"
+    )
+
     # -- report --------------------------------------------------------------
     p_report = sub.add_parser("report", help="run full analysis pipeline")
-    p_report.add_argument("-o", "--output-dir", metavar="PATH", default=None, dest="output_dir")
-    p_report.add_argument("-f", "--format",     metavar="FMT",  default=None, dest="format",
+    p_report.add_argument("-b", "--batch",      metavar="BATCH",  default=None, dest="batch",
+                          help=_batch_help)
+    p_report.add_argument("-p", "--preset",     metavar="PRESET", default=None, dest="preset",
+                          choices=list(PLOT_PRESETS),
+                          help=_preset_help + "  [default: large]")
+    p_report.add_argument("-o", "--output-dir", metavar="PATH",   default=None, dest="output_dir")
+    p_report.add_argument("-f", "--format",     metavar="FMT",    default=None, dest="format",
                           choices=["png", "pdf", "svg"])
     p_report.add_argument("--overwrite", action="store_true", default=False)
     p_report.add_argument("--graphs", metavar="SPEC", default=None,
@@ -644,19 +792,25 @@ def build_parser() -> argparse.ArgumentParser:
                                '"1-60,!35", or a preset name like "quick" '
                                '(preset names require ember-qc to be installed)')
     p_report.add_argument("--graph-type", metavar="TYPE", default=None, dest="graph_type",
-                          help="restrict analysis to one graph category: "
-                               "complete, bipartite, grid, cycle, tree, random, random_planar, special, other")
+                          help="restrict analysis to one graph type/family "
+                               "(any type present in the batch, e.g. watts_strogatz, spin_glass, regular)")
     p_report.set_defaults(func=cmd_report)
 
     # -- plots ---------------------------------------------------------------
     p_plots = sub.add_parser("plots", help="run plot generation")
     p_plots.add_argument("groups", nargs="*", metavar="GROUP",
-                         help=f"plot groups: {', '.join(PLOT_GROUPS)}")
-    p_plots.add_argument("-o", "--output-dir", metavar="PATH", default=None, dest="output_dir")
-    p_plots.add_argument("-f", "--format",     metavar="FMT",  default=None, dest="format",
+                         help=f"explicit group(s): {', '.join(PLOT_GROUPS)}  "
+                              f"(overrides --preset)")
+    p_plots.add_argument("-b", "--batch",      metavar="BATCH",  default=None, dest="batch",
+                         help=_batch_help)
+    p_plots.add_argument("-p", "--preset",     metavar="PRESET", default=None, dest="preset",
+                         choices=list(PLOT_PRESETS),
+                         help=_preset_help + "  [default: full]")
+    p_plots.add_argument("-o", "--output-dir", metavar="PATH",   default=None, dest="output_dir")
+    p_plots.add_argument("-f", "--format",     metavar="FMT",    default=None, dest="format",
                          choices=["png", "pdf", "svg"])
     p_plots.add_argument("--list",     action="store_true", default=False,
-                         help="list available plot groups")
+                         help="list available plot groups and presets")
     p_plots.add_argument("--overwrite", action="store_true", default=False)
     p_plots.add_argument("--graphs", metavar="SPEC", default=None,
                          help='restrict to a graph subset, e.g. "1-100" or "quick"')
@@ -667,7 +821,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     # -- tables --------------------------------------------------------------
     p_tables = sub.add_parser("tables", help="run summary table generation")
-    p_tables.add_argument("-o", "--output-dir", metavar="PATH", default=None, dest="output_dir")
+    p_tables.add_argument("-b", "--batch",      metavar="BATCH", default=None, dest="batch",
+                          help=_batch_help)
+    p_tables.add_argument("-o", "--output-dir", metavar="PATH",  default=None, dest="output_dir")
     p_tables.add_argument("--overwrite", action="store_true", default=False)
     p_tables.add_argument("--graphs", metavar="SPEC", default=None,
                           help='restrict to a graph subset, e.g. "1-100" or "quick"')
@@ -677,7 +833,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     # -- stats ---------------------------------------------------------------
     p_stats = sub.add_parser("stats", help="run statistical analysis")
-    p_stats.add_argument("-o", "--output-dir", metavar="PATH", default=None, dest="output_dir")
+    p_stats.add_argument("-b", "--batch",      metavar="BATCH", default=None, dest="batch",
+                         help=_batch_help)
+    p_stats.add_argument("-o", "--output-dir", metavar="PATH",  default=None, dest="output_dir")
     p_stats.add_argument("--overwrite", action="store_true", default=False)
     p_stats.add_argument("--graphs", metavar="SPEC", default=None,
                          help='restrict to a graph subset, e.g. "1-100" or "quick"')

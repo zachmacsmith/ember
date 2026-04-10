@@ -74,6 +74,15 @@ def _build_resolved_params(args: argparse.Namespace, yaml_params: dict) -> dict:
         p["algorithms"] = [a.strip() for a in p["algorithms"].split(",")]
     if "topologies" in p and isinstance(p["topologies"], str):
         p["topologies"] = [t.strip() for t in p["topologies"].split(",")]
+    # Parse fault_rate: accept scalar, string ("0.05" or "0.0,0.01,0.05"),
+    # or list from YAML.  Normalise to float (single) or list[float] (sweep).
+    if "fault_rate" in p and p["fault_rate"] is not None:
+        fr = p["fault_rate"]
+        if isinstance(fr, str):
+            parts = [float(x.strip()) for x in fr.split(",")]
+            p["fault_rate"] = parts if len(parts) > 1 else parts[0]
+        elif isinstance(fr, (list, tuple)):
+            p["fault_rate"] = [float(x) for x in fr]
     from ember_qc.config import get as _cfg
     p.setdefault("algorithms",      None)
     p.setdefault("graphs",          _cfg("default_graphs") or "*")
@@ -980,7 +989,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_run.add_argument("--timeout",     type=float,      default=None)
     p_run.add_argument("--seed",        type=int,        default=None)
     p_run.add_argument("--workers",     type=int,        default=None)
-    p_run.add_argument("--fault-rate",  type=float,      default=None, dest="fault_rate")
+    p_run.add_argument("--fault-rate",  type=str,        default=None, dest="fault_rate")
     p_run.add_argument("--fault-seed",  type=int,        default=None, dest="fault_seed")
     p_run.add_argument("--output-dir",  metavar="PATH",  default=None, dest="output_dir")
     p_run.add_argument("--note",        metavar="TEXT",  default=None)

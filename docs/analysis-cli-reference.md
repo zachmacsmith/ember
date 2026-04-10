@@ -12,7 +12,7 @@ Set the active batch context.
 ember-analysis stage BATCH_DIR
 ```
 
-Validates that `BATCH_DIR` is a valid ember-qc batch (contains `results.db` or `runs.csv`) and saves it as the active batch. Subsequent commands that need a batch use this path.
+Validates that `BATCH_DIR` is a valid ember-qc batch (contains `results.db`) and saves it as the active batch. Subsequent commands that need a batch use this path.
 
 ```bash
 ember-analysis stage results/my_benchmark_2026-03-28

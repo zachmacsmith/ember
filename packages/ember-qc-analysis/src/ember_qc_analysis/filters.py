@@ -15,9 +15,19 @@ from typing import List, Optional, Set, Tuple
 
 # ── Graph category constants ─────────────────────────────────────────────────
 
+# Kept for backward compatibility — code that imports VALID_CATEGORIES still
+# works.  Validation in apply_graph_filter now uses the actual categories
+# present in the DataFrame rather than this static set, so runs with any of
+# the 36 manifest graph families are handled automatically.
 VALID_CATEGORIES = frozenset({
-    'complete', 'bipartite', 'grid', 'cycle',
-    'tree', 'random', 'random_planar', 'special', 'other',
+    'complete', 'bipartite', 'grid', 'cycle', 'path', 'star', 'wheel',
+    'tree', 'binary_tree', 'random', 'random_er', 'random_planar',
+    'barabasi_albert', 'watts_strogatz', 'regular', 'sbm', 'lfr_benchmark',
+    'planted_solution', 'weak_strong_cluster', 'circulant', 'hypercube',
+    'johnson', 'kneser', 'turan', 'generalized_petersen',
+    'honeycomb', 'triangular_lattice', 'kagome', 'frustrated_square',
+    'king_graph', 'cubic_lattice', 'bcc_lattice', 'shastry_sutherland',
+    'spin_glass', 'hardware_native', 'sudoku', 'special', 'other',
 })
 
 
@@ -146,10 +156,11 @@ def apply_graph_filter(
     # ── Category filter ───────────────────────────────────────────────────────
     if graph_type:
         cat = graph_type.lower()
-        if cat not in VALID_CATEGORIES:
+        available = set(filtered['category'].unique()) if 'category' in filtered.columns else set()
+        if cat not in available:
             raise ValueError(
-                f"Unknown graph type {graph_type!r}. "
-                f"Valid types: {', '.join(sorted(VALID_CATEGORIES))}"
+                f"Graph type {graph_type!r} not found in this batch. "
+                f"Types present: {', '.join(sorted(available))}"
             )
         filtered = filtered[filtered['category'] == cat]
         parts.append(f"type_{cat}")

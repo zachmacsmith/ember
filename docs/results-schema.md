@@ -126,16 +126,7 @@ One row per algorithm suspension event. EMBER suspends an algorithm when its fai
 
 ---
 
-## runs.csv
-
-`runs.csv` is a flat export of the `runs` table. All columns are identical to the `runs` table above. It is written after batch compilation and is provided for users who prefer pandas or spreadsheet tools over SQLite.
-
-To load in Python:
-
-```python
-import pandas as pd
-df = pd.read_csv("results/my_batch/runs.csv")
-```
+## Loading from Python
 
 To load from SQLite with a join:
 

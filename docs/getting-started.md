@@ -244,7 +244,6 @@ clique          100%        4.0         4.0        16.0      0.1
 results/my_first_benchmark_2026-03-28_14-30-00/
 ├── config.json              — all run parameters + environment provenance
 ├── results.db               — SQLite database with all trial data
-├── runs.csv                 — every trial as a CSV row (for spreadsheets/pandas)
 ├── summary.csv              — grouped averages per (algorithm, topology)
 ├── README.md                — human-readable batch summary
 ├── experiment.yaml          — copy of your input file

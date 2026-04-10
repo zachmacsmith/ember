@@ -28,7 +28,7 @@ Both `ember-analysis` and `ember-a` call the same entry point.
 
 ## 2. Point it at your results
 
-You need a completed EMBER batch directory — one that contains `results.db` or `runs.csv`.
+You need a completed EMBER batch directory — one that contains `results.db`.
 
 Set the input directory (where your batch directories live):
 

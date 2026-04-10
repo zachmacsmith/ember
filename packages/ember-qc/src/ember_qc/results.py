@@ -193,7 +193,6 @@ class ResultsManager:
         print(f"   ├── README.md    (human-readable summary)")
         print(f"   ├── config.json  (machine-readable settings)")
         print(f"   ├── results.db   (SQLite — runs, embeddings, graphs, batches)")
-        print(f"   ├── runs.csv     ({len(results)} rows, exported from SQLite)")
         print(f"   ├── workers/     (per-process JSONL source files)")
         print(f"   └── summary.csv  (grouped averages ± std dev)")
 
@@ -303,7 +302,6 @@ class ResultsManager:
         lines.append("| File | Contents |")
         lines.append("|------|----------|")
         lines.append("| `results.db` | SQLite — runs, embeddings, graphs, batches |")
-        lines.append("| `runs.csv` | Every trial as a row (exported from SQLite) |")
         lines.append("| `summary.csv` | Grouped averages ± std dev |")
         lines.append("| `config.json` | Machine-readable settings |")
         lines.append("| `workers/` | Per-process JSONL source files |")

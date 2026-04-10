@@ -23,7 +23,7 @@ ember run [experiment.yaml] [flags]
 | `--timeout SECS` | float | Seconds per trial before TIMEOUT |
 | `--seed N` | int | Master random seed |
 | `--workers N` | int | Parallel worker processes |
-| `--fault-rate R` | float | Fraction of qubits to disable (0.0–1.0) |
+| `--fault-rate R` | float or comma-separated list | Fraction of qubits to disable (0.0–1.0). Pass multiple values to sweep: `--fault-rate 0.0,0.01,0.05,0.10` |
 | `--fault-seed N` | int | Seed for fault placement |
 | `--output-dir PATH` | string | Override output directory |
 | `--note TEXT` | string | Annotation stored with results |
