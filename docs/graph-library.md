@@ -77,6 +77,7 @@ Presets are defined in `ember_qc/graphs/presets.csv`.
 | `default` | 36 | One small representative per type |
 | `diverse` | 31 | Hand-picked across all types, varied n |
 | `benchmark` | 82 | Curated for algorithm benchmarking, n=3–100 |
+| `sensitivity` | 273 | Superset of `benchmark` extended with mid/large graphs (n=50–600) across all 36 families at varied densities; designed for parameter-sensitivity experiments |
 | `structured` | 2,568 | All deterministic/algebraic types |
 | `lattice` | 820 | All physics lattice types |
 | `physics` | 4,490 | Lattices + spin_glass + weak_strong_cluster + planted_solution |

@@ -113,6 +113,7 @@ ember graphs install --dry-run default   # preview without downloading
 | `default` | 36 | One small representative per type |
 | `diverse` | 31 | Hand-picked across all types, varied n |
 | `benchmark` | 82 | Curated for algorithm benchmarking, n=3–100 |
+| `sensitivity` | 273 | `benchmark` + mid/large graphs (n=50–600) for parameter-sensitivity analysis |
 | `structured` | 2,568 | All deterministic/algebraic types |
 | `lattice` | 820 | All physics lattice types |
 | `physics` | 4,490 | Lattices + spin_glass + weak_strong_cluster + planted_solution |
@@ -371,6 +372,8 @@ Full documentation: [github.com/zachmacsmith/ember/tree/main/docs](https://githu
 | [Getting Started](https://github.com/zachmacsmith/ember/blob/main/docs/getting-started.md) | Full tutorial with examples |
 | [Experiment YAML Reference](https://github.com/zachmacsmith/ember/blob/main/docs/experiment-yaml.md) | All YAML keys and defaults |
 | [CLI Reference](https://github.com/zachmacsmith/ember/blob/main/docs/cli-reference.md) | All `ember` commands and flags |
+| [Graph Library](https://github.com/zachmacsmith/ember/blob/main/docs/graph-library.md) | Graph types, presets, browsing, installation |
+| [Graph Presets](https://github.com/zachmacsmith/ember/blob/main/docs/presets.md) | Preset selection guide and experiment configurations |
 | [Results Schema](https://github.com/zachmacsmith/ember/blob/main/docs/results-schema.md) | Database tables and column definitions |
 | [Custom Algorithms](https://github.com/zachmacsmith/ember/blob/main/docs/custom-algorithms.md) | Writing and registering custom algorithms |
 | [Reproducibility](https://github.com/zachmacsmith/ember/blob/main/docs/reproducibility.md) | Seeding, resolved YAML, checkpointing |

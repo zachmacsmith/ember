@@ -5,6 +5,31 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.1.12] - 2026-04-09
+
+### Added
+
+- **`sensitivity` graph preset** (`graphs/presets.csv`): new 273-graph
+  preset designed for algorithm parameter-sensitivity experiments.
+  Includes all 82 graphs from `benchmark` plus 191 additional mid-to-
+  large graphs (50–600 nodes) sampled at low and high density per family
+  across all 36 graph families.  This fills the size gap in `benchmark`
+  (which skews toward n ≤ 20) and provides enough density variation to
+  reveal quality/speed tradeoffs between algorithm variants (e.g.
+  `pssa-fast` vs `pssa-thorough`, `minorminer-fast` vs
+  `minorminer-aggressive`) that are invisible on small graphs.
+
+  Size distribution: 64 tiny (≤ 20), 16 small (21–50), 70 medium
+  (51–100), 63 large (101–300), 59 xlarge (301–600).
+
+  Density distribution: 116 ultra-sparse (< 0.05), 56 sparse
+  (0.05–0.2), 46 medium (0.2–0.5), 28 dense (0.5–0.8), 25 very dense
+  (> 0.8).
+
+  Usage: `ember run --graphs sensitivity ...`
+
+---
+
 ## [1.1.11] - 2026-04-09
 
 ### Fixed — PSSA algorithm correctness
