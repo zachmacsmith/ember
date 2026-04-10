@@ -5,6 +5,214 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.1.11] - 2026-04-09
+
+### Fixed — PSSA algorithm correctness
+
+Every PSSA trial on every topology had been returning `status=FAILURE`
+since the algorithm was first registered.  Four distinct bugs were
+compounding; all were in `algorithms/pssa.py`, none were in the
+underlying Sugie et al. (2020) algorithm.
+
+- **`initial_placement` produced disconnected chains**
+  (`algorithms/pssa.py`).  The original implementation concatenated all
+  guiding-pattern chains plus any leftover H nodes into a flat list and
+  then sliced that list into `|V(I)|` contiguous blocks with
+  `unique_hw[idx:idx+size]`.  This is topology-blind: a slice that
+  straddles two guiding super-vertices, or that includes leftover H
+  nodes from the other side of the hardware graph, is not connected in
+  H — violating PSSA's M1 invariant before the annealing loop even
+  began.  Fixed by replacing the slice with two topology-aware cases:
+  (1) when the busclique guiding pattern already contains at least
+  `|V(I)|` super-vertices (the common case), adopt the first `|V(I)|`
+  of them verbatim — they are a valid `K_n` minor embedding, so the
+  search starts from a feasible state; (2) otherwise fall back to a
+  paper-faithful path-partition sub-slicing: build a greedy path cover
+  of H via `_path_partition_guiding` and repeatedly split the longest
+  path in half until the partition has `|V(I)|` connected sub-paths.
+  Sub-paths of a simple path are themselves simple paths, so
+  connectivity is trivially preserved.  This mirrors the original
+  Sugie et al. King's-graph construction (slice a single Hamiltonian
+  stripe into `|V(I)|` contiguous sub-paths), generalised to
+  arbitrary hardware by slicing multiple greedy paths.  Longer chains
+  are assigned to higher-degree source vertices to give hubs more
+  hardware room.
+
+- **`_leaves` returned list-order endpoints, not topological leaves**
+  (`algorithms/pssa.py`).  The original `_leaves(path)` returned
+  `[path[0], path[-1]]` — i.e. the first and last positions of the
+  chain's Python list.  This is correct on King's graph because
+  Sugie et al.'s diagonal-stripe guiding pattern makes every chain a
+  simple path in H, so `path[0]` and `path[-1]` coincide with the
+  topological endpoints.  On D-Wave hardware, however, busclique
+  produces **tree-shaped** clique chains, so list-order endpoints are
+  arbitrary nodes that may have topological degree > 1 inside the
+  chain — removing one disconnects the chain.  Combined with the bug
+  above, every SHIFT move silently violated chain connectivity,
+  `is_valid_embedding` rejected the final state, and the wrapper
+  returned `status=FAILURE` even though `Eemb == |E_I|`.  Fixed by
+  rewriting `_leaves(chain, H_adj)` to return **true topological
+  leaves** computed from the induced-subgraph degree (`≤ 1`), with a
+  full BFS connectivity check as a fallback for cyclic chains.  This
+  is a principled generalisation of Sugie et al.'s Path Super-Vertex
+  (PSV) invariant to a Tree Super-Vertex (TSV) invariant, which is
+  required for any D-Wave port of PSSA.  Paths are a strict special
+  case of trees, so on King's graph the new `_leaves` reduces exactly
+  to the paper's formulation.
+
+- **`_remove_leaf` / `_attach_leaf` were order-sensitive**
+  (`algorithms/pssa.py`).  The original `_remove_leaf` stripped
+  `path[0]` or `path[-1]` depending on which matched the node to
+  remove; `_attach_leaf` prepended or appended to maintain a path
+  orientation.  Both made sense only under the path invariant.  After
+  the TSV generalisation above, chains are order-agnostic connected
+  subgraphs, so `_remove_leaf(chain, u)` now simply filters `u` out
+  and `_attach_leaf(chain, u, v)` appends `u` to the chain list.  The
+  `v` parameter is retained for call-site compatibility but no longer
+  consulted.  Callers must guarantee `u` is a safe leaf (enforced by
+  the updated SHIFT branch of `pssa()`).
+
+- **`pssa()` SHIFT branch rejected legal moves and sometimes
+  disconnected chains** (`algorithms/pssa.py`).  The inner loop used
+  the old list-order `_leaves`, then further required the candidate
+  target node `v` to also be a list-order leaf of chain `j`.  The
+  extra `j`-leaf restriction was only needed under the path invariant
+  (so that a move grows `j` at one of its two ends); under TSV, any
+  `v ∈ j` adjacent in H to `u` produces a valid tree attachment.  The
+  restriction was also breaking PSSA on tree chains because busclique
+  chains rarely have list-order leaves that happen to be neighbours of
+  each other.  Fixed by (1) replacing both `_leaves(...)` calls with
+  the topology-aware version, (2) removing the `j`-leaf restriction on
+  the receiving side of a SHIFT, and (3) adding an explicit safe-leaf
+  check on the reverse-direction move (when shifting `v` from `j` to
+  `i`), which was previously implicit in the path assumption.
+
+### Fixed — PSSA topology handling
+
+These two bugs were specific to Zephyr and caused 100% failure on
+every Zephyr hardware graph regardless of problem size.
+
+- **`_detect_size` used the wrong Zephyr size-inversion formula**
+  (`algorithms/pssa.py`).  `dnx.zephyr_graph(m)` with the default tile
+  size `t=4` produces `n = 16·m·(2m+1)` qubits, so the correct inverse
+  is `m = (−1 + √(1 + n/2)) / 4`.  The old code used
+  `(−1 + √(1 + 2n)) / 4`, which for `zephyr(4)` with `n=576` returned
+  `m=8` — off by a factor of 2.  Combined with the bug below, this
+  caused PSSA to build a guiding pattern on a completely different
+  (larger) Zephyr graph and then reference qubit IDs that did not
+  exist in the actual hardware.  Fixed by correcting the formula and
+  adding a fast path that reads the authoritative `m` directly from
+  the `H.graph` attribute dict when the networkx graph was produced by
+  `dwave_networkx` (which always annotates its outputs with the
+  construction parameters).
+
+- **`build_guiding_pattern` ran busclique on a fresh `dnx` graph
+  instead of the real hardware graph** (`algorithms/pssa.py`).  The
+  old implementation built a new `dnx.chimera_graph(size)` /
+  `pegasus_graph(size)` / `zephyr_graph(size)` from the
+  (potentially-wrong) inferred size and ran
+  `find_clique_embedding(mid, topo_graph)` against that fresh graph.
+  The returned chain nodes were therefore qubit IDs of the *fresh*
+  graph, not of `self.H` — and when `_detect_size` was wrong (Zephyr),
+  or when the user passed a faulty-qubit subgraph, those IDs did not
+  exist in `self.H` at all.  The subsequent `H_adj[u]` lookup inside
+  `pssa()` crashed with `KeyError`, surfacing as
+  `pssa error: <qubit_id>` in the wrapper's exception handler.  Fixed
+  by always calling `find_clique_embedding(mid, H)` directly against
+  the real hardware graph, which eliminates the entire foreign-node
+  failure mode.  The `topology` and `size` parameters of
+  `build_guiding_pattern` are now retained only for call-site
+  compatibility and are no longer consulted — busclique infers the
+  topology from `H` itself.
+
+### Changed
+
+- **PSSA Path Super-Vertex invariant generalised to Tree
+  Super-Vertex**: this is documented above under `_leaves` but is
+  worth calling out as a semantic change to the algorithm's
+  assumptions.  On King's graph (the paper's original hardware) the
+  invariant reduces exactly to the paper's formulation, so no change
+  in behaviour.  On any D-Wave topology this is strictly necessary
+  for correctness because busclique produces tree-shaped chains.
+
+### Verification
+
+Across 8 D-Wave topologies (chimera 4×4×4 / 8×8×4 / 16×16×4,
+pegasus 4 / 8 / 16, zephyr 4 / 12) and 14 problem graph families
+(cliques, cycles, paths, grids, 3-regular, Erdős-Rényi, Barabási-Albert,
+Petersen), the broad regression test goes from **0/112 before this
+release** to **91/112 passing**.  All three realistic-scale D-Wave
+topologies — chimera_16×16×4 (D-Wave 2000Q, 2048 qubits), pegasus_16
+(Advantage, 5640 qubits), zephyr_12 (Advantage2 prototype, 4800
+qubits) — reach **14/14** on the broad suite.  The 21 remaining
+failures are all cases where `|V(I)| > maxclique(H)`, i.e. the
+problem exceeds the hardware's complete-graph embedding threshold;
+Sugie et al. (2020) explicitly state that PSSA cannot beat that
+threshold for dense graphs, so these failures are paper-predicted
+rather than regression-class.
+
+A separate large-problem regression sweep (`n = 100 … 400` on
+realistic hardware) exposes a pre-existing performance bottleneck in
+`eemb()`, which is `O(|E_H|)` per call (≈6016 edge iterations per
+annealing step on chimera_16×16×4).  This limits the annealing loop
+to ~100k steps per 30s timeout, well below the 10⁷–10⁸ steps Sugie
+et al. use for sparse graphs beyond the clique threshold, causing
+realistic-hardware sparse-large problems to time out rather than
+converge.  The initial placement and annealing logic are correct;
+only the step budget is insufficient.  Implementing an incremental
+edge-count delta on shift/swap (`O(deg(u))` per step instead of
+`O(|E_H|)`) is tracked as a follow-up.
+
+---
+
+## [1.1.10] - 2026-04-08
+
+### Fixed
+
+- **`ember version` always printed `0.9.0`** (`__init__.py`): the package
+  version was hard-coded as `__version__ = "0.9.0"` and had never been
+  bumped alongside `pyproject.toml`, so every release since 0.9.0 reported
+  the wrong version from both `ember version` and `ember doctor`.  Fixed
+  by reading the version dynamically from installed package metadata via
+  `importlib.metadata.version("ember-qc")`, with a `"0.0.0+unknown"`
+  fallback for source checkouts that have no `.dist-info`.  This makes
+  future drift impossible — the string now always matches whatever
+  `pyproject.toml` says at install time.
+- **`ember doctor`** (`cli.py`): `cmd_doctor()` referenced `os.access()`
+  but the `os` module was never imported at the module level (only
+  `platform`, `subprocess`, and `time` were imported lazily inside the
+  function), crashing with `NameError: name 'os' is not defined` when the
+  work-dir writability check ran.  `os` is now imported at the top of
+  `cli.py`.
+- **`ember doctor`** (`cli.py`): the Linux `ldd` diagnostic reported
+  `✓ all shared libraries found` even when the binary was unloadable due to
+  GLIBC / GLIBCXX symbol version mismatches (e.g. a binary built on
+  Ubuntu 24.04 / glibc 2.39 deployed on Debian 12 / glibc 2.36).  `ldd`
+  only verifies that the `.so` files *exist*, not that required symbol
+  versions within them are present.  A new `loader` check now actually
+  invokes the binary with a bogus probe flag, captures stderr, and greps
+  for `version \`GLIBC*\` not found (required by …)` lines — reporting
+  the exact missing symbol versions and pointing at the v1.1.9 binary
+  rebuild as the fix.
+- **`ember install-binary`** (`_install_binary.py`): the downloader used
+  `urllib.request.urlretrieve`, which does **not** raise on HTTP
+  4xx/5xx — it silently saved GitHub's HTML 404 error page to disk as
+  if it were the requested binary.  The subsequent verification step
+  only checked file existence and the executable bit, both of which an
+  HTML file trivially passes, so a bad download produced an "installed"
+  binary that crashed with `Exec format error` on first use.  Fixed by:
+    1. Replacing `urlretrieve` with `urlopen` + explicit status check +
+       streaming `copyfileobj`, so HTTP errors raise `HTTPError` and are
+       caught with a targeted message (including a 404-specific hint to
+       check the release tag / asset name on GitHub).
+    2. After download, validating the first four bytes against the known
+       magic numbers for ELF (`\x7fELF`) and Mach-O (thin and universal),
+       printing a content preview and exiting non-zero if the payload
+       looks like text (likely an HTML error page routed via a proxy or
+       cached CDN).
+
+---
+
 ## [1.1.9] - 2026-04-08
 
 ### Fixed

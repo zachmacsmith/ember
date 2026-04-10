@@ -19,6 +19,7 @@ Subcommand groups:
 
 import argparse
 import json
+import os
 import shutil
 import sys
 from pathlib import Path
@@ -870,6 +871,35 @@ def cmd_doctor(args: argparse.Namespace) -> None:
                             print(f"                  fix: sudo apt install libstdc++6")
                     else:
                         print(f"    ldd         : {_OK} all shared libraries found")
+
+                    # Real loader test: ldd only verifies SO existence, not
+                    # symbol versions.  Actually invoke the binary (with an
+                    # intentionally bogus arg so it exits quickly) and grep
+                    # stderr for the distinctive dynamic-linker errors that
+                    # indicate GLIBC / GLIBCXX version skew.
+                    try:
+                        lr = subprocess.run(
+                            [bp_str, "--__ember_doctor_probe__"],
+                            capture_output=True, text=True, timeout=5,
+                        )
+                        loader_err = (lr.stderr or "") + (lr.stdout or "")
+                        version_issues = [
+                            ln.strip() for ln in loader_err.splitlines()
+                            if "version `GLIBC" in ln or "version `GLIBCXX" in ln
+                            or "not found (required by" in ln
+                        ]
+                        if version_issues:
+                            print(f"    loader      : {_BAD} symbol version mismatch:")
+                            for v in version_issues[:4]:
+                                print(f"                  {v}")
+                            print(f"                  fix: upgrade ember-qc "
+                                  f"(≥ 1.1.9 ships glibc-2.35-compatible binaries)")
+                        else:
+                            print(f"    loader      : {_OK} binary loads on this system")
+                    except subprocess.TimeoutExpired:
+                        print(f"    loader      : {_OK} binary loads (probe timed out)")
+                    except Exception as exc:
+                        print(f"    loader      : {_BAD} could not invoke binary: {exc}")
                 elif _sys == "Darwin" and shutil.which("otool"):
                     r = subprocess.run(["otool", "-L", bp_str],
                                        capture_output=True, text=True)

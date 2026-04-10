@@ -71,63 +71,49 @@ def build_hardware_graph(topology: str, size: int) -> nx.Graph:
 
 def build_guiding_pattern(H: nx.Graph, topology: str, size: int) -> Dict[int, List[NodeH]]:
     """
-    Build the guiding pattern using busclique (falls back to path partition).
+    Build the guiding pattern using busclique on the *actual* hardware graph H.
+
+    Earlier versions built a fresh ``dnx.<topology>_graph(size)`` and ran
+    busclique on that, then used the resulting node IDs as if they were
+    nodes of H.  When ``size`` was inferred incorrectly (or H had been
+    relabelled / had broken qubits), the embedding nodes did not exist in
+    H and PSSA crashed with KeyError on the foreign IDs.  Running busclique
+    directly against H avoids that entire failure mode.
 
     Returns {sv_index: [hw_node, ...]} — one entry per guiding super vertex.
+    All returned hw_nodes are guaranteed to be members of H.
     """
+    # ``topology`` and ``size`` are kept in the signature for callers, but
+    # are no longer needed since busclique infers them from H itself.
+    del topology, size
+
     try:
         from minorminer.busclique import find_clique_embedding
-        import dwave_networkx as dnx
-
-        try:
-            if topology == "chimera":
-                topo_graph = dnx.chimera_graph(size)
-            elif topology == "pegasus":
-                topo_graph = dnx.pegasus_graph(size)
-            elif topology == "zephyr":
-                topo_graph = dnx.zephyr_graph(size)
-            else:
-                topo_graph = H
-
-            n_nodes = H.number_of_nodes()
-            lo, hi = 2, min(n_nodes, 300)
-            best_emb: Dict = {}
-            while lo <= hi:
-                mid = (lo + hi) // 2
-                emb = find_clique_embedding(mid, topo_graph)
-                if emb:
-                    best_emb = emb
-                    lo = mid + 1
-                else:
-                    hi = mid - 1
-
-            if best_emb:
-                node_map = {v: i for i, v in enumerate(H.nodes())}
-                gp: Dict[int, List[NodeH]] = {}
-                for sv_idx, chain in best_emb.items():
-                    try:
-                        int_chain = [int(u) for u in chain]
-                    except (TypeError, ValueError):
-                        int_chain = [node_map.get(u, u) for u in chain]
-                    gp[sv_idx] = int_chain
-                return gp
-        except Exception:
-            pass
-
-        # Fallback: busclique on the already-relabelled H
         n_nodes = H.number_of_nodes()
-        lo, hi = 2, min(n_nodes, 200)
-        best_emb = {}
+        lo, hi = 2, min(n_nodes, 300)
+        best_emb: Dict = {}
         while lo <= hi:
             mid = (lo + hi) // 2
-            emb = find_clique_embedding(mid, H)
+            try:
+                emb = find_clique_embedding(mid, H)
+            except Exception:
+                emb = None
             if emb:
                 best_emb = emb
                 lo = mid + 1
             else:
                 hi = mid - 1
+
         if best_emb:
-            return {k: list(v) for k, v in best_emb.items()}
+            # Cast to plain ints; drop any chain entries that mysteriously
+            # are not nodes of H (shouldn't happen, but cheap insurance).
+            gp: Dict[int, List[NodeH]] = {}
+            for sv_idx, chain in best_emb.items():
+                clean = [int(u) for u in chain if u in H]
+                if clean:
+                    gp[int(sv_idx)] = clean
+            if gp:
+                return gp
 
     except ImportError:
         pass
@@ -162,35 +148,89 @@ def _path_partition_guiding(H: nx.Graph) -> Dict[int, List[NodeH]]:
 # ===========================================================================
 
 def initial_placement(I: nx.Graph, gp: Dict[int, List[NodeH]], H: nx.Graph) -> Phi:
-    """Split guiding pattern into |V(I)| path super vertices."""
+    """Build the initial |V(I)| super-vertex partition.
+
+    Every returned chain is a connected subgraph of H — a hard requirement
+    of PSSA's invariants that the earlier list-slice implementation did not
+    respect.
+
+    Strategy:
+
+    1. **Busclique path** — if the busclique guiding pattern already contains
+       at least |V(I)| super-vertices (the common case for any reasonably
+       sized topology), adopt the first |V(I)| of them verbatim.  They are a
+       valid K_n minor embedding produced by ``find_clique_embedding``, so
+       the search starts from a feasible state.
+
+    2. **Path-partition sub-slicing (paper-faithful fallback)** — if
+       busclique cannot cover enough super-vertices (only happens on very
+       small topologies such as chimera_4x4x4 when |V(I)| exceeds the
+       hardware's maximum clique), switch to the paper's original approach:
+       build a greedy path cover of H via ``_path_partition_guiding`` and
+       then repeatedly split the longest path in half until we have exactly
+       |V(I)| connected sub-paths.  This mirrors the original PSSA
+       construction on King's graph (Sugie et al. 2020), which slices a
+       single Hamiltonian stripe pattern into |V(I)| contiguous sub-paths;
+       we generalize to arbitrary hardware by slicing multiple greedy
+       paths.  Every sub-path is a simple path in H, so chain connectivity
+       is trivially preserved.
+    """
     nodes_I = sorted(I.nodes())
     n = len(nodes_I)
+    gp_keys = sorted(gp.keys())
 
-    all_hw: List[NodeH] = []
-    for gk in sorted(gp.keys()):
-        all_hw.extend(gp[gk])
+    # ── Case 1: busclique gave us ≥ n valid super-vertices ──────────────────
+    if len(gp_keys) >= n:
+        phi: Phi = {}
+        for ni, v in enumerate(nodes_I):
+            phi[v] = list(gp[gp_keys[ni]])
+        return phi
 
-    seen: Set[NodeH] = set()
-    unique_hw: List[NodeH] = []
-    for u in all_hw:
-        if u not in seen:
-            unique_hw.append(u)
-            seen.add(u)
-    for u in sorted(H.nodes()):
-        if u not in seen:
-            unique_hw.append(u)
-            seen.add(u)
+    # ── Case 2: paper-faithful path-partition fallback ───────────────────────
+    pp = _path_partition_guiding(H)
+    paths: List[List[NodeH]] = [list(pp[k]) for k in sorted(pp.keys()) if pp[k]]
 
-    total = len(unique_hw)
-    block = total // n
-    remainder = total % n
+    # Repeatedly split the longest path in half until we have ≥ n chunks.
+    # Sub-paths of a simple path are themselves simple paths — connectivity
+    # is preserved without any extra checks.
+    while len(paths) < n:
+        paths.sort(key=len, reverse=True)
+        longest = paths[0]
+        if len(longest) < 2:
+            break  # every path is already a singleton; cannot split further
+        mid = len(longest) // 2
+        paths[0] = longest[:mid]
+        paths.append(longest[mid:])
 
-    phi: Phi = {}
-    idx = 0
-    for ni, v in enumerate(nodes_I):
-        size = block + (1 if ni < remainder else 0)
-        phi[v] = unique_hw[idx: idx + size]
-        idx += size
+    # If H was smaller than n (pathological, but handle gracefully) fill the
+    # remainder with any still-unclaimed H nodes as singleton chains.
+    if len(paths) < n:
+        claimed: Set[NodeH] = {u for p in paths for u in p}
+        for u in H.nodes():
+            if u in claimed:
+                continue
+            paths.append([u])
+            claimed.add(u)
+            if len(paths) >= n:
+                break
+
+    # Assign the first n chunks to source vertices in order.  Assigning
+    # longer chains to higher-degree source vertices slightly improves the
+    # starting Eemb because hubs benefit from more hardware room.
+    chunks = paths[:n]
+    chunks.sort(key=len, reverse=True)
+    source_by_deg = sorted(nodes_I, key=lambda v: I.degree(v), reverse=True)
+
+    phi = {}
+    for src, chain in zip(source_by_deg, chunks):
+        phi[src] = list(chain)
+    # Any source nodes left (if n > len(chunks) after all sub-splitting
+    # attempts) get empty chains — pssa() tolerates these, and subsequent
+    # shifts may absorb free nodes.  In practice this branch is never hit
+    # because H has many more nodes than source graphs we care about.
+    for src in nodes_I:
+        if src not in phi:
+            phi[src] = []
     return phi
 
 
@@ -220,22 +260,67 @@ def eemb(phi: Phi, I: nx.Graph, H: nx.Graph, inv: InvPhi) -> int:
     return len(covered)
 
 
-def _leaves(path: List[NodeH]) -> List[NodeH]:
-    if len(path) == 1:
-        return [path[0]]
-    return [path[0], path[-1]]
+def _leaves(chain: List[NodeH], H_adj: Dict[NodeH, Set[NodeH]]) -> List[NodeH]:
+    """Return topological leaves of the chain — nodes whose removal keeps the
+    remainder connected in H.
+
+    For a tree-shaped chain these are the degree-1 vertices of the induced
+    subgraph; for a singleton we return the sole node.  Because chains on
+    D-Wave topologies are not guaranteed to be simple paths (busclique
+    produces tree-like chains), this must be computed from the actual
+    induced subgraph rather than from list positions.
+    """
+    if len(chain) <= 1:
+        return list(chain)
+    chain_set = set(chain)
+    # Induced-subgraph degree
+    deg_in_chain: Dict[NodeH, int] = {}
+    for u in chain:
+        d = 0
+        for w in H_adj.get(u, ()):
+            if w in chain_set:
+                d += 1
+        deg_in_chain[u] = d
+    # A node is a "safe leaf" if (a) it has degree ≤ 1 in the induced
+    # subgraph, or (b) removing it leaves the remainder connected.  The
+    # cheap degree test catches the common case; a full connectivity check
+    # is only needed when the chain is cyclic.
+    leaves = [u for u, d in deg_in_chain.items() if d <= 1]
+    if leaves:
+        return leaves
+    # Cyclic or 2-regular chain — any node is removable iff the rest stays
+    # connected.  Run the check per candidate (rare path).
+    out: List[NodeH] = []
+    for u in chain:
+        remaining = chain_set - {u}
+        if not remaining:
+            continue
+        # BFS over H adjacency restricted to `remaining`
+        start = next(iter(remaining))
+        seen = {start}
+        stack = [start]
+        while stack:
+            x = stack.pop()
+            for w in H_adj.get(x, ()):
+                if w in remaining and w not in seen:
+                    seen.add(w)
+                    stack.append(w)
+        if len(seen) == len(remaining):
+            out.append(u)
+    return out
 
 
-def _remove_leaf(path: List[NodeH], u: NodeH) -> List[NodeH]:
-    if path[0] == u:
-        return path[1:]
-    return path[:-1]
+def _remove_leaf(chain: List[NodeH], u: NodeH) -> List[NodeH]:
+    """Return a new chain with node u removed.  Caller must ensure u is a
+    safe leaf (see :func:`_leaves`)."""
+    return [w for w in chain if w != u]
 
 
-def _attach_leaf(path: List[NodeH], u: NodeH, v: NodeH) -> List[NodeH]:
-    if path[0] == v:
-        return [u] + path
-    return path + [u]
+def _attach_leaf(chain: List[NodeH], u: NodeH, v: NodeH) -> List[NodeH]:  # noqa: ARG001
+    """Return a new chain with node u appended.  Parameter ``v`` is kept for
+    backwards-compat with the call site but is no longer used since chains
+    are order-agnostic after the topology-aware rewrite."""
+    return chain + [u]
 
 
 # ===========================================================================
@@ -369,16 +454,21 @@ def pssa(
             if not candidates:
                 continue
             i = random.choice(candidates)
-            leaves_i = _leaves(phi[i])
+            leaves_i = _leaves(phi[i], H_adj)
+            if not leaves_i:
+                continue
             u = random.choice(leaves_i)
             allow_any = random.random() < pa
 
+            # For SHIFT to preserve M1 (chain connectivity), we only need u to
+            # be a safe leaf of chain i; the receiving chain j just needs any
+            # node adjacent to u, not a "leaf" of itself.  The earlier leaf-
+            # of-j check made the algorithm only move along path-shaped
+            # chains and broke on tree-shaped busclique chains.
             candidate_jv: List[Tuple[NodeI, NodeH]] = []
             for v in H_adj[u]:
                 j = inv.get(v)
                 if j is None or j == i:
-                    continue
-                if v not in _leaves(phi[j]):
                     continue
                 if allow_any or gp_lookup.get(u) == gp_lookup.get(v):
                     candidate_jv.append((j, v))
@@ -390,11 +480,18 @@ def pssa(
             p_ij = _shift_direction_prob(i, j, phi, deg, weighted)
 
             if random.random() < p_ij:
+                # Move u from chain i to chain j.  u was verified to be a
+                # safe leaf of i above; adding u to j keeps j connected
+                # because v ∈ j is adjacent to u in H.
                 new_phi_i = _remove_leaf(phi[i], u)
                 new_phi_j = _attach_leaf(phi[j], u, v)
                 hw_changed, new_owner = u, j
             else:
+                # Reverse direction: move v from j to i.  Must verify v is
+                # a safe leaf of j; otherwise skip this proposal.
                 if len(phi[j]) < 2:
+                    continue
+                if v not in _leaves(phi[j], H_adj):
                     continue
                 new_phi_j = _remove_leaf(phi[j], v)
                 new_phi_i = _attach_leaf(phi[i], v, u)
@@ -778,13 +875,27 @@ class _PSSABase(EmbeddingAlgorithm):
         return 'zephyr'
 
     def _detect_size(self, H: nx.Graph, topology: str) -> int:
+        # Prefer the authoritative parameter from the dnx graph attributes —
+        # `dnx.{chimera,pegasus,zephyr}_graph` annotates the result with the
+        # construction parameters, so we can read them back exactly.
+        attrs = getattr(H, 'graph', {})
+        for key in ('rows', 'm'):
+            if key in attrs:
+                try:
+                    return int(attrs[key])
+                except (TypeError, ValueError):
+                    pass
+        # Fallback: invert the node-count formula assuming default tile size.
         n = H.number_of_nodes()
         if topology == 'chimera':
+            # Chimera C_{m,m,t=4}: n = 8 m²
             return max(1, round(math.sqrt(n / 8)))
         elif topology == 'pegasus':
+            # Pegasus P_m: n = 24 m (m-1)  →  m ≈ sqrt(n/24) + 1
             return max(2, round(math.sqrt(n / 24) + 1))
         elif topology == 'zephyr':
-            m = (-1 + math.sqrt(1 + 2 * n)) / 4
+            # Zephyr Z_{m,t=4}: n = 16 m (2m+1)  →  m = (-1+√(1+n/2))/4
+            m = (-1 + math.sqrt(1 + n / 2)) / 4
             return max(1, round(m))
         return 4
 

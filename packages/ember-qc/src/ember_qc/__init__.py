@@ -7,7 +7,17 @@ Core usage:
     result = benchmark_one(source_graph, target_graph, "minorminer")
 """
 
-__version__ = "0.9.0"
+# Read version dynamically from the installed package metadata so it can
+# never drift away from pyproject.toml.  Falls back to a placeholder for
+# editable installs that have no .dist-info yet.
+try:
+    from importlib.metadata import version as _pkg_version, PackageNotFoundError
+    try:
+        __version__ = _pkg_version("ember-qc")
+    except PackageNotFoundError:  # not installed (source checkout)
+        __version__ = "0.0.0+unknown"
+except ImportError:  # Python < 3.8 — unreachable under requires-python >= 3.9
+    __version__ = "0.0.0+unknown"
 
 # Core benchmark function and result type
 from ember_qc.benchmark import (

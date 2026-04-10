@@ -212,8 +212,35 @@ def install_binary(
         os.close(fd)
         tmp_path = Path(tmp_str)
 
+        # Use urlopen + explicit status check instead of urlretrieve, which
+        # silently saves HTTP error bodies (e.g. GitHub's 404 HTML page) as
+        # if they were the requested asset.
         try:
-            urllib.request.urlretrieve(url, tmp_path)
+            req = urllib.request.Request(
+                url, headers={"User-Agent": "ember-qc-install-binary"}
+            )
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                # urlopen follows redirects; a 200 here means the asset stream
+                # is ready to read.  Non-2xx raises HTTPError before reaching
+                # this branch.
+                if resp.status != 200:
+                    raise RuntimeError(
+                        f"HTTP {resp.status} {resp.reason} fetching {url}"
+                    )
+                with open(tmp_path, "wb") as out:
+                    shutil.copyfileobj(resp, out)
+        except urllib.error.HTTPError as exc:
+            # 404 on a release asset usually means the tag exists but the
+            # per-platform binary for this version was never uploaded (or the
+            # asset naming changed).  Tell the user exactly what to check.
+            print(f"Error: HTTP {exc.code} {exc.reason} downloading {name}")
+            print(f"  URL: {url}")
+            if exc.code == 404:
+                print(f"  The release tag 'ember-qc-v{ver}' either does not")
+                print(f"  exist or does not publish a '{name}-{platform_suffix}'")
+                print(f"  asset. Check https://github.com/{_GITHUB_REPO}/releases")
+                print(f"  and/or re-run with --version X.Y.Z to pin a known good release.")
+            sys.exit(1)
         except urllib.error.URLError as exc:
             print(f"Network error downloading {name}:")
             print(f"  {exc}")
@@ -222,6 +249,40 @@ def install_binary(
         except Exception as exc:  # noqa: BLE001
             print(f"Unexpected error while downloading {name}: {exc}")
             print(f"  URL: {url}")
+            sys.exit(1)
+
+        # ---- validate downloaded payload is actually a binary -------------
+        # Defensive check in case an intermediate proxy rewrites a failed
+        # request into a 200 with an HTML error page (seen with some corporate
+        # proxies and cached CDN entries).
+        try:
+            with open(tmp_path, "rb") as fh:
+                magic = fh.read(4)
+        except OSError as exc:
+            print(f"Error: could not read downloaded file: {exc}")
+            sys.exit(1)
+
+        # ELF ('\x7fELF'), Mach-O thin ('\xcf\xfa\xed\xfe', '\xce\xfa\xed\xfe'),
+        # or Mach-O universal ('\xca\xfe\xba\xbe').
+        valid_magics = {
+            b"\x7fELF",
+            b"\xcf\xfa\xed\xfe",
+            b"\xce\xfa\xed\xfe",
+            b"\xca\xfe\xba\xbe",
+        }
+        if magic not in valid_magics:
+            size = tmp_path.stat().st_size if tmp_path.exists() else 0
+            print(f"Error: downloaded file is not a valid executable.")
+            print(f"  Expected ELF or Mach-O magic bytes, got: {magic!r}")
+            print(f"  File size: {size} bytes")
+            print(f"  URL: {url}")
+            # Show a snippet if it looks like text (likely an HTML error page).
+            if magic[:1] in (b"<", b"{", b" ", b"\n", b"\r"):
+                try:
+                    snippet = tmp_path.read_text(errors="replace")[:500]
+                    print(f"  Content preview:\n    {snippet!r}")
+                except OSError:
+                    pass
             sys.exit(1)
 
         shutil.move(str(tmp_path), dest)
