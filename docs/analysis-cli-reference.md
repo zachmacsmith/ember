@@ -47,11 +47,13 @@ After unstaging, commands that need a batch fall back to automatic discovery fro
 Run the full analysis pipeline on the active batch.
 
 ```
-ember-analysis report [-o PATH] [-f FMT] [--overwrite]
+ember-analysis report [-b BATCH | -v VIEW] [-o PATH] [-f FMT] [--overwrite]
 ```
 
 | Flag | Description |
 |---|---|
+| `-b, --batch BATCH` | Batch specifier (number, name, prefix, or path) |
+| `-v, --view FILE` | View YAML file for multi-batch filtered analysis (see [views.md](views.md)) |
 | `-o, --output-dir PATH` | Override output directory (default: `<batch>/analysis/`) |
 | `-f, --format FMT` | Figure format: `png`, `pdf`, or `svg` (default: `png`) |
 | `--overwrite` | Regenerate files even if they already exist |

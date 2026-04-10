@@ -5,6 +5,56 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.12.0] - 2026-04-10
+
+### Added
+
+- **View system** (`--view` / view YAML): combine data from multiple
+  batches with per-source filters in a single analysis.  A view is a
+  YAML file listing sources (batch + filters):
+
+  ```yaml
+  name: Chimera fault comparison
+  sources:
+    - batch: batch_2026-04-10_19-18-24
+      filters:
+        algorithm: [minorminer, pssa]
+        base_topology: chimera_16x16x4
+    - batch: batch_2026-04-09_12-00-00
+      filters:
+        algorithm: [OCT, ATOM]
+        category: ["!complete"]
+        graph_id: 1-500
+  ```
+
+  Usage: `ember-a report --view my_view.yaml`
+
+  Supported filter keys: `algorithm`, `topology_name`, `graph_name`,
+  `graph_id` (including ranges like `1-500`), `status`, `success`,
+  `category`, `base_topology`, `fault_rate`.  Prefix values with `!`
+  to exclude.
+
+  SQL-filterable columns (`algorithm`, `topology_name`, `graph_id`,
+  etc.) are pushed down to the database query for efficiency.
+  Derived columns (`category`, `base_topology`, `fault_rate`) are
+  filtered post-load.
+
+  Results from `--view` runs are written to
+  `analysis/view_<output_name>/` to distinguish them from single-batch
+  analyses.
+
+  A `source_batch` column is added to the DataFrame so downstream
+  analysis can identify which batch each row came from.
+
+  The `--view` flag is available on `report`, `plots`, `tables`, and
+  `stats` subcommands.
+
+- **New module `views.py`**: `load_view(yaml_path)` returns
+  `(DataFrame, config)` from a view YAML.  Can also be used
+  programmatically.
+
+---
+
 ## [0.11.0] - 2026-04-10
 
 ### Added

@@ -101,9 +101,20 @@ class BenchmarkAnalysis:
                       Defaults to "analysis/" relative to the current directory.
     """
 
-    def __init__(self, batch_dir, output_root: str = 'analysis/'):
-        self._batch_dir = Path(batch_dir)
-        self._df, self._config = load_batch(self._batch_dir)
+    def __init__(self, batch_dir=None, output_root: str = 'analysis/',
+                 *, df: 'pd.DataFrame | None' = None, config: 'dict | None' = None,
+                 view_name: 'str | None' = None):
+        if df is not None:
+            # Pre-loaded mode (from view system or programmatic use)
+            self._batch_dir = Path(batch_dir) if batch_dir else None
+            self._df = df
+            self._config = config or {}
+            self._view_name = view_name
+        else:
+            # Standard single-batch mode
+            self._batch_dir = Path(batch_dir)
+            self._df, self._config = load_batch(self._batch_dir)
+            self._view_name = None
         self._output_root = Path(output_root)
         self._filter_subdir: str = ''   # set by filter_graphs(); appended to output_dir
 
@@ -119,6 +130,8 @@ class BenchmarkAnalysis:
 
     @property
     def batch_name(self) -> str:
+        if self._view_name:
+            return f"view_{self._view_name}"
         return self._batch_dir.name
 
     @property

@@ -279,10 +279,75 @@ def _resolve_groups(args: argparse.Namespace, default_preset: str = "large") -> 
 
 
 # ---------------------------------------------------------------------------
+# View loading helper
+# ---------------------------------------------------------------------------
+
+def _resolve_view_path(spec: str) -> Path:
+    """Resolve a --view argument to a YAML file path.
+
+    Tries, in order:
+      1. Exact path (absolute or relative to cwd)
+      2. Path with .yaml extension appended
+      3. views/<spec>.yaml inside the configured output directory
+    """
+    p = Path(spec).expanduser()
+    if p.exists():
+        return p.resolve()
+    if not p.suffix and p.with_suffix('.yaml').exists():
+        return p.with_suffix('.yaml').resolve()
+    # Check in analysis output dir
+    out_dir = resolve("output_dir")
+    if out_dir:
+        views_dir = Path(out_dir) / 'views'
+        candidate = views_dir / f"{spec}.yaml"
+        if candidate.exists():
+            return candidate.resolve()
+    return p  # Return as-is; load_view will raise FileNotFoundError
+
+
+def _load_analysis_from_view(view_path: Path, output_root: Path):
+    """Load a view YAML and create a BenchmarkAnalysis instance.
+
+    Returns a BenchmarkAnalysis with the combined DataFrame pre-loaded.
+    """
+    from ember_qc_analysis.views import load_view
+    from ember_qc_analysis import BenchmarkAnalysis
+
+    df, view_config = load_view(view_path)
+    view_name = view_config.get('_view', {}).get('output_name', view_path.stem)
+
+    an = BenchmarkAnalysis(
+        df=df, config=view_config,
+        view_name=view_name,
+        output_root=str(output_root),
+    )
+    return an
+
+
+# ---------------------------------------------------------------------------
 # ember-analysis report
 # ---------------------------------------------------------------------------
 
 def cmd_report(args: argparse.Namespace) -> None:
+    view_spec = getattr(args, "view", None)
+
+    if view_spec:
+        view_path = _resolve_view_path(view_spec)
+        output_root = Path(getattr(args, "output_dir", None) or resolve("output_dir") or "analysis")
+        fmt = getattr(args, "format", None) or resolve("fig_format")
+        overwrite = getattr(args, "overwrite", False)
+        groups = _resolve_groups(args)
+
+        print(f"View:    {view_path}")
+        print(f"Output:  {output_root}")
+        print(f"Preset:  {getattr(args, 'preset', 'large')}  ({', '.join(groups)})")
+        print("Loading view...", flush=True)
+        an = _load_analysis_from_view(view_path, output_root)
+        print(f"  {len(an.df):,} rows loaded from {an.df['source_batch'].nunique()} source(s)")
+        _apply_filter_args(an, args)
+        _generate_with_skip(an, fmt=fmt, groups=groups, output_root=an.output_dir, overwrite=overwrite)
+        return
+
     batch_dir = _resolve_active_batch(spec=getattr(args, "batch", None))
     output_root = resolve_output_dir(batch_dir, explicit=getattr(args, "output_dir", None))
     fmt = getattr(args, "format", None) or resolve("fig_format")
@@ -320,6 +385,20 @@ def cmd_plots(args: argparse.Namespace) -> None:
         return
 
     groups = _resolve_groups(args)
+    view_spec = getattr(args, "view", None)
+
+    if view_spec:
+        view_path = _resolve_view_path(view_spec)
+        output_root = Path(getattr(args, "output_dir", None) or resolve("output_dir") or "analysis")
+        fmt = getattr(args, "format", None) or resolve("fig_format")
+        overwrite = getattr(args, "overwrite", False)
+        print(f"View:    {view_path}")
+        print("Loading view...", flush=True)
+        an = _load_analysis_from_view(view_path, output_root)
+        print(f"  {len(an.df):,} rows loaded from {an.df['source_batch'].nunique()} source(s)")
+        _apply_filter_args(an, args)
+        _generate_with_skip(an, fmt=fmt, groups=groups, output_root=an.output_dir, overwrite=overwrite)
+        return
 
     batch_dir = _resolve_active_batch(spec=getattr(args, "batch", None))
     output_root = resolve_output_dir(batch_dir, explicit=getattr(args, "output_dir", None))
@@ -335,18 +414,42 @@ def cmd_plots(args: argparse.Namespace) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Shared loader: --view or --batch → BenchmarkAnalysis
+# ---------------------------------------------------------------------------
+
+def _load_analysis(args: argparse.Namespace):
+    """Load data from --view or --batch, print summary, return (an, overwrite).
+
+    Used by tables, stats, and any future commands that don't need
+    plot-specific options (preset, format, groups).
+    """
+    view_spec = getattr(args, "view", None)
+    overwrite = getattr(args, "overwrite", False)
+
+    if view_spec:
+        view_path = _resolve_view_path(view_spec)
+        output_root = Path(getattr(args, "output_dir", None) or resolve("output_dir") or "analysis")
+        print(f"View:    {view_path}")
+        print("Loading view...", flush=True)
+        an = _load_analysis_from_view(view_path, output_root)
+        print(f"  {len(an.df):,} rows loaded from {an.df['source_batch'].nunique()} source(s)")
+    else:
+        batch_dir = _resolve_active_batch(spec=getattr(args, "batch", None))
+        output_root = resolve_output_dir(batch_dir, explicit=getattr(args, "output_dir", None))
+        print("Loading data...", flush=True)
+        from ember_qc_analysis import BenchmarkAnalysis
+        an = BenchmarkAnalysis(str(batch_dir), output_root=str(output_root))
+        print(f"  {len(an.df):,} rows loaded")
+
+    return an, overwrite
+
+
+# ---------------------------------------------------------------------------
 # ember-analysis tables
 # ---------------------------------------------------------------------------
 
 def cmd_tables(args: argparse.Namespace) -> None:
-    batch_dir = _resolve_active_batch(spec=getattr(args, "batch", None))
-    output_root = resolve_output_dir(batch_dir, explicit=getattr(args, "output_dir", None))
-    overwrite = getattr(args, "overwrite", False)
-
-    print("Loading data...", flush=True)
-    from ember_qc_analysis import BenchmarkAnalysis
-    an = BenchmarkAnalysis(str(batch_dir), output_root=str(output_root))
-    print(f"  {len(an.df):,} rows loaded")
+    an, overwrite = _load_analysis(args)
     _apply_filter_args(an, args)
     summary_dir = an.summary_dir
     summary_dir.mkdir(parents=True, exist_ok=True)
@@ -384,14 +487,7 @@ def cmd_tables(args: argparse.Namespace) -> None:
 # ---------------------------------------------------------------------------
 
 def cmd_stats(args: argparse.Namespace) -> None:
-    batch_dir = _resolve_active_batch(spec=getattr(args, "batch", None))
-    output_root = resolve_output_dir(batch_dir, explicit=getattr(args, "output_dir", None))
-    overwrite = getattr(args, "overwrite", False)
-
-    print("Loading data...", flush=True)
-    from ember_qc_analysis import BenchmarkAnalysis
-    an = BenchmarkAnalysis(str(batch_dir), output_root=str(output_root))
-    print(f"  {len(an.df):,} rows loaded")
+    an, overwrite = _load_analysis(args)
     _apply_filter_args(an, args)
     stats_dir = an.statistics_dir
     stats_dir.mkdir(parents=True, exist_ok=True)
@@ -771,6 +867,10 @@ def build_parser() -> argparse.ArgumentParser:
         "batch number (1-based, newest first), directory name, name prefix, "
         "or full path — overrides any staged batch for this invocation only"
     )
+    _view_help = (
+        "path to a view YAML file that specifies multiple batches and "
+        "per-source filters (mutually exclusive with --batch)"
+    )
     _preset_help = (
         f"plot preset: {', '.join(PLOT_PRESETS)}  "
         "(use --list on plots to see group contents)"
@@ -780,6 +880,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_report = sub.add_parser("report", help="run full analysis pipeline")
     p_report.add_argument("-b", "--batch",      metavar="BATCH",  default=None, dest="batch",
                           help=_batch_help)
+    p_report.add_argument("-v", "--view",       metavar="FILE",   default=None, dest="view",
+                          help=_view_help)
     p_report.add_argument("-p", "--preset",     metavar="PRESET", default=None, dest="preset",
                           choices=list(PLOT_PRESETS),
                           help=_preset_help + "  [default: large]")
@@ -803,6 +905,8 @@ def build_parser() -> argparse.ArgumentParser:
                               f"(overrides --preset)")
     p_plots.add_argument("-b", "--batch",      metavar="BATCH",  default=None, dest="batch",
                          help=_batch_help)
+    p_plots.add_argument("-v", "--view",       metavar="FILE",   default=None, dest="view",
+                         help=_view_help)
     p_plots.add_argument("-p", "--preset",     metavar="PRESET", default=None, dest="preset",
                          choices=list(PLOT_PRESETS),
                          help=_preset_help + "  [default: full]")
@@ -823,6 +927,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_tables = sub.add_parser("tables", help="run summary table generation")
     p_tables.add_argument("-b", "--batch",      metavar="BATCH", default=None, dest="batch",
                           help=_batch_help)
+    p_tables.add_argument("-v", "--view",       metavar="FILE",  default=None, dest="view",
+                          help=_view_help)
     p_tables.add_argument("-o", "--output-dir", metavar="PATH",  default=None, dest="output_dir")
     p_tables.add_argument("--overwrite", action="store_true", default=False)
     p_tables.add_argument("--graphs", metavar="SPEC", default=None,
@@ -835,6 +941,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_stats = sub.add_parser("stats", help="run statistical analysis")
     p_stats.add_argument("-b", "--batch",      metavar="BATCH", default=None, dest="batch",
                          help=_batch_help)
+    p_stats.add_argument("-v", "--view",       metavar="FILE",  default=None, dest="view",
+                         help=_view_help)
     p_stats.add_argument("-o", "--output-dir", metavar="PATH",  default=None, dest="output_dir")
     p_stats.add_argument("--overwrite", action="store_true", default=False)
     p_stats.add_argument("--graphs", metavar="SPEC", default=None,

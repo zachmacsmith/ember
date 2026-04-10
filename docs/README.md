@@ -32,6 +32,7 @@
 | [analysis-getting-started.md](analysis-getting-started.md) | Install, stage a batch, run a report, read the outputs. |
 | [analysis-cli-reference.md](analysis-cli-reference.md) | Every `ember-analysis` command and flag. |
 | [analysis-outputs.md](analysis-outputs.md) | Every plot, table, and statistics file that `generate_report()` produces, with interpretation notes. |
+| [views.md](views.md) | Combine multiple batches with per-source filters using view YAML files. |
 
 ## Other
 

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ember-qc-analysis"
-version = "0.11.0"
+version = "0.12.0"
 description = "Post-benchmark analysis, plots, and statistics for ember-qc results"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -44,6 +44,7 @@ dependencies = [
     "scipy>=1.7.0",
     "networkx>=2.6.0",
     "platformdirs>=3.0.0",
+    "PyYAML>=5.4.0",
 ]
 
 [project.urls]
