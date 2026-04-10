@@ -536,8 +536,8 @@ def cmd_results_list(args: argparse.Namespace) -> None:
     if not batches:
         print(f"No completed batches in: {results_dir.resolve()}")
         return
-    print(f"{'Batch':<35}  {'Algorithms':<30}  {'Trials':>7}")
-    print("-" * 78)
+    print(f"{'Batch':<35}  {'Algorithms':<30}  {'Trials':>7}  Note")
+    print("-" * 110)
     for b in batches:
         cfg_path = b / "config.json"
         if cfg_path.exists():
@@ -545,9 +545,11 @@ def cmd_results_list(args: argparse.Namespace) -> None:
                 cfg = json.load(f)
             algos  = ", ".join(cfg.get("algorithms", []))[:28]
             trials = cfg.get("total_measured_runs", "?")
+            note   = cfg.get("batch_note", "") or ""
         else:
-            algos, trials = "?", "?"
-        print(f"{b.name:<35}  {algos:<30}  {str(trials):>7}")
+            algos, trials, note = "?", "?", ""
+        note_display = (note[:40] + "…") if len(note) > 41 else note
+        print(f"{b.name:<35}  {algos:<30}  {str(trials):>7}  {note_display}")
     print(f"\n{len(batches)} batch(es) in {results_dir.resolve()}")
 
 
