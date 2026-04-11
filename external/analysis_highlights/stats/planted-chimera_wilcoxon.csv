@@ -1,0 +1,7 @@
+,algo_a,algo_b,n_pairs,median_a,median_b,median_diff,direction,w_statistic,p_value,log10_p,effect_size,corrected_p,significant_005,significant_001,significant_0001,effect_magnitude
+0,atom,clique,1,,,,,,,,,,False,False,False,
+1,atom,minorminer,10,3.012543706293706,1.8628277972027973,1.1497159090909088,atom > minorminer,0.0,0.001953125,-2.2956751029121416,1.0,0.0078125,True,True,False,large
+2,atom,oct-fast-oct-reduce,8,2.686384615384615,2.6773173076923076,0.009067307692307569,atom > oct-fast-oct-reduce,2.0,0.0234375,-1.6009869716939193,0.8888888888888888,0.0703125,False,False,False,large
+3,clique,minorminer,6,13.0,1.1747165532879817,11.825283446712017,clique > minorminer,0.0,0.03125,-1.557397182199213,1.0,0.0703125,False,False,False,large
+4,clique,oct-fast-oct-reduce,6,13.0,1.4683767951625093,11.53162320483749,clique > oct-fast-oct-reduce,0.0,0.03125,-1.557397182199213,1.0,0.0703125,False,False,False,large
+5,minorminer,oct-fast-oct-reduce,15,1.526056338028169,2.2642105263157895,-0.7381541882876204,minorminer < oct-fast-oct-reduce,0.0,6.103515625e-05,-3.1837863210968176,1.0,0.00030517578125,True,True,True,large

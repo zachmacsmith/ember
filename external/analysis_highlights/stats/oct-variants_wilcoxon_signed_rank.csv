@@ -1,0 +1,22 @@
+,algo_a,algo_b,n_pairs,median_a,median_b,median_diff,direction,w_statistic,p_value,log10_p,effect_size,corrected_p,significant_005,significant_001,significant_0001,effect_magnitude
+0,oct-fast-oct,oct-fast-oct-reduce,118,3.0,2.3779761904761907,0.6220238095238093,oct-fast-oct > oct-fast-oct-reduce,19.0,1.0858903379669356e-14,-13.964214031119699,0.9885576633544113,1.954602608340484e-13,True,True,True,large
+1,oct-fast-oct,oct-hybrid-oct,53,1.488888888888889,1.434782608695652,0.05410628019323682,oct-fast-oct > oct-hybrid-oct,2.0,0.04252247799805163,-1.3713814348937514,0.8571428571428572,0.17008991199220652,False,False,False,large
+2,oct-fast-oct,oct-hybrid-oct-reduce,54,1.4618357487922706,1.3333333333333333,0.12850241545893737,oct-fast-oct > oct-hybrid-oct-reduce,8.5,0.0001272587622007737,-3.89531230530212,0.9328063241106719,0.0013998463842085109,True,True,False,large
+3,oct-fast-oct,oct-triad,94,2.522222222222222,4.0,-1.4777777777777779,oct-fast-oct < oct-triad,653.5,4.32631179136444e-09,-8.363882184760637,0.7009837565774422,7.354730045319548e-08,True,True,True,large
+4,oct-fast-oct,oct-triad-reduce,7,1.0,2.0,-1.0,oct-fast-oct < oct-triad-reduce,0.0,0.015625,-1.9426368523133712,1.0,0.125,False,False,False,large
+5,oct-fast-oct,oct_based,94,2.522222222222222,4.0,-1.4777777777777779,oct-fast-oct < oct_based,653.5,4.32631179136444e-09,-8.363882184760637,0.7009837565774422,7.354730045319548e-08,True,True,True,large
+6,oct-fast-oct-reduce,oct-hybrid-oct,54,1.3840579710144927,1.4599655617735685,-0.07590759075907583,oct-fast-oct-reduce < oct-hybrid-oct,9.0,0.0008610277704437636,-3.06498284116424,0.8947368421052632,0.007749249933993872,True,True,False,large
+7,oct-fast-oct-reduce,oct-hybrid-oct-reduce,55,1.3333333333333333,1.3333333333333333,0.0,equal,2.0,0.5929800980174267,-0.22695988246416104,0.33333333333333337,0.5929800980174267,False,False,False,medium
+8,oct-fast-oct-reduce,oct-triad,94,2.111111111111111,4.0,-1.8888888888888888,oct-fast-oct-reduce < oct-triad,4.0,9.163256956673562e-17,-16.037950134748886,0.9981299672744273,1.8326513913347125e-15,True,True,True,large
+9,oct-fast-oct-reduce,oct-triad-reduce,7,1.0,2.0,-1.0,oct-fast-oct-reduce < oct-triad-reduce,0.0,0.015625,-1.9426368523133712,1.0,0.125,False,False,False,large
+10,oct-fast-oct-reduce,oct_based,94,2.111111111111111,4.0,-1.8888888888888888,oct-fast-oct-reduce < oct_based,4.0,9.163256956673562e-17,-16.037950134748886,0.9981299672744273,1.8326513913347125e-15,True,True,True,large
+11,oct-hybrid-oct,oct-hybrid-oct-reduce,54,1.4599655617735685,1.3840579710144927,0.07590759075907583,oct-hybrid-oct > oct-hybrid-oct-reduce,0.0,0.00019575042504300203,-3.708297286262969,1.0,0.00195750425043002,True,True,False,large
+12,oct-hybrid-oct,oct-triad,38,1.2426470588235294,4.0,-2.7573529411764706,oct-hybrid-oct < oct-triad,0.0,7.444489405163162e-08,-7.128165083825099,1.0,1.1166734107744743e-06,True,True,True,large
+13,oct-hybrid-oct,oct-triad-reduce,7,1.0,2.0,-1.0,oct-hybrid-oct < oct-triad-reduce,0.0,0.015625,-1.9426368523133712,1.0,0.125,False,False,False,large
+14,oct-hybrid-oct,oct_based,38,1.2426470588235294,4.0,-2.7573529411764706,oct-hybrid-oct < oct_based,0.0,7.444489405163162e-08,-7.128165083825099,1.0,1.1166734107744743e-06,True,True,True,large
+15,oct-hybrid-oct-reduce,oct-triad,39,1.25,4.0,-2.75,oct-hybrid-oct-reduce < oct-triad,0.0,7.447422059125778e-08,-7.127994033190959,1.0,1.1166734107744743e-06,True,True,True,large
+16,oct-hybrid-oct-reduce,oct-triad-reduce,7,1.0,2.0,-1.0,oct-hybrid-oct-reduce < oct-triad-reduce,0.0,0.015625,-1.9426368523133712,1.0,0.125,False,False,False,large
+17,oct-hybrid-oct-reduce,oct_based,39,1.25,4.0,-2.75,oct-hybrid-oct-reduce < oct_based,0.0,7.447422059125778e-08,-7.127994033190959,1.0,1.1166734107744743e-06,True,True,True,large
+18,oct-triad,oct-triad-reduce,9,2.0,2.0,0.0,equal,0.0,0.125,-1.183098198721011,1.0,0.375,False,False,False,large
+19,oct-triad,oct_based,103,4.0,4.0,0.0,equal,0.0,,0.0,0.0,,False,False,False,negligible
+20,oct-triad-reduce,oct_based,9,2.0,2.0,0.0,equal,0.0,0.125,-1.183098198721011,1.0,0.375,False,False,False,large

@@ -1,0 +1,2 @@
+,algo_a,algo_b,n_pairs,median_a,median_b,median_diff,direction,w_statistic,p_value,log10_p,effect_size,corrected_p,significant_005,significant_001,significant_0001,effect_magnitude
+0,clique,minorminer,37,9.0,1.35,7.65,clique > minorminer,0.0,1.4551915228366852e-11,-6.9430134482190535,1.0,1.4551915228366852e-11,True,True,True,large

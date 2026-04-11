@@ -1,0 +1,25 @@
+Friedman Test Results
+==================================================
+
+Chi-squared statistic:  10461.3044083891
+p-value:               0.000000000000000e+00
+log10(p):              -2270.0326
+  (i.e. p ~ 10^-2270.0)
+
+Significant (a=0.05):  True
+Significant (a=0.01):  True
+Significant (a=0.001): True
+
+N problems (complete):  5150
+N algorithms:           4
+Kendall's W:            0.677107081449132
+
+Mean Ranks (1 = best):
+----------------------------------------
+  minorminer                          1.409515
+  oct-fast-oct-reduce                 1.786990
+  atom                                3.285728
+  clique                              3.517767
+
+Nemenyi CD (a=0.05):    0.065358
+  (pairs whose mean rank differs by >= CD are significantly different)

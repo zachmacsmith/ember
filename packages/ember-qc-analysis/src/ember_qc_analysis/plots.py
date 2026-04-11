@@ -89,31 +89,301 @@ def plot_heatmap(df: pd.DataFrame,
                  fmt: str = 'png') -> plt.Figure:
     """Heatmap: algorithm (rows) × graph category (columns), cell = mean metric.
 
-    Only successful trials are included.
+    For most metrics only successful trials are included.
+    ``success_rate`` and ``wall_time`` use all trials.
     """
-    from ember_qc_analysis.summary import summary_by_category
-    pivot = summary_by_category(df, metric)
+    if metric == 'win_rate':
+        # Win rate: % of graphs where this algorithm has the shortest
+        # avg_chain_length among all algorithms (successful trials only)
+        sdf = df[df['success']].copy()
+        if sdf.empty:
+            fig, ax = plt.subplots()
+            ax.text(0.5, 0.5, 'No successful data', ha='center', va='center')
+            _maybe_save(fig, output_dir, 'by_category.png', save,
+                        subdir=f'figures/category_breakdown/{metric}', fmt=fmt)
+            return fig
+        # For each graph_id, find the algorithm(s) with the minimum avg_chain_length
+        best = sdf.loc[sdf.groupby('graph_id')['avg_chain_length'].idxmin()]
+        # Count wins per (algorithm, category)
+        win_counts = best.groupby(['algorithm', 'category']).size().unstack(level='category', fill_value=0)
+        # Total graphs per category (where at least one algo succeeded)
+        total_per_cat = best.groupby('category').size()
+        pivot = win_counts.div(total_per_cat, axis=1)
+        # Ensure all algorithms appear (even if zero wins)
+        all_algos = sorted(df['algorithm'].unique())
+        pivot = pivot.reindex(all_algos, fill_value=0.0)
+    elif metric == 'success_rate':
+        # Compute success rate per (algorithm, category)
+        pivot = (
+            df.groupby(['algorithm', 'category'])['success']
+            .mean()
+            .unstack(level='category')
+        )
+    elif metric == 'wall_time':
+        # Embedding time across all trials (not just successful)
+        pivot = (
+            df.groupby(['algorithm', 'category'])[metric]
+            .mean()
+            .unstack(level='category')
+        )
+    elif metric == 'relative_time':
+        # Relative slowdown: each cell = algo_time / best_time for that category
+        raw = (
+            df.groupby(['algorithm', 'category'])['wall_time']
+            .mean()
+            .unstack(level='category')
+        )
+        col_min = raw.min(axis=0)
+        col_min = col_min.replace(0, np.nan)  # avoid div by zero
+        pivot = raw.div(col_min, axis=1)
+    else:
+        from ember_qc_analysis.summary import summary_by_category
+        pivot = summary_by_category(df, metric)
 
     if pivot.empty:
         fig, ax = plt.subplots()
         ax.text(0.5, 0.5, 'No data', ha='center', va='center')
-        _maybe_save(fig, output_dir, f'{metric}_by_category.png', save,
-                    subdir='figures/distributions', fmt=fmt)
+        _maybe_save(fig, output_dir, 'by_category.png', save,
+                    subdir=f'figures/category_breakdown/{metric}', fmt=fmt)
         return fig
+
+    # Choose colormap
+    if metric in ('success_rate', 'win_rate'):
+        hm_cmap = 'RdYlGn'
+    elif metric == 'relative_time':
+        hm_cmap = 'RdYlGn_r'  # 1x = green (low), high multiplier = red
+    else:
+        hm_cmap = 'YlOrRd'
 
     fig, ax = plt.subplots(figsize=(max(6, pivot.shape[1] * 1.4),
                                     max(3, pivot.shape[0] * 0.9) + 1))
-    sns.heatmap(
-        pivot, ax=ax, annot=True, fmt='.2f',
-        cmap='YlOrRd', linewidths=0.5, linecolor='white',
-        cbar_kws={'label': metric.replace('_', ' ')}
+    if metric in ('success_rate', 'win_rate'):
+        annot_fmt = '.0%'
+    elif metric == 'relative_time':
+        annot_fmt = '.1f'
+    else:
+        annot_fmt = '.2f'
+
+    hm_kwargs = dict(
+        cmap=hm_cmap, linewidths=0.5, linecolor='white',
+        cbar_kws={'label': _HEATMAP_LABELS.get(metric, metric.replace('_', ' '))}
     )
-    ax.set_title(f'Mean {metric.replace("_", " ")} by algorithm and graph category')
+
+    if metric == 'wall_time':
+        # Log colour scale so small differences aren't washed out by outliers
+        from matplotlib.colors import LogNorm
+        floor = max(pivot.min().min(), 1e-4)  # avoid log(0)
+        ceil = pivot.max().max()
+        hm_kwargs['norm'] = LogNorm(vmin=floor, vmax=ceil)
+    elif metric == 'relative_time':
+        from matplotlib.colors import LogNorm
+        hm_kwargs['norm'] = LogNorm(vmin=1.0, vmax=max(pivot.max().max(), 2.0))
+    elif metric in ('success_rate', 'win_rate'):
+        hm_kwargs['vmin'] = 0.0
+        hm_kwargs['vmax'] = 1.0
+
+    sns.heatmap(
+        pivot, ax=ax, annot=True, fmt=annot_fmt, **hm_kwargs
+    )
+    label = _HEATMAP_LABELS.get(metric, metric.replace('_', ' '))
+    ax.set_title(f'{label} by algorithm and graph category')
     ax.set_xlabel('Graph category')
     ax.set_ylabel('Algorithm')
     plt.tight_layout()
-    _maybe_save(fig, output_dir, f'{metric}_by_category.png', save,
-                subdir='figures/distributions', fmt=fmt)
+    _maybe_save(fig, output_dir, 'by_category.png', save,
+                subdir=f'figures/category_breakdown/{metric}', fmt=fmt)
+    return fig
+
+
+# ── Category family groupings ────────────────────────────────────────────────────
+
+_CATEGORY_FAMILIES = {
+    'random': [
+        'random_er', 'random_planar', 'barabasi_albert',
+        'watts_strogatz', 'sbm', 'lfr_benchmark', 'regular',
+    ],
+    'structured': [
+        'complete', 'bipartite', 'circulant', 'turan',
+        'johnson', 'kneser', 'hypercube', 'generalized_petersen',
+    ],
+    'lattice': [
+        'grid', 'honeycomb', 'triangular_lattice', 'kagome',
+        'king_graph', 'cubic_lattice', 'bcc_lattice',
+        'shastry_sutherland', 'frustrated_square',
+    ],
+    'tree_path': [
+        'path', 'cycle', 'star', 'wheel',
+        'binary_tree', 'tree',
+    ],
+    'application': [
+        'spin_glass', 'weak_strong_cluster', 'planted_solution',
+        'hardware_native', 'sudoku', 'named_special',
+    ],
+}
+
+_FAMILY_LABELS = {
+    'random': 'Random / stochastic graphs',
+    'structured': 'Structured / algebraic graphs',
+    'lattice': 'Lattice / physics-inspired graphs',
+    'tree_path': 'Trees, paths & cycles',
+    'application': 'Application & benchmark graphs',
+}
+
+
+def plot_heatmap_by_family(df: pd.DataFrame,
+                           metric: str = 'avg_chain_length',
+                           algo_palette=None,
+                           output_dir=None,
+                           save: bool = False,
+                           fmt: str = 'png') -> List[plt.Figure]:
+    """Per-family category heatmaps: one figure per graph family.
+
+    Splits the full category heatmap into smaller, readable chunks
+    grouped by graph family. Saved to ``figures/category_breakdown/``.
+    """
+    figs = []
+    present_cats = set(df['category'].unique())
+
+    for family_key, family_cats in _CATEGORY_FAMILIES.items():
+        # Only include categories that exist in this dataset
+        cats = [c for c in family_cats if c in present_cats]
+        if not cats:
+            continue
+
+        fdf = df[df['category'].isin(cats)]
+        if fdf.empty:
+            continue
+
+        # Reuse plot_heatmap but with filtered data — build the figure manually
+        fig = plot_heatmap(fdf, metric=metric, algo_palette=algo_palette,
+                           output_dir=None, save=False, fmt=fmt)
+
+        # Update title to include family name
+        ax = fig.axes[0]
+        label = _HEATMAP_LABELS.get(metric, metric.replace('_', ' '))
+        family_label = _FAMILY_LABELS.get(family_key, family_key)
+        ax.set_title(f'{label}\n{family_label}')
+        plt.tight_layout()
+
+        _maybe_save(fig, output_dir, f'{family_key}.png', save,
+                    subdir=f'figures/category_breakdown/{metric}', fmt=fmt)
+        figs.append(fig)
+
+    return figs
+
+
+def plot_heatmap_family_summary(df: pd.DataFrame,
+                                metric: str = 'avg_chain_length',
+                                algo_palette=None,
+                                output_dir=None,
+                                save: bool = False,
+                                fmt: str = 'png') -> plt.Figure:
+    """Compact heatmap: algorithm × graph family (5 columns).
+
+    Each family column aggregates all categories in that family using
+    macro-averaging (mean of per-category values) so that large categories
+    don't dominate.
+    """
+    present_cats = set(df['category'].unique())
+    all_algos = sorted(df['algorithm'].unique())
+
+    rows = {}
+    for family_key, family_cats in _CATEGORY_FAMILIES.items():
+        cats = [c for c in family_cats if c in present_cats]
+        if not cats:
+            continue
+        fdf = df[df['category'].isin(cats)]
+        if fdf.empty:
+            continue
+
+        if metric == 'win_rate':
+            sdf = fdf[fdf['success']].copy()
+            if sdf.empty:
+                continue
+            best = sdf.loc[sdf.groupby('graph_id')['avg_chain_length'].idxmin()]
+            win_counts = best.groupby('algorithm').size()
+            total = best.shape[0]
+            for algo in all_algos:
+                rows.setdefault(algo, {})[family_key] = win_counts.get(algo, 0) / total if total else 0.0
+        elif metric == 'success_rate':
+            per_cat = fdf.groupby(['algorithm', 'category'])['success'].mean().unstack('category')
+            macro = per_cat.mean(axis=1)
+            for algo in all_algos:
+                rows.setdefault(algo, {})[family_key] = macro.get(algo, np.nan)
+        elif metric == 'wall_time':
+            per_cat = fdf.groupby(['algorithm', 'category'])[metric].mean().unstack('category')
+            macro = per_cat.mean(axis=1)
+            for algo in all_algos:
+                rows.setdefault(algo, {})[family_key] = macro.get(algo, np.nan)
+        elif metric == 'relative_time':
+            per_cat = fdf.groupby(['algorithm', 'category'])['wall_time'].mean().unstack('category')
+            macro = per_cat.mean(axis=1)
+            best_time = macro.min()
+            best_time = best_time if best_time > 0 else np.nan
+            for algo in all_algos:
+                rows.setdefault(algo, {})[family_key] = macro.get(algo, np.nan) / best_time if best_time else np.nan
+        else:
+            sdf = fdf[fdf['success']].copy()
+            if sdf.empty:
+                continue
+            per_cat = sdf.groupby(['algorithm', 'category'])[metric].mean().unstack('category')
+            macro = per_cat.mean(axis=1)
+            for algo in all_algos:
+                rows.setdefault(algo, {})[family_key] = macro.get(algo, np.nan)
+
+    if not rows:
+        fig, ax = plt.subplots()
+        ax.text(0.5, 0.5, 'No data', ha='center', va='center')
+        _maybe_save(fig, output_dir, 'by_family.png', save,
+                    subdir=f'figures/category_breakdown/{metric}', fmt=fmt)
+        return fig
+
+    pivot = pd.DataFrame(rows).T
+    # Reorder columns to match family order
+    family_order = [k for k in _CATEGORY_FAMILIES if k in pivot.columns]
+    pivot = pivot[family_order]
+    # Use readable family labels
+    pivot.columns = [_FAMILY_LABELS.get(c, c) for c in pivot.columns]
+
+    # Colormap and formatting
+    if metric in ('success_rate', 'win_rate'):
+        hm_cmap = 'RdYlGn'
+        annot_fmt = '.0%'
+    elif metric == 'relative_time':
+        hm_cmap = 'RdYlGn_r'
+        annot_fmt = '.1f'
+    else:
+        hm_cmap = 'YlOrRd'
+        annot_fmt = '.2f'
+
+    fig, ax = plt.subplots(figsize=(max(6, len(pivot.columns) * 2.5),
+                                    max(3, len(pivot) * 0.9) + 1))
+
+    hm_kwargs = dict(
+        cmap=hm_cmap, linewidths=0.5, linecolor='white',
+        cbar_kws={'label': _HEATMAP_LABELS.get(metric, metric.replace('_', ' '))}
+    )
+
+    if metric == 'wall_time':
+        from matplotlib.colors import LogNorm
+        floor = max(pivot.min().min(), 1e-4)
+        ceil = pivot.max().max()
+        hm_kwargs['norm'] = LogNorm(vmin=floor, vmax=ceil)
+    elif metric == 'relative_time':
+        from matplotlib.colors import LogNorm
+        hm_kwargs['norm'] = LogNorm(vmin=1.0, vmax=max(pivot.max().max(), 2.0))
+    elif metric in ('success_rate', 'win_rate'):
+        hm_kwargs['vmin'] = 0.0
+        hm_kwargs['vmax'] = 1.0
+
+    sns.heatmap(pivot, ax=ax, annot=True, fmt=annot_fmt, **hm_kwargs)
+    label = _HEATMAP_LABELS.get(metric, metric.replace('_', ' '))
+    ax.set_title(f'{label} by algorithm and graph family\n(macro-averaged within each family)')
+    ax.set_xlabel('Graph family')
+    ax.set_ylabel('Algorithm')
+    plt.tight_layout()
+    _maybe_save(fig, output_dir, 'by_family.png', save,
+                subdir=f'figures/category_breakdown/{metric}', fmt=fmt)
     return fig
 
 
@@ -145,8 +415,8 @@ def plot_scaling(df: pd.DataFrame,
     if success_df.empty:
         fig, ax = plt.subplots()
         ax.text(0.5, 0.5, 'No successful trials', ha='center', va='center')
-        _maybe_save(fig, output_dir, f'scaling_{metric}_vs_{x}.png', save,
-                    subdir='figures/scaling', fmt=fmt)
+        _maybe_save(fig, output_dir, f'scaling_vs_{x}.png', save,
+                    subdir=f'figures/scaling/{metric}', fmt=fmt)
         return fig
 
     palette = algo_palette or _algo_palette(success_df['algorithm'].unique())
@@ -197,8 +467,8 @@ def plot_scaling(df: pd.DataFrame,
     ax.legend(framealpha=0.9)
     ax.grid(alpha=0.3)
     plt.tight_layout()
-    _maybe_save(fig, output_dir, f'scaling_{metric}_vs_{x}.png', save,
-                subdir='figures/scaling', fmt=fmt)
+    _maybe_save(fig, output_dir, f'scaling_vs_{x}.png', save,
+                subdir=f'figures/scaling/{metric}', fmt=fmt)
     return fig
 
 
@@ -219,8 +489,8 @@ def plot_density_hardness(df: pd.DataFrame,
     fig, ax = plt.subplots(figsize=(9, 5))
     if rand_df.empty:
         ax.text(0.5, 0.5, 'No random graph data', ha='center', va='center')
-        _maybe_save(fig, output_dir, f'density_hardness_{metric}.png', save,
-                    subdir='figures/scaling', fmt=fmt)
+        _maybe_save(fig, output_dir, 'density_hardness.png', save,
+                    subdir=f'figures/scaling/{metric}', fmt=fmt)
         return fig
 
     palette = algo_palette or _algo_palette(rand_df['algorithm'].unique())
@@ -245,24 +515,26 @@ def plot_density_hardness(df: pd.DataFrame,
     ax.legend(framealpha=0.9, fontsize=8)
     ax.grid(alpha=0.3)
     plt.tight_layout()
-    _maybe_save(fig, output_dir, f'density_hardness_{metric}.png', save,
-                subdir='figures/scaling', fmt=fmt)
+    _maybe_save(fig, output_dir, 'density_hardness.png', save,
+                subdir=f'figures/scaling/{metric}', fmt=fmt)
     return fig
 
 
 # ── 4. Size × density heatmap ───────────────────────────────────────────────────
 
 _HEATMAP_METRICS = frozenset({
-    'avg_chain_length', 'max_chain_length', 'qubit_overhead_ratio', 'success_rate',
+    'avg_chain_length', 'max_chain_length', 'qubit_overhead_ratio',
+    'success_rate', 'wall_time',
 })
 
-# Colormaps: for chain/qubit metrics lower is better → red=high=bad.
+# Colormaps: for chain/qubit/time metrics lower is better → red=high=bad.
 # For success_rate higher is better → green=high=good.
 _HEATMAP_CMAPS = {
     'avg_chain_length':    'RdYlGn_r',
     'max_chain_length':    'RdYlGn_r',
     'qubit_overhead_ratio':'RdYlGn_r',
     'success_rate':        'RdYlGn',
+    'wall_time':           'RdYlGn_r',
 }
 
 _HEATMAP_LABELS = {
@@ -270,6 +542,9 @@ _HEATMAP_LABELS = {
     'max_chain_length':    'Max chain length (qubits)',
     'qubit_overhead_ratio':'Qubit overhead ratio',
     'success_rate':        'Success rate',
+    'wall_time':           'Embedding time (s)',
+    'win_rate':            'Win rate (best chain length)',
+    'relative_time':       'Relative slowdown (×fastest)',
 }
 
 
@@ -349,11 +624,11 @@ def plot_size_density_heatmap(
 
     # ── Filter ────────────────────────────────────────────────────────────────
     if graph_categories is None:
-        graph_categories = ['random']
+        graph_categories = ['random_er']
 
     fdf = df[df['category'].isin(graph_categories)].copy()
 
-    fname_suffix = f'size_density_{metric}'
+    fname_suffix = 'size_density'
     fig, ax = plt.subplots(figsize=(16, 8))
 
     if fdf.empty:
@@ -361,7 +636,7 @@ def plot_size_density_heatmap(
                 f'No data for categories: {graph_categories}',
                 ha='center', va='center', transform=ax.transAxes)
         _maybe_save(fig, output_dir, f'{fname_suffix}.png', save,
-                    subdir='figures/scaling', fmt=fmt)
+                    subdir=f'figures/scaling/{metric}', fmt=fmt)
         return fig
 
     if algo is not None:
@@ -370,14 +645,19 @@ def plot_size_density_heatmap(
             ax.text(0.5, 0.5, f'No data for algorithm {algo!r}',
                     ha='center', va='center', transform=ax.transAxes)
             _maybe_save(fig, output_dir, f'{fname_suffix}.png', save,
-                        subdir='figures/scaling', fmt=fmt)
+                        subdir=f'figures/scaling/{metric}', fmt=fmt)
             return fig
 
     # ── Aggregate metric ──────────────────────────────────────────────────────
     is_success = metric == 'success_rate'
+    # success_rate and wall_time use all trials; other metrics use only successful
+    _use_all_trials = metric in ('success_rate', 'wall_time')
     if is_success:
         agg_df = fdf.copy()
         agg_col = 'success'
+    elif _use_all_trials:
+        agg_df = fdf.copy()
+        agg_col = metric
     else:
         if metric not in fdf.columns:
             raise ValueError(f"Column '{metric}' not found in DataFrame.")
@@ -385,21 +665,38 @@ def plot_size_density_heatmap(
         agg_col = metric
 
     if agg_df.empty:
-        ax.text(0.5, 0.5, 'No successful trials in filtered data',
+        ax.text(0.5, 0.5, 'No data in filtered set',
                 ha='center', va='center', transform=ax.transAxes)
         _maybe_save(fig, output_dir, f'{fname_suffix}.png', save,
-                    subdir='figures/scaling', fmt=fmt)
+                    subdir=f'figures/scaling/{metric}', fmt=fmt)
         return fig
 
     # ── Bin axes ──────────────────────────────────────────────────────────────
+    _use_log_x = metric in ('success_rate', 'wall_time')
     if node_bin_size is not None:
-        lo = (int(agg_df['problem_nodes'].min()) // node_bin_size) * node_bin_size
-        hi = (int(agg_df['problem_nodes'].max()) // node_bin_size + 1) * node_bin_size
-        bins = list(range(lo, hi + node_bin_size, node_bin_size))
-        labels = [b + node_bin_size // 2 for b in bins[:-1]]
-        agg_df['_x'] = pd.cut(
-            agg_df['problem_nodes'], bins=bins, labels=labels,
-        ).astype(float)
+        n_min = max(1, int(agg_df['problem_nodes'].min()))
+        n_max = int(agg_df['problem_nodes'].max())
+        if n_max > n_min and _use_log_x:
+            n_log_bins = max(10, min(40, int(np.log2(n_max / n_min) * 4)))
+            bins = np.unique(np.geomspace(n_min, n_max + 1, n_log_bins + 1).astype(int))
+            bins = sorted(set(bins))
+            if len(bins) < 2:
+                bins = [n_min, n_max + 1]
+            labels = [np.sqrt(bins[i] * bins[i + 1]) for i in range(len(bins) - 1)]
+            agg_df['_x'] = pd.cut(
+                agg_df['problem_nodes'], bins=bins, labels=labels,
+                include_lowest=True,
+            ).astype(float)
+        elif n_max > n_min:
+            lo = (n_min // node_bin_size) * node_bin_size
+            hi = (n_max // node_bin_size + 1) * node_bin_size
+            bins = list(range(lo, hi + node_bin_size, node_bin_size))
+            labels = [b + node_bin_size // 2 for b in bins[:-1]]
+            agg_df['_x'] = pd.cut(
+                agg_df['problem_nodes'], bins=bins, labels=labels,
+            ).astype(float)
+        else:
+            agg_df['_x'] = agg_df['problem_nodes'].astype(float)
     else:
         agg_df['_x'] = agg_df['problem_nodes'].astype(float)
 
@@ -451,15 +748,19 @@ def plot_size_density_heatmap(
     cb = plt.colorbar(im, ax=ax)
     cb.set_label(_HEATMAP_LABELS.get(metric, metric))
 
-    # Clip x-axis to the range that actually has data — avoids wide empty space
-    # on the right when most large graphs failed (success_rate case).
-    # If x_max is given (shared across per-algo plots) use that as the right
-    # edge so all heatmaps for the same metric are visually comparable.
+    if _use_log_x:
+        ax.set_xscale('log')
+    # Clip x-axis to the range that actually has data
     valid_cols = np.where(~np.all(np.isnan(Z), axis=0))[0]
     if valid_cols.size:
-        x_margin = (X[1] - X[0]) if len(X) > 1 else 5.0
-        x_right = float(x_max) if x_max is not None else X[valid_cols[-1]]
-        ax.set_xlim(X[valid_cols[0]] - x_margin, x_right + x_margin)
+        if _use_log_x:
+            x_left = X[valid_cols[0]]
+            x_right = float(x_max) if x_max is not None else X[valid_cols[-1]]
+            ax.set_xlim(x_left * 0.8, x_right * 1.2)
+        else:
+            x_margin = (X[1] - X[0]) if len(X) > 1 else 5.0
+            x_right = float(x_max) if x_max is not None else X[valid_cols[-1]]
+            ax.set_xlim(X[valid_cols[0]] - x_margin, x_right + x_margin)
 
     ax.set_xlabel('Number of nodes')
     ax.set_ylabel('Density')
@@ -474,7 +775,247 @@ def plot_size_density_heatmap(
     plt.tight_layout()
     algo_tag = f'_{algo}' if algo else ''
     _maybe_save(fig, output_dir, f'{fname_suffix}{algo_tag}.png', save,
-                subdir='figures/scaling', fmt=fmt)
+                subdir=f'figures/scaling/{metric}', fmt=fmt)
+    return fig
+
+
+def plot_size_density_heatmap_grid(
+    df: pd.DataFrame,
+    metric: str = 'avg_chain_length',
+    graph_categories: Optional[List[str]] = None,
+    node_bin_size: Optional[int] = 10,
+    density_bin_size: Optional[float] = 0.05,
+    smooth: bool = True,
+    smooth_sigma: float = 1.0,
+    vmin: Optional[float] = None,
+    vmax: Optional[float] = None,
+    x_max: Optional[float] = None,
+    cmap: Optional[str] = None,
+    algo_palette=None,
+    output_dir=None,
+    save: bool = False,
+    fmt: str = 'png',
+) -> plt.Figure:
+    """Grid of per-algorithm heatmaps for side-by-side comparison.
+
+    Creates one subplot per algorithm, all sharing the same colour scale
+    and axis ranges for direct visual comparison.
+
+    Args:
+        Same as ``plot_size_density_heatmap`` except ``algo`` is removed —
+        all algorithms in the data are plotted.
+
+    Returns:
+        matplotlib Figure with the grid of heatmaps.
+    """
+    if metric not in _HEATMAP_METRICS:
+        raise ValueError(
+            f"metric must be one of {sorted(_HEATMAP_METRICS)}, got {metric!r}"
+        )
+
+    if graph_categories is None:
+        graph_categories = ['random_er']
+
+    fdf = df[df['category'].isin(graph_categories)].copy()
+
+    fname_suffix = 'size_density_grid'
+
+    if fdf.empty:
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.text(0.5, 0.5,
+                f'No data for categories: {graph_categories}',
+                ha='center', va='center', transform=ax.transAxes)
+        _maybe_save(fig, output_dir, f'{fname_suffix}.png', save,
+                    subdir=f'figures/scaling/{metric}', fmt=fmt)
+        return fig
+
+    algos = sorted(fdf['algorithm'].unique())
+    n_algos = len(algos)
+
+    if n_algos == 0:
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.text(0.5, 0.5, 'No algorithms in filtered data',
+                ha='center', va='center', transform=ax.transAxes)
+        _maybe_save(fig, output_dir, f'{fname_suffix}.png', save,
+                    subdir=f'figures/scaling/{metric}', fmt=fmt)
+        return fig
+
+    # Grid layout: up to 3 columns for a balanced look (e.g. 5 algos → 3+2)
+    n_cols = min(n_algos, 3)
+    n_rows = (n_algos + n_cols - 1) // n_cols
+    fig, axes = plt.subplots(n_rows, n_cols,
+                             figsize=(5 * n_cols, 4.5 * n_rows),
+                             squeeze=False)
+
+    # ── Compute shared colour limits if not provided ─────────────────────
+    is_success = metric == 'success_rate'
+    _use_all_trials = metric in ('success_rate', 'wall_time')
+    _use_log_x = metric in ('success_rate', 'wall_time')
+    if is_success:
+        agg_col = 'success'
+        global_agg = fdf.copy()
+    elif _use_all_trials:
+        agg_col = metric
+        global_agg = fdf.copy()
+    else:
+        agg_col = metric
+        global_agg = fdf[fdf['success']].copy()
+
+    if vmin is None or vmax is None:
+        if is_success:
+            _auto_vmin, _auto_vmax = 0.0, 1.0
+        elif not global_agg.empty and agg_col in global_agg.columns:
+            _auto_vmin = float(global_agg[agg_col].min())
+            _auto_vmax = float(global_agg[agg_col].max())
+        else:
+            _auto_vmin, _auto_vmax = 0.0, 1.0
+        if vmin is None:
+            vmin = _auto_vmin
+        if vmax is None:
+            vmax = _auto_vmax
+
+    # Shared x_max
+    if x_max is None and not global_agg.empty:
+        x_max = float(global_agg['problem_nodes'].max())
+
+    chosen_cmap = cmap or _HEATMAP_CMAPS[metric]
+    cmap_obj = plt.get_cmap(chosen_cmap).copy()
+    cmap_obj.set_bad('lightgray')
+
+    last_im = None
+
+    for idx, algo in enumerate(algos):
+        row, col = divmod(idx, n_cols)
+        ax = axes[row][col]
+
+        adf = fdf[fdf['algorithm'] == algo].copy()
+        if is_success or _use_all_trials:
+            agg_df = adf.copy()
+        else:
+            agg_df = adf[adf['success']].copy()
+
+        if agg_df.empty:
+            ax.text(0.5, 0.5, 'No data', ha='center', va='center',
+                    transform=ax.transAxes, fontsize=9)
+            ax.set_title(algo, fontsize=10, fontweight='bold')
+            continue
+
+        # Bin nodes (log-spaced only for success_rate)
+        if node_bin_size is not None:
+            n_min = max(1, int(agg_df['problem_nodes'].min()))
+            n_max = int(agg_df['problem_nodes'].max())
+            if n_max > n_min and _use_log_x:
+                n_log_bins = max(10, min(40, int(np.log2(n_max / n_min) * 4)))
+                nbins = np.unique(np.geomspace(n_min, n_max + 1, n_log_bins + 1).astype(int))
+                nbins = sorted(set(nbins))
+                if len(nbins) < 2:
+                    nbins = [n_min, n_max + 1]
+                nlabels = [np.sqrt(nbins[i] * nbins[i + 1]) for i in range(len(nbins) - 1)]
+                agg_df['_x'] = pd.cut(
+                    agg_df['problem_nodes'], bins=nbins, labels=nlabels,
+                    include_lowest=True,
+                ).astype(float)
+            elif n_max > n_min:
+                lo = (n_min // node_bin_size) * node_bin_size
+                hi = (n_max // node_bin_size + 1) * node_bin_size
+                nbins = list(range(lo, hi + node_bin_size, node_bin_size))
+                nlabels = [b + node_bin_size // 2 for b in nbins[:-1]]
+                agg_df['_x'] = pd.cut(
+                    agg_df['problem_nodes'], bins=nbins, labels=nlabels,
+                ).astype(float)
+            else:
+                agg_df['_x'] = agg_df['problem_nodes'].astype(float)
+        else:
+            agg_df['_x'] = agg_df['problem_nodes'].astype(float)
+
+        if density_bin_size is not None:
+            dlo = (agg_df['problem_density'].min() // density_bin_size) * density_bin_size
+            dhi = min(1.0 + density_bin_size,
+                      (agg_df['problem_density'].max() // density_bin_size + 1) * density_bin_size)
+            d_bins = list(np.arange(dlo, dhi + density_bin_size / 2, density_bin_size))
+            d_labels = [round(b + density_bin_size / 2, 4) for b in d_bins[:-1]]
+            agg_df['_y'] = pd.cut(
+                agg_df['problem_density'], bins=d_bins, labels=d_labels,
+            ).astype(float)
+        else:
+            agg_df['_y'] = agg_df['problem_density'].round(3)
+
+        agg_df = agg_df.dropna(subset=['_x', '_y'])
+        if agg_df.empty:
+            ax.text(0.5, 0.5, 'No binned data', ha='center', va='center',
+                    transform=ax.transAxes, fontsize=9)
+            ax.set_title(algo, fontsize=10, fontweight='bold')
+            continue
+
+        pivot = (
+            agg_df.groupby(['_y', '_x'], observed=True)[agg_col]
+            .mean()
+            .unstack(level='_x')
+        )
+        pivot = pivot.sort_index(ascending=True).sort_index(axis=1, ascending=True)
+
+        X = pivot.columns.values.astype(float)
+        Y = pivot.index.values.astype(float)
+        Z = pivot.values
+
+        if smooth and smooth_sigma > 0:
+            from scipy.ndimage import gaussian_filter
+            Z_filled = np.where(np.isnan(Z), 0.0, Z)
+            W = (~np.isnan(Z)).astype(float)
+            Z_sm = gaussian_filter(Z_filled, sigma=smooth_sigma)
+            W_sm = gaussian_filter(W, sigma=smooth_sigma)
+            with np.errstate(invalid='ignore'):
+                Z = np.where(W_sm > 0.05, Z_sm / W_sm, np.nan)
+
+        im = ax.pcolormesh(X, Y, Z, cmap=cmap_obj, vmin=vmin, vmax=vmax,
+                           shading='nearest')
+        last_im = im
+
+        if _use_log_x:
+            ax.set_xscale('log')
+        # Shared x range
+        valid_cols = np.where(~np.all(np.isnan(Z), axis=0))[0]
+        if valid_cols.size:
+            if _use_log_x:
+                x_left = X[valid_cols[0]]
+                x_right = float(x_max) if x_max is not None else X[valid_cols[-1]]
+                ax.set_xlim(x_left * 0.8, x_right * 1.2)
+            else:
+                x_margin = (X[1] - X[0]) if len(X) > 1 else 5.0
+                x_right = float(x_max) if x_max is not None else X[valid_cols[-1]]
+                ax.set_xlim(X[valid_cols[0]] - x_margin, x_right + x_margin)
+
+        ax.set_title(algo, fontsize=10, fontweight='bold')
+        if col == 0:
+            ax.set_ylabel('Density')
+        else:
+            ax.set_ylabel('')
+        if row == n_rows - 1:
+            ax.set_xlabel('Nodes')
+        else:
+            ax.set_xlabel('')
+
+    # Hide unused subplots
+    for idx in range(n_algos, n_rows * n_cols):
+        row, col = divmod(idx, n_cols)
+        axes[row][col].set_visible(False)
+
+    # Shared colorbar
+    if last_im is not None:
+        fig.subplots_adjust(right=0.88)
+        cbar_ax = fig.add_axes([0.90, 0.15, 0.02, 0.7])
+        cb = fig.colorbar(last_im, cax=cbar_ax)
+        cb.set_label(_HEATMAP_LABELS.get(metric, metric))
+
+    cats_str = ', '.join(graph_categories)
+    fig.suptitle(
+        f'{_HEATMAP_LABELS.get(metric, metric)} vs size × density ({cats_str})',
+        fontsize=13, y=1.01,
+    )
+
+    plt.tight_layout(rect=[0, 0, 0.88, 0.98])
+    _maybe_save(fig, output_dir, f'{fname_suffix}.png', save,
+                subdir=f'figures/scaling/{metric}', fmt=fmt)
     return fig
 
 
@@ -550,16 +1091,12 @@ def plot_distributions(df: pd.DataFrame,
                        fmt: str = 'png') -> plt.Figure:
     """Violin plot of `metric` per algorithm (successful trials only)."""
     success_df = df[df['success']].copy()
+    _dist_metric_dir = 'chain_length' if metric == 'avg_chain_length' else metric
     if success_df.empty or metric not in success_df.columns:
         fig, ax = plt.subplots()
         ax.text(0.5, 0.5, 'No data', ha='center', va='center')
-        if metric == 'avg_chain_length':
-            fname = 'chain_length_violin.png'
-        elif metric == 'wall_time':
-            fname = 'embedding_time_violin.png'
-        else:
-            fname = f'distribution_{metric}.png'
-        _maybe_save(fig, output_dir, fname, save, subdir='figures/distributions', fmt=fmt)
+        _maybe_save(fig, output_dir, 'violin.png', save,
+                    subdir=f'figures/distributions/{_dist_metric_dir}', fmt=fmt)
         return fig
 
     palette = algo_palette or _algo_palette(success_df['algorithm'].unique())
@@ -575,19 +1112,238 @@ def plot_distributions(df: pd.DataFrame,
     )
     ax.set_xlabel('Algorithm')
     ax.set_ylabel(metric.replace('_', ' '))
+    if metric == 'wall_time':
+        ax.set_yscale('log')
+        ax.set_ylabel('Embedding time (s)')
     ax.set_title(f'Distribution of {metric.replace("_", " ")} per algorithm')
-    ax.grid(axis='y', alpha=0.3)
+    ax.grid(axis='y', alpha=0.3, which='both')
     plt.xticks(rotation=20, ha='right')
     plt.tight_layout()
 
-    if metric == 'avg_chain_length':
-        fname = 'chain_length_violin.png'
-    elif metric == 'wall_time':
-        fname = 'embedding_time_violin.png'
-    else:
-        fname = f'distribution_{metric}.png'
-    _maybe_save(fig, output_dir, fname, save, subdir='figures/distributions', fmt=fmt)
+    _maybe_save(fig, output_dir, 'violin.png', save,
+                subdir=f'figures/distributions/{_dist_metric_dir}', fmt=fmt)
     return fig
+
+
+# ── Category-balanced summary bars ───────────────────────────────────────────────
+
+def plot_balanced_summary(df: pd.DataFrame,
+                          algo_palette=None,
+                          output_dir=None,
+                          save: bool = False,
+                          fmt: str = 'png') -> plt.Figure:
+    """Two-panel bar chart: macro-averaged success rate and chain length.
+
+    Each graph category contributes equally (average of per-category
+    averages) so that large categories don't dominate the overall numbers.
+    """
+    algos = sorted(df['algorithm'].unique())
+    palette = algo_palette or _algo_palette(algos)
+    cats = sorted(df['category'].unique())
+
+    # ── Success rate: macro-average ──
+    sr_per_cat = (
+        df.groupby(['algorithm', 'category'])['success']
+        .mean()
+        .unstack(level='category')
+    )
+    macro_sr = sr_per_cat.mean(axis=1).reindex(algos)
+
+    # ── Chain length: macro-average (successful trials only) ──
+    sdf = df[df['success']]
+    cl_per_cat = (
+        sdf.groupby(['algorithm', 'category'])['avg_chain_length']
+        .mean()
+        .unstack(level='category')
+    )
+    macro_cl = cl_per_cat.mean(axis=1).reindex(algos)
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+
+    # Success rate bars
+    colors = [palette[a] for a in algos]
+    bars1 = ax1.bar(algos, macro_sr.values, color=colors)
+    ax1.set_ylabel('Success rate')
+    ax1.set_title('Category-balanced success rate')
+    ax1.set_ylim(0, 1.05)
+    for bar, val in zip(bars1, macro_sr.values):
+        ax1.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.01,
+                 f'{val:.1%}', ha='center', va='bottom', fontsize=9)
+    ax1.grid(axis='y', alpha=0.3)
+    ax1.tick_params(axis='x', rotation=20)
+
+    # Chain length bars
+    bars2 = ax2.bar(algos, macro_cl.values, color=colors)
+    ax2.set_ylabel('Avg chain length')
+    ax2.set_title('Category-balanced avg chain length\n(successful only)')
+    for bar, val in zip(bars2, macro_cl.values):
+        if not np.isnan(val):
+            ax2.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.1,
+                     f'{val:.2f}', ha='center', va='bottom', fontsize=9)
+    ax2.grid(axis='y', alpha=0.3)
+    ax2.tick_params(axis='x', rotation=20)
+
+    plt.tight_layout()
+    _maybe_save(fig, output_dir, 'balanced_summary.png', save,
+                subdir='figures/distributions/summary', fmt=fmt)
+    return fig
+
+
+def plot_balanced_time(df: pd.DataFrame,
+                       algo_palette=None,
+                       output_dir=None,
+                       save: bool = False,
+                       fmt: str = 'png') -> plt.Figure:
+    """Side-by-side median vs mean category-balanced embedding time.
+
+    Shows how much timeouts and outliers inflate the mean relative to
+    the median, making the impact of extreme values immediately visible.
+    """
+    algos = sorted(df['algorithm'].unique())
+    palette = algo_palette or _algo_palette(algos)
+    colors = [palette[a] for a in algos]
+
+    # Per-category median, then macro-average across categories
+    median_per_cat = (
+        df.groupby(['algorithm', 'category'])['wall_time']
+        .median()
+        .unstack(level='category')
+    )
+    macro_median = median_per_cat.mean(axis=1).reindex(algos)
+
+    # Per-category mean, then macro-average across categories
+    mean_per_cat = (
+        df.groupby(['algorithm', 'category'])['wall_time']
+        .mean()
+        .unstack(level='category')
+    )
+    macro_mean = mean_per_cat.mean(axis=1).reindex(algos)
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+
+    # Median
+    bars1 = ax1.bar(algos, macro_median.values, color=colors)
+    ax1.set_ylabel('Embedding time (s)')
+    ax1.set_title('Category-balanced embedding time\n(median per category)')
+    ax1.set_yscale('log')
+    for bar, val in zip(bars1, macro_median.values):
+        if not np.isnan(val):
+            ax1.text(bar.get_x() + bar.get_width() / 2, bar.get_height() * 1.15,
+                     f'{val:.3f}s', ha='center', va='bottom', fontsize=9)
+    ax1.grid(axis='y', alpha=0.3, which='both')
+    ax1.tick_params(axis='x', rotation=20)
+
+    # Mean
+    bars2 = ax2.bar(algos, macro_mean.values, color=colors)
+    ax2.set_ylabel('Embedding time (s)')
+    ax2.set_title('Category-balanced embedding time\n(mean per category)')
+    ax2.set_yscale('log')
+    for bar, val in zip(bars2, macro_mean.values):
+        if not np.isnan(val):
+            ax2.text(bar.get_x() + bar.get_width() / 2, bar.get_height() * 1.15,
+                     f'{val:.2f}s', ha='center', va='bottom', fontsize=9)
+    ax2.grid(axis='y', alpha=0.3, which='both')
+    ax2.tick_params(axis='x', rotation=20)
+
+    # Match y-axis range so the visual difference is clear
+    ymin = min(ax1.get_ylim()[0], ax2.get_ylim()[0])
+    ymax = max(ax1.get_ylim()[1], ax2.get_ylim()[1])
+    ax1.set_ylim(ymin, ymax)
+    ax2.set_ylim(ymin, ymax)
+
+    plt.tight_layout()
+    _maybe_save(fig, output_dir, 'balanced_time.png', save,
+                subdir='figures/distributions/wall_time', fmt=fmt)
+    return fig
+
+
+def plot_per_topology_summary(df: pd.DataFrame,
+                              algo_palette=None,
+                              output_dir=None,
+                              save: bool = False,
+                              fmt: str = 'png') -> List[plt.Figure]:
+    """Per-topology balanced summary: one figure per topology.
+
+    Each figure has 3 panels: category-balanced success rate, chain length,
+    and median embedding time for that topology only.
+    """
+    if 'topology_name' not in df.columns and 'base_topology' not in df.columns:
+        return []
+
+    topo_col = 'base_topology' if 'base_topology' in df.columns else 'topology_name'
+    topos = sorted(df[topo_col].unique())
+    algos = sorted(df['algorithm'].unique())
+    palette = algo_palette or _algo_palette(algos)
+    colors = [palette[a] for a in algos]
+    figs = []
+
+    for topo in topos:
+        tdf = df[df[topo_col] == topo]
+        if tdf.empty:
+            continue
+
+        cats = sorted(tdf['category'].unique())
+
+        # Success rate
+        sr_per_cat = tdf.groupby(['algorithm', 'category'])['success'].mean().unstack(level='category')
+        macro_sr = sr_per_cat.mean(axis=1).reindex(algos)
+
+        # Chain length (successful only)
+        sdf = tdf[tdf['success']]
+        if not sdf.empty:
+            cl_per_cat = sdf.groupby(['algorithm', 'category'])['avg_chain_length'].mean().unstack(level='category')
+            macro_cl = cl_per_cat.mean(axis=1).reindex(algos)
+        else:
+            macro_cl = pd.Series(np.nan, index=algos)
+
+        # Embedding time (median)
+        et_per_cat = tdf.groupby(['algorithm', 'category'])['wall_time'].median().unstack(level='category')
+        macro_et = et_per_cat.mean(axis=1).reindex(algos)
+
+        fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(17, 5))
+        fig.suptitle(f'Topology: {topo}', fontsize=14, fontweight='bold')
+
+        # Success rate
+        bars1 = ax1.bar(algos, macro_sr.values, color=colors)
+        ax1.set_ylabel('Success rate')
+        ax1.set_title('Category-balanced success rate')
+        ax1.set_ylim(0, 1.05)
+        for bar, val in zip(bars1, macro_sr.values):
+            if not np.isnan(val):
+                ax1.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.01,
+                         f'{val:.1%}', ha='center', va='bottom', fontsize=9)
+        ax1.grid(axis='y', alpha=0.3)
+        ax1.tick_params(axis='x', rotation=20)
+
+        # Chain length
+        bars2 = ax2.bar(algos, macro_cl.values, color=colors)
+        ax2.set_ylabel('Avg chain length')
+        ax2.set_title('Category-balanced chain length\n(successful only)')
+        for bar, val in zip(bars2, macro_cl.values):
+            if not np.isnan(val):
+                ax2.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.1,
+                         f'{val:.2f}', ha='center', va='bottom', fontsize=9)
+        ax2.grid(axis='y', alpha=0.3)
+        ax2.tick_params(axis='x', rotation=20)
+
+        # Embedding time (median, log scale)
+        bars3 = ax3.bar(algos, macro_et.values, color=colors)
+        ax3.set_ylabel('Median embedding time (s)')
+        ax3.set_title('Category-balanced embedding time\n(median, all trials)')
+        ax3.set_yscale('log')
+        for bar, val in zip(bars3, macro_et.values):
+            if not np.isnan(val):
+                ax3.text(bar.get_x() + bar.get_width() / 2, bar.get_height() * 1.15,
+                         f'{val:.3f}s', ha='center', va='bottom', fontsize=9)
+        ax3.grid(axis='y', alpha=0.3, which='both')
+        ax3.tick_params(axis='x', rotation=20)
+
+        plt.tight_layout(rect=[0, 0, 1, 0.95])
+        _maybe_save(fig, output_dir, f'summary_{topo}.png', save,
+                    subdir='figures/topology', fmt=fmt)
+        figs.append(fig)
+
+    return figs
 
 
 # ── 6. Head-to-head scatter ──────────────────────────────────────────────────────
@@ -697,7 +1453,7 @@ def plot_consistency(df: pd.DataFrame,
     plt.suptitle('Algorithm consistency (lower CV = more consistent)')
     plt.tight_layout()
     _maybe_save(fig, output_dir, 'consistency_cv.png', save,
-                subdir='figures/distributions', fmt=fmt)
+                subdir='figures/distributions/chain_length', fmt=fmt)
     return fig
 
 
@@ -853,8 +1609,8 @@ def plot_chain_distribution(df: pd.DataFrame,
     ax.legend(framealpha=0.9)
     ax.grid(alpha=0.3)
     plt.tight_layout()
-    _maybe_save(fig, output_dir, 'chain_length_kde.png', save,
-                subdir='figures/distributions', fmt=fmt)
+    _maybe_save(fig, output_dir, 'kde.png', save,
+                subdir='figures/distributions/chain_length', fmt=fmt)
     return fig
 
 
@@ -947,9 +1703,10 @@ def plot_success_by_nodes(df, algo_palette=None, output_dir=None, save=False, fm
     ax.set_xlabel('Number of nodes')
     ax.set_ylabel('Success rate')
     ax.set_ylim(-0.05, 1.05)
+    ax.set_xscale('log')
     ax.set_title('Success rate vs graph size')
     ax.legend(framealpha=0.9, bbox_to_anchor=(1.02, 1), loc='upper left')
-    ax.grid(alpha=0.3)
+    ax.grid(alpha=0.3, which='both')
     plt.tight_layout()
     _maybe_save(fig, output_dir, 'success_rate_by_nodes.png', save, subdir='figures/success', fmt=fmt)
     return fig
@@ -1361,8 +2118,8 @@ def plot_max_chain_distribution(df: pd.DataFrame,
     ax.legend(framealpha=0.9)
     ax.grid(alpha=0.3)
     plt.tight_layout()
-    _maybe_save(fig, output_dir, 'max_chain_length_kde.png', save,
-                subdir='figures/distributions', fmt=fmt)
+    _maybe_save(fig, output_dir, 'max_kde.png', save,
+                subdir='figures/distributions/chain_length', fmt=fmt)
     return fig
 
 

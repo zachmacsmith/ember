@@ -1,0 +1,28 @@
+Friedman Test Results
+==================================================
+
+Chi-squared statistic:  41.4
+p-value:               2.414988144483470e-07
+log10(p):              -6.6171
+  (i.e. p ~ 10^-6.6)
+
+Significant (a=0.05):  True
+Significant (a=0.01):  True
+Significant (a=0.001): True
+
+N problems (complete):  7
+N algorithms:           7
+Kendall's W:            0.985714285714285
+
+Mean Ranks (1 = best):
+----------------------------------------
+  oct-fast-oct                        2.500000
+  oct-fast-oct-reduce                 2.500000
+  oct-hybrid-oct                      2.500000
+  oct-hybrid-oct-reduce               2.500000
+  oct-triad-reduce                    5.714286
+  oct-triad                           6.142857
+  oct_based                           6.142857
+
+Nemenyi CD (a=0.05):    3.405212
+  (pairs whose mean rank differs by >= CD are significantly different)

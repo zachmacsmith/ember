@@ -18,9 +18,10 @@ Output layout produced by generate_report()
     ├── summary/        — CSV + LaTeX tables
     ├── statistics/     — significance tests, correlation, friedman
     ├── figures/
-    │   ├── distributions/
+    │   ├── distributions/{chain_length,wall_time,summary}/
     │   ├── graph_indexed/{by_graph_id,by_n_nodes,by_density}/
-    │   ├── scaling/
+    │   ├── scaling/{avg_chain_length,max_chain_length,…}/
+    │   ├── category_breakdown/{avg_chain_length,wall_time,…}/
     │   ├── pairwise/
     │   ├── success/
     │   └── topology/
@@ -46,7 +47,7 @@ from ember_qc_analysis.statistics import (
 from ember_qc_analysis.plots import (
     build_algo_palette,
     plot_heatmap, plot_scaling, plot_density_hardness,
-    plot_size_density_heatmap,
+    plot_size_density_heatmap, plot_size_density_heatmap_grid,
     plot_pareto, plot_distributions, plot_head_to_head,
     plot_consistency, plot_topology_comparison,
     plot_problem_deep_dive, plot_chain_distribution,
@@ -55,6 +56,8 @@ from ember_qc_analysis.plots import (
     plot_graph_indexed_chain, plot_graph_indexed_time,
     plot_graph_indexed_success,
     plot_max_chain_distribution, plot_intersection_comparison,
+    plot_balanced_summary, plot_balanced_time, plot_per_topology_summary,
+    plot_heatmap_by_family, plot_heatmap_family_summary,
 )
 from ember_qc_analysis.export import df_to_latex, export_tables
 from ember_qc_analysis.filters import shared_graph_filter, apply_graph_filter, parse_graph_ids
@@ -72,7 +75,7 @@ __all__ = [
     # Plots
     'build_algo_palette',
     'plot_heatmap', 'plot_scaling', 'plot_density_hardness',
-    'plot_size_density_heatmap',
+    'plot_size_density_heatmap', 'plot_size_density_heatmap_grid',
     'plot_pareto', 'plot_distributions', 'plot_head_to_head',
     'plot_consistency', 'plot_topology_comparison',
     'plot_problem_deep_dive', 'plot_chain_distribution',
@@ -389,7 +392,8 @@ class BenchmarkAnalysis:
 
     # ── Full report ───────────────────────────────────────────────────────────
 
-    def generate_report(self, fmt: str = 'png') -> Path:
+    def generate_report(self, fmt: str = 'png',
+                        skip_graph_indexed: bool = False) -> Path:
         """Run all analyses and write output to analysis/<batch-name>/.
 
         Output layout:
@@ -399,7 +403,9 @@ class BenchmarkAnalysis:
             report.md    — index with descriptions of every output
 
         Args:
-            fmt: Image format for figures ('png', 'pdf', 'svg').
+            fmt:                Image format for figures ('png', 'pdf', 'svg').
+            skip_graph_indexed: Skip the slow graph-indexed plots (useful for
+                                large datasets with thousands of graphs).
 
         Returns:
             Path to the output directory.
@@ -408,11 +414,27 @@ class BenchmarkAnalysis:
         for subdir in [
             self.summary_dir,
             self.statistics_dir,
-            self.figures_dir / 'distributions',
+            # distributions/<metric>/
+            self.figures_dir / 'distributions' / 'chain_length',
+            self.figures_dir / 'distributions' / 'wall_time',
+            self.figures_dir / 'distributions' / 'summary',
+            # graph_indexed/<x_mode>/
             self.figures_dir / 'graph_indexed' / 'by_graph_id',
             self.figures_dir / 'graph_indexed' / 'by_n_nodes',
             self.figures_dir / 'graph_indexed' / 'by_density',
-            self.figures_dir / 'scaling',
+            # scaling/<metric>/
+            self.figures_dir / 'scaling' / 'avg_chain_length',
+            self.figures_dir / 'scaling' / 'max_chain_length',
+            self.figures_dir / 'scaling' / 'qubit_overhead_ratio',
+            self.figures_dir / 'scaling' / 'success_rate',
+            self.figures_dir / 'scaling' / 'wall_time',
+            # category_breakdown/<metric>/
+            self.figures_dir / 'category_breakdown' / 'avg_chain_length',
+            self.figures_dir / 'category_breakdown' / 'wall_time',
+            self.figures_dir / 'category_breakdown' / 'success_rate',
+            self.figures_dir / 'category_breakdown' / 'win_rate',
+            self.figures_dir / 'category_breakdown' / 'relative_time',
+            # other
             self.figures_dir / 'pairwise',
             self.figures_dir / 'success',
             self.figures_dir / 'topology',
@@ -457,6 +479,42 @@ class BenchmarkAnalysis:
              lambda: plot_heatmap(
                  self._df, 'avg_chain_length', algo_palette=palette,
                  output_dir=self.output_dir, save=True, fmt=fmt))
+        _run('embedding_time_by_category',
+             lambda: plot_heatmap(
+                 self._df, 'wall_time', algo_palette=palette,
+                 output_dir=self.output_dir, save=True, fmt=fmt))
+        _run('success_rate_by_category',
+             lambda: plot_heatmap(
+                 self._df, 'success_rate', algo_palette=palette,
+                 output_dir=self.output_dir, save=True, fmt=fmt))
+        _run('win_rate_by_category',
+             lambda: plot_heatmap(
+                 self._df, 'win_rate', algo_palette=palette,
+                 output_dir=self.output_dir, save=True, fmt=fmt))
+        _run('relative_time_by_category',
+             lambda: plot_heatmap(
+                 self._df, 'relative_time', algo_palette=palette,
+                 output_dir=self.output_dir, save=True, fmt=fmt))
+        _run('balanced_summary',
+             lambda: plot_balanced_summary(
+                 self._df, algo_palette=palette,
+                 output_dir=self.output_dir, save=True, fmt=fmt))
+        _run('balanced_time',
+             lambda: plot_balanced_time(
+                 self._df, algo_palette=palette,
+                 output_dir=self.output_dir, save=True, fmt=fmt))
+        # Per-family category breakdowns + family summary
+        for _cat_metric in ('avg_chain_length', 'wall_time', 'success_rate',
+                             'win_rate', 'relative_time'):
+            _run(f'category_family_{_cat_metric}',
+                 lambda m=_cat_metric: plot_heatmap_by_family(
+                     self._df, metric=m, algo_palette=palette,
+                     output_dir=self.output_dir, save=True, fmt=fmt))
+            _run(f'family_summary_{_cat_metric}',
+                 lambda m=_cat_metric: plot_heatmap_family_summary(
+                     self._df, metric=m, algo_palette=palette,
+                     output_dir=self.output_dir, save=True, fmt=fmt))
+
         _run('consistency_cv',
              lambda: plot_consistency(
                  self._df, algo_palette=palette,
@@ -476,26 +534,16 @@ class BenchmarkAnalysis:
                  self._df, algo_palette=palette,
                  output_dir=self.output_dir, save=True, fmt=fmt))
         for _sdh_metric in ('avg_chain_length', 'max_chain_length',
-                             'qubit_overhead_ratio', 'success_rate'):
+                             'qubit_overhead_ratio', 'success_rate', 'wall_time'):
             _run(f'size_density_{_sdh_metric}',
                  lambda m=_sdh_metric: plot_size_density_heatmap(
                      self._df, metric=m,
                      output_dir=self.output_dir, save=True, fmt=fmt))
-            # Compute shared x and colour limits so per-algo plots are comparable
-            _rcat = self._df[self._df['category'] == 'random']
-            _succ = _rcat[_rcat['success']]
-            _sdh_xmax = float(_succ['problem_nodes'].max()) if not _succ.empty else None
-            if _sdh_metric == 'success_rate':
-                _sdh_vmin, _sdh_vmax = 0.0, 1.0
-            else:
-                _col = _succ[_sdh_metric].dropna() if _sdh_metric in _succ.columns else pd.Series(dtype=float)
-                _sdh_vmin = float(_col.min()) if not _col.empty else None
-                _sdh_vmax = float(_col.max()) if not _col.empty else None
-            for _sdh_algo in algos:
-                _run(f'size_density_{_sdh_metric}_{_sdh_algo}',
-                     lambda m=_sdh_metric, a=_sdh_algo, xmax=_sdh_xmax, vlo=_sdh_vmin, vhi=_sdh_vmax: plot_size_density_heatmap(
-                         self._df, metric=m, algo=a, x_max=xmax, vmin=vlo, vmax=vhi,
-                         output_dir=self.output_dir, save=True, fmt=fmt))
+            # Grid of per-algorithm heatmaps with shared colour scale
+            _run(f'size_density_{_sdh_metric}_grid',
+                 lambda m=_sdh_metric: plot_size_density_heatmap_grid(
+                     self._df, metric=m, algo_palette=palette,
+                     output_dir=self.output_dir, save=True, fmt=fmt))
 
         # ── Pairwise plots ────────────────────────────────────────────────
         _run('win_rate_matrix',
@@ -524,28 +572,35 @@ class BenchmarkAnalysis:
                  output_dir=self.output_dir, save=True, fmt=fmt))
 
         # ── Graph-indexed plots (3 x_modes × 4 metrics = 12 plots) ──────
-        for x_mode in ('by_graph_id', 'by_n_nodes', 'by_density'):
-            _run(f'graph_indexed/{x_mode}/chain_length',
-                 lambda xm=x_mode: plot_graph_indexed_chain(
-                     self._df, xm, algo_palette=palette,
-                     output_dir=self.output_dir, save=True, fmt=fmt))
-            _run(f'graph_indexed/{x_mode}/max_chain_length',
-                 lambda xm=x_mode: plot_graph_indexed_chain(
-                     self._df, xm, algo_palette=palette,
-                     metric='max_chain_length',
-                     output_dir=self.output_dir, save=True, fmt=fmt))
-            _run(f'graph_indexed/{x_mode}/embedding_time',
-                 lambda xm=x_mode: plot_graph_indexed_time(
-                     self._df, xm, algo_palette=palette,
-                     output_dir=self.output_dir, save=True, fmt=fmt))
-            _run(f'graph_indexed/{x_mode}/success',
-                 lambda xm=x_mode: plot_graph_indexed_success(
-                     self._df, xm,
-                     output_dir=self.output_dir, save=True, fmt=fmt))
+        if skip_graph_indexed:
+            print("  Skipping graph-indexed plots (skip_graph_indexed=True)")
+        else:
+            for x_mode in ('by_graph_id', 'by_n_nodes', 'by_density'):
+                _run(f'graph_indexed/{x_mode}/chain_length',
+                     lambda xm=x_mode: plot_graph_indexed_chain(
+                         self._df, xm, algo_palette=palette,
+                         output_dir=self.output_dir, save=True, fmt=fmt))
+                _run(f'graph_indexed/{x_mode}/max_chain_length',
+                     lambda xm=x_mode: plot_graph_indexed_chain(
+                         self._df, xm, algo_palette=palette,
+                         metric='max_chain_length',
+                         output_dir=self.output_dir, save=True, fmt=fmt))
+                _run(f'graph_indexed/{x_mode}/embedding_time',
+                     lambda xm=x_mode: plot_graph_indexed_time(
+                         self._df, xm, algo_palette=palette,
+                         output_dir=self.output_dir, save=True, fmt=fmt))
+                _run(f'graph_indexed/{x_mode}/success',
+                     lambda xm=x_mode: plot_graph_indexed_success(
+                         self._df, xm,
+                         output_dir=self.output_dir, save=True, fmt=fmt))
 
         # ── Topology comparison ───────────────────────────────────────────
         _run('topology_comparison',
              lambda: plot_topology_comparison(
+                 self._df, algo_palette=palette,
+                 output_dir=self.output_dir, save=True, fmt=fmt))
+        _run('per_topology_summaries',
+             lambda: plot_per_topology_summary(
                  self._df, algo_palette=palette,
                  output_dir=self.output_dir, save=True, fmt=fmt))
 
@@ -569,34 +624,65 @@ class BenchmarkAnalysis:
         # ── Statistics → statistics/ ──────────────────────────────────────
         try:
             sig = self.significance_tests()
-            sig.to_csv(self.statistics_dir / 'significance_tests.csv')
+            sig.to_csv(self.statistics_dir / 'wilcoxon_signed_rank.csv',
+                       float_format='%.15g')
             export_tables(
-                {'significance_tests': (sig, 'Wilcoxon significance tests', 'tab:sig')},
+                {'wilcoxon_signed_rank': (sig, 'Wilcoxon signed-rank tests (Holm-Bonferroni corrected)', 'tab:wilcoxon')},
                 self.statistics_dir,
             )
-            generated_stats.append('significance_tests')
+            generated_stats.append('wilcoxon_signed_rank')
         except Exception as e:
-            print(f"  [stats] significance_tests: {e}")
+            print(f"  [stats] wilcoxon_signed_rank: {e}")
 
         try:
             fr = self.friedman_test()
-            (self.statistics_dir / 'friedman_test.txt').write_text(
-                '\n'.join(f'{k}: {v}' for k, v in fr.items()) + '\n'
-            )
+            lines = [
+                f"Friedman Test Results",
+                f"{'='*50}",
+                f"",
+                f"Chi-squared statistic:  {fr.get('statistic', 'N/A'):.15g}" if isinstance(fr.get('statistic'), (int, float)) else f"statistic: {fr.get('statistic', 'N/A')}",
+                f"p-value:               {fr.get('p_value', 'N/A'):.15e}" if isinstance(fr.get('p_value'), (int, float)) else f"p-value: {fr.get('p_value', 'N/A')}",
+                f"log₁₀(p):             {fr.get('log10_p', 'N/A'):.4f}" if isinstance(fr.get('log10_p'), (int, float)) else f"log₁₀(p): {fr.get('log10_p', 'N/A')}",
+                f"Significant (α=0.05):  {fr.get('significant_005', 'N/A')}",
+                f"Significant (α=0.01):  {fr.get('significant_001', 'N/A')}",
+                f"Significant (α=0.001): {fr.get('significant_0001', 'N/A')}",
+                f"",
+                f"N problems (complete):  {fr.get('n_problems', 'N/A')}",
+                f"N algorithms:           {fr.get('n_algorithms', 'N/A')}",
+                f"Kendall's W:            {fr.get('kendalls_w', 'N/A'):.15g}" if isinstance(fr.get('kendalls_w'), (int, float)) else f"Kendall's W: {fr.get('kendalls_w', 'N/A')}",
+                f"",
+            ]
+            if 'mean_ranks' in fr and fr['mean_ranks']:
+                lines.append("Mean Ranks (1 = best):")
+                lines.append(f"{'-'*40}")
+                for algo in fr.get('rank_order', sorted(fr['mean_ranks'])):
+                    rank_val = fr['mean_ranks'].get(algo, '?')
+                    lines.append(f"  {algo:<35s} {rank_val:.6f}")
+            if fr.get('nemenyi_cd') is not None:
+                lines.append(f"")
+                lines.append(f"Nemenyi CD (α=0.05):    {fr['nemenyi_cd']:.6f}")
+                lines.append(f"  (pairs whose mean rank differs by ≥ CD are significantly different)")
+            if 'error' in fr:
+                lines.append(f"")
+                lines.append(f"Error: {fr['error']}")
+
+            (self.statistics_dir / 'friedman_test.txt').write_text('\n'.join(lines) + '\n')
             generated_stats.append('friedman_test')
         except Exception as e:
             print(f"  [stats] friedman_test: {e}")
 
         try:
             corr = self.correlation_matrix()
-            corr.to_csv(self.statistics_dir / 'correlation_matrix.csv')
+            corr.to_csv(self.statistics_dir / 'correlation_matrix.csv',
+                        float_format='%.15g')
             generated_stats.append('correlation_matrix')
         except Exception as e:
             print(f"  [stats] correlation_matrix: {e}")
 
         try:
             wm = self.win_rate_matrix()
-            wm.to_csv(self.statistics_dir / 'win_rate_matrix.csv')
+            wm.to_csv(self.statistics_dir / 'win_rate_matrix.csv',
+                       float_format='%.15g')
             generated_stats.append('win_rate_matrix')
         except Exception as e:
             print(f"  [stats] win_rate_matrix: {e}")
@@ -622,12 +708,10 @@ class BenchmarkAnalysis:
             '\n---\n',
             '## Figures\n',
             '### distributions/\n',
-            '- `chain_length_kde.png` — overlaid KDE of avg chain length per algorithm\n',
-            '- `max_chain_length_kde.png` — overlaid KDE of max chain length per algorithm\n',
-            '- `chain_length_violin.png` — violin + box of chain length distribution\n',
-            '- `embedding_time_violin.png` — violin + box of wall time distribution\n',
-            '- `chain_length_by_category.png` — heatmap: mean chain length by algo × graph category\n',
-            '- `consistency_cv.png` — coefficient of variation for time and chain length\n',
+            'Organised by metric:\n',
+            '- **chain_length/** — `kde.png`, `max_kde.png`, `violin.png`, `consistency_cv.png`\n',
+            '- **wall_time/** — `violin.png`, `balanced_time.png`\n',
+            '- **summary/** — `balanced_summary.png` (cross-metric category-balanced bars)\n',
             '\n### graph_indexed/\n',
             'Twelve plots organised into three x-axis variants:\n',
             '- **by_graph_id/** — one position per graph ID (categorical). Use this to see\n',
@@ -646,8 +730,15 @@ class BenchmarkAnalysis:
             '- `success.png` — success rate heatmap (algorithm × graph, red=0 green=1).\n',
             '  The most informative single figure: shows which algorithm fails on which graphs.\n',
             '\n### scaling/\n',
-            '- `chain_length_vs_nodes.png`, `time_vs_nodes.png` — mean ± std ribbon vs node count\n',
+            'Organised by metric (avg_chain_length/, wall_time/, etc.):\n',
+            '- `scaling_vs_problem_nodes.png` — mean ± std ribbon vs node count\n',
             '- `density_hardness.png` — metric vs density for random graphs (trend lines)\n',
+            '- `size_density.png` — 2D heatmap (nodes × density)\n',
+            '- `size_density_grid.png` — per-algorithm grid of size×density heatmaps\n',
+            '\n### category_breakdown/\n',
+            'Organised by metric (avg_chain_length/, wall_time/, success_rate/, win_rate/, relative_time/):\n',
+            '- `by_category.png` — full heatmap across all graph categories\n',
+            '- `random.png`, `structured.png`, … — per-family subset heatmaps\n',
             '\n### pairwise/\n',
             '- `win_rate_matrix.png` — N×N heatmap: % of problems where row algo beats col algo\n',
             '- `scatter_{A}_vs_{B}.png` — one per algorithm pair; diagonal = equal performance\n',
