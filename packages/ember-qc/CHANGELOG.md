@@ -5,6 +5,47 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.3.0] - 2026-04-17
+
+### Added
+
+- **`oct-fast-oct-reduce-timed`** — new adaptive variant of `fast-oct-reduce`
+  that drives the outer iteration loop from Python rather than relying on
+  the C++ binary's fixed `-r 100`. It repeatedly invokes the binary with
+  a fresh seed each call and keeps the embedding with the shortest max
+  chain length. Stops on whichever of the following fires first:
+
+    - `timeout` (wall-clock budget; default 60 s)
+    - `tries` (hard cap on subprocess calls; default unbounded)
+    - `patience` (consecutive successful attempts without
+      max-chain-length improvement; default 20 — analogue of
+      `minorminer.find_embedding`'s `max_no_improvement` /
+      `chainlength_patience`)
+
+  All knobs are overridable per call via kwargs. The result dict now
+  also carries `exit_reason` (`diminishing_returns` / `tries_exhausted`
+  / `timeout` / `completed` / `FAILURE`), `n_attempts`,
+  `n_successful_attempts`, `best_attempt_idx`, and `stalled_streak`
+  for observability.
+
+  Motivation: the existing `-r 100` variant is non-adaptive and cannot
+  respond to remaining time. On easy graphs it wastes iterations after
+  finding an optimal solution; on hard graphs it can be killed by the
+  subprocess timeout before a single run completes, returning no
+  embedding at all. The timed variant fixes both failure modes.
+
+- **`oct-fast-oct-reduce-1k`** — non-adaptive variant with `-r 1000`
+  (10× the default 100 internal repeats).
+
+- **`oct-fast-oct-reduce-10k`** — non-adaptive variant with `-r 10000`.
+
+All three new variants reuse the existing `fast-oct-reduce` C++
+algorithm. Existing algorithms (`oct-triad`, `oct-triad-reduce`,
+`oct-fast-oct`, `oct-fast-oct-reduce`, `oct-hybrid-oct`,
+`oct-hybrid-oct-reduce`, and the `oct_based` alias) are unchanged.
+
+---
+
 ## [1.2.1] - 2026-04-10
 
 ### Fixed
