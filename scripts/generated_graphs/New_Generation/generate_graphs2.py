@@ -179,8 +179,14 @@ def gen_tree(r: int, h: int):
 
 
 def gen_hypercube(k: int):
-    """Hypercube Q_k: 2^k nodes, each with degree k."""
-    return nx.hypercube_graph(k), f"hypercube_Q{k}", {"type": "hypercube", "k": k}
+    """Hypercube Q_k: 2^k nodes, each with degree k.
+
+    nx.hypercube_graph returns tuple-labeled nodes (e.g. (0,0,1)); relabel
+    to plain ints so downstream algorithms and the benchmark validator can
+    treat them like every other graph in the library.
+    """
+    G = nx.convert_node_labels_to_integers(nx.hypercube_graph(k), first_label=0)
+    return G, f"hypercube_Q{k}", {"type": "hypercube", "k": k}
 
 
 def gen_turan(n: int, r: int):
