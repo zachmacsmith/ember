@@ -23,8 +23,12 @@ class MinorMinerAlgorithm(EmbeddingAlgorithm):
         try:
             import minorminer
             seed = kwargs.get('seed', 42)
+            # Pass the source as a graph object (not an edge list) so that
+            # isolated source vertices are preserved and assigned singleton
+            # chains. The edge-list form silently drops vertices with no
+            # incident edges, producing INVALID_OUTPUT on near-edgeless graphs.
             embedding = minorminer.find_embedding(
-                list(source_graph.edges()),
+                source_graph,
                 list(target_graph.edges()),
                 timeout=timeout,
                 verbose=0,
@@ -49,7 +53,7 @@ class MinorMinerAggressive(EmbeddingAlgorithm):
             import minorminer
             seed = kwargs.get('seed', 42)
             embedding = minorminer.find_embedding(
-                list(source_graph.edges()),
+                source_graph,
                 list(target_graph.edges()),
                 timeout=timeout,
                 verbose=0,
@@ -76,7 +80,7 @@ class MinorMinerFast(EmbeddingAlgorithm):
             import minorminer
             seed = kwargs.get('seed', 42)
             embedding = minorminer.find_embedding(
-                list(source_graph.edges()),
+                source_graph,
                 list(target_graph.edges()),
                 timeout=timeout,
                 verbose=0,
@@ -103,7 +107,7 @@ class MinorMinerChainLength(EmbeddingAlgorithm):
             import minorminer
             seed = kwargs.get('seed', 42)
             embedding = minorminer.find_embedding(
-                list(source_graph.edges()),
+                source_graph,
                 list(target_graph.edges()),
                 timeout=timeout,
                 verbose=0,

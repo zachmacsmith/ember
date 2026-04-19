@@ -5,6 +5,30 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.3.1] - 2026-04-19
+
+### Fixed
+
+- **`minorminer` (all four variants: `minorminer`, `minorminer-aggressive`,
+  `minorminer-fast`, `minorminer-chainlength`)** — the wrapper previously
+  invoked `minorminer.find_embedding` with the source as a flattened edge
+  list (`list(source_graph.edges())`). This silently dropped any source
+  vertex with no incident edges, producing `INVALID_OUTPUT` failures with
+  `embedding missing N source vertex key(s)` on near-edgeless graphs
+  (notably random Erdős–Rényi at low p, planted-solution Chimera
+  instances, sparse SBM, sparse spin glass, and a handful of LFR graphs).
+  The fix passes the `source_graph` object directly so isolated vertices
+  are preserved and assigned singleton chains. Verified against
+  `minorminer 0.2.21` with `networkx 3.4.2`.
+
+  Affected categories in the v1.3.0 main run: `random_er`,
+  `planted_solution`, `sbm`, `spin_glass`, `lfr_benchmark`. 1,443 of
+  17,248 chimera trials (8.4 %) flipped from failure to success on
+  re-evaluation; counterfactual headline success rate moves from
+  51.5 % to 59.9 %.
+
+---
+
 ## [1.3.0] - 2026-04-17
 
 ### Added
