@@ -19,14 +19,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   failed `key_validity`; `pssa` errored out entirely. Source generator
   now relabels hypercube nodes to integers via
   `nx.convert_node_labels_to_integers`, all 11 hypercube JSONs were
-  regenerated, and the bundled manifest (`graphs/manifest.json`, version
-  `1.4.0`) was refreshed with the new SHA-256 hashes so caches refetch
-  automatically.
+  regenerated, and the bundled manifest (`graphs/manifest.json`, now
+  labeled `1.3.2` to match the package version) was refreshed with the
+  new SHA-256 hashes so caches refetch automatically.
 
 ### Changed
 
-- Bundled `graphs/manifest.json` bumped to manifest schema label `1.4.0`
-  to reflect the regenerated hypercube entries.
+- Bundled `graphs/manifest.json` version label aligned to the package
+  version (`1.3.2`) to reflect the regenerated hypercube entries.
 
 ---
 
