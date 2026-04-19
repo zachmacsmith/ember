@@ -5,6 +5,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.3.3] - 2026-04-19
+
+### Fixed
+
+- **Bundled graph cache (`graphs/library/4750_hypercube_Q2.json`)** — the
+  in-package fallback copy of `hypercube_Q2` still contained the old
+  tuple-labeled content, so the loader's SHA-256 integrity check rejected
+  it against the v1.3.2 manifest with
+  `Graph integrity check failed: 4750_hypercube_Q2.json (id=4750)`.
+  Replaced with the regenerated integer-labeled copy that matches the
+  manifest hash `3e85f9098eb87924`.
+
+---
+
 ## [1.3.2] - 2026-04-19
 
 ### Fixed
