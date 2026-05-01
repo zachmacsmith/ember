@@ -18,7 +18,7 @@ To also install the companion analysis package:
 pip install ember-qc[analysis]
 ```
 
-Requires Python 3.10+.
+Requires Python 3.9+.
 
 Verify the installation:
 
@@ -84,7 +84,7 @@ clique                 ✓
 pssa                   ✓
 atom                   ✗           run: ember install-binary atom
 oct-fast-oct           ✗           run: ember install-binary oct
-charme                 ✗           pip install ember-qc[charme]
+charme                 ✗           ember install-binary charme + pip install ember-qc[charme]
 ```
 
 For this tutorial, `minorminer` and `clique` are sufficient.

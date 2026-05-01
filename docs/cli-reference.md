@@ -389,13 +389,14 @@ Prints the path to the config file.
 Download and install pre-built C++ algorithm binaries from GitHub releases.
 
 ```
-ember install-binary [atom|oct] [--version X.Y.Z] [--force] [--list]
+ember install-binary [atom|oct|charme] [--version X.Y.Z] [--force] [--list]
 ```
 
 | Argument / Flag | Description |
 |---|---|
 | `atom` | Install the ATOM binary |
 | `oct` | Install the OCT binary |
+| `charme` | Install the CHARME binary and download weights (`ppo_CHARME_ep1800.pth`) |
 | `--version X.Y.Z` | Pin a specific release version (default: latest) |
 | `--force` | Overwrite an already-installed binary |
 | `--list` | Show install status for all binaries |
@@ -403,6 +404,7 @@ ember install-binary [atom|oct] [--version X.Y.Z] [--force] [--list]
 ```bash
 ember install-binary atom               # install latest ATOM
 ember install-binary oct --version 0.5.0
+ember install-binary charme             # install CHARME binary + weights
 ember install-binary atom --force       # reinstall
 ember install-binary --list             # check status
 ember install-binary                    # same as --list

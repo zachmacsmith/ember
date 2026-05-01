@@ -24,7 +24,7 @@ With the companion analysis package:
 pip install ember-qc[analysis]
 ```
 
-Requires Python 3.10+. No quantum hardware required — all benchmarks run locally.
+Requires Python 3.9+. No quantum hardware required — all benchmarks run locally.
 
 ---
 
@@ -120,6 +120,8 @@ ember graphs install --dry-run default   # preview without downloading
 | `hardware_native` | 42 | Hardware topology graphs |
 | `named_special` | 12 | Petersen, Tutte, Chvátal, etc. |
 | `small` | 617 | All graphs with n ≤ 10 |
+| `charme` | 64 | Graphs used in the original CHARME evaluation (120-node, Chimera-targeted) |
+| `charme_easy` | 45 | Easier subset of CHARME graphs (IDs 90000–90044) |
 | `all` | 31,083 | Everything |
 
 ### Cache management
@@ -147,7 +149,7 @@ ember graphs verify --fix                # re-download any corrupt files
 | `pssa-weighted` | ✓ included | Degree-weighted shifts — best for regular graphs |
 | `pssa-fast` | ✓ included | tmax=50,000 — good for large sweeps |
 | `pssa-thorough` | ✓ included | tmax=2,000,000 — highest quality, slow |
-| `charme` | optional | `pip install ember-qc[charme]` + PyTorch |
+| `charme` | optional | `ember install-binary charme` + `pip install ember-qc[charme]` |
 | `atom` | optional | `ember install-binary atom` |
 | `oct-triad` | optional | `ember install-binary oct` |
 | `oct-fast-oct` | optional | Recommended OCT variant |
@@ -303,7 +305,7 @@ ember algos list [--available]            List algorithms and availability
 ember algos template                      Print algorithm template
 ember algos dir                           Print user algorithms directory
 ember config show/set/get/reset/path      Manage configuration
-ember install-binary <atom|oct>           Install compiled algorithm binaries
+ember install-binary <atom|oct|charme>     Install compiled algorithm binaries
 ember version                             Show package version
 ```
 
@@ -352,7 +354,7 @@ ember topologies list --family pegasus
 
 ## Requirements
 
-- Python 3.10+
+- Python 3.9+
 - networkx >= 2.6
 - numpy >= 1.20
 - pandas >= 1.3
@@ -378,6 +380,23 @@ Full documentation: [github.com/zachmacsmith/ember/tree/main/docs](https://githu
 | [Custom Algorithms](https://github.com/zachmacsmith/ember/blob/main/docs/custom-algorithms.md) | Writing and registering custom algorithms |
 | [Reproducibility](https://github.com/zachmacsmith/ember/blob/main/docs/reproducibility.md) | Seeding, resolved YAML, checkpointing |
 | [Troubleshooting](https://github.com/zachmacsmith/ember/blob/main/docs/troubleshooting.md) | Common problems and fixes |
+
+---
+
+## Citation
+
+If you use EMBER in your research, please cite:
+
+```bibtex
+@article{macaskillsmith2026ember,
+  title   = {Ember: An Extensible Benchmark Suite for Quantum Annealing Embedding Algorithms},
+  author  = {Macaskill-Smith, Zachary and Sharma, Unmol and Warner, Melissa and Varga, K{\'a}lm{\'a}n and Hyde, David A. B.},
+  journal = {arXiv preprint arXiv:2604.25433},
+  year    = {2026},
+  doi     = {10.48550/arXiv.2604.25433},
+  url     = {https://arxiv.org/abs/2604.25433}
+}
+```
 
 ---
 

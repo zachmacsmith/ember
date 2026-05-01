@@ -62,7 +62,7 @@ Then look at `wall_time` in the results to calibrate.
 
 **Common causes:**
 
-- **Missing binary** — `atom` or `oct-*` algorithms crash if the binary is not installed. Run `ember algos list` to check. Install with `ember install-binary atom` or `ember install-binary oct`.
+- **Missing binary** — `atom`, `oct-*`, or `charme` algorithms crash if the binary is not installed. Run `ember algos list` to check. Install with `ember install-binary atom`, `ember install-binary oct`, or `ember install-binary charme`.
 - **Import error** — a custom algorithm file has a syntax error or a missing import. Run `ember algos list` to see if the algorithm appears as available.
 - **Incompatible topology** — `atom` and `oct-*` require Chimera. Check `ember algos list` to see topology restrictions.
 

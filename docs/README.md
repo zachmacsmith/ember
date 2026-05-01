@@ -37,3 +37,20 @@
 ## Other
 
 - [old-documentation/](old-documentation/) — archived working documents, design specs, and task notes from development.
+
+---
+
+## Citation
+
+If you use EMBER in your research, please cite:
+
+```bibtex
+@article{macaskillsmith2026ember,
+  title   = {Ember: An Extensible Benchmark Suite for Quantum Annealing Embedding Algorithms},
+  author  = {Macaskill-Smith, Zachary and Sharma, Unmol and Warner, Melissa and Varga, K{\'a}lm{\'a}n and Hyde, David A. B.},
+  journal = {arXiv preprint arXiv:2604.25433},
+  year    = {2026},
+  doi     = {10.48550/arXiv.2604.25433},
+  url     = {https://arxiv.org/abs/2604.25433}
+}
+```
