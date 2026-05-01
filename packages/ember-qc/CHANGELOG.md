@@ -17,6 +17,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.4.1] - 2026-04-30
+
+### Fixed
+
+- **`[charme]` optional-dependency extra** — corrected `karateclub>=1.3.0`
+  (a training-only dep carried over from the old stub) to
+  `torch_geometric>=2.0.0`, which is what the inference layer actually
+  imports (`GCNConv`). `pip install ember-qc[charme]` now installs the
+  right packages.
+
+### Changed
+
+- `ember install-binary charme` now checks for `torch` and
+  `torch_geometric` after installing the binary and prints a clear nudge
+  (`pip install ember-qc[charme]`) if either is missing, with a pointer
+  to the PyG installation guide for CUDA-specific builds.
+
+---
+
 ## [1.4.0] - 2026-04-30
 
 ### Added

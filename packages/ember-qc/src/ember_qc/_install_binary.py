@@ -22,6 +22,7 @@ Install layout under ``get_user_binary_dir()``:
 
 from __future__ import annotations
 
+import importlib.util
 import json as _json
 import os
 import platform
@@ -307,6 +308,16 @@ def install_binary(
     # somewhere to write on its first invocation.
     if name == "charme":
         (dest.parent / "atom_log").mkdir(parents=True, exist_ok=True)
+        missing_py = [p for p in ("torch", "torch_geometric")
+                      if importlib.util.find_spec(p) is None]
+        if missing_py:
+            print(
+                "\nCHARME binary installed. To enable the Python inference layer, "
+                "install the required packages:\n"
+                "  pip install ember-qc[charme]\n"
+                "(torch and torch_geometric are large; see https://pytorch-geometric.readthedocs.io "
+                "if you need a specific CUDA build.)"
+            )
 
     # ---- verify ------------------------------------------------------------
     # Neither ATOM nor OCT expose a --version flag; verification is a
