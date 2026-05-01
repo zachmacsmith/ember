@@ -17,6 +17,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.4.2] - 2026-04-30
+
+### Added
+
+- **CHARME weights auto-download** — `ember install-binary charme` now also
+  downloads `ppo_CHARME_ep1800.pth` (~144 KB) from the same GitHub release
+  and places it alongside the binary at
+  `<user_binary_dir>/charme/ppo_CHARME_ep1800.pth`.
+- **Weights resolver updated** — `_resolve_charme_weights()` now checks the
+  installed location first (next to the binary), then falls back to the
+  repo checkout path (`external/CHARME/`), then env vars. A pure PyPI
+  install with `ember install-binary charme` is now fully self-contained.
+- **Workflow** — `ppo_CHARME_ep1800.pth` uploaded as a GitHub release asset
+  (platform-independent; uploaded once from the linux-x86_64 job).
+
+---
+
 ## [1.4.1] - 2026-04-30
 
 ### Fixed

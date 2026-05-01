@@ -91,3 +91,10 @@ jobs:
             external/atom/atom-${{ matrix.platform }}
             external/oct_based/oct-${{ matrix.platform }}
             external/CHARME/charme-${{ matrix.platform }}
+
+      - name: Upload CHARME weights to GitHub release
+        # Platform-independent — only needs uploading once.
+        if: matrix.platform == 'linux-x86_64'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: external/CHARME/ppo_CHARME_ep1800.pth

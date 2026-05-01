@@ -60,6 +60,12 @@ def _resolve_charme_weights() -> Optional[Path]:
         val = os.environ.get(var)
         if val:
             return Path(val)
+    # Installed location: downloaded alongside the binary by install-binary charme.
+    from ember_qc._paths import get_user_binary_dir
+    installed = get_user_binary_dir() / "charme" / "ppo_CHARME_ep1800.pth"
+    if installed.exists():
+        return installed
+    # Editable / repo checkout fallback.
     here = Path(__file__).resolve()
     for parent in here.parents:
         candidate = parent / "external" / "CHARME" / "ppo_CHARME_ep1800.pth"

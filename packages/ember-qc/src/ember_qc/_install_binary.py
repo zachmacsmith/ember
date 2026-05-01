@@ -306,8 +306,25 @@ def install_binary(
     # CHARME's C++ helper writes per-call scratch files to `./atom_log/PPO.txt`
     # relative to its own directory. Create that directory so the binary has
     # somewhere to write on its first invocation.
+    # Also download the weights file (~144 KB) from the same release.
     if name == "charme":
         (dest.parent / "atom_log").mkdir(parents=True, exist_ok=True)
+
+        weights_dest = dest.parent / "ppo_CHARME_ep1800.pth"
+        if not weights_dest.exists():
+            weights_url = f"https://github.com/{_GITHUB_REPO}/releases/download/ember-qc-v{ver}/ppo_CHARME_ep1800.pth"
+            print(f"Downloading CHARME weights ({weights_url}) ...")
+            try:
+                urllib.request.urlretrieve(weights_url, weights_dest)
+                print(f"  → {weights_dest}")
+            except Exception as exc:
+                print(
+                    f"Warning: could not download CHARME weights: {exc}\n"
+                    f"Set EMBER_CHARME_WEIGHTS=/path/to/ppo_CHARME_ep1800.pth to use a local copy."
+                )
+        else:
+            print(f"CHARME weights already present at {weights_dest}")
+
         missing_py = [p for p in ("torch", "torch_geometric")
                       if importlib.util.find_spec(p) is None]
         if missing_py:
