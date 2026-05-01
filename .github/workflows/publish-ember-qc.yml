@@ -68,6 +68,12 @@ jobs:
           g++ -std=c++11 -O2 ${{ matrix.arch_flag }} embedding/*/src/*.cpp embedding/driver.cpp -o oct-${{ matrix.platform }} ${{ matrix.static_flags }}
           file oct-${{ matrix.platform }}
 
+      - name: Compile charme
+        run: |
+          cd external/CHARME
+          g++ -O3 ${{ matrix.arch_flag }} utilities/src/*.cpp main.cpp -std=c++11 -o charme-${{ matrix.platform }} -pthread ${{ matrix.static_flags }}
+          file charme-${{ matrix.platform }}
+
       - name: Verify Linux binary portability
         if: matrix.platform == 'linux-x86_64'
         run: |
@@ -75,6 +81,8 @@ jobs:
           objdump -T external/atom/atom-${{ matrix.platform }} | grep -E 'GLIBC|GLIBCXX' | awk '{print $5}' | sort -u || true
           echo "== oct =="
           objdump -T external/oct_based/oct-${{ matrix.platform }} | grep -E 'GLIBC|GLIBCXX' | awk '{print $5}' | sort -u || true
+          echo "== charme =="
+          objdump -T external/CHARME/charme-${{ matrix.platform }} | grep -E 'GLIBC|GLIBCXX' | awk '{print $5}' | sort -u || true
 
       - name: Upload binaries to GitHub release
         uses: softprops/action-gh-release@v2
@@ -82,3 +90,4 @@ jobs:
           files: |
             external/atom/atom-${{ matrix.platform }}
             external/oct_based/oct-${{ matrix.platform }}
+            external/CHARME/charme-${{ matrix.platform }}

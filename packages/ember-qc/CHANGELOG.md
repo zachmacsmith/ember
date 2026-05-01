@@ -3,6 +3,67 @@
 All notable changes to `ember-qc` are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+### Known issues
+
+- **Sudoku graphs (`sudoku_n9`, `sudoku_n16`)** fail for every algorithm on
+  every topology. Root cause: the generator passes the grid side length
+  (9, 16) to `nx.sudoku_graph`, which actually takes the *box* side length,
+  producing 9²×9² = 6,561-node and 16²×16² = 65,536-node instances — both
+  far too large to embed on any current D-Wave topology. Both sudoku
+  graphs have 0/N successes across all prior runs and are excluded from
+  category-level Friedman analysis. Not fixed here because fixing requires
+  a full graph regeneration + re-sweep; see TODO in `gen_sudoku` for the
+  two-line fix when next regenerating the library.
+
+---
+
+## [1.4.0] - 2026-04-30
+
+### Added
+
+- **CHARME algorithm** (`charme`) — full two-phase RL-based minor embedder
+  for Chimera topology, replacing the previous stub. Phase 1 runs a GCN
+  actor-critic to produce a node-ordering, Phase 2 replays that ordering
+  through the ATOM C++ binary for chain construction. Exposed via the
+  existing registry (`ember run --algorithms charme`).
+  - `algorithms/charme/` package with four modules:
+    `inference.py` (top-level driver `run_charme`), `env_infer.py`
+    (`CharmeAtomRunner` binary wrapper with retry logic),
+    `models.py` (inference-only `ActorCritic` GCN network),
+    `utils.py` (tensor/graph helpers: `generate_Chimera`,
+    `analysing_logical`, `get_hw_edge_index`, etc.).
+  - `CharmeAtomRunner.extend` implements a Lemma-2-style retry loop:
+    on adjacency-check failure it bumps the virtual Chimera grid by
+    2 rows + 2 cols and retries up to `max_extend_retries` (default 3)
+    times, subject to a per-run wall-clock budget (`retry_time_budget_s`).
+  - Multi-sample mode: `num_samples > 1` runs independent stochastic
+    rollouts within the timeout budget and returns the first success
+    (or best partial placement).
+  - Topology constraint enforced at call time: source must have 1–120
+    nodes with ≥1 edge; target must be `chimera_16×16×4`.
+
+- **`charme` binary entry** — `ember install-binary charme` now downloads
+  the incremental-state CHARME variant of the ATOM binary, creates the
+  required `atom_log/` scratch directory, and registers the binary under
+  `get_user_binary_dir() / "charme" / "main"`.
+
+- **New graph presets** — `charme` and `charme_easy` presets added to
+  `graphs/presets.csv`, selecting graphs suited to CHARME's ≤120-node,
+  Chimera constraint.
+
+### Changed
+
+- `algorithms/__init__.py` now imports `charme` as the full subpackage
+  (replacing the deleted single-file stub `algorithms/charme.py`).
+- `cli.py` `install-binary` argument choices extended to
+  `["atom", "oct", "charme"]`.
+
+### Removed
+
+- `algorithms/charme.py` stub — replaced by the `algorithms/charme/`
+  package. The stub only returned `FAILURE` with a "not yet callable"
+  message; no existing benchmarks relied on it succeeding.
+
 ---
 
 ## [1.3.3] - 2026-04-19

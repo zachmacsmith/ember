@@ -53,8 +53,11 @@ _PLATFORM_MAP: dict[tuple[str, str], str] = {
 
 # Known installable binaries: name → path relative to get_user_binary_dir().
 _BINARY_REL_PATHS: dict[str, Path] = {
-    "atom": Path("atom") / "main",
-    "oct":  Path("oct_based") / "embedding" / "driver",
+    "atom":   Path("atom") / "main",
+    "oct":    Path("oct_based") / "embedding" / "driver",
+    # CHARME's per-step helper (a variant of ATOM with incremental-state CLI).
+    # Not interchangeable with the regular `atom` binary — see external/CHARME/.
+    "charme": Path("charme") / "main",
 }
 
 # ---------------------------------------------------------------------------
@@ -297,6 +300,13 @@ def install_binary(
 
     # ---- write version sidecar ---------------------------------------------
     _write_installed_version(dest, ver)
+
+    # ---- per-binary post-install scaffolding ------------------------------
+    # CHARME's C++ helper writes per-call scratch files to `./atom_log/PPO.txt`
+    # relative to its own directory. Create that directory so the binary has
+    # somewhere to write on its first invocation.
+    if name == "charme":
+        (dest.parent / "atom_log").mkdir(parents=True, exist_ok=True)
 
     # ---- verify ------------------------------------------------------------
     # Neither ATOM nor OCT expose a --version flag; verification is a

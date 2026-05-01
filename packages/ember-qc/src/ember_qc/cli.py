@@ -1169,7 +1169,7 @@ def build_parser() -> argparse.ArgumentParser:
     # -- install-binary ------------------------------------------------------
     p_ib = sub.add_parser("install-binary",
                           help="download and install pre-built C++ binaries")
-    p_ib.add_argument("name", nargs="?", choices=["atom", "oct"])
+    p_ib.add_argument("name", nargs="?", choices=["atom", "oct", "charme"])
     p_ib.add_argument("--version", metavar="X.Y.Z", dest="binary_version", default=None)
     p_ib.add_argument("--force",   action="store_true", default=False)
     p_ib.add_argument("--list",    action="store_true", dest="list_binaries")
