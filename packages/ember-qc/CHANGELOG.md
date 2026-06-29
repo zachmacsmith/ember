@@ -19,6 +19,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **PathFinder is now ~3× faster at equal-or-better quality.** Following a
+  structured optimization pass (8 candidate improvements measured in isolation,
+  then combined — see `docs/candidate-algorithms/pf-improvements/`), the
+  production `pathfinder` family now composes three verified, quality-safe
+  optimizations: bounded-region routing + early termination, a dirty-set
+  incremental LNS schedule, and a spur-pruning finishing pass. Measured vs the
+  original engine: time ×0.31 (3.2× faster), mean ACL −0.6%, deterministic and
+  100% valid. New `pathfinder-stacked` (seeds from the multilevel placement:
+  ACL −1.1%, run-to-run std −0.048) and `pathfinder-base` (the original engine,
+  kept for reference / reproducing the paper). `pathfinder-thorough` and
+  `pathfinder-cold` inherit the speedups. No new hard dependency.
+
 ### Added
 
 - **Candidate embedders for research-brief approaches 3.1–3.4** — `srgw`

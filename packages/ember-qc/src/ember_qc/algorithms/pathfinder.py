@@ -485,6 +485,7 @@ def embed_pathfinder(
     seed: int = 0,
     base_fraction: float = 0.5,
     n_restarts: int = 1,
+    router_cls: type = PathFinderRouter,
     **params,
 ) -> dict:
     """Functional entry point returning an ember-qc result dict.
@@ -513,7 +514,7 @@ def embed_pathfinder(
             attempt_deadline = (
                 min(deadline, start + slice_timeout * (i + 1)) if deadline else None
             )
-            router = PathFinderRouter(
+            router = router_cls(
                 source_graph, target_graph, seed=seed + i * 1_000_003, **params
             )
             embedding = router.run(attempt_deadline, base_timeout)
@@ -566,20 +567,11 @@ class _PathFinderBase(EmbeddingAlgorithm):
         )
 
 
-@register_algorithm("pathfinder")
-class PathFinder(_PathFinderBase):
-    """PathFinder — MM-seeded negotiated rip-up-and-reroute improver (never worse than MM)."""
+@register_algorithm("pathfinder-base")
+class PathFinderOriginal(_PathFinderBase):
+    """The original (un-optimized) PathFinder engine, kept for reference and for
+    reproducing the paper's numbers. The production ``pathfinder`` family
+    (registered in ``pathfinder_opt.py``) wraps this engine with the verified
+    optimizations — bounded-region routing, dirty-set LNS, and spur-pruning —
+    which make it ~3x faster at equal-or-better ACL."""
     _params = {"base_method": "minorminer"}
-
-
-@register_algorithm("pathfinder-thorough")
-class PathFinderThorough(_PathFinderBase):
-    """PathFinder best-of-4 restarts with deeper reroute — slower, lower ACL & variance."""
-    _params = {"base_method": "minorminer", "lns_rounds": 80, "lns_penalty": 4.0,
-               "base_fraction": 0.4, "n_restarts": 4}
-
-
-@register_algorithm("pathfinder-cold")
-class PathFinderCold(_PathFinderBase):
-    """PathFinder standalone — BFS negotiated cold start (no MM seed), then improve."""
-    _params = {"base_method": None}
