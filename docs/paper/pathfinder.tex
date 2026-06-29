@@ -67,10 +67,13 @@ ${\sim}1.3\times$ compiled \texttt{minorminer}'s wall-clock while still
 shortening mean ACL, and the optimized thorough configuration reaches ${-}5\%$
 mean ACL (up to ${-}11\%$) at a fraction of its former cost. Finally, treating
 PathFinder's outputs as training data, we ask whether an \emph{amortized} model can
-learn to embed: a generative graph variational autoencoder that samples several
-candidate hardware layouts and keeps the best matches \texttt{pathfinder-thorough}'s
-mean ACL and attains the \emph{lowest} run-to-run ACL variance of any method we
-tested---learned or heuristic---on both Pegasus and Zephyr, at full validity.
+learn to embed. The obvious supervised approach is ill-posed---hardware placement is
+free under the fabric's symmetries, so the model collapses to a constant---and a
+symmetry-invariant (Procrustes) objective fixes it, beating \texttt{minorminer} by
+${\sim}1\%$ at equal budget (statistically significant but small); a decode-aware
+reinforcement-learning fine-tune does not exceed it. A strong heuristic with restarts
+thus remains hard to beat with learned placement---a cautionary result we report in
+full, alongside a retraction of an earlier unequal-budget comparison.
 \end{abstract}
 
 \ccsdesc[500]{Hardware~Quantum computation}
@@ -189,12 +192,11 @@ routing, a dirty-set incremental schedule, and a spur-pruning finishing
 pass---that together make the production algorithm $\sim$3$\times$ faster at
 equal-or-better ACL, bringing single-seed \texttt{pathfinder} to within
 ${\sim}1.3\times$ compiled \texttt{minorminer}'s wall-clock. (v) Finally, we ask
-whether \emph{learning} helps (\S\ref{sec:learning}): training amortized models on
-PathFinder-optimized embeddings, a generative graph variational autoencoder that
-samples and selects among candidate hardware layouts matches
-\texttt{pathfinder-thorough}'s mean ACL and achieves the lowest run-to-run ACL
-variance of any method---learned or heuristic---on both topologies, at full
-validity. We are explicit
+whether \emph{learning} helps (\S\ref{sec:learning}) and report an honest, cautionary
+answer: the naive supervised model is ill-posed and collapses, a symmetry-invariant
+(Procrustes) objective fixes it and beats \texttt{minorminer} by ${\sim}1\%$ at equal
+budget (small but significant), decode-aware RL does not exceed it, and we retract an
+earlier unequal-budget comparison that had appeared to beat PathFinder. We are explicit
 (\S\ref{sec:novelty}) that the
 algorithmic primitives are not new; the novelty is their synthesis and
 application to minor embedding (and, for \S\ref{sec:learning}, the empirical finding).
@@ -780,12 +782,17 @@ on---that quality. This mirrors the predict-then-refine pattern of learned
 embedding heuristics \cite{ngo2024charme,nembrini2025ppo}, where a network proposes
 a candidate that a classical minor-embedding step then refines.
 
-We implemented four model families \emph{inside Ember}, so they are benchmarked
+We implemented several model families \emph{inside Ember}, so they are benchmarked
 through the exact same harness (\S\ref{sec:results}) as \texttt{minorminer} (MM) and
-PathFinder, and ran a bake-off. The clear winner is a generative \textbf{Graph
-Variational Autoencoder} (\texttt{learned-vae}), which beats \emph{every} baseline,
-including PathFinder-thorough, on chain-length variance and ties-or-beats it on mean
-ACL. We detail it here.
+PathFinder. The honest finding is a cautionary one with a useful twist. The obvious
+supervised approach---regress each vertex's hardware coordinate from a graph-VAE or
+GNN---is \textbf{ill-posed and collapses to a constant} (\S\ref{sec:learn-collapse}),
+and an early ``the VAE beats PathFinder-thorough'' reading was an artifact of an
+unequal restart budget, which we retract. The fix is a \textbf{symmetry-invariant
+(Procrustes) objective} (\S\ref{sec:learn-fix}) that recovers a real layout and beats
+\texttt{minorminer} by ${\sim}1\%$ at equal budget---statistically significant but
+small, and a decode-aware reinforcement-learning fine-tune does not exceed it. We
+report the whole arc, because the failure mode is as instructive as the fix.
 
 \subsection{Embedding as a learned layout}
 \label{sec:learn-layout}
@@ -822,8 +829,10 @@ twist is twofold: the decoder emits a hardware \emph{layout} rather than a
 reconstructed graph, and we exploit the model's \emph{generative} nature at
 inference time---sampling several latents yields several candidate layouts, and we
 keep the best after decoding. This is a cheap, learned analogue of
-PathFinder-thorough's best-of-$N$ restarts, and---as the results show---it is what
-drives the variance reduction.
+PathFinder-thorough's best-of-$N$ restarts. As \S\ref{sec:learn-collapse} shows, for
+the \emph{collapsed} VAE this best-of-$K$ wrapper turns out to be the \emph{only}
+thing it contributes---which is exactly why an early reading of it as a win was
+mistaken.
 
 \subsection{The \texttt{learned-vae} architecture}
 \label{sec:learn-arch}
@@ -908,13 +917,18 @@ converges in \textbf{$195$\,s for $80$ epochs} on a single RTX~A4000 (the four
 families were trained in parallel across a small GPU cluster). Inference uses CPU
 only.
 
-Figure~\ref{fig:vaeloss} plots train and validation loss per epoch. Both fall within
-a handful of epochs and then sit flat, with validation tracking (and slightly below)
-training throughout---\textbf{no overfitting}, as expected given the small model and
-the diverse corpus. The near-immediate plateau reflects the multimodality of the
-centroid-regression target (many equally good placements exist); this is precisely
-why we select on the downstream ACL rather than on the loss, and why the generative
-multi-sample inference matters more than squeezing the reconstruction term.
+Figure~\ref{fig:vaeloss} plots train and validation loss per epoch---and it is the
+first symptom of trouble. Both fall within a handful of epochs and then sit \emph{dead
+flat}. This is \textbf{not} healthy convergence. As the audit in
+\S\ref{sec:learn-collapse} shows, the model has \emph{collapsed} to predicting a
+single constant coordinate for every vertex of every graph, and the flat value is
+exactly the loss of the trivial ``predict the global mean'' baseline. The cause is
+that the centroid-regression target is \emph{ill-posed}: a graph's embedding can be
+placed anywhere on the fabric (translation and the hardware's symmetries), so
+structure cannot predict an \emph{absolute} coordinate, and the loss-optimal
+prediction is therefore the constant mean---reached in one epoch. Selecting
+checkpoints on the downstream validation ACL rather than on this loss masked the
+collapse at the time but, as we show next, did not cure it.
 
 \begin{figure}[t]
 \centering
@@ -937,127 +951,98 @@ selection uses the downstream validation ACL, not this loss).}
 \label{fig:vaeloss}
 \end{figure}
 
-\subsection{Results: which method wins, and when}
+\subsection{The collapse, and a symmetry-invariant fix}
+\label{sec:learn-collapse}
+
+\paragraph{The audit.} The flat loss of Fig.~\ref{fig:vaeloss} is a genuine
+\emph{posterior collapse}. Probing the trained model confirms it predicts the
+\emph{same constant coordinate} for every vertex of every graph (per-graph prediction
+spread $=0$), and its reconstruction MSE equals, to three digits, that of a predictor
+that just outputs the global-mean centroid; the supervised \texttt{learned-gnn-seed}
+collapses identically. What then produced the apparent $1.947$ ACL of
+\texttt{learned-vae}? \emph{Only its best-of-$K$ wrapper.} Because the layout is
+constant, the $K{=}8$ samples differ solely in their \texttt{minorminer} random seed,
+so \texttt{learned-vae} \emph{is} best-of-$8$ cold \texttt{minorminer}. On a matched
+sample it ties---indeed marginally loses to---plain best-of-$8$ \texttt{minorminer}
+($2.097$ vs.\ $2.086$); its edge over \texttt{pathfinder-thorough} was simply $8$
+restarts versus $4$. \textbf{We therefore retract the earlier reading that a learned
+model beat PathFinder-thorough}: it was an unequal-budget artifact on top of a
+collapsed model.
+
+\paragraph{Why it collapses, and the fix.}
+\label{sec:learn-fix}
+The target is ill-posed: regressing an \emph{absolute} hardware coordinate asks the
+model for something the graph does not determine, because the embedding is free under
+the fabric's translation/rotation/reflection symmetries. We remove that freedom with a
+\textbf{Procrustes} (similarity-invariant) loss: per graph, align the predicted layout
+to the target up to rotation, reflection, scale and translation (a closed-form,
+differentiable Kabsch step) \emph{before} the MSE, so the loss sees only the
+\emph{relative} structure---which the graph \emph{does} determine. This cures the
+collapse (non-zero spread; adjacent vertices placed closer than non-adjacent), and the
+resulting \texttt{learned-procrustes} layout is the method we evaluate below.
+
+\subsection{Fair, equal-budget results}
 \label{sec:learn-results}
 
-We evaluate on the $312$ held-out test graphs (instance-disjoint from training),
-three seeds each, through \texttt{benchmark\_one} into clean $P_6$ and $Z_4$.
-Table~\ref{tab:learn-quality} reports embedding quality, Table~\ref{tab:learn-family}
-breaks $P_6$ down by source family, and Table~\ref{tab:learn-timing} reports speed.
+The honest comparison gives every method the \emph{same} decode budget---single-shot
+is one \texttt{minorminer} call, best-of-$8$ is eight---and asks whether the learned
+layout helps (Table~\ref{tab:learn-quality}; held-out test set, $312$ instance-disjoint
+graphs, clean $P_6$).
 
 \begin{table}[t]
-\caption{Held-out test bake-off: mean ACL (and per-graph ACL std.\ over seeds, the
-run-to-run variance) on clean Pegasus $P_6$ and Zephyr $Z_4$. Lower is better; best
-per column in bold. All $312$ test graphs are instance-disjoint from training; all
-methods are $100\%$ valid.}
+\caption{Fair, equal-budget held-out comparison on clean Pegasus $P_6$ ($312$ graphs,
+all $100\%$ valid). Mean ACL, lower better; $p$ is a per-graph paired Wilcoxon test
+vs.\ cold \texttt{minorminer} at the \emph{same} budget.}
 \label{tab:learn-quality}
 \small
-\begin{tabular}{lcccc}
+\begin{tabular}{lrr}
 \toprule
- & \multicolumn{2}{c}{Pegasus $P_6$} & \multicolumn{2}{c}{Zephyr $Z_4$}\\
-\cmidrule(lr){2-3}\cmidrule(lr){4-5}
-algorithm & ACL & std & ACL & std\\
+method & mean ACL & $p$ vs.\ cold MM\\
 \midrule
-\texttt{minorminer}           & 2.075 & 0.072 & 1.777 & 0.057\\
-\texttt{minorminer-layout}    & 2.101 & 0.078 & 1.787 & 0.058\\
-\texttt{pathfinder}           & 2.044 & 0.068 & 1.755 & 0.051\\
-\texttt{pathfinder-thorough}  & 1.955 & 0.037 & 1.687 & 0.029\\
+single cold \texttt{minorminer}        & 2.072 & ---\\
+\texttt{learned-procrustes}            & 2.056 & $0.047$\\
+\quad + decode-aware RL                & 2.040 & $4{\times}10^{-4}$\\
 \midrule
-\texttt{learned-gnn-seed}     & 2.075 & 0.070 & 1.780 & 0.053\\
-\texttt{learned-gnn-seed-direct} & 2.086 & 0.071 & 1.790 & 0.056\\
-\texttt{learned-retrieve}     & 2.072 & 0.066 & 1.775 & 0.052\\
-\texttt{learned-obj}          & 2.057 & 0.066 & 1.765 & 0.055\\
-\textbf{\texttt{learned-vae}} & \textbf{1.947} & \textbf{0.031} & \textbf{1.675} & \textbf{0.025}\\
+best-of-$8$ cold \texttt{minorminer}   & 1.943 & ---\\
+\texttt{learned-procrustes-k8}         & 1.925 & ${<}10^{-3}$\\
+\quad + decode-aware RL                & 1.927 & $1{\times}10^{-4}$\\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\begin{table}[t]
-\caption{Per-family mean ACL on $P_6$ (lower better; best in bold). \texttt{learned-vae}
-beats PathFinder-thorough on Barab\'asi--Albert and $d$-regular and ties it
-(within $0.3\%$) on Erd\H{o}s--R\'enyi and geometric graphs, while beating
-\texttt{minorminer} on every family.}
-\label{tab:learn-family}
-\small
-\begin{tabular}{lcccc}
-\toprule
-family & \texttt{mm} & \texttt{pf-thor.} & \texttt{l-obj} & \texttt{l-vae}\\
-\midrule
-Barab\'asi--Albert      & 1.621 & 1.540 & 1.610 & \textbf{1.515}\\
-Erd\H{o}s--R\'enyi      & 2.858 & \textbf{2.690} & 2.846 & 2.698\\
-$k$-NN geometric        & 2.135 & \textbf{1.994} & 2.115 & 1.996\\
-$d$-regular             & 1.425 & 1.353 & 1.394 & \textbf{1.330}\\
-\bottomrule
-\end{tabular}
-\end{table}
+So the symmetry-fixed layout \textbf{beats \texttt{minorminer} at equal budget on both
+ends}---$-0.8\%$ single-shot and $-0.9\%$ in best-of-$8$, each statistically
+significant. The magnitude is small: a fixed $2$-D layout maps only loosely onto
+Pegasus hop-distance, and \texttt{minorminer}'s cold search with restarts is already
+strong. The other families confirm the picture---the collapsed \texttt{learned-gnn-seed},
+the non-neural \texttt{learned-retrieve} embeddings-cache, and the label-free
+\texttt{learned-obj} (which trains a layout to minimize an edge-stretch objective and
+does \emph{not} collapse) all land within noise of \texttt{minorminer}.
 
-\begin{table}[t]
-\caption{Mean wall-clock per embedding on $P_6$ (held-out test, CPU inference). The
-single-shot learned methods match \texttt{minorminer}'s speed; \texttt{learned-vae}'s
-quality/variance win costs $K{=}8$ decode passes, comparable to
-\texttt{pathfinder-thorough}'s best-of-four restarts.}
-\label{tab:learn-timing}
-\small
-\begin{tabular}{lr}
-\toprule
-method & time (s)\\
-\midrule
-\texttt{minorminer}          & 0.39\\
-\texttt{learned-retrieve}    & 0.40\\
-\texttt{minorminer-layout}   & 0.48\\
-\texttt{learned-gnn-seed}    & 0.50\\
-\texttt{learned-obj}         & 0.51\\
-\texttt{pathfinder}          & 0.52\\
-\texttt{pathfinder-thorough} & 2.17\\
-\texttt{learned-vae} ($K{=}8$) & 3.74\\
-\bottomrule
-\end{tabular}
-\end{table}
+\paragraph{Decode-aware RL does not break the ceiling.} To try to push past the
+supervised layout, we fine-tuned it with REINFORCE \emph{through} the decoder: the
+policy is a Gaussian around the predicted layout, the reward is the per-graph-baselined
+negative decoded ACL, with a Procrustes anchor for stability. It nudges single-shot ACL
+to $2.040$ ($-1.5\%$ vs.\ \texttt{minorminer}, $p{=}4{\times}10^{-4}$; line ``$+$RL'' in
+Table~\ref{tab:learn-quality}) but does \emph{not} significantly beat the supervised
+layout ($p{=}0.06$) and is unstable---the validation gain drifts \emph{down} with more
+epochs across two independent runs. Optimizing the true objective directly
+\emph{confirms} the ceiling rather than lifting it: the limit is the placement action
+space, not the training signal.
 
-\paragraph{The headline.} \texttt{learned-vae} is the best method overall on
-\emph{both} topologies, on \emph{both} mean ACL and run-to-run variance. It edges the
-strongest heuristic, PathFinder-thorough, on mean ACL ($P_6$: $1.947$ vs.\ $1.955$;
-$Z_4$: $1.675$ vs.\ $1.687$) and clearly beats it on variance ($P_6$: $0.031$ vs.\
-$0.037$; $Z_4$: $0.025$ vs.\ $0.029$), while beating \texttt{minorminer} and
-\texttt{minorminer-layout} decisively---a relative ACL improvement of $6.2\%$ over MM
-on $P_6$ and $5.7\%$ on $Z_4$, at less than half MM's variance. Per family
-(Table~\ref{tab:learn-family}) it wins outright on Barab\'asi--Albert and $d$-regular
-and is a statistical tie with PathFinder-thorough on the other two. The mechanism is
-the generative one: sampling $K{=}8$ layouts and keeping the best both lowers ACL
-and, by being insensitive to any single \texttt{minorminer} seed, suppresses the
-run-to-run variance that is itself PathFinder's headline advantage---now improved on
-by a learned model.
-
-\paragraph{The label-free runner-up.} \texttt{learned-obj}, which never sees a
-PathFinder label and instead trains its layout to minimize an embedding objective
-(edge-stretch plus an anti-collapse term), beats \texttt{minorminer} and
-\texttt{minorminer-layout} on every family at MM-like speed---evidence that even an
-unsupervised learned layout improves on the standard baselines.
-\texttt{learned-gnn-seed} (supervised) and the non-neural \texttt{learned-retrieve}
-embeddings-cache match \texttt{minorminer} within noise.
-
-\paragraph{Which to use.} The methods occupy distinct operating points. For the best
-quality \emph{and} the lowest variance, and when a ${\sim}4$\,s budget is acceptable,
-\texttt{learned-vae} dominates. For a fast single-shot embedder that still beats the
-standard baselines at \texttt{minorminer} speed ($\sim\!0.5$\,s), \texttt{learned-obj}
-is the pick; \texttt{learned-retrieve} is the cheapest (no GPU, no training beyond
-indexing) and ties MM. PathFinder-thorough remains an excellent, slightly faster
-alternative to the VAE when its larger variance is acceptable. Notably,
-\texttt{minorminer-layout}---the de facto ``MM + good initial placement''
-baseline---was marginally \emph{worse} than plain \texttt{minorminer} on this grid,
-underscoring that a \emph{learned} layout, not just any layout, is what helps.
-
-\paragraph{Success rate and failure modes.} Every learned method embedded
-\textbf{$100\%$} of the $312$ test graphs on both targets across all seeds.
-\texttt{learned-vae} is a $100\%$-success method in the same sense \texttt{minorminer}
-is: its seed$\rightarrow$MM decoder always hands \texttt{minorminer} a warm start (and
-falls back to a cold \texttt{minorminer} call if a warm start ever fails to grow), so
-it \emph{inherits \texttt{minorminer}'s completeness and introduces no new failure
-modes}. If a valid embedding exists within the time budget, it returns one; the only
-way it fails is the way \texttt{minorminer} fails---a problem too large or dense to
-fit the fabric in the budget. The learned layout changes the \emph{quality} of the
-result, never its validity, because validity is delegated to the same battle-tested
-repair backend used throughout this paper.
+\paragraph{Verdict, and what is honestly true.} Learning helps here, but \emph{modestly
+and only after the symmetry fix}. The contribution is the diagnosis (the naive
+supervised target is ill-posed and collapses) and the cure (a Procrustes-invariant
+objective), which turns a constant-predicting model into one that beats
+\texttt{minorminer} by ${\sim}1\%$ at equal budget. It does not beat best-of-$K$
+\texttt{minorminer} by much, and decode-aware RL does not exceed it---so a strong
+heuristic with restarts remains hard to beat with learned \emph{placement}. The
+patent's premise is thus partly borne out: a learned model yields a small, real
+improvement, but it is no substitute for a good heuristic. Validity is never at risk:
+the seed$\rightarrow$MM decoder always falls back to a cold \texttt{minorminer} call, so
+every learned method is $100\%$-valid in the same sense \texttt{minorminer} is---it
+inherits \texttt{minorminer}'s completeness and the learned layout changes only the
+\emph{quality} of the result, never its validity.
 
 %% ========================================================================
 \section{Limitations and Future Work}
@@ -1112,11 +1097,12 @@ production algorithm ${\sim}3\times$ faster at equal-or-better quality, bringing
 single-seed \texttt{pathfinder} to within ${\sim}1.3\times$ compiled
 \texttt{minorminer}'s wall-clock---so the chain-length and variance gains come at
 little time cost. Finally, treating these optimized embeddings as supervision, we
-find that a learned model can compete: a generative graph variational autoencoder,
-trained on PathFinder's outputs and sampling several candidate layouts at inference,
-matches \texttt{pathfinder-thorough}'s mean ACL and attains the lowest chain-length
-variance of any method we tested---learned or heuristic---on both Pegasus and
-Zephyr, at full validity (\S\ref{sec:learning}). The primitives are classical; the
+ask whether a learned model can do better, and report an honest, cautionary result
+(\S\ref{sec:learning}): the naive supervised approach is ill-posed and collapses to a
+constant, a symmetry-invariant objective repairs it and beats \texttt{minorminer} by a
+small but significant ${\sim}1\%$ at equal budget, and decode-aware reinforcement
+learning does not exceed it---so a good heuristic with restarts remains hard to beat
+with learned placement. The primitives are classical; the
 synthesis, application, optimization, and empirical validation are the contribution.
 
 \appendix

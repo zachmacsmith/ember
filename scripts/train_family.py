@@ -8,7 +8,7 @@ import os
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("family", choices=["gnn-seed", "vae", "obj"])
+    ap.add_argument("family", choices=["gnn-seed", "vae", "obj", "procrustes"])
     ap.add_argument("target")                      # pegasus_6 | zephyr_4
     ap.add_argument("out")
     ap.add_argument("--data", default="data/learn")
@@ -31,6 +31,9 @@ def main():
     elif a.family == "obj":
         from ember_qc_learn.families.objective_gnn import train_objective
         train_objective(a.data, target=a.target, out=a.out, **common)
+    elif a.family == "procrustes":
+        from ember_qc_learn.families.procrustes import train_procrustes
+        train_procrustes(a.data, target=a.target, out=a.out, **common)
 
 
 if __name__ == "__main__":

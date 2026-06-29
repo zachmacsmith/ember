@@ -16,7 +16,7 @@ except Exception:  # pragma: no cover
 
 # Bake-off families (each self-registers a learned-* algorithm on import; soft so a
 # missing optional dep in one never blocks the others or the import).
-for _fam in ("retrieve", "vae", "objective_gnn"):
+for _fam in ("retrieve", "vae", "objective_gnn", "procrustes"):
     try:
         __import__(f"ember_qc_learn.families.{_fam}")
     except Exception:  # pragma: no cover

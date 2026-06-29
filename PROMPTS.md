@@ -154,3 +154,32 @@ Can you add a new section to the paper called "Learning-Based Approach" that det
 ```
 Yes, make those little changes in abstract/contributions/conclusion too, and commit and push (and make sure PROMPTS.md is up to date)
 ```
+
+### Prompt 16
+
+```
+Why is the learning loss basically flat?  That seems suspicious.  Usually it means the learning model underfit.  Or maybe learning just converged in the first epoch, but why?  Not enough training data?  The network is relatively small (dimension like 160) so that makes me wonder.  Do some investigation and let me know what you think.
+```
+
+> _Outcome: the flat loss is **posterior collapse** from an **ill-posed target** — the
+> VAE/gnn-seed regress an *absolute* hardware coordinate, but placement is arbitrary
+> under the fabric's symmetries, so the loss-optimal prediction is the constant global
+> mean (reached in 1 epoch). Verified: the model outputs one constant point for every
+> vertex; MSE = the predict-the-mean null model. Not underfit/data/size. Also found the
+> earlier "VAE beats PF-thorough" was an artifact: the collapsed VAE = best-of-8 MM
+> (8 restarts vs PF-thorough's 4)._
+
+### Prompt 17
+
+```
+Ok, so sounds like the VAE did not learn anything useful then.  Sounds lke we need some new objective and maybe different dataset and things like that.  Some model that predicts a constant for all inputs is not useful and not even worth analyzing.  Please explore the space of possible objectives and design choices for applying a VAE or even other network type to this problem, and see if there are some nontrivial things you can come up with.  Retrain and re-run experiments and regenerate new data sets as helpful.
+```
+
+> _Outcome: the fix is a **symmetry-invariant (Procrustes) objective** — align prediction
+> to target up to rotation/reflection/scale/translation before MSE, so the loss sees only
+> relative structure. This cures the collapse and yields a real layout (`learned-procrustes`)
+> that beats minorminer by ~1% at equal budget (single-shot −0.8% p=0.047; best-of-8 −0.9%),
+> statistically significant but small. A **decode-aware RL** (REINFORCE through the MM
+> decoder) does not exceed it (unstable, drifts down) — the limit is the placement action
+> space, not the objective. Paper §7 + abstract/contributions/conclusion rewritten to this
+> honest story; the VAE "win" retracted; learning verdict doc + scripts updated._
