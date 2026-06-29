@@ -7,13 +7,14 @@ algorithm and its Ember evaluation, plus everything needed to reproduce it.
 
 | Path | What |
 |------|------|
-| `pathfinder.tex` / `pathfinder.pdf` | the article (source + compiled, 10 pp) |
+| `pathfinder.tex` / `pathfinder.pdf` | the article (source + compiled) |
 | `refs.bib` | bibliography |
 | `reproduce.sh` | one-shot end-to-end reproduction (env → sweep → analysis → PDF) |
-| `data/run_sweep.py` | the benchmark sweep; writes `data/raw_results.csv` + `data/summary.csv` |
-| `data/analyze.py` | regenerates **every** reported statistic and the LaTeX table rows from the CSVs |
-| `data/coldstart_probe.py` | backs the §3.4 cold-start contrast |
-| `data/summary.csv` / `data/raw_results.csv` | the committed sweep results — the single source of truth for every number in the paper |
+| `data/run_sweep.py` | the **preliminary** benchmark sweep; writes `data/raw_results.csv` + `data/summary.csv` (§Preliminary Results) |
+| `data/run_sweep_opt.py` | the **optimized** sweep (same grid; adds `pathfinder-base`/`-stacked`); writes `data/raw_results_opt.csv` + `data/summary_opt.csv` (§Optimizations) |
+| `data/analyze.py` | regenerates **every** preliminary statistic and the LaTeX table rows from `summary.csv` |
+| `data/coldstart_probe.py` | backs the §"Preliminary Algorithm" cold-start contrast |
+| `data/summary.csv`, `data/summary_opt.csv` (+ raw) | the committed sweep results — the single source of truth for every number in the paper |
 
 ## Reproduce everything
 
