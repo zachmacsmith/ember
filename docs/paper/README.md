@@ -1,28 +1,49 @@
 # PathFinder ACM TQC article
 
 Self-contained ACM TQC (`acmart`) write-up of the PathFinder minor-embedding
-algorithm and its Ember evaluation.
+algorithm and its Ember evaluation, plus everything needed to reproduce it.
 
-## Build
+## Files
+
+| Path | What |
+|------|------|
+| `pathfinder.tex` / `pathfinder.pdf` | the article (source + compiled, 10 pp) |
+| `refs.bib` | bibliography |
+| `reproduce.sh` | one-shot end-to-end reproduction (env → sweep → analysis → PDF) |
+| `data/run_sweep.py` | the benchmark sweep; writes `data/raw_results.csv` + `data/summary.csv` |
+| `data/analyze.py` | regenerates **every** reported statistic and the LaTeX table rows from the CSVs |
+| `data/coldstart_probe.py` | backs the §3.4 cold-start contrast |
+| `data/summary.csv` / `data/raw_results.csv` | the committed sweep results — the single source of truth for every number in the paper |
+
+## Reproduce everything
 
 ```bash
-cd docs/paper
-latexmk -pdf pathfinder.tex      # -> pathfinder.pdf
-# or: pdflatex pathfinder && bibtex pathfinder && pdflatex pathfinder && pdflatex pathfinder
+bash docs/paper/reproduce.sh          # from anywhere in the repo
 ```
 
-Requires a TeX distribution with `acmart.cls`, `tikz`, `pgfplots`, `algorithmicx`
-(TeX Live 2022+ has all of these).
-
-## Provenance
-
-Every number in the Results section comes from `data/summary.csv`, produced by:
+This (1) creates `.venv` and installs `ember-qc`, (2) runs the sweep, (3) prints
+every reported statistic and the LaTeX rows, (4) runs the cold-start probe, and
+(5) builds `pathfinder.pdf`. Or run the steps individually:
 
 ```bash
-.venv/bin/python data/run_sweep.py        # writes data/raw_results.csv + data/summary.csv
+python3 -m venv .venv && .venv/bin/pip install -e "packages/ember-qc[dev]" scipy
+.venv/bin/python docs/paper/data/run_sweep.py        # -> data/{raw_results,summary}.csv
+.venv/bin/python docs/paper/data/analyze.py --latex  # verify numbers + emit table rows
+.venv/bin/python docs/paper/data/coldstart_probe.py  # §3.4 cold-start contrast
+cd docs/paper && latexmk -pdf pathfinder.tex         # -> pathfinder.pdf
 ```
 
-The sweep drives Ember's `benchmark_one` harness over an Erdős–Rényi (and
-d-regular / Barabási–Albert) source grid into clean Pegasus P6, broken Pegasus P6
-(5% faulty qubits), and Zephyr Z4, with five seeds per cell. Figures are inline
-TikZ/pgfplots; there are no external image dependencies.
+`analyze.py` (no flag) prints each statistic annotated with the paper claim it
+backs, so you can diff its output against the text.
+
+## Notes
+
+- **Determinism.** Embedding-quality numbers (ACL, std, max chain, qubits,
+  success) are deterministic per seed and will exactly match the committed CSVs
+  and the paper. **Wall-clock times (Table 2) are machine-dependent.**
+- Re-running `run_sweep.py` **overwrites** the committed CSVs.
+- The PDF build needs a TeX distribution with `acmart`, `tikz`, `pgfplots`,
+  `algorithmicx` (TeX Live 2022+). Figures are inline TikZ/pgfplots — no external
+  image dependencies.
+- The sweep takes a few minutes with parallel workers
+  (`run_sweep.py [n_workers] [timeout]`).

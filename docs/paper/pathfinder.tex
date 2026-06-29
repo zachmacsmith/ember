@@ -328,8 +328,15 @@ computations the SPH step needs.
 \label{sec:improver}
 A from-scratch router that places every chain from scattered single-qubit seeds
 is throttled by exactly the open problem MM names---\emph{initial placement}.
-Without co-locating adjacent variables, dense-graph chains balloon: in our
-experiments a cold start produces ACL $3.9$--$8$ where MM achieves $\sim\!2.3$.
+Without co-locating adjacent variables, dense-graph chains balloon and the search
+often fails to legalize at all. The standalone \texttt{pathfinder-cold} variant
+(a cold start followed by the same improver) bears this out: on the nine
+clean-Pegasus Erd\H{o}s--R\'enyi instances of our grid
+($n\in\{20,30,40\}$, $d\in\{0.3,0.5,0.7\}$) it legalizes only four---the smaller
+and sparser ones, at ACL $2.5$--$3.8$---and fails on the five larger, denser ones,
+whereas
+\texttt{minorminer} embeds all nine
+(reproduced by \texttt{docs/paper/data/coldstart\_probe.py}).
 PathFinder therefore runs as an \emph{improver}. It warm-starts from a fast base
 embedding (MM by default; any registered algorithm works), then performs
 \emph{large-neighbourhood} rip-up-and-reroute---the neighbourhood being a long
