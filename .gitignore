@@ -97,3 +97,9 @@ scripts/reassign_graph_ids.py
 
 # Jupyter
 .ipynb_checkpoints/
+
+# ember-qc-learn generated artifacts (large; regenerated via datagen/train)
+data/learn/
+ckpts/
+*.pt
+*.pt.history.json

@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ember-qc-learn"
+version = "0.1.0"
+description = "Learning-based minor-embedding for Ember: amortized GNN/VAE/retrieval models that predict embeddings (or MM seeds), trained on PathFinder/minorminer-optimized data, benchmarked head-to-head vs PF/MM."
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.23",
+    "networkx>=2.8",
+    "scipy>=1.9",
+    "scikit-learn>=1.1",
+    "dwave-networkx>=0.8",
+    "minorminer>=0.2",
+    "pandas>=1.5",
+    # torch + torch_geometric are required at train/inference time but imported
+    # lazily so the package (and its registry entries) import without them.
+    # Install via scripts/cluster_bootstrap.sh or:
+    #   pip install torch --index-url https://download.pytorch.org/whl/cu121
+    #   pip install torch_geometric
+]
+
+[project.optional-dependencies]
+torch = ["torch>=2.2", "torch_geometric>=2.5"]
+dev = ["pytest>=7"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
