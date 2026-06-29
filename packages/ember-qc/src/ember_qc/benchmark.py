@@ -167,6 +167,80 @@ def compute_embedding_metrics(embedding: Dict[int, list],
     }
 
 
+def evaluate(embedding: Optional[Dict[int, list]],
+             source_graph: nx.Graph,
+             target_graph: nx.Graph,
+             *,
+             wall_time: Optional[float] = None,
+             validate: bool = True) -> Dict:
+    """Single-call quality report for one embedding — the §2.4 evaluation harness.
+
+    Composes the existing :func:`compute_embedding_metrics` and structural
+    validation (:func:`ember_qc.validation.validate_layer1`) into the metric set
+    the research brief calls for, and adds the **dispersion** metrics that
+    distinguish a candidate algorithm from MM:
+
+    - ``avg_chain_length`` (ACL) and ``std_chain_length`` — chain-length spread
+      *within* this embedding;
+    - ``chain_length_cv`` — coefficient of variation, i.e. chain-length
+      *uniformity* (lower is more uniform);
+    - ``total_qubits_used`` / ``total_couplers_used`` / ``max_chain_length``;
+    - ``valid`` — whether it is a correct minor embedding.
+
+    ACL-variance *across seeds* — the headline comparison against MM — is then a
+    matter of aggregating this function's ``avg_chain_length`` over many seeded
+    runs (which the benchmark runner already records per trial). ``wall_time`` is
+    not a property of an embedding, so it is passed through verbatim if supplied.
+
+    Args:
+        embedding:    ``{source_node: [target_qubit, ...]}`` or ``None``/empty.
+        source_graph: Problem graph (for validity and node counts).
+        target_graph: Hardware graph (for couplers and validity).
+        wall_time:    Optional measured wall-clock seconds to fold into the report.
+        validate:     Run structural validation (set False to skip if already known).
+
+    Returns:
+        Flat metrics dict. For an empty/``None`` embedding, ``valid`` is False and
+        the quality metrics are zeroed.
+    """
+    base = {
+        'valid': False,
+        'num_source_nodes': source_graph.number_of_nodes(),
+        'num_chains': 0,
+        'total_qubits_used': 0,
+        'total_couplers_used': 0,
+        'avg_chain_length': 0.0,
+        'std_chain_length': 0.0,
+        'max_chain_length': 0,
+        'min_chain_length': 0,
+        'chain_length_cv': 0.0,
+        'wall_time': wall_time,
+    }
+    if not embedding:
+        return base
+
+    metrics = compute_embedding_metrics(embedding, target_graph)
+    chain_lengths = np.asarray(metrics['chain_lengths'], dtype=float)
+    mean = float(chain_lengths.mean())
+    std = float(chain_lengths.std())  # population std — within-embedding spread
+    valid = bool(validate_layer1(embedding, source_graph, target_graph).passed) \
+        if validate else None
+
+    base.update({
+        'valid': valid,
+        'num_chains': len(embedding),
+        'total_qubits_used': metrics['total_qubits_used'],
+        'total_couplers_used': metrics['total_couplers_used'],
+        'avg_chain_length': mean,
+        'std_chain_length': std,
+        'max_chain_length': metrics['max_chain_length'],
+        'min_chain_length': int(chain_lengths.min()),
+        'chain_length_cv': (std / mean) if mean > 0 else 0.0,
+        'wall_time': wall_time,
+    })
+    return base
+
+
 def benchmark_one(source_graph: nx.Graph,
                   target_graph: nx.Graph,
                   algorithm: str,

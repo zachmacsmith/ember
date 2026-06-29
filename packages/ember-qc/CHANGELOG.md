@@ -17,6 +17,34 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **PathFinder embedder** (`pathfinder`, `pathfinder-thorough`,
+  `pathfinder-cold`) — negotiated rip-up-and-reroute minor embedding
+  (research-brief approach 3.5). Warm-starts from a fast base embedding
+  (minorminer by default) and applies large-neighbourhood, congestion-priced
+  rip-up-and-reroute with a real Steiner inner step. Tracks the best valid
+  embedding, so it **never regresses below its base**; lowers mean ACL and
+  run-to-run ACL variance on dense Erdős–Rényi sources (`n ≥ 30`). See
+  `docs/pathfinder.md`.
+- **Shared round → repair backend** (`ember_qc/embedding_backend.py`) —
+  embedder-agnostic routing primitives (node-weighted multi-source Dijkstra,
+  path reconstruction, connectivity) plus `round_assignment`,
+  `grow_to_connected`, and `resolve_overlaps`. Reusable scaffolding for all
+  chain-building approaches (research-brief §2.2); exported from the package
+  root.
+- **`evaluate()`** (`ember_qc.evaluate`) — single-call embedding quality report:
+  validity, ACL mean **and std**, chain-length **CV** (uniformity), qubits,
+  couplers, max/min chain length. Composes the existing
+  `compute_embedding_metrics` + structural validation (§2.4).
+- **`minorminer-layout`** algorithm — MM seeded with `minorminer.layout`'s
+  **p-norm layout**, the primary baseline the new algorithms target (and the
+  Ocean "Layout Embedding" sparse-regime baseline, §2.3).
+
+---
+
 ## [1.4.2] - 2026-04-30
 
 ### Added

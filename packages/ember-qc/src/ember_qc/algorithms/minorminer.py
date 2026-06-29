@@ -124,6 +124,57 @@ class MinorMinerChainLength(EmbeddingAlgorithm):
             return {'embedding': {}, 'time': time.time() - start_time, 'success': False, 'status': 'FAILURE'}
 
 
+@register_algorithm("minorminer-layout")
+class MinorMinerLayout(EmbeddingAlgorithm):
+    """MM seeded with a p-norm layout — the primary baseline this project targets.
+
+    ``minorminer.layout.find_embedding`` first lays both graphs out in a shared
+    low-dimensional space (the source via the **p-norm** layout, the target via
+    its native hardware coordinates), places each source vertex near the target
+    qubit closest to it, and hands those positions to ``minorminer`` as initial
+    chains. This is the "better initial placement of vertex-models" the original
+    MM paper named as the key open problem, and the Ocean "Layout Embedding"
+    sparse-regime baseline. A new algorithm earns its place by beating *this*.
+    """
+
+    @property
+    def version(self) -> str:
+        return "1.0.0"
+
+    def embed(self, source_graph, target_graph, timeout=60.0, **kwargs):
+        start_time = time.time()
+        seed = kwargs.get('seed', 42)
+        if seed is None:
+            seed = 42
+        try:
+            import random as _random
+            import numpy as _np
+            from minorminer.layout import find_embedding as layout_find_embedding
+
+            # The p-norm layout draws its initial positions from the global RNGs;
+            # seed both so the same seed yields the same embedding (contract).
+            _random.seed(seed)
+            _np.random.seed(int(seed) % (2 ** 32))
+
+            raw = layout_find_embedding(
+                source_graph,
+                target_graph,
+                random_seed=int(seed),
+                timeout=timeout,
+                verbose=0,
+            )
+            elapsed = time.time() - start_time
+            if not raw:
+                return {'embedding': {}, 'time': elapsed, 'success': False, 'status': 'FAILURE'}
+            # Normalise to plain-int lists (layout may return tuples / numpy ints).
+            embedding = {int(k): [int(q) for q in v] for k, v in raw.items()}
+            return {'embedding': embedding, 'time': elapsed}
+        except Exception as e:
+            logger.error("minorminer-layout error: %s", e)
+            return {'embedding': {}, 'time': time.time() - start_time,
+                    'success': False, 'status': 'FAILURE'}
+
+
 @register_algorithm("clique")
 class CliqueEmbeddingAlgorithm(EmbeddingAlgorithm):
     """D-Wave clique embedding — topology-aware deterministic baseline."""
