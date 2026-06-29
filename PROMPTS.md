@@ -94,3 +94,22 @@ If MM is written in C++, we should make sure we're making a fair comparison for 
 > overhead is the improvement pass, not interpreter overhead, and the comparison is
 > fair; a C++ rewrite would hit the same ceiling. Paper §Optimizations and
 > §Limitations updated to report this; production stays pure-Python._
+
+### Prompt 11
+
+```
+Some of the earlier logs mentioned missing matplotlib and causing errros, as if it were trying to make some plots for the paper.  Please add and install matplotlib as a dependency and in our venv.  Create any plots you were thinking were necessary then commit and push.
+```
+
+> _Outcome: the matplotlib error was from `tests/test_ember_qc_analysis.py` (the
+> `ember-qc-analysis` package's plotting suite), **not** the paper — whose figures
+> are deliberately inline TikZ/pgfplots. matplotlib + seaborn were already declared
+> deps of `ember-qc-analysis`, just not installed; installed the analysis package
+> into `.venv` (matplotlib 3.10.9) and wired it into CI + `reproduce.sh`. Installing
+> it un-masked pre-existing stale-fixture failures (the package renamed
+> `problem_name`→`graph_name` and `significant`→`significant_005` after the test was
+> last touched); fixed the test fixtures → full `test_ember_qc_analysis.py` now
+> green (166 passed). Added `docs/paper/data/make_figures.py` → four supplementary
+> result figures (`docs/paper/figures/`: ACL vs density, ACL-std vs density,
+> wall-clock vs MM, topology robustness) rendered from the committed
+> `summary_opt.csv`; not embedded in the .tex (kept the paper's vector figures)._

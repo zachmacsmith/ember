@@ -17,6 +17,10 @@ jobs:
       - name: Install ember-qc
         run: pip install -e "packages/ember-qc/[dev]"
 
+      - name: Install ember-qc-analysis
+        # brings matplotlib + seaborn so tests/test_ember_qc_analysis.py can run
+        run: pip install -e "packages/ember-qc-analysis/"
+
       - name: Run tests
         run: |
           pytest tests/ \

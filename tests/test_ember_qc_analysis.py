@@ -67,6 +67,9 @@ _PROBLEMS = [
 ]
 
 
+_GRAPH_IDS = {name: i for i, (name, *_rest) in enumerate(_PROBLEMS)}
+
+
 def _make_row(algo, prob_name, n, edges, density, trial, rng, success=True):
     if success:
         t      = rng.uniform(0.001, 0.5)
@@ -75,7 +78,8 @@ def _make_row(algo, prob_name, n, edges, density, trial, rng, success=True):
         qubits = n * int(avg_cl + 0.5)
         couplers = max(1, edges - rng.integers(0, 3))
         return {
-            "algorithm": algo, "problem_name": prob_name,
+            "algorithm": algo, "graph_name": prob_name,
+            "graph_id": _GRAPH_IDS[prob_name],
             "topology_name": _TOPO, "trial": trial,
             "success": True, "is_valid": True,
             "wall_time": t,
@@ -86,7 +90,8 @@ def _make_row(algo, prob_name, n, edges, density, trial, rng, success=True):
         }
     else:
         return {
-            "algorithm": algo, "problem_name": prob_name,
+            "algorithm": algo, "graph_name": prob_name,
+            "graph_id": _GRAPH_IDS[prob_name],
             "topology_name": _TOPO, "trial": trial,
             "success": False, "is_valid": False,
             "wall_time": _TIMEOUT,
@@ -115,7 +120,7 @@ def sample_df() -> pd.DataFrame:
 def sample_df_with_failure(sample_df) -> pd.DataFrame:
     """sample_df with atom failing on K5 trial 2."""
     df = sample_df.copy()
-    mask = (df["algorithm"] == "atom") & (df["problem_name"] == "K5") & (df["trial"] == 2)
+    mask = (df["algorithm"] == "atom") & (df["graph_name"] == "K5") & (df["trial"] == 2)
     df.loc[mask, "success"]          = False
     df.loc[mask, "is_valid"]         = False
     df.loc[mask, "wall_time"]        = _TIMEOUT
@@ -789,7 +794,7 @@ class TestSignificance:
     def test_significance_tests_columns(self, sample_df):
         from ember_qc_analysis.statistics import significance_tests
         result = significance_tests(sample_df, "avg_chain_length")
-        for col in ("algo_a", "algo_b", "n_pairs", "p_value", "corrected_p", "significant"):
+        for col in ("algo_a", "algo_b", "n_pairs", "p_value", "corrected_p", "significant_005"):
             assert col in result.columns
 
     def test_significance_tests_p_in_range(self, sample_df):
@@ -820,7 +825,7 @@ class TestSignificance:
         from ember_qc_analysis.statistics import friedman_test
         result = friedman_test(sample_df, "avg_chain_length")
         if "error" not in result:
-            for key in ("statistic", "p_value", "significant", "n_problems", "n_algorithms"):
+            for key in ("statistic", "p_value", "significant_005", "n_problems", "n_algorithms"):
                 assert key in result
 
     def test_correlation_matrix_shape(self, sample_df):
@@ -972,7 +977,7 @@ class TestPlots:
     def test_plot_save_writes_file(self, sample_df, tmp_path):
         from ember_qc_analysis.plots import plot_heatmap
         plot_heatmap(sample_df, "avg_chain_length", output_dir=tmp_path, save=True)
-        saved = list((tmp_path / "figures" / "distributions").glob("*.png"))
+        saved = list((tmp_path / "figures").rglob("*.png"))
         assert len(saved) >= 1
         plt.close("all")
 
