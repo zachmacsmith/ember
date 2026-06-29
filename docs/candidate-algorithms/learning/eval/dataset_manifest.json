@@ -1,0 +1,63 @@
+{
+  "config": {
+    "families": [
+      "ER",
+      "REG",
+      "BA",
+      "GEO"
+    ],
+    "sizes": [
+      10,
+      16,
+      22,
+      30,
+      40,
+      50
+    ],
+    "er_densities": [
+      0.2,
+      0.35,
+      0.5,
+      0.7
+    ],
+    "reg_degrees": [
+      3,
+      4,
+      6
+    ],
+    "ba_m": [
+      2,
+      3,
+      5
+    ],
+    "geo_radius": [
+      0.3,
+      0.4,
+      0.55
+    ],
+    "targets": [
+      "pegasus_6",
+      "zephyr_4"
+    ],
+    "labeller": "pathfinder-thorough",
+    "label_seed": 0,
+    "timeout": 25.0,
+    "n_train": 20,
+    "n_val": 4,
+    "n_test": 4
+  },
+  "summary": {
+    "train": {
+      "instances": 1560,
+      "valid_labels": 3120
+    },
+    "val": {
+      "instances": 312,
+      "valid_labels": 624
+    },
+    "test": {
+      "instances": 312,
+      "valid_labels": 624
+    }
+  }
+}

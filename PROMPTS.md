@@ -113,3 +113,25 @@ Some of the earlier logs mentioned missing matplotlib and causing errros, as if 
 > result figures (`docs/paper/figures/`: ACL vs density, ACL-std vs density,
 > wall-clock vs MM, topology robustness) rendered from the committed
 > `summary_opt.csv`; not embedded in the .tex (kept the paper's vector figures)._
+
+### Prompt 12
+
+```
+Consider the patent application in ~/Downloads/quantum_patent.pdf. This patent imagines training a neural network of some sort (perhaps a graph attention network, but perhaps some other time of machine learning model) to predict embeddings. For instance, one could build up a cache (training data) of randomized input problem graphs and their optimized via embeddings (e.g., found via PathFinder optimized), and then training a model to predict those embeddings directly. Rather than predicting embeddings directly, one might just predict initial chains, e.g. as a seed for MM. This could again be done by generating a bunch of training data with PF/MM, finding out some optimal architecture, and training it. The goal would be to have this neural model generate embeddings that are at least as good (in terms of ACL and variance in ACL) in quality as those produced by PF/MM heuristics. Create a plan that uses a dynamic workflow with multiple subagents to explore different AI/learning strategies that may apply to this problem, build a training and validation/test eval framework/pipeline, generate training/validation/test data, and run training and evaluation (using this repository’s evaluation/benchmarking framework) to ultimately see whether learning-based methods can help.
+```
+
+> _Outcome: built `packages/ember-qc-learn` (a "learned layout" → decode pipeline reusing
+> the repair backend + `benchmark_one`). A dynamic Workflow implemented 4 families:
+> gnn-seed (supervised), graph-VAE (generative K=8), objective-GNN (label-free),
+> retrieval-cache (non-neural). Generated 1560/312/312 instance-disjoint PF-thorough-labeled
+> graphs into P6+Z4; trained all families on a 4-GPU cluster (hyde01/02/03). Held-out test
+> bake-off verdict: **learning helps** — `learned-vae` beats PathFinder-thorough on both mean
+> ACL and run-to-run variance on P6 and Z4, and beats minorminer/-layout on every family;
+> `learned-obj` beats minorminer everywhere at MM speed. Full writeup + figures in
+> docs/candidate-algorithms/learning/._
+
+### Prompt 13
+
+```
+What is left to run at this point?  What is running and where?
+```
