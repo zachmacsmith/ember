@@ -75,3 +75,22 @@ Continue the background agents, I hit ctrl+c by mistake!
 ```
 Go ahead and write a new section of the paper titled Optimizations and describe the optimizations we ended up baking in, in that section.  In that section, you can report new results of the optimized PathFinder algorithm versus MM and MM with p-norm layout.  I'd change the earlier section to be something like "Preliminary Algorithm" so that readers know that an optimized version and improved results are coming.  The abstract and intro and conclusion of the paper will also need to be updated to reflect the new optimizations and new numbers from the optimized algorithm.  Remember to do an update pass on PROMPTS.md, and then commit and push everything when done
 ```
+
+### Prompt 10
+
+```
+If MM is written in C++, we should make sure we're making a fair comparison for performance (runtime).  It is totally fine to use numba and to implement any kernels in C++ rather than in Python, if that yields improved performance.  Consider the "optimized" version of Pathfinder and whether i can be sped up by using numba or by rewriting some or all of the algorithm in C++.
+```
+
+> _Outcome: investigated and **measured a negative result.** Profiling attributes
+> 70–84% of optimized-`pathfinder` runtime to the compiled-C++ `minorminer` base
+> call (PathFinder's wall-clock is ≥ minorminer's by construction — it runs
+> minorminer then improves). A numba-compiled node-weighted Dijkstra
+> (`pf_numba.py`, kept un-registered for reproducibility) gives **no net speedup**:
+> restricted to the bounded region it is a wash with pure-Python `pathfinder`
+> (n40 d0.7 P6: 1.74 s vs 1.74 s, identical ACL), and on the full graph it is ~24%
+> slower — bounded routing already shrank each Dijkstra to a region where the
+> compiled kernel's per-node win is cancelled by call overhead. So the ~1.3×
+> overhead is the improvement pass, not interpreter overhead, and the comparison is
+> fair; a C++ rewrite would hit the same ceiling. Paper §Optimizations and
+> §Limitations updated to report this; production stays pure-Python._

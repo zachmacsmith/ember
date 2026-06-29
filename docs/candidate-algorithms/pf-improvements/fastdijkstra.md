@@ -2,8 +2,18 @@
 
 **Module:** `ember_qc/algorithms/pf_fastdijkstra.py`
 **Registry name:** `pathfinder-fastdijkstra`
-**Baseline:** `pathfinder` (frozen)
-**Status:** ✅ **bake-in candidate** — a pure speed win, **zero quality change**, but it **requires `numba`** (a new dependency).
+**Baseline:** `pathfinder` (frozen = today's *un-bounded* `pathfinder-base`)
+**Status:** ❌ **not baked — superseded by bounded routing (S3).** This was a pure
+speed win **measured against the un-bounded engine**, where the per-route Dijkstra
+runs over the *full* target graph. The production router instead adopted **bounded
+routing (S3)**, which shrinks each Dijkstra to a small region by a different
+mechanism — and the two **fully overlap**. A Prompt-10 follow-up re-tested numba
+*on top of* the final production router (`pf_numba.py`): a region-restricted numba
+kernel is a **wash** (within noise of pure-Python `pathfinder`), and a full-graph
+numba kernel is **~24% slower** than bounded routing. With **70–84%** of runtime in
+the compiled-C++ `minorminer` base call, compiling the routing inner loop does not
+speed up the optimized algorithm. The production router stays pure Python; the
+numbers below stand only against the un-bounded baseline.
 
 ---
 

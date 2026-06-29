@@ -22,12 +22,16 @@ shorter; time ratio < 1 = faster. All variants stayed 100% valid + deterministic
 | Q4 | exact Dreyfus–Wagner Steiner | +0.0% | — | ×0.99 | rejected (no gain over SPH) |
 | **S3** | bounded region + early termination | **+0.0%** | +0.000 | **×0.33** | **baked in** (3× faster, identical chains, dep-free) |
 | **S4** | dirty-set incremental LNS | +0.1% | +0.005 | **×0.74** | **baked in** (fewer re-sweeps, same moves) |
-| S1 | numba CSR fast-Dijkstra | +0.0% | +0.000 | ×0.37 | not baked (bit-identical, but adds a numba dep and overlaps with S3) |
+| S1 | numba CSR fast-Dijkstra | +0.0% | +0.000 | ×0.37† | not baked (bit-identical, but adds a numba dep and **fully overlaps with S3** — no net gain on the final router; see follow-up below) |
 | S2 | A\* / landmark routing | **+1.7%** | +0.009 | ×0.28 | rejected (quality regression) |
 | S5 | parallel restarts | +0.0%¹ | — | ×0.71¹ | deferred (orthogonal; future) |
 
 ¹ S5 is measured vs `pathfinder-thorough`, under contention; a clean re-measure
 should approach ×0.25.
+
+† S1's ×0.37 is vs the *un-bounded* frozen baseline (= `pathfinder-base`); the
+bounded production router (S3) captures the same Dijkstra speedup by a different
+mechanism, so on the final router numba is a wash (see the S1 bullet below).
 
 ## What was baked into production
 
@@ -58,10 +62,22 @@ optimizations are pure-Python (no new hard dependency) and quality-safe
 - **Exact Steiner (Q4):** no ACL gain — PathFinder's SPH inner step is already
   near-optimal for the small terminal sets here; representative-terminal
   Dreyfus–Wagner is only a heuristic for the underlying group-Steiner problem.
-- **numba fast-Dijkstra (S1):** bit-identical and ~2× faster, but it adds a numba
-  dependency and overlaps with bounded routing (both speed up the same step).
-  Left available as a future optional accelerator (numba primary, fall back to the
-  pure-Python primitive).
+- **numba fast-Dijkstra (S1):** bit-identical and ~2.7× faster *against the
+  un-bounded preliminary engine* — but that gain **fully overlaps with bounded
+  routing (S3)**: both accelerate the same Dijkstra step, by compiling it vs. by
+  shrinking it. **Re-tested against the final production router** (bounded+dirty-set+spur)
+  as a Prompt-10 follow-up (`pf_numba.py`): a numba kernel *restricted to the
+  bounded region* (persistent +inf cost array, O(region) setup) is a **wash** —
+  within noise of pure-Python `pathfinder` (n40 d0.7 P6: 1.74 s vs 1.74 s; identical
+  ACL; valid; deterministic) — and replacing bounded routing with a *full-graph*
+  numba search is **~24% slower**. Profiling attributes **70–84%** of
+  optimized-`pathfinder` runtime to the compiled-C++ `minorminer` base call itself,
+  which caps any routing-side speedup (PathFinder's wall-clock is ≥ minorminer's
+  *by construction* — it runs minorminer then improves). So numba does **not** speed
+  up the optimized algorithm; the production router stays pure Python (no numba
+  dependency). Kept as the reproducible, un-registered `pf_numba.py` behind the
+  paper's fairness finding (§Limitations). A C++ rewrite of the same kernel hits the
+  same ceiling.
 - **parallel restarts (S5):** orthogonal speed win for the thorough mode; left as
   future work.
 
