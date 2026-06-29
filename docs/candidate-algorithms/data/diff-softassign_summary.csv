@@ -1,0 +1,17 @@
+cell,algorithm,n_seeds,n_success,success_rate,acl_mean,acl_std,qubits_mean,time_mean
+ER_n20_d0.3_P6,minorminer,3,3,1.0,1.8,0.108,36,0.037
+ER_n20_d0.3_P6,diff-softassign,3,3,1.0,1.8,0.108,36,0.795
+ER_n20_d0.5_P6,minorminer,3,3,1.0,2.317,0.131,46.3,0.09
+ER_n20_d0.5_P6,diff-softassign,3,3,1.0,2.317,0.131,46.3,0.417
+ER_n20_d0.7_P6,minorminer,3,3,1.0,2.583,0.062,51.7,0.134
+ER_n20_d0.7_P6,diff-softassign,3,3,1.0,2.583,0.062,51.7,0.483
+ER_n30_d0.3_P6,minorminer,3,3,1.0,2.711,0.129,81.3,0.189
+ER_n30_d0.3_P6,diff-softassign,3,3,1.0,2.711,0.129,81.3,0.564
+ER_n30_d0.5_P6,minorminer,3,3,1.0,3.356,0.11,100.7,0.559
+ER_n30_d0.5_P6,diff-softassign,3,3,1.0,3.356,0.11,100.7,1.012
+ER_n30_d0.7_P6,minorminer,3,3,1.0,3.911,0.247,117.3,0.801
+ER_n30_d0.7_P6,diff-softassign,3,3,1.0,3.911,0.247,117.3,1.233
+ER_n30_d0.5_P6-broken,minorminer,3,3,1.0,3.478,0.087,104.3,0.349
+ER_n30_d0.5_P6-broken,diff-softassign,3,3,1.0,3.478,0.087,104.3,0.688
+ER_n30_d0.5_Z4,minorminer,3,3,1.0,2.744,0.087,82.3,0.299
+ER_n30_d0.5_Z4,diff-softassign,3,3,1.0,2.744,0.087,82.3,0.65
