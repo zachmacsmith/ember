@@ -21,6 +21,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Candidate embedders for research-brief approaches 3.1–3.4** — `srgw`
+  (semi-relaxed Gromov–Wasserstein placement, POT), `diff-softassign`
+  (differentiable annealed soft-assignment, torch), `multilevel`
+  (coarsen→embed→refine V-cycle), and `lns-cpsat` (large-neighbourhood search
+  with exact OR-Tools CP-SAT region repair). All conform to the
+  `EmbeddingAlgorithm` contract, reuse `embedding_backend`, and import their
+  optional deps (POT / torch / OR-Tools) lazily. Evaluated against minorminer in
+  `docs/candidate-algorithms/`: `lns-cpsat` modestly beats mean ACL (never-worse,
+  ~16× slower); `srgw` and `multilevel` reduce ACL variance; `diff-softassign`
+  ties MM (an instructive negative). PathFinder (3.5) remains the standout.
 - **PathFinder embedder** (`pathfinder`, `pathfinder-thorough`,
   `pathfinder-cold`) — negotiated rip-up-and-reroute minor embedding
   (research-brief approach 3.5). Warm-starts from a fast base embedding
