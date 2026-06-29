@@ -756,6 +756,299 @@ $n{=}40,d{=}0.7$ & 1.33 & 5.59 & 1.87 & 8.41 \\
 \end{table}
 
 %% ========================================================================
+\section{A Learning-Based Approach}
+\label{sec:learning}
+
+PathFinder is a hand-engineered improver. A complementary question is whether an
+\emph{amortized} model can \emph{learn} to embed---paying an offline training cost
+once and then predicting an embedding in a single forward pass, rather than
+searching at solve time. The cache of problems PathFinder has already solved is a
+ready-made training set: each \emph{(problem graph, PathFinder-optimized embedding)}
+pair is a labelled example, and we ask a model to reproduce---and ideally improve
+on---that quality. This mirrors the predict-then-refine pattern of learned
+embedding heuristics \cite{ngo2024charme,nembrini2025ppo}, where a network proposes
+a candidate that a classical minor-embedding step then refines.
+
+We implemented four model families \emph{inside Ember}, so they are benchmarked
+through the exact same harness (\S\ref{sec:results}) as \texttt{minorminer} (MM) and
+PathFinder, and ran a bake-off. The clear winner is a generative \textbf{Graph
+Variational Autoencoder} (\texttt{learned-vae}), which beats \emph{every} baseline,
+including PathFinder-thorough, on chain-length variance and ties-or-beats it on mean
+ACL. We detail it here.
+
+\subsection{Embedding as a learned layout}
+\label{sec:learn-layout}
+
+The central reduction is to predict a \emph{layout} rather than an embedding
+directly. Every family maps each logical vertex $v$ to a coordinate
+$\hat{p}(v)\in[0,1]^2$ in the target's normalized hardware frame (read off the
+Pegasus/Zephyr drawing layout). Two decoders turn a layout into a valid embedding,
+both reusing PathFinder's repair backend (\S\ref{sec:pathfinder}) so that no
+validity logic is re-implemented:
+\emph{seed}$\rightarrow$\emph{MM} snaps each vertex to a distinct nearest qubit (an
+optimal linear-assignment problem) and hands those single-qubit chains to
+\texttt{minorminer} as \texttt{initial\_chains}; \emph{direct}$\rightarrow$%
+\emph{repair} forms a proximity soft-assignment and rounds, grows, and legalizes it.
+Feeding the \emph{true} PathFinder chain centroids through the seed decoder recovers
+PathFinder-quality embeddings (mean ACL within $1.03\times$, $100\%$ valid), so the
+decoder is near-lossless: the learning problem is exactly ``predict a good layout.''
+
+\subsection{Background: variational autoencoders on graphs}
+
+A variational autoencoder (VAE) \cite{kingma2014vae} learns a probabilistic encoder
+$q_\phi(z\mid x)$ and decoder $p_\theta(x\mid z)$ over a latent variable $z$,
+trained by maximizing the evidence lower bound
+\[
+  \mathcal{L}(\theta,\phi)=\mathbb{E}_{q_\phi(z\mid x)}\!\left[\log p_\theta(x\mid z)\right]
+  -\beta\,\mathrm{KL}\!\left(q_\phi(z\mid x)\,\|\,p(z)\right),
+\]
+a reconstruction term traded against a standard-normal prior $p(z)$. Graph VAEs
+replace the encoder with a graph neural network and have been used to embed and
+generate graphs \cite{kipf2016vgae,simonovsky2018graphvae}. Our encoder is a
+message-passing GNN (a residual GraphSAGE stack \cite{hamilton2017graphsage}; a
+graph-attention encoder \cite{velickovic2018gat} is a drop-in alternative). The
+twist is twofold: the decoder emits a hardware \emph{layout} rather than a
+reconstructed graph, and we exploit the model's \emph{generative} nature at
+inference time---sampling several latents yields several candidate layouts, and we
+keep the best after decoding. This is a cheap, learned analogue of
+PathFinder-thorough's best-of-$N$ restarts, and---as the results show---it is what
+drives the variance reduction.
+
+\subsection{The \texttt{learned-vae} architecture}
+\label{sec:learn-arch}
+
+Figure~\ref{fig:vae} sketches the model. The encoder runs a residual GraphSAGE
+backbone ($5$ layers, width $160$) over the source graph's structural node features
+(degree, clustering, triangle and core numbers, and an $8$-dimensional Laplacian
+positional encoding), then pools the node embeddings $h_v$ with concatenated
+mean-and-max pooling and projects to a Gaussian posterior $\mathcal{N}(\mu,\sigma^2)$
+over a latent of dimension $16$. The decoder concatenates each node embedding $h_v$
+with the (broadcast) latent $z$ and maps it through an MLP with a sigmoid head to a
+coordinate $\hat{p}(v)\in[0,1]^2$. Training minimizes the ELBO with reconstruction
+$\lVert \hat{p}-y\rVert^2$ against the PathFinder chain-centroid labels $y$ and a
+KL term with $\beta{=}0.01$ (linearly warmed up); the deterministic layout $z{=}\mu$
+serves the layout interface used for model selection.
+
+\emph{Inference} is generative: encode the query once, draw $K{=}8$ latents
+$z^{(1)}{=}\mu, z^{(2)},\dots,z^{(K)}\sim\mathcal{N}(\mu,\sigma^2)$, decode each to a
+layout, run the seed$\rightarrow$MM decoder on each, and return the lowest-ACL valid
+embedding. The $K$ decode passes share the encode and are individually fast; the
+per-sample \texttt{minorminer} budget is apportioned so the total stays within the
+wall-clock budget.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\scriptsize,
+  box/.style={draw,rounded corners,minimum height=8mm,align=center,inner sep=2pt},
+  >=Stealth]
+\node[box,fill=blue!8] (h) {problem\\graph $H$};
+\node[box,right=4mm of h,fill=blue!8] (gnn) {GraphSAGE\\encoder\\($5{\times}160$)};
+\node[box,right=4mm of gnn] (pool) {mean$+$max\\pool};
+\node[box,right=4mm of pool,fill=green!8] (z) {$\mu,\sigma$\\$z\!\in\!\mathbb{R}^{16}$};
+\node[box,right=5mm of z] (dec) {decoder\\MLP\\$h_v\!\oplus\!z$};
+\node[box,right=4mm of dec,fill=orange!10] (lay) {layout\\$\hat p(v)\!\in\![0,1]^2$};
+\node[box,below=5mm of dec,fill=red!8] (mm) {seed$\to$MM\\decode};
+\node[box,left=4mm of mm,fill=red!8] (best) {best of\\$K{=}8$};
+\draw[->] (h)--(gnn); \draw[->] (gnn)--(pool); \draw[->] (pool)--(z);
+\draw[->] (z)--(dec); \draw[->] (dec)--(lay);
+\draw[->] (gnn.south) to[out=-90,in=90] (dec.north);
+\draw[->] (lay) to[out=-90,in=0] (mm);
+\draw[->] (mm)--(best);
+\node[above=0.5mm of dec,font=\tiny] {$\times K$ samples};
+\end{tikzpicture}
+\caption{\texttt{learned-vae}. A graph-VAE encodes $H$ to a latent $z$; the decoder
+turns $z$ (plus per-node features) into a hardware \emph{layout}; $K{=}8$ sampled
+layouts are each decoded to a valid embedding via seed$\to$\texttt{minorminer}, and
+the shortest-ACL one is returned.}
+\label{fig:vae}
+\end{figure}
+
+\subsection{Dataset generation}
+\label{sec:learn-data}
+
+Supervision comes entirely from PathFinder, so the corpus must be diverse and the
+splits clean. We sample source graphs from four families across a size grid
+$n\in\{10,\dots,50\}$: Erd\H{o}s--R\'enyi $G(n,p)$, random $d$-regular,
+Barab\'asi--Albert, and $k$-nearest-neighbour geometric graphs, over a grid of the
+relevant density/degree/radius parameter. Each graph is labelled by running
+\texttt{pathfinder-thorough} through Ember's \texttt{benchmark\_one} into both
+clean Pegasus $P_6$ ($680$ qubits) and Zephyr $Z_4$ ($576$ qubits); only graphs it
+validly embeds contribute a label for that target. The supervised target for vertex
+$v$ is the centroid, in normalized hardware coordinates, of its PathFinder chain.
+
+Splits are \textbf{instance-disjoint}: train, validation, and test draw from
+disjoint random-seed ranges \emph{per grid cell}, so a graph (and its isomorphs from
+the same generator seed) can never appear in two splits---the property reviewers of
+learned combinatorial solvers rightly scrutinize. The realized corpus is $1560$
+train, $312$ validation, and $312$ test graphs, i.e.\ $3120/624/624$ labelled
+(graph, target, embedding) examples after the both-target labelling. Generation is
+deterministic (seeded) and embarrassingly parallel; the full corpus labels in a few
+minutes across a multi-core node.
+
+\subsection{Training}
+\label{sec:learn-train}
+
+Models are trained with Adam \cite{kingma2015adam} (learning rate $2{\times}10^{-3}$,
+cosine decay, batch size $16$) and---crucially---\textbf{selected on the real
+downstream metric}: every few epochs we decode the validation layouts through
+seed$\rightarrow$MM and keep the checkpoint with the best validation ACL ratio, not
+the one with the lowest loss. Training is cheap: the $P_6$ \texttt{learned-vae}
+converges in \textbf{$195$\,s for $80$ epochs} on a single RTX~A4000 (the four
+families were trained in parallel across a small GPU cluster). Inference uses CPU
+only.
+
+Figure~\ref{fig:vaeloss} plots train and validation loss per epoch. Both fall within
+a handful of epochs and then sit flat, with validation tracking (and slightly below)
+training throughout---\textbf{no overfitting}, as expected given the small model and
+the diverse corpus. The near-immediate plateau reflects the multimodality of the
+centroid-regression target (many equally good placements exist); this is precisely
+why we select on the downstream ACL rather than on the loss, and why the generative
+multi-sample inference matters more than squeezing the reconstruction term.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=0.86\columnwidth,height=4.3cm,
+  xlabel={epoch},ylabel={VAE loss},
+  ymin=0.039,ymax=0.0435,xmin=0,xmax=80,
+  legend pos=north east,legend cell align=left,
+  grid=both,grid style={gray!20},tick label style={font=\scriptsize},
+  label style={font=\scriptsize},legend style={font=\scriptsize}]
+\addplot[thick,blue,mark=none] coordinates {(1,0.0422) (2,0.0418) (4,0.0418) (6,0.0417) (8,0.0417) (10,0.0417) (12,0.0417) (14,0.0416) (16,0.0417) (20,0.0415) (24,0.0416) (28,0.0417) (32,0.0416) (36,0.0416) (40,0.0416) (44,0.0417) (48,0.0416) (52,0.0417) (56,0.0417) (60,0.0415) (64,0.0416) (68,0.0416) (72,0.0416) (76,0.0417) (80,0.0417)};
+\addplot[thick,red,dashed,mark=none] coordinates {(1,0.0406) (2,0.0410) (4,0.0409) (6,0.0408) (8,0.0407) (10,0.0406) (14,0.0407) (18,0.0407) (22,0.0406) (26,0.0406) (30,0.0406) (34,0.0406) (40,0.0406) (46,0.0406) (52,0.0406) (58,0.0406) (64,0.0406) (70,0.0406) (76,0.0406) (80,0.0406)};
+\legend{train,validation}
+\end{axis}
+\end{tikzpicture}
+\caption{\texttt{learned-vae} training and validation loss per epoch ($P_6$, $1560/312$
+train/val graphs). Validation tracks training and stays slightly below it---no
+overfitting; the fast plateau reflects the multimodal centroid target (model
+selection uses the downstream validation ACL, not this loss).}
+\label{fig:vaeloss}
+\end{figure}
+
+\subsection{Results: which method wins, and when}
+\label{sec:learn-results}
+
+We evaluate on the $312$ held-out test graphs (instance-disjoint from training),
+three seeds each, through \texttt{benchmark\_one} into clean $P_6$ and $Z_4$.
+Table~\ref{tab:learn-quality} reports embedding quality, Table~\ref{tab:learn-family}
+breaks $P_6$ down by source family, and Table~\ref{tab:learn-timing} reports speed.
+
+\begin{table}[t]
+\caption{Held-out test bake-off: mean ACL (and per-graph ACL std.\ over seeds, the
+run-to-run variance) on clean Pegasus $P_6$ and Zephyr $Z_4$. Lower is better; best
+per column in bold. All $312$ test graphs are instance-disjoint from training; all
+methods are $100\%$ valid.}
+\label{tab:learn-quality}
+\small
+\begin{tabular}{lcccc}
+\toprule
+ & \multicolumn{2}{c}{Pegasus $P_6$} & \multicolumn{2}{c}{Zephyr $Z_4$}\\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+algorithm & ACL & std & ACL & std\\
+\midrule
+\texttt{minorminer}           & 2.075 & 0.072 & 1.777 & 0.057\\
+\texttt{minorminer-layout}    & 2.101 & 0.078 & 1.787 & 0.058\\
+\texttt{pathfinder}           & 2.044 & 0.068 & 1.755 & 0.051\\
+\texttt{pathfinder-thorough}  & 1.955 & 0.037 & 1.687 & 0.029\\
+\midrule
+\texttt{learned-gnn-seed}     & 2.075 & 0.070 & 1.780 & 0.053\\
+\texttt{learned-gnn-seed-direct} & 2.086 & 0.071 & 1.790 & 0.056\\
+\texttt{learned-retrieve}     & 2.072 & 0.066 & 1.775 & 0.052\\
+\texttt{learned-obj}          & 2.057 & 0.066 & 1.765 & 0.055\\
+\textbf{\texttt{learned-vae}} & \textbf{1.947} & \textbf{0.031} & \textbf{1.675} & \textbf{0.025}\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\caption{Per-family mean ACL on $P_6$ (lower better; best in bold). \texttt{learned-vae}
+beats PathFinder-thorough on Barab\'asi--Albert and $d$-regular and ties it
+(within $0.3\%$) on Erd\H{o}s--R\'enyi and geometric graphs, while beating
+\texttt{minorminer} on every family.}
+\label{tab:learn-family}
+\small
+\begin{tabular}{lcccc}
+\toprule
+family & \texttt{mm} & \texttt{pf-thor.} & \texttt{l-obj} & \texttt{l-vae}\\
+\midrule
+Barab\'asi--Albert      & 1.621 & 1.540 & 1.610 & \textbf{1.515}\\
+Erd\H{o}s--R\'enyi      & 2.858 & \textbf{2.690} & 2.846 & 2.698\\
+$k$-NN geometric        & 2.135 & \textbf{1.994} & 2.115 & 1.996\\
+$d$-regular             & 1.425 & 1.353 & 1.394 & \textbf{1.330}\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\caption{Mean wall-clock per embedding on $P_6$ (held-out test, CPU inference). The
+single-shot learned methods match \texttt{minorminer}'s speed; \texttt{learned-vae}'s
+quality/variance win costs $K{=}8$ decode passes, comparable to
+\texttt{pathfinder-thorough}'s best-of-four restarts.}
+\label{tab:learn-timing}
+\small
+\begin{tabular}{lr}
+\toprule
+method & time (s)\\
+\midrule
+\texttt{minorminer}          & 0.39\\
+\texttt{learned-retrieve}    & 0.40\\
+\texttt{minorminer-layout}   & 0.48\\
+\texttt{learned-gnn-seed}    & 0.50\\
+\texttt{learned-obj}         & 0.51\\
+\texttt{pathfinder}          & 0.52\\
+\texttt{pathfinder-thorough} & 2.17\\
+\texttt{learned-vae} ($K{=}8$) & 3.74\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{The headline.} \texttt{learned-vae} is the best method overall on
+\emph{both} topologies, on \emph{both} mean ACL and run-to-run variance. It edges the
+strongest heuristic, PathFinder-thorough, on mean ACL ($P_6$: $1.947$ vs.\ $1.955$;
+$Z_4$: $1.675$ vs.\ $1.687$) and clearly beats it on variance ($P_6$: $0.031$ vs.\
+$0.037$; $Z_4$: $0.025$ vs.\ $0.029$), while beating \texttt{minorminer} and
+\texttt{minorminer-layout} decisively---a relative ACL improvement of $6.2\%$ over MM
+on $P_6$ and $5.7\%$ on $Z_4$, at less than half MM's variance. Per family
+(Table~\ref{tab:learn-family}) it wins outright on Barab\'asi--Albert and $d$-regular
+and is a statistical tie with PathFinder-thorough on the other two. The mechanism is
+the generative one: sampling $K{=}8$ layouts and keeping the best both lowers ACL
+and, by being insensitive to any single \texttt{minorminer} seed, suppresses the
+run-to-run variance that is itself PathFinder's headline advantage---now improved on
+by a learned model.
+
+\paragraph{The label-free runner-up.} \texttt{learned-obj}, which never sees a
+PathFinder label and instead trains its layout to minimize an embedding objective
+(edge-stretch plus an anti-collapse term), beats \texttt{minorminer} and
+\texttt{minorminer-layout} on every family at MM-like speed---evidence that even an
+unsupervised learned layout improves on the standard baselines.
+\texttt{learned-gnn-seed} (supervised) and the non-neural \texttt{learned-retrieve}
+embeddings-cache match \texttt{minorminer} within noise.
+
+\paragraph{Which to use.} The methods occupy distinct operating points. For the best
+quality \emph{and} the lowest variance, and when a ${\sim}4$\,s budget is acceptable,
+\texttt{learned-vae} dominates. For a fast single-shot embedder that still beats the
+standard baselines at \texttt{minorminer} speed ($\sim\!0.5$\,s), \texttt{learned-obj}
+is the pick; \texttt{learned-retrieve} is the cheapest (no GPU, no training beyond
+indexing) and ties MM. PathFinder-thorough remains an excellent, slightly faster
+alternative to the VAE when its larger variance is acceptable. Notably,
+\texttt{minorminer-layout}---the de facto ``MM + good initial placement''
+baseline---was marginally \emph{worse} than plain \texttt{minorminer} on this grid,
+underscoring that a \emph{learned} layout, not just any layout, is what helps.
+
+\paragraph{Success rate and failure modes.} Every learned method embedded
+\textbf{$100\%$} of the $312$ test graphs on both targets across all seeds.
+\texttt{learned-vae} is a $100\%$-success method in the same sense \texttt{minorminer}
+is: its seed$\rightarrow$MM decoder always hands \texttt{minorminer} a warm start (and
+falls back to a cold \texttt{minorminer} call if a warm start ever fails to grow), so
+it \emph{inherits \texttt{minorminer}'s completeness and introduces no new failure
+modes}. If a valid embedding exists within the time budget, it returns one; the only
+way it fails is the way \texttt{minorminer} fails---a problem too large or dense to
+fit the fabric in the budget. The learned layout changes the \emph{quality} of the
+result, never its validity, because validity is delegated to the same battle-tested
+repair backend used throughout this paper.
+
+%% ========================================================================
 \section{Limitations and Future Work}
 \label{sec:limitations}
 
