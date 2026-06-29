@@ -45,3 +45,9 @@ Please commit everything and push.  Do not list Claude as a co-author of any com
 ```
 Did you push all the scripts and commands necessary to reproduce all the results reported in this paper draft?  If not, can you go ahead and do do?  Also, please write and push a PROMPTS.md file that has all the prompts issued so far in this session of Claude (including this one).  Make a memory to always update PROMPTS.md every time there is a new prompt.
 ```
+
+### Prompt 5
+
+```
+There were several other possible algorithms envisioned in CLAUDE.md.  PathFinder works well, but can we consider (fan out subagents, use a dynamic workflow) the other algorithms in parallel and evaluate each in the same way as we evaluated PathFinder?  Write up the results of each algorithm in a separate .md file; do NOT touch the PathFinder LaTeX paper for now.  Let's see how each algorithm performs first.  For any ideas you may have (e.g., one of the ideas is about sliced optimal transport or Gromov-Wasserstein stuff), be sure to go read some relevant background papers and get context before attempting any implementation.
+```
