@@ -135,3 +135,22 @@ Consider the patent application in ~/Downloads/quantum_patent.pdf. This patent i
 ```
 What is left to run at this point?  What is running and where?
 ```
+
+### Prompt 14
+
+```
+Can you add a new section to the paper called "Learning-Based Approach" that details the learned-vae method?  Include architecture diagrams, citations to (Graph?) VAEs, and any other background or helpful expositional content.  Then show (in the same section / as a subsection) the tables comparing learned-vae results on the various architectures (as you just showed above), emphasizing which methods are best for different tasks/scenarios.  But also, add a table comparing timing/performance.  Ensure in the prose you mention training time, and include a plot of training/validation loss per epoch so we can get a visual sense of whether we're overfitting or not.  Be sure to include a subsection as well that describes the dataset generation process as reviewers will certainly pay close attention to that.  Be sure to mention somewhere in the section the success rate of learned-vae, whether it's a 100%-success-type method or whether it has failure modes.  Upon completing all this, commit and push
+```
+
+> _Outcome: added §7 "A Learning-Based Approach" to docs/paper/pathfinder.tex — VAE/graph-VAE
+> background + citations (refs.bib: kingma2014vae, kipf2016vgae, simonovsky2018graphvae,
+> hamilton2017graphsage, velickovic2018gat, kingma2015adam); a TikZ architecture diagram; a
+> dataset-generation subsection; a training subsection with training time (195s/80 epochs/A4000)
+> and a real train/val loss-per-epoch plot (no overfitting); quality/per-family/timing tables; a
+> "which method wins and when" guide; and an explicit 100%-success / failure-mode paragraph._
+
+### Prompt 15
+
+```
+Yes, make those little changes in abstract/contributions/conclusion too, and commit and push (and make sure PROMPTS.md is up to date)
+```

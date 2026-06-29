@@ -65,7 +65,12 @@ spur-pruning finishing pass---making the production improver $\sim$3$\times$
 faster at equal-or-better ACL: single-seed \texttt{pathfinder} runs within
 ${\sim}1.3\times$ compiled \texttt{minorminer}'s wall-clock while still
 shortening mean ACL, and the optimized thorough configuration reaches ${-}5\%$
-mean ACL (up to ${-}11\%$) at a fraction of its former cost.
+mean ACL (up to ${-}11\%$) at a fraction of its former cost. Finally, treating
+PathFinder's outputs as training data, we ask whether an \emph{amortized} model can
+learn to embed: a generative graph variational autoencoder that samples several
+candidate hardware layouts and keeps the best matches \texttt{pathfinder-thorough}'s
+mean ACL and attains the \emph{lowest} run-to-run ACL variance of any method we
+tested---learned or heuristic---on both Pegasus and Zephyr, at full validity.
 \end{abstract}
 
 \ccsdesc[500]{Hardware~Quantum computation}
@@ -166,7 +171,7 @@ $E$ is unused. Here $\mathrm{ACL}=\tfrac{1+2+1}{3}=\tfrac{4}{3}$.}
 \end{figure}
 
 \paragraph{Contribution.}
-This paper makes four contributions. (i) We frame minor-embedding chain
+This paper makes five contributions. (i) We frame minor-embedding chain
 construction as \emph{multi-net global routing} and transfer two ideas from
 FPGA/VLSI computer-aided design---a real Steiner-tree inner step and
 \emph{negotiated congestion}---to the quantum-annealing setting
@@ -183,10 +188,16 @@ a structured pass yields three quality-safe improvements---bounded-region
 routing, a dirty-set incremental schedule, and a spur-pruning finishing
 pass---that together make the production algorithm $\sim$3$\times$ faster at
 equal-or-better ACL, bringing single-seed \texttt{pathfinder} to within
-${\sim}1.3\times$ compiled \texttt{minorminer}'s wall-clock. We are explicit
+${\sim}1.3\times$ compiled \texttt{minorminer}'s wall-clock. (v) Finally, we ask
+whether \emph{learning} helps (\S\ref{sec:learning}): training amortized models on
+PathFinder-optimized embeddings, a generative graph variational autoencoder that
+samples and selects among candidate hardware layouts matches
+\texttt{pathfinder-thorough}'s mean ACL and achieves the lowest run-to-run ACL
+variance of any method---learned or heuristic---on both topologies, at full
+validity. We are explicit
 (\S\ref{sec:novelty}) that the
 algorithmic primitives are not new; the novelty is their synthesis and
-application to minor embedding.
+application to minor embedding (and, for \S\ref{sec:learning}, the empirical finding).
 
 %% ========================================================================
 \section{Background and Related Work}
@@ -1100,8 +1111,13 @@ run-to-run variance on D-Wave Pegasus and Zephyr. A structured optimization pass
 production algorithm ${\sim}3\times$ faster at equal-or-better quality, bringing
 single-seed \texttt{pathfinder} to within ${\sim}1.3\times$ compiled
 \texttt{minorminer}'s wall-clock---so the chain-length and variance gains come at
-little time cost. The primitives are classical; the synthesis, application,
-optimization, and empirical validation are the contribution.
+little time cost. Finally, treating these optimized embeddings as supervision, we
+find that a learned model can compete: a generative graph variational autoencoder,
+trained on PathFinder's outputs and sampling several candidate layouts at inference,
+matches \texttt{pathfinder-thorough}'s mean ACL and attains the lowest chain-length
+variance of any method we tested---learned or heuristic---on both Pegasus and
+Zephyr, at full validity (\S\ref{sec:learning}). The primitives are classical; the
+synthesis, application, optimization, and empirical validation are the contribution.
 
 \appendix
 \section{Complete per-cell results}
