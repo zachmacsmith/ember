@@ -51,3 +51,21 @@ Did you push all the scripts and commands necessary to reproduce all the results
 ```
 There were several other possible algorithms envisioned in CLAUDE.md.  PathFinder works well, but can we consider (fan out subagents, use a dynamic workflow) the other algorithms in parallel and evaluate each in the same way as we evaluated PathFinder?  Write up the results of each algorithm in a separate .md file; do NOT touch the PathFinder LaTeX paper for now.  Let's see how each algorithm performs first.  For any ideas you may have (e.g., one of the ideas is about sliced optimal transport or Gromov-Wasserstein stuff), be sure to go read some relevant background papers and get context before attempting any implementation.
 ```
+
+### Prompt 6
+
+```
+Based on all the findings so far, do you have any other ideas for (1) promising embedding algorithms we should try, or (2) ways to increase the speed of PathFinder?
+```
+
+### Prompt 7
+
+```
+Algorithmically, let's try 1, 3, and 4.  For implementation, yes, let's try 1, 2, 3, 4, and 5.  Fan out subagents so we can measure the impact of each of these potential improvements on their own, and then, for any promising fixes/improvements, let's try combining them to see if performance (quality or speed) improves even further.  Eventually we can converge on one production version of PathFinder that has as many optimizations baked into it as we can find and verify.  Commit and push as a quick checkpoint before you start this pass.
+```
+
+### Prompt 8
+
+```
+Continue the background agents, I hit ctrl+c by mistake!
+```
