@@ -69,3 +69,9 @@ Algorithmically, let's try 1, 3, and 4.  For implementation, yes, let's try 1, 2
 ```
 Continue the background agents, I hit ctrl+c by mistake!
 ```
+
+### Prompt 9
+
+```
+Go ahead and write a new section of the paper titled Optimizations and describe the optimizations we ended up baking in, in that section.  In that section, you can report new results of the optimized PathFinder algorithm versus MM and MM with p-norm layout.  I'd change the earlier section to be something like "Preliminary Algorithm" so that readers know that an optimized version and improved results are coming.  The abstract and intro and conclusion of the paper will also need to be updated to reflect the new optimizations and new numbers from the optimized algorithm.  Remember to do an update pass on PROMPTS.md, and then commit and push everything when done
+```
