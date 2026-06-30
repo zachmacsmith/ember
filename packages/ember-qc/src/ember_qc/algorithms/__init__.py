@@ -21,6 +21,14 @@ from ember_qc.algorithms import lns_cpsat    # noqa: F401  (3.4 LNS + CP-SAT; ne
 # reweave-stacked seeds from is registered first.
 from ember_qc.algorithms import reweave_opt  # noqa: F401
 
+# Search-guidance variants: the vertex-ordering lever (rw_order: reweave-cold-<order>)
+# and the rip-up-selection lever (rw_ripup: reweave-ripup-<policy>). Both build on
+# the optimized router, so they import after reweave_opt.
+from ember_qc.algorithms import rw_order      # noqa: F401  (ordering lever)
+from ember_qc.algorithms import rw_ripup      # noqa: F401  (rip-up selection lever)
+from ember_qc.algorithms import minorminer_guided  # noqa: F401  (order-guided MM via quickpass)
+from ember_qc.algorithms import minorminer_forked  # noqa: F401  (order-guided MM via the var_order fork)
+
 # Load any user-defined custom algorithms from the user data directory.
 from ember_qc.algorithms._loader import load_user_algorithms
 load_user_algorithms()

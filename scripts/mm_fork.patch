@@ -1,0 +1,88 @@
+diff --git a/include/find_embedding/embedding_problem.hpp b/include/find_embedding/embedding_problem.hpp
+index cfc3d48..9449ecd 100644
+--- a/include/find_embedding/embedding_problem.hpp
++++ b/include/find_embedding/embedding_problem.hpp
+@@ -361,6 +361,13 @@ class embedding_problem_base {
+             minorminer_assert(var_order_space.size() > 0);
+             return var_order_space;
+         }
++        // Ember search-guidance fork: if the user supplied a variable order whose
++        // length matches this (sub)problem's variable count, use it verbatim for
++        // every (non-KEEP) pass instead of the strategy-generated order.
++        if (params.fixed_var_order.size() == static_cast<size_t>(num_v)) {
++            var_order_space = params.fixed_var_order;
++            return var_order_space;
++        }
+         var_order_space.clear();
+         var_order_shuffle.clear();
+         for (int v = num_v; v--;) var_order_shuffle.push_back(v);
+diff --git a/include/find_embedding/util.hpp b/include/find_embedding/util.hpp
+index 7697ab5..a910bfd 100644
+--- a/include/find_embedding/util.hpp
++++ b/include/find_embedding/util.hpp
+@@ -145,6 +145,12 @@ class optional_parameters {
+     map<int, vector<int>> initial_chains;
+     map<int, vector<int>> restrict_chains;
+ 
++    //! Ember search-guidance fork: a user-supplied variable order (in internal
++    //! variable-index space). Empty => use the built-in VARORDER strategy.
++    //! Honored only when its length equals the (sub)problem's variable count, so
++    //! component subproblems with a different size fall back to the default order.
++    vector<int> fixed_var_order;
++
+     //! duplicate all parameters but chain hints,
+     //! and seed a new rng.  this vaguely peculiar behavior is
+     //! utilized to spawn parameters for component subproblems
+@@ -166,7 +172,8 @@ class optional_parameters {
+               skip_initialization(p.skip_initialization),
+               fixed_chains(fixed_chains),
+               initial_chains(initial_chains),
+-              restrict_chains(restrict_chains) {
++              restrict_chains(restrict_chains),
++              fixed_var_order(p.fixed_var_order) {
+ #ifndef CPPDEBUG
+         if (verbose >= 4)
+             throw CorruptParametersException(
+diff --git a/minorminer/_minorminer.pyx b/minorminer/_minorminer.pyx
+index 53aad8f..53b8aad 100644
+--- a/minorminer/_minorminer.pyx
++++ b/minorminer/_minorminer.pyx
+@@ -331,7 +331,8 @@ cdef class _input_parser:
+         names = {"max_no_improvement", "random_seed", "timeout", "tries", "verbose",
+                  "fixed_chains", "initial_chains", "max_fill", "chainlength_patience",
+                  "return_overlap", "skip_initialization", "inner_rounds", "threads",
+-                 "restrict_chains", "suspend_chains", "max_beta", "interactive"}
++                 "restrict_chains", "suspend_chains", "max_beta", "interactive",
++                 "var_order"}
+ 
+         for name in params:
+             if name not in names:
+@@ -411,6 +412,16 @@ cdef class _input_parser:
+         _get_chainmap(params.get("initial_chains", ()), self.opts.initial_chains, self.SL, self.TL, "initial_chains")
+         _get_chainmap(params.get("restrict_chains", ()), self.opts.restrict_chains, self.SL, self.TL, "restrict_chains")
+ 
++        # Ember search-guidance fork: optional user-supplied variable order. Maps
++        # source-graph labels to internal variable indices (as quickpass does) and
++        # hands them to the C++ search via opts.fixed_var_order.
++        vo = params.get("var_order")
++        if vo is not None:
++            for v in vo:
++                if v not in self.SL:
++                    raise ValueError("entries of var_order must be source graph labels")
++                self.opts.fixed_var_order.push_back(<int> self.SL[v])
++
+         self.pincount = 0
+         cdef int nonempty
+         cdef int pinlabel
+diff --git a/minorminer/_minorminer_h.pxi b/minorminer/_minorminer_h.pxi
+index ca9c138..c1d72a6 100644
+--- a/minorminer/_minorminer_h.pxi
++++ b/minorminer/_minorminer_h.pxi
+@@ -58,6 +58,7 @@ cdef extern from "../include/find_embedding/util.hpp" namespace "find_embedding"
+     cppclass optional_parameters:
+         optional_parameters()
+         void seed(uint64_t)
++        vector[int] fixed_var_order
+ 
+         LocalInteractionPtr localInteractionPtr
+         int max_no_improvement

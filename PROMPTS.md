@@ -201,3 +201,19 @@ In parallel, I think we need to change the name PathFinder.  It seems like PathF
 > the PF→RW abbreviation. The FPGA "PathFinder" (line in §Background + the mcmurchie1995pathfinder
 > bib key/title) is deliberately PRESERVED so the two are now clearly distinct. CLAUDE.md
 > (research brief) and the verbatim prompts above keep "PathFinder" (FPGA reference / historical)._
+
+### Prompt 19
+
+```
+You mentioned one untried lever — learning to guide minorminer's search (vertex ordering / a rip-up policy) rather than its initialization.  This is a separate, larger effort, but let's build a plan of how we might do such a thing - opening up MM's internals and inventing and benchmarking some new algorithms and heuristics.  Could be deterministic or learning-based approaches.  Do a literature search first to see what might be plausible, and then build a plan to ideate, implement, test, iterate, and rank/summarize.
+```
+
+> _Outcome: literature search done (CHARME GNN-RL order→ATOM, Nembrini PPO, Gasse
+> learn-to-branch by imitation, FPGA RL-Ripper rip-and-reroute, degeneracy ordering /
+> MM order-sensitivity); plan written + approved. Decisions (via clarifying questions):
+> **all three vehicles** — Reweave (open Python MM-style engine), a **fork of real
+> minorminer** (patch `var_order`/rip policy in the C++), and CHARME's **ATOM** constructive
+> embedder; **deterministic and learned in parallel** (hyde GPU cluster for the learned side);
+> deliverable = a **sprint + ranked leaderboard/verdict** (no paper/production changes yet).
+> Focus levers = vertex order + rip-up selection. Plan: ceiling probes (honesty gate) →
+> deterministic battery + learned policies → combine/ablate/cross-vehicle → rank/summarize._

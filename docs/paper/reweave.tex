@@ -1045,6 +1045,175 @@ inherits \texttt{minorminer}'s completeness and the learned layout changes only 
 \emph{quality} of the result, never its validity.
 
 %% ========================================================================
+\section{Guiding the Search: Vertex Order and Rip-Up}
+\label{sec:searchguide}
+
+\S\ref{sec:learning} learned a better \emph{initialization}; this section asks the
+complementary question: can we guide \texttt{minorminer}'s \emph{search} itself?
+Any \texttt{minorminer}-style embedder exposes two such levers---the \textbf{vertex
+order} in which chains are built and rebuilt, and the \textbf{rip-up policy} that
+chooses which chain to tear out and reroute next. \texttt{minorminer}'s own authors
+named initial placement and vertex order as the key open problem, and much of its
+run-to-run variance is order-driven. We test both levers, deterministically and
+with a learned model, in three vehicles: Reweave, a small fork of
+\texttt{minorminer} that exposes its variable order, and \texttt{minorminer}'s own
+\texttt{quickpass} greedy primitive.
+
+\paragraph{Opening \texttt{minorminer}'s variable order.}
+Stock \texttt{find\_embedding} runs its full heuristic---tear-and-replace plus
+\texttt{tries} restarts---under an \emph{internal randomized} order, and offers no
+way to supply one (only the much weaker \texttt{quickpass} primitive takes a custom
+order). We forked \texttt{minorminer}~0.2.22 with a ${\sim}90$-line patch that adds
+a \texttt{var\_order} parameter threaded into every pass of the full search: an
+\texttt{optional\_parameters} field, an early return in the variable-order routine
+(guarded so the per-connected-component subproblems fall back to the default), and
+the Cython binding plumbing. \emph{Without} \texttt{var\_order} the fork is
+byte-identical to stock \texttt{minorminer} (parity-tested across seeds, once the
+public wrapper's default \texttt{tries}{=}$10$ is matched); the patch and a
+one-command build ship in the artifact (\texttt{scripts/build\_mm\_fork.sh}). The
+guided search is exposed as \texttt{mmfork} (no order---the stock-MM control) and
+\texttt{mmfork-}$\langle\textit{order}\rangle$.
+
+\paragraph{Rip-up selection is a dead lever.}
+We added five rip-up \emph{selection} policies to Reweave's dirty-set improver
+(longest-first, boundary-churn, contention, inflation, and a contrarian
+shortest-first), changing only \emph{which} chain is attacked next while holding
+the move operator and accept rule byte-for-byte. On the dense grid (six LNS-active
+cells, three seeds) all five land within $0.004$ ACL of the default---even
+shortest-first. The improver converges to essentially the same local optimum
+regardless of rip-up order, so the FPGA ``which-net-to-rip'' idea has no quality
+headroom here and we did not pursue a learned rip-up policy. (That
+\texttt{reweave-ripup-longest} reproduces \texttt{reweave} exactly also validates
+the refactored loop.)
+
+\paragraph{Vertex order is a real lever.}
+On the forked full search a bandwidth/locality order---reverse Cuthill--McKee---
+lowers mean ACL, and because \texttt{minorminer}'s variance on these feasible
+instances is order-driven it also cuts run-to-run variance by ${\sim}25\%$
+(Table~\ref{tab:mmfork}). Order quality is vehicle- and instance-dependent
+(\texttt{minfill} wins on the weak \texttt{quickpass} primitive, \texttt{cuthill}
+on the full search; \texttt{degeneracy} and \texttt{community} can hurt), which is
+exactly why a per-instance \textbf{portfolio}---run the five good orders, keep the
+best valid embedding---is so effective: \texttt{mmfork-portfolio} reaches $-5.3\%$
+ACL vs.\ \texttt{minorminer} and $-3.1\%$ vs.\ \texttt{reweave} at roughly
+\emph{half} \texttt{minorminer}'s variance, the strongest single quality result in
+this paper, at ${\sim}6\times$ the wall-clock since it runs every order.
+
+\begin{table}[t]
+\caption{Order-guided \texttt{minorminer} on the full search (standard grid: ER
+sources over a size/density/topology mix, $7$ cells, $3$ seeds; mean ACL, std over
+cell means in parentheses; lower is better). \texttt{mmfork} (no order) reproduces
+\texttt{minorminer} exactly. A fixed Cuthill--McKee order and especially the
+per-instance portfolio cut both ACL and variance.}
+\label{tab:mmfork}
+\small
+\begin{tabular}{lccc}
+\toprule
+algorithm & ACL (std) & vs.\ MM & vs.\ Reweave \\
+\midrule
+\texttt{minorminer} $\equiv$ \texttt{mmfork} & 3.641 (0.115) & --- & $+2.4\%$ \\
+\texttt{mmfork-cuthill}    & 3.592 (0.105) & $-1.6\%$ & $+0.8\%$ \\
+\texttt{reweave}           & 3.553 (0.102) & $-2.3\%$ & --- \\
+\textbf{\texttt{mmfork-portfolio}} & \textbf{3.456} (\textbf{0.059}) & $\mathbf{-5.3\%}$ & $\mathbf{-3.1\%}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{The new embedders stack with Reweave.}
+Reweave warm-starts from any registered base embedder and then improves it, so the
+order-guided variants compose with it directly: seeding Reweave from
+\texttt{mmfork-portfolio} rather than stock \texttt{minorminer} stacks two
+independent gains---a better-ordered base \emph{and} the negotiated
+destroy-repair improver---and yields the lowest ACL we observe
+(Table~\ref{tab:stack}). The levers are orthogonal: ordering improves the base, and
+Reweave's improver improves whatever base it is given. This is the same composition
+mechanism as the existing \texttt{reweave-stacked} variant (which seeds from the
+multilevel placement); \texttt{mmfork-portfolio} is simply a stronger, always-valid
+base.
+
+\begin{table}[t]
+\caption{Stacking: seeding Reweave from \texttt{mmfork-portfolio}
+(\texttt{reweave+mmfork}) combines the ordering and improver gains, beating both
+its parents and stock \texttt{minorminer} (ER into $P_6$, mean ACL over $5$ seeds;
+all methods $5/5$ valid).}
+\label{tab:stack}
+\small
+\begin{tabular}{lcccc}
+\toprule
+cell & \texttt{minorminer} & \texttt{reweave} & \texttt{mmfork-portf.} & \texttt{reweave+mmfork} \\
+\midrule
+$n{=}40,d{=}0.5$ & 4.57 & 4.45 & 4.38 & \textbf{4.32} \\
+$n{=}60,d{=}0.5$ & 7.71 & 7.30 & 6.89 & \textbf{6.62} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Drop-in safety: as reliable as \texttt{minorminer}.}
+A natural worry is whether fixing one order across all restarts---removing the
+order diversity \texttt{minorminer} relies on near the feasibility boundary---makes
+the guided search \emph{fail} where stock \texttt{minorminer} would succeed, the
+way constructive embedders such as ATOM fail outright on hard instances. We ensure
+the new embedders are genuine drop-ins. \texttt{mmfork} is stock
+\texttt{minorminer}; \texttt{mmfork-portfolio} always includes a stock-MM config;
+and each single-order \texttt{mmfork-}$\langle\textit{order}\rangle$ falls back to
+one stock-\texttt{minorminer} call if its ordered attempt fails---so success rate is
+$\geq$ \texttt{minorminer} \emph{by construction}. Table~\ref{tab:success} confirms
+this empirically and then some: forced into \texttt{minorminer}'s partial-success
+regime by a short ($8$\,s) budget on dense cells, the fixed Cuthill--McKee order
+\emph{matches or exceeds} stock \texttt{minorminer}'s success rate---dramatically so
+on the hardest cell, $8/8$ versus $2/8$ (Table~\ref{tab:success}). A good order is
+at least as reliable as a random one and, near the boundary, expands the
+feasibility frontier as well as shortening chains; the fall-back (never even
+triggered here) is a guarantee rather than a crutch. Crucially, every
+\texttt{mmfork} output is a genuine \texttt{minorminer} embedding, so validity is
+never at risk and these variants are $100\%$-valid in the same sense
+\texttt{minorminer} is---unlike a constructive embedder, they cannot fail where
+\texttt{minorminer} would not.
+
+\begin{table}[t]
+\caption{Drop-in reliability near \texttt{minorminer}'s feasibility boundary (ER
+into $P_6$, $8$\,s budget, $8$ seeds; valid embeddings found). A fixed
+Cuthill--McKee order is at least as reliable as stock \texttt{minorminer} and
+markedly more so on the hardest cell; the stock-MM fall-back (not triggered here)
+guarantees success $\geq$ \texttt{minorminer} regardless.}
+\label{tab:success}
+\small
+\begin{tabular}{lccc}
+\toprule
+cell & \texttt{minorminer} & \texttt{mmfork-cuthill} (no fb) & \texttt{mmfork-cuthill} \\
+\midrule
+$n{=}63,d{=}0.5$ & 8/8 & 8/8 & 8/8 \\
+$n{=}64,d{=}0.5$ & 7/8 & 8/8 & 8/8 \\
+$n{=}65,d{=}0.5$ & 2/8 & \textbf{8/8} & \textbf{8/8} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Learning does not beat the best fixed order.}
+Finally we tested whether a model can pick or generate a per-instance order that
+beats the fixed heuristics, applying the same ceiling-probe discipline as
+\S\ref{sec:learning}: a cheap linear model first, escalating to a GNN only if it
+shows headroom. On an instance-disjoint test set (47 graphs), an order
+\emph{selector} (graph features $\rightarrow$ which fixed order to run) reaches
+$-1.9\%$ ACL vs.\ \texttt{minorminer}---statistically a tie with simply always
+using Cuthill--McKee ($-1.8\%$), and far from the per-instance oracle ($-4.6\%$);
+a learned per-vertex \emph{score} (features $\rightarrow$ order, weights
+hill-climbed with the forked search in the loop) gives $-0.2\%$, no better than the
+heuristics, its weights collapsing to a degeneracy-like prior. Graph-level features
+do not predict which order wins, so the cheap model amounts to ``use
+Cuthill--McKee'' and a GNN on the cluster was not warranted---the same ceiling the
+learned-placement study of \S\ref{sec:learning} hit. The real opportunity the
+oracle exposes ($-4.6\%$) is a \emph{cheaper} portfolio, not a learned order.
+
+\paragraph{Verdict.} Of the two search levers, rip-up selection is inert but vertex
+order is real: a deterministic Cuthill--McKee order, or better a per-instance
+portfolio, lowers \texttt{minorminer}'s ACL by up to $5\%$ and halves its variance,
+composes with Reweave for the best result overall, and---unlike a learned or
+constructive embedder---never sacrifices \texttt{minorminer}'s reliability. The full
+study, including the cross-vehicle results and the negative rip-up and learning
+findings, is in \texttt{docs/candidate-algorithms/search-guidance/}.
+
+%% ========================================================================
 \section{Limitations and Future Work}
 \label{sec:limitations}
 

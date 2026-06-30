@@ -29,6 +29,10 @@ test_graphs_generation/
 # Current experiments or local working files
 Curr_experiments/
 
+# minorminer search-guidance fork: cloned + built locally via
+# scripts/build_mm_fork.sh (reproduced from scripts/mm_fork.patch); not vendored.
+external/minorminer-fork/
+
 # Compiled C++ binaries (external/ — new locations)
 external/atom/main
 external/atom/main_*
