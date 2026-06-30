@@ -70,8 +70,9 @@ to ${\sim}5\%$ and roughly halves its run-to-run variance; it composes with Rewe
 and, unlike a learned or constructive embedder, never sacrifices
 \texttt{minorminer}'s reliability. On the \emph{actual} hardware graphs (Advantage
 Pegasus-$16$, $5640$ qubits; Advantage2 Zephyr-$15$, $7440$ qubits) this guidance
-is essentially free: its wall-clock premium shrinks as problems grow, the ordered
-search running at or below \texttt{minorminer}'s time on the largest instances.
+stays cheap at scale: averaged over instances, its wall-clock premium does not grow
+with problem size, the single fixed order falling to parity with \texttt{minorminer}
+on the largest Zephyr instances.
 (The complementary lever---which chain to rip up next---is, we find, inert.)
 
 Finally, treating Reweave's outputs as training data, we ask whether an
@@ -221,8 +222,10 @@ its ACL by up to ${\sim}5\%$ and roughly halves its variance, composes with Rewe
 \texttt{minorminer}---while the complementary rip-up-order lever is inert.
 (vi) We study \emph{scaling} on the actual hardware graphs
 (\S\ref{sec:scaling})---Advantage Pegasus-$16$ and Advantage2 Zephyr-$15$---and
-find the order-guided variants' wall-clock premium \emph{shrinks} with problem
-size, running at or below \texttt{minorminer}'s time on the largest instances.
+find the order-guided variants' wall-clock premium stays \emph{bounded} as problem
+size grows (the single fixed order reaching parity with \texttt{minorminer} on the
+largest Zephyr instances), while \texttt{mmfork-portfolio} holds a $5$--$7\%$ ACL
+edge across scales.
 (vii) We \emph{validate} the objective and harden the statistics
 (\S\ref{sec:solquality},~\S\ref{sec:rigor}): on a simulator, shorter-chain
 embeddings yield significantly better annealing solutions (Spearman $\rho=-0.63$
@@ -1336,22 +1339,24 @@ from small to large under two regimes: Erd\H{o}s--R\'enyi at fixed density
 larger $n$). The full grid runs on a $128$-core host; we report ACL, success, and
 wall-clock versus $n$.
 
-\paragraph{The relative cost of guidance shrinks with $n$.} The headline is the
-time curve (Figure~\ref{fig:scaling}): the wall-clock multipliers of all the guided
-methods \emph{fall} as the problem grows. On $Z_{15}$, \texttt{mmfork-cuthill} drops
-from $1.3\times$ \texttt{minorminer} at $n{=}40$ to $0.6\times$ at $n{=}320$---i.e.\
-it becomes \emph{faster} than stock \texttt{minorminer} at scale, because a good
-fixed order reaches a valid embedding before \texttt{minorminer}'s randomized search
-does; \texttt{reweave-mmfork-cuthill} falls from $1.7\times$ to $0.9\times$, and even
-the six-search portfolio's multiplier nearly halves ($7.3\times{\to}4.4\times$).
-$P_{16}$ is the same story ($\texttt{mmfork-cuthill}\,1.5\times{\to}1.0\times$, the
-portfolio $8.2\times{\to}5.3\times$). So the fixed overhead of computing an order, or
-of running several of them, amortizes against \texttt{minorminer}'s
-super-linearly-growing search: a method that is slower at small $n$ is relatively
-cheaper---sometimes free---at the large $n$ that real hardware makes reachable. The
-single-order variants are therefore an unambiguous win at scale, and even the
-portfolio's premium is far smaller on big problems than the ${\sim}6\times$ measured
-on $P_6$.
+\paragraph{The relative cost of guidance stays bounded as $n$ grows.} The time curve
+(Figure~\ref{fig:scaling}, averaged over $K{=}8$ instances per size) shows the guided
+methods' wall-clock multipliers \emph{flat-to-falling} as the problem grows---none
+compound with \texttt{minorminer}'s super-linearly-growing search. On $Z_{15}$ the
+single fixed order \texttt{mmfork-cuthill} trends from $1.2\times$ \texttt{minorminer}
+at $n{=}40$ to $0.9{\pm}0.1\times$ at $n{=}320$, reaching parity at scale because a
+good fixed order can find a valid embedding before \texttt{minorminer}'s randomized
+search does; \texttt{reweave-mmfork-cuthill} holds at ${\sim}1.2$--$1.5\times$ and the
+six-search portfolio at ${\sim}5$--$7\times$ (its multiplier does not grow, though the
+across-instance spread is too wide to claim it shrinks). $P_{16}$ is similar, the
+single-order premium staying modest (within ${\sim}1.5\times$). (An earlier single-instance
+reading showed a sharper drop---\texttt{mmfork-cuthill} apparently \emph{halving} to
+$0.6\times$; instance-averaging tempers that to ``bounded, reaching parity for the
+single order,'' a concrete illustration of why \S\ref{sec:rigor}'s multi-instance
+design matters.) The fixed cost of computing an order, or of running several,
+therefore amortizes rather than compounds: a method slower at small $n$ is no more
+expensive---and for the single fixed order, eventually free---at the large $n$ that
+real hardware makes reachable.
 
 \begin{figure}[t]
 \centering
@@ -1364,40 +1369,43 @@ on $P_6$.
   legend style={font=\scriptsize, fill opacity=0.85},
   grid=both, grid style={gray!18}]
 \addplot[black,thick,mark=*] coordinates {(40,1)(80,1)(160,1)(320,1)}; \addlegendentry{minorminer}
-\addplot[blue,thick,mark=triangle*] coordinates {(40,1.3)(80,1.0)(160,0.8)(320,0.6)}; \addlegendentry{mmfork-cuthill}
-\addplot[blue,thick,densely dashed,mark=triangle,forget plot] coordinates {(40,1.5)(80,1.3)(160,1.4)(320,1.0)};
-\addplot[green!55!black,thick,mark=square*] coordinates {(40,1.7)(80,1.2)(160,1.3)(320,0.9)}; \addlegendentry{reweave+cuthill}
-\addplot[green!55!black,thick,densely dashed,mark=square,forget plot] coordinates {(40,1.6)(80,1.8)(160,1.3)(320,1.2)};
-\addplot[red,thick,mark=otimes*] coordinates {(40,7.3)(80,6.6)(160,5.9)(320,4.4)}; \addlegendentry{mmfork-portfolio}
-\addplot[red,thick,densely dashed,mark=otimes,forget plot] coordinates {(40,8.2)(80,6.7)(160,7.5)(320,5.3)};
+\addplot[blue,thick,mark=triangle*] coordinates {(40,1.19)(80,1.26)(160,1.05)(320,0.92)}; \addlegendentry{mmfork-cuthill}
+\addplot[blue,thick,densely dashed,mark=triangle,forget plot] coordinates {(40,1.34)(80,1.03)(160,1.10)(320,1.14)};
+\addplot[green!55!black,thick,mark=square*] coordinates {(40,1.48)(80,1.30)(160,1.39)(320,1.22)}; \addlegendentry{reweave+cuthill}
+\addplot[green!55!black,thick,densely dashed,mark=square,forget plot] coordinates {(40,1.48)(80,1.17)(160,1.17)(320,1.42)};
+\addplot[red,thick,mark=otimes*] coordinates {(40,6.33)(80,6.89)(160,6.95)(320,5.16)}; \addlegendentry{mmfork-portfolio}
+\addplot[red,thick,densely dashed,mark=otimes,forget plot] coordinates {(40,6.87)(80,5.95)(160,6.63)(320,6.89)};
 \end{axis}
 \end{tikzpicture}
 \caption{Wall-clock relative to \texttt{minorminer} ($=1$) versus source size $n$
-($6$-regular sources; \textbf{solid} $=$ Advantage2 $Z_{15}$, \textbf{dashed} $=$
-Advantage $P_{16}$; $5\%$ faults). Every guided method's multiplier \emph{shrinks}
-with $n$: \texttt{mmfork-cuthill} and \texttt{reweave-mmfork-cuthill} fall
-\emph{below} $1$ (faster than stock \texttt{minorminer}) on the largest $Z_{15}$
-problems, and even the six-search portfolio's premium nearly halves. The fixed cost
-of guidance amortizes against \texttt{minorminer}'s super-linearly-growing search.}
+($6$-regular sources, mean over $K{=}8$ instances; \textbf{solid} $=$ Advantage2
+$Z_{15}$, \textbf{dashed} $=$ Advantage $P_{16}$; $5\%$ faults). The guided methods'
+multipliers stay \emph{bounded}---flat-to-falling---rather than compounding with
+\texttt{minorminer}'s super-linearly-growing search: the single order
+\texttt{mmfork-cuthill} reaches parity ($0.9\times$) on the largest $Z_{15}$ problems,
+and the six-search portfolio's ${\sim}6\times$ does not grow with $n$.}
 \label{fig:scaling}
 \end{figure}
 
-\paragraph{Quality stays competitive; the frontier is shared.} On ACL the portfolio
-and \texttt{reweave-mmfork-cuthill} remain at or ahead of \texttt{minorminer} across
-the swept sizes (Figure~\ref{fig:scalingacl})---by up to ${\sim}10\%$ at the densest
-feasible cell---though with a single source instance per size the per-$n$ gains are
-noisy and not monotone, so we do not claim the ACL advantage \emph{widens} with $n$,
-only that it persists. The
+\paragraph{Quality stays competitive; the frontier is shared.} On ACL, averaging
+over $K{=}8$ instances sharpens the picture (Figure~\ref{fig:scalingacl}):
+\texttt{mmfork-portfolio} sits a consistent $5$--$7\%$ below \texttt{minorminer} at
+every size, with $95\%$ confidence intervals that clear $1$ throughout---a persistent,
+not widening, advantage. The single-order \texttt{mmfork-cuthill} and
+\texttt{reweave-mmfork-cuthill}, by contrast, are statistically \emph{tied} with
+\texttt{minorminer} on this sparse $6$-regular regime (their intervals straddle $1$):
+ordering buys less on sparse-into-huge than on the dense ER cells of
+\S\ref{sec:results}, where chains run long enough for a better order to matter. The
 \emph{feasibility} frontier is shared: every method succeeds together up to
 $n{=}320$ ($6$-regular) and $n{=}120$ (ER $d{=}0.3$) on $P_{16}$ and then fails
 together beyond---this is the hardware's capacity limit, not an algorithmic one, and
 is distinct from the near-boundary success advantage of Table~\ref{tab:success}
 (which concerns \texttt{minorminer}'s \emph{stochastic} limit at a fixed size, where
 a good order does help). The practical takeaway: on real Advantage/Advantage2
-hardware the order-guided variants keep \texttt{minorminer}'s reach and reliability
-while their time premium vanishes with scale, making \texttt{mmfork-cuthill} (and,
-for the best quality, \texttt{reweave-mmfork-cuthill}) the preferred drop-ins for
-large problems.
+hardware the order-guided variants keep \texttt{minorminer}'s reach and reliability at
+bounded extra time, with \texttt{mmfork-portfolio} delivering a consistent $5$--$7\%$
+ACL reduction at scale (the quality choice) and the near-free \texttt{mmfork-cuthill}
+the conservative drop-in.
 
 \begin{figure}[t]
 \centering
@@ -1405,21 +1413,23 @@ large problems.
 \begin{axis}[width=\linewidth, height=4.8cm, xmode=log, log basis x=2,
   xtick={40,80,160,320}, xticklabels={40,80,160,320},
   xlabel={source size $n$ ($6$-regular, into Advantage $P_{16}$)},
-  ylabel={ACL $/$ \texttt{minorminer}}, ymin=0.9, ymax=1.13,
+  ylabel={ACL $/$ \texttt{minorminer}}, ymin=0.87, ymax=1.11,
   legend pos=north west, legend columns=2,
   legend style={font=\scriptsize, fill opacity=0.85},
-  grid=both, grid style={gray!18}]
+  grid=both, grid style={gray!18},
+  error bars/error bar style={line width=0.5pt}]
 \addplot[black,thick,mark=*] coordinates {(40,1)(80,1)(160,1)(320,1)}; \addlegendentry{minorminer}
-\addplot[blue,thick,mark=triangle*] coordinates {(40,1.095)(80,0.971)(160,1.050)(320,1.009)}; \addlegendentry{mmfork-cuthill}
-\addplot[green!55!black,thick,mark=square*] coordinates {(40,1.087)(80,0.945)(160,1.019)(320,0.969)}; \addlegendentry{reweave+cuthill}
-\addplot[red,thick,mark=otimes*] coordinates {(40,1.0)(80,0.940)(160,0.998)(320,0.942)}; \addlegendentry{mmfork-portfolio}
+\addplot[blue,thick,mark=triangle*,error bars/.cd, y dir=both, y explicit] coordinates {(40,1.000)+-(0,0.040) (80,1.034)+-(0,0.042) (160,1.038)+-(0,0.033) (320,1.023)+-(0,0.049)}; \addlegendentry{mmfork-cuthill}
+\addplot[green!55!black,thick,mark=square*,error bars/.cd, y dir=both, y explicit] coordinates {(40,0.995)+-(0,0.041) (80,1.017)+-(0,0.041) (160,1.005)+-(0,0.034) (320,0.985)+-(0,0.046)}; \addlegendentry{reweave+cuthill}
+\addplot[red,thick,mark=otimes*,error bars/.cd, y dir=both, y explicit] coordinates {(40,0.928)+-(0,0.035) (80,0.942)+-(0,0.018) (160,0.946)+-(0,0.033) (320,0.947)+-(0,0.023)}; \addlegendentry{mmfork-portfolio}
 \end{axis}
 \end{tikzpicture}
 \caption{ACL relative to \texttt{minorminer} ($=1$) versus $n$ ($6$-regular into
-Advantage $P_{16}$). \texttt{mmfork-portfolio} and \texttt{reweave-mmfork-cuthill}
-sit at or below $1$ (at-or-better-than \texttt{minorminer}) across scales; with one
-source instance per size the curves are noisy, so the quality advantage
-\emph{persists} rather than clearly widening with $n$.}
+Advantage $P_{16}$; mean over $K{=}8$ instances, $95\%$ CI bars).
+\texttt{mmfork-portfolio} sits a consistent $5$--$7\%$ below \texttt{minorminer} at
+every size (CI clears $1$ throughout)---the advantage \emph{persists} rather than
+widening; the single-order variants are within noise of \texttt{minorminer} on this
+sparse regime.}
 \label{fig:scalingacl}
 \end{figure}
 
@@ -1668,8 +1678,9 @@ with a small fork: a bandwidth-reducing order, or a per-instance portfolio of
 orders, lowers its ACL by up to ${\sim}5\%$ and roughly halves its variance,
 composes with Reweave, and---unlike a learned or constructive embedder---never
 sacrifices its reliability. On the actual Advantage and Advantage2 hardware graphs
-this guidance is essentially free: its wall-clock premium vanishes as problems
-grow. What does \emph{not} pay off is learning the placement: the naive supervised
+this guidance stays cheap at scale: averaged over instances its wall-clock premium
+does not grow with problem size, reaching parity with \texttt{minorminer} for the
+single fixed order on the largest Zephyr problems. What does \emph{not} pay off is learning the placement: the naive supervised
 model is ill-posed and collapses, a symmetry-invariant objective repairs it but
 beats \texttt{minorminer} by only a small (if significant) ${\sim}1\%$, and
 decode-aware reinforcement learning does not exceed it---so a strong heuristic with
