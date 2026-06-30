@@ -64,3 +64,16 @@ class ReweaveStacked(_ReweaveBase):
 class ReweaveCold(_ReweaveBase):
     """Optimized Reweave standalone — BFS negotiated cold start (no MM seed)."""
     _params = {"router_cls": _OptimizedRouter, "base_method": None}
+
+
+@register_algorithm("reweave-mmfork-cuthill")
+class ReweaveMMForkCuthill(_ReweaveBase):
+    """Optimized Reweave seeded from ``mmfork-cuthill`` (the full minorminer search
+    under a fixed Cuthill–McKee order) instead of stock minorminer. Stacks the two
+    orthogonal gains — a better-ordered base and the negotiated improver — at
+    roughly plain ``reweave``'s cost (the Cuthill base is ${\\sim}1\\times$ MM),
+    unlike the portfolio-seeded stack which pays the portfolio's ${\\sim}6\\times$.
+    ``base_fraction=0.4`` gives the cheap base a bit less of the budget so the LNS
+    gets more."""
+    _params = {"router_cls": _OptimizedRouter, "base_method": "mmfork-cuthill",
+               "base_fraction": 0.4}

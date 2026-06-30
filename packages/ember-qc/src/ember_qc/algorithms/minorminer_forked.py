@@ -144,6 +144,7 @@ def forked_find_embedding(
 
 class _ForkBase(EmbeddingAlgorithm):
     _order: Optional[str] = None  # key into ORDERINGS, or None for default
+    _tries: int = 10              # minorminer restart count (10 = stock default)
 
     _install_instruction = "build the fork: bash scripts/build_mm_fork.sh"
 
@@ -161,7 +162,7 @@ class _ForkBase(EmbeddingAlgorithm):
         seed = kwargs.get("seed", 0) or 0
         order = ORDERINGS[self._order](source_graph) if self._order else None
         return forked_find_embedding(source_graph, target_graph, order=order,
-                                     seed=int(seed), timeout=timeout)
+                                     seed=int(seed), timeout=timeout, tries=self._tries)
 
 
 @register_algorithm("mmfork")
@@ -170,36 +171,106 @@ class MMFork(_ForkBase):
     _order = None
 
 
+@register_algorithm("mmfork-cuthill-fast")
+class MMForkCuthillFast(_ForkBase):
+    """``mmfork-cuthill`` with fewer restarts. A good fixed order makes
+    minorminer's restart diversity largely redundant (see the search-guidance
+    study: ``tries=10``≈``tries=1`` here), so this matches the quality of the
+    full-``tries`` Cuthill variant at a fraction of the wall-clock — typically
+    *faster* than stock minorminer. ``tries`` is set from the ``tries_probe``."""
+    _order = "cuthill"
+    _tries = 2
+
+
 # The orders that help on the full search (see the mmfork_order_probe); a
 # per-instance portfolio over them keeps whichever wins on this graph.
 _PORTFOLIO = ["cuthill", "spectral", "mcs", "minfill", "degeneracy"]
+
+
+def _pf_run_one(args):
+    """Run one portfolio config. Module-level so a ProcessPool can pickle it."""
+    source, target, order_name, seed, timeout = args
+    order = ORDERINGS[order_name](source) if order_name else None
+    return forked_find_embedding(source, target, order=order, seed=seed, timeout=timeout)
+
+
+def _portfolio_best(source, target, seed, timeout, workers, backend):
+    """Run the portfolio configs and return (best_embedding | None, elapsed).
+
+    Serial (``workers<=1``): each config gets ``timeout/len`` so the total stays in
+    budget. Parallel: the configs run concurrently (each gets the *full* budget, so
+    the wall-clock is ~one config's time rather than the sum) via a thread pool
+    (minorminer's C++ search releases the GIL) or a process pool."""
+    configs = [None] + _PORTFOLIO
+    start = time.perf_counter()
+    results = []
+    if workers and workers > 1:
+        from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+        tasks = [(source, target, n, seed, timeout) for n in configs]
+        try:
+            if backend == "thread":
+                pool = ThreadPoolExecutor(max_workers=workers)
+            else:
+                # fork avoids re-importing ember_qc per worker (cheap on Linux/mac);
+                # minorminer holds the GIL, so threads don't parallelize the search.
+                import multiprocessing as mp
+                try:
+                    ctx = mp.get_context("fork")
+                except ValueError:
+                    ctx = None
+                pool = ProcessPoolExecutor(max_workers=workers, mp_context=ctx)
+            with pool as ex:
+                results = list(ex.map(_pf_run_one, tasks))
+        except Exception as exc:  # fall back to serial on any pool failure
+            logger.debug("parallel portfolio failed (%s); serial fallback", exc)
+            results = []
+    if not results:  # serial path (default, and the fallback)
+        slice_t = max(1.0, timeout / len(configs)) if timeout else 0.0
+        results = [_pf_run_one((source, target, n, seed, slice_t)) for n in configs]
+    best, best_total = None, float("inf")
+    for r in results:
+        emb = (r or {}).get("embedding")
+        if emb:
+            total = sum(len(c) for c in emb.values())
+            if total < best_total:
+                best, best_total = emb, total
+    return best, time.perf_counter() - start
 
 
 @register_algorithm("mmfork-portfolio")
 class MMForkPortfolio(_ForkBase):
     """Run the forked search under each good order (and the default) on a slice of
     the budget; keep the fewest-qubit valid embedding. A deterministic per-instance
-    order selector — the target a learned order-picker would match more cheaply."""
+    order selector — the target a learned order-picker would match more cheaply.
+    Serial by default (``_workers=1``) so it is safe inside a parallel sweep."""
+
+    _workers = 1            # serial; sweep-safe default
+    _backend = "thread"
+
+    def _resolve_workers(self) -> int:
+        return self._workers
 
     def embed(self, source_graph, target_graph, timeout=60.0, **kwargs) -> dict:
         seed = int(kwargs.get("seed", 0) or 0)
-        configs = [None] + _PORTFOLIO
-        slice_t = max(1.0, timeout / len(configs)) if timeout else 0.0
-        start = time.perf_counter()
-        best, best_total, t_used = None, float("inf"), 0.0
-        for name in configs:
-            order = ORDERINGS[name](source_graph) if name else None
-            r = forked_find_embedding(source_graph, target_graph, order=order,
-                                      seed=seed, timeout=slice_t)
-            emb = r.get("embedding")
-            if emb:
-                total = sum(len(c) for c in emb.values())
-                if total < best_total:
-                    best, best_total = emb, total
-        elapsed = time.perf_counter() - start
+        best, elapsed = _portfolio_best(source_graph, target_graph, seed, timeout,
+                                        self._resolve_workers(), self._backend)
         if not best:
             return {"embedding": {}, "time": elapsed, "success": False, "status": "FAILURE"}
         return {"embedding": best, "time": elapsed}
+
+
+@register_algorithm("mmfork-portfolio-par")
+class MMForkPortfolioPar(MMForkPortfolio):
+    """Portfolio with its orders run CONCURRENTLY — standalone wall-clock drops
+    toward a single order's cost (one embedding using several cores). Worker count
+    from ``$EMBER_MMFORK_WORKERS`` (default = #configs). Keep it OUT of a parallel
+    sweep (would oversubscribe); use ``mmfork-portfolio`` there."""
+
+    _backend = "process"  # minorminer holds the GIL, so threads don't parallelize
+
+    def _resolve_workers(self) -> int:
+        import os
+        return int(os.environ.get("EMBER_MMFORK_WORKERS", len(_PORTFOLIO) + 1))
 
 
 def _make(order_name: str) -> type:

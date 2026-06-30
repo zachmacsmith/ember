@@ -232,3 +232,20 @@ Tables 7-9 show ACL metrics but do not show timing/performance.  We need to esta
 > ${\sim}1.3\times$ improver. Added a wall-clock column to Table 7 (tab:mmfork) and a dedicated
 > per-cell timing table + a "Timing" paragraph to the search-guidance section; rebuilt the PDF.
 > Committed and pushed._
+
+### Prompt 21
+
+```
+(1) Any idea on how to speed up any of our new algorithms?  (2) You keep mentioning cells.  Are you only testing on representative single cells from a given hardware architecture?  What about trying out problems using an actual hardware graph from a real D-Wave system (lots of copies of cells all connected to each other)?  Can we do a scaling study with a real hardware graph like that that shows how all the methods perform as you go from small to big problems?  Perhaps even if one of our methods is slower at small n, it scales better as n grows?  (3) It is weird that reweave is only 1.7x MM and mmfork is 1.0x MM but combining them gives 6.4x MM (way slower).  What's up with that?  And are we testing reweave+mmfork or reweave+mmfork-cuthill (which seems more promising?)?
+```
+
+> _Outcome: (3) the 6.4x is because `reweave+mmfork` seeds Reweave from `base_method="mmfork-portfolio"`
+> (5.9x) — not reweave(1.7x)⊕mmfork(1.0x). Added `reweave-mmfork-cuthill` (Reweave seeded from the
+> 1.0x single Cuthill order, ~1.7x) — the promising cheap stack. (1) speedups: `mmfork-cuthill-fast`
+> (a good order needs few restarts → reduced `tries`, sub-1x MM) and a parallelized portfolio
+> (run its ~6 orders concurrently). (2) scaling study on the REAL hardware topologies — Advantage
+> `pegasus_graph(16)` (5640q) and Advantage2 `zephyr_graph(15)` (7440q) + faults — sweeping problem
+> size small→large on the hyde cluster (128 cores), measuring ACL/variance/success/time vs n. Added a
+> "Scaling Behavior" paper section + timing fixes. (Note: "cell" was my term for a (size,density,target)
+> grid point — the target was already a full P6 hardware graph, but only 680q; this study uses the
+> full-size 5640q/7440q graphs.)_

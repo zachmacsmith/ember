@@ -1128,15 +1128,18 @@ algorithm & ACL (std) & vs.\ MM & vs.\ Reweave & $t/$MM \\
 
 \paragraph{The new embedders stack with Reweave.}
 Reweave warm-starts from any registered base embedder and then improves it, so the
-order-guided variants compose with it directly: seeding Reweave from
-\texttt{mmfork-portfolio} rather than stock \texttt{minorminer} stacks two
-independent gains---a better-ordered base \emph{and} the negotiated
-destroy-repair improver---and yields the lowest ACL we observe
-(Table~\ref{tab:stack}). The levers are orthogonal: ordering improves the base, and
-Reweave's improver improves whatever base it is given. This is the same composition
-mechanism as the existing \texttt{reweave-stacked} variant (which seeds from the
-multilevel placement); \texttt{mmfork-portfolio} is simply a stronger, always-valid
-base.
+order-guided variants compose with it directly. The \emph{lowest} ACL we observe
+comes from seeding Reweave with \texttt{mmfork-portfolio} (\texttt{reweave+mmfork} in
+Table~\ref{tab:stack}): it stacks two independent gains---a better-ordered base
+\emph{and} the negotiated destroy-repair improver---but inherits the portfolio's
+${\sim}6\times$ cost as its base. The practical sweet spot is to seed from the single
+Cuthill order instead: \texttt{reweave-mmfork-cuthill} reaches ${\sim}{-}5\%$ ACL
+versus \texttt{minorminer}---matching the ${\sim}6\times$ portfolio and beating both
+plain \texttt{reweave} ($-3.4\%$) and \texttt{mmfork-cuthill} ($-2.2\%$) on their
+own---at only ${\sim}1.8\times$ \texttt{minorminer}, the cost of plain Reweave. The
+levers are orthogonal: ordering improves the base, Reweave's improver improves
+whatever base it is given (the same composition mechanism as the existing
+\texttt{reweave-stacked} variant, which seeds from the multilevel placement).
 
 \begin{table}[t]
 \caption{Stacking: seeding Reweave from \texttt{mmfork-portfolio}
@@ -1162,15 +1165,21 @@ standard grid \texttt{mmfork} is identical to \texttt{minorminer} ($1.0\times$) 
 \texttt{mmfork-cuthill} averages $1.0\times$---a good order even converges
 marginally faster, and it is faster than \texttt{minorminer-layout} ($1.3\times$).
 The portfolio buys its quality and variance with a constant factor of time: it runs
-the five orders plus the default, so \texttt{mmfork-portfolio} is $5.9\times$
-\texttt{minorminer}, and the stacked \texttt{reweave+mmfork} is $6.4\times$---the
-improver adds little on top of the portfolio base, which is already near-optimal so
-few destroy-repair moves are accepted (cf.\ standalone \texttt{reweave}'s
-$1.7\times$). This is the same wall-clock regime as \texttt{reweave-thorough}
-(\S\ref{sec:results}): a ${\sim}6\times$ constant factor bought for the lowest ACL
-and the lowest variance, while the single-order variants stay at
-\texttt{minorminer}'s cost. Table~\ref{tab:fgtime} gives per-cell seconds; all
-algorithms run back-to-back on each instance so the ratios are robust to CPU
+the five orders plus the default, so serially \texttt{mmfork-portfolio} is
+$5.9\times$ \texttt{minorminer}. Its orders are independent, however, so a
+process-parallel variant (\texttt{mmfork-portfolio-par}) recovers ${\sim}3.5\times$
+of that on a multi-core host---at \emph{identical} ACL---bringing a single embedding
+back to ${\sim}1.7\times$. The $6.4\times$ of \texttt{reweave+mmfork}
+(Table~\ref{tab:fgtime}) deserves a word, because it is \emph{not}
+reweave\,($1.7\times$) plus mmfork\,($1.0\times$): it is Reweave seeded from the
+\emph{portfolio} base, so it pays the portfolio's ${\sim}6\times$. Seeding instead
+from the single Cuthill order (\texttt{reweave-mmfork-cuthill}) gives nearly the same
+ACL at ${\sim}1.8\times$, which is the configuration to use. Finally, reducing
+\texttt{minorminer}'s restart count does \emph{not} speed the single-order variants:
+under a fixed order the redundant restarts short-circuit, so \texttt{tries}$\in\{1,
+\dots,10\}$ give identical ACL \emph{and} wall-clock---the single fixed order is
+already as fast as the search gets. Table~\ref{tab:fgtime} gives per-cell seconds;
+all algorithms run back-to-back on each instance so the ratios are robust to CPU
 contention.
 
 \begin{table}[t]
@@ -1265,6 +1274,77 @@ composes with Reweave for the best result overall, and---unlike a learned or
 constructive embedder---never sacrifices \texttt{minorminer}'s reliability. The full
 study, including the cross-vehicle results and the negative rip-up and learning
 findings, is in \texttt{docs/candidate-algorithms/search-guidance/}.
+
+%% ========================================================================
+\section{Scaling Behaviour on Advantage and Advantage2}
+\label{sec:scaling}
+
+The experiments so far target a small graph, Pegasus $P_6$ ($680$ qubits). To see
+how the methods behave at the scale of \emph{real} hardware we repeat the
+comparison on the actual D-Wave topologies---Advantage's Pegasus $P_{16}$
+($5640$ qubits) and Advantage2's Zephyr $Z_{15}$ ($7440$ qubits), each with $5\%$
+simulated dead qubits, a realistic working graph---and sweep the source size $n$
+from small to large under two regimes: Erd\H{o}s--R\'enyi at fixed density
+($d{=}0.3$) and $6$-regular at fixed degree (which stays sparse and so reaches much
+larger $n$). The full grid runs on a $128$-core host; we report ACL, success, and
+wall-clock versus $n$.
+
+\paragraph{The relative cost of guidance shrinks with $n$.} The headline is the
+time curve (Figure~\ref{fig:scaling}): the wall-clock multipliers of all the guided
+methods \emph{fall} as the problem grows. On $Z_{15}$, \texttt{mmfork-cuthill} drops
+from $1.3\times$ \texttt{minorminer} at $n{=}40$ to $0.6\times$ at $n{=}320$---i.e.\
+it becomes \emph{faster} than stock \texttt{minorminer} at scale, because a good
+fixed order reaches a valid embedding before \texttt{minorminer}'s randomized search
+does; \texttt{reweave-mmfork-cuthill} falls from $1.7\times$ to $0.9\times$, and even
+the six-search portfolio's multiplier nearly halves ($7.3\times{\to}4.4\times$).
+$P_{16}$ is the same story ($\texttt{mmfork-cuthill}\,1.5\times{\to}1.0\times$, the
+portfolio $8.2\times{\to}5.3\times$). So the fixed overhead of computing an order, or
+of running several of them, amortizes against \texttt{minorminer}'s
+super-linearly-growing search: a method that is slower at small $n$ is relatively
+cheaper---sometimes free---at the large $n$ that real hardware makes reachable. The
+single-order variants are therefore an unambiguous win at scale, and even the
+portfolio's premium is far smaller on big problems than the ${\sim}6\times$ measured
+on $P_6$.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=\linewidth, height=5.2cm, xmode=log, log basis x=2,
+  xtick={40,80,160,320}, xticklabels={40,80,160,320},
+  xlabel={source size $n$ ($6$-regular, into Advantage2 $Z_{15}$)},
+  ylabel={wall-clock $/$ \texttt{minorminer}}, ymin=0, ymax=8,
+  legend pos=north east, legend style={font=\scriptsize, fill opacity=0.85},
+  grid=both, grid style={gray!18}]
+\addplot+[thick,mark=*] coordinates {(40,1)(80,1)(160,1)(320,1)}; \addlegendentry{minorminer}
+\addplot+[thick,mark=triangle*] coordinates {(40,1.3)(80,1.0)(160,0.8)(320,0.6)}; \addlegendentry{mmfork-cuthill}
+\addplot+[thick,mark=square*] coordinates {(40,1.7)(80,1.2)(160,1.3)(320,0.9)}; \addlegendentry{reweave+cuthill}
+\addplot+[thick,mark=diamond*] coordinates {(40,4.9)(80,4.4)(160,3.3)(320,2.6)}; \addlegendentry{reweave-thorough}
+\addplot+[thick,mark=otimes*] coordinates {(40,7.3)(80,6.6)(160,5.9)(320,4.4)}; \addlegendentry{mmfork-portfolio}
+\end{axis}
+\end{tikzpicture}
+\caption{Wall-clock relative to \texttt{minorminer} ($=1$) versus source size $n$,
+$6$-regular sources into Advantage2 $Z_{15}$ ($7440$ qubits, $5\%$ faults). Every
+guided method's multiplier \emph{shrinks} with $n$; \texttt{mmfork-cuthill} and
+\texttt{reweave-mmfork-cuthill} fall \emph{below} $1$ (faster than stock
+\texttt{minorminer}) on the largest problems. $P_{16}$ behaves the same way.}
+\label{fig:scaling}
+\end{figure}
+
+\paragraph{Quality stays competitive; the frontier is shared.} On ACL the portfolio
+and \texttt{reweave-mmfork-cuthill} remain at or ahead of \texttt{minorminer} across
+the swept sizes---by up to ${\sim}10\%$ at the densest feasible cell---though with a
+single source instance per size the per-$n$ gains are noisy and not monotone, so we
+do not claim the ACL advantage \emph{widens} with $n$, only that it persists. The
+\emph{feasibility} frontier is shared: every method succeeds together up to
+$n{=}320$ ($6$-regular) and $n{=}120$ (ER $d{=}0.3$) on $P_{16}$ and then fails
+together beyond---this is the hardware's capacity limit, not an algorithmic one, and
+is distinct from the near-boundary success advantage of Table~\ref{tab:success}
+(which concerns \texttt{minorminer}'s \emph{stochastic} limit at a fixed size, where
+a good order does help). The practical takeaway: on real Advantage/Advantage2
+hardware the order-guided variants keep \texttt{minorminer}'s reach and reliability
+while their time premium vanishes with scale, making \texttt{mmfork-cuthill} (and,
+for the best quality, \texttt{reweave-mmfork-cuthill}) the preferred drop-ins for
+large problems.
 
 %% ========================================================================
 \section{Limitations and Future Work}

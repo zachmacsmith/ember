@@ -175,6 +175,29 @@ order *matches or exceeds* MM's success rate — dramatically on the hardest cel
 A good order *expands MM's feasibility frontier* (embeds instances MM's random order misses in
 the same budget), as well as shortening chains — so the fallback is a guarantee, not a crutch.
 
+## 5c. Speed & scaling on real hardware (Advantage P16 / Advantage2 Z15)
+
+**The cheap stack.** `reweave+mmfork` costs 6.4× MM because it seeds Reweave from the *portfolio*
+base (5.9×), not from a single order. **`reweave-mmfork-cuthill`** (seed from the 1.0× Cuthill
+order) reaches **−5% ACL at only ~1.8× MM** — matching the 6.5× portfolio and beating both plain
+`reweave` (−3.4%) and `mmfork-cuthill` (−2.2%) alone. This is the configuration to use.
+
+**Speedups.** (`tries_probe.py`, `portfolio_parallel_probe.py`)
+- *Reduced tries — no help:* under a fixed order minorminer's redundant restarts short-circuit, so
+  `tries∈{1..10}` give identical ACL **and** time (even on P16 n80). The single fixed order is
+  already as fast as the search gets.
+- *Parallel portfolio — ~3.5×:* the portfolio's orders are independent, so a fork-based process pool
+  (`mmfork-portfolio-par`) cuts 5.9× → **~1.7× MM** standalone at *identical* ACL.
+
+**Scaling study** (`run_sweep_scaling.py` on the 128-core cluster; P16=5640q, Z15=7440q, +5% faults;
+n swept small→large; `make_scaling_figures.py`): **the relative cost of guidance shrinks with n.** On
+Z15, `mmfork-cuthill` goes 1.3× (n=40) → **0.6× (n=320)** — *faster* than MM at scale;
+`reweave-mmfork-cuthill` 1.7×→0.9×; the portfolio's multiplier nearly halves (7.3×→4.4×). P16 is the
+same. So a method slower at small n is relatively cheaper — sometimes free — at the large n real
+hardware reaches. ACL stays competitive (portfolio/cuthill-stack at-or-ahead of MM, up to −10%) but
+is noisy at large n (one instance/cell); the feasibility frontier is *shared* (all methods fail
+together at the hardware-capacity limit, n≈320 reg / n≈120 ER d0.3 on P16).
+
 ## 6. Verdict (so far)
 
 - **Rip-up selection: no quality headroom** — a clean negative; Reweave's gains come from its
