@@ -184,6 +184,11 @@ the same budget), as well as shortening chains — so the fallback is a guarante
   half the variance**, the best method here. It **stacks with Reweave** (`reweave+mmfork` is best
   overall) and is **as reliable as minorminer** (≥ MM success by construction; more reliable near
   the boundary).
+- **Timing** (`mmfork_timing.py`, back-to-back on the standard grid): single-order variants are
+  drop-ins on *speed* too — `mmfork` ≡ MM (1.0×), `mmfork-cuthill` ~1.0× (faster than
+  `minorminer-layout`'s 1.3×; a good order even converges marginally quicker). The portfolio
+  trades a ~6× constant factor for the quality/variance win (`mmfork-portfolio` 5.9×,
+  stacked `reweave+mmfork` 6.4×) — the same wall-clock regime as `reweave-thorough`.
 - **Learning does not beat the best deterministic order** on this lever — the order-selector
   only ties Cuthill–McKee (and never approaches the per-instance oracle), and a learned generated
   order is no better than the fixed heuristics. Consistent with the placement bake-off: strong

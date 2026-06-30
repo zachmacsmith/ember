@@ -217,3 +217,18 @@ You mentioned one untried lever — learning to guide minorminer's search (verte
 > deliverable = a **sprint + ranked leaderboard/verdict** (no paper/production changes yet).
 > Focus levers = vertex order + rip-up selection. Plan: ceiling probes (honesty gate) →
 > deterministic battery + learned policies → combine/ablate/cross-vehicle → rank/summarize._
+
+### Prompt 20
+
+```
+Tables 7-9 show ACL metrics but do not show timing/performance.  We need to establish whether our new algorithms (stacked or unstacked) are faster or slower than MM, mm-layout, etc.  Can you run these experiments (if necessary), add to the paper, commit, and push?  (Be sure to update PROMPTS.md as usual)
+```
+
+> _Outcome: ran a back-to-back wall-clock experiment (`mmfork_timing.py`) over the standard
+> grid for minorminer / minorminer-layout / mmfork / mmfork-cuthill / mmfork-portfolio /
+> reweave / reweave+mmfork. Findings: single-order mmfork variants run at ${\sim}$MM speed
+> (the order is computed once and is nearly free; mmfork ≡ MM); the portfolio is ${\sim}6\times$
+> MM (it runs every order) and the stacked reweave+mmfork is portfolio-cost + Reweave's
+> ${\sim}1.3\times$ improver. Added a wall-clock column to Table 7 (tab:mmfork) and a dedicated
+> per-cell timing table + a "Timing" paragraph to the search-guidance section; rebuilt the PDF.
+> Committed and pushed._

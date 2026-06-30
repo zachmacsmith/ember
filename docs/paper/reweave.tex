@@ -1109,17 +1109,19 @@ this paper, at ${\sim}6\times$ the wall-clock since it runs every order.
 sources over a size/density/topology mix, $7$ cells, $3$ seeds; mean ACL, std over
 cell means in parentheses; lower is better). \texttt{mmfork} (no order) reproduces
 \texttt{minorminer} exactly. A fixed Cuthill--McKee order and especially the
-per-instance portfolio cut both ACL and variance.}
+per-instance portfolio cut both ACL and variance. The last column is wall-clock
+relative to \texttt{minorminer} (Table~\ref{tab:fgtime}): a single fixed order is
+free, the portfolio runs every order.}
 \label{tab:mmfork}
 \small
-\begin{tabular}{lccc}
+\begin{tabular}{lcccc}
 \toprule
-algorithm & ACL (std) & vs.\ MM & vs.\ Reweave \\
+algorithm & ACL (std) & vs.\ MM & vs.\ Reweave & $t/$MM \\
 \midrule
-\texttt{minorminer} $\equiv$ \texttt{mmfork} & 3.641 (0.115) & --- & $+2.4\%$ \\
-\texttt{mmfork-cuthill}    & 3.592 (0.105) & $-1.6\%$ & $+0.8\%$ \\
-\texttt{reweave}           & 3.553 (0.102) & $-2.3\%$ & --- \\
-\textbf{\texttt{mmfork-portfolio}} & \textbf{3.456} (\textbf{0.059}) & $\mathbf{-5.3\%}$ & $\mathbf{-3.1\%}$ \\
+\texttt{minorminer} $\equiv$ \texttt{mmfork} & 3.641 (0.115) & --- & $+2.4\%$ & $1.0\times$ \\
+\texttt{mmfork-cuthill}    & 3.592 (0.105) & $-1.6\%$ & $+0.8\%$ & $1.0\times$ \\
+\texttt{reweave}           & 3.553 (0.102) & $-2.3\%$ & --- & $1.7\times$ \\
+\textbf{\texttt{mmfork-portfolio}} & \textbf{3.456} (\textbf{0.059}) & $\mathbf{-5.3\%}$ & $\mathbf{-3.1\%}$ & $5.9\times$ \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1149,6 +1151,52 @@ cell & \texttt{minorminer} & \texttt{reweave} & \texttt{mmfork-portf.} & \texttt
 \midrule
 $n{=}40,d{=}0.5$ & 4.57 & 4.45 & 4.38 & \textbf{4.32} \\
 $n{=}60,d{=}0.5$ & 7.71 & 7.30 & 6.89 & \textbf{6.62} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Timing.} Guiding the order is nearly free, so the single-order variants
+are drop-ins on \emph{speed} as well as quality. The order is computed once in
+$O(|V|{+}|E|)$ and the search is otherwise \texttt{minorminer}'s, so over the
+standard grid \texttt{mmfork} is identical to \texttt{minorminer} ($1.0\times$) and
+\texttt{mmfork-cuthill} averages $1.0\times$---a good order even converges
+marginally faster, and it is faster than \texttt{minorminer-layout} ($1.3\times$).
+The portfolio buys its quality and variance with a constant factor of time: it runs
+the five orders plus the default, so \texttt{mmfork-portfolio} is $5.9\times$
+\texttt{minorminer}, and the stacked \texttt{reweave+mmfork} is $6.4\times$---the
+improver adds little on top of the portfolio base, which is already near-optimal so
+few destroy-repair moves are accepted (cf.\ standalone \texttt{reweave}'s
+$1.7\times$). This is the same wall-clock regime as \texttt{reweave-thorough}
+(\S\ref{sec:results}): a ${\sim}6\times$ constant factor bought for the lowest ACL
+and the lowest variance, while the single-order variants stay at
+\texttt{minorminer}'s cost. Table~\ref{tab:fgtime} gives per-cell seconds; all
+algorithms run back-to-back on each instance so the ratios are robust to CPU
+contention.
+
+\begin{table}[t]
+\caption{Wall-clock for the search-guidance algorithms (mean seconds per embedding;
+all algorithms run back-to-back per (cell, seed) so ratios are contention-robust;
+$30$\,s budget). Single-order \texttt{mmfork-cuthill} matches \texttt{minorminer}
+(\texttt{mmfork} without an order is identical, omitted); the portfolio and the
+stacked variant cost a ${\sim}6\times$ constant factor.
+\texttt{mm}${=}$\texttt{minorminer}, \texttt{mm-l}${=}$\texttt{minorminer-layout},
+\texttt{mf}${=}$\texttt{mmfork}.}
+\label{tab:fgtime}
+\small
+\begin{tabular}{lrrrrr}
+\toprule
+cell & \texttt{mm} & \texttt{mm-l} & \texttt{mf-cuth} & \texttt{mf-portf} & \texttt{rw+mf} \\
+\midrule
+$n{=}20,d{=}0.5$         & 0.09 & 0.09 & 0.14 & 0.69 & 0.67 \\
+$n{=}30,d{=}0.5$         & 0.53 & 0.37 & 0.36 & 2.43 & 2.51 \\
+$n{=}30,d{=}0.7$         & 0.77 & 0.76 & 0.94 & 3.53 & 3.80 \\
+$n{=}40,d{=}0.5$         & 1.01 & 0.86 & 0.72 & 5.41 & 5.76 \\
+$n{=}40,d{=}0.7$         & 1.13 & 1.67 & 1.04 & 6.44 & 6.94 \\
+$n{=}60,d{=}0.5$         & 0.95 & 2.00 & 1.25 & 7.49 & 8.73 \\
+$n{=}30,d{=}0.5$ (broken)& 0.34 & 0.41 & 0.35 & 2.30 & 2.34 \\
+$n{=}30,d{=}0.5$ ($Z_4$) & 0.27 & 0.35 & 0.23 & 1.65 & 1.75 \\
+\midrule
+mean $\times$\,\texttt{mm} & $1.0$ & $1.3$ & $1.0$ & $5.9$ & $6.4$ \\
 \bottomrule
 \end{tabular}
 \end{table}
