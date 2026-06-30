@@ -70,15 +70,18 @@ def build_targets() -> dict:
     }
 
 
-def build_sources() -> dict:
-    src = {}
-    for n in ER_NS:
-        g = nx.convert_node_labels_to_integers(nx.gnp_random_graph(n, 0.3, seed=INSTANCE_SEED))
-        src[f"ERd0.3_n{n}"] = (g, "ER", n, 0.3)
-    for n in REG_NS:
-        g = nx.convert_node_labels_to_integers(nx.random_regular_graph(6, n, seed=INSTANCE_SEED))
-        src[f"REGk6_n{n}"] = (g, "REG", n, 6)
-    return src
+def build_sources(K: int = 1) -> list:
+    """K instances per cell; returns [(cell, graph, instance_id, fam, n, d)]."""
+    out = []
+    for i in range(K):
+        seed = INSTANCE_SEED + i * 100003
+        for n in ER_NS:
+            g = nx.convert_node_labels_to_integers(nx.gnp_random_graph(n, 0.3, seed=seed))
+            out.append((f"ERd0.3_n{n}", g, i, "ER", n, 0.3))
+        for n in REG_NS:
+            g = nx.convert_node_labels_to_integers(nx.random_regular_graph(6, n, seed=seed))
+            out.append((f"REGk6_n{n}", g, i, "REG", n, 6))
+    return out
 
 
 _TARGETS: dict = {}
@@ -93,12 +96,12 @@ def _init(timeout: float) -> None:
 
 def _run(task):
     from ember_qc.benchmark import benchmark_one
-    src_name, src_graph, tgt_name, algo, seed = task
+    src_name, src_graph, inst, tgt_name, algo, seed = task
     tgt = _TARGETS[tgt_name]
     r = benchmark_one(src_graph, tgt, algo, timeout=_TIMEOUT, seed=seed,
-                      graph_name=src_name, topology_name=tgt_name)
+                      graph_name=f"{src_name}#{inst}", topology_name=tgt_name)
     return {
-        "source": src_name, "target": tgt_name, "algorithm": algo, "seed": seed,
+        "source": src_name, "instance": inst, "target": tgt_name, "algorithm": algo, "seed": seed,
         "n": src_graph.number_of_nodes(),
         "success": int(bool(r.success)), "valid": int(bool(r.is_valid)),
         "avg_chain_length": r.avg_chain_length, "max_chain_length": r.max_chain_length,
@@ -110,16 +113,17 @@ def _run(task):
 def main():
     n_workers = int(sys.argv[1]) if len(sys.argv) > 1 else max(1, (os.cpu_count() or 4) - 2)
     timeout = float(sys.argv[2]) if len(sys.argv) > 2 else 300.0
+    K = int(sys.argv[3]) if len(sys.argv) > 3 else 8
 
-    sources = build_sources()
+    sources = build_sources(K)
     tasks = []
-    for sname, (g, fam, n, d) in sources.items():
+    for (cell, g, inst, fam, n, d) in sources:
         for tname in TARGET_NAMES:
             for algo in ALGOS:
                 for seed in SEEDS:
-                    tasks.append((sname, g, tname, algo, seed))
+                    tasks.append((cell, g, inst, tname, algo, seed))
 
-    print(f"scaling sweep: {len(sources)} sources × {len(TARGET_NAMES)} targets × "
+    print(f"scaling sweep: K={K} instances × {len(TARGET_NAMES)} targets × "
           f"{len(ALGOS)} algos × {len(SEEDS)} seeds = {len(tasks)} trials; "
           f"workers={n_workers}, timeout={timeout}s", flush=True)
 
@@ -150,11 +154,18 @@ def main():
         times = [r["wall_time"] for r in rs]
         # time over SUCCESSFUL runs too (capped/failed runs distort the time curve)
         ok_times = [r["wall_time"] for r in ok]
+        # 95% CI for the mean ACL across INSTANCES (per-instance mean first, then SEM)
+        per_inst: dict = {}
+        for r in ok:
+            per_inst.setdefault(r["instance"], []).append(r["avg_chain_length"])
+        inst_means = [st.mean(v) for v in per_inst.values()]
+        acl_ci = (1.96 * st.pstdev(inst_means) / (len(inst_means) ** 0.5)) if len(inst_means) > 1 else 0.0
         summary.append({
             "source": sname, "target": tname, "algorithm": algo, "n": rs[0]["n"],
-            "n_seeds": len(rs), "n_success": len(ok),
+            "n_seeds": len(rs), "n_success": len(ok), "n_instances": len(inst_means),
             "success_rate": round(len(ok) / len(rs), 3) if rs else 0.0,
             "acl_mean": round(st.mean(acls), 3) if acls else "",
+            "acl_ci": round(acl_ci, 3),
             "acl_std": round(st.pstdev(acls), 3) if len(acls) > 1 else (0.0 if acls else ""),
             "maxchain_mean": round(st.mean(maxc), 2) if maxc else "",
             "qubits_mean": round(st.mean(qubits), 1) if qubits else "",

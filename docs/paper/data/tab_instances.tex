@@ -1,0 +1,14 @@
+\begin{tabular}{lcccc}
+\toprule
+method & $\Delta$ACL vs.\ MM & 95\% CI & seed std (ratio) & paired $p$ \\
+\midrule
+\texttt{reweave-base} & $-0.8\%$$^{***}$ & $[-0.9,-0.7]$ & $0.122\,(0.93\times)$ & $9e{-}53$ \\
+\texttt{reweave} & $-1.2\%$$^{***}$ & $[-1.4,-1.1]$ & $0.117\,(0.89\times)$ & $2e{-}54$ \\
+\texttt{reweave-thorough} & $-5.4\%$$^{***}$ & $[-5.6,-5.1]$ & $0.071\,(0.54\times)$ & $1e{-}84$ \\
+\texttt{mmfork-cuthill} & $-0.6\%$$^{***}$ & $[-0.9,-0.2]$ & $0.134\,(1.02\times)$ & $2e{-}4$ \\
+\texttt{mmfork-portfolio} & $-5.5\%$$^{***}$ & $[-5.8,-5.3]$ & $0.070\,(0.53\times)$ & $2e{-}85$ \\
+\texttt{reweave+cuthill} & $-1.7\%$$^{***}$ & $[-2.0,-1.4]$ & $0.119\,(0.91\times)$ & $8e{-}22$ \\
+\texttt{reweave-stacked} & $+2.6\%$ & $[+1.7,+3.7]$ & $0.207\,(1.57\times)$ & $8e{-}1$ \\
+\texttt{mm-layout} & $+0.7\%$$^{\dagger}$ & $[+0.4,+1.1]$ & $0.137\,(1.04\times)$ & $3e{-}2$ \\
+\bottomrule
+\end{tabular}

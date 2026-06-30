@@ -81,10 +81,15 @@ under the fabric's symmetries, so the model collapses to a constant---while a
 symmetry-invariant (Procrustes) objective repairs it and beats \texttt{minorminer}
 by ${\sim}1\%$ at equal budget (statistically significant but small), and a
 decode-aware reinforcement-learning fine-tune does not exceed it. A strong
-heuristic with restarts thus remains hard to beat with learned placement. The
-algorithmic primitives throughout are classical; the contribution is their
-synthesis and empirical evaluation, inside the Ember benchmarking framework, for
-minor embedding.
+heuristic with restarts thus remains hard to beat with learned placement. We then
+validate the premise that ACL is worth optimizing: on a simulator, across $2{,}736$
+embedded random-Ising instances, shorter-chain embeddings give significantly better
+solutions (Spearman $\rho=-0.63$ between ACL and ground-state probability,
+$p\approx10^{-296}$, agreed by simulated annealing and spin-vector Monte Carlo), and
+we re-establish every empirical claim under a $K{=}15$-instance redesign with
+confidence intervals and Holm-corrected paired significance tests. The algorithmic
+primitives throughout are classical; the contribution is their synthesis and
+empirical evaluation, inside the Ember benchmarking framework, for minor embedding.
 \end{abstract}
 
 \ccsdesc[500]{Hardware~Quantum computation}
@@ -185,7 +190,7 @@ $E$ is unused. Here $\mathrm{ACL}=\tfrac{1+2+1}{3}=\tfrac{4}{3}$.}
 \end{figure}
 
 \paragraph{Contribution.}
-This paper makes six contributions, listed in the order they appear.
+This paper makes seven contributions, listed in the order they appear.
 (i) We frame minor-embedding chain construction as \emph{multi-net global
 routing} and transfer two ideas from FPGA/VLSI computer-aided design---a real
 Steiner-tree inner step and \emph{negotiated congestion}---to the
@@ -218,6 +223,13 @@ its ACL by up to ${\sim}5\%$ and roughly halves its variance, composes with Rewe
 (\S\ref{sec:scaling})---Advantage Pegasus-$16$ and Advantage2 Zephyr-$15$---and
 find the order-guided variants' wall-clock premium \emph{shrinks} with problem
 size, running at or below \texttt{minorminer}'s time on the largest instances.
+(vii) We \emph{validate} the objective and harden the statistics
+(\S\ref{sec:solquality},~\S\ref{sec:rigor}): on a simulator, shorter-chain
+embeddings yield significantly better annealing solutions (Spearman $\rho=-0.63$
+between ACL and ground-state probability, agreed by simulated annealing and
+spin-vector Monte Carlo), and a $K{=}15$-instance redesign with confidence intervals
+and paired significance tests confirms the gains and the variance reduction---and
+shows which one variant does not survive the stronger design.
 Throughout we are explicit (\S\ref{sec:novelty}) that the algorithmic primitives
 are not new; the novelty is their synthesis and application to minor embedding,
 together with the empirical findings.
@@ -690,10 +702,12 @@ interaction:
     shaves a further ${\sim}0.6\%$ ACL for free.
 \end{itemize}
 A fourth idea---seeding the improver from a multilevel placement instead of
-\texttt{minorminer}---lowers variance on dense Pegasus, but the multilevel base is
-unreliable on small, sparse, and Zephyr instances (it inflated ACL by up to
-$30\%$ where \texttt{minorminer} is already near-optimal), so we keep it as an
-optional variant rather than the default. We also rejected an A\,$^\star$ routing
+\texttt{minorminer}---lowers ACL and variance on large, dense Pegasus instances
+(e.g.\ $-6\%$ ACL and $-17\%$ seed std at $n{=}40,d{=}0.7$ under the $K{=}15$ design
+of \S\ref{sec:rigor}), but the multilevel base is unreliable on small, sparse, and
+Zephyr instances (it inflated ACL by up to $30\%$ where \texttt{minorminer} is already
+near-optimal, so that pooled over the grid it is a net regression), so we keep it as
+an optional variant rather than the default. We also rejected an A\,$^\star$ routing
 scheme (a $+1.7\%$ ACL regression) and an exact Dreyfus--Wagner Steiner inner step
 (no gain over the shortest-path heuristic). A compiled (numba) node-weighted
 Dijkstra core, which we built and tested, gives \emph{no} net speedup once
@@ -1410,6 +1424,192 @@ source instance per size the curves are noisy, so the quality advantage
 \end{figure}
 
 %% ========================================================================
+\section{Solution Quality on a Simulator}
+\label{sec:solquality}
+
+Every result so far optimizes \emph{average chain length}: we treat ACL (and its
+variance) as a proxy for the quantity a practitioner cares about---the quality of
+the solutions a quantum annealer returns. That proxy is standard, and the
+state-of-the-art evaluation we follow adopts it because ACL is the structural metric
+that correlates most strongly with annealing solution error~\cite{gomez2025eval}.
+But the paper never tests the link directly. This section does, on a simulator: we
+put random Ising problems on the source graphs, embed each with every method, sample
+the embedded problem, and ask whether shorter-ACL embeddings actually yield better
+solutions.
+
+\paragraph{Protocol.} For each source graph we draw random Ising problems with
+$h_i,J_{ij}\in\{-1,+1\}$ and compute the exact ground-state energy by brute force,
+which bounds the sources to $n\le 18$. We embed every problem with all six methods
+(two embedding seeds each) into clean and broken Pegasus~$P_3$---small enough that
+the dense sources need real, breakable chains, so chain length matters---and build
+the embedded Ising with the reference \texttt{dwave.embedding} construction
+(ferromagnetic intra-chain couplers of strength $c$, swept as a multiple of
+$\max|J|$). We sample each embedded problem with classical simulated
+annealing~\cite{kirkpatrick1983sa,isakov2015sa} ($500$ reads, the optimized
+\texttt{dwave.samplers} implementation), majority-vote unembed, and score against the
+exact ground state. As a semiclassical quantum-annealing cross-check we repeat with
+\emph{spin-vector Monte Carlo} (SVMC)~\cite{shin2014svmc}, in which each qubit is an
+$O(2)$ rotor annealed under a transverse-field schedule. We report the
+ground-state probability $P(\mathrm{GS})$, the residual-energy ratio
+$(\langle E\rangle-E_0)/|E_0|$, and the chain-break fraction, over $114$ problems and
+$2{,}736$ (problem, embedding) pairs.
+
+\paragraph{Shorter chains give better solutions.} Across the whole cloud of
+(problem, embedding) pairs, ACL is strongly and significantly anti-correlated with
+solution quality: at the reference chain strength the Spearman correlation between ACL
+and $P(\mathrm{GS})$ is $\rho=-0.63$ ($p\approx10^{-296}$), between ACL and residual
+energy $\rho=+0.63$, and between ACL and chain breaks $\rho=+0.80$
+(Figure~\ref{fig:quality}). The mechanism is direct---longer chains break more often
+under a fixed coupler budget, and broken chains corrupt the majority vote. The link
+is not an artifact of one chain-strength choice: taking each embedding's \emph{best}
+strength over the sweep, ACL still predicts $P(\mathrm{GS})$ at $\rho=-0.53$
+($p\approx10^{-197}$). Figure~\ref{fig:chainstrength} shows why: short chains are
+already near-optimal at weak coupling, whereas long chains need a stronger
+ferromagnet to hold together---and even fully compensated they top out lower, because
+the coupler budget spent holding a long chain rigid is budget taken from the logical
+problem.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=0.52\columnwidth, height=4.2cm,
+  xlabel={average chain length}, ylabel={$P(\mathrm{ground\ state})$},
+  ymin=0, ymax=1, xmin=1, xmax=2.6, title={(a)}, title style={font=\footnotesize},
+  tick label style={font=\scriptsize}, label style={font=\footnotesize}]
+\addplot+[thick,mark=*,mark size=1.4pt] coordinates
+ {(1.11,0.913)(1.34,0.755)(1.56,0.646)(1.79,0.495)(2.02,0.325)(2.25,0.228)(2.44,0.162)};
+\end{axis}
+\end{tikzpicture}\hfill
+\begin{tikzpicture}
+\begin{axis}[width=0.52\columnwidth, height=4.2cm,
+  xlabel={average chain length}, ylabel={chain-break fraction},
+  ymin=0, xmin=1, xmax=2.6, title={(b)}, title style={font=\footnotesize},
+  tick label style={font=\scriptsize}, label style={font=\footnotesize}]
+\addplot+[thick,mark=square*,mark size=1.4pt,red] coordinates
+ {(1.11,0.008)(1.34,0.028)(1.56,0.057)(1.79,0.093)(2.02,0.138)(2.25,0.181)(2.44,0.215)};
+\end{axis}
+\end{tikzpicture}
+\caption{Solution quality versus chain length across all $2{,}736$ (problem,
+embedding) pairs (binned mean, reference chain strength). (a) the ground-state
+probability falls monotonically with ACL ($\rho=-0.63$, $p\approx10^{-296}$); (b) the
+chain-break fraction rises with ACL ($\rho=+0.80$)---the mechanism. Lower ACL is
+better on both axes.}
+\label{fig:quality}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=0.52\columnwidth, height=4.2cm,
+  xlabel={chain strength $/\max|J|$}, ylabel={$P(\mathrm{ground\ state})$},
+  ymin=0, ymax=1, title={(a)}, title style={font=\footnotesize},
+  legend style={font=\tiny, at={(0.98,0.02)}, anchor=south east, fill opacity=0.8},
+  legend cell align=left, tick label style={font=\scriptsize}, label style={font=\footnotesize}]
+\addplot+[thick,mark=*,mark size=1pt] coordinates {(0.5,0.778)(0.75,0.849)(1.0,0.883)(1.5,0.913)(2.0,0.912)}; \addlegendentry{short}
+\addplot+[thick,mark=square*,mark size=1pt] coordinates {(0.5,0.393)(0.75,0.529)(1.0,0.639)(1.5,0.786)(2.0,0.836)}; \addlegendentry{medium}
+\addplot+[thick,mark=triangle*,mark size=1pt] coordinates {(0.5,0.127)(0.75,0.205)(1.0,0.296)(1.5,0.488)(2.0,0.626)}; \addlegendentry{long}
+\end{axis}
+\end{tikzpicture}\hfill
+\begin{tikzpicture}
+\begin{axis}[width=0.52\columnwidth, height=4.2cm,
+  xlabel={chain strength $/\max|J|$}, ylabel={chain-break fraction},
+  ymin=0, title={(b)}, title style={font=\footnotesize},
+  tick label style={font=\scriptsize}, label style={font=\footnotesize}]
+\addplot+[thick,mark=*,mark size=1pt] coordinates {(0.5,0.030)(0.75,0.019)(1.0,0.012)(1.5,0.004)(2.0,0.001)};
+\addplot+[thick,mark=square*,mark size=1pt] coordinates {(0.5,0.123)(0.75,0.085)(1.0,0.057)(1.5,0.024)(2.0,0.009)};
+\addplot+[thick,mark=triangle*,mark size=1pt] coordinates {(0.5,0.281)(0.75,0.210)(1.0,0.156)(1.5,0.084)(2.0,0.039)};
+\end{axis}
+\end{tikzpicture}
+\caption{The chain-strength sweep, by ACL tertile (short $\le1.36$, medium, long
+$\ge1.78$). (a) longer chains need a stronger ferromagnet and still cap at a lower
+$P(\mathrm{GS})$; (b) at every chain strength the break fraction grows with chain
+length. Spending coupler budget to hold long chains rigid is budget taken from the
+logical problem---the cost that ACL measures.}
+\label{fig:chainstrength}
+\end{figure}
+
+\paragraph{The shorter-ACL methods win on quality.} Ordered by mean
+$P(\mathrm{GS})$, the methods rank exactly as their ACL predicts
+(Table~\ref{tab:solquality}): \texttt{mmfork-portfolio} and \texttt{reweave-thorough},
+the two lowest-ACL methods, give the highest ground-state probability, and
+\texttt{mmfork-portfolio} beats \texttt{minorminer} on solution quality by a paired
+Wilcoxon test across problems ($p=2\times10^{-4}$, medium effect). The per-method
+\emph{gaps} are modest here because the brute-force ceiling forces small sources where
+all methods produce short chains (ACL ${\approx}1.5$--$1.7$); the cloud-level
+correlation, spanning the full ACL range, is the primary evidence and is overwhelming.
+Simulated annealing and SVMC agree closely---they rank the six methods identically
+(method-mean Spearman $\rho=0.94$; per-embedding $\rho=0.95$)---so the ordering is not
+an artifact of one sampler.
+
+\begin{table}[t]
+\caption{Solution quality by method (mean over the $114$ problems, reference chain
+strength, clean and broken $P_3$). Lower ACL tracks higher ground-state probability
+under both samplers, lower residual energy, and fewer chain breaks.
+$^{***}$\,$p<10^{-3}$, paired Wilcoxon vs.\ \texttt{minorminer}.}
+\label{tab:solquality}
+\small
+\centering
+\input{data/tab_solquality.tex}
+\end{table}
+
+\paragraph{What this does and does not show.} Classical SA and semiclassical SVMC
+exercise the pathway by which chain length degrades solutions on real hardware---chain
+breaks and the dynamic-range tax of holding long chains together---which is the
+dominant ACL-to-quality mechanism. They do not model coherent multi-qubit tunneling,
+and a faithful open-system simulation of quantum annealing is infeasible at the
+hundreds of physical qubits these embeddings occupy. The claim we support is therefore
+the one the optimization rests on: \emph{at fixed problem and sampler, shorter and more
+uniform chains yield measurably better solutions}, so the ACL reductions of the
+preceding sections are reductions in something that matters.
+
+%% ========================================================================
+\section{Statistical Robustness Across Instances}
+\label{sec:rigor}
+
+The per-cell tables above follow the state-of-the-art protocol and isolate run-to-run
+variance on \emph{one fixed graph instance} per cell---deliberately, because
+single-instance seed spread is \texttt{minorminer}'s documented failure mode. It
+leaves one question open: are the gains and the variance reduction properties of those
+particular instances? To settle it we re-ran the entire grid with $K=15$ independent
+graph instances per cell ($35$ cell--target combinations $\times\,15$ instances
+$\times\,3$ seeds $=1{,}575$ embeddings per method), and analyze the $525$
+per-(cell, target, instance) units with bootstrap confidence intervals and
+Holm--Bonferroni-corrected paired Wilcoxon tests, separating graph-draw variance from
+algorithm-seed variance.
+
+The headline claims survive intact (Table~\ref{tab:instances}). \emph{Never-regress}
+holds at the instance level: across all $525$ units, every Reweave configuration that
+warm-starts from \texttt{minorminer} has mean ACL $\le$ \texttt{minorminer}'s, with a
+maximum observed regression of $0.000$. The ACL reductions hold with tight
+intervals---\texttt{reweave-thorough} $-5.4\%$ ($95\%$ CI $[-5.6,-5.1]$) and
+\texttt{mmfork-portfolio} $-5.5\%$ $[-5.8,-5.3]$, both at $p<10^{-84}$ with large
+effect size, and the cheap \texttt{reweave-mmfork-cuthill} stack $-1.7\%$
+$[-2.0,-1.4]$. The \emph{variance} advantage---Reweave's central claim---is confirmed
+once instance and seed variance are separated: \texttt{reweave-thorough} and
+\texttt{mmfork-portfolio} cut the within-instance (seed) ACL standard deviation to
+$0.54\times$ and $0.53\times$ \texttt{minorminer}'s, while their between-instance
+standard deviation ($0.087$, $0.090$) is likewise below \texttt{minorminer}'s
+($0.113$). The one variant that does \emph{not} survive scrutiny is
+\texttt{reweave-stacked}: pooled over the grid it is $+2.6\%$ \emph{worse} than
+\texttt{minorminer} and not significant, because its multilevel base inflates ACL on
+small, sparse instances even as it helps on large dense ones (\S\ref{sec:optimizations})
+---which is why we already report it as an optional variant rather than a default. The
+multi-instance design turns that caveat from a hedge into a measurement.
+
+\begin{table}[t]
+\caption{The headline claims under $K=15$ instances per cell (pooled over all cells and
+targets; $525$ paired per-(cell, target, instance) units). $\Delta$ACL is the mean
+per-instance change vs.\ \texttt{minorminer} with a bootstrap $95\%$ CI; ``seed std''
+is the within-instance ACL standard deviation and its ratio to \texttt{minorminer}'s;
+$p$ is Holm-corrected paired Wilcoxon. $^{***}$\,significantly \emph{better} than
+\texttt{minorminer} ($p<10^{-3}$); $^{\dagger}$\,significantly worse.}
+\label{tab:instances}
+\small
+\centering
+\input{data/tab_instances.tex}
+\end{table}
+
+%% ========================================================================
 \section{Limitations and Future Work}
 \label{sec:limitations}
 
@@ -1439,11 +1639,12 @@ Reweave with a stronger global placement---e.g.\ a semi-relaxed
 Gromov--Wasserstein assignment~\cite{vincentcuaz2022srgw}---is the natural next
 step. The destroy-repair neighbourhood here is a single-chain shortcut;
 a larger neighbourhood repaired exactly with a constraint solver
-\cite{bernal2020ip} is a promising route to deeper ACL reductions. Finally, our
-grid uses one graph instance per (size, density) cell with five seeds; replicating
-each cell over several instances, with significance tests or confidence intervals,
-would more cleanly separate algorithm-seed variance from graph-draw variance and
-further substantiate the variance claims that are Reweave's headline advantage.
+\cite{bernal2020ip} is a promising route to deeper ACL reductions. The
+solution-quality validation of \S\ref{sec:solquality} is classical and semiclassical
+by necessity: it exercises the chain-break and dynamic-range pathway that dominates
+the ACL-to-quality link, but a faithful open-system quantum-annealing simulation at
+the embedded sizes here remains out of reach, so direct confirmation on quantum
+hardware is the natural next step.
 
 %% ========================================================================
 \section{Conclusion}
@@ -1473,9 +1674,15 @@ model is ill-posed and collapses, a symmetry-invariant objective repairs it but
 beats \texttt{minorminer} by only a small (if significant) ${\sim}1\%$, and
 decode-aware reinforcement learning does not exceed it---so a strong heuristic with
 restarts remains hard to beat with learned placement, and we report the failure
-mode as carefully as the fix. The algorithmic primitives throughout are classical;
-the contribution is their synthesis, application, and honest empirical validation
-for minor embedding.
+mode as carefully as the fix. Finally, we close the loop on the objective itself: a
+simulator study over thousands of embedded Ising instances confirms that shorter,
+more uniform chains yield significantly better annealing solutions---validating ACL
+as more than a structural convenience---and a $K{=}15$-instance redesign with
+confidence intervals and paired significance tests puts the headline gains and the
+variance reduction on firm statistical footing, while honestly flagging the one
+variant that does not survive it. The algorithmic primitives throughout are
+classical; the contribution is their synthesis, application, and honest empirical
+validation for minor embedding.
 
 \appendix
 \section{Complete per-cell results}

@@ -265,3 +265,31 @@ Grab 10 random papers published in ACM TQC, and analyze them (fan out subagents)
 > abstract/intro/contributions, improved captions/flow, restructured where it helped — preserving
 > every result, number, and claim exactly (verified vs the committed CSVs). Rebuilt the PDF;
 > committed and pushed._
+
+### Prompt 23
+
+```
+Pretend you're a reviewer for TQC.  What are the five biggest constructive criticisms you'd have for the paper right now - what are the five most important things for us to try and improve?
+```
+
+> _Outcome: gave five reviewer-grade criticisms (no code): (1) the ACL→solution-quality proxy is
+> asserted, never tested on an annealer; (2) headline variance claim rests on one graph instance
+> per cell (seed variance only); (3) thin baselines (only minorminer/-layout; no clique/OCT) and
+> unquantified practical significance; (4) the paper does too much / diffuse thesis; (5) almost no
+> theory and the ordering result hangs on a version-specific minorminer fork. Noted the honesty as
+> a strength to preserve. User then asked to plan #1 (via simulator) and #2._
+
+### Prompt 24
+
+```
+Can you write a plan to do #2, and also #1 (using a simulator)?
+```
+
+> _Outcome: planned + executing two rigor upgrades. #1 (validate the proxy): random Ising on small
+> sources → embed via each method → simulated annealing (+ spin-vector Monte Carlo cross-check) on
+> the embedded Ising at swept chain strength → majority-vote unembed → score P(ground state)/
+> residual energy/chain-breaks vs the exact ground state, and correlate quality with ACL. #2
+> (statistics): regenerate the whole empirical evaluation with K≈15 graph instances per cell, with
+> confidence intervals + paired Wilcoxon (reusing ember_qc_analysis.statistics), on the hyde
+> cluster. Tooling: dimod ships SA/ExactSolver/ising_energy; embed/unembed via dwave.embedding or
+> hand-rolled. Then update the paper (new "Solution quality" section, CIs/significance in tables)._
