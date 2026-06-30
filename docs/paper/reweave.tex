@@ -36,44 +36,55 @@ on D-Wave Quantum Annealers}
 Minor embedding---mapping a logical problem graph onto the fixed sparse
 connectivity of a quantum annealer by representing each logical variable as a
 connected \emph{chain} of physical qubits---is the compilation bottleneck for
-quantum annealing. The de facto standard, \texttt{minorminer}, is a randomized
-rip-up-and-reroute heuristic whose chains are built as unions of independent
-shortest paths and whose congestion signal is a memoryless per-pass snapshot;
-both choices inflate the \emph{average chain length} (ACL), the metric most
-widely taken as the primary proxy for embedded-problem solution quality, and
-produce high run-to-run variance. We observe that chain construction is exactly the multi-net global
-routing problem solved for thirty years in FPGA/VLSI computer-aided design, and
-port its two key ideas to minor embedding: a true Steiner-tree inner step
-(the shortest-path heuristic) in place of independent shortest paths, and
-\emph{negotiated congestion} (McMurchie--Ebeling) in place of the snapshot
-penalty. We package these as Reweave, an anytime, large-neighbourhood
-\emph{improver} that warm-starts from a fast base embedding and then rips up and
-reroutes the longest chains through a congestion-priced fabric, accepting a move
-only if it lowers the total qubit count and preserves validity---so it never
-returns an embedding worse than its base. The algorithmic primitives are classical; the
-contribution is their synthesis and application to minor embedding, together
-with an empirical evaluation inside the Ember benchmarking framework. On
-Erd\H{o}s--R\'enyi, $d$-regular, and Barab\'asi--Albert sources embedded into
-clean and broken D-Wave Pegasus and into Zephyr (all four methods reach $100\%$
-success on every target), \texttt{reweave} never returns a longer-ACL
-embedding than \texttt{minorminer} on any of the $35$ instance--topology cells,
-and its thorough configuration lowers mean ACL on every cell (by $1$--$11\%$,
-mean ${\sim}5\%$) and reduces ACL standard deviation in $30$ of the $35$ (by up
-to $77\%$), at the cost of additional wall-clock time. We then optimize the
-algorithm---bounded-region routing, a dirty-set incremental schedule, and a
-spur-pruning finishing pass---making the production improver $\sim$3$\times$
-faster at equal-or-better ACL: single-seed \texttt{reweave} runs within
-${\sim}1.3\times$ compiled \texttt{minorminer}'s wall-clock while still
-shortening mean ACL, and the optimized thorough configuration reaches ${-}5\%$
-mean ACL (up to ${-}11\%$) at a fraction of its former cost. Finally, treating
-Reweave's outputs as training data, we ask whether an \emph{amortized} model can
-learn to embed. The obvious supervised approach is ill-posed---hardware placement is
-free under the fabric's symmetries, so the model collapses to a constant---and a
-symmetry-invariant (Procrustes) objective fixes it, beating \texttt{minorminer} by
-${\sim}1\%$ at equal budget (statistically significant but small); a decode-aware
-reinforcement-learning fine-tune does not exceed it. A strong heuristic with restarts
-thus remains hard to beat with learned placement---a cautionary result we report in
-full, alongside a retraction of an earlier unequal-budget comparison.
+quantum annealing, and \emph{average chain length} (ACL) is the metric most
+widely taken as the primary proxy for embedded-problem solution quality. The de
+facto standard, \texttt{minorminer}, builds chains as unions of independent
+shortest paths under a memoryless per-pass congestion penalty; both choices
+inflate ACL and produce high run-to-run variance. We attack \texttt{minorminer}
+on two fronts---how it \emph{builds} a chain and the \emph{order} in which it
+searches---and, as a control, ask whether learning can beat it.
+
+First, we observe that chain construction is exactly the multi-net global routing
+problem refined for thirty years in FPGA/VLSI computer-aided design, and port its
+two key ideas: a true Steiner-tree inner step in place of independent shortest
+paths, and \emph{negotiated congestion} (McMurchie--Ebeling) in place of the
+snapshot penalty. We package these as \textbf{Reweave}, an anytime,
+large-neighbourhood \emph{improver} that warm-starts from a fast base embedding
+and reroutes the longest chains through a congestion-priced fabric, committing a
+move only if it lowers qubit count and preserves validity---so it never returns an
+embedding worse than its base. On Erd\H{o}s--R\'enyi, $d$-regular, and
+Barab\'asi--Albert sources into clean and broken Pegasus and into Zephyr,
+\texttt{reweave} never lengthens ACL versus \texttt{minorminer} on any of $35$
+instance--topology cells; its thorough configuration lowers mean ACL on every cell
+(by $1$--$11\%$, mean ${\sim}5\%$) and ACL standard deviation in $30$ of $35$ (by
+up to $77\%$), all at $100\%$ success. A structured optimization pass---bounded
+routing, a dirty-set schedule, and spur-pruning---makes the production improver
+${\sim}3\times$ faster, within ${\sim}1.3\times$ compiled \texttt{minorminer}'s
+wall-clock.
+
+Second, we open \texttt{minorminer}'s \emph{search order}---the lever its own
+authors named as the key open problem---with a ${\sim}90$-line fork that exposes
+the vertex order to its full search. A bandwidth-reducing (Cuthill--McKee) order,
+or a per-instance portfolio of such orders, lowers \texttt{minorminer}'s ACL by up
+to ${\sim}5\%$ and roughly halves its run-to-run variance; it composes with Reweave
+and, unlike a learned or constructive embedder, never sacrifices
+\texttt{minorminer}'s reliability. On the \emph{actual} hardware graphs (Advantage
+Pegasus-$16$, $5640$ qubits; Advantage2 Zephyr-$15$, $7440$ qubits) this guidance
+is essentially free: its wall-clock premium shrinks as problems grow, the ordered
+search running at or below \texttt{minorminer}'s time on the largest instances.
+(The complementary lever---which chain to rip up next---is, we find, inert.)
+
+Finally, treating Reweave's outputs as training data, we ask whether an
+\emph{amortized} model can learn to embed, and report an honest, cautionary
+answer: the naive supervised approach is ill-posed---hardware placement is free
+under the fabric's symmetries, so the model collapses to a constant---while a
+symmetry-invariant (Procrustes) objective repairs it and beats \texttt{minorminer}
+by ${\sim}1\%$ at equal budget (statistically significant but small), and a
+decode-aware reinforcement-learning fine-tune does not exceed it. A strong
+heuristic with restarts thus remains hard to beat with learned placement. The
+algorithmic primitives throughout are classical; the contribution is their
+synthesis and empirical evaluation, inside the Ember benchmarking framework, for
+minor embedding.
 \end{abstract}
 
 \ccsdesc[500]{Hardware~Quantum computation}
@@ -174,32 +185,42 @@ $E$ is unused. Here $\mathrm{ACL}=\tfrac{1+2+1}{3}=\tfrac{4}{3}$.}
 \end{figure}
 
 \paragraph{Contribution.}
-This paper makes five contributions. (i) We frame minor-embedding chain
-construction as \emph{multi-net global routing} and transfer two ideas from
-FPGA/VLSI computer-aided design---a real Steiner-tree inner step and
-\emph{negotiated congestion}---to the quantum-annealing setting
-(\S\ref{sec:reweave}). (ii) We package them as \textbf{Reweave}, an
-anytime, large-neighbourhood \emph{improver} that warm-starts from a fast base
-embedding and, by construction, never regresses below it. (iii) We evaluate Reweave
-inside the Ember benchmarking framework (\S\ref{sec:ember}) against
-\texttt{minorminer} and \texttt{minorminer}-with-p-norm-layout on clean and
-broken Pegasus and on Zephyr (\S\ref{sec:results}), showing it reduces mean
-ACL and---the property that most distinguishes it---run-to-run ACL
-\emph{variance} in nearly every cell, while all methods retain full success and
-validity. (iv) We then \emph{optimize} the algorithm (\S\ref{sec:optimizations}):
-a structured pass yields three quality-safe improvements---bounded-region
-routing, a dirty-set incremental schedule, and a spur-pruning finishing
-pass---that together make the production algorithm $\sim$3$\times$ faster at
-equal-or-better ACL, bringing single-seed \texttt{reweave} to within
-${\sim}1.3\times$ compiled \texttt{minorminer}'s wall-clock. (v) Finally, we ask
-whether \emph{learning} helps (\S\ref{sec:learning}) and report an honest, cautionary
-answer: the naive supervised model is ill-posed and collapses, a symmetry-invariant
-(Procrustes) objective fixes it and beats \texttt{minorminer} by ${\sim}1\%$ at equal
-budget (small but significant), decode-aware RL does not exceed it, and we retract an
-earlier unequal-budget comparison that had appeared to beat Reweave. We are explicit
-(\S\ref{sec:novelty}) that the
-algorithmic primitives are not new; the novelty is their synthesis and
-application to minor embedding (and, for \S\ref{sec:learning}, the empirical finding).
+This paper makes six contributions, listed in the order they appear.
+(i) We frame minor-embedding chain construction as \emph{multi-net global
+routing} and transfer two ideas from FPGA/VLSI computer-aided design---a real
+Steiner-tree inner step and \emph{negotiated congestion}---to the
+quantum-annealing setting, packaging them as \textbf{Reweave}, an anytime,
+large-neighbourhood \emph{improver} that warm-starts from a fast base embedding
+and, by construction, never regresses below it (\S\ref{sec:reweave}).
+(ii) We evaluate Reweave inside the Ember benchmarking framework
+(\S\ref{sec:ember}) against \texttt{minorminer} and
+\texttt{minorminer}-with-p-norm-layout on clean and broken Pegasus and on Zephyr
+(\S\ref{sec:results}), showing it reduces mean ACL and---the property that most
+distinguishes it---run-to-run ACL \emph{variance} in nearly every cell, while all
+methods retain full success and validity.
+(iii) We \emph{optimize} the algorithm (\S\ref{sec:optimizations}): a structured
+pass yields three quality-safe improvements---bounded-region routing, a dirty-set
+incremental schedule, and a spur-pruning finishing pass---that together make the
+production algorithm ${\sim}3\times$ faster at equal-or-better ACL, within
+${\sim}1.3\times$ compiled \texttt{minorminer}'s wall-clock.
+(iv) We ask whether \emph{learning} helps (\S\ref{sec:learning}) and report an
+honest, cautionary answer: the naive supervised model is ill-posed and collapses,
+a symmetry-invariant (Procrustes) objective fixes it and beats \texttt{minorminer}
+by ${\sim}1\%$ at equal budget (small but significant), decode-aware RL does not
+exceed it, and we retract an earlier unequal-budget comparison.
+(v) We open \texttt{minorminer}'s \emph{search order}
+(\S\ref{sec:searchguide}) with a ${\sim}90$-line fork that injects a vertex order
+into its full search: a Cuthill--McKee order, or a per-instance portfolio, lowers
+its ACL by up to ${\sim}5\%$ and roughly halves its variance, composes with Reweave
+(the cheap stack \texttt{reweave-mmfork-cuthill}), and stays as reliable as
+\texttt{minorminer}---while the complementary rip-up-order lever is inert.
+(vi) We study \emph{scaling} on the actual hardware graphs
+(\S\ref{sec:scaling})---Advantage Pegasus-$16$ and Advantage2 Zephyr-$15$---and
+find the order-guided variants' wall-clock premium \emph{shrinks} with problem
+size, running at or below \texttt{minorminer}'s time on the largest instances.
+Throughout we are explicit (\S\ref{sec:novelty}) that the algorithmic primitives
+are not new; the novelty is their synthesis and application to minor embedding,
+together with the empirical findings.
 
 %% ========================================================================
 \section{Background and Related Work}
@@ -1053,13 +1074,14 @@ inherits \texttt{minorminer}'s completeness and the learned layout changes only 
 \section{Guiding the Search: Vertex Order and Rip-Up}
 \label{sec:searchguide}
 
-\S\ref{sec:learning} learned a better \emph{initialization}; this section asks the
-complementary question: can we guide \texttt{minorminer}'s \emph{search} itself?
-Any \texttt{minorminer}-style embedder exposes two such levers---the \textbf{vertex
-order} in which chains are built and rebuilt, and the \textbf{rip-up policy} that
-chooses which chain to tear out and reroute next. \texttt{minorminer}'s own authors
-named initial placement and vertex order as the key open problem, and much of its
-run-to-run variance is order-driven. We test both levers, deterministically and
+Reweave improves the embedding \texttt{minorminer} produces, and \S\ref{sec:learning}
+tried to \emph{learn} a better one; this section attacks a third, orthogonal lever---the
+\emph{order} in which \texttt{minorminer} searches. Any \texttt{minorminer}-style
+embedder exposes two such order levers: the \textbf{vertex order} in which chains are
+built and rebuilt, and the \textbf{rip-up policy} that chooses which chain to tear out
+and reroute next. \texttt{minorminer}'s own authors named initial placement and vertex
+order as the key open problem, and much of its run-to-run variance is order-driven---yet,
+to our knowledge, search-order heuristics for minor embedding are unstudied. We test both levers, deterministically and
 with a learned model, in three vehicles: Reweave, a small fork of
 \texttt{minorminer} that exposes its variable order, and \texttt{minorminer}'s own
 \texttt{quickpass} greedy primitive.
@@ -1430,23 +1452,30 @@ further substantiate the variance claims that are Reweave's headline advantage.
 Minor-embedding chain construction is multi-net routing, and the routing
 community has spent decades on exactly the two operations \texttt{minorminer}
 performs weakly: building a net (Steiner tree) and resolving contention
-(congestion). Importing a real Steiner inner step and negotiated congestion, and
-running them as a warm-started anytime improver, yields Reweave---a drop-in
-method that never regresses below \texttt{minorminer} and, in its thorough
-configuration, reduces average chain length and---in nearly every cell---its
-run-to-run variance on D-Wave Pegasus and Zephyr. A structured optimization pass
-(bounded-region routing, dirty-set scheduling, spur-pruning) then makes the
-production algorithm ${\sim}3\times$ faster at equal-or-better quality, bringing
-single-seed \texttt{reweave} to within ${\sim}1.3\times$ compiled
-\texttt{minorminer}'s wall-clock---so the chain-length and variance gains come at
-little time cost. Finally, treating these optimized embeddings as supervision, we
-ask whether a learned model can do better, and report an honest, cautionary result
-(\S\ref{sec:learning}): the naive supervised approach is ill-posed and collapses to a
-constant, a symmetry-invariant objective repairs it and beats \texttt{minorminer} by a
-small but significant ${\sim}1\%$ at equal budget, and decode-aware reinforcement
-learning does not exceed it---so a good heuristic with restarts remains hard to beat
-with learned placement. The primitives are classical; the
-synthesis, application, optimization, and empirical validation are the contribution.
+(congestion). Importing a real Steiner inner step and negotiated congestion, run
+as a warm-started anytime improver, yields Reweave---a drop-in method that never
+regresses below \texttt{minorminer} and, in its thorough configuration, reduces
+average chain length and---in nearly every cell---its run-to-run variance on
+D-Wave Pegasus and Zephyr. A structured optimization pass (bounded routing,
+dirty-set scheduling, spur-pruning) then makes the production algorithm
+${\sim}3\times$ faster at equal-or-better quality, within ${\sim}1.3\times$
+compiled \texttt{minorminer}'s wall-clock, so the gains come at little time cost.
+
+The same diagnosis exposes a second, lighter lever. Much of
+\texttt{minorminer}'s variance is \emph{order}-driven, so we open its vertex order
+with a small fork: a bandwidth-reducing order, or a per-instance portfolio of
+orders, lowers its ACL by up to ${\sim}5\%$ and roughly halves its variance,
+composes with Reweave, and---unlike a learned or constructive embedder---never
+sacrifices its reliability. On the actual Advantage and Advantage2 hardware graphs
+this guidance is essentially free: its wall-clock premium vanishes as problems
+grow. What does \emph{not} pay off is learning the placement: the naive supervised
+model is ill-posed and collapses, a symmetry-invariant objective repairs it but
+beats \texttt{minorminer} by only a small (if significant) ${\sim}1\%$, and
+decode-aware reinforcement learning does not exceed it---so a strong heuristic with
+restarts remains hard to beat with learned placement, and we report the failure
+mode as carefully as the fix. The algorithmic primitives throughout are classical;
+the contribution is their synthesis, application, and honest empirical validation
+for minor embedding.
 
 \appendix
 \section{Complete per-cell results}

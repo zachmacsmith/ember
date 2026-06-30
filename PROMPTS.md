@@ -249,3 +249,19 @@ Tables 7-9 show ACL metrics but do not show timing/performance.  We need to esta
 > "Scaling Behavior" paper section + timing fixes. (Note: "cell" was my term for a (size,density,target)
 > grid point — the target was already a full P6 hardware graph, but only 680q; this study uses the
 > full-size 5640q/7440q graphs.)_
+
+### Prompt 22
+
+```
+Grab 10 random papers published in ACM TQC, and analyze them (fan out subagents) to identify 10 key characteristics of the writing style, word choice, figure style, page layout, and other writing aspects of each paper.  Then merge these into one list of rules (STYLE_GUIDE.md).  Then perform a self-critique pass of the current paper using the style guide to improve the writing and overall quality of the paper.  Ensure PROMPTS.md is up to date (including this prompt).  Commit and push everything when done.
+```
+
+> _Outcome: fanned out 10 subagents, each analyzing one ACM TQC paper's writing style via its
+> arXiv full text (ACM's site is 403-blocked; arXiv HTML works) and returning 10 characteristics
+> + a TQC-membership confirmation. Merged the ~100 observations into `docs/paper/STYLE_GUIDE.md`
+> (deduped, actionable rules grouped by category), with raw per-paper analyses under
+> `docs/paper/style-analysis/`. Then ran a DEEP self-critique of `reweave.tex` against the guide
+> (user chose "deep, allow restructure"): tightened/clarified prose, strengthened the
+> abstract/intro/contributions, improved captions/flow, restructured where it helped — preserving
+> every result, number, and claim exactly (verified vs the committed CSVs). Rebuilt the PDF;
+> committed and pushed._
