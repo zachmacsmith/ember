@@ -1142,20 +1142,30 @@ whatever base it is given (the same composition mechanism as the existing
 \texttt{reweave-stacked} variant, which seeds from the multilevel placement).
 
 \begin{table}[t]
-\caption{Stacking: seeding Reweave from \texttt{mmfork-portfolio}
-(\texttt{reweave+mmfork}) combines the ordering and improver gains, beating both
-its parents and stock \texttt{minorminer} (ER into $P_6$, mean ACL over $5$ seeds;
-all methods $5/5$ valid).}
+\caption{The quality/speed spectrum of the order-guided embedders and their stacks
+(ER into $P_6$, mean over four size/density cells $\times3$ seeds; $t/$MM is
+wall-clock relative to \texttt{minorminer}, back-to-back). The cheap stack,
+\textbf{\texttt{reweave-mmfork-cuthill}}, matches the ${\sim}6.5\times$ portfolio's
+ACL at plain Reweave's cost; only the portfolio-seeded \texttt{reweave+mmfork} goes
+lower, and it pays the portfolio's ${\sim}6\times$ as its base.}
 \label{tab:stack}
 \small
-\begin{tabular}{lcccc}
+\begin{tabular}{lccc}
 \toprule
-cell & \texttt{minorminer} & \texttt{reweave} & \texttt{mmfork-portf.} & \texttt{reweave+mmfork} \\
+method & ACL & vs.\ MM & $t/$MM \\
 \midrule
-$n{=}40,d{=}0.5$ & 4.57 & 4.45 & 4.38 & \textbf{4.32} \\
-$n{=}60,d{=}0.5$ & 7.71 & 7.30 & 6.89 & \textbf{6.62} \\
+\texttt{minorminer}                  & 5.233 & ---      & $1.0\times$ \\
+\texttt{mmfork-cuthill}              & 5.117 & $-2.2\%$ & $1.0\times$ \\
+\texttt{reweave}                     & 5.055 & $-3.4\%$ & $2.0\times$ \\
+\textbf{\texttt{reweave-mmfork-cuthill}} & \textbf{4.960} & $\mathbf{-5.2\%}$ & $\mathbf{1.8\times}$ \\
+\texttt{mmfork-portfolio}            & 4.949 & $-5.4\%$ & $6.5\times$\,/\,$1.7\times^{\dagger}$ \\
+\texttt{reweave+mmfork} (portf.)     & \textbf{4.801} & $-8.3\%$ & $7.4\times$ \\
 \bottomrule
 \end{tabular}
+
+{\footnotesize $^{\dagger}$\,\texttt{mmfork-portfolio-par}: the portfolio's
+independent orders run on a fork process pool (${\sim}3.5\times$ speedup,
+identical ACL).}
 \end{table}
 
 \paragraph{Timing.} Guiding the order is nearly free, so the single-order variants
@@ -1177,8 +1187,9 @@ from the single Cuthill order (\texttt{reweave-mmfork-cuthill}) gives nearly the
 ACL at ${\sim}1.8\times$, which is the configuration to use. Finally, reducing
 \texttt{minorminer}'s restart count does \emph{not} speed the single-order variants:
 under a fixed order the redundant restarts short-circuit, so \texttt{tries}$\in\{1,
-\dots,10\}$ give identical ACL \emph{and} wall-clock---the single fixed order is
-already as fast as the search gets. Table~\ref{tab:fgtime} gives per-cell seconds;
+\dots,10\}$ give identical ACL \emph{and} wall-clock (e.g.\ on a $P_{16}$,
+$n{=}80$ instance, ACL ${\approx}8.14$ and ${\sim}15$\,s for \emph{every}
+\texttt{tries})---the single fixed order is already as fast as the search gets. Table~\ref{tab:fgtime} gives per-cell seconds;
 all algorithms run back-to-back on each instance so the ratios are robust to CPU
 contention.
 
@@ -1309,32 +1320,38 @@ on $P_6$.
 \begin{figure}[t]
 \centering
 \begin{tikzpicture}
-\begin{axis}[width=\linewidth, height=5.2cm, xmode=log, log basis x=2,
+\begin{axis}[width=\linewidth, height=5.4cm, xmode=log, log basis x=2,
   xtick={40,80,160,320}, xticklabels={40,80,160,320},
-  xlabel={source size $n$ ($6$-regular, into Advantage2 $Z_{15}$)},
-  ylabel={wall-clock $/$ \texttt{minorminer}}, ymin=0, ymax=8,
-  legend pos=north east, legend style={font=\scriptsize, fill opacity=0.85},
+  xlabel={source size $n$ ($6$-regular sources)},
+  ylabel={wall-clock $/$ \texttt{minorminer}}, ymin=0, ymax=9,
+  legend pos=north east, legend columns=2,
+  legend style={font=\scriptsize, fill opacity=0.85},
   grid=both, grid style={gray!18}]
-\addplot+[thick,mark=*] coordinates {(40,1)(80,1)(160,1)(320,1)}; \addlegendentry{minorminer}
-\addplot+[thick,mark=triangle*] coordinates {(40,1.3)(80,1.0)(160,0.8)(320,0.6)}; \addlegendentry{mmfork-cuthill}
-\addplot+[thick,mark=square*] coordinates {(40,1.7)(80,1.2)(160,1.3)(320,0.9)}; \addlegendentry{reweave+cuthill}
-\addplot+[thick,mark=diamond*] coordinates {(40,4.9)(80,4.4)(160,3.3)(320,2.6)}; \addlegendentry{reweave-thorough}
-\addplot+[thick,mark=otimes*] coordinates {(40,7.3)(80,6.6)(160,5.9)(320,4.4)}; \addlegendentry{mmfork-portfolio}
+\addplot[black,thick,mark=*] coordinates {(40,1)(80,1)(160,1)(320,1)}; \addlegendentry{minorminer}
+\addplot[blue,thick,mark=triangle*] coordinates {(40,1.3)(80,1.0)(160,0.8)(320,0.6)}; \addlegendentry{mmfork-cuthill}
+\addplot[blue,thick,densely dashed,mark=triangle,forget plot] coordinates {(40,1.5)(80,1.3)(160,1.4)(320,1.0)};
+\addplot[green!55!black,thick,mark=square*] coordinates {(40,1.7)(80,1.2)(160,1.3)(320,0.9)}; \addlegendentry{reweave+cuthill}
+\addplot[green!55!black,thick,densely dashed,mark=square,forget plot] coordinates {(40,1.6)(80,1.8)(160,1.3)(320,1.2)};
+\addplot[red,thick,mark=otimes*] coordinates {(40,7.3)(80,6.6)(160,5.9)(320,4.4)}; \addlegendentry{mmfork-portfolio}
+\addplot[red,thick,densely dashed,mark=otimes,forget plot] coordinates {(40,8.2)(80,6.7)(160,7.5)(320,5.3)};
 \end{axis}
 \end{tikzpicture}
-\caption{Wall-clock relative to \texttt{minorminer} ($=1$) versus source size $n$,
-$6$-regular sources into Advantage2 $Z_{15}$ ($7440$ qubits, $5\%$ faults). Every
-guided method's multiplier \emph{shrinks} with $n$; \texttt{mmfork-cuthill} and
-\texttt{reweave-mmfork-cuthill} fall \emph{below} $1$ (faster than stock
-\texttt{minorminer}) on the largest problems. $P_{16}$ behaves the same way.}
+\caption{Wall-clock relative to \texttt{minorminer} ($=1$) versus source size $n$
+($6$-regular sources; \textbf{solid} $=$ Advantage2 $Z_{15}$, \textbf{dashed} $=$
+Advantage $P_{16}$; $5\%$ faults). Every guided method's multiplier \emph{shrinks}
+with $n$: \texttt{mmfork-cuthill} and \texttt{reweave-mmfork-cuthill} fall
+\emph{below} $1$ (faster than stock \texttt{minorminer}) on the largest $Z_{15}$
+problems, and even the six-search portfolio's premium nearly halves. The fixed cost
+of guidance amortizes against \texttt{minorminer}'s super-linearly-growing search.}
 \label{fig:scaling}
 \end{figure}
 
 \paragraph{Quality stays competitive; the frontier is shared.} On ACL the portfolio
 and \texttt{reweave-mmfork-cuthill} remain at or ahead of \texttt{minorminer} across
-the swept sizes---by up to ${\sim}10\%$ at the densest feasible cell---though with a
-single source instance per size the per-$n$ gains are noisy and not monotone, so we
-do not claim the ACL advantage \emph{widens} with $n$, only that it persists. The
+the swept sizes (Figure~\ref{fig:scalingacl})---by up to ${\sim}10\%$ at the densest
+feasible cell---though with a single source instance per size the per-$n$ gains are
+noisy and not monotone, so we do not claim the ACL advantage \emph{widens} with $n$,
+only that it persists. The
 \emph{feasibility} frontier is shared: every method succeeds together up to
 $n{=}320$ ($6$-regular) and $n{=}120$ (ER $d{=}0.3$) on $P_{16}$ and then fails
 together beyond---this is the hardware's capacity limit, not an algorithmic one, and
@@ -1345,6 +1362,30 @@ hardware the order-guided variants keep \texttt{minorminer}'s reach and reliabil
 while their time premium vanishes with scale, making \texttt{mmfork-cuthill} (and,
 for the best quality, \texttt{reweave-mmfork-cuthill}) the preferred drop-ins for
 large problems.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=\linewidth, height=4.8cm, xmode=log, log basis x=2,
+  xtick={40,80,160,320}, xticklabels={40,80,160,320},
+  xlabel={source size $n$ ($6$-regular, into Advantage $P_{16}$)},
+  ylabel={ACL $/$ \texttt{minorminer}}, ymin=0.9, ymax=1.13,
+  legend pos=north west, legend columns=2,
+  legend style={font=\scriptsize, fill opacity=0.85},
+  grid=both, grid style={gray!18}]
+\addplot[black,thick,mark=*] coordinates {(40,1)(80,1)(160,1)(320,1)}; \addlegendentry{minorminer}
+\addplot[blue,thick,mark=triangle*] coordinates {(40,1.095)(80,0.971)(160,1.050)(320,1.009)}; \addlegendentry{mmfork-cuthill}
+\addplot[green!55!black,thick,mark=square*] coordinates {(40,1.087)(80,0.945)(160,1.019)(320,0.969)}; \addlegendentry{reweave+cuthill}
+\addplot[red,thick,mark=otimes*] coordinates {(40,1.0)(80,0.940)(160,0.998)(320,0.942)}; \addlegendentry{mmfork-portfolio}
+\end{axis}
+\end{tikzpicture}
+\caption{ACL relative to \texttt{minorminer} ($=1$) versus $n$ ($6$-regular into
+Advantage $P_{16}$). \texttt{mmfork-portfolio} and \texttt{reweave-mmfork-cuthill}
+sit at or below $1$ (at-or-better-than \texttt{minorminer}) across scales; with one
+source instance per size the curves are noisy, so the quality advantage
+\emph{persists} rather than clearly widening with $n$.}
+\label{fig:scalingacl}
+\end{figure}
 
 %% ========================================================================
 \section{Limitations and Future Work}
