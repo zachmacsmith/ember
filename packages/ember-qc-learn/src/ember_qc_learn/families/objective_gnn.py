@@ -4,7 +4,7 @@ Family: objective-GNN — amortized *differentiable embedding*, LABEL-FREE.
 This is the §3.2 "differentiable embedding by annealed soft-assignment" bet, recast
 as an amortized predictor. We reuse the proven ``gnn-seed`` coord-model architecture
 (GNNBackbone -> sigmoid head -> per-vertex coords in [0,1]^2), but we do NOT fit the
-PathFinder chain-centroid labels (``batch.y``). Instead we train the GNN to MINIMISE
+Reweave chain-centroid labels (``batch.y``). Instead we train the GNN to MINIMISE
 a pure *layout objective* computed from its own predicted coords ``P = model(batch)``
 and the source ``edge_index`` — no embedding ground truth enters the loss:
 
@@ -20,11 +20,11 @@ and the source ``edge_index`` — no embedding ground truth enters the loss:
         layout collapsing while letting edge_stretch compact it down to exactly
         the floor. ``batch.batch`` gives the per-node graph id for this per-graph
         term. ``target_spread`` is calibrated to the *measured* spread of the
-        PathFinder centroids (RoG ~0.07 on pegasus_6 — PF packs into a small corner
-        of the fabric), so predicted layouts are PF-compact rather than scattered.
+        Reweave centroids (RoG ~0.07 on pegasus_6 — RW packs into a small corner
+        of the fabric), so predicted layouts are RW-compact rather than scattered.
   * boundary is free: the sigmoid head already keeps coords in (0,1)^2.
 
-The model is still *selected* on the real downstream metric (val ACL ratio vs PF
+The model is still *selected* on the real downstream metric (val ACL ratio vs RW
 after seed->MM) inside ``train.train`` — only the gradient signal is label-free.
 
 Decode reuses the shared seed->MM path (decode.decode_seed_path): predicted coords
@@ -53,8 +53,8 @@ _CKPT_PREFIX = "obj"
 
 # --- loss hyperparameters (label-free layout objective) ----------------------
 # target_spread is the desired per-graph radius of gyration of predicted coords.
-# Calibrated to PathFinder centroids on pegasus_6 (measured RoG ~0.066, mean
-# pairwise dist ~0.086): PF packs the model into a compact corner of the fabric,
+# Calibrated to Reweave centroids on pegasus_6 (measured RoG ~0.066, mean
+# pairwise dist ~0.086): RW packs the model into a compact corner of the fabric,
 # so we want COMPACT predicted layouts (scattered seeds => long chains => high ACL).
 DEFAULT_TARGET_SPREAD = 0.06
 DEFAULT_W_STRETCH = 1.0
@@ -103,7 +103,7 @@ def objective_loss(model, batch, geo, *, target_spread: float = DEFAULT_TARGET_S
                    w_spread: float = DEFAULT_W_SPREAD):
     """train.train-compatible ``loss_fn(model, batch, geo) -> scalar``.
 
-    LABEL-FREE: ``batch.y`` (PF centroids) is intentionally unused. The signal is
+    LABEL-FREE: ``batch.y`` (RW centroids) is intentionally unused. The signal is
     entirely the layout objective on the model's own predicted coords.
     """
     P = model(batch)  # [N, 2]

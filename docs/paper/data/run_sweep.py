@@ -1,7 +1,7 @@
 """
 docs/paper/data/run_sweep.py
 ============================
-Expanded benchmark sweep for the PathFinder ACM TQC article.
+Expanded benchmark sweep for the Reweave ACM TQC article.
 
 Drives Ember's atomic harness ``ember_qc.benchmark.benchmark_one`` (with its
 four-layer validation and metric computation) over a grid of source graphs and
@@ -36,7 +36,7 @@ import networkx as nx  # noqa: E402
 HERE = os.path.dirname(os.path.abspath(__file__))
 INSTANCE_SEED = 12345          # fixes the source graph per (family, n, d)
 FAULT_SEED = 7                 # fixes which qubits are broken
-ALGOS = ["minorminer", "minorminer-layout", "pathfinder", "pathfinder-thorough"]
+ALGOS = ["minorminer", "minorminer-layout", "reweave", "reweave-thorough"]
 SEEDS = list(range(5))
 
 

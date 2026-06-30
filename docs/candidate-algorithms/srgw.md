@@ -119,7 +119,7 @@ sliced GW.
 correspondence, not connectivity. My first attempts — (a) the pure canonical
 pipeline and (b) a self-contained single-pass srGW-affinity Dijkstra router —
 both produced invalid or much-worse embeddings (a competent standalone router
-would essentially re-derive PathFinder's negotiated rip-up). The design that
+would essentially re-derive Reweave's negotiated rip-up). The design that
 *works and stays genuinely srGW* is srGW-for-placement + a mature router, which
 also yields the cleanest isolation of srGW's actual contribution.
 

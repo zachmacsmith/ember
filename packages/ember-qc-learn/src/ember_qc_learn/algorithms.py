@@ -1,6 +1,6 @@
 """
 Registry adapters: expose trained coord-models as ``learned-*`` algorithms so they
-drop into ember_qc's benchmark_one head-to-head with PF/MM. Each adapter loads the
+drop into ember_qc's benchmark_one head-to-head with RW/MM. Each adapter loads the
 checkpoint matching the *passed* target (P6/Z4, incl. broken variants), predicts a
 layout, and decodes (seed->MM or direct->repair). Unavailable (skipped by the
 harness) when torch or the checkpoint is missing — never hard-fails import.

@@ -1,9 +1,12 @@
 # Session Prompts
 
 A verbatim, chronological log of the user prompts issued to Claude Code in the
-session that produced the PathFinder algorithm and its ACM TQC write-up.
+session that produced the **Reweave** algorithm (originally named *PathFinder*,
+renamed in Prompt 18 to avoid collision with the cited FPGA router of the same
+name) and its ACM TQC write-up.
 Prompts are recorded exactly as issued (including typos). **This file must be
-updated with every new prompt** (see the project memory note).
+updated with every new prompt** (see the project memory note). The prompts below
+retain the original "PathFinder"/"PF" wording as typed; the method is now Reweave.
 
 Session start: 2026-06-28.
 
@@ -183,3 +186,18 @@ Ok, so sounds like the VAE did not learn anything useful then.  Sounds lke we ne
 > decoder) does not exceed it (unstable, drifts down) — the limit is the placement action
 > space, not the objective. Paper §7 + abstract/contributions/conclusion rewritten to this
 > honest story; the VAE "win" retracted; learning verdict doc + scripts updated._
+
+### Prompt 18
+
+```
+In parallel, I think we need to change the name PathFinder.  It seems like PathFinder is the name of some existing method, like we cite some other existing method called PathFinder.  So can we go through the whole codebase and paper and name the method something else that's distinct (at least not the name of one of the methods we're already citing?)?
+```
+
+> _Outcome: renamed the method **PathFinder → Reweave** (the cited method was the FPGA
+> router PathFinder, McMurchie–Ebeling 1995). Comprehensive rename across code (registry
+> IDs reweave/-thorough/-base/-cold/-stacked/-numba, modules reweave.py/reweave_opt.py/
+> rw_*.py, classes ReweaveRouter etc.), the paper (title + prose + tables + file
+> reweave.tex/pdf), docs, ~1260 CSV algorithm-column rows + variant filenames, memory, and
+> the PF→RW abbreviation. The FPGA "PathFinder" (line in §Background + the mcmurchie1995pathfinder
+> bib key/title) is deliberately PRESERVED so the two are now clearly distinct. CLAUDE.md
+> (research brief) and the verbatim prompts above keep "PathFinder" (FPGA reference / historical)._

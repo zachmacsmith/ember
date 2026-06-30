@@ -2,7 +2,7 @@
 Symmetry-invariant layout learning (the fix for the posterior collapse).
 
 The naive supervised objective regresses each vertex's ABSOLUTE hardware
-coordinate (its PathFinder chain centroid). That target is ill-posed: a graph's
+coordinate (its Reweave chain centroid). That target is ill-posed: a graph's
 embedding can be placed anywhere on the fabric (translation + the fabric's
 symmetries), so structure cannot predict absolute coordinates and the model
 collapses to the constant global mean (flat loss). The fix is a **Procrustes /

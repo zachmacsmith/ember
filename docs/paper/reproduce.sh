@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# docs/paper/reproduce.sh — reproduce the PathFinder paper end-to-end.
+# docs/paper/reproduce.sh — reproduce the Reweave paper end-to-end.
 #
 # Run from anywhere; it cd's to the repo root. Steps:
 #   1. create a virtualenv and install ember-qc (+ scipy)
@@ -41,8 +41,8 @@ echo "==> [5/6] render supplementary result figures -> docs/paper/figures/"
 
 echo "==> [6/6] build the article"
 if command -v latexmk >/dev/null 2>&1; then
-    ( cd docs/paper && latexmk -pdf -interaction=nonstopmode pathfinder.tex >/dev/null )
-    echo "Done: docs/paper/pathfinder.pdf"
+    ( cd docs/paper && latexmk -pdf -interaction=nonstopmode reweave.tex >/dev/null )
+    echo "Done: docs/paper/reweave.pdf"
 else
     echo "latexmk not found — skipping PDF build (install TeX Live with acmart/tikz/pgfplots)."
 fi

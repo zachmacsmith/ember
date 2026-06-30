@@ -259,21 +259,21 @@ budget: identical best qubit counts on all four instances (66/102/108/191), but
 single-vertex *converged* in 4–16 s while the cluster phase burned the whole 20 s
 for **zero** extra gain. Hence the default is single-vertex only.
 
-**vs PathFinder (§3.5).** Both are MM-seeded, never-worse improvers. PathFinder
+**vs Reweave (§3.5).** Both are MM-seeded, never-worse improvers. Reweave
 untangles congestion *heuristically* (negotiated rip-up-reroute, joint chain
 motion); LNS-CP-SAT prunes each chain *exactly* against its neighbours. A 3-cell,
-3-seed head-to-head at 30 s (`data/lns_vs_pathfinder.py`):
+3-seed head-to-head at 30 s (`data/lns_vs_reweave.py`):
 
-| cell | MM ACL | PathFinder ACL | LNS ACL | MM q | PF q | LNS q |
+| cell | MM ACL | Reweave ACL | LNS ACL | MM q | RW q | LNS q |
 |---|---|---|---|---|---|---|
 | ER n30 d0.5 P6 | 3.356 | 3.300 | **3.278** | 100.7 | 99.0 | **98.3** |
 | ER n30 d0.7 P6 | 3.911 | 3.889 | **3.833** | 117.3 | 116.7 | **115.0** |
 | ER n30 d0.5 Z4 | 2.744 | **2.689** | **2.689** | 82.3 | **80.7** | **80.7** |
 
-Both beat MM; LNS-CP-SAT edges PathFinder on ACL/qubits in 2/3 cells and ties in
+Both beat MM; LNS-CP-SAT edges Reweave on ACL/qubits in 2/3 cells and ties in
 the third — its **optimality certificate** on each block (a chain provably cannot
-be shorter given its neighbours) buys a hair more than PathFinder's heuristic, at
-~3× the wall-clock (≈6–8 s vs ≈2–3 s). They are complementary: PathFinder for
+be shorter given its neighbours) buys a hair more than Reweave's heuristic, at
+~3× the wall-clock (≈6–8 s vs ≈2–3 s). They are complementary: Reweave for
 speed, LNS-CP-SAT for the last qubit.
 
 ---

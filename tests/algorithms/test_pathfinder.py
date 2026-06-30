@@ -1,8 +1,8 @@
 """
-tests/algorithms/test_pathfinder.py
+tests/algorithms/test_reweave.py
 ===================================
-Tests specific to the PathFinder negotiated rip-up-and-reroute embedder
-(ember_qc.algorithms.pathfinder), beyond the generic algorithm contract suite.
+Tests specific to the Reweave negotiated rip-up-and-reroute embedder
+(ember_qc.algorithms.reweave), beyond the generic algorithm contract suite.
 """
 import networkx as nx
 import dwave_networkx as dnx
@@ -17,7 +17,7 @@ def chimera():
     return dnx.chimera_graph(4, 4, 4)
 
 
-PATHFINDER_VARIANTS = ["pathfinder", "pathfinder-thorough", "pathfinder-cold"]
+PATHFINDER_VARIANTS = ["reweave", "reweave-thorough", "reweave-cold"]
 
 
 class TestRegistered:
@@ -45,11 +45,11 @@ class TestNeverWorseThanBase:
     embedding than its minorminer base for the same seed."""
 
     @pytest.mark.parametrize("seed", [0, 1, 2])
-    def test_pathfinder_no_worse_than_minorminer(self, seed, chimera):
+    def test_reweave_no_worse_than_minorminer(self, seed, chimera):
         source = nx.gnp_random_graph(14, 0.45, seed=99)
         source = nx.convert_node_labels_to_integers(source)
         mm = benchmark_one(source, chimera, "minorminer", timeout=15.0, seed=seed)
-        pf = benchmark_one(source, chimera, "pathfinder", timeout=15.0, seed=seed)
+        pf = benchmark_one(source, chimera, "reweave", timeout=15.0, seed=seed)
         if not (mm.success and pf.success):
             pytest.skip("base or improver failed to embed this instance")
         # improver tracks the best valid embedding seen, so it cannot regress
@@ -59,7 +59,7 @@ class TestNeverWorseThanBase:
 
 class TestColdStartStandalone:
     def test_cold_start_needs_no_minorminer_seed(self, chimera):
-        # pathfinder-cold sets base_method=None — it must still embed small graphs
-        r = benchmark_one(nx.complete_graph(4), chimera, "pathfinder-cold",
+        # reweave-cold sets base_method=None — it must still embed small graphs
+        r = benchmark_one(nx.complete_graph(4), chimera, "reweave-cold",
                           timeout=15.0, seed=0)
         assert r.success and r.is_valid

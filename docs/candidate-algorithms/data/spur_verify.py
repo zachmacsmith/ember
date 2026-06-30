@@ -1,4 +1,4 @@
-"""Quick contract + correctness checks for pathfinder-spur."""
+"""Quick contract + correctness checks for reweave-spur."""
 from __future__ import annotations
 import warnings
 warnings.filterwarnings("ignore")
@@ -6,8 +6,8 @@ warnings.filterwarnings("ignore")
 import networkx as nx
 import dwave_networkx as dnx
 
-import ember_qc.algorithms.pf_spur as pf_spur  # registers pathfinder-spur
-from ember_qc.algorithms.pf_spur import prune_spurs
+import ember_qc.algorithms.rw_spur as rw_spur  # registers reweave-spur
+from ember_qc.algorithms.rw_spur import prune_spurs
 from ember_qc.benchmark import benchmark_one
 from ember_qc.embedding_backend import build_adjacency, is_valid_embedding
 
@@ -15,22 +15,22 @@ chim = dnx.chimera_graph(4)
 
 # --- 1. K6 into chimera(4): valid dict, deterministic --------------------------
 K6 = nx.complete_graph(6)
-r1 = benchmark_one(K6, chim, "pathfinder-spur", timeout=30, seed=0)
-r1b = benchmark_one(K6, chim, "pathfinder-spur", timeout=30, seed=0)
+r1 = benchmark_one(K6, chim, "reweave-spur", timeout=30, seed=0)
+r1b = benchmark_one(K6, chim, "reweave-spur", timeout=30, seed=0)
 print("K6  success=%s valid=%s acl=%.3f qubits=%d" % (
     r1.success, r1.is_valid, r1.avg_chain_length, r1.total_qubits_used))
 print("K6  deterministic (acl, qubits, embedding equal):",
       r1.avg_chain_length == r1b.avg_chain_length
       and r1.total_qubits_used == r1b.total_qubits_used)
 
-# compare to baseline pathfinder ACL on K6
-rb = benchmark_one(K6, chim, "pathfinder", timeout=30, seed=0)
-print("K6  baseline pathfinder acl=%.3f qubits=%d   spur acl=%.3f qubits=%d" % (
+# compare to baseline reweave ACL on K6
+rb = benchmark_one(K6, chim, "reweave", timeout=30, seed=0)
+print("K6  baseline reweave acl=%.3f qubits=%d   spur acl=%.3f qubits=%d" % (
     rb.avg_chain_length, rb.total_qubits_used, r1.avg_chain_length, r1.total_qubits_used))
 
 # --- 2. K20 into chimera(4): too big -> failure dict, never None/raise ----------
 K20 = nx.complete_graph(20)
-r2 = benchmark_one(K20, chim, "pathfinder-spur", timeout=20, seed=0)
+r2 = benchmark_one(K20, chim, "reweave-spur", timeout=20, seed=0)
 print("K20 success=%s valid=%s status=%s (expect failure dict, no raise)" % (
     r2.success, r2.is_valid, r2.status))
 

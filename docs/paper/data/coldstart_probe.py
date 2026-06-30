@@ -2,7 +2,7 @@
 docs/paper/data/coldstart_probe.py
 ==================================
 Backs the §3.4 aside: "a from-scratch (cold-start) router balloons chains." Runs
-the standalone ``pathfinder-cold`` algorithm (no warm start) against
+the standalone ``reweave-cold`` algorithm (no warm start) against
 ``minorminer`` on the clean-Pegasus Erdős–Rényi grid and prints the ACL ranges,
 so the cold-start-vs-MM contrast in the paper is reproducible.
 
@@ -34,7 +34,7 @@ def main():
     for n in SIZES:
         for d in DENS:
             g = nx.convert_node_labels_to_integers(nx.gnp_random_graph(n, d, seed=INSTANCE_SEED))
-            cold = [benchmark_one(g, p6, "pathfinder-cold", timeout=TIMEOUT, seed=s) for s in SEEDS]
+            cold = [benchmark_one(g, p6, "reweave-cold", timeout=TIMEOUT, seed=s) for s in SEEDS]
             mm = [benchmark_one(g, p6, "minorminer", timeout=TIMEOUT, seed=s) for s in SEEDS]
             cok = [r.avg_chain_length for r in cold if r.success]
             mok = [r.avg_chain_length for r in mm if r.success]

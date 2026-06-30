@@ -1,8 +1,8 @@
 """
 docs/paper/data/analyze.py
 ==========================
-Regenerate EVERY statistic and table reported in the PathFinder article
-(docs/paper/pathfinder.tex) from the sweep outputs in this directory. This is the
+Regenerate EVERY statistic and table reported in the Reweave article
+(docs/paper/reweave.tex) from the sweep outputs in this directory. This is the
 verification/transparency layer: each printed line is annotated with the paper
 location it backs, and ``--latex`` re-emits the LaTeX rows for Tables 1--3 and the
 appendix.
@@ -22,7 +22,7 @@ import statistics as st
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-ALGOS = ["minorminer", "minorminer-layout", "pathfinder", "pathfinder-thorough"]
+ALGOS = ["minorminer", "minorminer-layout", "reweave", "reweave-thorough"]
 
 
 def load():
@@ -47,7 +47,7 @@ def pairs(summ):
 
 def report(summ, raw):
     P = pairs(summ)
-    print(f"# PathFinder results — regenerated from summary.csv / raw_results.csv")
+    print(f"# Reweave results — regenerated from summary.csv / raw_results.csv")
     print(f"# {len(P)} (source,target) cells x {len(ALGOS)} algorithms x 5 seeds\n")
 
     # 100% success (Abstract; §5 "all four methods embed every instance")
@@ -61,14 +61,14 @@ def report(summ, raw):
         perseed.setdefault((r["source"], r["target"], r["seed"]), {})[r["algorithm"]] = F(r["avg_chain_length"])
     bad = wp = 0
     for d in perseed.values():
-        if "minorminer" in d and "pathfinder" in d:
+        if "minorminer" in d and "reweave" in d:
             wp += 1
-            if d["pathfinder"] - d["minorminer"] > 1e-9:
+            if d["reweave"] - d["minorminer"] > 1e-9:
                 bad += 1
-    wmean = max(st.mean([F(summ[(s, t, "pathfinder")]["acl_mean"])]) - F(summ[(s, t, "minorminer")]["acl_mean"])
+    wmean = max(st.mean([F(summ[(s, t, "reweave")]["acl_mean"])]) - F(summ[(s, t, "minorminer")]["acl_mean"])
                 for s, t in P)
-    print(f"[never-regress] per-seed runs where pathfinder ACL > minorminer ACL: {bad}/{wp}")
-    print(f"[never-regress] max mean-level (pathfinder-minorminer) over {len(P)} cells = {wmean:+.6f}   "
+    print(f"[never-regress] per-seed runs where reweave ACL > minorminer ACL: {bad}/{wp}")
+    print(f"[never-regress] max mean-level (reweave-minorminer) over {len(P)} cells = {wmean:+.6f}   "
           f"(paper: 'maximum observed difference 0.000')")
 
     # thorough vs minorminer: ACL reductions (Abstract '1-11%, mean ~5%'; §5 ranges)
@@ -76,7 +76,7 @@ def report(summ, raw):
         out = []
         for s, t in cells:
             mm = F(summ[(s, t, "minorminer")]["acl_mean"])
-            th = F(summ[(s, t, "pathfinder-thorough")]["acl_mean"])
+            th = F(summ[(s, t, "reweave-thorough")]["acl_mean"])
             out.append(100 * (th - mm) / mm)
         return out
     allc = P
@@ -88,7 +88,7 @@ def report(summ, raw):
         d = acl_delta(c)
         print(f"[ACL Δ thorough vs mm] {name:42s} {min(d):+.1f}%..{max(d):+.1f}%  mean {st.mean(d):+.1f}%")
     # biggest single ACL gain and which source (paper: '-10.6% on a d-regular source')
-    worst = min(((100 * (F(summ[(s, t, 'pathfinder-thorough')]['acl_mean']) - F(summ[(s, t, 'minorminer')]['acl_mean']))
+    worst = min(((100 * (F(summ[(s, t, 'reweave-thorough')]['acl_mean']) - F(summ[(s, t, 'minorminer')]['acl_mean']))
                   / F(summ[(s, t, 'minorminer')]['acl_mean']), s, t) for s, t in P))
     print(f"[ACL Δ] largest single reduction = {worst[0]:+.1f}% at {worst[1]} on {worst[2]}   "
           f"(paper: '-10.6% on a d-regular source')")
@@ -99,7 +99,7 @@ def report(summ, raw):
         best = 0.0
         for s, t in cells:
             a = F(summ[(s, t, "minorminer")]["acl_std"])
-            b = F(summ[(s, t, "pathfinder-thorough")]["acl_std"])
+            b = F(summ[(s, t, "reweave-thorough")]["acl_std"])
             if a in (None, 0.0) or b is None:
                 continue
             dd = 100 * (b - a) / a
@@ -118,9 +118,9 @@ def report(summ, raw):
 
     # thorough is min ACL everywhere (Appendix)
     notmin = sum(1 for s, t in P
-                 if F(summ[(s, t, "pathfinder-thorough")]["acl_mean"]) >
+                 if F(summ[(s, t, "reweave-thorough")]["acl_mean"]) >
                  min(F(summ[(s, t, a)]["acl_mean"]) for a in ALGOS) + 1e-9)
-    print(f"[min] cells where pathfinder-thorough is NOT lowest ACL: {notmin}/{len(P)}   "
+    print(f"[min] cells where reweave-thorough is NOT lowest ACL: {notmin}/{len(P)}   "
           f"(paper: 'lowest ACL in all 35 cells')")
 
 
@@ -139,7 +139,7 @@ def latex(summ):
             print(f"\\multirow{{4}}{{*}}{{$n{{=}}{n},d{{=}}{d}$}}")
             for a in ALGOS:
                 r = summ[(s, t, a)]
-                bold = "\\textbf{%s}" % f"{F(r['acl_mean']):.2f}" if a == "pathfinder-thorough" else f"{F(r['acl_mean']):.2f}"
+                bold = "\\textbf{%s}" % f"{F(r['acl_mean']):.2f}" if a == "reweave-thorough" else f"{F(r['acl_mean']):.2f}"
                 print(f" & \\texttt{{{a}}} & {bold} ({F(r['acl_std']):.2f}) & {F(r['maxchain_mean']):g} & {F(r['qubits_mean']):g} \\\\")
             print("\\midrule")
 
@@ -156,7 +156,7 @@ def latex(summ):
         print(f"\\multirow{{4}}{{*}}{{{labels[t]}}}")
         for a in ALGOS:
             r = summ[("ER_n40_d0.5", t, a)]
-            bold = "\\textbf{%s}" % f"{F(r['acl_mean']):.2f}" if a == "pathfinder-thorough" else f"{F(r['acl_mean']):.2f}"
+            bold = "\\textbf{%s}" % f"{F(r['acl_mean']):.2f}" if a == "reweave-thorough" else f"{F(r['acl_mean']):.2f}"
             print(f" & \\texttt{{{a}}} & {bold} ({F(r['acl_std']):.2f}) & {F(r['time_mean']):.2f} \\\\")
         print("\\midrule")
 

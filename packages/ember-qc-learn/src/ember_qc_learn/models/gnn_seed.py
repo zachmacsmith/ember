@@ -1,6 +1,6 @@
 """
 Reference family: a GNN that predicts a per-vertex hardware coordinate (a learned
-layout), trained by MSE to the PathFinder chain centroids. Decoded primarily via
+layout), trained by MSE to the Reweave chain centroids. Decoded primarily via
 seed->MM (the patent's predict-then-refine). The proven-out family that anchors
 the shared train/decode interface before the workflow adds the others.
 """

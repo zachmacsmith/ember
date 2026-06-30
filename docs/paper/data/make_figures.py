@@ -1,7 +1,7 @@
 """
 docs/paper/data/make_figures.py
 ===============================
-Render result figures for the PathFinder paper from the committed optimized
+Render result figures for the Reweave paper from the committed optimized
 sweep (``summary_opt.csv``). These are *supplementary* matplotlib renderings of
 the same numbers reported in the paper's tables (the paper's own in-text figures
 are vector TikZ/pgfplots); they are handy for slides, the repo README, and a
@@ -29,21 +29,21 @@ FIGDIR = os.path.normpath(os.path.join(HERE, "..", "figures"))
 
 # The four head-to-head algorithms the paper compares (the -base/-stacked engines
 # are diagnostics, omitted here to keep the figures legible).
-ALGOS = ["minorminer", "minorminer-layout", "pathfinder", "pathfinder-thorough"]
+ALGOS = ["minorminer", "minorminer-layout", "reweave", "reweave-thorough"]
 LABELS = {
     "minorminer": "minorminer (MM)",
     "minorminer-layout": "MM + p-norm layout",
-    "pathfinder": "PathFinder",
-    "pathfinder-thorough": "PathFinder-thorough",
+    "reweave": "Reweave",
+    "reweave-thorough": "Reweave-thorough",
 }
 COLORS = {
     "minorminer": "#555555",
     "minorminer-layout": "#1f77b4",
-    "pathfinder": "#2ca02c",
-    "pathfinder-thorough": "#d62728",
+    "reweave": "#2ca02c",
+    "reweave-thorough": "#d62728",
 }
 MARKERS = {"minorminer": "o", "minorminer-layout": "s",
-           "pathfinder": "^", "pathfinder-thorough": "D"}
+           "reweave": "^", "reweave-thorough": "D"}
 TARGET_LABELS = {
     "pegasus_6": "Pegasus $P_6$ (clean)",
     "pegasus_6_broken5": "Pegasus $P_6$ (5% faults)",
@@ -96,7 +96,7 @@ def fig_acl_vs_density(df: pd.DataFrame) -> None:
 
 
 def fig_acl_std_vs_density(df: pd.DataFrame) -> None:
-    """ACL std (run-to-run variance) vs density — PathFinder's headline advantage."""
+    """ACL std (run-to-run variance) vs density — Reweave's headline advantage."""
     er = df[(df["target"] == "pegasus_6") & df["n"].notna()]
     fig, axes = plt.subplots(1, len(NS), figsize=(12, 3.6), sharey=True)
     for ax, n in zip(axes, NS):

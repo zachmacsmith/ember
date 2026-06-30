@@ -164,7 +164,7 @@
 - [ ] **v0.1 release** — core suite with 3-4 problem types + MinorMiner baseline
 
 ### Novel Algorithm (Paper 3)
-- [ ] **Prototype pathfinder-inspired embedding algorithm**
+- [ ] **Prototype reweave-inspired embedding algorithm**
 - [ ] **Register via `@register_algorithm`**
 - [ ] **Benchmark against all existing algorithms** on full suite
 - [ ] **Analyze structural conditions** where it excels

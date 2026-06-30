@@ -15,7 +15,7 @@ sys.path.insert(0, HERE)
 from eval_candidate import make_targets, make_source  # noqa: E402
 
 from ember_qc.registry import ALGORITHM_REGISTRY                       # noqa: E402
-from ember_qc.algorithms.pf_spur import prune_spurs                    # noqa: E402
+from ember_qc.algorithms.rw_spur import prune_spurs                    # noqa: E402
 from ember_qc.embedding_backend import build_adjacency, is_valid_embedding  # noqa: E402
 
 SEEDS = [0, 1, 2]

@@ -10,15 +10,15 @@ HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 from eval_candidate import make_targets, make_source
 from ember_qc.embedding_backend import (is_valid_embedding, reconstruct_path,
                                          weighted_multisource_dijkstra as wmd)
-from ember_qc.algorithms.pathfinder import embed_pathfinder, _BIG
-from ember_qc.algorithms.pf_bounded import PathFinderBoundedRouter
+from ember_qc.algorithms.reweave import embed_reweave, _BIG
+from ember_qc.algorithms.rw_bounded import ReweaveBoundedRouter
 
 targets = make_targets(); src = make_source("ER", 40, 0.7); tgt = targets["pegasus_6"]
 SEEDS = [0, 1, 2]
 
 # We inject a per-call "v_old" by remembering the seed footprint passed to _bfs_ball.
 # Simpler: re-derive in a subclass that knows v during _steiner_route.
-class Probe(PathFinderBoundedRouter):
+class Probe(ReweaveBoundedRouter):
     target_mode = "none"   # set per run
     def _steiner_route(self, v, cost, forbidden_extra=None):
         self._cur_vold = set(self.chains.get(v, ()))
@@ -76,7 +76,7 @@ def run(mode):
     for s in SEEDS:
         Probe.target_mode = mode
         t0 = time.perf_counter()
-        r = embed_pathfinder(src, tgt, timeout=60.0, seed=s, router_cls=Probe,
+        r = embed_reweave(src, tgt, timeout=60.0, seed=s, router_cls=Probe,
                              base_method="minorminer", region_radius=1,
                              region_max_expand=2, early_stop=False, region_enabled=True)
         dt = time.perf_counter() - t0

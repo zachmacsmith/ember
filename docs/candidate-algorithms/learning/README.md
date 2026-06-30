@@ -1,8 +1,8 @@
-# Learning-based minor-embedding — an honest bake-off vs PathFinder/minorminer
+# Learning-based minor-embedding — an honest bake-off vs Reweave/minorminer
 
 **Question (from the patent in scope):** can a neural network, trained on a cache of
-randomized problem graphs labelled with *PathFinder-optimized* embeddings, predict
-embeddings (or seeds for minorminer) that **match or beat PF/MM on average chain
+randomized problem graphs labelled with *Reweave-optimized* embeddings, predict
+embeddings (or seeds for minorminer) that **match or beat RW/MM on average chain
 length (ACL) and ACL-variance**?
 
 **Short answer, after a thorough investigation:** *modestly, and only after fixing a
@@ -10,7 +10,7 @@ fundamental flaw.* A naive supervised model is **ill-posed and collapses to a co
 a **symmetry-invariant (Procrustes) objective** fixes it and yields a small but
 **statistically significant** improvement over minorminer (~1%); a **decode-aware RL**
 fine-tune does **not** exceed that — so a strong heuristic with restarts is hard to beat
-with learned placement. An earlier "the VAE beats PathFinder-thorough" result was an
+with learned placement. An earlier "the VAE beats Reweave-thorough" result was an
 **artifact** of an unequal restart budget on top of a collapsed model, and is retracted
 below.
 
@@ -20,7 +20,7 @@ The first bake-off (gnn-seed, graph-VAE, objective-GNN, retrieval) appeared to s
 generative graph-VAE beating every baseline. On audit this was **not real**:
 
 - **The supervised models collapse.** gnn-seed and the VAE regress each vertex's
-  *absolute* hardware coordinate (its PF chain centroid). That target is **ill-posed**:
+  *absolute* hardware coordinate (its RW chain centroid). That target is **ill-posed**:
   a graph's embedding can be placed anywhere on the fabric (translation + the fabric's
   symmetries), so structure cannot predict absolute coordinates. The MSE-optimal
   predictor is the constant global mean, which the model finds in epoch 1 — the
@@ -30,7 +30,7 @@ generative graph-VAE beating every baseline. On audit this was **not real**:
 - **The VAE "win" was a budget artifact.** Because the layout is constant, the VAE's
   K=8 sampling is just **best-of-8 minorminer from a fixed central seed**. At equal
   budget it ties/loses to plain best-of-8 cold minorminer (2.097 vs 2.086 on a matched
-  sample); its apparent edge over `pathfinder-thorough` was simply **8 restarts vs 4**.
+  sample); its apparent edge over `reweave-thorough` was simply **8 restarts vs 4**.
 
 ## 2. The fix that works: a symmetry-invariant objective
 
@@ -83,7 +83,7 @@ minorminer's cold start + restarts is already a strong, well-tuned search.
   exceed the supervised layout** — the placement-prediction paradigm has a low ceiling
   here. The patent's premise is *partially* borne out: a learned model can give a small,
   real improvement, but it is not a substitute for a good heuristic with restarts.
-- **The earlier "learned-vae beats PathFinder-thorough" claim is retracted** as a budget
+- **The earlier "learned-vae beats Reweave-thorough" claim is retracted** as a budget
   artifact.
 
 Honest, validity is never at risk: all learned methods inherit minorminer's completeness
@@ -93,7 +93,7 @@ same sense minorminer is, and the learned layout only changes *quality*, never v
 ## Reproduce
 
 ```bash
-# dataset (instance-disjoint splits, PF-thorough labels into P6+Z4)
+# dataset (instance-disjoint splits, RW-thorough labels into P6+Z4)
 python -m ember_qc_learn.datagen --out data/learn --scale cluster --workers 120
 # the working method:
 python scripts/train_family.py procrustes pegasus_6 ckpts/procrustes_pegasus_6.pt --device cuda

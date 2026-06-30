@@ -1,7 +1,7 @@
 """
 docs/candidate-algorithms/data/eval_candidate.py
 ================================================
-Evaluate a candidate embedding algorithm the SAME way PathFinder was evaluated:
+Evaluate a candidate embedding algorithm the SAME way Reweave was evaluated:
 Ember's benchmark_one harness, the same source families / D-Wave targets, paired
 against minorminer. Runs sequentially (no process pool) so it is robust to the
 heavy third-party libs (torch / ortools / POT) and to several agents running at
@@ -39,7 +39,7 @@ FAULT_SEED = 7
 SEEDS = [0, 1, 2]
 
 # (family, n, density-or-param, target_name) — same families/targets as the
-# PathFinder sweep, reduced so the expensive candidates stay tractable.
+# Reweave sweep, reduced so the expensive candidates stay tractable.
 FULL_GRID = [
     ("ER", 20, 0.3, "pegasus_6"), ("ER", 20, 0.5, "pegasus_6"), ("ER", 20, 0.7, "pegasus_6"),
     ("ER", 30, 0.3, "pegasus_6"), ("ER", 30, 0.5, "pegasus_6"), ("ER", 30, 0.7, "pegasus_6"),

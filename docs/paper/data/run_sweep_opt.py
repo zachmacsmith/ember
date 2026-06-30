@@ -1,18 +1,18 @@
 """
 docs/paper/data/run_sweep_opt.py
 ================================
-Optimized-PathFinder counterpart of run_sweep.py for the paper's "Optimizations"
+Optimized-Reweave counterpart of run_sweep.py for the paper's "Optimizations"
 section. Identical grid / instances / seeds as run_sweep.py (so results are
-directly comparable), but measures the OPTIMIZED PathFinder family alongside the
+directly comparable), but measures the OPTIMIZED Reweave family alongside the
 baselines and the preliminary engine:
 
   minorminer, minorminer-layout,
-  pathfinder-base       (the preliminary engine — same code path as the original
-                         `pathfinder` in run_sweep.py; included for a same-run
+  reweave-base       (the preliminary engine — same code path as the original
+                         `reweave` in run_sweep.py; included for a same-run
                          preliminary-vs-optimized comparison),
-  pathfinder            (optimized: bounded routing + dirty-set + spur),
-  pathfinder-thorough   (optimized best-of-4),
-  pathfinder-stacked    (optimized + multilevel placement).
+  reweave            (optimized: bounded routing + dirty-set + spur),
+  reweave-thorough   (optimized best-of-4),
+  reweave-stacked    (optimized + multilevel placement).
 
 Writes raw_results_opt.csv and summary_opt.csv (the preliminary summary.csv is
 left untouched). Quality numbers (ACL, std, qubits) are deterministic per seed;
@@ -37,8 +37,8 @@ import networkx as nx  # noqa: E402
 HERE = os.path.dirname(os.path.abspath(__file__))
 INSTANCE_SEED = 12345
 FAULT_SEED = 7
-ALGOS = ["minorminer", "minorminer-layout", "pathfinder-base",
-         "pathfinder", "pathfinder-thorough", "pathfinder-stacked"]
+ALGOS = ["minorminer", "minorminer-layout", "reweave-base",
+         "reweave", "reweave-thorough", "reweave-stacked"]
 SEEDS = list(range(5))
 
 

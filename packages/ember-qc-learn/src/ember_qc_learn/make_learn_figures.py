@@ -1,7 +1,7 @@
 """
 Render the learned-embedding bake-off results (from evaluate.py's summary_eval.csv /
 raw_eval.csv) into figures + a markdown verdict table. The headline questions:
-  * does any learned method match/beat PF/MM on ACL (quality)?
+  * does any learned method match/beat RW/MM on ACL (quality)?
   * ... on ACL run-to-run variance?
   * at what wall-clock?
 
@@ -20,11 +20,11 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
-ORDER = ["minorminer", "minorminer-layout", "pathfinder", "pathfinder-thorough",
+ORDER = ["minorminer", "minorminer-layout", "reweave", "reweave-thorough",
          "learned-gnn-seed", "learned-gnn-seed-direct", "learned-retrieve",
          "learned-vae", "learned-obj"]
-COLORS = {"minorminer": "#555", "minorminer-layout": "#1f77b4", "pathfinder": "#2ca02c",
-          "pathfinder-thorough": "#17a02c", "learned-gnn-seed": "#d62728",
+COLORS = {"minorminer": "#555", "minorminer-layout": "#1f77b4", "reweave": "#2ca02c",
+          "reweave-thorough": "#17a02c", "learned-gnn-seed": "#d62728",
           "learned-gnn-seed-direct": "#ff7f0e", "learned-retrieve": "#9467bd",
           "learned-vae": "#8c564b", "learned-obj": "#e377c2"}
 
@@ -68,10 +68,10 @@ def main():
     fig.tight_layout(); fig.savefig(os.path.join(args.out, "figures", "acl_and_variance.png"), dpi=150)
     plt.close(fig)
 
-    # Fig 2: ACL ratio vs pathfinder-thorough, per source family (from raw)
+    # Fig 2: ACL ratio vs reweave-thorough, per source family (from raw)
     raw = [r for r in _read(os.path.join(args.eval, "raw_eval.csv"))
            if r["target"] == args.target and r["valid"] == "1" and r["acl"] != ""]
-    # per (family, algo) mean ACL; ratio to PF-thorough
+    # per (family, algo) mean ACL; ratio to RW-thorough
     fam_algo = defaultdict(list)
     for r in raw:
         fam_algo[(r["family"], r["algorithm"])].append(_f(r["acl"]))
@@ -83,12 +83,12 @@ def main():
     for i, a in enumerate(learned):
         ratios = []
         for fam in families:
-            mine = fam_algo.get((fam, a)); base = fam_algo.get((fam, "pathfinder-thorough"))
+            mine = fam_algo.get((fam, a)); base = fam_algo.get((fam, "reweave-thorough"))
             ratios.append((st.mean(mine) / st.mean(base)) if mine and base else float("nan"))
         ax.bar(x + (i - len(learned)/2) * w, ratios, w, label=a, color=COLORS.get(a, "#333"))
-    ax.axhline(1.0, color="k", ls="--", lw=1, label="pathfinder-thorough = 1.0")
-    ax.set_xticks(x); ax.set_xticklabels(families); ax.set_ylabel("ACL ÷ PF-thorough")
-    ax.set_title(f"Learned ACL relative to PathFinder-thorough by family — {args.target}")
+    ax.axhline(1.0, color="k", ls="--", lw=1, label="reweave-thorough = 1.0")
+    ax.set_xticks(x); ax.set_xticklabels(families); ax.set_ylabel("ACL ÷ RW-thorough")
+    ax.set_title(f"Learned ACL relative to Reweave-thorough by family — {args.target}")
     ax.legend(fontsize=8, ncol=2); ax.grid(True, axis="y", alpha=0.3)
     fig.tight_layout(); fig.savefig(os.path.join(args.out, "figures", "acl_ratio_by_family.png"), dpi=150)
     plt.close(fig)

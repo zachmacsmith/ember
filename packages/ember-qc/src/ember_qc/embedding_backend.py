@@ -29,8 +29,8 @@ Two layers live here:
 
 The routing primitives are deliberately node-weighted (cost accrues on *qubits*,
 the scarce resource in an embedding) rather than edge-weighted, which is what
-makes them directly reusable by the PathFinder negotiated-congestion router
-(``ember_qc.algorithms.pathfinder``).
+makes them directly reusable by the Reweave negotiated-congestion router
+(``ember_qc.algorithms.reweave``).
 
 Conventions
 -----------
@@ -358,7 +358,7 @@ def resolve_overlaps(
     """Rip-up contested qubits until chains are pairwise disjoint, then verify.
 
     A MM-style legalizer used as a repair / finishing pass by the relaxation
-    approaches and as a safety net by PathFinder. Each pass:
+    approaches and as a safety net by Reweave. Each pass:
 
     1. Finds every **contested** qubit (claimed by more than one chain).
     2. Awards each contested qubit to a single *keeper* — the chain that would be

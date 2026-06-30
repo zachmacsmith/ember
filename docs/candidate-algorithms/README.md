@@ -1,9 +1,9 @@
 # Candidate minor-embedding algorithms (CLAUDE.md §3.1–3.4)
 
-After PathFinder (§3.5; see `docs/pathfinder.md` and the paper in `docs/paper/`),
+After Reweave (§3.5; see `docs/reweave.md` and the paper in `docs/paper/`),
 we explored the other four candidate algorithms from the research brief, each
 implemented against the existing `EmbeddingAlgorithm` interface, reusing the
-shared `embedding_backend.py`, and **evaluated the same way as PathFinder** —
+shared `embedding_backend.py`, and **evaluated the same way as Reweave** —
 Ember's `benchmark_one` harness, paired against `minorminer` (MM), on
 Erdős–Rényi sources into clean Pegasus P6, broken Pegasus P6 (5% faults), and
 Zephyr Z4. Each has its own writeup; this file is the cross-cutting summary.
@@ -69,16 +69,16 @@ banking (at most) a **variance** win from a more consistent global placement:
   single-vertex repair = pruning the spurs MM's union-of-shortest-paths leaves
   behind: **−1.6% ACL grid-avg (−2…−2.9% on density ≥ 0.5, up to −9% on a hard
   n40 d0.7 instance), strictly never-worse than MM**, at ~16× MM wall-clock. It
-  edges PathFinder on 2/3 spot-check cells but is ~3× slower; its distinguishing
+  edges Reweave on 2/3 spot-check cells but is ~3× slower; its distinguishing
   property is an optimality certificate per repaired block.
 
-**Bottom line.** None of 3.1–3.4 dominates MM the way `pathfinder-thorough` does
+**Bottom line.** None of 3.1–3.4 dominates MM the way `reweave-thorough` does
 (−3…−8% ACL *and* large variance reduction). Among them: `lns-cpsat` is the only
 genuine mean-ACL improver (modest, exact, expensive); `srgw` and `multilevel`
 deliver real **variance** reductions cheaply; `diff-softassign` is an instructive
 negative. These are exploratory (3 seeds); a higher-seed confirmation of the
 `lns-cpsat` ACL win and the `srgw`/`multilevel` variance wins is the natural next
-step before any would join PathFinder in a paper.
+step before any would join Reweave in a paper.
 
 ## Reproduce
 

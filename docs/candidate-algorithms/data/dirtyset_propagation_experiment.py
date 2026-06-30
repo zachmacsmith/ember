@@ -27,8 +27,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from eval_candidate import make_targets, make_source  # noqa: E402
 
-from ember_qc.algorithms import pathfinder as pf  # noqa: E402
-from ember_qc.algorithms.pf_dirtyset import DirtySetRouter  # noqa: E402
+from ember_qc.algorithms import reweave as pf  # noqa: E402
+from ember_qc.algorithms.rw_dirtyset import DirtySetRouter  # noqa: E402
 from ember_qc.embedding_backend import is_valid_embedding  # noqa: E402
 
 import time
@@ -80,7 +80,7 @@ class OccAwareRouter(DirtySetRouter):
 
 
 # instrument call counts on the shared base method
-_orig = pf.PathFinderRouter._try_shorten
+_orig = pf.ReweaveRouter._try_shorten
 _calls = {"n": 0}
 
 
@@ -89,7 +89,7 @@ def _counting(self, v, bt):
     return _orig(self, v, bt)
 
 
-pf.PathFinderRouter._try_shorten = _counting
+pf.ReweaveRouter._try_shorten = _counting
 
 
 def run(router_cls, src, tgt, seed):
@@ -120,7 +120,7 @@ for (fam, n, p, tname) in GRID:
     tgt = targets[tname]
     cell = f"{fam}_n{n}_d{p}"
     for s in SEEDS:
-        _, acl_base, c_base, _, _ = run(pf.PathFinderRouter, src, tgt, s)
+        _, acl_base, c_base, _, _ = run(pf.ReweaveRouter, src, tgt, s)
         _, acl_a, c_a, _, val_a = run(DirtySetRouter, src, tgt, s)
         _, acl_b, c_b, _, val_b = run(OccAwareRouter, src, tgt, s)
         da_list.append(acl_a - acl_base)
@@ -134,4 +134,4 @@ for (fam, n, p, tname) in GRID:
 print("-" * 78)
 print(f"mean dACL  A vs base = {st.mean(da_list):+.4f}   B vs base = {st.mean(db_list):+.4f}")
 print(f"mean callratio  A = {st.mean(ca_ratio):.3f}x   B = {st.mean(cb_ratio):.3f}x")
-pf.PathFinderRouter._try_shorten = _orig
+pf.ReweaveRouter._try_shorten = _orig

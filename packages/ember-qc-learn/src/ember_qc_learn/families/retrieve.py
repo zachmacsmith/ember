@@ -2,10 +2,10 @@
 Retrieval / embeddings-cache family (patent FIG 2/5/6) — a NON-neural baseline
 that learning is meant to beat.
 
-"Training" = build an INDEX over the PathFinder-labelled training graphs. Per graph
+"Training" = build an INDEX over the Reweave-labelled training graphs. Per graph
 we store: a fixed graph-level descriptor (degree / clustering / core moments +
 spectral moments), the per-vertex structural features (degree, clustering, core),
-and the PF embedding (chains) for each target.
+and the RW embedding (chains) for each target.
 
 Inference (no neural net):
   1. Featurize the query graph.
@@ -14,7 +14,7 @@ Inference (no neural net):
      to the nearest standardized graph descriptor over the whole index.
   3. REMAP the retrieved graph's vertices onto the query's by aligning BOTH vertex
      sets in sorted (degree, clustering, core) order, producing initial_chains =
-     retrieved PF chains under that alignment. Qubits absent from a (broken) target
+     retrieved RW chains under that alignment. Qubits absent from a (broken) target
      are dropped; minorminer grows/repairs the rest.
   4. Decode via ``decode.run_minorminer(query, target, initial_chains, seed, timeout)``
      (warm start); cold-MM fallback guarantees we never report an invalid embedding.
@@ -271,7 +271,7 @@ def _retrieve_nearest(index: Dict, n_q: int, vfeat_q: np.ndarray,
 def _remap_chains(entry: Dict, nodes_q: List[int], vfeat_q: np.ndarray,
                   target_graph: nx.Graph) -> Dict[int, List[int]]:
     """Align query and retrieved vertices in sorted structural-feature order and
-    transfer PF chains, dropping qubits absent from the (possibly broken) target."""
+    transfer RW chains, dropping qubits absent from the (possibly broken) target."""
     nodes_r = entry["nodes"]
     vfeat_r = np.asarray(entry["vfeat"])
     chains_r = entry["embedding"]
@@ -308,7 +308,7 @@ def _infer_target_name(G: nx.Graph) -> Optional[str]:
 
 @register_algorithm("learned-retrieve")
 class RetrieveCache(EmbeddingAlgorithm):
-    """Retrieval / embeddings-cache embedder: nearest indexed PF embedding, remapped
+    """Retrieval / embeddings-cache embedder: nearest indexed RW embedding, remapped
     onto the query graph and grown to validity by minorminer (non-neural)."""
 
     _requires = ["minorminer", "numpy", "networkx"]

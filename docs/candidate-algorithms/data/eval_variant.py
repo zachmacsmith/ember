@@ -1,8 +1,8 @@
 """
 docs/candidate-algorithms/data/eval_variant.py
 ==============================================
-Measure ONE PathFinder optimization variant against the FROZEN baseline
-`pathfinder` (and `minorminer`), the same way candidates were measured.
+Measure ONE Reweave optimization variant against the FROZEN baseline
+`reweave` (and `minorminer`), the same way candidates were measured.
 
 The key metrics are the variant-vs-baseline deltas:
   - quality variants: ACL % change and ACL-std change (lower = better),
@@ -12,10 +12,10 @@ The key metrics are the variant-vs-baseline deltas:
 
 Usage:
     python eval_variant.py <module> <variant_name> [baseline_algo] [timeout] [--smoke]
-      <module>        dotted suffix under ember_qc.algorithms (e.g. "pf_spur")
-      <variant_name>  the @register_algorithm name (e.g. "pathfinder-spur")
-      baseline_algo   algo to delta against (default "pathfinder"; use
-                      "pathfinder-thorough" for the parallel-restarts variant)
+      <module>        dotted suffix under ember_qc.algorithms (e.g. "rw_spur")
+      <variant_name>  the @register_algorithm name (e.g. "reweave-spur")
+      baseline_algo   algo to delta against (default "reweave"; use
+                      "reweave-thorough" for the parallel-restarts variant)
 Writes <variant_name>_variant_{raw,summary}.csv and prints the comparison.
 """
 from __future__ import annotations
@@ -49,7 +49,7 @@ def main():
     if len(sys.argv) < 3:
         print(__doc__); sys.exit(1)
     module, variant = sys.argv[1], sys.argv[2]
-    baseline = "pathfinder"
+    baseline = "reweave"
     timeout = 60.0
     smoke = "--smoke" in sys.argv
     rest = [a for a in sys.argv[3:] if a != "--smoke"]

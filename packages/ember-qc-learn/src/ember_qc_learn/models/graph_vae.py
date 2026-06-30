@@ -13,7 +13,7 @@ decoded layout — lives in the inference adapter (families/vae.py), which calls
 ``encode`` once and ``decode_coords`` K times.
 
 Trained with a custom VAE loss (``VAELoss`` below): reconstruction MSE of the
-reparameterized decode against the PathFinder chain-centroid labels + a small
+reparameterized decode against the Reweave chain-centroid labels + a small
 KL term (beta, linear warmup). All torch-coupled code lives here so the family
 file can stay import-safe (no torch at module top).
 """

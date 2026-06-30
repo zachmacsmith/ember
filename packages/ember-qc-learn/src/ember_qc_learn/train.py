@@ -1,7 +1,7 @@
 """
-Training harness for coord-models. Loss = MSE to PathFinder chain centroids (the
+Training harness for coord-models. Loss = MSE to Reweave chain centroids (the
 learned-layout target); the model is *selected* on the real downstream metric —
-val ACL ratio vs PF after seed->MM decode — not on MSE. Checkpoints are
+val ACL ratio vs RW after seed->MM decode — not on MSE. Checkpoints are
 self-describing so algorithms.py can reload for benchmarking.
 
 CLI:
@@ -35,7 +35,7 @@ def _build_target(target_name: str):
 
 
 def mse_coord_loss(model, batch, geo) -> torch.Tensor:
-    """Default learned-layout loss: MSE(pred coords, PF centroid coords)."""
+    """Default learned-layout loss: MSE(pred coords, RW centroid coords)."""
     pred = model(batch)
     return F.mse_loss(pred, batch.y)
 
@@ -43,7 +43,7 @@ def mse_coord_loss(model, batch, geo) -> torch.Tensor:
 @torch.no_grad()
 def eval_acl(model, ds: EmbedDataset, target_graph, *, n_eval: int,
              device, timeout: float = 8.0) -> Dict:
-    """Real metric: predict coords -> seed->MM -> ACL ratio vs PF, over a subset."""
+    """Real metric: predict coords -> seed->MM -> ACL ratio vs RW, over a subset."""
     from torch_geometric.loader import DataLoader
     model.eval()
     geo = ds.geo

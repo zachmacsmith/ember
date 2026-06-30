@@ -161,7 +161,7 @@ Develop and validate a new minor embedding algorithm. Details are the team's cor
 **Core contribution:** A new minor embedding algorithm, evaluated on the standardized benchmark suite against all existing algorithms, with analysis of where and why it outperforms.
 
 **Key sections:**
-1. Algorithm description and theoretical motivation (pathfinder inspiration)
+1. Algorithm description and theoretical motivation (reweave inspiration)
 2. Complexity analysis
 3. Evaluation on QEBench (your own suite) — full comparison across problem classes, densities, topologies
 4. Analysis of structural conditions where the algorithm excels
@@ -184,7 +184,7 @@ Develop and validate a new minor embedding algorithm. Details are the team's cor
 - [ ] Fix ATOM to output real embeddings
 - [ ] Add Pegasus and Zephyr topology support
 - [ ] Add warm-up runs to benchmark engine
-- [ ] Begin pathfinder algorithm prototyping
+- [ ] Begin reweave algorithm prototyping
 
 **Milestone:** Can generate real-problem QUBO graphs, characterize them, and benchmark MinorMiner against them on multiple topologies.
 
@@ -198,7 +198,7 @@ Develop and validate a new minor embedding algorithm. Details are the team's cor
 - [ ] Structural analysis: compare real-problem vs. random graph properties systematically
 - [ ] Build enhanced reporting module with LaTeX export
 - [ ] Build GitHub Pages leaderboard (static site from results JSON)
-- [ ] Iterate on pathfinder algorithm, benchmark continuously against suite
+- [ ] Iterate on reweave algorithm, benchmark continuously against suite
 - [ ] Polish README, contribution guidelines, CI for result submission validation
 - [ ] **Public release of v0.1** — core suite with 4-5 problem types, baseline results, leaderboard
 
@@ -210,7 +210,7 @@ Develop and validate a new minor embedding algorithm. Details are the team's cor
 
 - [ ] Submit Paper 1 (benchmark suite) to QCE 2027 or equivalent
 - [ ] Run structural analysis experiments for Paper 2
-- [ ] Finalize pathfinder algorithm, run comprehensive evaluation
+- [ ] Finalize reweave algorithm, run comprehensive evaluation
 - [ ] Reach out to D-Wave research team with the published suite
 - [ ] Incorporate community feedback, update leaderboard
 - [ ] Draft Paper 2 (structural analysis)
@@ -238,7 +238,7 @@ Develop and validate a new minor embedding algorithm. Details are the team's cor
 | Problem Formulation + Validation | Teammate A | Implement QUBO generators from Lucas (2014), validate against known optima, graph characterization analysis, experiment execution |
 | Infrastructure + Reporting | Teammate B | C++ integration fixes (ATOM), enhanced reporting module, leaderboard site, CI setup, documentation |
 
-**Zach's specific ownership:** Interface design for `problem_generators.py` and `graph_analysis.py` (sets the standard others implement against), all pathfinder algorithm development, architectural decisions, final polish pass before any public release.
+**Zach's specific ownership:** Interface design for `problem_generators.py` and `graph_analysis.py` (sets the standard others implement against), all reweave algorithm development, architectural decisions, final polish pass before any public release.
 
 ---
 

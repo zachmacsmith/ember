@@ -5,7 +5,7 @@ Each example is a problem graph H with:
   x          [n, F]   source structural features (features.source_features)
   edge_index [2, 2E]  bidirectional source edges
   y          [n, 2]   SUPERVISED LABEL: the centroid (in the target's normalized
-                      hardware coordinates) of each vertex's PathFinder chain
+                      hardware coordinates) of each vertex's Reweave chain
   meta                id / edges / embedding / n  (kept off the tensor path, for decode+eval)
 
 A model maps (x, edge_index) -> predicted [n, 2] coords in the same normalized

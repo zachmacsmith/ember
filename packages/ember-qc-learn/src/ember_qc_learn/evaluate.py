@@ -1,9 +1,9 @@
 """
 Bake-off evaluation: benchmark every algorithm on the HELD-OUT test graphs
 (data/learn/test.jsonl — instance-disjoint from training) through ember_qc's
-benchmark_one, and report the headline comparison vs PF/MM:
+benchmark_one, and report the headline comparison vs RW/MM:
   * ACL mean (quality)              -> lower is better
-  * ACL std across seeds per graph  -> run-to-run variance (PF's headline edge)
+  * ACL std across seeds per graph  -> run-to-run variance (RW's headline edge)
   * success rate, wall-clock
 Multiple seeds per (graph, algo) expose MM's decode variance.
 
@@ -26,7 +26,7 @@ from typing import Dict, List
 warnings.filterwarnings("ignore")
 
 DEFAULT_ALGOS = [
-    "minorminer", "minorminer-layout", "pathfinder", "pathfinder-thorough",
+    "minorminer", "minorminer-layout", "reweave", "reweave-thorough",
     "learned-gnn-seed", "learned-gnn-seed-direct",
     "learned-retrieve", "learned-vae", "learned-obj",
 ]
@@ -82,7 +82,7 @@ def main() -> None:
     for rec in recs:
         for target in args.targets:
             if target not in rec.get("labels", {}) or "embedding" not in rec["labels"][target]:
-                continue  # only graphs PF could embed into this target
+                continue  # only graphs RW could embed into this target
             for algo in args.algos:
                 for seed in range(args.seeds):
                     tasks.append((rec, target, algo, seed))

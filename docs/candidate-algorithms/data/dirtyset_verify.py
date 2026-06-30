@@ -1,8 +1,8 @@
 """
-dirtyset_verify.py — quick-verify the pathfinder-dirtyset variant (S4).
+dirtyset_verify.py — quick-verify the reweave-dirtyset variant (S4).
 
 Checks, on a few small (cell, seed) pairs:
-  1. contract: module import registers "pathfinder-dirtyset"; embed() returns a
+  1. contract: module import registers "reweave-dirtyset"; embed() returns a
      dict with a valid embedding.
   2. determinism: same seed -> identical embedding.
   3. ACL parity: dirty-set ACL is not worse than baseline (per cell/seed).
@@ -22,15 +22,15 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from eval_candidate import make_targets, make_source  # noqa: E402
 
-import ember_qc.algorithms.pf_dirtyset  # noqa: E402  (registers the variant)
-from ember_qc.algorithms import pathfinder as pf  # noqa: E402
-from ember_qc.algorithms.pf_dirtyset import DirtySetRouter  # noqa: E402
+import ember_qc.algorithms.rw_dirtyset  # noqa: E402  (registers the variant)
+from ember_qc.algorithms import reweave as pf  # noqa: E402
+from ember_qc.algorithms.rw_dirtyset import DirtySetRouter  # noqa: E402
 from ember_qc.registry import ALGORITHM_REGISTRY  # noqa: E402
 from ember_qc.benchmark import benchmark_one  # noqa: E402
 from ember_qc.embedding_backend import is_valid_embedding  # noqa: E402
 
-assert "pathfinder-dirtyset" in ALGORITHM_REGISTRY, "variant not registered!"
-print("contract: 'pathfinder-dirtyset' registered OK")
+assert "reweave-dirtyset" in ALGORITHM_REGISTRY, "variant not registered!"
+print("contract: 'reweave-dirtyset' registered OK")
 
 targets = make_targets()
 CELLS = [
@@ -41,7 +41,7 @@ CELLS = [
 SEEDS = [0, 1, 2]
 
 # ---- instrument _try_shorten to count calls (wraps the shared base method) ----
-_orig_try_shorten = pf.PathFinderRouter._try_shorten
+_orig_try_shorten = pf.ReweaveRouter._try_shorten
 _calls = {"n": 0}
 
 
@@ -50,7 +50,7 @@ def _counting_try_shorten(self, v, best_total):
     return _orig_try_shorten(self, v, best_total)
 
 
-pf.PathFinderRouter._try_shorten = _counting_try_shorten
+pf.ReweaveRouter._try_shorten = _counting_try_shorten
 
 
 def run_router(router_cls, src, tgt, seed):
@@ -70,7 +70,7 @@ for (fam, n, p, tname) in CELLS:
     tgt = targets[tname]
     cell = f"{fam}_n{n}_d{p}"
     for s in SEEDS:
-        emb_b, calls_b = run_router(pf.PathFinderRouter, src, tgt, s)
+        emb_b, calls_b = run_router(pf.ReweaveRouter, src, tgt, s)
         emb_d, calls_d = run_router(DirtySetRouter, src, tgt, s)
         # determinism: re-run dirty-set, must be identical
         emb_d2, _ = run_router(DirtySetRouter, src, tgt, s)
@@ -90,7 +90,7 @@ for (fam, n, p, tname) in CELLS:
               f"{int(valid_d)}{det_flag}{flag}")
 
 # restore
-pf.PathFinderRouter._try_shorten = _orig_try_shorten
+pf.ReweaveRouter._try_shorten = _orig_try_shorten
 
 print("\nALL CHECKS PASS" if all_ok else "\nSOME CHECKS FAILED")
 sys.exit(0 if all_ok else 1)

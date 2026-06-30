@@ -7,7 +7,7 @@ This module is import-safe: it pulls in NO torch at module top, so
 inside ``train_vae`` and the adapter's methods.
 
 Training (``train_vae``): reuses the shared train.train() loop, passing a custom
-VAE loss (reconstruction MSE of the *reparameterized* decode against PathFinder
+VAE loss (reconstruction MSE of the *reparameterized* decode against Reweave
 chain centroids + KL) and ``extra_cfg={"latent_dim": ...}``. The model is still
 *selected* on the real downstream metric (val ACL ratio after seed->MM decode),
 and the self-describing checkpoint ``vae_<target>.pt`` reloads through build_model.
@@ -59,7 +59,7 @@ def train_vae(data_dir: str, target: str = "pegasus_6", out: Optional[str] = Non
               dropout: float = 0.1, latent_dim: int = 16, beta: float = 0.01,
               warmup_steps: int = 200, device: str = "cpu", eval_every: int = 5,
               eval_subset: int = 24, seed: int = 0) -> Dict:
-    """Train the Graph-VAE on PF-labeled data and write ``vae_<target>.pt``.
+    """Train the Graph-VAE on RW-labeled data and write ``vae_<target>.pt``.
 
     Reuses ember_qc_learn.train.train() with the custom VAELoss so selection
     still happens on real val ACL ratio (seed->MM decode), and the checkpoint is

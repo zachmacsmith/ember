@@ -1,11 +1,11 @@
 """
-Training-data generation: randomized problem graphs labelled with PathFinder-
+Training-data generation: randomized problem graphs labelled with Reweave-
 optimized embeddings (the "embeddings cache" of the patent). Each record is a
 (graph, target, embedding, metrics) tuple; the supervised target for a vertex is
-the centroid (in hardware coordinates) of its PF chain — derived at load time.
+the centroid (in hardware coordinates) of its RW chain — derived at load time.
 
 Splits are INSTANCE-DISJOINT (different seed ranges per split) so train/val/test
-never share a graph. Reuses ember_qc's registry (pathfinder-thorough labeller)
+never share a graph. Reuses ember_qc's registry (reweave-thorough labeller)
 and a ProcessPoolExecutor, mirroring docs/paper/data/run_sweep_opt.py.
 
 CLI:
@@ -36,7 +36,7 @@ class GenConfig:
     ba_m: Tuple[int, ...] = (2, 3, 5)
     geo_radius: Tuple[float, ...] = (0.30, 0.40, 0.55)
     targets: Tuple[str, ...] = ("pegasus_6", "zephyr_4")
-    labeller: str = "pathfinder-thorough"
+    labeller: str = "reweave-thorough"
     label_seed: int = 0
     timeout: float = 20.0
     # instances per (family, size, param) cell, per split

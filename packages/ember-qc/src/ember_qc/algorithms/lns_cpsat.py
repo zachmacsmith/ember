@@ -4,7 +4,7 @@ ember_qc/algorithms/lns_cpsat.py
 LNS-CP-SAT — large-neighbourhood search with *exact* CP-SAT region repair
 (approach 3.4 of the minor-embedding research brief).
 
-Where PathFinder (approach 3.5) untangles a congested embedding *heuristically*
+Where Reweave (approach 3.5) untangles a congested embedding *heuristically*
 — rip-up the longest chain, re-route the displaced ones with weighted Dijkstra —
 this module untangles it *optimally*, one bounded block at a time:
 

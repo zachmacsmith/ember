@@ -241,7 +241,7 @@ less sensitive to the random vertex order that drives MM's variance.
    **minorminer warm-started from the projected layout** — so on the eval grid
    MM still does the hardest legalization. A fuller operator would need
    terminal-aware splitting (route each constituent's *own* external couplers to
-   its side) and a congestion-aware multi-net repair (cf. the PathFinder
+   its side) and a congestion-aware multi-net repair (cf. the Reweave
    candidate) instead of one-edge-at-a-time free-space routing.
 2. **Mean-ACL benefit is marginal and partly generic.** With more seeds the mean
    ACL edge over MM narrows to roughly a tie; a non-trivial slice of it is the
