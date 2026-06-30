@@ -775,12 +775,16 @@ $n{=}40,d{=}0.7$ & 1.33 & 5.59 & 1.87 & 8.41 \\
 Reweave is a hand-engineered improver. A complementary question is whether an
 \emph{amortized} model can \emph{learn} to embed---paying an offline training cost
 once and then predicting an embedding in a single forward pass, rather than
-searching at solve time. The cache of problems Reweave has already solved is a
-ready-made training set: each \emph{(problem graph, Reweave-optimized embedding)}
-pair is a labelled example, and we ask a model to reproduce---and ideally improve
-on---that quality. This mirrors the predict-then-refine pattern of learned
-embedding heuristics \cite{ngo2024charme,nembrini2025ppo}, where a network proposes
-a candidate that a classical minor-embedding step then refines.
+searching at solve time. This amortized premise---a deep network that accelerates
+graph embedding---is precisely that of a recent patent application
+\cite{hyde2025dlembedding}. The cache of problems Reweave has already solved is a
+ready-made training set---and reusing embeddings cached from previously-solved
+problems is itself a patented strategy~\cite{brahm2021caching}: each \emph{(problem
+graph, Reweave-optimized embedding)} pair is a labelled example, and we ask a model
+to reproduce---and ideally improve on---that quality. This mirrors the
+predict-then-refine pattern of learned embedding heuristics
+\cite{ngo2024charme,nembrini2025ppo}, where a network proposes a candidate that a
+classical minor-embedding step then refines.
 
 We implemented several model families \emph{inside Ember}, so they are benchmarked
 through the exact same harness (\S\ref{sec:results}) as \texttt{minorminer} (MM) and
@@ -1015,7 +1019,7 @@ ends}---$-0.8\%$ single-shot and $-0.9\%$ in best-of-$8$, each statistically
 significant. The magnitude is small: a fixed $2$-D layout maps only loosely onto
 Pegasus hop-distance, and \texttt{minorminer}'s cold search with restarts is already
 strong. The other families confirm the picture---the collapsed \texttt{learned-gnn-seed},
-the non-neural \texttt{learned-retrieve} embeddings-cache, and the label-free
+the non-neural \texttt{learned-retrieve} embeddings-cache~\cite{brahm2021caching}, and the label-free
 \texttt{learned-obj} (which trains a layout to minimize an edge-stretch objective and
 does \emph{not} collapse) all land within noise of \texttt{minorminer}.
 
@@ -1037,7 +1041,8 @@ objective), which turns a constant-predicting model into one that beats
 \texttt{minorminer} by ${\sim}1\%$ at equal budget. It does not beat best-of-$K$
 \texttt{minorminer} by much, and decode-aware RL does not exceed it---so a strong
 heuristic with restarts remains hard to beat with learned \emph{placement}. The
-patent's premise is thus partly borne out: a learned model yields a small, real
+premise of the deep-learning embedding patent~\cite{hyde2025dlembedding} is thus
+partly borne out: a learned model yields a small, real
 improvement, but it is no substitute for a good heuristic. Validity is never at risk:
 the seed$\rightarrow$MM decoder always falls back to a cold \texttt{minorminer} call, so
 every learned method is $100\%$-valid in the same sense \texttt{minorminer} is---it
