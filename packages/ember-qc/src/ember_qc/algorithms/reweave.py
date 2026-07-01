@@ -93,6 +93,7 @@ class ReweaveRouter:
         cold_pres_fac_mult: float = 1.4,
         cold_hist_inc: float = 0.5,
         cold_max_iter: int = 60,
+        union_paths: bool = False,
     ):
         self.source = source
         self.target = target
@@ -112,6 +113,10 @@ class ReweaveRouter:
         self.cold_pres_fac_mult = cold_pres_fac_mult
         self.cold_hist_inc = cold_hist_inc
         self.cold_max_iter = cold_max_iter
+        # Ablation knob: attach every neighbour to the ROOT only (MM's
+        # union-of-independent-paths inner step) instead of the nearest tree
+        # node (SPH sharing). Default off = production behaviour.
+        self.union_paths = union_paths
 
         self.rng = random.Random(seed)
         self.seed = seed
@@ -239,7 +244,8 @@ class ReweaveRouter:
         for u in sorted(dist_by_u, key=lambda u: (dist_by_u[u].get(root, _BIG), u)):
             dist = dist_by_u[u]
             best_t, best_d = None, _BIG
-            for t in tree:
+            attach = (root,) if self.union_paths else tree
+            for t in attach:
                 d = dist.get(t, _BIG)
                 if d < best_d or (d == best_d and (best_t is None or t < best_t)):
                     best_d, best_t = d, t

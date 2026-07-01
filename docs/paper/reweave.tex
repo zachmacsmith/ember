@@ -57,16 +57,20 @@ Barab\'asi--Albert sources into clean and broken Pegasus and into Zephyr,
 \texttt{reweave} never lengthens ACL versus \texttt{minorminer} on any of $35$
 instance--topology cells; its thorough configuration lowers mean ACL on every cell
 (by $1$--$11\%$, mean ${\sim}5\%$) and ACL standard deviation in $30$ of $35$ (by
-up to $77\%$), all at $100\%$ success. A structured optimization pass---bounded
+up to $76\%$), all at $100\%$ success. An ablation attributes the gain honestly:
+the two imported ingredients are individually interchangeable and only jointly
+load-bearing---the warm-started anytime \emph{improver structure} itself does most
+of the work. A structured optimization pass---bounded
 routing, a dirty-set schedule, and spur-pruning---makes the production improver
 ${\sim}3\times$ faster, within ${\sim}1.3\times$ compiled \texttt{minorminer}'s
 wall-clock.
 
 Second, we open \texttt{minorminer}'s \emph{search order}---the lever its own
 authors named as the key open problem---with a ${\sim}90$-line fork that exposes
-the vertex order to its full search. A bandwidth-reducing (Cuthill--McKee) order,
-or a per-instance portfolio of such orders, lowers \texttt{minorminer}'s ACL by up
-to ${\sim}5\%$ and roughly halves its run-to-run variance; it composes with Reweave
+the vertex order to its full search. A per-instance \emph{portfolio} of
+bandwidth-reducing orders lowers \texttt{minorminer}'s ACL by ${\sim}5\%$ and
+roughly halves its run-to-run variance; a single Cuthill--McKee order captures a
+smaller gain at essentially zero cost. The guidance composes with Reweave
 and, unlike a learned or constructive embedder, never sacrifices
 \texttt{minorminer}'s reliability. On the \emph{actual} hardware graphs (Advantage
 Pegasus-$16$, $5640$ qubits; Advantage2 Zephyr-$15$, $7440$ qubits) this guidance
@@ -84,11 +88,14 @@ by ${\sim}1\%$ at equal budget (statistically significant but small), and a
 decode-aware reinforcement-learning fine-tune does not exceed it. A strong
 heuristic with restarts thus remains hard to beat with learned placement. We then
 validate the premise that ACL is worth optimizing: on a simulator, across $2{,}736$
-embedded random-Ising instances, shorter-chain embeddings give significantly better
-solutions (Spearman $\rho=-0.63$ between ACL and ground-state probability,
-$p\approx10^{-296}$, agreed by simulated annealing and spin-vector Monte Carlo), and
-we re-establish every empirical claim under a $K{=}15$-instance redesign with
-confidence intervals and Holm-corrected paired significance tests. The algorithmic
+embedded random-Ising instances, shorter-chain embeddings give measurably better
+solutions---\emph{within a fixed problem}, ACL anti-correlates with ground-state
+probability (fixed-effects Spearman $\rho=-0.11$, $p=3{\times}10^{-8}$; the pooled
+$\rho=-0.63$ additionally reflects problem difficulty), simulated annealing and
+spin-vector Monte Carlo agree, and the lowest-ACL method is significantly better
+paired per problem---and we re-establish the headline claims under a
+$K{=}15$-instance redesign with confidence intervals and Holm-corrected paired
+significance tests. The algorithmic
 primitives throughout are classical; the contribution is their synthesis and
 empirical evaluation, inside the Ember benchmarking framework, for minor embedding.
 \end{abstract}
@@ -208,7 +215,9 @@ methods retain full success and validity.
 pass yields three quality-safe improvements---bounded-region routing, a dirty-set
 incremental schedule, and a spur-pruning finishing pass---that together make the
 production algorithm ${\sim}3\times$ faster at equal-or-better ACL, within
-${\sim}1.3\times$ compiled \texttt{minorminer}'s wall-clock.
+${\sim}1.3\times$ compiled \texttt{minorminer}'s wall-clock; a $2{\times}2$
+ablation then attributes the quality gain, finding the two imported routing ideas
+individually interchangeable and the improver structure the primary driver.
 (iv) We ask whether \emph{learning} helps (\S\ref{sec:learning}) and report an
 honest, cautionary answer: the naive supervised model is ill-posed and collapses,
 a symmetry-invariant (Procrustes) objective fixes it and beats \texttt{minorminer}
@@ -216,8 +225,9 @@ by ${\sim}1\%$ at equal budget (small but significant), decode-aware RL does not
 exceed it, and we retract an earlier unequal-budget comparison.
 (v) We open \texttt{minorminer}'s \emph{search order}
 (\S\ref{sec:searchguide}) with a ${\sim}90$-line fork that injects a vertex order
-into its full search: a Cuthill--McKee order, or a per-instance portfolio, lowers
-its ACL by up to ${\sim}5\%$ and roughly halves its variance, composes with Reweave
+into its full search: a per-instance portfolio of orders lowers its ACL by
+${\sim}5\%$ and roughly halves its seed variance (a single Cuthill--McKee order
+gives a smaller gain for free), composes with Reweave
 (the cheap stack \texttt{reweave-mmfork-cuthill}), and stays as reliable as
 \texttt{minorminer}---while the complementary rip-up-order lever is inert.
 (vi) We study \emph{scaling} on the actual hardware graphs
@@ -228,9 +238,10 @@ largest Zephyr instances), while \texttt{mmfork-portfolio} holds a $5$--$7\%$ AC
 edge across scales.
 (vii) We \emph{validate} the objective and harden the statistics
 (\S\ref{sec:solquality},~\S\ref{sec:rigor}): on a simulator, shorter-chain
-embeddings yield significantly better annealing solutions (Spearman $\rho=-0.63$
-between ACL and ground-state probability, agreed by simulated annealing and
-spin-vector Monte Carlo), and a $K{=}15$-instance redesign with confidence intervals
+embeddings yield measurably better annealing solutions at fixed problem
+(fixed-effects $\rho=-0.11$, $p=3{\times}10^{-8}$; the mechanism---chain
+breaks---and the method ranking agree across simulated annealing and spin-vector
+Monte Carlo), and a $K{=}15$-instance redesign with confidence intervals
 and paired significance tests confirms the gains and the variance reduction---and
 shows which one variant does not survive the stronger design.
 Throughout we are explicit (\S\ref{sec:novelty}) that the algorithmic primitives
@@ -410,7 +421,12 @@ embedding (MM by default; any registered algorithm works), then performs
 chain together with the cascade of chains its rerouting displaces. It takes the
 longest chain and lets it re-route along the cheapest tree under
 Eq.~\eqref{eq:cost}---which may cross occupied territory and create temporary
-overlaps---then re-routes every chain it displaced through free space. A move is
+overlaps---then re-routes every chain it displaced through free space. (One
+scoping note for precision: when the base embedding is valid, no qubit is ever
+over-subscribed \emph{between} moves, so the history term never accumulates and
+Eq.~\eqref{eq:cost} reduces to its present-occupancy factor inside the improver;
+the history memory earns its keep in the cold-start and legalization paths, where
+overlap persists across passes.) A move is
 committed only if it lowers the embedding's total qubit count (equivalently, its
 ACL) and leaves it valid; otherwise the prior state is restored
 (Algorithms~\ref{alg:driver}--\ref{alg:move}). Because Reweave keeps the best
@@ -472,8 +488,9 @@ chain construction as multi-net routing, replacing MM's two weakest components
 running it as a warm-started anytime improver with a never-regress guarantee, and
 validating empirically that this reduces ACL and---more importantly---ACL
 variance against the standard tool. The clean substitution also isolates a
-question of independent interest: \emph{is it MM's congestion signal or its
-inner step that costs the most?}
+question of independent interest---\emph{is it MM's congestion signal or its
+inner step that costs the most?}---which \S\ref{sec:optimizations} answers with a
+$2{\times}2$ ablation.
 
 %% ========================================================================
 \section{Ember and Evaluation Methodology}
@@ -499,7 +516,10 @@ Zephyr~$Z_4$. Sources are an Erd\H{o}s--R\'enyi (ER) grid over
 $n\in\{20,30,40\}$ and edge density $d\in\{0.3,0.5,0.7\}$, plus $d$-regular and
 Barab\'asi--Albert graphs for generality; one fixed instance per cell, so the
 reported spread is the run-to-run variance \emph{on a fixed instance}---MM's
-documented failure mode. Baselines are \texttt{minorminer} and
+documented failure mode. (\S\ref{sec:rigor} replicates the entire grid over
+$K{=}15$ independent instances per cell with confidence intervals and paired
+significance tests; the headline claims survive.) Baselines are \texttt{minorminer}
+and
 \texttt{minorminer-layout} ($p$-norm layout). Each (algorithm, instance) is run
 over five seeds; we report success rate, ACL mean and standard deviation, max
 chain length, qubits, and wall-clock time.
@@ -508,167 +528,38 @@ chain length, qubits, and wall-clock time.
 \section{Preliminary Results}
 \label{sec:results}
 
-These are the results of the preliminary algorithm of \S\ref{sec:reweave};
-the optimized production version and its (improved, and much faster) numbers
-follow in \S\ref{sec:optimizations}. All four methods embed every instance across
-all seeds and topologies ($100\%$ success), so success is not a differentiator on
-this grid; the
-comparison is on chain length, its variance, and time. Table~\ref{tab:quality}
-reports embedding quality on clean Pegasus~$P_6$, Table~\ref{tab:timing} the
-corresponding wall-clock time, and Table~\ref{tab:robust} robustness across
-topologies; Figure~\ref{fig:density} shows the density trend.
+These are the results of the preliminary algorithm of \S\ref{sec:reweave}; the
+optimized production version and its (improved, and much faster) numbers follow in
+\S\ref{sec:optimizations}, so we summarize here and defer the full preliminary
+tables---per-cell quality, wall-clock, and cross-topology robustness, with the
+density trend---to Appendix~\ref{app:prelim}
+(Tables~\ref{tab:quality}--\ref{tab:robust}, Figure~\ref{fig:density}). All four
+methods embed every instance across all seeds and topologies ($100\%$ success), so
+the comparison is on chain length, its variance, and time.
 
 Two findings are sharp. First, the single-seed \texttt{reweave} \emph{never
 regresses}: across all $35$ instance--topology cells (every per-seed run, in
 fact) its mean ACL is $\le$ \texttt{minorminer}'s---the maximum observed
 difference is $0.000$ to three decimals---confirming the best-valid guarantee
-empirically. Second, \texttt{reweave-thorough} lowers mean ACL on the six
-shown cells by $3.2$--$4.5\%$, and reduces ACL standard deviation in five of the
-six---by up to $76\%$ on the full clean-$P_6$ grid (e.g.\
-$0.11\!\to\!0.03$ at $n{=}30,d{=}0.3$). The lone clean-$P_6$ exception is
-$n{=}40,d{=}0.3$, where \texttt{minorminer}'s spread is already at the floor
-($0.05$); we report it rather than hide it. The complete $35$-cell grid across
-all three source families is in Appendix~\ref{app:full}: there
-\texttt{reweave-thorough} lowers mean ACL on \emph{every} cell (by
-$1$--$11\%$; the largest single gain, $-10.6\%$, is on a $d$-regular source) and
-cuts ACL standard deviation in $30$ of the $35$.
-
-\begin{table}[t]
-\caption{Embedding quality on clean Pegasus~$P_6$ for ER sources (mean over $5$
-seeds; ACL std in parentheses; lower ACL is better). Best ACL per cell in bold.}
-\label{tab:quality}
-\small
-\begin{tabular}{llccc}
-\toprule
-cell & algorithm & ACL (std) & max & qubits \\
-\midrule
-\multirow{4}{*}{$n{=}30,d{=}0.3$}
- & \texttt{minorminer}          & 2.70 (0.11) & 3.8 & 81.0 \\
- & \texttt{minorminer-layout}   & 2.75 (0.15) & 4.0 & 82.4 \\
- & \texttt{reweave}          & 2.69 (0.10) & 3.8 & 80.6 \\
- & \texttt{reweave-thorough} & \textbf{2.59} (0.03) & 3.8 & 77.6 \\
-\midrule
-\multirow{4}{*}{$n{=}30,d{=}0.5$}
- & \texttt{minorminer}          & 3.30 (0.16) & 4.6 & 99.0 \\
- & \texttt{minorminer-layout}   & 3.43 (0.10) & 4.8 & 102.8 \\
- & \texttt{reweave}          & 3.25 (0.15) & 4.6 & 97.6 \\
- & \texttt{reweave-thorough} & \textbf{3.19} (0.10) & 4.0 & 95.8 \\
-\midrule
-\multirow{4}{*}{$n{=}30,d{=}0.7$}
- & \texttt{minorminer}          & 3.83 (0.22) & 5.0 & 114.8 \\
- & \texttt{minorminer-layout}   & 3.80 (0.17) & 5.4 & 114.0 \\
- & \texttt{reweave}          & 3.79 (0.23) & 5.0 & 113.8 \\
- & \texttt{reweave-thorough} & \textbf{3.65} (0.06) & 4.8 & 109.6 \\
-\midrule
-\multirow{4}{*}{$n{=}40,d{=}0.3$}
- & \texttt{minorminer}          & 3.56 (0.05) & 5.2 & 142.4 \\
- & \texttt{minorminer-layout}   & 3.62 (0.14) & 5.4 & 144.8 \\
- & \texttt{reweave}          & 3.53 (0.06) & 5.2 & 141.0 \\
- & \texttt{reweave-thorough} & \textbf{3.41} (0.06) & 5.0 & 136.4 \\
-\midrule
-\multirow{4}{*}{$n{=}40,d{=}0.5$}
- & \texttt{minorminer}          & 4.57 (0.10) & 6.4 & 182.6 \\
- & \texttt{minorminer-layout}   & 4.72 (0.13) & 6.8 & 188.8 \\
- & \texttt{reweave}          & 4.49 (0.14) & 6.2 & 179.6 \\
- & \texttt{reweave-thorough} & \textbf{4.39} (0.08) & 6.2 & 175.4 \\
-\midrule
-\multirow{4}{*}{$n{=}40,d{=}0.7$}
- & \texttt{minorminer}          & 5.15 (0.06) & 7.2 & 206.0 \\
- & \texttt{minorminer-layout}   & 5.23 (0.17) & 7.0 & 209.2 \\
- & \texttt{reweave}          & 5.07 (0.04) & 7.0 & 202.6 \\
- & \texttt{reweave-thorough} & \textbf{4.98} (0.04) & 7.0 & 199.0 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\begin{table}[t]
-\caption{Wall-clock time (mean seconds per embedding, clean $P_6$). Reweave
-is pure Python; \texttt{minorminer} is compiled C++. \texttt{reweave-thorough}
-runs four seeded restarts and may use up to the full $20$\,s time budget.}
-\label{tab:timing}
-\small
-\begin{tabular}{lrrrr}
-\toprule
-cell & \texttt{mm} & \texttt{mm-layout} & \texttt{rw} & \texttt{rw-thor.} \\
-\midrule
-$n{=}30,d{=}0.3$ & 0.33 & 0.33 & 1.11 & 20.08 \\
-$n{=}30,d{=}0.5$ & 4.44 & 3.30 & 9.04 & 18.82 \\
-$n{=}30,d{=}0.7$ & 1.22 & 0.98 & 3.23 & 12.33 \\
-$n{=}40,d{=}0.3$ & 0.54 & 0.46 & 2.12 & 8.37 \\
-$n{=}40,d{=}0.5$ & 1.11 & 0.99 & 4.12 & 16.41 \\
-$n{=}40,d{=}0.7$ & 1.35 & 1.73 & 5.87 & 20.01 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\begin{table}[t]
-\caption{Robustness across topologies for the $n{=}40,d{=}0.5$ ER source: ACL
-(std) and time. \texttt{minorminer}'s ACL inflates most on broken Pegasus, where
-\texttt{reweave-thorough}'s relative gain is largest ($-7.3\%$).}
-\label{tab:robust}
-\small
-\begin{tabular}{llcc}
-\toprule
-target & algorithm & ACL (std) & time (s) \\
-\midrule
-\multirow{4}{*}{Pegasus $P_6$}
- & \texttt{minorminer}          & 4.57 (0.10) & 1.11 \\
- & \texttt{minorminer-layout}   & 4.72 (0.13) & 0.99 \\
- & \texttt{reweave}          & 4.49 (0.14) & 4.12 \\
- & \texttt{reweave-thorough} & \textbf{4.39} (0.08) & 16.41 \\
-\midrule
-\multirow{4}{*}{broken $P_6$ ($5\%$)}
- & \texttt{minorminer}          & 4.88 (0.18) & 0.82 \\
- & \texttt{minorminer-layout}   & 4.72 (0.19) & 1.19 \\
- & \texttt{reweave}          & 4.80 (0.18) & 3.52 \\
- & \texttt{reweave-thorough} & \textbf{4.52} (0.06) & 14.26 \\
-\midrule
-\multirow{4}{*}{Zephyr $Z_4$}
- & \texttt{minorminer}          & 3.63 (0.08) & 0.98 \\
- & \texttt{minorminer-layout}   & 3.61 (0.16) & 1.10 \\
- & \texttt{reweave}          & 3.57 (0.07) & 3.81 \\
- & \texttt{reweave-thorough} & \textbf{3.52} (0.03) & 13.90 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\begin{figure}[t]
-\centering
-\begin{tikzpicture}
-\begin{axis}[
-  width=\columnwidth, height=5cm,
-  xlabel={edge density $d$}, ylabel={ACL (lower better)},
-  xtick={0.3,0.5,0.7}, xmin=0.25, xmax=0.75,
-  legend style={font=\scriptsize, at={(0.02,0.98)}, anchor=north west},
-  legend cell align=left, mark size=1.6pt,
-]
-\addplot+[thick] coordinates {(0.3,3.56)(0.5,4.565)(0.7,5.15)};
-\addplot+[thick] coordinates {(0.3,3.62)(0.5,4.72)(0.7,5.23)};
-\addplot+[thick] coordinates {(0.3,3.525)(0.5,4.49)(0.7,5.065)};
-\addplot+[thick] coordinates {(0.3,3.41)(0.5,4.385)(0.7,4.975)};
-\legend{\texttt{minorminer}, \texttt{mm-layout}, \texttt{reweave}, \texttt{rw-thorough}}
-\end{axis}
-\end{tikzpicture}
-\caption{ACL versus edge density for $n{=}40$ ER sources on clean Pegasus~$P_6$.
-\texttt{reweave-thorough} (bottom curve) is uniformly shortest; the gap to
-\texttt{minorminer} is roughly constant in absolute terms across densities.}
-\label{fig:density}
-\end{figure}
-
-\paragraph{Discussion.}
-The single-seed \texttt{reweave} is the fair \emph{equal-base} comparison: it
-consumes the same \texttt{minorminer} base for a given seed and only refines it,
-so it cannot regress---and it already trims ACL on denser cells while leaving the
-sparse and $d$-regular cells (where the base is near-optimal) unchanged. The
-substantive gains come from \texttt{reweave-thorough}, whose four restarts
-both lower the mean and, by selecting the best of several runs, sharply cut the
-run-to-run variance that is \texttt{minorminer}'s signature weakness. The effect
-persists on broken Pegasus---where \texttt{minorminer}'s ACL inflates most and the
-thorough gain is largest---and on Zephyr, so the mechanism is not
-topology-specific. The cost is wall-clock time: Reweave layers a pure-Python
-router on top of the base, and \texttt{reweave-thorough}, with its four
-restarts, can use the full $20$\,s budget; \texttt{minorminer-layout}, by
-contrast, is neither consistently faster nor consistently better than plain
+empirically. It consumes the same \texttt{minorminer} base for a given seed and
+only refines it, trimming ACL on the denser cells while leaving sparse cells,
+where the base is already near-optimal, unchanged. Second, the substantive gains
+come from \texttt{reweave-thorough}, whose four seeded restarts both lower the
+mean and, by keeping the best of several runs, sharply cut the run-to-run variance
+that is \texttt{minorminer}'s signature weakness: over the complete $35$-cell grid
+(Appendix~\ref{app:full}) it lowers mean ACL on \emph{every} cell (by $1$--$11\%$;
+the largest single gain, $-10.6\%$, is on a $d$-regular source) and cuts ACL
+standard deviation in $30$ of the $35$, by up to $76\%$ (e.g.\
+$0.11\!\to\!0.03$ at clean-$P_6$ $n{=}30,d{=}0.3$); the five exceptions are cells
+where \texttt{minorminer}'s spread is already small ($0.02$--$0.09$), and we
+report them rather than hide them. The effect persists on broken Pegasus---where
+\texttt{minorminer}'s ACL inflates most and the thorough gain is largest
+($-7.3\%$ at $n{=}40,d{=}0.5$)---and on Zephyr, so the mechanism is not
+topology-specific. The cost is wall-clock: the preliminary pure-Python router runs
+$3$--$6\times$ compiled \texttt{minorminer}, and \texttt{reweave-thorough} can use
+the full $20$\,s budget (Table~\ref{tab:timing})---the gap
+\S\ref{sec:optimizations} closes; \texttt{minorminer-layout}, by contrast, is
+neither consistently faster nor consistently better than plain
 \texttt{minorminer}.
 
 %% ========================================================================
@@ -717,6 +608,30 @@ Dijkstra core, which we built and tested, gives \emph{no} net speedup once
 bounded-region routing has localized each search
 (\S\ref{sec:limitations})---so the production router stays pure Python; only
 parallelized restarts remain as future speed work.
+
+\paragraph{Which imported ingredient carries the gain?} \S\ref{sec:novelty} asked
+whether it is \texttt{minorminer}'s congestion signal or its inner step that costs
+the most. A $2{\times}2$ ablation on the production improver answers it: we run
+Reweave with the SPH tree replaced by MM's union-of-independent-paths inner step
+(\texttt{-ablate-paths}), with congestion pricing disabled so the destroy step
+routes at uniform cost (\texttt{-ablate-nocong}), and with both, on the six
+LNS-active dense ER cells ($K{=}5$ instances $\times\,3$ seeds, clean $P_6$; same
+seeds $\Rightarrow$ same \texttt{minorminer} base, so differences isolate the
+improver ingredient). The result is a finding we did not expect: \emph{either
+ingredient alone is statistically interchangeable with the full algorithm}
+($-1.86\%$ and $-1.89\%$ ACL vs.\ \texttt{minorminer}, against the full improver's
+$-1.93\%$; paired $p=0.23$ and $0.78$), while removing \emph{both} is
+significantly worse ($-1.64\%$, paired $p=0.002$)---the two ideas are individually
+redundant but jointly load-bearing. Congestion pricing does earn its keep on
+\emph{time}: without it, unpriced shortcuts displace more chains and the repair
+work grows (${\sim}25\%$ more improver wall-clock at equal quality). The honest
+attribution is therefore that most of Reweave's gain comes from the warm-started
+anytime LNS \emph{structure} itself---rip up the longest chain, shortcut, repair
+the displaced, keep only strict improvements---with the routing-imported
+ingredients supplying a modest, mutually substitutable quality increment and the
+congestion price paying for itself in speed. This mirrors the rip-up finding of
+\S\ref{sec:searchguide}: on feasible instances the improver converges to much the
+same local optimum along many paths; \emph{that it improves at all} is the value.
 
 \paragraph{Optimized results.} Tables~\ref{tab:optquality} and~\ref{tab:opttime}
 report the optimized algorithm on the clean-Pegasus grid. The optimizations are
@@ -987,8 +902,9 @@ collapse at the time but, as we show next, did not cure it.
 \end{axis}
 \end{tikzpicture}
 \caption{\texttt{learned-vae} training and validation loss per epoch ($P_6$, $1560/312$
-train/val graphs). Validation tracks training and stays slightly below it---no
-overfitting; the fast plateau reflects the multimodal centroid target (model
+train/val graphs). Both curves plateau within a handful of epochs at exactly the
+loss of the constant global-mean predictor---the first symptom of the posterior
+collapse diagnosed in \S\ref{sec:learn-collapse} (model
 selection uses the downstream validation ACL, not this loss).}
 \label{fig:vaeloss}
 \end{figure}
@@ -1132,23 +1048,28 @@ the refactored loop.)
 
 \paragraph{Vertex order is a real lever.}
 On the forked full search a bandwidth/locality order---reverse Cuthill--McKee---
-lowers mean ACL, and because \texttt{minorminer}'s variance on these feasible
-instances is order-driven it also cuts run-to-run variance by ${\sim}25\%$
-(Table~\ref{tab:mmfork}). Order quality is vehicle- and instance-dependent
+lowers mean ACL (Table~\ref{tab:mmfork}); under the $K{=}15$ multi-instance design
+of \S\ref{sec:rigor} the single fixed order leaves \emph{seed} variance essentially
+unchanged ($1.02\times$ \texttt{minorminer}'s), so the variance reduction below
+belongs to the portfolio, not to any one order. Order quality is vehicle- and
+instance-dependent
 (\texttt{minfill} wins on the weak \texttt{quickpass} primitive, \texttt{cuthill}
 on the full search; \texttt{degeneracy} and \texttt{community} can hurt), which is
 exactly why a per-instance \textbf{portfolio}---run the five good orders, keep the
 best valid embedding---is so effective: \texttt{mmfork-portfolio} reaches $-5.3\%$
-ACL vs.\ \texttt{minorminer} and $-3.1\%$ vs.\ \texttt{reweave} at roughly
-\emph{half} \texttt{minorminer}'s variance, the strongest single quality result in
+ACL vs.\ \texttt{minorminer} and $-3.1\%$ vs.\ \texttt{reweave} at half
+\texttt{minorminer}'s seed variance ($0.53\times$, \S\ref{sec:rigor}), the
+strongest single quality result in
 this paper, at ${\sim}6\times$ the wall-clock since it runs every order.
 
 \begin{table}[t]
 \caption{Order-guided \texttt{minorminer} on the full search (standard grid: ER
-sources over a size/density/topology mix, $7$ cells, $3$ seeds; mean ACL, std over
-cell means in parentheses; lower is better). \texttt{mmfork} (no order) reproduces
+sources over a size/density/topology mix, $7$ cells, $3$ seeds; mean ACL; the
+parenthesized figure is the dispersion of the seven cell means, a cross-cell
+spread---per-seed variance is measured properly in \S\ref{sec:rigor}). \texttt{mmfork}
+(no order) reproduces
 \texttt{minorminer} exactly. A fixed Cuthill--McKee order and especially the
-per-instance portfolio cut both ACL and variance. The last column is wall-clock
+per-instance portfolio cut ACL. The last column is wall-clock
 relative to \texttt{minorminer} (Table~\ref{tab:fgtime}): a single fixed order is
 free, the portfolio runs every order.}
 \label{tab:mmfork}
@@ -1168,25 +1089,37 @@ algorithm & ACL (std) & vs.\ MM & vs.\ Reweave & $t/$MM \\
 \paragraph{The new embedders stack with Reweave.}
 Reweave warm-starts from any registered base embedder and then improves it, so the
 order-guided variants compose with it directly. The \emph{lowest} ACL we observe
-comes from seeding Reweave with \texttt{mmfork-portfolio} (\texttt{reweave+mmfork} in
-Table~\ref{tab:stack}): it stacks two independent gains---a better-ordered base
+comes from seeding Reweave with \texttt{mmfork-portfolio} (\texttt{reweave+portfolio}
+in Table~\ref{tab:stack}): it stacks two independent gains---a better-ordered base
 \emph{and} the negotiated destroy-repair improver---but inherits the portfolio's
-${\sim}6\times$ cost as its base. The practical sweet spot is to seed from the single
-Cuthill order instead: \texttt{reweave-mmfork-cuthill} reaches ${\sim}{-}5\%$ ACL
-versus \texttt{minorminer}---matching the ${\sim}6\times$ portfolio and beating both
+${\sim}6\times$ cost as its base. The practical sweet spot on \emph{dense ER}
+instances is to seed from the single
+Cuthill order instead: \texttt{reweave-mmfork-cuthill} (abbreviated
+\texttt{reweave+cuthill} in figures) reaches ${\sim}{-}5\%$ ACL
+versus \texttt{minorminer} on this grid---matching the ${\sim}6\times$ portfolio and
+beating both
 plain \texttt{reweave} ($-3.4\%$) and \texttt{mmfork-cuthill} ($-2.2\%$) on their
-own---at only ${\sim}1.8\times$ \texttt{minorminer}, the cost of plain Reweave. The
+own---at only ${\sim}1.8\times$ \texttt{minorminer}, the cost of plain Reweave.
+That parity is a dense-ER phenomenon, however: pooled over the full $K{=}15$
+grid of \S\ref{sec:rigor} the cheap stack retains $-1.7\%$ against the portfolio's
+$-5.5\%$, and on sparse $6$-regular sources at hardware scale it is statistically
+tied with \texttt{minorminer} (\S\ref{sec:scaling})---seed from the portfolio when
+quality is worth $6\times$, from Cuthill when the sources are dense. The
 levers are orthogonal: ordering improves the base, Reweave's improver improves
 whatever base it is given (the same composition mechanism as the existing
 \texttt{reweave-stacked} variant, which seeds from the multilevel placement).
 
 \begin{table}[t]
 \caption{The quality/speed spectrum of the order-guided embedders and their stacks
-(ER into $P_6$, mean over four size/density cells $\times3$ seeds; $t/$MM is
-wall-clock relative to \texttt{minorminer}, back-to-back). The cheap stack,
+(\textbf{dense-ER grid}: ER into $P_6$, mean over four size/density cells
+$\times3$ seeds; $t/$MM is
+wall-clock relative to \texttt{minorminer}, back-to-back). On these dense cells the
+cheap stack,
 \textbf{\texttt{reweave-mmfork-cuthill}}, matches the ${\sim}6.5\times$ portfolio's
-ACL at plain Reweave's cost; only the portfolio-seeded \texttt{reweave+mmfork} goes
-lower, and it pays the portfolio's ${\sim}6\times$ as its base.}
+ACL at plain Reweave's cost; only the portfolio-seeded \texttt{reweave+portfolio}
+goes lower, and it pays the portfolio's ${\sim}6\times$ as its base. Pooled over
+the full $K{=}15$ grid the ordering differs (\S\ref{sec:rigor},
+Table~\ref{tab:instances}).}
 \label{tab:stack}
 \small
 \begin{tabular}{lccc}
@@ -1198,7 +1131,7 @@ method & ACL & vs.\ MM & $t/$MM \\
 \texttt{reweave}                     & 5.055 & $-3.4\%$ & $2.0\times$ \\
 \textbf{\texttt{reweave-mmfork-cuthill}} & \textbf{4.960} & $\mathbf{-5.2\%}$ & $\mathbf{1.8\times}$ \\
 \texttt{mmfork-portfolio}            & 4.949 & $-5.4\%$ & $6.5\times$\,/\,$1.7\times^{\dagger}$ \\
-\texttt{reweave+mmfork} (portf.)     & \textbf{4.801} & $-8.3\%$ & $7.4\times$ \\
+\texttt{reweave+portfolio}           & \textbf{4.801} & $-8.3\%$ & $7.4\times$ \\
 \bottomrule
 \end{tabular}
 
@@ -1218,12 +1151,13 @@ the five orders plus the default, so serially \texttt{mmfork-portfolio} is
 $5.9\times$ \texttt{minorminer}. Its orders are independent, however, so a
 process-parallel variant (\texttt{mmfork-portfolio-par}) recovers ${\sim}3.5\times$
 of that on a multi-core host---at \emph{identical} ACL---bringing a single embedding
-back to ${\sim}1.7\times$. The $6.4\times$ of \texttt{reweave+mmfork}
+back to ${\sim}1.7\times$. The $6.4\times$ of \texttt{reweave+portfolio}
 (Table~\ref{tab:fgtime}) deserves a word, because it is \emph{not}
-reweave\,($1.7\times$) plus mmfork\,($1.0\times$): it is Reweave seeded from the
+reweave\,($1.7\times$) plus an ordered search\,($1.0\times$): it is Reweave seeded
+from the
 \emph{portfolio} base, so it pays the portfolio's ${\sim}6\times$. Seeding instead
 from the single Cuthill order (\texttt{reweave-mmfork-cuthill}) gives nearly the same
-ACL at ${\sim}1.8\times$, which is the configuration to use. Finally, reducing
+ACL at ${\sim}1.8\times$ on dense ER, which is the configuration to use there. Finally, reducing
 \texttt{minorminer}'s restart count does \emph{not} speed the single-order variants:
 under a fixed order the redundant restarts short-circuit, so \texttt{tries}$\in\{1,
 \dots,10\}$ give identical ACL \emph{and} wall-clock (e.g.\ on a $P_{16}$,
@@ -1238,13 +1172,13 @@ all algorithms run back-to-back per (cell, seed) so ratios are contention-robust
 $30$\,s budget). Single-order \texttt{mmfork-cuthill} matches \texttt{minorminer}
 (\texttt{mmfork} without an order is identical, omitted); the portfolio and the
 stacked variant cost a ${\sim}6\times$ constant factor.
-\texttt{mm}${=}$\texttt{minorminer}, \texttt{mm-l}${=}$\texttt{minorminer-layout},
-\texttt{mf}${=}$\texttt{mmfork}.}
+\texttt{mm}${=}$\texttt{minorminer}, \texttt{mm-layout}${=}$\texttt{minorminer-layout},
+\texttt{mf}${=}$\texttt{mmfork}, \texttt{rw+portf}${=}$\texttt{reweave+portfolio}.}
 \label{tab:fgtime}
 \small
 \begin{tabular}{lrrrrr}
 \toprule
-cell & \texttt{mm} & \texttt{mm-l} & \texttt{mf-cuth} & \texttt{mf-portf} & \texttt{rw+mf} \\
+cell & \texttt{mm} & \texttt{mm-layout} & \texttt{mf-cuth} & \texttt{mf-portf} & \texttt{rw+portf} \\
 \midrule
 $n{=}20,d{=}0.5$         & 0.09 & 0.09 & 0.14 & 0.69 & 0.67 \\
 $n{=}30,d{=}0.5$         & 0.53 & 0.37 & 0.36 & 2.43 & 2.51 \\
@@ -1318,10 +1252,11 @@ learned-placement study of \S\ref{sec:learning} hit. The real opportunity the
 oracle exposes ($-4.6\%$) is a \emph{cheaper} portfolio, not a learned order.
 
 \paragraph{Verdict.} Of the two search levers, rip-up selection is inert but vertex
-order is real: a deterministic Cuthill--McKee order, or better a per-instance
-portfolio, lowers \texttt{minorminer}'s ACL by up to $5\%$ and halves its variance,
-composes with Reweave for the best result overall, and---unlike a learned or
-constructive embedder---never sacrifices \texttt{minorminer}'s reliability. The full
+order is real: a per-instance portfolio of orders lowers \texttt{minorminer}'s ACL
+by ${\sim}5\%$ and halves its seed variance, a deterministic Cuthill--McKee order
+captures a smaller gain for free (leaving variance unchanged), and the guidance
+composes with Reweave for the best dense-ER result. Unlike a learned or
+constructive embedder, none of it sacrifices \texttt{minorminer}'s reliability. The full
 study, including the cross-vehicle results and the negative rip-up and learning
 findings, is in \texttt{docs/candidate-algorithms/search-guidance/}.
 
@@ -1464,16 +1399,29 @@ ground-state probability $P(\mathrm{GS})$, the residual-energy ratio
 $(\langle E\rangle-E_0)/|E_0|$, and the chain-break fraction, over $114$ problems and
 $2{,}736$ (problem, embedding) pairs.
 
-\paragraph{Shorter chains give better solutions.} Across the whole cloud of
-(problem, embedding) pairs, ACL is strongly and significantly anti-correlated with
-solution quality: at the reference chain strength the Spearman correlation between ACL
-and $P(\mathrm{GS})$ is $\rho=-0.63$ ($p\approx10^{-296}$), between ACL and residual
-energy $\rho=+0.63$, and between ACL and chain breaks $\rho=+0.80$
-(Figure~\ref{fig:quality}). The mechanism is direct---longer chains break more often
-under a fixed coupler budget, and broken chains corrupt the majority vote. The link
-is not an artifact of one chain-strength choice: taking each embedding's \emph{best}
-strength over the sweep, ACL still predicts $P(\mathrm{GS})$ at $\rho=-0.53$
-($p\approx10^{-197}$). Figure~\ref{fig:chainstrength} shows why: short chains are
+\paragraph{Shorter chains give better solutions---within a fixed problem.} Across
+the whole cloud of (problem, embedding) pairs the association is striking: at the
+reference chain strength the pooled Spearman correlation between ACL and
+$P(\mathrm{GS})$ is $\rho=-0.63$, and between ACL and chain breaks $+0.80$
+(Figure~\ref{fig:quality}). But the pooled statistic conflates two effects: harder
+problems (larger $n$, higher density) are simultaneously harder to solve \emph{and}
+longer-chained, so much of that correlation is problem difficulty, not embedding
+quality. The claim the paper actually needs is the \emph{within-problem} one, and it
+holds: demeaning within each (problem, target)---so only embedding-to-embedding
+differences on the \emph{same} problem remain---ACL still anti-correlates with
+$P(\mathrm{GS})$ (fixed-effects $\rho=-0.11$, $p=3{\times}10^{-8}$; per-problem
+median $\rho=-0.13$, negative for $62\%$ of the $196$ problem--target units,
+sign-test $p=1.2{\times}10^{-4}$), and residual energy ($+0.10$,
+$p=2{\times}10^{-7}$) and chain breaks ($+0.15$, $p=6{\times}10^{-16}$) move with
+it; the demeaned slope is $-0.28$ in $P(\mathrm{GS})$ per unit of ACL. The
+fixed-problem effect is an order of magnitude smaller than the pooled cloud
+suggests---embeddings of the same small problem differ by only ${\sim}0.3$ ACL
+(median within-problem range), so the lever's travel is short here---but it is
+real, significant, and mechanistic: longer chains break more often under a fixed
+coupler budget, and broken chains corrupt the majority vote. The link is not an
+artifact of one chain-strength choice (at each embedding's \emph{best} strength the
+pooled correlation is still $\rho=-0.53$), and Figure~\ref{fig:chainstrength}
+exhibits the mechanism: short chains are
 already near-optimal at weak coupling, whereas long chains need a stronger
 ferromagnet to hold together---and even fully compensated they top out lower, because
 the coupler budget spent holding a long chain rigid is budget taken from the logical
@@ -1501,9 +1449,11 @@ problem.
 \end{tikzpicture}
 \caption{Solution quality versus chain length across all $2{,}736$ (problem,
 embedding) pairs (binned mean, reference chain strength). (a) the ground-state
-probability falls monotonically with ACL ($\rho=-0.63$, $p\approx10^{-296}$); (b) the
-chain-break fraction rises with ACL ($\rho=+0.80$)---the mechanism. Lower ACL is
-better on both axes.}
+probability falls monotonically with ACL (pooled $\rho=-0.63$); (b) the
+chain-break fraction rises with ACL (pooled $\rho=+0.80$)---the mechanism. The
+pooled trend conflates problem difficulty with embedding quality; the
+fixed-effects analysis in the text isolates the embedding-specific effect
+($\rho=-0.11$, $p=3{\times}10^{-8}$).}
 \label{fig:quality}
 \end{figure}
 
@@ -1531,7 +1481,9 @@ better on both axes.}
 \end{axis}
 \end{tikzpicture}
 \caption{The chain-strength sweep, by ACL tertile (short $\le1.36$, medium, long
-$\ge1.78$). (a) longer chains need a stronger ferromagnet and still cap at a lower
+$\ge1.78$; tertiles pool across problems, so part of the separation reflects
+problem difficulty---the mechanism, not the effect size, is the point here). (a)
+longer chains need a stronger ferromagnet and still cap at a lower
 $P(\mathrm{GS})$; (b) at every chain strength the break fraction grows with chain
 length. Spending coupler budget to hold long chains rigid is budget taken from the
 logical problem---the cost that ACL measures.}
@@ -1543,10 +1495,13 @@ $P(\mathrm{GS})$, the methods rank exactly as their ACL predicts
 (Table~\ref{tab:solquality}): \texttt{mmfork-portfolio} and \texttt{reweave-thorough},
 the two lowest-ACL methods, give the highest ground-state probability, and
 \texttt{mmfork-portfolio} beats \texttt{minorminer} on solution quality by a paired
-Wilcoxon test across problems ($p=2\times10^{-4}$, medium effect). The per-method
-\emph{gaps} are modest here because the brute-force ceiling forces small sources where
-all methods produce short chains (ACL ${\approx}1.5$--$1.7$); the cloud-level
-correlation, spanning the full ACL range, is the primary evidence and is overwhelming.
+Wilcoxon test across problems ($p=2\times10^{-4}$, medium effect)---a within-problem
+comparison, immune to the pooling confound above. In practical terms the portfolio's
+embeddings raise mean $P(\mathrm{GS})$ from $0.594$ to $0.649$, a ${\sim}9\%$
+relative improvement---about $9\%$ fewer anneal reads for the same expected number
+of ground-state hits at these sizes. The per-method
+\emph{gaps} are modest because the brute-force ceiling forces small sources where
+all methods produce short chains (ACL ${\approx}1.5$--$1.7$).
 Simulated annealing and SVMC agree closely---they rank the six methods identically
 (method-mean Spearman $\rho=0.94$; per-embedding $\rho=0.95$)---so the ordering is not
 an artifact of one sampler.
@@ -1562,15 +1517,37 @@ $^{***}$\,$p<10^{-3}$, paired Wilcoxon vs.\ \texttt{minorminer}.}
 \input{data/tab_solquality.tex}
 \end{table}
 
+\paragraph{Does the link persist at deployment scale?} The exact-reference design
+caps sources at $n\le18$, where chains stay short (ACL $\le2.8$); the paper's
+methods differ most at ACL $3.5$--$5.5$. We therefore ran an SA-only extension at
+$n\in\{24,32,40\}$ (ER $d{=}0.5$ into clean $P_6$; ACL $2.5$--$4.9$), scoring each
+run against the best energy found across all $36$ runs of its problem, since the
+exact ground state is out of reach. We report it honestly: the extension is
+\emph{directionally consistent but statistically inconclusive}. The lowest-ACL
+methods again hit the best-known energy most often (\texttt{mmfork-portfolio}
+$0.080$ vs.\ \texttt{minorminer} $0.030$ at reference strength; per-problem median
+fixed-effects $\rho=-0.16$, negative for $65\%$ of problems), but with only $24$
+problems nothing reaches significance ($p\ge0.27$), and the residual-energy metric
+is ambiguous at some strengths. Two effects plausibly blur the channel at this
+scale beyond low power: chain breaking saturates ($21$--$42\%$ of chains break at
+the swept strengths, all methods alike), and majority-vote decoding then acts as a
+classical repair that masks much of the difference---a masking real hardware, with
+its analog dynamic-range and noise costs, does not enjoy. Extending the controlled
+result into this regime---more problems, stronger coupling, decoders weaker than
+majority vote, and ultimately hardware---is the natural next experiment.
+
 \paragraph{What this does and does not show.} Classical SA and semiclassical SVMC
 exercise the pathway by which chain length degrades solutions on real hardware---chain
 breaks and the dynamic-range tax of holding long chains together---which is the
 dominant ACL-to-quality mechanism. They do not model coherent multi-qubit tunneling,
 and a faithful open-system simulation of quantum annealing is infeasible at the
-hundreds of physical qubits these embeddings occupy. The claim we support is therefore
-the one the optimization rests on: \emph{at fixed problem and sampler, shorter and more
-uniform chains yield measurably better solutions}, so the ACL reductions of the
-preceding sections are reductions in something that matters.
+hundreds of physical qubits these embeddings occupy. The claim we support is
+therefore the controlled one: \emph{at fixed problem and sampler, in the regime
+where chain breaking is not saturated, shorter and more
+uniform chains yield measurably better solutions}---so the ACL reductions of the
+preceding sections are reductions in something that matters, with the effect size
+at fixed problem modest for classical sampling and its full practical weight
+expected from hardware channels our simulators do not model.
 
 %% ========================================================================
 \section{Statistical Robustness Across Instances}
@@ -1582,10 +1559,17 @@ single-instance seed spread is \texttt{minorminer}'s documented failure mode. It
 leaves one question open: are the gains and the variance reduction properties of those
 particular instances? To settle it we re-ran the entire grid with $K=15$ independent
 graph instances per cell ($35$ cell--target combinations $\times\,15$ instances
-$\times\,3$ seeds $=1{,}575$ embeddings per method), and analyze the $525$
-per-(cell, target, instance) units with bootstrap confidence intervals and
+$\times\,3$ algorithm seeds $=1{,}575$ embeddings per method; $30$\,s per-trial
+budget; instance seeds disjoint from the fixed-instance grid's), and analyze the
+$525$ per-(cell, target, instance) units with bootstrap confidence intervals and
 Holm--Bonferroni-corrected paired Wilcoxon tests, separating graph-draw variance from
-algorithm-seed variance.
+algorithm-seed variance. One dependency caveat: the same ER instance appears under
+all three targets ($525$ units from $255$ distinct graphs), which the tests treat as
+independent; collapsing each graph's targets into a single unit---$255$ fully
+independent graphs---leaves every conclusion below intact
+(e.g.\ \texttt{reweave} $p=8{\times}10^{-28}$, \texttt{reweave-thorough} and
+\texttt{mmfork-portfolio} $p=4{\times}10^{-43}$, \texttt{mmfork-cuthill}
+$p=8{\times}10^{-4}$).
 
 The headline claims survive intact (Table~\ref{tab:instances}). \emph{Never-regress}
 holds at the instance level: across all $525$ units, every Reweave configuration that
@@ -1600,10 +1584,14 @@ once instance and seed variance are separated: \texttt{reweave-thorough} and
 $0.54\times$ and $0.53\times$ \texttt{minorminer}'s, while their between-instance
 standard deviation ($0.087$, $0.090$) is likewise below \texttt{minorminer}'s
 ($0.113$). The one variant that does \emph{not} survive scrutiny is
-\texttt{reweave-stacked}: pooled over the grid it is $+2.6\%$ \emph{worse} than
-\texttt{minorminer} and not significant, because its multilevel base inflates ACL on
-small, sparse instances even as it helps on large dense ones (\S\ref{sec:optimizations})
----which is why we already report it as an optional variant rather than a default. The
+\texttt{reweave-stacked}, and its failure mode is a distribution, not a mean: the
+\emph{typical} instance is unchanged (median paired difference $-0.01$ qubits/chain,
+Wilcoxon $p=0.41$), but a heavy tail of small, sparse instances regresses badly
+(worst $+72\%$), dragging the mean to $+2.6\%$ \emph{worse} than \texttt{minorminer}
+with a CI that excludes zero ($[+1.7,+3.7]$)---the multilevel base inflates ACL
+exactly where \texttt{minorminer} is already near-optimal, even as it helps on
+large dense instances (\S\ref{sec:optimizations}). This is why we report it as an
+optional variant rather than a default; the
 multi-instance design turns that caveat from a hedge into a measurement.
 
 \begin{table}[t]
@@ -1612,7 +1600,9 @@ targets; $525$ paired per-(cell, target, instance) units). $\Delta$ACL is the me
 per-instance change vs.\ \texttt{minorminer} with a bootstrap $95\%$ CI; ``seed std''
 is the within-instance ACL standard deviation and its ratio to \texttt{minorminer}'s;
 $p$ is Holm-corrected paired Wilcoxon. $^{***}$\,significantly \emph{better} than
-\texttt{minorminer} ($p<10^{-3}$); $^{\dagger}$\,significantly worse.}
+\texttt{minorminer} ($p<10^{-3}$); $^{\dagger}$\,significantly worse.
+\texttt{reweave-stacked}'s mean CI excludes zero while its median is null---a heavy
+tail, not a shift; see text.}
 \label{tab:instances}
 \small
 \centering
@@ -1653,8 +1643,12 @@ a larger neighbourhood repaired exactly with a constraint solver
 solution-quality validation of \S\ref{sec:solquality} is classical and semiclassical
 by necessity: it exercises the chain-break and dynamic-range pathway that dominates
 the ACL-to-quality link, but a faithful open-system quantum-annealing simulation at
-the embedded sizes here remains out of reach, so direct confirmation on quantum
-hardware is the natural next step.
+the embedded sizes here remains out of reach; its controlled, exact-reference
+regime is also capped at short chains, and the larger-$n$ extension is
+directionally consistent but statistically inconclusive---majority-vote decoding
+repairs much of what chain breaking costs a classical sampler. Direct confirmation
+on quantum hardware, where no such classical repair is free, is the natural next
+step.
 
 %% ========================================================================
 \section{Conclusion}
@@ -1673,9 +1667,10 @@ ${\sim}3\times$ faster at equal-or-better quality, within ${\sim}1.3\times$
 compiled \texttt{minorminer}'s wall-clock, so the gains come at little time cost.
 
 The same diagnosis exposes a second, lighter lever. Much of
-\texttt{minorminer}'s variance is \emph{order}-driven, so we open its vertex order
-with a small fork: a bandwidth-reducing order, or a per-instance portfolio of
-orders, lowers its ACL by up to ${\sim}5\%$ and roughly halves its variance,
+\texttt{minorminer}'s variability is \emph{order}-driven, so we open its vertex
+order with a small fork: a per-instance portfolio of bandwidth-reducing orders
+lowers its ACL by ${\sim}5\%$ and roughly halves its seed variance (a single
+Cuthill--McKee order gives a smaller gain for free),
 composes with Reweave, and---unlike a learned or constructive embedder---never
 sacrifices its reliability. On the actual Advantage and Advantage2 hardware graphs
 this guidance stays cheap at scale: averaged over instances its wall-clock premium
@@ -1696,6 +1691,137 @@ classical; the contribution is their synthesis, application, and honest empirica
 validation for minor embedding.
 
 \appendix
+\section{Preliminary-engine tables}
+\label{app:prelim}
+
+Full results for the preliminary engine of \S\ref{sec:reweave}, summarized in
+\S\ref{sec:results}: embedding quality on clean Pegasus~$P_6$
+(Table~\ref{tab:quality}), the corresponding wall-clock (Table~\ref{tab:timing}),
+robustness across topologies (Table~\ref{tab:robust}), and the density trend
+(Figure~\ref{fig:density}).
+
+\begin{table}[t]
+\caption{Embedding quality on clean Pegasus~$P_6$ for ER sources (mean over $5$
+seeds; ACL std in parentheses; lower ACL is better). Best ACL per cell in bold.}
+\label{tab:quality}
+\small
+\begin{tabular}{llccc}
+\toprule
+cell & algorithm & ACL (std) & max & qubits \\
+\midrule
+\multirow{4}{*}{$n{=}30,d{=}0.3$}
+ & \texttt{minorminer}          & 2.70 (0.11) & 3.8 & 81.0 \\
+ & \texttt{minorminer-layout}   & 2.75 (0.15) & 4.0 & 82.4 \\
+ & \texttt{reweave}          & 2.69 (0.10) & 3.8 & 80.6 \\
+ & \texttt{reweave-thorough} & \textbf{2.59} (0.03) & 3.8 & 77.6 \\
+\midrule
+\multirow{4}{*}{$n{=}30,d{=}0.5$}
+ & \texttt{minorminer}          & 3.30 (0.16) & 4.6 & 99.0 \\
+ & \texttt{minorminer-layout}   & 3.43 (0.10) & 4.8 & 102.8 \\
+ & \texttt{reweave}          & 3.25 (0.15) & 4.6 & 97.6 \\
+ & \texttt{reweave-thorough} & \textbf{3.19} (0.10) & 4.0 & 95.8 \\
+\midrule
+\multirow{4}{*}{$n{=}30,d{=}0.7$}
+ & \texttt{minorminer}          & 3.83 (0.22) & 5.0 & 114.8 \\
+ & \texttt{minorminer-layout}   & 3.80 (0.17) & 5.4 & 114.0 \\
+ & \texttt{reweave}          & 3.79 (0.23) & 5.0 & 113.8 \\
+ & \texttt{reweave-thorough} & \textbf{3.65} (0.06) & 4.8 & 109.6 \\
+\midrule
+\multirow{4}{*}{$n{=}40,d{=}0.3$}
+ & \texttt{minorminer}          & 3.56 (0.05) & 5.2 & 142.4 \\
+ & \texttt{minorminer-layout}   & 3.62 (0.14) & 5.4 & 144.8 \\
+ & \texttt{reweave}          & 3.53 (0.06) & 5.2 & 141.0 \\
+ & \texttt{reweave-thorough} & \textbf{3.41} (0.06) & 5.0 & 136.4 \\
+\midrule
+\multirow{4}{*}{$n{=}40,d{=}0.5$}
+ & \texttt{minorminer}          & 4.57 (0.10) & 6.4 & 182.6 \\
+ & \texttt{minorminer-layout}   & 4.72 (0.13) & 6.8 & 188.8 \\
+ & \texttt{reweave}          & 4.49 (0.14) & 6.2 & 179.6 \\
+ & \texttt{reweave-thorough} & \textbf{4.39} (0.08) & 6.2 & 175.4 \\
+\midrule
+\multirow{4}{*}{$n{=}40,d{=}0.7$}
+ & \texttt{minorminer}          & 5.15 (0.06) & 7.2 & 206.0 \\
+ & \texttt{minorminer-layout}   & 5.23 (0.17) & 7.0 & 209.2 \\
+ & \texttt{reweave}          & 5.07 (0.04) & 7.0 & 202.6 \\
+ & \texttt{reweave-thorough} & \textbf{4.98} (0.04) & 7.0 & 199.0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\caption{Wall-clock time (mean seconds per embedding, clean $P_6$). Reweave
+is pure Python; \texttt{minorminer} is compiled C++. \texttt{reweave-thorough}
+runs four seeded restarts and may use up to the full $20$\,s time budget.}
+\label{tab:timing}
+\small
+\begin{tabular}{lrrrr}
+\toprule
+cell & \texttt{mm} & \texttt{mm-layout} & \texttt{rw} & \texttt{rw-thor.} \\
+\midrule
+$n{=}30,d{=}0.3$ & 0.33 & 0.33 & 1.11 & 20.08 \\
+$n{=}30,d{=}0.5$ & 4.44 & 3.30 & 9.04 & 18.82 \\
+$n{=}30,d{=}0.7$ & 1.22 & 0.98 & 3.23 & 12.33 \\
+$n{=}40,d{=}0.3$ & 0.54 & 0.46 & 2.12 & 8.37 \\
+$n{=}40,d{=}0.5$ & 1.11 & 0.99 & 4.12 & 16.41 \\
+$n{=}40,d{=}0.7$ & 1.35 & 1.73 & 5.87 & 20.01 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\caption{Robustness across topologies for the $n{=}40,d{=}0.5$ ER source: ACL
+(std) and time. \texttt{minorminer}'s ACL inflates most on broken Pegasus, where
+\texttt{reweave-thorough}'s relative gain is largest ($-7.3\%$).}
+\label{tab:robust}
+\small
+\begin{tabular}{llcc}
+\toprule
+target & algorithm & ACL (std) & time (s) \\
+\midrule
+\multirow{4}{*}{Pegasus $P_6$}
+ & \texttt{minorminer}          & 4.57 (0.10) & 1.11 \\
+ & \texttt{minorminer-layout}   & 4.72 (0.13) & 0.99 \\
+ & \texttt{reweave}          & 4.49 (0.14) & 4.12 \\
+ & \texttt{reweave-thorough} & \textbf{4.39} (0.08) & 16.41 \\
+\midrule
+\multirow{4}{*}{broken $P_6$ ($5\%$)}
+ & \texttt{minorminer}          & 4.88 (0.18) & 0.82 \\
+ & \texttt{minorminer-layout}   & 4.72 (0.19) & 1.19 \\
+ & \texttt{reweave}          & 4.80 (0.18) & 3.52 \\
+ & \texttt{reweave-thorough} & \textbf{4.52} (0.06) & 14.26 \\
+\midrule
+\multirow{4}{*}{Zephyr $Z_4$}
+ & \texttt{minorminer}          & 3.63 (0.08) & 0.98 \\
+ & \texttt{minorminer-layout}   & 3.61 (0.16) & 1.10 \\
+ & \texttt{reweave}          & 3.57 (0.07) & 3.81 \\
+ & \texttt{reweave-thorough} & \textbf{3.52} (0.03) & 13.90 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=\columnwidth, height=5cm,
+  xlabel={edge density $d$}, ylabel={ACL (lower better)},
+  xtick={0.3,0.5,0.7}, xmin=0.25, xmax=0.75,
+  legend style={font=\scriptsize, at={(0.02,0.98)}, anchor=north west},
+  legend cell align=left, mark size=1.6pt,
+]
+\addplot+[thick] coordinates {(0.3,3.56)(0.5,4.565)(0.7,5.15)};
+\addplot+[thick] coordinates {(0.3,3.62)(0.5,4.72)(0.7,5.23)};
+\addplot+[thick] coordinates {(0.3,3.525)(0.5,4.49)(0.7,5.065)};
+\addplot+[thick] coordinates {(0.3,3.41)(0.5,4.385)(0.7,4.975)};
+\legend{\texttt{minorminer}, \texttt{mm-layout}, \texttt{reweave}, \texttt{rw-thorough}}
+\end{axis}
+\end{tikzpicture}
+\caption{ACL versus edge density for $n{=}40$ ER sources on clean Pegasus~$P_6$.
+\texttt{reweave-thorough} (bottom curve) is uniformly shortest; the gap to
+\texttt{minorminer} is roughly constant in absolute terms across densities.}
+\label{fig:density}
+\end{figure}
+
 \section{Complete per-cell results}
 \label{app:full}
 
@@ -1716,7 +1842,7 @@ instance--topology cells. Columns: \texttt{minorminer}, \texttt{minorminer-layou
 \setlength{\tabcolsep}{3.5pt}
 \begin{tabular}{lcccc}
 \toprule
-cell & \texttt{mm} & \texttt{mm-lay} & \texttt{pathf} & \texttt{rw-thor} \\
+cell & \texttt{mm} & \texttt{mm-layout} & \texttt{reweave} & \texttt{rw-thor} \\
 \midrule
 \multicolumn{5}{l}{\emph{Pegasus $P_6$ (clean)}}\\
 \midrule
@@ -1764,6 +1890,16 @@ ER $n{=}40,d{=}0.7$ & 4.18\,(0.30) & 4.29\,(0.06) & 4.09\,(0.26) & 3.85\,(0.07) 
 \bottomrule
 \end{tabular}
 \end{table}
+
+\section*{Data and Code Availability}
+The Ember benchmarking framework, every embedder evaluated here (under the
+registered names used in the text), the \texttt{minorminer} fork patch and its
+one-command build script, all sweep and analysis scripts, and the per-run CSVs
+behind every table and figure ship in the artifact accompanying this submission;
+\texttt{docs/paper/reproduce.sh} regenerates the locally-reproducible pipelines
+end-to-end and documents the cluster-scale sweeps. An archival public repository
+link will be provided upon publication (withheld here for double-anonymous
+review).
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{refs}

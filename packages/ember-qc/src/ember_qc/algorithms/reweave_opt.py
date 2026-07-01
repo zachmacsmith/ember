@@ -55,8 +55,10 @@ class ReweaveThorough(_ReweaveBase):
 
 @register_algorithm("reweave-stacked")
 class ReweaveStacked(_ReweaveBase):
-    """Optimized Reweave seeded from the multilevel placement instead of MM —
-    lower ACL and markedly lower run-to-run variance (Q1 placement-stacking)."""
+    """Optimized Reweave seeded from the multilevel placement instead of MM.
+    Helps on large, dense Pegasus instances but the multilevel base regresses
+    badly on small/sparse ones (net worse than MM pooled over the K=15 grid) —
+    an optional variant, not a default."""
     _params = {"router_cls": _OptimizedRouter, "base_method": "multilevel"}
 
 
@@ -77,3 +79,30 @@ class ReweaveMMForkCuthill(_ReweaveBase):
     gets more."""
     _params = {"router_cls": _OptimizedRouter, "base_method": "mmfork-cuthill",
                "base_fraction": 0.4}
+
+
+@register_algorithm("reweave-ablate-paths")
+class ReweaveAblatePaths(_ReweaveBase):
+    """Ablation: MM's inner step inside Reweave — every neighbour attaches to
+    the tree ROOT only (union of independent paths) instead of the nearest tree
+    node (SPH sharing). Isolates the Steiner-tree ingredient."""
+    _params = {"router_cls": _OptimizedRouter, "base_method": "minorminer",
+               "union_paths": True}
+
+
+@register_algorithm("reweave-ablate-nocong")
+class ReweaveAblateNoCong(_ReweaveBase):
+    """Ablation: congestion pricing off — the LNS shortcut routes at uniform
+    cost (lns_penalty=0) instead of pricing occupied qubits. Isolates the
+    negotiated-congestion ingredient."""
+    _params = {"router_cls": _OptimizedRouter, "base_method": "minorminer",
+               "lns_penalty": 0.0}
+
+
+@register_algorithm("reweave-ablate-both")
+class ReweaveAblateBoth(_ReweaveBase):
+    """Ablation: both ingredients off (union-of-paths inner step AND uniform
+    shortcut cost) — completes the 2x2 factorial with reweave / -paths /
+    -nocong."""
+    _params = {"router_cls": _OptimizedRouter, "base_method": "minorminer",
+               "union_paths": True, "lns_penalty": 0.0}

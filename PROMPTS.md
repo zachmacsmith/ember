@@ -293,3 +293,47 @@ Can you write a plan to do #2, and also #1 (using a simulator)?
 > confidence intervals + paired Wilcoxon (reusing ember_qc_analysis.statistics), on the hyde
 > cluster. Tooling: dimod ships SA/ExactSolver/ising_energy; embed/unembed via dwave.embedding or
 > hand-rolled. Then update the paper (new "Solution quality" section, CIs/significance in tables)._
+
+### Prompt 25
+
+```
+Perform a self-critique of the paper draft we have been writing in this repository, now that we have upgraded you to a smarter and more capable model
+```
+
+> _Outcome: full re-read (1771 lines) + data-verified critique. Major finding: the headline
+> solution-quality correlation (rho=-0.63, p~1e-296) is confounded by problem difficulty — within
+> a fixed problem the effect is rho~-0.11 (p=3e-8, still real but ~6x smaller); chain-break rho
+> +0.80 -> +0.15 likewise. Also: reweave-stacked "not significant" text contradicts its own CI
+> (mean +2.6% [1.7,3.7] significant vs median ~0, skew +2.9, worst instance +72%); the cuthill
+> "cuts variance ~25%" claim is contradicted by K=15 (0.97-1.02x in every regime; halving is
+> portfolio-only, 0.49-0.53x); abstract "re-establish every empirical claim" overclaims;
+> tab:stack "cheap stack matches portfolio" holds only on dense ER (K=15 pooled: -1.7% vs -5.5%);
+> abstract 77% should be 76% (verified 76.5% max); stale `pathf` column in tab:full; sec:novelty
+> poses the congestion-vs-Steiner ablation question and never answers it; reproduce.sh covers
+> only Sec. 5; two probe CSVs backing in-paper claims untracked; anonymous-mode patent self-cites.
+> Critique delivered with prioritized P0/P1/P2 fix list; fixes await user direction._
+
+### Prompt 26
+
+```
+Complete P0, P1, and P2, and ask me any questions if needed for each of the 20 to-dos
+```
+
+> _Outcome: all 20 items executed (user chose: run the 2x2 ablation; run the larger-n SA arm;
+> keep anonymous + mask patents; compress Sec. 5 into an appendix). New results: the ablation
+> finds the two imported routing ideas individually interchangeable (p=0.23/0.78 vs full
+> Reweave) and only jointly load-bearing (both-off p=0.002), with congestion pricing paying
+> for itself in time (~25%) — the LNS improver structure is the primary driver; the larger-n
+> SA arm (n in {24,32,40} into P6, best-known reference) is directionally consistent but
+> statistically inconclusive and is reported as such (chain-break saturation + majority-vote
+> repair blur the channel). Paper now leads with the fixed-effects correlation (rho=-0.11,
+> p=3e-8) and demotes the pooled rho=-0.63 to descriptive; reweave-stacked verdict rewritten
+> as tail-not-shift; cuthill variance claim corrected (portfolio-only halving, cuthill 1.02x);
+> cheap-stack parity scoped to dense ER; "every empirical claim" -> "headline claims"; 77->76;
+> pathf header fixed; graph-clustered robustness added (255 units, all conclusions hold);
+> forward-refs + K=15 run params added; patents anonymized (camera-ready originals in bib
+> comments); Data-and-Code-Availability section added; +9%-fewer-reads practical sentence;
+> vaeloss caption aligned with collapse narrative; naming standardized (reweave+portfolio /
+> mm-layout); Sec. 5 compressed with tables moved to new Appendix A; reproduce.sh rewritten to
+> cover all pipelines honestly; probe CSVs committed. 1365 tests pass (3 pre-existing runs.csv
+> failures); PDF 27pp, zero unresolved refs. Committed and pushed._

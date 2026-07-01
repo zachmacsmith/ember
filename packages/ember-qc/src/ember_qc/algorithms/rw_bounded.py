@@ -268,7 +268,8 @@ class ReweaveBoundedRouter(ReweaveRouter):
         for u in sorted(dist_by_u, key=lambda u: (dist_by_u[u].get(root, _BIG), u)):
             dist = dist_by_u[u]
             best_t, best_d = None, _BIG
-            for t in tree:
+            attach = (root,) if self.union_paths else tree
+            for t in attach:
                 d = dist.get(t, _BIG)
                 if d < best_d or (d == best_d and (best_t is None or t < best_t)):
                     best_d, best_t = d, t

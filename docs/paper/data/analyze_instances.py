@@ -128,6 +128,20 @@ def main():
               f"Holm={r.get('corrected_p', float('nan')):.2e} "
               f"r={r['effect_size']:+.2f} ({r['effect_magnitude']})")
 
+    # ---- 3b. robustness: cluster by GRAPH (ER instances appear under 3 targets;
+    # collapsing to one unit per graph removes the cross-target correlation) ----
+    print("\n=== robustness: Wilcoxon on per-GRAPH units (targets collapsed) ===")
+    piv_g = (inst.groupby(["cell", "instance", "algorithm"])["acl"].mean()
+                 .unstack("algorithm"))
+    for m in ["reweave", "reweave-thorough", "mmfork-cuthill", "mmfork-portfolio",
+              "reweave-mmfork-cuthill"]:
+        if m not in piv_g:
+            continue
+        d = (piv_g[m] - piv_g[BASE]).dropna()
+        w = stats.wilcoxon(d) if (d != 0).any() else None
+        print(f"  {PRETTY[m]:22s}: n_graphs={len(d)}  median diff={d.median():+.4f}  "
+              f"p={w.pvalue:.2e}" if w else f"  {PRETTY[m]}: all-zero diffs")
+
     # ---- 4. aggregate % ACL change vs mm with bootstrap CI ----
     print("\n=== aggregate ACL change vs minorminer (paired per instance, bootstrap CI) ===")
     rng = np.random.default_rng(0)

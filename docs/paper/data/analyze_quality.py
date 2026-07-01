@@ -50,6 +50,33 @@ def _corr(x, y):
     return float(r), float(p), int(m.sum())
 
 
+def _fixed_effects(sub, metric, unit=("pid", "target")):
+    """Within-problem (fixed-effects) association of ACL with `metric`.
+
+    Pooled correlations over the (problem, embedding) cloud conflate problem
+    difficulty with embedding quality (bigger/denser problems are harder AND
+    longer-chained). Demeaning within each problem removes the confound; the
+    per-problem rho distribution + sign test is the nonparametric counterpart.
+    Also fits the demeaned linear slope: d(metric)/d(ACL) at fixed problem.
+    """
+    unit = [u for u in unit if u in sub.columns]
+    acl_c = sub["acl"] - sub.groupby(unit)["acl"].transform("mean")
+    met_c = sub[metric] - sub.groupby(unit)[metric].transform("mean")
+    rho, p = stats.spearmanr(acl_c, met_c)
+    slope = float(np.polyfit(acl_c, met_c, 1)[0]) if acl_c.std() > 0 else float("nan")
+    rhos = []
+    for _, g in sub.groupby(unit):
+        if g["acl"].nunique() >= 3:
+            r, _ = stats.spearmanr(g["acl"], g[metric])
+            if np.isfinite(r):
+                rhos.append(r)
+    rhos = np.asarray(rhos)
+    p_sign = stats.wilcoxon(rhos).pvalue if len(rhos) >= 10 else float("nan")
+    return dict(rho=float(rho), p=float(p), slope=slope, n=len(sub),
+                med_rho=float(np.median(rhos)), frac_neg=float(np.mean(rhos < 0)),
+                n_problems=len(rhos), p_sign=float(p_sign))
+
+
 def _sig_df(sub, metric):
     """Wrap rows for significance_tests: one paired unit per (pid,target)."""
     return pd.DataFrame({
@@ -95,8 +122,18 @@ def main():
           f"{ref['pid'].nunique()} problems, {ref['method'].nunique()} methods, "
           f"targets={sorted(ref['target'].unique())}")
 
-    # ---- 1. ACL <-> quality correlations across the cloud (reference cs) ----
-    print("\n=== ACL <-> solution quality (Spearman, reference chain strength) ===")
+    # ---- 1. ACL <-> quality: fixed-effects (primary) + pooled (descriptive) ----
+    print("\n=== ACL <-> solution quality, WITHIN-PROBLEM (fixed effects; primary) ===")
+    for metric, label in [("p_gs", "P(ground state)"), ("resid", "residual energy"),
+                          ("chainbreak", "chain-break fraction")]:
+        fe = _fixed_effects(ref, metric)
+        print(f"  ACL vs {label:24s}: FE rho={fe['rho']:+.3f} p={fe['p']:.1e}  "
+              f"slope={fe['slope']:+.3f}/ACL  per-problem median rho={fe['med_rho']:+.2f} "
+              f"(frac<0={fe['frac_neg']:.2f}, sign p={fe['p_sign']:.1e}, "
+              f"{fe['n_problems']} problems)")
+    spread = ref.groupby(["pid", "target"])["acl"].agg(lambda x: x.max() - x.min())
+    print(f"  within-problem ACL range: median={spread.median():.2f} mean={spread.mean():.2f}")
+    print("\n=== pooled correlations (descriptive; conflate problem difficulty) ===")
     for metric, label in [("p_gs", "P(ground state)"), ("resid", "residual energy"),
                           ("chainbreak", "chain-break fraction")]:
         r, p, n = _corr(ref["acl"], ref[metric])
@@ -144,6 +181,33 @@ def main():
     _write_table(summ, psig, msv)
     _figures(ref, sa, join)
     print(f"\nwrote tab_solquality.tex and figures to {FIGDIR}")
+
+    # ---- 5. deployment-regime arm (best-known reference, larger n) ----
+    large_path = os.path.join(HERE, "raw_solution_quality_large.csv")
+    if os.path.exists(large_path):
+        lg = pd.read_csv(large_path)
+        lref = lg[np.isclose(lg["chain_rel"], REF_REL)].copy()
+        print("\n=== LARGE ARM (best-known reference; deployment ACL regime) ===")
+        print(f"  {lref['pid'].nunique()} problems; ACL range "
+              f"[{lref['acl'].min():.2f}, {lref['acl'].max():.2f}]; "
+              f"within-problem ACL range median="
+              f"{lref.groupby('pid')['acl'].agg(lambda x: x.max()-x.min()).median():.2f}")
+        for metric, label in [("p_gs", "P(best-known)"), ("resid", "residual energy"),
+                              ("chainbreak", "chain-break fraction")]:
+            fe = _fixed_effects(lref, metric, unit=("pid",))
+            print(f"  ACL vs {label:24s}: FE rho={fe['rho']:+.3f} p={fe['p']:.1e}  "
+                  f"slope={fe['slope']:+.3f}/ACL  per-problem median rho={fe['med_rho']:+.2f} "
+                  f"(frac<0={fe['frac_neg']:.2f}, sign p={fe['p_sign']:.1e})")
+        print("  per-method mean (reference chain strength):")
+        lsumm = (lref.groupby("method")
+                     .agg(acl=("acl", "mean"), p_gs=("p_gs", "mean"),
+                          resid=("resid", "mean"), cbreak=("chainbreak", "mean"))
+                     .reindex(METHOD_ORDER))
+        print(lsumm.round(3).to_string())
+        lpaired = _paired_vs_mm(lref.assign(target="p6"), "resid", higher_better=False)
+        for other, ma, mb, p, cp, es, mag, sign in lpaired:
+            print(f"    {PRETTY.get(other, other):18s} resid {mb:.3f} vs mm {ma:.3f} "
+                  f"({'BETTER' if sign > 0 else 'worse'}; p={p:.1e}, r={es:+.2f} {mag})")
 
 
 def _stars(p):
