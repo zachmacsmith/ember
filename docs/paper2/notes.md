@@ -430,6 +430,48 @@ Two readings and a caution:
    at ACL 3.37 vs our best arm 32/45 at ≈4.6–4.9. That residual is a
    *dynamics/fidelity* problem (§3.10), demonstrably not a history problem.
 
+### 3.12 The drop-in experiment, unblocked: history inside stock minorminer (2026-07-13)
+
+The §3.10 blocker is resolved from the other direction: instead of making the
+replica faithful to minorminer, the history cost is now a switch inside
+minorminer itself. The C++ fork (`scripts/mm_fork.patch`, previously only the
+`var_order` lever) gains a `history_alpha` parameter implementing §3.5 verbatim
+in MM's own dynamics:
+
+- **Price.** minorminer computes every qubit's routing price in exactly one
+  place (`pathfinder.hpp`, `compute_qubit_weights`); with `history_alpha > 0`
+  that price becomes `(1 + h_q) · weight_table[occ(q)]`.
+- **Update.** `h_q ← max(0, h_q + α·(occ_q − 1))` once at the end of each of
+  MM's four pass types (initialization, improve-overfill, pushdown-overfill,
+  improve-chainlength), where occupancy is globally consistent. During the
+  post-legality chainlength phase `occ ≤ 1` everywhere, so h only decays —
+  §3.4's "decay while slack" falls out for free.
+- **Persistence.** h lives on the pathfinder object: it persists across passes
+  *and* across `tries` restarts within one `find_embedding` call (congestion
+  geometry is instance-level knowledge; the down-step fades stale scars), and
+  is reset per call.
+- **Overflow.** Scaled prices saturate at `max_distance / exponent_margin` —
+  the same bound MM's weight table already respects — so path-sum arithmetic
+  keeps stock's no-overflow guarantee. `h` is a double; prices stay int64.
+- **Parity.** Both the multiply and the update are guarded by `α ≠ 0`, and the
+  price path consumes no randomness, so `α = 0` (or the parameter absent) is
+  **byte-identical to stock** — same embeddings, same RNG stream. Enforced by
+  the build self-test and `tests/algorithms/test_mmfork_history.py` (identical
+  embeddings vs the installed stock package across seeds).
+
+One semantic caveat: shipped MM's table base is adaptive (effectively-infinite
+`max_beta`, §3.8), so occupancy remains lexicographically dominant and `(1+h)`
+acts as *sub-level* bias — history breaks who-yields symmetries among
+equal-occupancy qubits, which per §3.5 is its only job here.
+
+First activation probe (n∈{30,35,40}, d∈{0.4,0.5} into clean Pegasus-4, 4 seeds
+each, `tries=10`; a probe, **not** a benchmark): easy instances legalize before
+any pass ends contested, so h stays 0 and `α=1` reproduces stock exactly; on
+the congested cells 6/12 runs diverged from stock, and every divergent run had
+ACL ≤ stock (e.g. 3.23 vs 3.63, 4.18 vs 4.50). The honest history 2×2 —
+`{α=0, α=1} × {stock order, fixed order}`, paired by (instance, seed) with
+`fallback=False` — is now runnable against a control that *is* stock minorminer.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).

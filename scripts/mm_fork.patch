@@ -1,8 +1,22 @@
 diff --git a/include/find_embedding/embedding_problem.hpp b/include/find_embedding/embedding_problem.hpp
-index cfc3d48..9449ecd 100644
+index cfc3d48..2a16e58 100644
 --- a/include/find_embedding/embedding_problem.hpp
 +++ b/include/find_embedding/embedding_problem.hpp
-@@ -361,6 +361,13 @@ class embedding_problem_base {
+@@ -303,6 +303,13 @@ class embedding_problem_base {
+             return weight_table[c];
+     }
+ 
++    //! Ember history-cost fork: the largest finite price a scaled qubit weight
++    //! may take while preserving the overflow guarantee (path sums of up to
++    //! ~exponent_margin prices stay below max_distance).
++    distance_t max_finite_price() const {
++        return max_distance / static_cast<distance_t>(exponent_margin);
++    }
++
+     //! a vector of neighbors for the variable `u`
+     const vector<int> &var_neighbors(int u) const { return var_nbrs[u]; }
+ 
+@@ -361,6 +368,13 @@ class embedding_problem_base {
              minorminer_assert(var_order_space.size() > 0);
              return var_order_space;
          }
@@ -16,11 +30,101 @@ index cfc3d48..9449ecd 100644
          var_order_space.clear();
          var_order_shuffle.clear();
          for (int v = num_v; v--;) var_order_shuffle.push_back(v);
+diff --git a/include/find_embedding/pathfinder.hpp b/include/find_embedding/pathfinder.hpp
+index 84c6bf2..8bffae7 100644
+--- a/include/find_embedding/pathfinder.hpp
++++ b/include/find_embedding/pathfinder.hpp
+@@ -89,6 +89,11 @@ class pathfinder_base : public pathfinder_public_interface {
+ 
+     vector<distance_t> qubit_weight;
+ 
++    //! Ember history-cost fork: per-qubit PathFinder-style history term h_q,
++    //! persistent across passes and restarts within one findEmbedding call.
++    //! Identically zero (and never read) when params.history_alpha == 0.
++    vector<double> hist;
++
+     vector<int> tmp_stats;
+     vector<int> best_stats;
+ 
+@@ -118,6 +123,7 @@ class pathfinder_base : public pathfinder_public_interface {
+               total_distance(num_qubits, 0),
+               min_list(num_qubits, 0),
+               qubit_weight(num_qubits, 0),
++              hist(num_qubits, 0.0),
+               tmp_stats(),
+               best_stats(),
+               visited_list(num_vars + num_fixed, vector<int>(num_qubits)),
+@@ -233,6 +239,7 @@ class pathfinder_base : public pathfinder_public_interface {
+                 if (!find_chain(emb, u)) return -1;
+             }
+         }
++        update_history(emb);
+         return check_stops(1);
+     }
+ 
+@@ -246,6 +253,7 @@ class pathfinder_base : public pathfinder_public_interface {
+             improved |= check_improvement(emb);
+             if (ep.embedded) break;
+         }
++        update_history(emb);
+         return check_stops(static_cast<int>(improved));
+     }
+ 
+@@ -284,6 +292,7 @@ class pathfinder_base : public pathfinder_public_interface {
+         }
+         ep.weight_bound = oldbound;
+         if (!improved) pushback += (num_vars * 2) / params.inner_rounds;
++        update_history(emb);
+         return check_stops(improved);
+     }
+ 
+@@ -299,6 +308,7 @@ class pathfinder_base : public pathfinder_public_interface {
+ 
+             improved |= check_improvement(emb);
+         }
++        update_history(emb);
+         return check_stops(improved);
+     }
+ 
+@@ -525,7 +535,32 @@ class pathfinder_base : public pathfinder_public_interface {
+     //! where the weight is `2^(alpha*fill)` where `fill` is the number of
+     //! chains which use that qubit
+     void compute_qubit_weights(const embedding_t &emb, const int start, const int stop) {
+-        for (int q = start; q < stop; q++) qubit_weight[q] = ep.weight(emb.weight(q));
++        if (params.history_alpha == 0.0) {
++            for (int q = start; q < stop; q++) qubit_weight[q] = ep.weight(emb.weight(q));
++        } else {
++            // Ember history-cost fork: price(q) = (1 + h_q) * weight_table[occ(q)],
++            // saturated at ep.max_finite_price() (and left untouched at max_distance)
++            // so path sums keep stock minorminer's overflow guarantee.
++            const distance_t cap = ep.max_finite_price();
++            for (int q = start; q < stop; q++) {
++                distance_t w = ep.weight(emb.weight(q));
++                if (w != max_distance && hist[q] != 0.0) {
++                    double scaled = (1.0 + hist[q]) * static_cast<double>(w);
++                    w = (scaled >= static_cast<double>(cap)) ? cap : static_cast<distance_t>(scaled);
++                }
++                qubit_weight[q] = w;
++            }
++        }
++    }
++
++    //! Ember history-cost fork: once-per-pass subgradient update of the history
++    //! term, h_q <- max(0, h_q + alpha*(occ(q) - 1)) -- rises while contested
++    //! (occ >= 2), holds at exactly-full, decays while free. No-op at alpha == 0,
++    //! so the stock code path (including its rng stream) is untouched.
++    void update_history(const embedding_t &emb) {
++        const double alpha = params.history_alpha;
++        if (alpha == 0.0) return;
++        for (int q = num_qubits; q--;) hist[q] = max(0.0, hist[q] + alpha * (emb.weight(q) - 1));
+     }
+ 
+   public:
 diff --git a/include/find_embedding/util.hpp b/include/find_embedding/util.hpp
-index 7697ab5..a910bfd 100644
+index 7697ab5..48a3ba6 100644
 --- a/include/find_embedding/util.hpp
 +++ b/include/find_embedding/util.hpp
-@@ -145,6 +145,12 @@ class optional_parameters {
+@@ -145,6 +145,19 @@ class optional_parameters {
      map<int, vector<int>> initial_chains;
      map<int, vector<int>> restrict_chains;
  
@@ -30,21 +134,29 @@ index 7697ab5..a910bfd 100644
 +    //! component subproblems with a different size fall back to the default order.
 +    vector<int> fixed_var_order;
 +
++    //! Ember history-cost fork: step size for the PathFinder-style history term.
++    //! Each pass, every qubit's history h_q is updated by the subgradient rule
++    //! h_q <- max(0, h_q + history_alpha*(occ(q) - 1)) and the routing price
++    //! becomes (1 + h_q) * weight_table[occ(q)]. 0.0 (default) disables the
++    //! mechanism entirely: the price path is byte-identical to stock minorminer.
++    double history_alpha = 0.0;
++
      //! duplicate all parameters but chain hints,
      //! and seed a new rng.  this vaguely peculiar behavior is
      //! utilized to spawn parameters for component subproblems
-@@ -166,7 +172,8 @@ class optional_parameters {
+@@ -166,7 +179,9 @@ class optional_parameters {
                skip_initialization(p.skip_initialization),
                fixed_chains(fixed_chains),
                initial_chains(initial_chains),
 -              restrict_chains(restrict_chains) {
 +              restrict_chains(restrict_chains),
-+              fixed_var_order(p.fixed_var_order) {
++              fixed_var_order(p.fixed_var_order),
++              history_alpha(p.history_alpha) {
  #ifndef CPPDEBUG
          if (verbose >= 4)
              throw CorruptParametersException(
 diff --git a/minorminer/_minorminer.pyx b/minorminer/_minorminer.pyx
-index 53aad8f..53b8aad 100644
+index 53aad8f..529af47 100644
 --- a/minorminer/_minorminer.pyx
 +++ b/minorminer/_minorminer.pyx
 @@ -331,7 +331,8 @@ cdef class _input_parser:
@@ -53,11 +165,24 @@ index 53aad8f..53b8aad 100644
                   "return_overlap", "skip_initialization", "inner_rounds", "threads",
 -                 "restrict_chains", "suspend_chains", "max_beta", "interactive"}
 +                 "restrict_chains", "suspend_chains", "max_beta", "interactive",
-+                 "var_order"}
++                 "var_order", "history_alpha"}
  
          for name in params:
              if name not in names:
-@@ -411,6 +412,16 @@ cdef class _input_parser:
+@@ -383,6 +384,12 @@ cdef class _input_parser:
+         if z is not None:
+             self.opts.timeout = float(z)
+ 
++        # Ember history-cost fork: step size of the per-qubit history term;
++        # 0.0 (default) leaves the search byte-identical to stock minorminer.
++        z = params.get("history_alpha")
++        if z is not None:
++            self.opts.history_alpha = float(z)
++
+         z = params.get("max_beta")
+         if z is not None:
+             self.opts.max_beta = float(z)
+@@ -411,6 +418,16 @@ cdef class _input_parser:
          _get_chainmap(params.get("initial_chains", ()), self.opts.initial_chains, self.SL, self.TL, "initial_chains")
          _get_chainmap(params.get("restrict_chains", ()), self.opts.restrict_chains, self.SL, self.TL, "restrict_chains")
  
@@ -75,14 +200,15 @@ index 53aad8f..53b8aad 100644
          cdef int nonempty
          cdef int pinlabel
 diff --git a/minorminer/_minorminer_h.pxi b/minorminer/_minorminer_h.pxi
-index ca9c138..c1d72a6 100644
+index ca9c138..228e508 100644
 --- a/minorminer/_minorminer_h.pxi
 +++ b/minorminer/_minorminer_h.pxi
-@@ -58,6 +58,7 @@ cdef extern from "../include/find_embedding/util.hpp" namespace "find_embedding"
+@@ -58,6 +58,8 @@ cdef extern from "../include/find_embedding/util.hpp" namespace "find_embedding"
      cppclass optional_parameters:
          optional_parameters()
          void seed(uint64_t)
 +        vector[int] fixed_var_order
++        double history_alpha
  
          LocalInteractionPtr localInteractionPtr
          int max_no_improvement

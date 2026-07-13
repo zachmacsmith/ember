@@ -1,24 +1,27 @@
 """
 ember_qc/algorithms/minorminer_forked.py
 =========================================
-**Order-guided minorminer on the FULL search** — via a small fork of minorminer
-that adds a ``var_order=`` parameter to ``find_embedding``.
+**Stock minorminer with its decisions exposed as switches** — via a small fork
+(``scripts/mm_fork.patch``) that adds two parameters to ``find_embedding``:
 
-Stock ``minorminer.find_embedding`` runs its complete heuristic (tear-and-replace
-+ ``tries`` restarts) using an *internal randomized* variable order (RPFS); it
-exposes no way to supply your own order to that full search (only the weaker
-``quickpass`` primitive takes one — see ``minorminer_guided.py``). The fork in
-``external/minorminer-fork`` adds one field (``optional_parameters.fixed_var_order``)
-and one early-return in ``embedding_problem::var_order`` so a caller-supplied order
-drives every pass of the full search. With ``var_order`` unset the fork is
-byte-identical to stock minorminer 0.2.22 (parity-tested).
+* ``var_order=`` — a caller-supplied variable order drives every pass of the
+  full search (stock uses an internal randomized order, RPFS, and exposes no
+  way to override it on the full heuristic).
+* ``history_alpha=`` — PathFinder-style history in the qubit cost: the routing
+  price becomes ``(1 + h_q) * weight_table[occ(q)]`` and once per pass
+  ``h_q <- max(0, h_q + alpha*(occ(q) - 1))`` (rises while contested, holds at
+  exactly-full, decays while free; docs/paper2/notes.md §3.5/§3.12).
+
+With both switches unset the fork is byte-identical to stock minorminer 0.2.22
+(parity self-tested at build: identical embeddings across seeds).
 
 This module loads that forked ``_minorminer`` extension (built in-place by
 ``scripts/build_mm_fork.sh``) as a standalone module — it coexists with the
 installed stock ``minorminer`` in the same process — and registers:
 
-  mmfork              the fork with no var_order (== stock minorminer; control)
+  mmfork              the fork with every switch off (== stock minorminer; control)
   mmfork-<order>      the full search guided by a ``search_orders`` ordering
+  mmfork-history      stock dynamics with the history cost on (history_alpha=1)
 
 The headline finding (search-guidance study, `new-algorithm` branch): a min-fill
 or degeneracy order lowers mean ACL by ~1-2% **and** roughly halves run-to-run
@@ -94,16 +97,20 @@ _DEF = dict(max_no_improvement=10, timeout=1000, max_beta=None, tries=10,
 
 def forked_find_embedding(
     source: nx.Graph, target: nx.Graph, *, order: Optional[List[int]] = None,
+    history_alpha: float = 0.0,
     seed: int = 0, timeout: float = 60.0, tries: int = 10, fallback: bool = True,
 ) -> dict:
-    """Run the forked minorminer full search, optionally guided by ``order``.
+    """Run the forked minorminer full search, optionally guided by ``order``
+    and/or pricing qubits with the history term (``history_alpha`` > 0).
 
     Drop-in safety: a single fixed order reused across all ``tries`` restarts
     removes the order diversity stock MM relies on near the feasibility boundary,
-    so a guided run *could* fail where stock MM would succeed. With ``fallback``
-    (default), a failed guided run is retried once as **stock minorminer** (no
-    ``var_order``) on the remaining budget — guaranteeing success >= stock MM. The
-    plain ``mmfork`` control (``order=None``) is stock MM by construction."""
+    so a modified run *could* fail where stock MM would succeed. With ``fallback``
+    (default), a failed modified run is retried once as **stock minorminer** (no
+    ``var_order``, no history) on the remaining budget — guaranteeing success >=
+    stock MM. For paired experiments pass ``fallback=False`` so the arm stays
+    pure. The plain ``mmfork`` control (``order=None``, ``history_alpha=0``) is
+    stock MM by construction."""
     start = time.perf_counter()
     deadline = start + timeout if timeout else None
     try:
@@ -115,12 +122,14 @@ def forked_find_embedding(
                 "success": False, "status": "FAILURE", "error": str(exc)}
     S, T = list(source.edges()), list(target.edges())
 
-    def _run(var_order, t):
+    def _run(var_order, alpha, t):
         params = dict(_DEF)
         params["tries"] = tries
         params["timeout"] = t if t else 1000
         if var_order is not None:
             params["var_order"] = list(var_order)
+        if alpha:  # keep the param out entirely on the stock path
+            params["history_alpha"] = float(alpha)
         try:
             e = mod.find_embedding(S, T, random_seed=int(seed), **params)
         except Exception as exc:
@@ -128,12 +137,12 @@ def forked_find_embedding(
             return None
         return {int(k): [int(q) for q in v] for k, v in e.items() if v}
 
-    emb = _run(order, timeout)
-    # Fallback: a guided run that fails (empty/raised) retries as stock MM so the
-    # ordered variants never do worse than minorminer on *success*.
-    if (not emb) and order is not None and fallback:
+    emb = _run(order, history_alpha, timeout)
+    # Fallback: a modified run that fails (empty/raised) retries as stock MM so
+    # the variants never do worse than minorminer on *success*.
+    if (not emb) and (order is not None or history_alpha) and fallback:
         remaining = None if deadline is None else max(1.0, deadline - time.perf_counter())
-        emb = _run(None, remaining)
+        emb = _run(None, 0.0, remaining)
 
     elapsed = time.perf_counter() - start
     if not emb:
@@ -143,6 +152,7 @@ def forked_find_embedding(
 
 class _ForkBase(EmbeddingAlgorithm):
     _order: Optional[str] = None  # key into ORDERINGS, or None for default
+    _alpha: float = 0.0           # history step size; 0 = stock cost
     _tries: int = 10              # minorminer restart count (10 = stock default)
 
     _install_instruction = "build the fork: bash scripts/build_mm_fork.sh"
@@ -160,14 +170,27 @@ class _ForkBase(EmbeddingAlgorithm):
     def embed(self, source_graph, target_graph, timeout=60.0, **kwargs) -> dict:
         seed = kwargs.get("seed", 0) or 0
         order = ORDERINGS[self._order](source_graph) if self._order else None
+        alpha = float(kwargs.get("history_alpha", self._alpha) or 0.0)
+        fallback = bool(kwargs.get("fallback", True))
         return forked_find_embedding(source_graph, target_graph, order=order,
+                                     history_alpha=alpha, fallback=fallback,
                                      seed=int(seed), timeout=timeout, tries=self._tries)
 
 
 @register_algorithm("mmfork")
 class MMFork(_ForkBase):
-    """Forked minorminer with no var_order — control == stock minorminer 0.2.22."""
+    """Forked minorminer with every switch off — control == stock minorminer 0.2.22."""
     _order = None
+
+
+@register_algorithm("mmfork-history")
+class MMForkHistory(_ForkBase):
+    """Stock minorminer dynamics with the history cost switched on: the routing
+    price becomes ``(1 + h_q) * beta^occ(q)`` with the once-per-pass subgradient
+    update ``h_q <- max(0, h_q + alpha*(occ(q) - 1))`` (docs/paper2/notes.md §3.5,
+    inside real minorminer instead of the Python replica). Order stays stock.
+    ``alpha`` defaults to 1.0; override per call with ``history_alpha=``."""
+    _alpha = 1.0
 
 
 def _make(order_name: str) -> type:

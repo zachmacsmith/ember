@@ -66,9 +66,14 @@ acl = lambda e: sum(len(c) for c in e.values())/len(e)
 a = [acl(s.find_embedding(S, T, random_seed=k)) for k in range(8)]
 b = [acl(f.find_embedding(S, T, random_seed=k, **DEF)) for k in range(8)]
 assert a == b, f"PARITY FAILED: {a} != {b}"
+c = [acl(f.find_embedding(S, T, random_seed=k, history_alpha=0.0, **DEF)) for k in range(8)]
+assert a == c, f"PARITY FAILED at history_alpha=0: {a} != {c}"
 order = sorted(src.nodes(), key=lambda v: -src.degree(v))
 e = f.find_embedding(S, T, random_seed=0, var_order=order, **DEF)
 assert len(e) == src.number_of_nodes(), "var_order run did not embed all nodes"
-print("   parity OK (fork==stock without var_order); var_order accepted and valid")
+e = f.find_embedding(S, T, random_seed=0, history_alpha=1.0, **DEF)
+assert len(e) == src.number_of_nodes(), "history_alpha run did not embed all nodes"
+print("   parity OK (fork==stock with var_order unset AND with history_alpha=0);")
+print("   var_order and history_alpha accepted and valid")
 PYEOF
 echo ">> done."

@@ -9,8 +9,10 @@ on top of `main`'s benchmarking framework, exactly two things:
    **order** (Cuthill–McKee vs. random). Minorminer is one corner of the family; every claim
    is one switch flipped against that corner.
 2. **The minorminer C++ fork** (`scripts/mm_fork.patch` + `build_mm_fork.sh`) — stock
-   minorminer 0.2.22 plus a `var_order=` parameter, byte-identical to stock when unset.
-   Registered as `mmfork` / `mmfork-<order>`. This is the gold standard for comparability:
+   minorminer 0.2.22 plus two switches, byte-identical to stock when both are unset:
+   `var_order=` (caller-supplied vertex order) and `history_alpha=` (the §3.5 history
+   cost inside MM's real dynamics; see notes.md §3.12). Registered as `mmfork` /
+   `mmfork-<order>` / `mmfork-history`. This is the gold standard for comparability:
    the control arm is literally stock minorminer.
 
 **Ground rules.** Every change to minorminer must be a toggleable switch, defaulted to stock
