@@ -23,10 +23,19 @@ except ImportError:  # Python < 3.8 — unreachable under requires-python >= 3.9
 from ember_qc.benchmark import (
     benchmark_one,
     compute_embedding_metrics,
+    evaluate,
     EmbeddingResult,
     EmbeddingBenchmark,
     load_benchmark,
     delete_benchmark,
+)
+
+# Shared round → repair backend (§2.2) — reusable by all chain-building algorithms
+from ember_qc.embedding_backend import (
+    round_assignment,
+    grow_to_connected,
+    resolve_overlaps,
+    is_valid_embedding,
 )
 
 # Fault simulation
@@ -74,10 +83,16 @@ __all__ = [
     # Benchmark
     "benchmark_one",
     "compute_embedding_metrics",
+    "evaluate",
     "EmbeddingResult",
     "EmbeddingBenchmark",
     "load_benchmark",
     "delete_benchmark",
+    # Round → repair backend
+    "round_assignment",
+    "grow_to_connected",
+    "resolve_overlaps",
+    "is_valid_embedding",
     # Results
     "ResultsManager",
     # Registry
