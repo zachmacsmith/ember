@@ -1,0 +1,141 @@
+% Bibliography for paper 2 (working title: none yet).
+% Everything cited in notes.md, in citation order. Entries shared with paper 1
+% (docs/paper/refs.bib) are copied verbatim so the two bibs stay stylistically
+% consistent: cai2014minorminer, mcmurchie1995pathfinder, takahashi1980sph,
+% mehlhorn1988steiner, gomez2025eval.
+
+@misc{cai2014minorminer,
+  author = {Cai, Jun and Macready, William G. and Roy, Aidan},
+  title  = {A Practical Heuristic for Finding Graph Minors},
+  year   = {2014},
+  eprint = {1406.2741},
+  archivePrefix = {arXiv},
+  primaryClass = {quant-ph},
+  note   = {arXiv:1406.2741}
+}
+
+@inproceedings{mcmurchie1995pathfinder,
+  author    = {McMurchie, Larry and Ebeling, Carl},
+  title     = {{PathFinder}: A Negotiation-Based Performance-Driven Router for {FPGAs}},
+  booktitle = {ACM International Symposium on Field-Programmable Gate Arrays (FPGA)},
+  pages     = {111--117},
+  year      = {1995}
+}
+
+@inproceedings{awerbuch1993online,
+  author    = {Awerbuch, Baruch and Azar, Yossi and Plotkin, Serge},
+  title     = {Throughput-Competitive On-Line Routing},
+  booktitle = {34th Annual Symposium on Foundations of Computer Science (FOCS)},
+  pages     = {32--40},
+  year      = {1993}
+}
+
+@article{raghavan1987rounding,
+  author  = {Raghavan, Prabhakar and Thompson, Clark D.},
+  title   = {Randomized Rounding: A Technique for Provably Good Algorithms and Algorithmic Proofs},
+  journal = {Combinatorica},
+  volume  = {7},
+  number  = {4},
+  pages   = {365--374},
+  year    = {1987}
+}
+
+@inproceedings{racke2002congestion,
+  author    = {R{\"a}cke, Harald},
+  title     = {Minimizing Congestion in General Networks},
+  booktitle = {43rd Annual IEEE Symposium on Foundations of Computer Science (FOCS)},
+  pages     = {43--52},
+  year      = {2002}
+}
+
+@inproceedings{betz1997vpr,
+  author    = {Betz, Vaughn and Rose, Jonathan},
+  title     = {{VPR}: A New Packing, Placement and Routing Tool for {FPGA} Research},
+  booktitle = {International Workshop on Field-Programmable Logic and Applications (FPL)},
+  pages     = {213--222},
+  year      = {1997}
+}
+
+@misc{vtrdocs,
+  author       = {{Verilog-to-Routing project}},
+  title        = {{VPR} Command-Line Options ({VTR} Documentation)},
+  howpublished = {\url{https://docs.verilogtorouting.org/en/latest/vpr/command_line_usage/}},
+  note         = {Accessed 2026-07-10; documents the negotiated-congestion cost
+                  parameterization: \texttt{initial\_pres\_fac}, \texttt{pres\_fac\_mult},
+                  \texttt{acc\_fac}, \texttt{max\_pres\_fac}}
+}
+
+@article{murray2020vtr8,
+  author  = {Murray, Kevin E. and Petelin, Oleg and Zhong, Sheng and Wang, Jia Min and
+             Eldafrawy, Mohamed and Legault, Jean-Philippe and Sha, Eugene and
+             Graham, Aaron G. and Wu, Jean and Walker, Matthew J. P. and others},
+  title   = {{VTR} 8: High-Performance {CAD} and Customizable {FPGA} Architecture Modelling},
+  journal = {ACM Transactions on Reconfigurable Technology and Systems},
+  volume  = {13},
+  number  = {2},
+  year    = {2020}
+}
+
+@inproceedings{hoo2015paralar,
+  author    = {Hoo, Chin Hau and Kumar, Akash and Ha, Yajun},
+  title     = {{ParaLaR}: A Parallel {FPGA} Router Based on {Lagrangian} Relaxation},
+  booktitle = {25th International Conference on Field Programmable Logic and Applications (FPL)},
+  year      = {2015}
+}
+
+@article{paralarpd2019,
+  author  = {Agrawal, Rohit and Ahuja, Kapil and Hoo, Chin Hau and
+             Nguyen, Tuan Duy Anh and Kumar, Akash},
+  title   = {{ParaLarPD}: Parallel {FPGA} Router Using Primal-Dual Sub-Gradient Method},
+  journal = {Electronics},
+  volume  = {8},
+  number  = {12},
+  pages   = {1439},
+  year    = {2019}
+}
+
+@inproceedings{takahashi1980sph,
+  author    = {Takahashi, Hiromitsu and Matsuyama, Akira},
+  title     = {An Approximate Solution for the Steiner Problem in Graphs},
+  booktitle = {Mathematica Japonica},
+  volume    = {24},
+  pages     = {573--577},
+  year      = {1980}
+}
+
+@article{mehlhorn1988steiner,
+  author  = {Mehlhorn, Kurt},
+  title   = {A Faster Approximation Algorithm for the Steiner Problem in Graphs},
+  journal = {Information Processing Letters},
+  volume  = {27},
+  number  = {3},
+  pages   = {125--128},
+  year    = {1988}
+}
+
+@inproceedings{cuthill1969bandwidth,
+  author    = {Cuthill, Elizabeth and McKee, James},
+  title     = {Reducing the Bandwidth of Sparse Symmetric Matrices},
+  booktitle = {Proceedings of the 24th National Conference of the ACM},
+  pages     = {157--172},
+  year      = {1969}
+}
+
+@misc{benchoff2025orthoroute,
+  author       = {Benchoff, Brian},
+  title        = {{OrthoRoute}: {GPU}-Accelerated {PCB} Autorouting},
+  howpublished = {\url{https://bbenchoff.com/pages/OrthoRoute.html}},
+  note         = {Accessed 2026-07-10; documents oscillation under blanket history
+                  decay ($h \leftarrow 0.995\,h$) and the \texttt{pres\_fac} cap
+                  needed to keep history competitive}
+}
+
+@misc{gomez2025eval,
+  author = {G\'omez-Tejedor, Pablo and Osaba, Eneko and Villar-Rodriguez, Esther},
+  title  = {Addressing the Minor-Embedding Problem in Quantum Annealing and Evaluating State-of-the-Art Algorithm Performance},
+  year   = {2025},
+  eprint = {2504.13376},
+  archivePrefix = {arXiv},
+  primaryClass = {quant-ph},
+  note   = {arXiv:2504.13376}
+}
