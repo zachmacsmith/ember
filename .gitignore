@@ -97,3 +97,6 @@ scripts/reassign_graph_ids.py
 
 # Jupyter
 .ipynb_checkpoints/
+
+# minorminer fork build artifact (recreated by scripts/build_mm_fork.sh)
+external/minorminer-fork/
