@@ -472,6 +472,59 @@ ACL ≤ stock (e.g. 3.23 vs 3.63, 4.18 vs 4.50). The honest history 2×2 —
 `{α=0, α=1} × {stock order, fixed order}`, paired by (instance, seed) with
 `fallback=False` — is now runnable against a control that *is* stock minorminer.
 
+### 3.13 The 2×2 inside real minorminer: history is a wash (2026-07-13)
+
+Ran via `docs/paper2/data/history_2x2.py` (raw rows in `history_2x2.csv`).
+Arms: {α=0, α=1} × {stock order, Cuthill–McKee}, all pure (`fallback=False`,
+stock `tries=10`); α=0/stock-order is byte-identical stock minorminer 0.2.22
+(§3.12). Grid A: ER n∈{20,30,40} × d∈{0.3,0.5,0.7} into clean Pegasus-6;
+Grid B (congested): n∈{30,35,40,45} × d∈{0.4,0.5} into clean Pegasus-4.
+One instance per cell (seed 12345), algorithm seeds 0–9. Paired per
+(cell, seed), both arms legal:
+
+| family | grid | pairs | mean ΔACL (α1−α0) | shorter/longer/tie | diverged |
+|---|---|---|---|---|---|
+| stock | A/P6 | 90 | +0.012 | 1/5/84 | 6/90 |
+| stock | B/P4 | 60 | −0.045 | 18/13/29 | 32/60 |
+| cuthill | A/P6 | 90 | −0.010 | 4/1/85 | 5/90 |
+| cuthill | B/P4 | 60 | +0.003 | 13/15/32 | 30/60 |
+| **pooled** | | **300** | **−0.008** | 36/34/230 | |
+
+Success rates are **identical arm-for-arm** (90/90 on every grid-A arm; 60/80
+on every grid-B arm — the same hard (cell, seed) draws fail in all four arms).
+Dose response (stock order, 4 congested cells, paired): −0.081 / −0.105 /
+−0.016 for α = 0.25 / 1 / 4 — small, non-monotone, consistent with noise
+around zero. Wall-clock overhead ≈3–6%.
+
+Reading, in order of confidence:
+
+1. **Inside real minorminer, the history term is inert-to-negligible.** On
+   easy cells it literally never engages (84–85/90 exact ties — the designed
+   negative control); on congested cells it engages in half the pairs
+   (~30/60 divergent) and still moves nothing: ΔACL ≈ 0, shorter/longer
+   balanced, feasibility unchanged in every arm. The §3.12 first probe
+   (6/6 divergent runs improved) does not replicate at sample size —
+   it was luck.
+2. **This closes the loop on §3.9's substitutes hypothesis.** The replica
+   needed history because it was deterministic — history was its only escape
+   from price deadlocks (§3.6), and there it also shortened chains (§3.11,
+   −0.15 pooled). Real MM already carries per-pass order shuffles, randomized
+   tie-breaking, and feasibility restarts (§3.8); given that machinery,
+   memory has nothing left to add. Randomness and memory are substitutes,
+   and MM already has one.
+3. **A mechanistic suspect for the null, untested:** shipped MM prices
+   overlap lexicographically hard (β effectively infinite, §3.8), so
+   `(1+h)` can only reorder qubits *within* an occupancy class, never
+   across classes. The replica ran β = D̂, where history has real exchange
+   rate against path length. A `max_beta`-lowered arm (stock exposes the
+   parameter) would separate "history is useless in MM's dynamics" from
+   "history is useless at infinite β". Also untested: h reset per try
+   (ours persists), asymmetric up/down steps.
+
+Consequence for the paper-2 thesis: the cost axis, at least in this form, is
+not where minorminer loses. The order axis (§3.11 fork results: ~1–2% ACL,
+halved variance) remains the only lever with a measured effect inside real MM.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).
