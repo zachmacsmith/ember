@@ -659,6 +659,48 @@ endpoint moves, early-exit inner searches) pays on every run
 unconditionally; basin selection paid only if this probe had gone the
 other way.
 
+### 3.17 Verified: the shortening rebuild is already lockstep meeting-point search; the cost is its exhaustive audition (2026-07-14)
+
+Read `find_short_chain` (`pathfinder.hpp:388-450`), the rebuild used by
+`improve_chainlength_pass` — i.e. the inner step of the phase where 85–95% of
+wall-clock goes (§3.15):
+
+- Tears out `u`, then expands k Dijkstras (one per neighbour chain) **in
+  lockstep by distance**, through free qubits only — synchronized ball growth;
+  `counts[q]` tracks how many balls have reached `q`.
+- Every free qubit reached by all k balls is a candidate root — the meeting
+  points, visited in increasing lockstep radius.
+- At **every** candidate it constructs the full Steiner chain
+  (`construct_chain_steiner`), measures the *actual* length, and tears it out
+  unless it improves; it exits early only on strict improvement over the
+  current size, and abandons at radius > current chain length.
+
+Consequences:
+
+1. **The expense is the audition, not the search structure.** Construct-and-
+   tear at every meeting point, most expensive exactly when no improvement
+   exists (the audit exhausts the ball and fails) — i.e. in the
+   diminishing-returns tail of the grind, ~10 failing full sweeps before
+   patience expires. The audit exists because the legalization-phase estimate
+   (sum of root distances) is loose for Steiner trees (trunk-sharing), so
+   estimate-ranking misranks candidates; the code's own comment: this variant
+   "takes quite a long time" vs the others that "simply pick a random root
+   candidate with minimum estimated chainlength".
+2. **Candidate switch for the fork** (the first speed lever aimed at the 90%
+   slice): `short_audit` mode — (A) estimate-only: one construction per
+   rebuild using the legalization-style estimated root; (B) budgeted: audit
+   candidates in estimated order, stop at first improvement or j
+   constructions. Not a free win per-rebuild (the audit is the polish's
+   accuracy mechanism); the bet is at *fixed wall-clock* — cheaper rebuilds
+   buy more sweeps/retries than the per-rebuild loss costs. Experiment must
+   be time-matched Pareto (stock vs A vs B), P16 scale.
+3. Third entry in the shipped-vs-paper list (§3.8 randomization, §3.14
+   Steiner construction, now the shortening rebuild): design discussion here
+   independently reinvented both the meeting-point root search and the
+   Steiner attach — the shipped program keeps arriving first. The remaining
+   headroom is in its *economics* (audit cost, scheduling, patience), not its
+   search primitives.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).
