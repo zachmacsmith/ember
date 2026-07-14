@@ -739,6 +739,50 @@ is *correct* (the clique-embedding shape), so rest-length springs are the
 wrong fix; density-limited attraction handles both regimes. This is also
 VLSI's actual choice (ePlace density fields, not pairwise repulsion).
 
+### 3.19 Placement-loop v1: density-limited attraction descends (2026-07-14)
+
+Same harness, same instances/seeds as §3.18; only the force law changed
+(`placement_loop.py --v1`, raw in `placement_loop_v1.csv`): attraction as
+before + binned density-overflow repulsion (16×16 bins, capacity = measured
+qubits per bin, demand = λ per centroid with λ read back from the previous
+round's realized chains, overfull bins push centroids toward the
+least-pressured neighbour bin).
+
+**Legal-ACL trajectories now descend** where v0 orbited:
+
+- n=100: 8.52 → 8.07 best (round 7), settling ~8.2–8.6 (v0: never below 8.52)
+- n=140: 12.54 → 11.80–11.86 by rounds 8–10, near-monotone (v0: orbit 12.3–12.9)
+- n=180: 14.65 → wobble 14.4–14.9, min 14.39 (weak descent; largest size least moved)
+
+**Final polished ACL, paired per (cell, seed), 15 pairs:**
+
+| v1 vs | mean ΔACL | v1 wins |
+|---|---|---|
+| mm-full (½ the budget) | −0.31 | 11/15 |
+| v0 loop (same budget) | −0.23 | 11/15 |
+| restart-control (same budget, no steering) | **−0.34** | 10/15 |
+
+Reading, carefully:
+
+1. **The force law was the missing piece, as §3.18 predicted**: adding Max's
+   density term turns orbits into descent at two of three sizes and flips the
+   loop from indistinguishable-from-re-rolling to beating the same-budget
+   unguided control by −0.34 ACL (10/15). Geometry is now doing real work —
+   the first mechanism this whole investigation has added to the MM ecosystem
+   with a measured positive effect.
+2. Honest caveats: 5 seeds per cell; the mm-full comparison is at ~2× its
+   wall-clock (the clean same-budget claim is vs control); the n=180
+   trajectory barely descends (possible λ/bin-resolution effects at scale);
+   descent is ~5–6% of legal ACL, and much of the final gain may flow through
+   "better basin → same polish" — which §3.16 said doesn't work from *random*
+   basins, so steered basins behaving differently is itself notable and
+   should be re-checked (does v1's legal ACL now correlate with polished
+   ACL?).
+3. Next levers, in order: more seeds + a size sweep for significance; the
+   n=180 weakness (bin size vs chain extent; λ per-variable instead of
+   global); round schedule (descend further before polishing); and only then
+   thinking about speed (the loop still pays ~11 legalizations).
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).
