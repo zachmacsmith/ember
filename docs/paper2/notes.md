@@ -783,6 +783,44 @@ Reading, carefully:
    global); round schedule (descend further before polishing); and only then
    thinking about speed (the loop still pays ~11 legalizations).
 
+### 3.20 Placement-loop v2: per-variable charge helps the geometry, not the endpoint (2026-07-14)
+
+Charge-model iteration on §3.19, same harness/instances/seeds
+(`placement_loop.py --v2`, raw in `placement_loop_v2.csv`).
+
+Design note first: the originally proposed "measured footprint" charge (deposit
+last round's realized chain qubits into bins) is **logically inert** for a
+threshold-1 push — realized chains occupy distinct qubits, so realized density
+can never exceed capacity. Only *proposal* demand can signal crowding. v2
+therefore keeps demand on proposals but replaces the global scalar λ with each
+variable's own realized chain length from the previous round (per-variable,
+measured; still isotropic — the H/V wire-orientation refinement stays parked,
+along with interval/crossbar coordinates, per Max: chains also turn corners,
+so H/V is itself a cartoon; finer modelling judged not worth its cost yet).
+
+Results (5 seeds × 3 cells, paired):
+
+- **Legal-stage geometry improved**, most where it was weakest: n=180's
+  trajectory now genuinely drifts down (second half 14.0–14.4 vs round-0
+  14.65; min 14.03 vs v1's 14.39); best-legal-per-seed means: 11.09 vs 11.26
+  (n=140), 13.72 vs 13.90 (n=180), ≈tie at n=100.
+- **Final polished ACL did not improve**: v2 vs v1 +0.083, v2 wins 5/15 —
+  noise-level, slightly the wrong way. The legal-stage gain is eaten by the
+  polish (the §3.16 lesson again, now applying between two *steered* variants).
+- The family's edge replicates a third time: v2 beats same-budget control
+  −0.254 (9/15) and mm-full-at-half-budget −0.230 (10/15), consistent with
+  v1's −0.34/−0.31.
+
+Verdict: **v1 stays the default force law by parsimony** (simpler, same
+endpoint). Max's pre-run prediction ("charge modelling won't be big enough to
+fix 180, but I suspect it would be helpful") — confirmed on both halves.
+The recurring structural lesson: improvements to the *legal-stage* geometry
+keep failing to survive MM's polish. The next high-value question is therefore
+not the force law but the *handoff*: either polish less destructively (local
+polish only, preserving the placement's structure), or select/iterate at the
+polished level rather than the legal level (e.g. polish the best 2–3 rounds
+briefly, race them — merges with the §3.16(2) successive-halving idea).
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).

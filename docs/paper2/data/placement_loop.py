@@ -96,15 +96,18 @@ class DensityField:
     def _center(self, i, j):
         return self.mins + (np.array([i, j]) + 0.5) * self.width
 
-    def push(self, cent, lam):
-        count = np.zeros_like(self.cap)
-        where = {}
-        for v, p in cent.items():
-            ij = self._bin(p)
-            where[v] = ij
-            count[ij] += 1
+    def push(self, cent, charges):
+        """charges[v] = qubits variable v is expected to need. v1: the global
+        mean chain length for everyone. v2: v's OWN realized chain length from
+        the previous round (measured per-variable charge; notes §3.20 — note a
+        pure realized-footprint field cannot work here: occupancy never exceeds
+        capacity by construction, so only proposal demand can signal crowding)."""
+        where = {v: self._bin(p) for v, p in cent.items()}
+        demand = np.zeros_like(self.cap)
+        for v, ij in where.items():
+            demand[ij] += charges[v]
         with np.errstate(divide="ignore"):
-            pressure = np.where(self.cap > 0, lam * count / np.maximum(self.cap, 1),
+            pressure = np.where(self.cap > 0, demand / np.maximum(self.cap, 1),
                                 np.inf)
         new = {}
         for v, p in cent.items():
@@ -150,13 +153,13 @@ def snap(cent, tree, qubits, degree_order):
 
 
 def run_loop(S, T_edges, src_adj, pos, tree, qubits, degree_order, adj, seed, clock,
-             field=None):
+             field=None, use_footprint=False):
     """R rounds of relax->[density push]->snap->route->prune."""
     traj, fails = [], 0
     best_emb, best_acl = None, float("inf")
     # round 0: unguided legalization to obtain initial geometry
     emb = clock.find(S, T_edges, random_seed=seed, timeout=60, chainlength_patience=0)
-    cent, lam = None, 3.0
+    cent, lam, chain_len = None, 3.0, {}
     if emb:
         emb = spur_prune(emb, src_adj, adj)
         a = acl(emb)
@@ -164,6 +167,7 @@ def run_loop(S, T_edges, src_adj, pos, tree, qubits, degree_order, adj, seed, cl
         best_emb, best_acl = emb, a
         cent = centroids_of(emb, pos)
         lam = a
+        chain_len = {v: len(c) for v, c in emb.items()}
     else:
         fails += 1
         traj.append(None)
@@ -171,7 +175,11 @@ def run_loop(S, T_edges, src_adj, pos, tree, qubits, degree_order, adj, seed, cl
     for r in range(1, ROUNDS + 1):
         cent = relax(cent, src_adj)
         if field is not None:
-            cent = field.push(cent, lam)
+            if use_footprint:  # v2: per-variable measured charge
+                charges = {v: chain_len.get(v, lam) for v in cent}
+            else:              # v1: global scalar charge
+                charges = {v: lam for v in cent}
+            cent = field.push(cent, charges)
         seeds = snap(cent, tree, qubits, degree_order)
         emb = clock.find(S, T_edges, random_seed=seed * 100 + r, timeout=60,
                          chainlength_patience=0,
@@ -187,6 +195,7 @@ def run_loop(S, T_edges, src_adj, pos, tree, qubits, degree_order, adj, seed, cl
             best_emb, best_acl = emb, a
         cent = centroids_of(emb, pos)  # realized geometry, congestion-deformed
         lam = a
+        chain_len = {v: len(c) for v, c in emb.items()}
     return best_emb, traj, fails
 
 
@@ -221,7 +230,7 @@ def make_cell(n, target):
     return src, S, src_adj, degree_order
 
 
-def main(smoke=False, v1=False):
+def main(smoke=False, v1=False, v2=False):
     target = dnx.pegasus_graph(4 if smoke else 16)
     T_edges = list(target.edges())
     adj = build_adjacency(target)
@@ -229,15 +238,17 @@ def main(smoke=False, v1=False):
     qubits = sorted(pos)
     coords = np.array([pos[q] for q in qubits])
     tree = cKDTree(coords)
-    field = DensityField(coords, B=4 if smoke else 16) if v1 else None
-    csv_path = CSV_PATH.replace(".csv", "_v1.csv") if v1 else CSV_PATH
-    loop_arm = "loop-v1" if v1 else "loop"
+    field = DensityField(coords, B=4 if smoke else 16) if (v1 or v2) else None
+    tag = "_v2" if v2 else ("_v1" if v1 else "")
+    csv_path = CSV_PATH.replace(".csv", tag + ".csv") if tag else CSV_PATH
+    loop_arm = "loop" + tag.replace("_", "-") if tag else "loop"
 
     if smoke:
         src, S, src_adj, degree_order = make_cell(30, target)
         clock = MMClock()
         best, traj, fails = run_loop(S, T_edges, src_adj, pos, tree, qubits,
-                                     degree_order, adj, 0, clock, field=field)
+                                     degree_order, adj, 0, clock, field=field,
+                                     use_footprint=v2)
         assert best and is_valid_embedding(best, src, target), "loop output invalid"
         pol = polish(S, T_edges, best, 0, clock)
         assert pol and is_valid_embedding(pol, src, target), "polished output invalid"
@@ -250,7 +261,7 @@ def main(smoke=False, v1=False):
     for n in NS:
         src, S, src_adj, degree_order = make_cell(n, target)
         for seed in SEEDS:
-            if not v1:
+            if not (v1 or v2):
                 # mm-full baseline (v1 reuses v0's, same instances/seeds)
                 clock = MMClock(); t0 = time.perf_counter()
                 emb = clock.find(S, T_edges, random_seed=seed, timeout=300)
@@ -262,14 +273,15 @@ def main(smoke=False, v1=False):
             # loop
             clock = MMClock(); t0 = time.perf_counter()
             best, traj, fails = run_loop(S, T_edges, src_adj, pos, tree, qubits,
-                                         degree_order, adj, seed, clock, field=field)
+                                         degree_order, adj, seed, clock, field=field,
+                                         use_footprint=v2)
             pol = polish(S, T_edges, best, seed, clock) if best else None
             rows.append(dict(n=n, seed=seed, arm=loop_arm,
                              final_acl=round(acl(pol), 3) if pol else None,
                              total_time=round(time.perf_counter() - t0, 2),
                              mm_time=round(clock.t, 2), fails=fails,
                              trajectory=";".join("%.3f" % t if t else "F" for t in traj)))
-            if not v1:
+            if not (v1 or v2):
                 # restart-control
                 clock = MMClock(); t0 = time.perf_counter()
                 best, fails = run_control(S, T_edges, src_adj, adj, seed, clock)
@@ -287,7 +299,7 @@ def main(smoke=False, v1=False):
     print(f"wrote {len(rows)} rows -> {csv_path}\n")
 
     # ── summary ───────────────────────────────────────────────────────────────
-    arms = (loop_arm,) if v1 else ("mm-full", "loop", "control")
+    arms = (loop_arm,) if (v1 or v2) else ("mm-full", "loop", "control")
     for n in NS:
         print(f"n={n}")
         for arm in arms:
@@ -313,4 +325,4 @@ def main(smoke=False, v1=False):
 
 
 if __name__ == "__main__":
-    main(smoke="--smoke" in sys.argv, v1="--v1" in sys.argv)
+    main(smoke="--smoke" in sys.argv, v1="--v1" in sys.argv, v2="--v2" in sys.argv)
