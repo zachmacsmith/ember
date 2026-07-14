@@ -21,7 +21,7 @@ swappable:
 | axis | minorminer's choice | our candidate replacement |
 |---|---|---|
 | qubit cost | `D^occ(q)`, recomputed each pass, no memory | same exponential backbone plus a history term with principled decay (§3) |
-| chain construction | union of independent shortest paths to each placed neighbour | shortest-path-heuristic (SPH) Steiner tree: attach each neighbour to the nearest node of the growing tree [10, 11] |
+| chain construction | union of independent shortest paths to each placed neighbour — **the 2014 paper's description; shipped MM actually builds nearest-attach Steiner trees, see §3.14** | shortest-path-heuristic (SPH) Steiner tree: attach each neighbour to the nearest node of the growing tree [10, 11] |
 | vertex order | fixed random order per restart | bandwidth-reducing order (Cuthill–McKee [12]) |
 
 Minorminer is then *one corner of the family* (exponential cost with zero history,
@@ -524,6 +524,51 @@ Reading, in order of confidence:
 Consequence for the paper-2 thesis: the cost axis, at least in this form, is
 not where minorminer loses. The order axis (§3.11 fork results: ~1–2% ACL,
 halved variance) remains the only lever with a measured effect inside real MM.
+
+### 3.14 Verified: shipped minorminer's inner step is already a Steiner heuristic (2026-07-13)
+
+Read while scoping the tree switch for the fork; checked directly against the
+0.2.22 source (clone in `external/minorminer-fork`). The headline fact:
+
+- **`construct_chain_steiner` is the only chain constructor ever called**
+  (`pathfinder.hpp:377` in `find_chain`; `:422` in `find_short_chain` — every
+  pass type funnels through these two sites). It is a nearest-attach Steiner
+  build: the first neighbour's path grows from the root; each subsequent
+  neighbour attaches at the nearest node of the *current* chain — with attach
+  candidates restricted to root/branch nodes (`refcount > 1`), a mild variant
+  of pure Takahashi–Matsuyama SPH [10], which would allow any tree node.
+- **The union-of-paths constructor (`construct_chain`, `embedding.hpp:180`) is
+  dead code** — defined, documented, never invoked. Its own successor's doc
+  comment says the Steiner build "has an opportunity to make shorter chains
+  than `construct_chain`".
+- The group-Steiner→Steiner contraction (touch a *connected chain*, not a
+  vertex) is implemented as the seeding rule: each neighbour's Dijkstra seeds
+  every qubit of that chain at distance 0 with `parent = -1`
+  (`pathfinder.hpp:458-493`), and `link_path` (`chain.hpp:333`) walks parents
+  until it lands in the neighbour's chain, making the landing qubit the
+  neighbour's side of the link — condition (3) bookkeeping falls out exactly.
+
+The 2014 CMR paper describes the union of independent shortest paths; the
+shipped program outgrew its paper. Consequences:
+
+1. **Paper 1's "replace union-of-paths with a real SPH Steiner tree" replaced
+   something shipped minorminer does not do.** Its ablation's verdict that the
+   SPH ingredient was "individually redundant" is retroactively unsurprising:
+   both arms of that ablation were Steiner builders.
+2. **The replica's `tree="union"` corner is mislabeled as "the MM corner"**
+   (§2 table, §3.9–§3.11 arms). Shipped MM sits nearer our `sph` arm — though
+   not identical: the `refcount>1` attach restriction, the per-neighbour full
+   distance fields, and the root argmin differ from the replica's `_assemble`.
+   A concrete, newly identified contributor to the §3.10 fidelity gap.
+3. **The tree experiment inverts.** The arm worth building in the fork is the
+   *dumber* union constructor (revive the dead code behind a switch) — the
+   question becomes "what does MM's Steiner trick buy?", not "does adding
+   Steiner help?" — plus pure-SPH (drop the `refcount>1` filter) as the
+   third point. All three share every other line of the program.
+4. Another entry for the §3.8 list of load-bearing not-in-the-paper facts
+   (with the per-pass reshuffle, the capped-exponent weight table, and the
+   effectively-infinite β). The paper is a sketch of this program, not a
+   specification of it; claims must be verified against source.
 
 ## 4. References
 

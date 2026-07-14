@@ -17,7 +17,8 @@ on top of `main`'s benchmarking framework, exactly two things:
 
 **Ground rules.** Every change to minorminer must be a toggleable switch, defaulted to stock
 behavior, measured one flip at a time against the stock corner — paired by (instance, seed),
-never unpaired (survivor bias). Design rationale, source-verified minorminer facts, and the
+never unpaired (survivor bias). Verify any claim about minorminer against its source, never
+its paper — the shipped program has repeatedly outgrown the 2014 description (notes §3.8, §3.14). Design rationale, source-verified minorminer facts, and the
 open fidelity gap between the Python replica and stock MM: `docs/paper2/notes.md`.
 
 The abandoned prior work (Reweave wrapper, speculative embedders, learning line) lives only

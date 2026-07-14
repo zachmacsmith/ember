@@ -10,7 +10,11 @@ Two named strategies over one shared assembly:
               neighbour attaches to the *nearest node of the growing tree*, so
               paths share trunk structure and chains come out shorter.
 * ``union`` — every neighbour attaches to the root only: the union of
-              independent shortest paths, which is minorminer's inner step.
+              independent shortest paths. This is the 2014 CMR *paper's*
+              description of minorminer's inner step; shipped minorminer
+              actually builds nearest-attach Steiner trees (its union
+              constructor is dead code — verified, docs/paper2/notes.md
+              §3.14), so ``union`` is the paper's corner, not the program's.
               Kept as the ablation arm for this axis.
 
 Assembly (adapted from the paper-1 implementation's ``_steiner_route``
