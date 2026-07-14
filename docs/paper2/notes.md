@@ -570,6 +570,50 @@ shipped program outgrew its paper. Consequences:
    effectively-infinite β). The paper is a sketch of this program, not a
    specification of it; claims must be verified against source.
 
+### 3.15 Where stock minorminer spends its time (2026-07-13)
+
+Probe (`data/mm_time_budget.py`, raw in `mm_time_budget.csv`): stock MM on
+Pegasus-16 (5640 qubits), ER at average degree 10, n ∈ {60,100,140,180,220},
+2 seeds, decomposed with MM's own knobs — `chainlength_patience=0` isolates
+legalization from the shortening phase; `threads ∈ {4,16}` parallelizes the
+per-neighbour root-distance Dijkstras.
+
+| n | full run | legalize-only | legalization share | ACL legal-only → polished |
+|---|---|---|---|---|
+| 60 | 1.2 s | 0.16–0.29 s | ~13–22% | 6.4 → 4.0 |
+| 100 | 4.6–5.6 s | 0.44 s | ~8% | 9.1 → 5.7 |
+| 140 | 10–12 s | 0.5–0.7 s | ~5% | 13.2–14.2 → 7.9–8.2 |
+| 180 | 7.5–17 s | 0.8 s | ~5–10% | 15.0–15.7 → 9.9–10.4 |
+| 220 | 8.4–9.0 s | 1.4 s | ~15% | 17.5–18.0 → 12.5–12.9 |
+
+Findings:
+
+1. **85–95% of wall-clock is the post-legality shortening phase**
+   (`improve_chainlength_pass` / `find_short_chain`), and it earns its keep:
+   a consistent ~30–38% ACL reduction over the legal-only result. Legalization
+   is cheap and scales mildly. MM's economy is "legalize fast and dumb, then
+   spend 10× that budget polishing" — the opposite of where §"root selection
+   waste" reasoning pointed. Any speed project aimed at the legalization
+   search (early-exit root argmin, flood construction *as a speed play*)
+   attacks ≤15% of the bill; Amdahl closes that avenue.
+2. **`threads` is a no-op at these scales**: 4 and 16 threads give wall-clock
+   and ACL identical to 1 thread at every size. The parallel pathfinder covers
+   only the legalization-phase root-distance computation. Another shipped-vs-
+   assumed surprise for the §3.8/§3.14 list.
+
+What this motivates instead, in order:
+
+- **Best-of-N legalizations → shorten the winner once.** Legalization ≈5–15%
+  of a run, so N-way basin diversity costs ≈ one polish. Stock parameters
+  suffice end-to-end (`chainlength_patience=0` for the cheap runs;
+  `initial_chains` + `skip_initialization` to warm-start the polish).
+  Gating question first: does legal-only ACL predict polished ACL on the
+  same instance (if the grind washes out the starting basin, N-way selection
+  buys nothing)? A small paired probe answers it.
+- **The shortening phase's diminishing-returns curve** (`chainlength_patience`
+  sweep): if most of the polish arrives early, cheap runs get much cheaper
+  and the N in best-of-N grows at fixed budget.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).
