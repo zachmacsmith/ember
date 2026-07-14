@@ -701,6 +701,44 @@ Consequences:
    headroom is in its *economics* (audit cost, scheduling, patience), not its
    search primitives.
 
+### 3.18 Placement-loop prototype v0: attraction-only orbits, as predicted (2026-07-14)
+
+Prototype of the iterated placement loop (`data/placement_loop.py`, raw in
+`placement_loop.csv`): one centroid per variable in `pegasus_layout`
+coordinates; per round, one Laplacian-smoothing step (η=0.5, attraction only)
+→ snap to distinct qubits (KD-tree, degree-first) → **stock minorminer**
+legalization from those seeds (`initial_chains`, `chainlength_patience=0`) →
+spur-prune → read centroids back from realized chains. Best round warm-polished
+(§3.16 pipeline). Repulsion deliberately left implicit (snap distinctness +
+router exclusion). Arms: mm-full, loop (R=10), restart-control (same router
+budget, no steering). P16, ER avg degree 10, n ∈ {100,140,180}, 5 seeds.
+
+Max's pre-registered prediction (made mid-run, from the 3-body analogy):
+attraction-only dynamics has collapse as its fixed point; the round dynamics
+(contract → fabric re-inflates → read back) should therefore orbit, not
+descend. **Confirmed:**
+
+- Mean legal-ACL trajectories are flat oscillations around round 0:
+  8.52 → (8.7–9.1) at n=100; 12.54 → (12.3–12.9) at n=140;
+  14.65 → (14.4–15.7) at n=180. No descent anywhere.
+- Final ACLs: loop ≈ control ≈ mm-full (e.g. n=180: 9.95 / 10.28 / 10.10)
+  at ~2× mm-full's wall-clock — no win, exactly what flat geometry + §3.16's
+  worthless selection predicts. Controls behaved (control ≈ mm-full).
+- Wall-clock fairness held: steering glue is 0.3–1.9 s vs 8.7–20.5 s inside
+  stock minorminer (≤8%).
+
+Verdict: **the v0 force law is refuted, not the family** — the pre-registered
+distinction. The trajectory diagnostic did its job: geometry fails to improve
+its own legal ACL under pure attraction. v1 force law (Max): keep attraction,
+add **density-overflow repulsion** — bin the layout, capacity = measured
+working qubits per bin (broken qubits handled by construction), demand =
+centroids × current mean chain length λ (read from last round — capacity
+tightens/loosens as chains lengthen/shorten), push centroids in overfull bins
+down the pressure gradient. Rationale: for dense sources, collapse-to-capacity
+is *correct* (the clique-embedding shape), so rest-length springs are the
+wrong fix; density-limited attraction handles both regimes. This is also
+VLSI's actual choice (ePlace density fields, not pairwise repulsion).
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).
