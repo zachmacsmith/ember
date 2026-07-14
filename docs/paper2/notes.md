@@ -614,6 +614,51 @@ What this motivates instead, in order:
   sweep): if most of the polish arrives early, cheap runs get much cheaper
   and the N in best-of-N grows at fixed budget.
 
+### 3.16 The basin does not survive the polish (2026-07-13)
+
+Gate experiment for the best-of-N idea (`data/basin_persistence.py`, raw in
+`basin_persistence.csv`). Pegasus-16, ER avg degree 10, n ∈ {100,140,180}
+(instance seed 12345), 16 seeds each. Per seed: legal-only run
+(`chainlength_patience=0`), then a warm-started polish of exactly that
+embedding (`initial_chains` + `skip_initialization`, stock patience).
+Fidelity confirmed: the two-stage pipeline's polished ACLs match plain
+full-run ACLs on the same instance.
+
+| cell | pairs | Pearson(legal, polished) | Spearman | mean legal → polished |
+|---|---|---|---|---|
+| n=100 | 16 | −0.28 (p=.29) | −0.07 | 9.40 → 5.95 |
+| n=140 | 16 | +0.05 (p=.84) | −0.16 | 13.55 → 8.36 |
+| n=180 | 16 | −0.01 (p=.97) | +0.02 | 15.92 → 9.92 |
+| pooled (centered) | 48 | **−0.01 (p=.93)** | −0.04 | |
+
+Bootstrapped best-of-N preview (select by legal ACL, report polished ACL):
+flat at every N — 5.96/5.97/5.96/5.94 (n=100), 8.38/8.34/8.27/8.25 (n=140),
+9.91/9.92/9.94/10.00 (n=180) for N = 1/2/4/8.
+
+Reading:
+
+1. **Legal-only ACL carries no information about polished ACL.** The
+   shortening grind (which cuts ~35–40% of ACL, §3.15) is chaotic enough to
+   wash out the starting embedding's apparent quality. Best-of-N cheap
+   legalizations *selected by legal ACL* is dead — killed for the price of
+   one probe, before any code was built on it.
+2. What is *not* dead: polished outcomes do spread (~±5% ACL run-to-run,
+   the full-run columns), so there is variance worth selecting over — it just
+   can't be seen from the legal stage. The standard fallback is racing /
+   successive halving: give all N candidates a *small* polish budget, keep
+   the best half, iterate. Whether early-polish ACL predicts full-polish ACL
+   is exactly the `chainlength_patience` curve question (§3.15) — the two
+   experiments merged into one: trace ACL vs polish budget per seed and
+   compute rank stability over the trajectory.
+3. Untested alternative predictors from the legal stage (max chain length,
+   qubit dispersion, congestion structure) — noted, not pursued.
+
+Consequence: the shortener itself is the target. Making the polish cheaper
+(§3.15 shortener menu: dirty-set + fat-first scheduling, spur-pruning,
+endpoint moves, early-exit inner searches) pays on every run
+unconditionally; basin selection paid only if this probe had gone the
+other way.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).
