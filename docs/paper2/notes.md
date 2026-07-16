@@ -821,6 +821,42 @@ polish only, preserving the placement's structure), or select/iterate at the
 polished level rather than the legal level (e.g. polish the best 2–3 rounds
 briefly, race them — merges with the §3.16(2) successive-halving idea).
 
+### 3.21 Why nothing crushes minorminer on this suite: ER is bisection-limited (2026-07-14)
+
+Two one-off measurements (inline, from existing CSVs + one busclique call),
+prompted by Max's "something feels wrong — surely MM can't be optimal?"
+
+1. **ACL is linear in n at fixed average degree.** Stock MM full runs, ER at
+   avg degree 10 into P16: ACL/n = 0.068, 0.056, 0.057, 0.056, 0.058 for
+   n = 60…220 (two independent datasets agree). Constant ACL/n is the
+   signature of a *geometric* limit: fixed-degree ER is an expander —
+   bisection width Θ(n) — while a quasi-2D fabric's cut capacity grows only
+   with the perimeter of the occupied region, forcing total chain mass (and
+   hence ACL at fixed n/qubit ratio... more precisely the occupied-region
+   scale) to grow until the cut fits. Any embedder pays Θ(n) ACL on this
+   class; MM sits on the right scaling law already. **On random ER the only
+   available prizes are the constant, speed, variance, and parallelism.**
+2. **The crossbar/clique construction is not descriptive of good sparse
+   embeddings.** busclique K180 on P16: ACL 16.67. Reusing those exact chains
+   for our ER(180, deg 10) instance and spur-pruning to its edges: ACL 13.87
+   — far worse than MM's 10.1. The crossbar pays for all-to-all capacity the
+   sparse instance doesn't need; its regularity buys everything at the
+   density cliff and nothing out here. MM's sparse embeddings rightly look
+   nothing like it.
+
+Consequences for the placement family: ER at fixed degree is the *unique*
+class with no latent geometry for centroids to discover (a random graph's
+2D "positions" carry no information), so "not crushing MM on ER" is the
+expected behaviour of a correct geometric method — the replicated −0.3 edge
+(§3.19–3.20) is nibbling the constant, which is all that exists there. The
+family's honest home-turf test is structured sources — geometric kNN, grids/
+lattices, planted communities (real QUBOs are usually structured) — where
+round-0 placement should already be strong and trajectories should descend
+hard. If it cannot win *there*, the family is dead; if it wins big, the
+result is "structure-aware embedding: matches MM on random, beats it on
+structured" — a defensible paper thesis. (The SOTA eval's kNN/BA/d-regular
+extensions point the same direction.)
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).
