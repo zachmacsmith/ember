@@ -857,6 +857,72 @@ result is "structure-aware embedding: matches MM on random, beats it on
 structured" — a defensible paper thesis. (The SOTA eval's kNN/BA/d-regular
 extensions point the same direction.)
 
+### 3.22 The attraction embedder v3: pure arm refuted on ER, hybrid at parity (2026-07-17)
+
+The placement loop became a registered algorithm (`attraction`;
+`factored/placement.py`, tests in `test_attraction.py`). Changes vs the §3.19
+prototype: **own initialization** (spectral layout of H scaled into the target
+layout; circle fallback for degenerate spectra — no round-0 minorminer call,
+no MM basin as anchor), seeded construction via `initial_chains` (now
+supported by the factored router: seeds claimed before pass 0), and a
+finishing pass. Probe script `data/placement_v3.py`.
+
+**Pure arm** (no minorminer anywhere: native router + region-biased native
+shorten, γ=1): ER n=100 → P16: legal 11.80, final 9.84, 403 s — vs stock MM
+5.66 in 5.7 s. Two decomposed gaps: (a) construction — our seeded
+legalization (11.8) is *worse* than MM's unguided one (~8.5); on an expander
+the spectral seeds are noise (§3.21), and the §3.10 fidelity gap compounds;
+(b) finishing — region-biased shorten cut 17% where MM's free grind cuts
+~37%. **Region-biasing the polish is refuted** (Max's call, confirmed by the
+numbers): biasing the *search* hides genuinely shorter rebuilds even though
+acceptance was on true length. Principle adopted: *the placement earns its
+keep by improving the endpoint of an unconstrained polish, or it wasn't
+real.* γ now defaults to 0; the biased arm is kept only as an ablation.
+
+**Hybrid** (per Max: combine the good attraction with the good polish):
+geometry + snap as before, but per-round routing = stock MM seeded cheap
+legalization (`initial_chains` + `chainlength_patience=0`) and finish =
+stock MM warm-started full grind. Same cell: final 6.16 in 5.9 s vs mm-full
+5.66 in 5.4 s — one seed, equal wall-clock, inside the ±5% seed band (v1's
+paired −0.3 edge needs the 5-seed probe to re-confirm under spectral init).
+This is now the registered default; `backend="native", polish="native"` is
+the purity arm.
+
+**Source-verified along the way** (the shipped-vs-assumed list grows):
+`pathfinder.hpp`'s comment "Dijkstra … is responsible for 99% of our runtime"
+describes the *legalization* phase and predates the §3.15 measurement
+(legalization ≈ 10% of wall-clock); `find_short_chain` — where the time
+actually goes — expands through free qubits at unit weight (`d += 1`), i.e.
+lockstep BFS balls, not weighted Dijkstra. A native shortener should use BFS,
+not a heap.
+
+**Parked (Max, 2026-07-17):** the binned density field feels wrong —
+centroids should perhaps be true real-valued points drifting under a
+continuous density repulsion (the ePlace electrostatic direction, §3.18)
+rather than receiving one-bin pushes on a 16×16 grid. Suspected relevant to
+the n=180 bin-resolution weakness (§3.19). Revisit after the dataset run.
+
+**Reference docs split out** (2026-07-17): organized state now lives in two
+sibling files — `mm-internals.md` (source-verified account of shipped minorminer
+0.2.22: phases, search primitives incl. the Dijkstra-vs-BFS resolution, cost
+table, randomization channels, paper-vs-program deltas, fork hooks) and
+`attraction.md` (the attraction embedder: multilevel framing, as-built v3 spec,
+idea ledger with confirmed/refuted/parked status, and the pre-registered
+predictions for the full-Ember sweep). These notes remain the chronological
+record; update the ledger there when a section here settles a question.
+
+**Dataset context, corrected mid-launch** (2026-07-17): the *local*
+`test_graphs/` directory (101 graphs, median n ≈ 10, max 121) is only the
+offline layer. The full Ember library is the HuggingFace dataset
+(`zachmacsmith/ember-graphs`): **31,149 graphs, n from 2 to 65,536, median
+192**, of which 24,061 fit Pegasus-16 — thousands of instances in and beyond
+the n ≥ 100 regime where the v1 edge was measured, including fabric-filling
+sizes. A naive full run (3 trials, 1 worker) is weeks of compute; the first
+sweep is therefore `attraction` vs `minorminer`, all P16-eligible graphs,
+1 trial (paired by shared seed), 60 s timeout, ~40 workers — expected
+hours, not weeks. Note the CLI pre-loads graphs serially before running, so
+the library was bulk-prefetched in parallel first.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).

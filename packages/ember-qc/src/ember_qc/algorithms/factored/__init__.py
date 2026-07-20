@@ -36,6 +36,10 @@ from ember_qc.algorithms.factored.loop import (       # noqa: F401
     RouterConfig,
     embed_factored,
 )
+from ember_qc.algorithms.factored.placement import (  # noqa: F401
+    AttractConfig,
+    attract_embed,
+)
 
 
 @register_algorithm("factored")
@@ -55,6 +59,30 @@ class Factored(EmbeddingAlgorithm):
         if seed is None:
             seed = 0
         return embed_factored(
+            source_graph, target_graph,
+            timeout=timeout, seed=int(seed), **kwargs,
+        )
+
+
+@register_algorithm("attraction")
+class Attraction(EmbeddingAlgorithm):
+    """Placement-first embedder (paper 2 attraction family, notes §3.18+):
+    spectral initialization, Laplacian attraction + density-overflow repulsion
+    in target-layout coordinates, snapped seeds, then the strongest available
+    routing/polish from that placement (default: minorminer seeded cheap
+    legalization per round + unconstrained warm-started grind; a fully
+    minorminer-free arm via ``backend="native", polish="native"``). See
+    ``factored.AttractConfig``."""
+
+    @property
+    def version(self) -> str:
+        return "0.1.0"
+
+    def embed(self, source_graph, target_graph, timeout: float = 60.0, **kwargs) -> dict:
+        seed = kwargs.pop("seed", 0)
+        if seed is None:
+            seed = 0
+        return attract_embed(
             source_graph, target_graph,
             timeout=timeout, seed=int(seed), **kwargs,
         )

@@ -135,12 +135,19 @@ def embed_factored(
     timeout: float = 60.0,
     seed: int = 0,
     config: Optional[RouterConfig] = None,
+    initial_chains: Optional[Embedding] = None,
     **overrides,
 ) -> dict:
     """Functional entry point; returns an ember-qc result dict (never raises).
 
     ``overrides`` matching :class:`RouterConfig` fields replace those fields;
     unknown keyword arguments are ignored (the harness passes extras through).
+
+    ``initial_chains`` seeds the search: the given chains (typically snapped
+    singleton qubits from a placement) are claimed before the first pass, so
+    every vertex is rebuilt in the context of its neighbours' seeds instead of
+    growing from nothing. Qubits absent from the target are dropped; vertices
+    absent from the source are ignored.
     """
     start = time.perf_counter()
     deadline = start + timeout if timeout else None
@@ -187,6 +194,17 @@ def embed_factored(
         chains: Embedding = {}
         legal: Optional[Embedding] = None
         out_of_time = False
+
+        if initial_chains:
+            for v in sorted(initial_chains):
+                if v not in src_adj:
+                    continue
+                chain = [int(q) for q in initial_chains[v] if q in adj]
+                if not chain:
+                    continue
+                chains[v] = chain
+                cost.claim(chain)
+                counters["embedding_state_mutations"] += len(chain)
 
         tie_rng = rng if cfg.random_ties else None
         for pass_idx in range(cfg.max_passes):

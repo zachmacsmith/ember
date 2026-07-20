@@ -27,10 +27,11 @@ Two deterministic, validity-preserving operations on a **legal** embedding:
 from __future__ import annotations
 
 import time
-from typing import Dict, List, Optional, Set
+from typing import Callable, Dict, List, Optional, Set
 
 from ember_qc.embedding_backend import (
     Adjacency,
+    CostMap,
     Embedding,
     chain_connected,
 )
@@ -91,14 +92,23 @@ def shorten_chains(
     deadline: Optional[float] = None,
     max_sweeps: int = 8,
     visit_counter: Optional[List[int]] = None,
+    vertex_prices: Optional[Callable[[int], CostMap]] = None,
 ) -> Embedding:
     """Free-space rip-up-and-shorten sweeps over a legal embedding.
 
     Longest chain first: release ``v``'s chain, rebuild it with the SPH
-    assembly at uniform prices with every other chain's qubits forbidden and
-    all placed neighbours required; keep iff strictly fewer qubits. A kept
-    rebuild is disjoint (forbidden), connected and covering (assembly
-    guarantees) — validity is preserved move by move.
+    assembly with every other chain's qubits forbidden and all placed
+    neighbours required; keep iff strictly fewer qubits. A kept rebuild is
+    disjoint (forbidden), connected and covering (assembly guarantees) —
+    validity is preserved move by move.
+
+    ``vertex_prices`` (optional) supplies a per-vertex qubit price map for the
+    rebuild search — the region-respecting variant (notes §3.20 handoff
+    discussion): prices rising with distance from ``v``'s placement bias
+    *which* short tree the search finds, while acceptance stays on true qubit
+    count, so the shorten descends chain length subject to the placement
+    instead of scribbling over it. ``None`` (default) is uniform pricing —
+    the same move class as minorminer's chainlength phase.
     """
     work: Embedding = {int(v): [int(q) for q in c] for v, c in chains.items()}
     visits = visit_counter if visit_counter is not None else [0]
@@ -117,8 +127,9 @@ def shorten_chains(
             if not placed:
                 continue
             forbidden = used - set(old)
+            prices = vertex_prices(v) if vertex_prices is not None else ones
             new = sph_tree(
-                v, placed, work, adj, ones, visits,
+                v, placed, work, adj, prices, visits,
                 forbidden_extra=forbidden, require_all_neighbors=True,
             )
             if new and len(new) < len(old):

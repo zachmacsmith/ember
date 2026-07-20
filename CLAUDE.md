@@ -18,8 +18,12 @@ on top of `main`'s benchmarking framework, exactly two things:
 **Ground rules.** Every change to minorminer must be a toggleable switch, defaulted to stock
 behavior, measured one flip at a time against the stock corner — paired by (instance, seed),
 never unpaired (survivor bias). Verify any claim about minorminer against its source, never
-its paper — the shipped program has repeatedly outgrown the 2014 description (notes §3.8, §3.14). Design rationale, source-verified minorminer facts, and the
-open fidelity gap between the Python replica and stock MM: `docs/paper2/notes.md`.
+its paper — the shipped program has repeatedly outgrown the 2014 description (notes §3.8, §3.14). Design rationale and the chronological lab record: `docs/paper2/notes.md`.
+Organized references: `docs/paper2/mm-internals.md` (what shipped minorminer
+actually does, with file:line citations into `external/minorminer-fork`) and
+`docs/paper2/attraction.md` (the attraction embedder: as-built spec, idea ledger,
+roadmap). Consult these before re-deriving minorminer behavior or re-proposing
+tried ideas.
 
 The abandoned prior work (Reweave wrapper, speculative embedders, learning line) lives only
 on the `new-algorithm` branch. Do not reintroduce it.
