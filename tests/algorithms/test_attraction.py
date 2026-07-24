@@ -149,7 +149,73 @@ class TestAttractEmbed:
 
     def test_overrides_reach_router_and_config(self, chimera, source):
         res = attract_embed(source, chimera, timeout=60, seed=0,
-                            outer_rounds=1, alpha=0.0, gamma=0.0)
+                            max_rounds=1, alpha=0.0, gamma=0.0)
         assert res.get("rounds", 0) <= 1
         if res["embedding"]:
             assert validate_embedding(res["embedding"], source, chimera)
+
+    def test_round_acls_diagnostic(self, chimera, source):
+        res = attract_embed(source, chimera, timeout=60, seed=0, max_rounds=3)
+        acls = res["round_acls"]
+        assert isinstance(acls, list) and 1 <= len(acls) <= 3
+        assert any(a is not None for a in acls)
+        assert res["legal_acl"] is not None
+
+    def test_selection_modes_both_valid(self, chimera, source):
+        for sel in ("last", "best_legal"):
+            res = attract_embed(source, chimera, timeout=60, seed=0,
+                                selection=sel, max_rounds=3)
+            assert res["embedding"], f"selection={sel} failed"
+            assert validate_embedding(res["embedding"], source, chimera)
+
+    def test_vary_rng_false_deterministic(self, chimera, source):
+        a = attract_embed(source, chimera, timeout=60, seed=2,
+                          vary_rng=False, max_rounds=3)
+        b = attract_embed(source, chimera, timeout=60, seed=2,
+                          vary_rng=False, max_rounds=3)
+        assert a["embedding"] and a["embedding"] == b["embedding"]
+        assert a["round_acls"] == b["round_acls"]
+
+    def test_poisson_field_valid_and_deterministic(self, chimera, source):
+        a = attract_embed(source, chimera, timeout=60, seed=0,
+                          field="poisson", max_rounds=4)
+        b = attract_embed(source, chimera, timeout=60, seed=0,
+                          field="poisson", max_rounds=4)
+        assert a["embedding"], "poisson-field attraction failed"
+        assert validate_embedding(a["embedding"], source, chimera)
+        assert a["embedding"] == b["embedding"]
+        assert "field_diag" in a
+
+    def test_poisson_field_dense_source(self, chimera):
+        k = nx.complete_graph(10)
+        res = attract_embed(k, chimera, timeout=60, seed=0, field="poisson")
+        assert res["embedding"]
+        assert validate_embedding(res["embedding"], k, chimera)
+
+    def test_feasibility_fallback(self, chimera, source):
+        # round_frac=0 exhausts the rounds budget instantly: the rounds loop
+        # never runs and the uncapped fallback must still legalize.
+        res = attract_embed(source, chimera, timeout=60, seed=0,
+                            round_frac=0.0)
+        assert res["embedding"], "fallback did not legalize an easy instance"
+        assert validate_embedding(res["embedding"], source, chimera)
+        assert res["rounds"] == 1  # the fallback attempt only
+        assert len(res["round_acls"]) == 1
+
+    def test_cross_state_valid_and_deterministic(self, chimera, source):
+        a = attract_embed(source, chimera, timeout=60, seed=0,
+                          state="cross", max_rounds=4)
+        b = attract_embed(source, chimera, timeout=60, seed=0,
+                          state="cross", max_rounds=4)
+        assert a["embedding"], "cross-state attraction failed"
+        assert validate_embedding(a["embedding"], source, chimera)
+        assert a["embedding"] == b["embedding"]
+        assert "extent_mean" in a["field_diag"]
+
+    def test_cross_state_dense_and_bar_seeds(self, chimera):
+        k = nx.complete_graph(10)
+        for mode in ("point", "bars"):
+            res = attract_embed(k, chimera, timeout=60, seed=0,
+                                state="cross", seed_mode=mode)
+            assert res["embedding"], f"cross/{mode} failed on K10"
+            assert validate_embedding(res["embedding"], k, chimera)

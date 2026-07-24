@@ -40,7 +40,8 @@ from ember_qc.algorithms.factored.trees import sph_tree
 SrcAdj = Dict[int, List[int]]
 
 
-def spur_prune(chains: Embedding, src_adj: SrcAdj, adj: Adjacency) -> Embedding:
+def spur_prune(chains: Embedding, src_adj: SrcAdj, adj: Adjacency,
+               *, deadline: Optional[float] = None) -> Embedding:
     """Delete removable spur qubits from every chain, to a fixpoint.
 
     A qubit ``q`` in chain ``phi(v)`` is removable iff (a) ``phi(v) - {q}``
@@ -49,13 +50,23 @@ def spur_prune(chains: Embedding, src_adj: SrcAdj, adj: Adjacency) -> Embedding:
     Chains and qubits are visited in sorted order (deterministic); coverage is
     checked against the current, possibly already-pruned neighbour chains.
     Input is not mutated; chains never shrink below one qubit.
+
+    ``deadline`` (perf_counter timestamp) bounds the fixpoint loop: pruning is
+    validity-preserving move by move, so stopping early is always safe. Without
+    it, hub-and-spoke sources (star/wheel) with chains of hundreds of qubits
+    made the quadratic inner loop blow through the caller's whole time budget
+    (measured up to ~1000 s in the first full-Ember sweep).
     """
     work: Embedding = {int(v): [int(q) for q in c] for v, c in chains.items()}
 
     changed = True
     while changed:
+        if deadline is not None and time.perf_counter() > deadline:
+            return work
         changed = False
         for v in sorted(work):
+            if deadline is not None and time.perf_counter() > deadline:
+                return work
             chain = work[v]
             if len(chain) <= 1:
                 continue

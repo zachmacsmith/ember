@@ -923,6 +923,489 @@ sweep is therefore `attraction` vs `minorminer`, all P16-eligible graphs,
 hours, not weeks. Note the CLI pre-loads graphs serially before running, so
 the library was bulk-prefetched in parallel first.
 
+### 3.23 First full-Ember sweep: structured wins, dense losses, two bugs (2026-07-18)
+
+Completed: `attraction` (hybrid v3) vs stock `minorminer`, 23,642 P16-eligible
+graphs paired by shared seed, 60 s, 1 trial, 40 workers
+(`results/batch_2026-07-17_20-34-03`; analysis `data/analyze_fullember.py`).
+Headline: successes 15,427 (mm) vs 13,986 (att); of paired graphs — both legal
+13,590, only-mm 1,837, only-att 396, neither 7,819 (beyond either's reach at
+60 s). Pooled paired ΔACL **+0.016** (≈zero), win/loss/tie
+**6,481 / 5,995 / 1,114** — attraction wins *more* paired comparisons; the mean
+is dragged positive by dense-instance blowouts.
+
+**Two implementation bugs found by the sweep (both fixed and verified same day):**
+
+1. **Isolated-vertex seeding — 1,546 failures, ~all of the success-rate gap.**
+   `_mm_route` passed the source as an *edge list*; minorminer then rejects
+   `initial_chains` entries for degree-0 vertices ("labels that weren't referred
+   to by any edges"). Graph 5550 (n=10, 8 isolated): fail → 0.1 s success. Fix:
+   pass the graph object (matching the `minorminer` wrapper, which comments on
+   exactly this trap).
+2. **Unbounded `spur_prune` on hub-and-spoke sources** — star/wheel hub chains
+   (hundreds of qubits) made the quadratic prune blow the whole budget (star
+   301-1000 median 838 s vs 60 s cap; wheel ~1,066 s). Fix: `deadline=` param,
+   checked per chain (pruning is validity-preserving, early stop always safe).
+   Star n=393: 838 → 221 s; residual is MM's own per-pass timeout granularity
+   on huge hubs (stock shows the same, e.g. 337 s sudoku run).
+
+**Scorecard vs the §3.22/attraction.md pre-registered predictions:**
+
+1. *Small n ties* — *confirmed* (typical |ΔACL| ≤ 0.01, tie-heavy).
+2. *Structured mid-size wins* — **confirmed, stronger and at larger sizes than
+   predicted**: regular 301-1000 **−0.755** (82W/5L); planted_solution 301-1000
+   **−0.497** (512/188) *plus net feasibility +154* (only-att 215 vs only-mm
+   61); watts_strogatz 301-1000 −0.210 (434/258); lattices sweep it at scale —
+   bcc −0.527 (6/0), cubic 301-1000 −0.398 (10/3), honeycomb n>1000 −0.432
+   (11/0), shastry_sutherland n>1000 (9/0), hardware_native 101-300 −0.416.
+3. *Mid ER parity-to-slight-loss* — worse than predicted at the congested band
+   (101-300: **+1.24**); small ER parity. Consistent with the unvalidated v3
+   regressions (§3.22) — the cadence/rounds ablation just got more urgent.
+4. *Dense blunted to parity* — **too optimistic: clear losses.** complete
+   101-300 **+8.2**, turán +4.1, dense bipartite +4.0, spin_glass +2.0, kneser
+   +1.3, weak_strong_cluster +0.3–0.5 at every size. The density-field plateau
+   problem is now the top *algorithmic* defect (roadmap items 5–6).
+5. *Hard-tail success deficit* — confirmed in raw numbers but ~fully explained
+   by bug 1; **and inverted at 301-1000**, where seeding delivers net
+   feasibility wins (only-att 396, concentrated there — geometry is a
+   feasibility mechanism at scale, echoing §3.9's diversity observation from
+   the other side).
+
+Net reading: placement helps exactly where the theory said it should (structured
+sources, larger n — the first broad, external confirmation of the family
+thesis), is neutral where nothing is winnable (small/random), and loses where
+its known cartoons bind (dense = monopole + plateau; congested mid-ER = v3
+regressions). Wall-clock ~2–4× stock typical (3 legalizations + polish).
+Pending: re-sweep of the bug-affected subset; then roadmap order stands —
+budget/selection/cadence fixes, then the field redesign.
+
+### 3.24 v3.1 plumbing: trust-region cadence, budget reserve, selection, attribution (2026-07-18)
+
+Design round following the §3.23 postmortem discussions with Max; changes only,
+no measurement claims (the paired cadence ablation is still owed). All prior
+behavior reachable via config for one-flip experiments.
+
+- **Trust-region cadence**: `geo_iters` 10 → 1. The insight (from the "why does
+  over-solving the coarse problem *hurt*?" discussion): the coarse model's
+  calibration data (λ, realized centroids) comes from the fine level, so it is a
+  *local* proxy valid near the last realized embedding — running it to its
+  fixpoint both optimizes fictions (trust-region violation; over-optimizing a
+  misaligned proxy harms, unlike exact-vs-SGD gradients on a shared objective)
+  and erases the router's feedback (fixpoints forget initial conditions). v1's
+  one-step cadence was unknowingly trust-region-correct.
+- **Adaptive rounds under a budget**: fixed `outer_rounds=3` → `max_rounds=10`
+  bounded by `round_frac=0.4` of the timeout; polish reserve falls out by
+  construction; **uncapped feasibility fallback** when no round legalizes
+  (degradation mode = spectral-seeded stock MM, the §3.23 net feasibility
+  winner). Verified on a neither-bucket WS instance: 61.5 s vs 60 s budget.
+- **Selection**: default best-legal-round → **last round** (trajectory
+  endpoint); `best_legal` kept as ablation arm. Note §3.16's null was measured
+  on unsteered i.i.d. ER basins; steered+structured is open. Every run now
+  returns `round_acls` (per-round legal ACL) as a free rank-stability
+  diagnostic.
+- **Attribution switch**: `vary_rng=False` freezes the router RNG across rounds
+  so only geometry varies — un-confounding steering from re-rolling (each round
+  previously changed both seeds and geometry simultaneously; the §3.18 control
+  handled this at experiment level only). Failed rounds still re-roll.
+
+Directional single-seed check (not a claim): ER n=100 → P16 final ACL
+6.16 (v3) → **5.96** (v3.1), v1 mean ≈ 5.95, stock mm 5.66; rounds 3 → 10 at
+comparable wall-clock. 49 tests pass (5 new). Next: the VLSI round — tile-graph
+coarse target, route-smeared charges, hinge²+μ Poisson field (attraction.md
+roadmap 4–6, field design settled in the ledger).
+
+### 3.25 The VLSI round: typed tiles + smeared demand + Poisson field — new default (2026-07-18)
+
+Built per the settled design (attraction.md roadmap 4–6 with Max's corrections):
+`factored/field.py` — **TileGrid** (per-family typed tile capacities from dnx
+coordinates: chimera (i,j,u,k), pegasus nice (t,y,x,u,k) with t merged;
+per-tile (vertical, horizontal) wire pools measured from working qubits; affine
+drawing↔tile map; untyped drawing-bin fallback incl. zephyr), **segment-smeared
+deposits** [`spindler2007rudy`] (each variable's λ along straight half-segments
+toward neighbours, mass split h/v by direction — traversal charging, the fix
+for the point-deposit field's blindness to §3.21's cut constraint), and
+**PoissonField** [`lu2015eplace`] (one-sided source `hinge_w·relu(ρ−cap)² + μ`,
+`μ ← max(0, μ + α_μ(ρ−cap))` once per router round; Neumann pseudo-inverse
+solve; forces trust-region-clipped at 1 tile). λ updates damped
+(`lam_tau=0.5`). All switchable; `field="push"` = v3.1 control arm.
+
+**Field probe** (`data/field_probe.py` / `.csv`; 3 seeds, P16, 60 s; cells from
+§3.23's verdict classes; pre-registered rule: poisson becomes default iff the
+dense cell improves and the win cells don't regress):
+
+| cell | push | poisson | mm-full |
+|---|---|---|---|
+| K100 (dense loss) | 15.83 | **14.50** | 13.44 |
+| ER100 d10 (parity) | 5.89 | **5.70** | 5.67 |
+| regular_n316 (win guard) | 3.54 | **3.50** | 4.02 |
+| ws_n486 (win guard) | 3.45 | **3.11** | 3.89 |
+
+Rule satisfied on all four → **poisson is the registered default**. Readings:
+the dense gap to stock halves (2.4 → 1.1 ACL) but does not close — monopole
+shape (anisotropy, multi-qubit seeds) and/or the coarse solver remain the
+residual; the ws win *widens* (−0.34); ER reaches statistical parity with
+stock (probe mean 5.70 vs 5.67; the standard n=100 cell now reads 5.57 vs
+5.66 on seed 0). **First data on Max's stale-shadow-price prediction**: at run
+end 32–60% of μ-mass sits on currently-slack tiles (`field_diag.mu_stale_frac`)
+— staleness is real; whether it costs anything is unmeasured (hinge²-only
+`mu_alpha=0` ablation owed, alongside the cadence ablation). 472 tests pass
+(15 new for the field).
+
+### 3.26 Dense attribution: every search method is 30-60% above the constructive ceiling (2026-07-19)
+
+Probe `data/dense_attrib.py` (`.csv`), pre-registered decision tree; K60/K100/
+K140 clique ladder + bipartite_K48_96, P16, 60 s, 3 seeds:
+
+| cell | template-raw | template+polish | poisson | budget | mm-full |
+|---|---|---|---|---|---|
+| K60 | 6.73 | 6.70 | 8.76 | 8.27 | 7.83 |
+| K100 | 9.78 | 9.78 | 14.55 | 13.76 | 13.62 |
+| K140 | 13.17 | 13.17 | **fail 0/3** | 25.16 | 20.72 |
+| biK48_96 | 6.21 | 6.17 | 8.39 | 8.36 | 6.68 |
+
+(`template` = busclique K_n chains restricted to the source's edges +
+spur-prune; `budget` = attraction `max_rounds=1, round_frac=0.1`, i.e. seeded
+mm with a full-length polish.)
+
+Findings, in order of importance:
+
+1. **The constructive template dominates every search method, including stock
+   minorminer, by 15-57%** (K100: mm 39% above it; K140: 57%). And MM's full
+   grind **cannot improve the template at all** (dACL <= 0.04 in 3-42 s of
+   polishing): the crossbar is a local optimum of the chain-local move set --
+   the s3.9 joint-move blindness measured from the other side. Consequence:
+   the dense game is not "close a 1.1 gap to mm"; mm itself is far from the
+   ceiling, and whoever adopts a **template prior** wins dense outright. A
+   template IS a placement -- this slots natively into the attraction layer
+   (recognize density -> constructive prior -> restrict -> brief polish), and
+   s3.21 already measured the sparse side of the crossover (template terrible
+   at ER deg-10), so a best-of-both arm needs no density threshold: evaluate
+   both, keep the better (template evaluation is ~free).
+2. **The s3.25 K100 gap was mostly budget split**: `budget` 13.76 vs mm 13.62
+   (residual 0.14 vs 1.1 for the default). At comfortable dense sizes the
+   geometry wasn't the problem; the rounds' clock was.
+3. **But near the cliff the seeds actively hurt**: K140 `budget` 25.16 vs mm
+   20.72, and the default pipeline **fails outright** (rounds + fallback
+   exhaust 60 s without legalizing an instance mm solves) -- the s3.10
+   anti-placement effect is real for dense sources: disk seeding fights the
+   extended-bar structure the router needs to build. biK48_96 confirms
+   geometry (not budget) as the culprit there too (budget ~ poisson >> mm).
+4. Together with s3.25: the field fixed what a field can fix (plateau); the
+   remaining dense deficit is **representational** (point-state cannot express
+   bars) -- and the template result shows the payoff for fixing it is much
+   larger than parity: 30-60% over stock MM. Next build: the template arm.
+
+### 3.27 The two ablations: mu inert, cadence a wash, steering suffices (2026-07-19)
+
+`data/ablations_mu_cadence.py` (`.csv`): 7 arms x 4 cells x 5 seeds, P16, 60 s.
+Mean final ACL:
+
+| cell | default (hinge2+mu) | mu0 | hinge0 | geo10 | geo1_frozen | geo10_frozen | mm-full |
+|---|---|---|---|---|---|---|---|
+| K100 | 14.69 | 14.53 | 15.27 | 14.77 | 14.97 | 14.99 | 12.69 |
+| ER100 | 5.76 | 5.72 | 5.84 | 5.82 | 5.70 | 5.78 | 5.74 |
+| regular_n316 | 3.50 | 3.49 | 3.44 | 3.51 | 3.62 | 3.43 | 4.08 |
+| ws_n486 | 3.13 | 3.26 | 3.33 | 3.15 | 3.38 | 3.06 | 3.87 |
+
+1. **mu is inert.** hinge2-only (mu0) is within noise of hinge2+mu on every
+   cell despite 30-60% stale mu-mass (s3.25) -- Max's staleness is real but
+   harmless AND the memory earns nothing. The s3.13 pattern a second time: a
+   memory mechanism is inert when another mechanism (here the hinge2 present
+   term with per-round fresh calibration) already covers its job. Default
+   flipped to `mu_alpha=0` by parsimony (the s3.20 precedent); mu stays as a
+   knob. mu-only (hinge0) is mildly worse on 3/4 cells: the present term is
+   the load-bearing one.
+2. **Cadence is a wash under the poisson field** (geo10 vs default within
+   noise everywhere). The v3 over-solving regression (s3.24's trust-region
+   story) does NOT reproduce with the new field -- it was either specific to
+   the discontinuous push field or partly noise in the original single-seed
+   probe. The trust-region *theory* stands (and the field's 1-tile clip
+   embodies it); the measured claim is hereby softened: with a smooth,
+   one-sided, damped field, deeper coarse iteration neither helps nor hurts.
+   `geo_iters=1` stays default (cheaper, no downside).
+3. **Steering alone suffices** (the attribution arms): frozen-RNG
+   trajectories -- rounds differing ONLY by geometry -- reach parity with
+   vary-RNG (geo10_frozen is even the best arm on both win-guard cells:
+   3.43 / 3.06). Trajectory gains are attributable to the geometry, not to
+   re-rolling. The v1-era question "is the loop just fancy restarts?" is
+   answered: no.
+4. Caveat for all K100 comparisons: mm-full variance on K100 is large
+   (12.69 five-seed mean here vs 13.44/13.62 on the 3-seed probes); dense
+   conclusions should lean on s3.26's template result, which dwarfs this
+   variance, not on ~1-ACL search-vs-search deltas.
+
+### 3.28 Extent-state v1: bars emerge at the right scale; the assignment doesn't (2026-07-19)
+
+Option A built (`field.py` CrossState: contact-deficit descent whose zero-extent
+limit is exactly L1 point attraction; own-bar typed deposits; measured-extent
+feedback; `seed_mode="bars"` multi-qubit seeds as the separate s3.10-risk
+switch). 482 tests pass. Probe `data/extent_probe.py` (`.csv`), 3 seeds,
+pre-registered bar: K100 <= ~11.2, no guard regression, no K140 failure.
+
+| cell | point | cross | cross-bars | mm-full | (template s3.26) |
+|---|---|---|---|---|---|
+| K100 | 14.30 | 15.28 | 14.69 | 13.44 | 9.78 |
+| K140 | fail | fail | **24.15 (2/3)** | 20.72 | 13.17 |
+| ER100 | 5.65 | 6.23 | 5.65 | 5.67 | -- |
+| regular_n316 | 3.54 | 3.45 | **3.42** | 4.02 | -- |
+| ws_n486 | 3.26 | 3.23 | 3.31 | 3.89 | -- |
+
+**Verdict: the pre-registered bar FAILED; default stays `state="point"`.**
+What the diagnostics salvage from the failure -- three findings:
+
+1. **The representation works: bars of crossbar scale genuinely emerge.**
+   K100 extent_mean 11.7-12.7 tiles (template bars ~10-15). Contact demand +
+   capacity pressure grow the right shapes, and the sparse limit is safe
+   (guards fine; cross-bars == point on ER; cross slightly *best* on
+   regular_n316).
+2. **What fails is the ASSIGNMENT, not the shape**: max_violation 14-25 at
+   equilibrium -- everyone's bars want the same central rows/columns and
+   gradient flow settles into an oversubscribed smear instead of the
+   1-bar-per-row lattice. The crossbar's remaining content is a
+   *permutation* (which row/column each variable owns), and continuous
+   dynamics cannot break that combinatorial symmetry -- the s3.9 deadlock
+   phenomenon, now at the coarse level. Identified cheap candidate fix
+   (v2, unbuilt): a discrete assignment step -- rank-order bars by current
+   position and assign distinct rows/columns by argsort (or a small
+   matching), then let the field/contact dynamics polish around the broken
+   symmetry.
+3. **Bar seeds carry real feasibility signal**: cross-bars is the ONLY arm
+   that legalizes K140 at all (2/3, vs 0/3 for both point-seeded arms) --
+   transmitting shape to the router does exactly what s3.26's anti-placement
+   diagnosis predicted it would. The s3.10 caution (multi-qubit seeds hurt)
+   is refuted in the dense regime, unproven elsewhere.
+
+### 3.29 Extent-state v2: assignment and attraction fight; bar failed again, K140 regressed (2026-07-19)
+
+v2 added the two s3.28-diagnosed fixes: tip-potential field-bar coupling
+(translation = bar-averaged gradient; extent force = -psi at tips) and the
+per-round rank-order assignment (distinct integer rows/columns,
+capacity-many per line). 482 tests pass; K20 smoke max_violation 3.22 -> 0.16
+(tip coupling works locally). Probe `data/extent_probe_v2.py` (`.csv`), same
+pre-registered bar:
+
+| cell | point | cross-v1 | cross2 | cross2-bars | mm-full |
+|---|---|---|---|---|---|
+| K100 | 14.30 | 15.23 | 14.94 | 15.98 | 13.44 |
+| K140 | fail | fail | fail | **fail (v1 bars: 2/3)** | 20.72 |
+| ER100 | 5.65 | 5.88 | 5.61 | 5.61 | 5.67 |
+| regular_n316 | 3.54 | 3.46 | 3.72 | 3.40 | 4.02 |
+| ws_n486 | 3.26 | 3.22 | 3.25 | 3.46 | 3.89 |
+
+**Bar FAILED (0-for-2 for the emergence program); defaults unchanged; and the
+bars arm REGRESSED on K140 feasibility (2/3 -> 0/3).** Guards unharmed (the
+sparse regime remains untouched by all of this). Diagnosis from the
+diagnostics (K100 cross2: assigned=100, yet max_violation 25, extent_mean
+10.4):
+
+1. **Assignment and attraction fight each round with no fixpoint.** The loop
+   is contact-attract (re-stacks bars) -> deposit -> field -> assign
+   (un-stacks) -> route; next round attraction undoes the assignment again.
+   The crossbar is a fixed point of the assignment but NOT of the composed
+   dynamics -- assigned coordinates would need to be *pinned* (attraction
+   projected along-bar for assigned variables) for the lattice to persist.
+   Also an ordering artifact: deposits (hence field + violation diagnostics)
+   sample the pre-assignment stacked configuration.
+2. **Row packing at 100% of pool capacity starves routing slack** (per_row =
+   floor(mean h-pool) ~ 12 bars/row = exactly full): the K140 bar seeds land
+   on wire-saturated rows and the router cannot legalize around them --
+   explains the feasibility regression vs v1's unassigned (looser) bars.
+3. ACL: every cross arm ~ point (14.3-16.0) vs bar 11.2. Two design
+   iterations have not moved dense ACL at all; the binding constraint is
+   evidently not what each iteration fixed.
+
+Options recorded for Max (build stopped pending direction): (a) v3 = pin
+assigned coordinates + pack rows at ~60% + post-assign re-deposit -- risks
+the complexity spiral Max pre-warned about ("lost the plot irrecoverably");
+(b) concede the dense regime to the template arm (parity with existing
+D-Wave practice, the "ugly" option); (c) park dense and run the
+hard-frontier eval (s"Strategic emphasis": success-vs-budget on the s3.23
+neither-bucket) where the algorithm already holds its only unambiguous wins.
+
+### 3.30 The missing physics: contact capacity (2026-07-19/20, in progress)
+
+Max's directive after the v2 failure: dense and random graphs are the regime
+that matters (structured wins are replaceable by specialized methods; we are
+a heavy replacement for the heavy fallback); and his hypothesis: the crosses
+cannot MOVE properly -- "we're evolving them sloppily."
+
+Router-free diagnostic (evolving the coarse dynamics with no router, no
+polish -- a testbed we should have built two iterations ago): the current
+cross dynamics on K100 collapses to ONE row, ZERO extents, and near-zero
+violation. **The coarse model's global minimum for a clique is total
+collapse, and collapse is FEASIBLE in the model** -- 100 coincident
+point-variables deposit 100 units into a fabric holding 5,640, all contact
+deficits are zero at distance zero, and nothing objects. Root cause: the
+model prices qubit occupancy and wire occupancy but **never prices contact
+itself**. In reality a chain of L qubits hosts at most ~kappa*L
+neighbour-contacts (kappa ~ 13 usable couplers/qubit on Pegasus -- the
+degree-counting bound of s3.26, ACL >= (n-1)/kappa). v1/v2 bars only grew
+for REACH; the actual reason crossbar bars are long is CONTACT HOSTING.
+Two design iterations built spreading machinery on an energy landscape whose
+minimum was collapse.
+
+Fix: **extent floor** 1 + w + h >= deg(v)/kappa (contact capacity imported
+as a constraint). Testbed-confirmed: collapse becomes infeasible (violation
+jumps from ~0 to ~240 at the collapsed state; extents grow to the floor).
+Two remaining TRANSIENT pathologies, both order-of-forces problems:
+(a) chicken-and-egg valley -- spreading requires longer bars, bars only grow
+under deficits that appear after spreading; from a compact start gradient
+flow cannot find the coordinated valley; (b) **tip-retraction chokes
+reach-growth**: during the over-capacity transient the whole region has high
+psi, tips retract before bars can grow to reach distant partners, growth
+pins at the floor, unresolved deficits re-collapse the spread (confirmed:
+spread init re-collapses to row_spread 2.9). Forces individually correct;
+their ORDER through the transient is the open problem -- the standard remedy
+is an annealing schedule (ePlace's ramp exists for exactly this).
+
+Testbed built (`data/crossbar_testbed.py`): router-free K_n schedule sweep
+(all-on / grow-first / three-phase / ramped / no-retract / strong-field, x
+compact/spread inits). Running; results decide the v3 schedule before
+anything touches the pipeline. Methodology note: testing coarse dynamics
+through the full pipeline+router+polish was an attribution disaster -- the
+router-free testbed is how every future force-law change gets validated
+first.
+
+### 3.30 (concluded) Emergent crossbar reaches MM parity; the residual gap is constructive fine detail (2026-07-20)
+
+Continuation of the s3.30 program, all in the router-free testbed
+(`crossbar_testbed.py` + inline probes):
+
+1. **Schedule sweep (12 variants)**: ALL converge to the same blob attractor
+   (viol ~240, spread ~3) -- not an ordering problem. Derived cause: at that
+   state every force is balanced (bar-averaged field force cancels BY
+   SYMMETRY on blob-spanning bars; deficits vanish at floor-scale spread;
+   rent pins extents at the floor). A genuine constrained local minimum.
+2. **Floor + assignment are complementary**: assignment forces spread ->
+   spread creates deficits -> deficits justify growth -> growth stabilizes
+   the assignment. Jointly: viol 240 -> ~150, rows 2 -> 6; the S7 parameter
+   sweep (24 combos; assignment cadence x growth x rent x retract) found
+   genuine coarse crossbars (11 rows, extents ~11, spread ~10) at
+   ak=5, ee=0.4, ec=0.03, ew=0.2 with 65%-derated capacity.
+3. **The sub-tile last mile**: routed ACL from coarse-crossbar seeds was
+   ~14.3 because bar_seeds picked nearest qubits per tile with NO WIRE
+   CONTINUITY (adjacent tiles' seeds on uncoupled wires -> router stitching
+   inflation). Fix: `wire_seeds` -- per (row, orientation) interval-graph
+   coloring (greedy left-endpoint sweep, exact for intervals) assigns each
+   bar ONE physical wire; seeds become contiguous coupled runs. TileGrid now
+   carries sub-wire indices ((t,k) for pegasus nice) and a wire lookup.
+4. **Result: K100 emergent-crossbar pipeline = 13.46 polished** (stock mm
+   13.62, previous best arm 13.57, template 9.78). MM parity achieved by the
+   emergent route for the first time; the template remains 3.7 ahead. Gap
+   decomposition from seed stats (chains 9-18, mean 11.9): (a) region
+   oversize -- the 65%-derated assignment spreads over ~13 rows vs
+   busclique's tighter packing (bars ~12 vs ~10); (b) cross-orientation
+   colors chosen independently -- h-run and v-run may land on different
+   t-shifts whose wires are NOT intra-tile coupled at the crossing, costing
+   bridge qubits; (c) MM's polish cannot compress crossbars (s3.26), so
+   seed-level inflation is permanent.
+
+Reading: the coarse-to-fine refinement of an emergent crossbar is
+CONVERGING toward busclique's construction layer by layer -- expected: on
+pure cliques busclique is near-optimal and emergence can at best tie it.
+**The value regime for the emergent route is irregular dense** -- graphs
+where per-variable degree varies (the floor is per-variable: deg_v/kappa!)
+and K_n template restriction overpays (spin_glass 101-300, turan, dense
+bipartite -- the s3.23 loss cells). Next: (i) t-coordinated coloring +
+tighter packing (constructive detail); (ii) wire v3 (floor + assignment +
+wire_seeds) into the pipeline behind switches; (iii) probe on the
+IRREGULAR-dense cells where neither mm nor template is the right answer.
+Methodology: the router-free testbed reduced iteration from ~40 min probes
+to ~10 s simulations -- every force-law change validates there first.
+
+### 3.31 Span state: extents demoted to a readout — bar failed at K100, the cliff opens (2026-07-23)
+
+Design settled in discussion (Max: "is there a way to capture the properties
+we want with minimal complexity?"): the s3.28-3.30 machinery evolved extents
+under fictional forces, but **extents were never legitimate state** — any
+embedding of v owes bars spanning its neighbours' coordinates, so extents
+are a deterministic READOUT of positions. State = one (x, y) per variable;
+h-bar = x-interval of N[v]+v at row y_v (contact for (u,v) at (x_u, y_v),
+inside both bars by construction); energy `E = sum_v [xspan + yspan]` = the
+implied embedding's total bar length — VLSI HPWL, one net per closed
+neighbourhood. Chain length IS the objective, not a simulated quantity.
+Dynamics keep the v2 shape (Max: no annealing): HPWL-subgradient attraction,
+Poisson field on EXACT implied-bar deposits (RUDY smear obsolete in this
+state), argsort assignment as projection of the same energy. Deleted:
+extent ODEs, tip retraction, lambda/chain_len feedback (no measured-length
+calibration exists — the charge-feedback instability channel is gone),
+fit_extents. Collapse is infeasible in-model (stacked variables still
+deposit 1+w+h; the pool overfills); the deg/kappa floor survives as a
+readout clamp; assignment participation is capacity-gated (only
+deg/kappa-1 > 0 variables enter the sort — sparse sources structurally
+untouched). Built behind `state="span"` (default unchanged); `seed_mode=
+"wire"` finally wires s3.30's interval coloring into the pipeline
+(roadmap item (ii)); +10 tests incl. the previously-untested wire_seeds.
+
+**Router-free testbed (24 combos, ZERO schedules; span_sweep_k100.log):**
+dynamics insensitive to eta and threshold — identical outcomes across both
+axes; only assignment cadence and capacity derate matter. The no-knob-zoo
+property is real. Stock capacity converges to a 10-row crossbar (viol~2)
+but routes at 15.16; the 0.65-derated 14-row config routes at **13.15**
+(ak=5) — 100%-packed rows starve routing slack, s3.29's lesson re-measured
+from the clean side. Gate (<= 13.46) PASSED, untuned.
+
+**Pre-registered probe (span_probe.py / .csv; 3 seeds, 60 s; bar: K100 <=
+13.46 near-default, biK48 beats point, guards hold, K140 feasibility >=
+point):**
+
+| cell | point | span | span-tb | cross | mm-full |
+|---|---|---|---|---|---|
+| K100 | 14.30 | 14.47 | 15.11 | 14.80 | 13.44 |
+| K140 | fail | fail | **21.84 (3/3)** | fail | 20.70 |
+| biK48_96 | 8.20 | 9.34 | **8.01** | 9.20 | 6.68 |
+| ER100_d10 | 5.65 | 5.66 | 6.09 | 5.61 | 5.67 |
+| regular_n316 | 3.54 | 3.66 | **3.44** | 3.72 | 4.02 |
+| ws_n486 | 3.26 | 3.37 | **3.12** | 3.25 | 3.89 |
+
+(span = state flip alone, defaults; span-tb = testbed-decided arm: wire
+seeds + geo_iters=30 + cap_derate=0.65 + assign_every=5, recorded before
+the run.)
+
+**Verdict: the K100 bar FAILED (15.11 / one-shot 13.96 vs 13.46) — the
+emergence program is 0-for-3 on dense ACL bars; defaults unchanged.**
+Findings, in decreasing order of importance:
+
+1. **The cliff opens: span-tb is the only search arm that legalizes K140 at
+   all — 3/3** (mean 21.84, best seed 20.74 ~ mm 20.70), vs 0/3 for point,
+   span-default, AND cross, all of which fail outright. The s3.26
+   anti-placement failure (seeds actively hurting near the cliff) is fixed
+   by derived bars + wire-coherent seeds. This is the hard-frontier regime
+   the strategic emphasis declared the one that matters; the span arm is
+   the first steered configuration that reaches the cliff without hurting
+   feasibility.
+2. **The coarse layer is exonerated; the residual dense gap is transfer
+   economics.** In-pipeline the coarse state converges to testbed grade
+   (max_violation ~2.4), yet routes at 15.11. Attribution (existing
+   switches only, span_oneshot.log): converge-once-then-route-once
+   (geo_iters=300, max_rounds=1) gives **13.96** — the interleaved round
+   loop costs ~1.1 ACL on K100 (re-centroid feedback overwrites the coarse
+   trajectory each round; budget splits). Residual ~0.8 vs the testbed's
+   13.15 = init (spectral/circle vs compact) + polish-budget split.
+   Notably K140 prefers the OPPOSITE protocol (one-shot 23.9 vs rounds
+   21.8): comfortable-dense wants converge-then-route, at-the-cliff wants
+   feedback rounds.
+3. **Guards: span-tb sweeps both win-guard cells** (3.44 / 3.12 vs point's
+   3.54 / 3.26) and takes biK48_96 (8.01 vs 8.20) — capacity-gated
+   assignment leaves sparse dynamics untouched by construction (probe
+   diag: assigned=0 on all guard cells). One regression: span-tb ER100
+   +0.44 (derate + depth on the parity cell); span-defaults hold parity
+   there (5.66 vs 5.65).
+4. **Span dominates cross on every measured cell with strictly fewer
+   knobs** (K100 14.47 vs 14.80; biK48 8.01 vs 9.20; K140 3/3 vs 0/3;
+   guards <=). The cross arm is now a dominated configuration whose only
+   remaining role is historical comparison — deletion is Max's call (the
+   2026-07-23 protocol said "delete after span wins"; span beat cross
+   everywhere but missed the dense bar).
+
+Options recorded for Max: (a) keep dense-ACL status quo, adopt the span
+pieces where they win (wire seeds, capacity gating, the K140 feasibility
+result feeds the hard-frontier eval directly); (b) build the dense
+one-shot path properly (converge-then-route as a first-class mode with
+testbed-style budgeting — the 13.96->13.15 residual says ~0.8 more is
+available, still shy of the bar); (c) concede dense ACL to the template
+arm (9.78, untouched by every search method all program).
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).
@@ -965,3 +1448,25 @@ Numbered here; BibTeX in `refs.bib` (keys in brackets).
 14. Gómez-Tejedor, Osaba, Villar-Rodriguez (2025). *Addressing the Minor-Embedding
     Problem in Quantum Annealing and Evaluating State-of-the-Art Algorithm Performance.*
     arXiv:2504.13376. — evaluation protocol and MM failure modes. [`gomez2025eval`]
+15. Spindler, Johannes (2007). *Fast and Accurate Routing Demand Estimation for
+    Efficient Routability-driven Placement.* DATE '07. — RUDY: segment/rect-smeared
+    routing demand; the deposit model of `field.py`. [`spindler2007rudy`]
+16. Lu, Chen, Chang, Sha, Huang, Teng, Cheng (2015). *ePlace: Electrostatics-Based
+    Placement Using FFT and Nesterov's Method.* ACM TODAES 20(2). — charges +
+    Poisson-solved density potential; the field architecture attraction.md adapts
+    (one-sided source is our departure). [`lu2015eplace`]
+17. Cheng, Kahng, Kang, Wang (2019). *RePlAce.* IEEE TCAD 38(9). — ePlace line's
+    current reference implementation. [`cheng2019replace`]
+18. Eisenmann, Johannes (1998). *Generic Global Placement and Floorplanning.*
+    DAC '98. — force-directed spreading precursor. [`eisenmann1998force`]
+19. Karypis, Aggarwal, Kumar, Shekhar (1999). *Multilevel Hypergraph Partitioning:
+    Applications in VLSI Domain.* IEEE TVLSI 7(1). — the multilevel
+    coarsen-solve-refine paradigm behind the tile-grid framing. [`karypis1999hmetis`]
+20. Garg, Könemann (1998). *Faster and Simpler Algorithms for Multicommodity Flow.*
+    FOCS '98. — fractional MCF via multiplicative weights; the principled-solver
+    option for the coarse routing subproblem. [`garg1998mcf`]
+21. Müller, Radke, Vygen (2011). *Faster Min-Max Resource Sharing in Theory and
+    Practice.* Math. Prog. Computation 3. — BonnRoute's shipped fractional-MCF
+    global routing. [`mueller2011resource`]
+22. Nocedal, Wright (2006). *Numerical Optimization*, 2nd ed. — trust-region
+    methods; the cadence rationale of §3.24. [`nocedal2006numopt`]

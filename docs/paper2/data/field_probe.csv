@@ -1,0 +1,37 @@
+cell,arm,seed,final_acl,legal_acl,rounds,time,diag
+K100,push,0,16.34,21.0,4,61.5,
+K100,poisson,0,14.95,20.32,5,60.5,"{'mu_total': 109.7514, 'mu_stale_frac': 0.4944, 'max_violation': 194.0312}"
+K100,mm-full,0,12.75,,,60.0,
+K100,push,1,14.83,22.84,5,60.5,
+K100,poisson,1,14.63,17.49,4,60.8,"{'mu_total': 71.7749, 'mu_stale_frac': 0.5813, 'max_violation': 187.6617}"
+K100,mm-full,1,13.96,,,60.4,
+K100,push,2,16.32,26.19,5,61.7,
+K100,poisson,2,13.93,16.41,4,60.4,"{'mu_total': 88.6891, 'mu_stale_frac': 0.4969, 'max_violation': 212.5188}"
+K100,mm-full,2,13.61,,,61.2,
+ER100_d10,push,0,5.5,8.06,10,8.9,
+ER100_d10,poisson,0,5.57,8.24,10,8.6,"{'mu_total': 71.8053, 'mu_stale_frac': 0.6025, 'max_violation': 48.2958}"
+ER100_d10,mm-full,0,5.66,,,5.5,
+ER100_d10,push,1,5.57,8.6,10,7.0,
+ER100_d10,poisson,1,5.71,8.03,10,9.3,"{'mu_total': 73.5014, 'mu_stale_frac': 0.7511, 'max_violation': 41.2518}"
+ER100_d10,mm-full,1,5.51,,,4.6,
+ER100_d10,push,2,6.59,8.6,10,7.1,
+ER100_d10,poisson,2,5.83,8.19,10,8.8,"{'mu_total': 87.4535, 'mu_stale_frac': 0.5099, 'max_violation': 39.2843}"
+ER100_d10,mm-full,2,5.84,,,3.8,
+regular_n316,push,0,3.557,4.728,10,8.7,
+regular_n316,poisson,0,3.5,4.63,10,8.2,"{'mu_total': 63.8925, 'mu_stale_frac': 0.3248, 'max_violation': 12.0628}"
+regular_n316,mm-full,0,3.953,,,3.0,
+regular_n316,push,1,3.57,4.782,10,8.9,
+regular_n316,poisson,1,3.456,5.146,10,8.9,"{'mu_total': 65.9142, 'mu_stale_frac': 0.3652, 'max_violation': 12.4545}"
+regular_n316,mm-full,1,4.234,,,2.7,
+regular_n316,push,2,3.478,4.937,10,9.3,
+regular_n316,poisson,2,3.547,4.778,10,8.5,"{'mu_total': 61.1684, 'mu_stale_frac': 0.3387, 'max_violation': 11.4578}"
+regular_n316,mm-full,2,3.861,,,2.5,
+ws_n486,push,0,3.525,4.317,4,25.4,
+ws_n486,poisson,0,3.154,4.115,10,25.5,"{'mu_total': 53.4838, 'mu_stale_frac': 0.5383, 'max_violation': 9.2787}"
+ws_n486,mm-full,0,4.455,,,2.8,
+ws_n486,push,1,3.459,4.311,10,24.8,
+ws_n486,poisson,1,3.105,4.302,10,20.6,"{'mu_total': 52.128, 'mu_stale_frac': 0.4593, 'max_violation': 12.4117}"
+ws_n486,mm-full,1,3.617,,,3.8,
+ws_n486,push,2,3.354,4.091,10,23.6,
+ws_n486,poisson,2,3.068,4.611,10,24.7,"{'mu_total': 57.5862, 'mu_stale_frac': 0.5048, 'max_violation': 13.12}"
+ws_n486,mm-full,2,3.584,,,4.1,

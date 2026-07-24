@@ -1,0 +1,8 @@
+<stdin>:1: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+K100 seed 0 oneshot ACL: 14.13 rounds: 1 E: [2600.1]
+K100 seed 1 oneshot ACL: 13.77 rounds: 1 E: [2600.1]
+K100 seed 2 oneshot ACL: 13.98 rounds: 1 E: [2600.1]
+K140 seed 0 oneshot ACL: 23.79 rounds: 1 E: [4017.3]
+K140 seed 1 oneshot ACL: 24.21 rounds: 1 E: [4017.3]
+K140 seed 2 oneshot ACL: 23.75 rounds: 1 E: [4017.3]
+done-oneshot

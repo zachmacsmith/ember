@@ -1,0 +1,33 @@
+/data/max/ember/docs/paper2/data/crossbar_testbed.py:25: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+SPAN sweep: 24 combos, K100, 300 steps, compact init
+ak= 1 eta=0.3 thr=2.0 derate=1.0: E=   1800 viol=     2 ext= 18.0 rows= 10 spread=  9.0 E_assign=1740->1800
+ak= 1 eta=0.3 thr=2.0 derate=0.65: E=   2700 viol=     0 ext= 27.0 rows= 14 spread= 13.0 E_assign=2670->2700
+ak= 1 eta=0.3 thr=4.0 derate=1.0: E=   1800 viol=     2 ext= 18.0 rows= 10 spread=  9.0 E_assign=1740->1800
+ak= 1 eta=0.3 thr=4.0 derate=0.65: E=   2700 viol=     0 ext= 27.0 rows= 14 spread= 13.0 E_assign=2670->2700
+ak= 1 eta=0.6 thr=2.0 derate=1.0: E=   1800 viol=     2 ext= 18.0 rows= 10 spread=  9.0 E_assign=1680->1800
+ak= 1 eta=0.6 thr=2.0 derate=0.65: E=   2700 viol=     0 ext= 27.0 rows= 14 spread= 13.0 E_assign=2640->2700
+ak= 1 eta=0.6 thr=4.0 derate=1.0: E=   1800 viol=     2 ext= 18.0 rows= 10 spread=  9.0 E_assign=1680->1800
+ak= 1 eta=0.6 thr=4.0 derate=0.65: E=   2700 viol=     0 ext= 27.0 rows= 14 spread= 13.0 E_assign=2640->2700
+ak= 5 eta=0.3 thr=2.0 derate=1.0: E=   1600 viol=     7 ext= 16.0 rows=  9 spread=  8.0 E_assign=1600->1800
+ak= 5 eta=0.3 thr=2.0 derate=0.65: E=   2600 viol=     0 ext= 26.0 rows= 14 spread= 13.0 E_assign=2600->2700
+ak= 5 eta=0.3 thr=4.0 derate=1.0: E=   1600 viol=     7 ext= 16.0 rows=  9 spread=  8.0 E_assign=1600->1800
+ak= 5 eta=0.3 thr=4.0 derate=0.65: E=   2600 viol=     0 ext= 26.0 rows= 14 spread= 13.0 E_assign=2600->2700
+ak= 5 eta=0.6 thr=2.0 derate=1.0: E=   1600 viol=    26 ext= 16.0 rows=  9 spread=  8.0 E_assign=1600->1800
+ak= 5 eta=0.6 thr=2.0 derate=0.65: E=   2600 viol=     0 ext= 26.0 rows= 14 spread= 13.0 E_assign=2600->2700
+ak= 5 eta=0.6 thr=4.0 derate=1.0: E=   1600 viol=    26 ext= 16.0 rows=  9 spread=  8.0 E_assign=1600->1800
+ak= 5 eta=0.6 thr=4.0 derate=0.65: E=   2600 viol=     0 ext= 26.0 rows= 14 spread= 13.0 E_assign=2600->2700
+ak=25 eta=0.3 thr=2.0 derate=1.0: E=   1443 viol=   134 ext= 14.4 rows=  8 spread=  7.2 E_assign=1442->1800
+ak=25 eta=0.3 thr=2.0 derate=0.65: E=   2297 viol=    46 ext= 23.0 rows= 12 spread= 11.4 E_assign=2297->2700
+ak=25 eta=0.3 thr=4.0 derate=1.0: E=   1443 viol=   134 ext= 14.4 rows=  8 spread=  7.2 E_assign=1442->1800
+ak=25 eta=0.3 thr=4.0 derate=0.65: E=   2297 viol=    46 ext= 23.0 rows= 12 spread= 11.4 E_assign=2297->2700
+ak=25 eta=0.6 thr=2.0 derate=1.0: E=   1342 viol=   202 ext= 13.4 rows=  8 spread=  6.7 E_assign=1301->1800
+ak=25 eta=0.6 thr=2.0 derate=0.65: E=   2170 viol=    32 ext= 21.7 rows= 12 spread= 10.8 E_assign=2150->2800
+ak=25 eta=0.6 thr=4.0 derate=1.0: E=   1342 viol=   202 ext= 13.4 rows=  8 spread=  6.7 E_assign=1301->1800
+ak=25 eta=0.6 thr=4.0 derate=0.65: E=   2170 viol=    32 ext= 21.7 rows= 12 spread= 10.8 E_assign=2150->2800
+
+finalist route checks (top 3 by violation):
+  (1, 0.3, 2.0, 0.65): viol=0 unseeded=0 -> legal, polished ACL=13.94 (cross-emergent 13.46, mm ~13.6, template 9.78)
+  (1, 0.3, 4.0, 0.65): viol=0 unseeded=0 -> legal, polished ACL=13.94 (cross-emergent 13.46, mm ~13.6, template 9.78)
+  (5, 0.3, 2.0, 0.65): viol=0 unseeded=0 -> legal, polished ACL=13.15 (cross-emergent 13.46, mm ~13.6, template 9.78)
+done-span

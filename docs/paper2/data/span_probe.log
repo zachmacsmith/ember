@@ -1,0 +1,27 @@
+/data/max/ember/docs/paper2/data/span_probe.py:30: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+K100 seed 0 done
+K100 seed 1 done
+K100 seed 2 done
+K140 seed 0 done
+K140 seed 1 done
+K140 seed 2 done
+biK48_96 seed 0 done
+biK48_96 seed 1 done
+biK48_96 seed 2 done
+ER100_d10 seed 0 done
+ER100_d10 seed 1 done
+ER100_d10 seed 2 done
+regular_n316 seed 0 done
+regular_n316 seed 1 done
+regular_n316 seed 2 done
+ws_n486 seed 0 done
+ws_n486 seed 1 done
+ws_n486 seed 2 done
+wrote 90 rows -> /data/max/ember/docs/paper2/data/span_probe.csv
+K100           point=14.30(3)  span=14.47(3)  span-tb=15.11(3)  cross=14.80(3)  mm-full=13.44(3)
+K140           point=fail  span=fail  span-tb=21.84(3)  cross=fail  mm-full=20.70(3)
+biK48_96       point=8.20(3)  span=9.34(3)  span-tb=8.01(3)  cross=9.20(3)  mm-full=6.68(3)
+ER100_d10      point=5.65(3)  span=5.66(3)  span-tb=6.09(3)  cross=5.61(3)  mm-full=5.67(3)
+regular_n316   point=3.54(3)  span=3.66(3)  span-tb=3.44(3)  cross=3.72(3)  mm-full=4.02(3)
+ws_n486        point=3.26(3)  span=3.37(3)  span-tb=3.12(3)  cross=3.25(3)  mm-full=3.89(3)
