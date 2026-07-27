@@ -47,7 +47,7 @@ def yaml_text(name, algorithms, graphs, topology, note):
             f"algorithms:\n{algos}\n"
             f'graphs: "{graphs}"\n'
             f"topologies: [{topology}]\n"
-            f"trials: 1\nwarmup: 0\ntimeout: 60.0\nseed: 4242\nworkers: 56\n"
+            f"trials: 1\nwarmup: 0\ntimeout: 60.0\nseed: 4242\nworkers: 60\n"
             f"output_dir: results/{name}\n"
             f'note: "{note} | (instance, trial) pairing [CLI] | paper3 M5 full"\n')
 

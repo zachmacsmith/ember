@@ -12,6 +12,6 @@ trials: 1
 warmup: 0
 timeout: 60.0
 seed: 4242
-workers: 56
+workers: 60
 output_dir: results/m5full_z12
 note: "complete Ember library, n<=4800 pigeonhole-eligible (30221 graphs) | (instance, trial) pairing [CLI] | paper3 M5 full"

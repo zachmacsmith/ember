@@ -8,6 +8,6 @@ trials: 1
 warmup: 0
 timeout: 60.0
 seed: 4242
-workers: 56
+workers: 60
 output_dir: results/m5full_c16_layout
 note: "layout supplement, n<=1000 (25010 graphs; layout stage unwatchdogged on CLI — big-n excluded) | (instance, trial) pairing [CLI] | paper3 M5 full"
