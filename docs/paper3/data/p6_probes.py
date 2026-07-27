@@ -281,6 +281,10 @@ def parse_args():
     ap = argparse.ArgumentParser(
         description="P6 fork-anatomy probes (tree/root/beta; see docstring)")
     ap.add_argument("--workers", type=int, default=8)
+    ap.add_argument("--confirm", action="store_true",
+                    help="§4.8b 15-seed surprise confirm: deg-10 n in {100,140,"
+                         "180} x {stock,tree-sph,boltz-2.0,boltz-8.0,beta-16.0,"
+                         "beta-dhat} x algo seeds 0-14; separate CSV")
     ap.add_argument("--smoke", action="store_true",
                     help="local check: 2 cells, 6 switches, 1 inst, 1 seed, 8 s")
     ap.add_argument("--resume", action="store_true")
@@ -298,6 +302,13 @@ def main():
         inst_seeds, algo_seeds, timeout = (101,), (0,), SMOKE_TIMEOUT
         csv_path = CSV_PATH.replace(".csv", "_smoke.csv")
         summary_path = SUMMARY_PATH.replace(".txt", "_smoke.txt")
+    elif args.confirm:
+        confirm_switches = ("stock", "tree-sph", "boltz-2.0", "boltz-8.0",
+                            "beta-16.0", "beta-dhat")
+        plan = [(n, 10.0 / (n - 1), confirm_switches) for n in (100, 140, 180)]
+        inst_seeds, algo_seeds, timeout = INST_SEEDS, tuple(range(15)), TIMEOUT
+        csv_path = CSV_PATH.replace(".csv", "_confirm.csv")
+        summary_path = SUMMARY_PATH.replace(".txt", "_confirm.txt")
     else:
         plan = [(n, p, SWITCH_ORDER) for n, p in CELLS_MAIN]
         plan.append((CELL_CLIFF[0], CELL_CLIFF[1], CLIFF_SWITCHES))
