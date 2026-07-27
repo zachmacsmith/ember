@@ -192,7 +192,7 @@ and (140, 0.08) on both topologies — same arms/seeds/budget as E0. Also determ
 whether p*(140) is even lower than 0.12 (the n=160 ladder says 0.12 is winnable).
 
 Script: docs/paper3/data/e0_crossover.py with the two cells appended to the grid
-@ <sha stamped at commit>, run with --resume against the E0 CSV (only new cells
+@ f04a4115, run with --resume against the E0 CSV (only new cells
 execute; resume keys verified exact-match in the E0-author's validation).
 
 Bars: none (baseline extension of §4.1; the §4.1 decision rules apply verbatim to
