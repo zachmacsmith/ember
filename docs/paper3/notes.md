@@ -582,3 +582,26 @@ p3-clmm regresses on sparse families (its seeds hurt below the crossover — E0)
 is expected to need the density gate; p3-mmpolish never regresses.
 
 --- results appended below per experiment; nothing above edited after launch ---
+
+### 4.10b M4 supplement — the p-norm layout baseline (2026-07-27)
+
+PRE-REGISTERED 2026-07-27 (before launch; added on user directive — the original
+kickoff asked for MM "including with p-norm layout, the documented practitioner
+default", and no paper3 experiment had carried the arm). Script: m4_eval.py --stage
+main --arms minorminer-layout @ <sha stamped at commit> (dev_suite ARMS gains
+"minorminer-layout"; registry arm = minorminer.layout.find_embedding, p-norm
+placement). Cells/seeds/budget: the 14 frozen eval cells x eval inst seeds 901-915 x
+algo seeds 10-14 x 60 s (rows append to m4_eval.csv; m4_analysis pairs it vs
+minorminer like any arm). Bars: none (baseline completion) — the read is whether
+layout changes ANY §4.10 conclusion: expected ≈ stock on dense ER (no geometry to
+exploit), and the p3 margins must stand against max(stock, layout) per cell to be
+quoted as "beats the practitioner default".
+
+AMENDMENT to §4.11 (pre-launch, 2026-07-27): M5 arms gain minorminer-layout (its
+home turf is structured sources); M5 graphs gain 1,100 sampled random/application
+graphs (220 each from spin_glass, regular, watts_strogatz, planted_solution,
+barabasi_albert; rng seed 4242) restoring the approved plan's scope that the
+authored YAML had narrowed. Selection now parses to 4,488 graphs. The §4.11 bar
+applies verbatim to all five families and both baselines.
+
+--- results appended below; nothing above this line is edited after launch ---
