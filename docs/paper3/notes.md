@@ -414,3 +414,39 @@ apply the old rule — disregard them; the CSV is authoritative). Seeds-only cap
 Scientific note: even dense RANDOM graphs carry ~4–5% of assignment-exploitable
 structure (degree fluctuations + local edge patterns) — the "no latent structure"
 intuition from §3.21 applies to placement geometry, not to slot assignment.
+
+§4.5 RESULTS (2026-07-27, 2,214 rows, hyde06 48W; full table dev_suite_summary.txt):
+
+- **P1 p3-ate: PASS, overwhelming.** Above-p* cells all won at 20-25/25: P16
+  (100,0.3) -16.8%, (140,0.2) -19.3%, K140 -33.5%, (140,0.12) -4.7% (23/1); Z12
+  (100,0.3) -15.2%, (140,0.2) -17.6%, K140 -30.6%, (140,0.12) -3.6% (22/3), plus
+  (100,0.2) -4.4% both topos. Sparse control (160,0.05): EXACT tie with MM 0.000
+  (0/0/25 both topos) — the never-worse auto-select verified live (winner=mm there;
+  winner=template above p*, ties p3-template to the third decimal). Frontier: K180/
+  K179 5/5 at 16.64/12.97 where MM+cuthill+attraction are 0/5.
+- **THE STRADDLE FLIP — assignment moves p* itself.** At (140,0.12), where the naive
+  identity-assignment template LOSES (§4.1b: +0.51/+0.61), the shipped ATE template
+  (KG2's 2-swap assignment + trim) WINS: P16 -0.529 (-4.7%, 23/1), Z12 -0.322
+  (-3.6%, 22/3). The §4.9 assignment gain (+3.6..4.8%) is exactly the flip margin:
+  **ATE's crossover sits BELOW the naive template's p*(140) in (0.12, 0.2]** — the
+  product widens the dense regime beyond the construction that defined it.
+- **P2: B1 PASS** — mid-band paired wins P16 (100,0.2) -4.7% (20/5) and (140,0.12)
+  -2.9% (16/9). Topology asymmetry: the same cells on Z12 are +2.8% (7/18) and +0.4%
+  (12/13) — clmm's mid-band edge is Pegasus-specific at n=100-140; report as-is.
+  **B2 PASS** — clmm-core beats clmm at (140,0.2) on BOTH topos (-15.0 vs -12.9;
+  -14.9 vs -12.4) and ties-or-beats at K_n; but core BACKFIRES at (140,0.12)
+  (+5.0/+5.6% vs clmm's -2.9/+0.4) — core-seeding is a dense-side tool; regime-gate
+  it. **B3**: K179 clmm 12.961 vs template 12.972 (4/0/1) — seeded polish shaves a
+  hair off the template at the frontier, again.
+- **p3-mmpolish: PASS.** Median < 0 on ALL 10 MM-feasible ER cells, win rates
+  18-25/25 (typical -0.5..-1.2%): the exact-repair polish is a small, near-universal
+  free improvement on MM's own output in the search regime. It does NOT help at the
+  cliff (P16 K140 +3.0% — the 30% budget reservation costs more than repair returns;
+  K179/K180 fail with their base). Product shape: mid/sparse-band add-on.
+- Context: attraction wins the sparse control (-4.3% 21/3 Z12; -2.8% 17/8 P16) and
+  Z12 (100,0.3) (-2.1%) — the sparse specialist as mapped. pssa collapses sparse
+  (+79..+86%). cuthill: -1.6..-3.7% mid-band; K140 split by topology (P16 -6.2%,
+  Z12 +4.2%, n=4-5 — noisy at the cliff).
+- Ops: Z12 K140 MM 4/5 (cliff-edge flakiness, matches E0); attraction 0/5 on all
+  K_n cells at 70-81 s (cooperative overrun, watchdog never fired); all other arms
+  100% success on MM-feasible cells.
