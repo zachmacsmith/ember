@@ -523,7 +523,16 @@ def _graph_topo_compatible(graph_id: int, source_graph, target_graph,
                     return any(topo_lower.startswith(t.lower()) for t in compatible_topos)
         except Exception:
             pass
-    # Custom graph or no topology annotation: size is a necessary condition
+    # Custom graph or no topology annotation: size is a necessary condition.
+    # Lazy-mode tasks carry source_graph=None — use manifest node/edge counts.
+    if source_graph is None:
+        try:
+            from ember_qc.load_graphs import _manifest_by_id
+            entry = _manifest_by_id().get(graph_id) or {}
+            return (entry.get('nodes', 0) <= target_graph.number_of_nodes() and
+                    entry.get('edges', 0) <= target_graph.number_of_edges())
+        except Exception:
+            return True  # unknowable without loading — let the run decide
     return (source_graph.number_of_nodes() <= target_graph.number_of_nodes() and
             source_graph.number_of_edges() <= target_graph.number_of_edges())
 
@@ -799,6 +808,20 @@ def _execute_tasks(
                     raise KeyboardInterrupt
 
                 source_graph, target_graph, algo_name, graph_id, graph_name, topo_name, trial, trial_seed = task
+                try:
+                    source_graph, target_graph = _materialize_task(
+                        source_graph, target_graph, graph_id, topo_name)
+                except Exception as _mat_exc:
+                    result = _lazy_failure_result(algo_name, graph_name, graph_id,
+                                                  topo_name, trial, _mat_exc)
+                    batch_logger.log_run(result, trial_seed)
+                    with open(worker_file, "a") as wf:
+                        rec = result.to_jsonl_dict()
+                        rec['seed'] = trial_seed
+                        rec['batch_id'] = batch_id
+                        wf.write(json.dumps(rec) + "\n")
+                    done_count += 1
+                    continue
 
                 # Transition detection: print topo/problem headers in verbose mode
                 if verbose:
@@ -985,6 +1008,47 @@ def _execute_tasks(
     )
 
 
+_LAZY_TARGETS: Dict[str, "nx.Graph"] = {}
+_LAZY_SOURCES: Dict[int, "nx.Graph"] = {}
+
+
+def _materialize_task(source_graph, target_graph, graph_id, topo_name):
+    """Resolve lazy task graphs (None placeholders) process-locally.
+
+    Library-selection batches ship graph IDs instead of pickled graphs (the
+    eager path serially loaded the whole selection in the parent — hours and
+    tens of GB at full-library scale, and re-pickled the target into every
+    task). Targets are built once per process from the topology registry;
+    sources load by id through the packaged loader's disk cache (ms-scale).
+    A small FIFO source cache serves consecutive same-graph tasks
+    (n_workers=1); scattered queue consumption just reloads.
+    """
+    if target_graph is None:
+        target_graph = _LAZY_TARGETS.get(topo_name)
+        if target_graph is None:
+            from ember_qc.topologies import get_topology
+            target_graph = get_topology(topo_name)
+            _LAZY_TARGETS[topo_name] = target_graph
+    if source_graph is None:
+        source_graph = _LAZY_SOURCES.get(graph_id)
+        if source_graph is None:
+            from ember_qc.load_graphs import load_graph
+            source_graph = load_graph(graph_id)
+            if len(_LAZY_SOURCES) >= 128:
+                _LAZY_SOURCES.pop(next(iter(_LAZY_SOURCES)))
+            _LAZY_SOURCES[graph_id] = source_graph
+    return source_graph, target_graph
+
+
+def _lazy_failure_result(algo_name, graph_name, graph_id, topo_name, trial,
+                         exc) -> "EmbeddingResult":
+    return EmbeddingResult(
+        algorithm=algo_name, graph_name=graph_name, graph_id=graph_id,
+        topology_name=topo_name, trial=trial, success=False, status='CRASH',
+        error=f'lazy graph load failed: {exc}',
+    )
+
+
 def _worker_process(task_queue: multiprocessing.Queue,
                     result_queue: multiprocessing.Queue,
                     workers_dir_str: str,
@@ -1021,12 +1085,19 @@ def _worker_process(task_queue: multiprocessing.Queue,
 
         log_path = run_log_path(logs_runs_dir, algo_name, graph_name, trial, trial_seed)
         _reseed_globals(trial_seed)
-        with capture_run(log_path):
-            result = benchmark_one(
-                source_graph, target_graph, algo_name,
-                timeout=timeout, graph_name=graph_name, graph_id=graph_id,
-                topology_name=topo_name, trial=trial, seed=trial_seed,
-            )
+        try:
+            source_graph, target_graph = _materialize_task(
+                source_graph, target_graph, graph_id, topo_name)
+        except Exception as _mat_exc:
+            result = _lazy_failure_result(algo_name, graph_name, graph_id,
+                                          topo_name, trial, _mat_exc)
+        else:
+            with capture_run(log_path):
+                result = benchmark_one(
+                    source_graph, target_graph, algo_name,
+                    timeout=timeout, graph_name=graph_name, graph_id=graph_id,
+                    topology_name=topo_name, trial=trial, seed=trial_seed,
+                )
 
         # Append runner diagnostics footer after capture exits (not captured)
         try:
@@ -1403,10 +1474,27 @@ class EmbeddingBenchmark:
                 faulted_topo_list.append((label, faulted, topo_name))
             topo_list = faulted_topo_list
 
-        # Resolve problems
+        # Resolve problems. Library selections resolve LAZILY: the parent keeps
+        # only (id, name) from the manifest and workers materialize graphs on
+        # demand (_materialize_task) — the eager path loaded the entire
+        # selection serially in the parent (hours + tens of GB at full-library
+        # scale) and pickled the target graph into every queued task. Eager is
+        # kept for caller-supplied problems and fault runs (virtual topologies
+        # are not reconstructable from the registry by name).
+        lazy_load = (problems is None
+                     and graph_selection not in (None, "custom")
+                     and not _any_faults)
         if problems is None:
             selection = graph_selection or "*"
-            problems = _load_test_graphs(selection)
+            if lazy_load:
+                from ember_qc.load_graphs import (_manifest_by_id,
+                                                  parse_graph_selection)
+                _man = _manifest_by_id()
+                problems = [(gid, _man[gid]['name'], None)
+                            for gid in sorted(parse_graph_selection(selection))
+                            if gid in _man]
+            else:
+                problems = _load_test_graphs(selection)
             if not problems:
                 print(f"Warning: No graphs matched selection '{selection}'. "
                       f"Run: python generate_test_graphs.py")
@@ -1487,6 +1575,10 @@ class EmbeddingBenchmark:
             print(f"Warning: Warmup trials skipped (not supported with n_workers > 1).")
             total_warmup = 0
             warmup_trials = 0
+        if lazy_load and warmup_trials > 0:
+            print("Warning: Warmup trials skipped (lazy library loading).")
+            total_warmup = 0
+            warmup_trials = 0
 
         total_runs = total_measured + total_warmup
         topo_names_for_config = [t[2] for t in topo_list]
@@ -1554,8 +1646,11 @@ class EmbeddingBenchmark:
             _warn_registry['TOPOLOGY_DISCONNECTED'] = _disconnected_topos
 
         # Build flat task list — 7-element tuple (timeout excluded, passed uniformly).
+        # Lazy mode ships None graphs: workers rebuild the target from the
+        # registry by topo_name and load sources by id (_materialize_task).
         all_tasks = []
         for _, target_graph, topo_name in topo_list:
+            _tg = None if lazy_load else target_graph
             for graph_id, graph_name, source_graph in problems:
                 if (graph_id, topo_name) in _incompat_graph_topo:
                     continue
@@ -1564,7 +1659,7 @@ class EmbeddingBenchmark:
                         continue
                     for trial in range(n_trials):
                         trial_seed = _derive_seed(seed, algo_name, graph_id, topo_name, trial)
-                        all_tasks.append((source_graph, target_graph, algo_name,
+                        all_tasks.append((source_graph, _tg, algo_name,
                                           graph_id, graph_name, topo_name, trial, trial_seed))
 
         # Warmup: caller-owned, sequential only (n_workers > 1 disables warmup upstream).
