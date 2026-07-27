@@ -693,3 +693,21 @@ Dated corrections; original entries above are left as written (append-only).
 6. **Ceiling-gap range:** canonical MM-only figure is 16–57% (K60 +16%, K100
    +39%, K140 +57% above the template); paper2's "30–60%" title spans all search
    arms, not MM alone.
+
+§4.10b RESULTS (2026-07-27, 770 rows appended to m4_eval.csv; paired analysis in
+this entry — m4_analysis's fixed arm list omits the supplement, computed directly):
+
+- **minorminer-layout ≈ stock MM on every ER eval cell**: medians −0.06..+0.28,
+  win rates 27-40 of 75 each way — no significant difference anywhere; the
+  documented practitioner default does not change the dense-random story.
+- **Layout is strictly WORSE at the dense cliff: 0/5 on ALL four K_n cells**
+  (K140 P16/Z12 where stock is 5/5 and 4/5; K180/K179 where both fail). The
+  p-norm initial chains actively fight the extended-bar structure the cliff
+  needs — the same §3.10 anti-placement effect, now measured in the practitioner
+  default. Quotable: the D-Wave-documented layout wrapper LOWERS MM's feasibility
+  ceiling on complete graphs at 60 s.
+- **p3-ate beats max(stock, layout) on every above-p* cell**: vs layout −0.31..
+  −2.89 at 69-75/75; exact-tie-grade on sparse (40/33..40/35, |med| ≤ 0.07 — ate
+  defers to stock MM, which ≈ layout there). The "beats the practitioner default"
+  quote is licensed cell-by-cell.
+- M4 is now fully closed (main + race + supplement).
