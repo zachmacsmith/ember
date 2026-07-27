@@ -200,6 +200,39 @@ the new cells). Runs on hyde06 after e0_ceiling per QUEUE.md.
 
 --- results appended below; nothing above this line is edited after launch ---
 
+RESULTS (2026-07-27, 324 rows appended to e0_crossover.csv):
+
+- **p*(140) ∈ (0.12, 0.2] on BOTH topologies** — template at (140, 0.12): P16 median
+  +0.51 (2/13), Z12 +0.61 (1/14) = loses; at (140, 0.2) it wins 15/15 (§4.1). The
+  dev-suite straddle pair is real and fully baselined; the left-censoring is resolved.
+- (140, 0.08): all constructive arms lose big (template +2.6..+3.2); attraction wins
+  small (−0.24 P16 / −0.06 Z12) — the sparse strip persists at n=140. MM 15/15
+  everywhere in the extension.
+- Mid-band interpolation confirmed at n=140: **clmm still beats MM at (140, 0.12) on
+  P16** (median −0.46, 10/5; Z12 neutral +0.04) — seeded search extends the win region
+  below the raw-template crossover, the P2 mid-band role in one number. cuthill −0.44
+  (10/5) there too (its fixed-order effect is alive on mid-band).
+
+**e0_ceiling RESULTS (2026-07-27, 1,000 rows; the rule-2 deflator, measured at equal
+wall-clock on the frozen dev cells — supersedes the paper-1 tiny-cell probe):**
+
+- **The best-of-K freebie largely does not exist at equal wall-clock.** Sparse
+  (160, 0.05): bo3/bo6/bo12 = −0.32/−0.43/−0.32 spur (real but small — the one
+  regime where restarts are nearly free, consistent with §4.2's q1-convergence).
+  Mid-band (100, 0.2/0.3): bo3 ≈ −0.2, bo6/bo12 ≈ 0 to +0.3 (splitting starts to
+  hurt). (140, 0.2): ALL best-of-K arms WORSE (+0.29..+1.36 spur, bo6 0/24 wins) —
+  the long grind wants contiguous time. Dense cliff: P16 K140 bo12 gains on raw
+  (−2.7 spur) but only by BURNING 137 s vs 59 s (MM's cooperative timeout overshoots
+  ~2.2× per 5 s slice — equal-wall-clock best-of-K is not even achievable there);
+  Z12 K140 is unambiguous: bo-K loses +1.8..+4.1 spur with 10/25 failures at bo12,
+  despite 143 s. Restarting at the cliff destroys the one continuous grind that works.
+- Paper-1's −4.8..−10% ceiling-probe number came from n=20–40 toy cells with
+  full-budget (unequal-time) restarts; it does NOT transfer to real cells at equal
+  wall-clock. Consequence for rule 2: the strong MM configuration at 60 s is mostly
+  the SINGLE run; bo-K is the binding control only on sparse cells (and the parallel
+  variant for the racer). Our dense margins (−11..−33%) tower over any restart
+  freebie by an order of magnitude.
+
 ### 4.2 Rank-stability probe — the P3 gate + P4 patience curve (2026-07-26)
 
 PRE-REGISTERED 2026-07-26

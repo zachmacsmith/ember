@@ -102,7 +102,8 @@ mmfork arms in script-route experiments always pass `fallback=False`.
   (180, 1.0)=K180 [past-cliff], (160, 0.05) [sparse control]
 - Z12: (100, 0.2), (100, 0.3), (140, 0.12)†, (140, 0.2), (140, 1.0)=K140,
   (179, 1.0)=K179 [past-cliff], (160, 0.05) [sparse control]
-† baselined by the §4.1b extension run.
+† baselined by the §4.1b extension run (done 2026-07-27: template loses at 0.12 on
+both topologies → the straddle pair (0.12 below, 0.2 above) is confirmed).
 Bars on this suite use the acl_spur column; per-cell baselines: E0 CSV + e0_ceiling.
 
 ## File layout

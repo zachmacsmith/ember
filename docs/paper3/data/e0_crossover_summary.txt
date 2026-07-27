@@ -337,6 +337,15 @@ against every minorminer seed run on the same instance. Success rates are unpair
   pssa            success 15/15   med time    0.49s   pairs  15  dACL_spur mean  +2.266 median  +2.210  W/L/T 0/15/0
   attraction      success 15/15   med time   12.29s   pairs  15  dACL_spur mean  -0.091 median  -0.090  W/L/T 9/6/0
 
+-- P16  n=140  p=0.12
+  minorminer      success 15/15   med time   21.59s   acl_spur mean 11.580 median 11.529
+  mmfork-cuthill  success 15/15   med time   23.47s   pairs  15  dACL_spur mean  -0.219 median  -0.436  W/L/T 10/5/0
+  clmm            success 15/15   med time    9.15s   pairs  15  dACL_spur mean  -0.112 median  -0.464  W/L/T 10/5/0
+  template        success 3/3   med time    0.07s   pairs  15  dACL_spur mean  +0.361 median  +0.514  W/L/T 2/13/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  +0.361 median  +0.514  W/L/T 2/13/0
+  pssa            success 15/15   med time    0.63s   pairs  15  dACL_spur mean  +0.573 median  +0.671  W/L/T 2/13/0
+  attraction      success 15/15   med time   41.15s   pairs  15  dACL_spur mean  -0.246 median  -0.150  W/L/T 11/4/0
+
 -- P16  n=160  p=0.12
   minorminer      success 15/15   med time   29.07s   acl_spur mean 14.412 median 14.294
   mmfork-cuthill  success 15/15   med time   30.68s   pairs  15  dACL_spur mean  -0.438 median  -0.500  W/L/T 10/4/1
@@ -390,6 +399,15 @@ against every minorminer seed run on the same instance. Success rates are unpair
   clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  +3.358 median  +3.392  W/L/T 0/15/0
   pssa            success 15/15   med time    0.59s   pairs  15  dACL_spur mean  +3.511 median  +3.550  W/L/T 0/15/0
   attraction      success 15/15   med time   11.36s   pairs  15  dACL_spur mean  -0.130 median  -0.100  W/L/T 11/4/0
+
+-- P16  n=140  p=0.08
+  minorminer      success 15/15   med time   11.26s   acl_spur mean 8.144 median 8.150
+  mmfork-cuthill  success 15/15   med time   13.73s   pairs  15  dACL_spur mean  -0.084 median  -0.107  W/L/T 8/7/0
+  clmm            success 15/15   med time    6.63s   pairs  15  dACL_spur mean  +1.205 median  +1.100  W/L/T 0/15/0
+  template        success 3/3   med time    0.08s   pairs  15  dACL_spur mean  +3.142 median  +3.200  W/L/T 0/15/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  +3.142 median  +3.200  W/L/T 0/15/0
+  pssa            success 15/15   med time    0.68s   pairs  15  dACL_spur mean  +3.337 median  +3.371  W/L/T 0/15/0
+  attraction      success 15/15   med time   18.77s   pairs  15  dACL_spur mean  -0.187 median  -0.243  W/L/T 13/2/0
 
 -- P16  n=180  p=0.08
   minorminer      success 15/15   med time   20.09s   acl_spur mean 13.303 median 13.133
@@ -841,6 +859,15 @@ against every minorminer seed run on the same instance. Success rates are unpair
   pssa            success 15/15   med time    0.36s   pairs  15  dACL_spur mean  +1.805 median  +1.820  W/L/T 0/15/0
   attraction      success 15/15   med time   10.39s   pairs  15  dACL_spur mean  -0.064 median  -0.100  W/L/T 10/4/1
 
+-- Z12  n=140  p=0.12
+  minorminer      success 15/15   med time   19.42s   acl_spur mean 8.997 median 8.950
+  mmfork-cuthill  success 15/15   med time   19.72s   pairs  15  dACL_spur mean  +0.028 median  +0.029  W/L/T 7/8/0
+  clmm            success 15/15   med time    7.57s   pairs  15  dACL_spur mean  +0.138 median  +0.036  W/L/T 7/8/0
+  template        success 3/3   med time    0.07s   pairs  15  dACL_spur mean  +0.618 median  +0.607  W/L/T 1/14/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  +0.618 median  +0.607  W/L/T 1/14/0
+  pssa            success 15/15   med time    0.44s   pairs  15  dACL_spur mean  +0.618 median  +0.607  W/L/T 1/14/0
+  attraction      success 15/15   med time   31.95s   pairs  15  dACL_spur mean  -0.140 median  -0.043  W/L/T 10/5/0
+
 -- Z12  n=160  p=0.12
   minorminer      success 15/15   med time   27.07s   acl_spur mean 11.156 median 11.094
   mmfork-cuthill  success 15/15   med time   24.48s   pairs  15  dACL_spur mean  -0.098 median  -0.169  W/L/T 9/6/0
@@ -894,6 +921,15 @@ against every minorminer seed run on the same instance. Success rates are unpair
   clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  +2.629 median  +2.608  W/L/T 0/15/0
   pssa            success 15/15   med time    0.40s   pairs  15  dACL_spur mean  +2.629 median  +2.608  W/L/T 0/15/0
   attraction      success 15/15   med time   10.43s   pairs  15  dACL_spur mean  -0.073 median  -0.008  W/L/T 8/6/1
+
+-- Z12  n=140  p=0.08
+  minorminer      success 15/15   med time    8.00s   acl_spur mean 6.476 median 6.464
+  mmfork-cuthill  success 15/15   med time    7.14s   pairs  15  dACL_spur mean  -0.020 median  +0.043  W/L/T 7/8/0
+  clmm            success 15/15   med time    6.78s   pairs  15  dACL_spur mean  +0.838 median  +0.657  W/L/T 0/15/0
+  template        success 3/3   med time    0.05s   pairs  15  dACL_spur mean  +2.600 median  +2.614  W/L/T 0/15/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  +2.600 median  +2.614  W/L/T 0/15/0
+  pssa            success 15/15   med time    0.44s   pairs  15  dACL_spur mean  +2.605 median  +2.614  W/L/T 0/15/0
+  attraction      success 15/15   med time   15.91s   pairs  15  dACL_spur mean  -0.226 median  -0.057  W/L/T 11/4/0
 
 -- Z12  n=180  p=0.08
   minorminer      success 15/15   med time   21.42s   acl_spur mean 10.101 median 10.067
@@ -985,4 +1021,4 @@ against every minorminer seed run on the same instance. Success rates are unpair
   pssa            success 0/15   med time   66.45s
   attraction      success 0/15   med time   67.35s
 
-rows: 8235   csv: /data/dabh/ember/docs/paper3/data/e0_crossover.csv
+rows: 8559   csv: /data/dabh/ember/docs/paper3/data/e0_crossover.csv

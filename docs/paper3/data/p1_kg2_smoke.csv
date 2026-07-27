@@ -1,0 +1,9 @@
+topo,n,p,inst_seed,assignment,status,acl_pre,acl_spur,obj_sim,qubits,time,detail,err
+P16,100,0.3,101,identity,SUCCESS,9.82,9.52,959,952,0.0257,,
+P16,100,0.3,101,cuthill,SUCCESS,9.82,9.44,956,944,0.0267,,
+P16,100,0.3,101,spectral,SUCCESS,9.82,9.35,946,935,0.2919,,
+P16,100,0.3,101,shipped,SUCCESS,9.82,9.07,906,907,0.1272,"{""seed_order"":""spectral"",""obj_seed"":946,""obj_final"":906,""complete_skip"":false}",
+P16,100,0.3,101,rand-00,SUCCESS,9.82,9.52,957,952,0.0198,,
+P16,100,0.3,101,rand-01,SUCCESS,9.82,9.52,960,952,0.0234,,
+P16,100,0.3,101,rand-02,SUCCESS,9.82,9.54,959,954,0.0216,,
+P16,100,0.3,101,rand-03,SUCCESS,9.82,9.52,956,952,0.0231,,

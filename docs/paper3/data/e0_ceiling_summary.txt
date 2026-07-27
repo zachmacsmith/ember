@@ -1,0 +1,66 @@
+====================================================================================================
+E0 ceiling summary — the best-of-K freebie at equal wall-clock (protocol rule 2 deflator)
+dACL = best-of-K arm - single-run arm, paired by (inst_seed, base_seed) on both-succeed pairs
+====================================================================================================
+
+-- P16  n=140  p=1   (baseline arm: mm-bo1x60)
+  mm-bo1x60    success 25/25  mean restarts-ok  1.0/1  mean time   58.8s   acl mean 18.401  acl_spur mean 16.539
+  mm-bo3x20    success 25/25  mean restarts-ok  3.0/3  mean time   65.6s   pairs 25  dACL mean  -1.069 median  +0.000  dACL_spur mean  -0.685  W/L/T 10/5/10
+  mm-bo6x10    success 25/25  mean restarts-ok  5.1/6  mean time   79.6s   pairs 25  dACL mean  -1.765 median  -0.307  dACL_spur mean  -1.138  W/L/T 15/5/5
+  mm-bo12x5    success 25/25  mean restarts-ok  7.6/12  mean time  136.9s   pairs 25  dACL mean  -3.744 median  -5.207  dACL_spur mean  -2.737  W/L/T 20/5/0
+
+-- P16  n=100  p=0.3   (baseline arm: mm-bo1x60)
+  mm-bo1x60    success 25/25  mean restarts-ok  1.0/1  mean time   25.8s   acl mean 11.737  acl_spur mean 11.017
+  mm-bo3x20    success 25/25  mean restarts-ok  3.0/3  mean time   57.7s   pairs 25  dACL mean  -0.312 median  -0.220  dACL_spur mean  -0.227  W/L/T 16/4/5
+  mm-bo6x10    success 25/25  mean restarts-ok  6.0/6  mean time   61.8s   pairs 25  dACL mean  -0.003 median  +0.120  dACL_spur mean  +0.022  W/L/T 11/14/0
+  mm-bo12x5    success 25/25  mean restarts-ok 12.0/12  mean time   63.7s   pairs 25  dACL mean  +0.251 median  +0.350  dACL_spur mean  +0.232  W/L/T 8/17/0
+
+-- P16  n=100  p=0.2   (baseline arm: mm-bo1x60)
+  mm-bo1x60    success 25/25  mean restarts-ok  1.0/1  mean time   15.9s   acl mean 9.704  acl_spur mean 9.284
+  mm-bo3x20    success 25/25  mean restarts-ok  3.0/3  mean time   46.2s   pairs 25  dACL mean  -0.224 median  -0.110  dACL_spur mean  -0.215  W/L/T 15/1/9
+  mm-bo6x10    success 25/25  mean restarts-ok  6.0/6  mean time   59.8s   pairs 25  dACL mean  -0.058 median  +0.000  dACL_spur mean  -0.071  W/L/T 12/12/1
+  mm-bo12x5    success 25/25  mean restarts-ok 12.0/12  mean time   62.2s   pairs 25  dACL mean  +0.410 median  +0.500  dACL_spur mean  +0.315  W/L/T 5/20/0
+
+-- P16  n=140  p=0.2   (baseline arm: mm-bo1x60)
+  mm-bo1x60    success 25/25  mean restarts-ok  1.0/1  mean time   40.1s   acl mean 15.437  acl_spur mean 14.600
+  mm-bo3x20    success 25/25  mean restarts-ok  3.0/3  mean time   60.7s   pairs 25  dACL mean  +0.380 median  +0.364  dACL_spur mean  +0.293  W/L/T 6/18/1
+  mm-bo6x10    success 25/25  mean restarts-ok  6.0/6  mean time   62.2s   pairs 25  dACL mean  +1.131 median  +1.193  dACL_spur mean  +0.846  W/L/T 0/24/1
+  mm-bo12x5    success 25/25  mean restarts-ok 12.0/12  mean time   64.3s   pairs 25  dACL mean  +1.753 median  +1.750  dACL_spur mean  +1.363  W/L/T 1/24/0
+
+-- P16  n=160  p=0.05   (baseline arm: mm-bo1x60)
+  mm-bo1x60    success 25/25  mean restarts-ok  1.0/1  mean time    6.5s   acl mean 6.726  acl_spur mean 6.503
+  mm-bo3x20    success 25/25  mean restarts-ok  3.0/3  mean time   20.1s   pairs 25  dACL mean  -0.358 median  -0.194  dACL_spur mean  -0.323  W/L/T 18/0/7
+  mm-bo6x10    success 25/25  mean restarts-ok  6.0/6  mean time   39.6s   pairs 25  dACL mean  -0.474 median  -0.469  dACL_spur mean  -0.429  W/L/T 20/0/5
+  mm-bo12x5    success 25/25  mean restarts-ok 12.0/12  mean time   59.1s   pairs 25  dACL mean  -0.342 median  -0.388  dACL_spur mean  -0.315  W/L/T 19/4/2
+
+-- Z12  n=140  p=1   (baseline arm: mm-bo1x60)
+  mm-bo1x60    success 25/25  mean restarts-ok  1.0/1  mean time   61.6s   acl mean 18.836  acl_spur mean 15.786
+  mm-bo3x20    success 25/25  mean restarts-ok  2.2/3  mean time   67.7s   pairs 25  dACL mean  +2.461 median  +2.664  dACL_spur mean  +1.847  W/L/T 0/25/0
+  mm-bo6x10    success 25/25  mean restarts-ok  2.8/6  mean time   84.3s   pairs 25  dACL mean  +4.987 median  +5.236  dACL_spur mean  +3.790  W/L/T 0/25/0
+  mm-bo12x5    success 15/25  mean restarts-ok  1.2/12  mean time  143.0s   pairs 15  dACL mean  +5.920 median  +4.779  dACL_spur mean  +4.079  W/L/T 0/15/0
+
+-- Z12  n=100  p=0.3   (baseline arm: mm-bo1x60)
+  mm-bo1x60    success 25/25  mean restarts-ok  1.0/1  mean time   21.2s   acl mean 9.424  acl_spur mean 8.821
+  mm-bo3x20    success 25/25  mean restarts-ok  3.0/3  mean time   54.8s   pairs 25  dACL mean  -0.297 median  -0.160  dACL_spur mean  -0.257  W/L/T 16/5/4
+  mm-bo6x10    success 25/25  mean restarts-ok  6.0/6  mean time   61.6s   pairs 25  dACL mean  +0.084 median  +0.090  dACL_spur mean  +0.063  W/L/T 10/14/1
+  mm-bo12x5    success 25/25  mean restarts-ok 12.0/12  mean time   63.0s   pairs 25  dACL mean  +0.800 median  +0.780  dACL_spur mean  +0.616  W/L/T 2/22/1
+
+-- Z12  n=100  p=0.2   (baseline arm: mm-bo1x60)
+  mm-bo1x60    success 25/25  mean restarts-ok  1.0/1  mean time   14.5s   acl mean 7.710  acl_spur mean 7.333
+  mm-bo3x20    success 25/25  mean restarts-ok  3.0/3  mean time   41.2s   pairs 25  dACL mean  -0.275 median  -0.140  dACL_spur mean  -0.228  W/L/T 18/1/6
+  mm-bo6x10    success 25/25  mean restarts-ok  6.0/6  mean time   59.2s   pairs 25  dACL mean  -0.154 median  -0.030  dACL_spur mean  -0.097  W/L/T 13/11/1
+  mm-bo12x5    success 25/25  mean restarts-ok 12.0/12  mean time   62.0s   pairs 25  dACL mean  +0.314 median  +0.300  dACL_spur mean  +0.252  W/L/T 4/20/1
+
+-- Z12  n=140  p=0.2   (baseline arm: mm-bo1x60)
+  mm-bo1x60    success 25/25  mean restarts-ok  1.0/1  mean time   38.5s   acl mean 12.495  acl_spur mean 11.678
+  mm-bo3x20    success 25/25  mean restarts-ok  3.0/3  mean time   60.5s   pairs 25  dACL mean  +0.605 median  +0.671  dACL_spur mean  +0.469  W/L/T 3/21/1
+  mm-bo6x10    success 25/25  mean restarts-ok  6.0/6  mean time   62.0s   pairs 25  dACL mean  +1.793 median  +1.843  dACL_spur mean  +1.429  W/L/T 2/23/0
+  mm-bo12x5    success 25/25  mean restarts-ok 12.0/12  mean time   63.7s   pairs 25  dACL mean  +3.312 median  +3.257  dACL_spur mean  +2.688  W/L/T 0/25/0
+
+-- Z12  n=160  p=0.05   (baseline arm: mm-bo1x60)
+  mm-bo1x60    success 25/25  mean restarts-ok  1.0/1  mean time    5.1s   acl mean 5.330  acl_spur mean 5.148
+  mm-bo3x20    success 25/25  mean restarts-ok  3.0/3  mean time   15.6s   pairs 25  dACL mean  -0.185 median  -0.162  dACL_spur mean  -0.165  W/L/T 16/0/9
+  mm-bo6x10    success 25/25  mean restarts-ok  6.0/6  mean time   30.5s   pairs 25  dACL mean  -0.259 median  -0.213  dACL_spur mean  -0.232  W/L/T 18/0/7
+  mm-bo12x5    success 25/25  mean restarts-ok 12.0/12  mean time   54.0s   pairs 25  dACL mean  -0.304 median  -0.350  dACL_spur mean  -0.283  W/L/T 19/4/2
+
+rows: 1000   csv: /data/dabh/ember/docs/paper3/data/e0_ceiling.csv

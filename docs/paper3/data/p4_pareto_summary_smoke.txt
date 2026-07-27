@@ -1,0 +1,22 @@
+====================================================================================================
+P4 shortener-economics Pareto — column: acl_spur (rule 3); pairs on (inst_seed, algo_seed) within (cell, budget).
+Bar: a switch SURVIVES iff at >=1 budget it wins median dACL_spur vs stock with >=60% win rate, or |median d| <= 1%
+of stock median at <= 0.5x stock median wall (within-batch walls; headline re-measured at workers=1 idle).
+====================================================================================================
+
+-- ER(140, 0.2)  budget 5s   stock: success 1/1  acl_spur med  18.279  wall med    5.1s
+  audit1  success 1/1  wall med    5.5s   pairs  1  med d  +1.236 ( +6.76%)  winrate   0.0%
+  audit2  success 1/1  wall med    5.5s   pairs  1  med d  +1.707 ( +9.34%)  winrate   0.0%
+  dirty   success 1/1  wall med    5.1s   pairs  1  med d  +0.000 ( +0.00%)  winrate   0.0%
+
+-- ER(140, 0.2)  budget 15s   stock: success 1/1  acl_spur med  15.300  wall med   15.1s
+  audit1  success 1/1  wall med   15.2s   pairs  1  med d  +1.750 (+11.44%)  winrate   0.0%
+  audit2  success 1/1  wall med   15.3s   pairs  1  med d  +1.729 (+11.30%)  winrate   0.0%
+  dirty   success 1/1  wall med   15.2s   pairs  1  med d  +0.000 ( +0.00%)  winrate   0.0%
+
+PARETO VERDICT (pre-registered bar):
+  audit1  DIES — on no (cell, budget) point
+  audit2  DIES — on no (cell, budget) point
+  dirty   DIES — on no (cell, budget) point
+
+rows: 8   csv: /Users/dabh/ember/docs/paper3/data/p4_pareto_smoke.csv

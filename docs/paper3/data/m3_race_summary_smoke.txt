@@ -1,0 +1,19 @@
+====================================================================================================
+M3 racer summary — column: acl_spur (rule 3); pairs on (inst_seed, base_seed), both-succeed only.
+PRE-REGISTERED reads: [seq] race8-seq vs bestof8-seq (1 core) and [par] race8-par vs bestof8-par (8 cores).
+Bar (portfolio.md): race <= baseline on >=70% of pairs AND median paired dACL_spur <= -2%.
+====================================================================================================
+
+-- P16  n=100  p=0.2
+  race8-seq    success 1/1  acl_spur med   8.380  wall med   12.5s  winners {'template': 1}
+  bestof8-seq  success 1/1  acl_spur med  10.560  wall med   13.0s  winners {'mm': 1}
+  bestof8-par  success 1/1  acl_spur med   9.390  wall med   12.4s  winners {'mm': 1}
+  race8-par    success 1/1  acl_spur med   8.380  wall med   12.2s  winners {'template': 1}
+  [seq] race8-seq vs bestof8-seq: n= 1  med d  -2.180 (-20.64%)  W/L/T 1/0/0  pct(a<=b) 100.0%
+  [par] race8-par vs bestof8-par: n= 1  med d  -1.010 (-10.76%)  W/L/T 1/0/0  pct(a<=b) 100.0%
+
+POOLED across cells:
+  [seq] race8-seq vs bestof8-seq: n= 1  med d  -2.180 (-20.64%)  W/L/T 1/0/0  pct(a<=b) 100.0%
+  [par] race8-par vs bestof8-par: n= 1  med d  -1.010 (-10.76%)  W/L/T 1/0/0  pct(a<=b) 100.0%
+
+rows: 4   csv: /Users/dabh/ember/docs/paper3/data/m3_race_smoke.csv
