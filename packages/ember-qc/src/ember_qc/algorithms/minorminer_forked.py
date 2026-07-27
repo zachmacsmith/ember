@@ -11,8 +11,16 @@ ember_qc/algorithms/minorminer_forked.py
   price becomes ``(1 + h_q) * weight_table[occ(q)]`` and once per pass
   ``h_q <- max(0, h_q + alpha*(occ(q) - 1))`` (rises while contested, holds at
   exactly-full, decays while free; docs/paper2/notes.md §3.5/§3.12).
+* paper3 P4 shortener-economics switches — ``short_audit=`` / ``audit_budget=``
+  (audition policy inside ``find_short_chain``) and ``dirty_skip=`` (negative
+  cache over provably-unchanged neighborhoods in the chainlength phase).
+* paper3 P6 anatomy switches — ``chain_tree=`` (stock Steiner / revived
+  union-of-paths / pure SPH) and ``root_boltzmann=`` (temperature-weighted root
+  choice, the 2014 paper's never-shipped proposal); ``max_beta=`` (stock knob,
+  finite = the paper's beta^occ pricing) is surfaced via the wrapper.
+  See ``forked_find_embedding`` below and docs/paper3/proposals/{shortener,anatomy}.md.
 
-With both switches unset the fork is byte-identical to stock minorminer 0.2.22
+With every switch unset the fork is byte-identical to stock minorminer 0.2.22
 (parity self-tested at build: identical embeddings across seeds).
 
 This module loads that forked ``_minorminer`` extension (built in-place by
@@ -98,19 +106,42 @@ _DEF = dict(max_no_improvement=10, timeout=1000, max_beta=None, tries=10,
 def forked_find_embedding(
     source: nx.Graph, target: nx.Graph, *, order: Optional[List[int]] = None,
     history_alpha: float = 0.0,
+    short_audit: int = 0, audit_budget: int = 3, dirty_skip: int = 0,
+    chain_tree: int = 0, root_boltzmann: float = 0.0,
+    max_beta: Optional[float] = None,
     seed: int = 0, timeout: float = 60.0, tries: int = 10, fallback: bool = True,
 ) -> dict:
-    """Run the forked minorminer full search, optionally guided by ``order``
-    and/or pricing qubits with the history term (``history_alpha`` > 0).
+    """Run the forked minorminer full search with any of the fork's switches.
 
-    Drop-in safety: a single fixed order reused across all ``tries`` restarts
-    removes the order diversity stock MM relies on near the feasibility boundary,
-    so a modified run *could* fail where stock MM would succeed. With ``fallback``
-    (default), a failed modified run is retried once as **stock minorminer** (no
-    ``var_order``, no history) on the remaining budget — guaranteeing success >=
-    stock MM. For paired experiments pass ``fallback=False`` so the arm stays
-    pure. The plain ``mmfork`` control (``order=None``, ``history_alpha=0``) is
-    stock MM by construction."""
+    Switches (every default is byte-identical stock minorminer 0.2.22):
+
+    * ``order`` — caller-supplied variable order for every pass.
+    * ``history_alpha`` — PathFinder-style history cost (paper2 §3.5/§3.12).
+    * ``short_audit`` — P4 audition policy in ``find_short_chain``: 0 stock
+      exhaustive; 1 estimate-only (one construction at the best-estimated
+      meeting point, kept only on strict improvement); 2 budgeted (audition in
+      estimated-cost order, stop at first improvement or ``audit_budget``
+      constructions). ``audit_budget`` is passed only alongside
+      ``short_audit`` (it is meaningless without it).
+    * ``dirty_skip`` — P4 negative-result cache: skip re-auditing a variable in
+      the chainlength phase while its closed neighborhood of chains is
+      provably unchanged since its last failed audition.
+    * ``chain_tree`` — P6 constructor: 0 stock nearest-attach Steiner; 1 the
+      revived ``construct_chain`` (union of independent paths, the 2014
+      paper's build); 2 pure SPH (attach filter dropped).
+    * ``root_boltzmann`` — P6 temperature for Boltzmann root choice in the
+      legalization phase (0 = stock uniform-among-minima); T in units of the
+      zero-occupancy qubit price (one free-qubit hop).
+    * ``max_beta`` — stock minorminer knob, surfaced here for P6: finite values
+      give the 2014 paper's beta^occ exchange-rate pricing instead of the
+      shipped effectively-infinite (lexicographic-overlap) default.
+
+    Drop-in safety: any engaged switch *could* fail where stock MM would
+    succeed. With ``fallback`` (default), a failed modified run is retried once
+    as **stock minorminer** (all switches off) on the remaining budget —
+    guaranteeing success >= stock MM. For paired experiments pass
+    ``fallback=False`` so the arm stays pure. The plain ``mmfork`` control
+    (every switch at default) is stock MM by construction."""
     start = time.perf_counter()
     deadline = start + timeout if timeout else None
     try:
@@ -122,14 +153,29 @@ def forked_find_embedding(
                 "success": False, "status": "FAILURE", "error": str(exc)}
     S, T = list(source.edges()), list(target.edges())
 
-    def _run(var_order, alpha, t):
+    engaged = (order is not None or history_alpha or short_audit or dirty_skip
+               or chain_tree or root_boltzmann or max_beta is not None)
+
+    def _run(t, modified):
         params = dict(_DEF)
         params["tries"] = tries
         params["timeout"] = t if t else 1000
-        if var_order is not None:
-            params["var_order"] = list(var_order)
-        if alpha:  # keep the param out entirely on the stock path
-            params["history_alpha"] = float(alpha)
+        if modified:  # keep every param out entirely on the stock path
+            if order is not None:
+                params["var_order"] = list(order)
+            if history_alpha:
+                params["history_alpha"] = float(history_alpha)
+            if short_audit:
+                params["short_audit"] = int(short_audit)
+                params["audit_budget"] = int(audit_budget)
+            if dirty_skip:
+                params["dirty_skip"] = int(dirty_skip)
+            if chain_tree:
+                params["chain_tree"] = int(chain_tree)
+            if root_boltzmann:
+                params["root_boltzmann"] = float(root_boltzmann)
+            if max_beta is not None:
+                params["max_beta"] = float(max_beta)
         try:
             e = mod.find_embedding(S, T, random_seed=int(seed), **params)
         except Exception as exc:
@@ -137,12 +183,12 @@ def forked_find_embedding(
             return None
         return {int(k): [int(q) for q in v] for k, v in e.items() if v}
 
-    emb = _run(order, history_alpha, timeout)
+    emb = _run(timeout, engaged)
     # Fallback: a modified run that fails (empty/raised) retries as stock MM so
     # the variants never do worse than minorminer on *success*.
-    if (not emb) and (order is not None or history_alpha) and fallback:
+    if (not emb) and engaged and fallback:
         remaining = None if deadline is None else max(1.0, deadline - time.perf_counter())
-        emb = _run(None, 0.0, remaining)
+        emb = _run(remaining, False)
 
     elapsed = time.perf_counter() - start
     if not emb:
