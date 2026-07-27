@@ -118,6 +118,88 @@ Bars / decision tree:
 
 --- results appended below; nothing above this line is edited after launch ---
 
+RESULTS (2026-07-27; 8,235/8,235 rows, 0 watchdog kills / 0 crashes; acl_spur for
+all arms per rule 3, dACL on both-succeed pairs per rule 4; analysis archived in
+session scratchpad (e0_analysis.py), per-cell grid e0_cells.tsv; template==clique on
+acl_spur in all 202 co-successes -> one constructive family, written "template"):
+
+- **G1 PASS, decisively.** 32 dense-random ER cells (0.2<=p<=0.9) carry >=5%
+  best-arm median headroom; top of the map: -31.8% (Z12 140@0.9), -30.7%
+  (Z12 140@0.7), -28.7% (P16 140@0.7), all template at 15/15 wins.
+- **p*(n) (output 1).** P16: n=40 <=0.7, 60 0.5, 80 0.5 (grid gap 0.08-0.5),
+  100 0.3, 140 <=0.2 (left-censored), 160 0.12, 180 0.3. Z12: 40 0.9, 60 0.7,
+  80 0.5, 100 0.3, 140 <=0.2, 160 0.12. No non-monotonicity anywhere. Crossover
+  average degree p*(n-1) ~ 19-40, falling with n; Z12 sits one grid step denser
+  than P16 at n<=60, identical from n=80. By n=140 the construction wins at every
+  density MM survives.
+- **Headroom (output 2)** is a ridge along the feasibility cliff: -5% at the
+  crossover edge, -11..-19% at n=100, -20..-33% at n=140-180, peak P16 K140
+  -33.4%. Template's level is density-FLAT (P16 n=140: 12.4-13.2 across
+  p=0.2..1.0 while MM climbs 14.6->19.8; Z12 10.0-10.5 vs 11.7->15.1) — the
+  dense headroom IS MM's density sensitivity. Below p* only attraction's sparse
+  -1..-7% strip survives. **KG1 PASS**: template beats MM in 27 cells below
+  p=0.9, down to p=0.12 (n=160, both topos; Z12 at 73% win rate).
+- **CLMM (output 3): P2's ACL claim RETAINED.** clmm beats stock MM in 43/67
+  MM-feasible paired cells — every paired cell with n>=80, p>=0.3, plus the
+  mid-band to p=0.08 — up to -30.5% (P16 K140), 36/43 at 14-15/15 sweeps,
+  2-4x faster than MM at n<=100 (full budget at n=140). Loses only sparse
+  (21 cells, worst +1.11). Frontier: 12 cells where MM is 0-for-all and clmm
+  embeds (P16 180@0.9, K180, 200@0.2; Z12 180@0.3-0.9, K179/K180/K184, 200@0.2,
+  220@0.12 at 6/15).
+- **Cliff (output 4).** MM's 60 s cliff is density-FLAT and topology-identical:
+  n=140 at every p in {0.2..1.0} on BOTH topologies, rising only sparse (160 @
+  0.12, 180 @ 0.08, 240 @ 0.05). P16 fades past it (180: 9/15@0.3, 1/15@0.7);
+  Z12 dies outright (180: 0/15 everywhere; K140 already 4/5). The constructive
+  family + clmm extend the dense frontier to the busclique bound — P16 180,
+  Z12 184 = its max clique (K189 all-fail) — at BETTER ACL than MM on smaller
+  graphs: Z12 K184 template 12.98 vs MM's own K140 15.09 (-14% on +44 vertices);
+  P16 K180 16.64 vs MM K140 19.77. Zbinden's frontier reproduces on P16/Z12,
+  now with the ACL axis Zbinden never measured.
+- **Dev suite (output 5, FIXED rule): 14 cells, frozen in protocol.md.** P16:
+  (100,0.2) (100,0.3) (140,0.12)+ (140,0.2) (140,1.0) (180,1.0) (160,0.05);
+  Z12: (100,0.2) (100,0.3) (140,0.12)+ (140,0.2) (140,1.0) (179,1.0) (160,0.05).
+  (+) the n=140 straddle-lo is left-censored and lands on grid-p 0.12, UNSAMPLED
+  in E0 -> §4.1b pre-registers the two-cell baseline extension ((140,0.12) and
+  (140,0.08), both topos) rather than swapping cells. Near-cliff-at-0.2
+  duplicates (140,0.2) on both topos (merged).
+- Context arms: pssa == template ± light SA polish (identical medians in most
+  shared cells, better in 5 small-n cells by ~0.1; 0.45 s median; inherits the
+  n<=maxclique wall and the sparse losses) — consistent with the thesis: its
+  wins ARE the template's. attraction owns only the sparse strip (22/61 paired
+  cells, to -6% at p=0.05, incl. a 15/0 sweep at Z12 160@0.05) and is the slow
+  arm (32 s median success, failures to 89.0 s, dense collapse by n=140).
+- Data quality: (i) **mmfork-cuthill fails in <30 ms on exactly the 3
+  DISCONNECTED instances** ((100,0.05) seeds 101/102, (80,0.08) seed 102, both
+  topos) — stock MM embeds them 15/15; fix before M3 (cuthill is a control
+  arm). (ii) 465 failure rows overran 60 s (max 89.0 s; watchdog never fired).
+  (iii) rule-3 sensitivity: 19 cells flip best-arm raw-vs-spur (pssa's unpruned
+  output flatters it: prune gain mm 0.73 vs pssa 0.12 ACL); 6 crossover-edge
+  cells flip a beats-MM verdict; p* moves one grid step on 3 ladders under raw.
+  The pre-registered spur column stands. (iv) 103 INFEASIBLE = template/clique
+  at n > max clique, by construction; 30/109 cells all-arms-fail.
+- M3 design note: above p* at n~100-140, clmm and the raw template CONVERGE to
+  the same medians (P16 100@0.9: both -2.24 — 60 s of seeded search adds nothing
+  the template lacks). ATE's job above p* is to BE the template; clmm's marginal
+  value is speed at n<=100, a hair of polish at the K_n frontier (Z12 K179:
+  12.953 vs 12.978), and the n>maxclique overflow band (200-220).
+
+### 4.1b E0 extension — the unsampled n=140 straddle (2026-07-27)
+
+PRE-REGISTERED 2026-07-27
+
+Question: baseline the two unsampled cells the dev-suite rule needs — (140, 0.12)
+and (140, 0.08) on both topologies — same arms/seeds/budget as E0. Also determines
+whether p*(140) is even lower than 0.12 (the n=160 ladder says 0.12 is winnable).
+
+Script: docs/paper3/data/e0_crossover.py with the two cells appended to the grid
+@ <sha stamped at commit>, run with --resume against the E0 CSV (only new cells
+execute; resume keys verified exact-match in the E0-author's validation).
+
+Bars: none (baseline extension of §4.1; the §4.1 decision rules apply verbatim to
+the new cells). Runs on hyde06 after e0_ceiling per QUEUE.md.
+
+--- results appended below; nothing above this line is edited after launch ---
+
 ### 4.2 Rank-stability probe — the P3 gate + P4 patience curve (2026-07-26)
 
 PRE-REGISTERED 2026-07-26

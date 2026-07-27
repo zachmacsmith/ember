@@ -95,6 +95,16 @@ mmfork arms in script-route experiments always pass `fallback=False`.
 - One batch at a time; `QUEUE.md` is the ledger and the lock. `nohup nice -n 5`,
   BatchMode-ssh polling, rsync results back, analysis stays local.
 
+## Frozen dev suite (E0 §4.1 output 5, fixed rule; frozen 2026-07-27)
+
+14 cells (ER instances from dev seeds 101–105 unless K_n):
+- P16: (100, 0.2), (100, 0.3), (140, 0.12)†, (140, 0.2), (140, 1.0)=K140,
+  (180, 1.0)=K180 [past-cliff], (160, 0.05) [sparse control]
+- Z12: (100, 0.2), (100, 0.3), (140, 0.12)†, (140, 0.2), (140, 1.0)=K140,
+  (179, 1.0)=K179 [past-cliff], (160, 0.05) [sparse control]
+† baselined by the §4.1b extension run.
+Bars on this suite use the acl_spur column; per-cell baselines: E0 CSV + e0_ceiling.
+
 ## File layout
 
 ```

@@ -1,0 +1,8 @@
+/Users/dabh/ember/docs/paper3/data/p5_k60_fixpoint.py:12: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+start: qubits=404 ACL=6.7333 (expect 404 / 6.7333)
+K60/P16 exact-move fixpoint (2026-07-27)
+start:  qubits=404  ACL=6.7333
+end:    qubits=394  ACL=6.5667  valid=True
+gain:   10 qubits  dACL=0.1667
+wall:   1800.2s (deadline 1800s)

@@ -1,0 +1,988 @@
+====================================================================================================
+E0 crossover summary — ACL column: acl_spur (spur-pruned, ALL arms; protocol rule 3)
+dACL = arm - minorminer on both-succeed (inst_seed, algo_seed) pairs; deterministic arms pair
+against every minorminer seed run on the same instance. Success rates are unpaired.
+====================================================================================================
+
+-- P16  n=60  p=1
+  minorminer      success 5/5   med time    8.87s   acl_spur mean 7.127 median 7.000
+  mmfork-cuthill  success 5/5   med time    8.01s   pairs   5  dACL_spur mean  +0.063 median  +0.000  W/L/T 2/2/1
+  clmm            success 5/5   med time    3.50s   pairs   5  dACL_spur mean  -0.423 median  -0.283  W/L/T 5/0/0
+  template        success 1/1   med time    0.01s   pairs   5  dACL_spur mean  -0.393 median  -0.267  W/L/T 5/0/0
+  clique          success 1/1   med time    0.03s   pairs   5  dACL_spur mean  -0.393 median  -0.267  W/L/T 5/0/0
+  pssa            success 5/5   med time    0.37s   pairs   5  dACL_spur mean  -0.493 median  -0.367  W/L/T 5/0/0
+  attraction      success 5/5   med time   35.59s   pairs   5  dACL_spur mean  +0.513 median  +0.450  W/L/T 0/5/0
+
+-- P16  n=100  p=1
+  minorminer      success 5/5   med time   60.12s   acl_spur mean 11.858 median 12.180
+  mmfork-cuthill  success 5/5   med time   60.63s   pairs   5  dACL_spur mean  +0.074 median  -0.360  W/L/T 3/2/0
+  clmm            success 5/5   med time   27.07s   pairs   5  dACL_spur mean  -2.086 median  -2.400  W/L/T 5/0/0
+  template        success 1/1   med time    0.05s   pairs   5  dACL_spur mean  -2.078 median  -2.400  W/L/T 5/0/0
+  clique          success 1/1   med time    0.03s   pairs   5  dACL_spur mean  -2.078 median  -2.400  W/L/T 5/0/0
+  pssa            success 5/5   med time    0.48s   pairs   5  dACL_spur mean  -1.878 median  -2.200  W/L/T 5/0/0
+  attraction      success 5/5   med time   61.10s   pairs   5  dACL_spur mean  +1.818 median  +2.020  W/L/T 0/5/0
+
+-- P16  n=140  p=1
+  minorminer      success 5/5   med time   61.84s   acl_spur mean 19.631 median 19.771
+  mmfork-cuthill  success 5/5   med time   62.97s   pairs   5  dACL_spur mean  -1.094 median  -1.221  W/L/T 4/1/0
+  clmm            success 5/5   med time   63.86s   pairs   5  dACL_spur mean  -5.887 median  -6.036  W/L/T 5/0/0
+  template        success 1/1   med time    0.17s   pairs   5  dACL_spur mean  -6.460 median  -6.600  W/L/T 5/0/0
+  clique          success 1/1   med time    0.02s   pairs   5  dACL_spur mean  -6.460 median  -6.600  W/L/T 5/0/0
+  pssa            success 5/5   med time    0.62s   pairs   5  dACL_spur mean  -6.317 median  -6.457  W/L/T 5/0/0
+  attraction      success 0/5   med time   73.60s
+
+-- P16  n=180  p=1 [FRONTIER: minorminer 0/5]
+  minorminer      success 0/5   med time   71.92s
+  mmfork-cuthill  success 0/5   med time   69.75s
+  clmm            success 5/5   med time   64.15s   [unpairable: mm 0 successes]  acl_spur mean 16.644
+  template        success 1/1   med time    0.30s   [unpairable: mm 0 successes]  acl_spur mean 16.644
+  clique          success 1/1   med time    0.02s   [unpairable: mm 0 successes]  acl_spur mean 16.644
+  pssa            success 5/5   med time    0.56s   [unpairable: mm 0 successes]  acl_spur mean 16.644
+  attraction      success 0/5   med time   79.40s
+
+-- P16  n=40  p=0.9
+  minorminer      success 15/15   med time    2.43s   acl_spur mean 5.078 median 5.100
+  mmfork-cuthill  success 15/15   med time    2.38s   pairs  15  dACL_spur mean  -0.110 median  -0.125  W/L/T 10/5/0
+  clmm            success 15/15   med time    0.77s   pairs  15  dACL_spur mean  -0.385 median  -0.400  W/L/T 14/0/1
+  template        success 3/3   med time    0.01s   pairs  15  dACL_spur mean  -0.378 median  -0.400  W/L/T 14/0/1
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  -0.378 median  -0.400  W/L/T 14/0/1
+  pssa            success 15/15   med time    0.28s   pairs  15  dACL_spur mean  -0.128 median  -0.150  W/L/T 11/4/0
+  attraction      success 15/15   med time   11.26s   pairs  15  dACL_spur mean  +0.063 median  -0.025  W/L/T 8/7/0
+
+-- P16  n=60  p=0.9
+  minorminer      success 15/15   med time    9.72s   acl_spur mean 7.213 median 7.117
+  mmfork-cuthill  success 15/15   med time    9.35s   pairs  15  dACL_spur mean  -0.181 median  -0.117  W/L/T 11/4/0
+  clmm            success 15/15   med time    3.16s   pairs  15  dACL_spur mean  -0.513 median  -0.400  W/L/T 15/0/0
+  template        success 3/3   med time    0.01s   pairs  15  dACL_spur mean  -0.486 median  -0.383  W/L/T 15/0/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  -0.486 median  -0.383  W/L/T 15/0/0
+  pssa            success 15/15   med time    0.36s   pairs  15  dACL_spur mean  -0.586 median  -0.483  W/L/T 15/0/0
+  attraction      success 15/15   med time   32.96s   pairs  15  dACL_spur mean  +0.266 median  +0.283  W/L/T 2/13/0
+
+-- P16  n=80  p=0.9
+  minorminer      success 15/15   med time   27.87s   acl_spur mean 9.701 median 9.887
+  mmfork-cuthill  success 15/15   med time   26.31s   pairs  15  dACL_spur mean  -0.317 median  -0.225  W/L/T 11/4/0
+  clmm            success 15/15   med time   10.63s   pairs  15  dACL_spur mean  -1.027 median  -1.175  W/L/T 14/1/0
+  template        success 3/3   med time    0.03s   pairs  15  dACL_spur mean  -1.526 median  -1.712  W/L/T 15/0/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  -1.526 median  -1.712  W/L/T 15/0/0
+  pssa            success 15/15   med time    0.46s   pairs  15  dACL_spur mean  -1.405 median  -1.587  W/L/T 15/0/0
+  attraction      success 15/15   med time   60.53s   pairs  15  dACL_spur mean  +0.350 median  +0.188  W/L/T 5/10/0
+
+-- P16  n=100  p=0.9
+  minorminer      success 15/15   med time   60.35s   acl_spur mean 11.933 median 12.020
+  mmfork-cuthill  success 15/15   med time   60.67s   pairs  15  dACL_spur mean  -0.085 median  -0.140  W/L/T 9/6/0
+  clmm            success 15/15   med time   23.24s   pairs  15  dACL_spur mean  -2.155 median  -2.240  W/L/T 15/0/0
+  template        success 3/3   med time    0.04s   pairs  15  dACL_spur mean  -2.153 median  -2.240  W/L/T 15/0/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  -2.153 median  -2.240  W/L/T 15/0/0
+  pssa            success 15/15   med time    0.51s   pairs  15  dACL_spur mean  -1.957 median  -2.040  W/L/T 15/0/0
+  attraction      success 15/15   med time   60.95s   pairs  15  dACL_spur mean  +1.368 median  +1.020  W/L/T 0/15/0
+
+-- P16  n=140  p=0.9
+  minorminer      success 15/15   med time   61.40s   acl_spur mean 18.115 median 18.114
+  mmfork-cuthill  success 15/15   med time   62.03s   pairs  15  dACL_spur mean  -0.253 median  -0.814  W/L/T 8/7/0
+  clmm            success 15/15   med time   63.34s   pairs  15  dACL_spur mean  -4.370 median  -4.364  W/L/T 15/0/0
+  template        success 3/3   med time    0.15s   pairs  15  dACL_spur mean  -4.949 median  -4.950  W/L/T 15/0/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  -4.949 median  -4.950  W/L/T 15/0/0
+  pssa            success 15/15   med time    0.62s   pairs  15  dACL_spur mean  -4.801 median  -4.800  W/L/T 15/0/0
+  attraction      success 1/15   med time   70.84s   pairs   1  dACL_spur mean  +3.386 median  +3.386  W/L/T 0/1/0
+
+-- P16  n=180  p=0.9 [FRONTIER: minorminer 0/15]
+  minorminer      success 0/15   med time   69.33s
+  mmfork-cuthill  success 0/15   med time   70.09s
+  clmm            success 15/15   med time   66.43s   [unpairable: mm 0 successes]  acl_spur mean 16.643
+  template        success 3/3   med time    0.28s   [unpairable: mm 0 successes]  acl_spur mean 16.643
+  clique          success 3/3   med time    0.02s   [unpairable: mm 0 successes]  acl_spur mean 16.643
+  pssa            success 15/15   med time    0.51s   [unpairable: mm 0 successes]  acl_spur mean 16.644
+  attraction      success 0/15   med time   76.53s
+
+-- P16  n=40  p=0.7
+  minorminer      success 15/15   med time    2.42s   acl_spur mean 4.875 median 4.850
+  mmfork-cuthill  success 15/15   med time    2.78s   pairs  15  dACL_spur mean  -0.052 median  -0.025  W/L/T 8/5/2
+  clmm            success 15/15   med time    0.53s   pairs  15  dACL_spur mean  -0.232 median  -0.225  W/L/T 15/0/0
+  template        success 3/3   med time    0.00s   pairs  15  dACL_spur mean  -0.208 median  -0.200  W/L/T 15/0/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  -0.208 median  -0.200  W/L/T 15/0/0
+  pssa            success 15/15   med time    0.29s   pairs  15  dACL_spur mean  +0.025 median  +0.025  W/L/T 6/8/1
+  attraction      success 15/15   med time    8.96s   pairs  15  dACL_spur mean  +0.053 median  +0.050  W/L/T 7/8/0
+
+-- P16  n=60  p=0.7
+  minorminer      success 15/15   med time   10.17s   acl_spur mean 7.312 median 7.367
+  mmfork-cuthill  success 15/15   med time    9.52s   pairs  15  dACL_spur mean  -0.257 median  -0.367  W/L/T 13/2/0
+  clmm            success 15/15   med time    2.40s   pairs  15  dACL_spur mean  -0.634 median  -0.667  W/L/T 15/0/0
+  template        success 3/3   med time    0.01s   pairs  15  dACL_spur mean  -0.646 median  -0.683  W/L/T 15/0/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  -0.646 median  -0.683  W/L/T 15/0/0
+  pssa            success 15/15   med time    0.36s   pairs  15  dACL_spur mean  -0.723 median  -0.767  W/L/T 15/0/0
+  attraction      success 15/15   med time   24.95s   pairs  15  dACL_spur mean  +0.027 median  -0.083  W/L/T 9/6/0
+
+-- P16  n=80  p=0.7
+  minorminer      success 15/15   med time   27.74s   acl_spur mean 9.531 median 9.463
+  mmfork-cuthill  success 15/15   med time   27.12s   pairs  15  dACL_spur mean  -0.071 median  -0.062  W/L/T 8/7/0
+  clmm            success 15/15   med time    7.62s   pairs  15  dACL_spur mean  -0.902 median  -0.875  W/L/T 15/0/0
+  template        success 3/3   med time    0.03s   pairs  15  dACL_spur mean  -1.406 median  -1.350  W/L/T 15/0/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  -1.406 median  -1.350  W/L/T 15/0/0
+  pssa            success 15/15   med time    0.45s   pairs  15  dACL_spur mean  -1.260 median  -1.200  W/L/T 15/0/0
+  attraction      success 15/15   med time   60.25s   pairs  15  dACL_spur mean  +0.162 median  +0.138  W/L/T 6/9/0
+
+-- P16  n=100  p=0.7
+  minorminer      success 15/15   med time   53.71s   acl_spur mean 12.010 median 12.080
+  mmfork-cuthill  success 15/15   med time   57.49s   pairs  15  dACL_spur mean  -0.342 median  -0.280  W/L/T 10/5/0
+  clmm            success 15/15   med time   17.63s   pairs  15  dACL_spur mean  -2.240 median  -2.300  W/L/T 15/0/0
+  template        success 3/3   med time    0.04s   pairs  15  dACL_spur mean  -2.237 median  -2.300  W/L/T 15/0/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  -2.237 median  -2.300  W/L/T 15/0/0
+  pssa            success 15/15   med time    0.51s   pairs  15  dACL_spur mean  -2.053 median  -2.130  W/L/T 15/0/0
+  attraction      success 15/15   med time   60.47s   pairs  15  dACL_spur mean  +1.035 median  +0.900  W/L/T 2/13/0
+
+-- P16  n=140  p=0.7
+  minorminer      success 15/15   med time   62.15s   acl_spur mean 18.409 median 18.429
+  mmfork-cuthill  success 15/15   med time   61.61s   pairs  15  dACL_spur mean  -0.744 median  -0.379  W/L/T 10/5/0
+  clmm            success 15/15   med time   55.50s   pairs  15  dACL_spur mean  -4.675 median  -4.679  W/L/T 15/0/0
+  template        success 3/3   med time    0.13s   pairs  15  dACL_spur mean  -5.275 median  -5.293  W/L/T 15/0/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  -5.275 median  -5.293  W/L/T 15/0/0
+  pssa            success 15/15   med time    0.61s   pairs  15  dACL_spur mean  -5.113 median  -5.143  W/L/T 15/0/0
+  attraction      success 8/15   med time   61.43s   pairs   8  dACL_spur mean  +2.865 median  +1.625  W/L/T 2/6/0
+
+-- P16  n=180  p=0.7
+  minorminer      success 1/15   med time   67.67s   acl_spur mean 22.211 median 22.211
+  mmfork-cuthill  success 0/15   med time   67.89s
+  clmm            success 15/15   med time   63.03s   pairs   1  dACL_spur mean  -5.572 median  -5.572  W/L/T 1/0/0
+  template        success 3/3   med time    0.22s   pairs   1  dACL_spur mean  -5.572 median  -5.572  W/L/T 1/0/0
+  clique          success 3/3   med time    0.02s   pairs   1  dACL_spur mean  -5.572 median  -5.572  W/L/T 1/0/0
+  pssa            success 15/15   med time    0.50s   pairs   1  dACL_spur mean  -5.578 median  -5.578  W/L/T 1/0/0
+  attraction      success 0/15   med time   73.40s
+
+-- P16  n=220  p=0.7 [FRONTIER: minorminer 0/15]
+  minorminer      success 0/15   med time   69.29s
+  mmfork-cuthill  success 0/15   med time   70.19s
+  clmm            success 0/15   med time   75.95s
+  template        success 0/3   med time    0.00s
+  clique          success 0/3   med time    0.02s
+  pssa            success 0/15   med time   65.84s
+  attraction      success 0/15   med time   62.24s
+
+-- P16  n=60  p=0.5
+  minorminer      success 15/15   med time    8.14s   acl_spur mean 6.841 median 6.850
+  mmfork-cuthill  success 15/15   med time    7.92s   pairs  15  dACL_spur mean  -0.239 median  -0.183  W/L/T 13/2/0
+  clmm            success 15/15   med time    1.69s   pairs  15  dACL_spur mean  -0.317 median  -0.333  W/L/T 14/0/1
+  template        success 3/3   med time    0.01s   pairs  15  dACL_spur mean  -0.319 median  -0.333  W/L/T 15/0/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  -0.319 median  -0.333  W/L/T 15/0/0
+  pssa            success 15/15   med time    0.36s   pairs  15  dACL_spur mean  -0.341 median  -0.333  W/L/T 15/0/0
+  attraction      success 15/15   med time   16.46s   pairs  15  dACL_spur mean  +0.170 median  +0.083  W/L/T 2/13/0
+
+-- P16  n=80  p=0.5
+  minorminer      success 15/15   med time   19.51s   acl_spur mean 9.427 median 9.450
+  mmfork-cuthill  success 15/15   med time   18.59s   pairs  15  dACL_spur mean  -0.403 median  -0.400  W/L/T 13/2/0
+  clmm            success 15/15   med time    5.17s   pairs  15  dACL_spur mean  -0.864 median  -0.938  W/L/T 15/0/0
+  template        success 3/3   med time    0.02s   pairs  15  dACL_spur mean  -1.381 median  -1.363  W/L/T 15/0/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  -1.381 median  -1.363  W/L/T 15/0/0
+  pssa            success 15/15   med time    0.44s   pairs  15  dACL_spur mean  -1.243 median  -1.300  W/L/T 15/0/0
+  attraction      success 15/15   med time   40.07s   pairs  15  dACL_spur mean  +0.079 median  +0.175  W/L/T 6/9/0
+
+-- P16  n=100  p=0.5
+  minorminer      success 15/15   med time   38.87s   acl_spur mean 11.891 median 11.850
+  mmfork-cuthill  success 15/15   med time   41.73s   pairs  15  dACL_spur mean  -0.441 median  -0.420  W/L/T 12/3/0
+  clmm            success 15/15   med time   11.75s   pairs  15  dACL_spur mean  -2.170 median  -2.120  W/L/T 15/0/0
+  template        success 3/3   med time    0.03s   pairs  15  dACL_spur mean  -2.161 median  -2.120  W/L/T 15/0/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  -2.161 median  -2.120  W/L/T 15/0/0
+  pssa            success 15/15   med time    0.51s   pairs  15  dACL_spur mean  -1.998 median  -1.950  W/L/T 15/0/0
+  attraction      success 15/15   med time   60.30s   pairs  15  dACL_spur mean  +0.706 median  +0.750  W/L/T 2/13/0
+
+-- P16  n=140  p=0.5
+  minorminer      success 15/15   med time   60.74s   acl_spur mean 17.822 median 17.743
+  mmfork-cuthill  success 15/15   med time   61.28s   pairs  15  dACL_spur mean  -0.863 median  -1.086  W/L/T 12/3/0
+  clmm            success 15/15   med time   36.17s   pairs  15  dACL_spur mean  -4.275 median  -4.064  W/L/T 15/0/0
+  template        success 3/3   med time    0.10s   pairs  15  dACL_spur mean  -4.739 median  -4.671  W/L/T 15/0/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  -4.739 median  -4.671  W/L/T 15/0/0
+  pssa            success 15/15   med time    0.60s   pairs  15  dACL_spur mean  -4.586 median  -4.514  W/L/T 15/0/0
+  attraction      success 14/15   med time   61.20s   pairs  14  dACL_spur mean  +2.069 median  +1.571  W/L/T 3/11/0
+
+-- P16  n=180  p=0.5
+  minorminer      success 2/15   med time   65.47s   acl_spur mean 21.481 median 21.481
+  mmfork-cuthill  success 1/15   med time   65.97s
+  clmm            success 15/15   med time   61.14s   pairs   2  dACL_spur mean  -4.911 median  -4.911  W/L/T 2/0/0
+  template        success 3/3   med time    0.18s   pairs   2  dACL_spur mean  -4.908 median  -4.908  W/L/T 2/0/0
+  clique          success 3/3   med time    0.02s   pairs   2  dACL_spur mean  -4.908 median  -4.908  W/L/T 2/0/0
+  pssa            success 15/15   med time    0.56s   pairs   2  dACL_spur mean  -4.908 median  -4.908  W/L/T 2/0/0
+  attraction      success 0/15   med time   68.90s
+
+-- P16  n=240  p=0.5 [FRONTIER: minorminer 0/15]
+  minorminer      success 0/15   med time   69.32s
+  mmfork-cuthill  success 0/15   med time   69.78s
+  clmm            success 0/15   med time   74.08s
+  template        success 0/3   med time    0.00s
+  clique          success 0/3   med time    0.02s
+  pssa            success 0/15   med time   65.87s
+  attraction      success 0/15   med time   77.11s
+
+-- P16  n=60  p=0.3
+  minorminer      success 15/15   med time    3.95s   acl_spur mean 5.700 median 5.700
+  mmfork-cuthill  success 15/15   med time    3.11s   pairs  15  dACL_spur mean  -0.049 median  -0.100  W/L/T 8/6/1
+  clmm            success 15/15   med time    1.22s   pairs  15  dACL_spur mean  +0.179 median  +0.217  W/L/T 6/9/0
+  template        success 3/3   med time    0.01s   pairs  15  dACL_spur mean  +0.472 median  +0.450  W/L/T 0/15/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  +0.472 median  +0.450  W/L/T 0/15/0
+  pssa            success 15/15   med time    0.36s   pairs  15  dACL_spur mean  +0.478 median  +0.433  W/L/T 0/15/0
+  attraction      success 15/15   med time    9.90s   pairs  15  dACL_spur mean  -0.042 median  -0.033  W/L/T 9/6/0
+
+-- P16  n=100  p=0.3
+  minorminer      success 15/15   med time   24.18s   acl_spur mean 10.881 median 10.930
+  mmfork-cuthill  success 15/15   med time   25.15s   pairs  15  dACL_spur mean  -0.429 median  -0.380  W/L/T 13/2/0
+  clmm            success 15/15   med time    6.16s   pairs  15  dACL_spur mean  -1.455 median  -1.420  W/L/T 15/0/0
+  template        success 3/3   med time    0.02s   pairs  15  dACL_spur mean  -1.401 median  -1.410  W/L/T 15/0/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  -1.401 median  -1.410  W/L/T 15/0/0
+  pssa            success 15/15   med time    0.49s   pairs  15  dACL_spur mean  -1.218 median  -1.210  W/L/T 15/0/0
+  attraction      success 15/15   med time   46.76s   pairs  15  dACL_spur mean  +0.118 median  +0.180  W/L/T 6/9/0
+
+-- P16  n=140  p=0.3
+  minorminer      success 15/15   med time   60.22s   acl_spur mean 16.482 median 16.450
+  mmfork-cuthill  success 15/15   med time   60.03s   pairs  15  dACL_spur mean  -0.591 median  -0.436  W/L/T 11/3/1
+  clmm            success 15/15   med time   19.18s   pairs  15  dACL_spur mean  -3.120 median  -2.964  W/L/T 15/0/0
+  template        success 3/3   med time    0.07s   pairs  15  dACL_spur mean  -3.623 median  -3.571  W/L/T 15/0/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  -3.623 median  -3.571  W/L/T 15/0/0
+  pssa            success 15/15   med time    0.66s   pairs  15  dACL_spur mean  -3.428 median  -3.357  W/L/T 15/0/0
+  attraction      success 15/15   med time   60.38s   pairs  15  dACL_spur mean  +1.451 median  +1.322  W/L/T 0/15/0
+
+-- P16  n=180  p=0.3
+  minorminer      success 9/15   med time   60.68s   acl_spur mean 22.120 median 22.178
+  mmfork-cuthill  success 12/15   med time   60.69s   pairs   6  dACL_spur mean  -0.442 median  -1.522  W/L/T 4/2/0
+  clmm            success 15/15   med time   36.95s   pairs   9  dACL_spur mean  -5.707 median  -5.750  W/L/T 9/0/0
+  template        success 3/3   med time    0.19s   pairs   9  dACL_spur mean  -5.706 median  -5.750  W/L/T 9/0/0
+  clique          success 3/3   med time    0.02s   pairs   9  dACL_spur mean  -5.706 median  -5.750  W/L/T 9/0/0
+  pssa            success 15/15   med time    0.61s   pairs   9  dACL_spur mean  -5.706 median  -5.750  W/L/T 9/0/0
+  attraction      success 0/15   med time   65.13s
+
+-- P16  n=240  p=0.3 [FRONTIER: minorminer 0/15]
+  minorminer      success 0/15   med time   65.02s
+  mmfork-cuthill  success 0/15   med time   66.09s
+  clmm            success 0/15   med time   67.75s
+  template        success 0/3   med time    0.00s
+  clique          success 0/3   med time    0.02s
+  pssa            success 0/15   med time   63.30s
+  attraction      success 0/15   med time   69.25s
+
+-- P16  n=300  p=0.3 [FRONTIER: minorminer 0/15]
+  minorminer      success 0/15   med time   68.75s
+  mmfork-cuthill  success 0/15   med time   68.22s
+  clmm            success 0/15   med time   72.60s
+  template        success 0/3   med time    0.00s
+  clique          success 0/3   med time    0.02s
+  pssa            success 0/15   med time   65.93s
+  attraction      success 0/15   med time   73.97s
+
+-- P16  n=60  p=0.2
+  minorminer      success 15/15   med time    1.55s   acl_spur mean 4.349 median 4.383
+  mmfork-cuthill  success 15/15   med time    1.76s   pairs  15  dACL_spur mean  +0.149 median  +0.167  W/L/T 4/11/0
+  clmm            success 15/15   med time    1.14s   pairs  15  dACL_spur mean  +0.334 median  +0.283  W/L/T 2/13/0
+  template        success 3/3   med time    0.01s   pairs  15  dACL_spur mean  +1.440 median  +1.467  W/L/T 0/15/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  +1.440 median  +1.467  W/L/T 0/15/0
+  pssa            success 15/15   med time    0.35s   pairs  15  dACL_spur mean  +1.512 median  +1.483  W/L/T 0/15/0
+  attraction      success 15/15   med time    5.31s   pairs  15  dACL_spur mean  -0.054 median  -0.117  W/L/T 10/5/0
+
+-- P16  n=100  p=0.2
+  minorminer      success 15/15   med time   15.01s   acl_spur mean 9.322 median 9.180
+  mmfork-cuthill  success 15/15   med time   16.56s   pairs  15  dACL_spur mean  -0.287 median  -0.240  W/L/T 11/4/0
+  clmm            success 15/15   med time    5.22s   pairs  15  dACL_spur mean  -0.507 median  -0.460  W/L/T 13/2/0
+  template        success 3/3   med time    0.03s   pairs  15  dACL_spur mean  -0.139 median  +0.000  W/L/T 7/7/1
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  -0.139 median  +0.000  W/L/T 7/7/1
+  pssa            success 15/15   med time    0.50s   pairs  15  dACL_spur mean  +0.045 median  +0.190  W/L/T 5/10/0
+  attraction      success 15/15   med time   27.95s   pairs  15  dACL_spur mean  +0.101 median  +0.130  W/L/T 5/10/0
+
+-- P16  n=140  p=0.2
+  minorminer      success 15/15   med time   42.26s   acl_spur mean 14.594 median 14.621
+  mmfork-cuthill  success 15/15   med time   40.76s   pairs  15  dACL_spur mean  -0.460 median  -0.536  W/L/T 11/4/0
+  clmm            success 15/15   med time   10.97s   pairs  15  dACL_spur mean  -1.735 median  -1.843  W/L/T 15/0/0
+  template        success 3/3   med time    0.07s   pairs  15  dACL_spur mean  -2.068 median  -2.178  W/L/T 15/0/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  -2.068 median  -2.178  W/L/T 15/0/0
+  pssa            success 15/15   med time    0.59s   pairs  15  dACL_spur mean  -1.878 median  -1.907  W/L/T 15/0/0
+  attraction      success 15/15   med time   60.22s   pairs  15  dACL_spur mean  +0.963 median  +0.793  W/L/T 1/14/0
+
+-- P16  n=200  p=0.2 [FRONTIER: minorminer 0/15]
+  minorminer      success 0/15   med time   62.78s
+  mmfork-cuthill  success 0/15   med time   62.94s
+  clmm            success 9/15   med time   60.51s   [unpairable: mm 0 successes]  acl_spur mean 21.274
+  template        success 0/3   med time    0.00s
+  clique          success 0/3   med time    0.02s
+  pssa            success 0/15   med time   64.57s
+  attraction      success 0/15   med time   61.93s
+
+-- P16  n=260  p=0.2 [FRONTIER: minorminer 0/15]
+  minorminer      success 0/15   med time   64.12s
+  mmfork-cuthill  success 0/15   med time   64.92s
+  clmm            success 0/15   med time   63.99s
+  template        success 0/3   med time    0.00s
+  clique          success 0/3   med time    0.02s
+  pssa            success 0/15   med time   67.39s
+  attraction      success 0/15   med time   67.30s
+
+-- P16  n=340  p=0.2 [FRONTIER: minorminer 0/15]
+  minorminer      success 0/15   med time   67.36s
+  mmfork-cuthill  success 0/15   med time   67.79s
+  clmm            success 0/15   med time   68.83s
+  template        success 0/3   med time    0.00s
+  clique          success 0/3   med time    0.02s
+  pssa            success 0/15   med time   66.31s
+  attraction      success 0/15   med time   72.42s
+
+-- P16  n=60  p=0.12
+  minorminer      success 15/15   med time    0.55s   acl_spur mean 2.806 median 2.833
+  mmfork-cuthill  success 15/15   med time    0.73s   pairs  15  dACL_spur mean  +0.039 median  +0.033  W/L/T 4/10/1
+  clmm            success 15/15   med time    0.36s   pairs  15  dACL_spur mean  +0.116 median  +0.117  W/L/T 7/8/0
+  template        success 3/3   med time    0.01s   pairs  15  dACL_spur mean  +2.189 median  +2.200  W/L/T 0/15/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  +2.189 median  +2.200  W/L/T 0/15/0
+  pssa            success 15/15   med time    0.35s   pairs  15  dACL_spur mean  +2.256 median  +2.300  W/L/T 0/15/0
+  attraction      success 15/15   med time    2.58s   pairs  15  dACL_spur mean  -0.112 median  -0.150  W/L/T 13/2/0
+
+-- P16  n=100  p=0.12
+  minorminer      success 15/15   med time    6.41s   acl_spur mean 6.524 median 6.530
+  mmfork-cuthill  success 15/15   med time    5.56s   pairs  15  dACL_spur mean  +0.153 median  +0.030  W/L/T 6/8/1
+  clmm            success 15/15   med time    2.58s   pairs  15  dACL_spur mean  +0.962 median  +1.000  W/L/T 0/15/0
+  template        success 3/3   med time    0.02s   pairs  15  dACL_spur mean  +2.079 median  +2.020  W/L/T 0/15/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  +2.079 median  +2.020  W/L/T 0/15/0
+  pssa            success 15/15   med time    0.49s   pairs  15  dACL_spur mean  +2.266 median  +2.210  W/L/T 0/15/0
+  attraction      success 15/15   med time   12.29s   pairs  15  dACL_spur mean  -0.091 median  -0.090  W/L/T 9/6/0
+
+-- P16  n=160  p=0.12
+  minorminer      success 15/15   med time   29.07s   acl_spur mean 14.412 median 14.294
+  mmfork-cuthill  success 15/15   med time   30.68s   pairs  15  dACL_spur mean  -0.438 median  -0.500  W/L/T 10/4/1
+  clmm            success 15/15   med time   17.86s   pairs  15  dACL_spur mean  -1.618 median  -1.500  W/L/T 15/0/0
+  template        success 3/3   med time    0.09s   pairs  15  dACL_spur mean  -0.806 median  -0.669  W/L/T 14/1/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  -0.806 median  -0.669  W/L/T 14/1/0
+  pssa            success 15/15   med time    0.63s   pairs  15  dACL_spur mean  -0.625 median  -0.513  W/L/T 14/1/0
+  attraction      success 15/15   med time   60.10s   pairs  15  dACL_spur mean  -0.331 median  -0.106  W/L/T 9/6/0
+
+-- P16  n=220  p=0.12 [FRONTIER: minorminer 0/15]
+  minorminer      success 0/15   med time   62.33s
+  mmfork-cuthill  success 0/15   med time   62.62s
+  clmm            success 0/15   med time   62.62s
+  template        success 0/3   med time    0.00s
+  clique          success 0/3   med time    0.02s
+  pssa            success 0/15   med time   66.55s
+  attraction      success 0/15   med time   63.45s
+
+-- P16  n=300  p=0.12 [FRONTIER: minorminer 0/15]
+  minorminer      success 0/15   med time   63.98s
+  mmfork-cuthill  success 0/15   med time   64.20s
+  clmm            success 0/15   med time   64.28s
+  template        success 0/3   med time    0.00s
+  clique          success 0/3   med time    0.02s
+  pssa            success 0/15   med time   67.38s
+  attraction      success 0/15   med time   65.99s
+
+-- P16  n=400  p=0.12 [FRONTIER: minorminer 0/15]
+  minorminer      success 0/15   med time   65.88s
+  mmfork-cuthill  success 0/15   med time   67.60s
+  clmm            success 0/15   med time   66.68s
+  template        success 0/3   med time    0.00s
+  clique          success 0/3   med time    0.02s
+  pssa            success 0/15   med time   64.83s
+  attraction      success 0/15   med time   71.48s
+
+-- P16  n=80  p=0.08
+  minorminer      success 15/15   med time    0.70s   acl_spur mean 2.834 median 2.800
+  mmfork-cuthill  success 10/15   med time    0.65s   pairs  10  dACL_spur mean  +0.044 median  +0.044  W/L/T 4/6/0
+  clmm            success 15/15   med time    0.38s   pairs  15  dACL_spur mean  +0.202 median  +0.162  W/L/T 2/12/1
+  template        success 3/3   med time    0.02s   pairs  15  dACL_spur mean  +3.212 median  +3.213  W/L/T 0/15/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  +3.212 median  +3.213  W/L/T 0/15/0
+  pssa            success 15/15   med time    0.41s   pairs  15  dACL_spur mean  +3.232 median  +3.263  W/L/T 0/15/0
+  attraction      success 15/15   med time    3.27s   pairs  15  dACL_spur mean  -0.099 median  -0.100  W/L/T 10/5/0
+
+-- P16  n=120  p=0.08
+  minorminer      success 15/15   med time    5.60s   acl_spur mean 6.056 median 6.083
+  mmfork-cuthill  success 15/15   med time    6.26s   pairs  15  dACL_spur mean  +0.039 median  +0.017  W/L/T 7/8/0
+  clmm            success 15/15   med time    3.88s   pairs  15  dACL_spur mean  +0.769 median  +0.758  W/L/T 0/15/0
+  template        success 3/3   med time    0.04s   pairs  15  dACL_spur mean  +3.358 median  +3.392  W/L/T 0/15/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  +3.358 median  +3.392  W/L/T 0/15/0
+  pssa            success 15/15   med time    0.59s   pairs  15  dACL_spur mean  +3.511 median  +3.550  W/L/T 0/15/0
+  attraction      success 15/15   med time   11.36s   pairs  15  dACL_spur mean  -0.130 median  -0.100  W/L/T 11/4/0
+
+-- P16  n=180  p=0.08
+  minorminer      success 15/15   med time   20.09s   acl_spur mean 13.303 median 13.133
+  mmfork-cuthill  success 15/15   med time   21.73s   pairs  15  dACL_spur mean  -0.242 median  -0.161  W/L/T 9/6/0
+  clmm            success 15/15   med time   11.14s   pairs  15  dACL_spur mean  -0.271 median  -0.189  W/L/T 11/4/0
+  template        success 3/3   med time    0.17s   pairs  15  dACL_spur mean  +1.534 median  +1.706  W/L/T 1/14/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  +1.534 median  +1.706  W/L/T 1/14/0
+  pssa            success 15/15   med time    0.67s   pairs  15  dACL_spur mean  +1.534 median  +1.706  W/L/T 1/14/0
+  attraction      success 15/15   med time   40.17s   pairs  15  dACL_spur mean  -0.355 median  -0.233  W/L/T 10/5/0
+
+-- P16  n=260  p=0.08 [FRONTIER: minorminer 0/15]
+  minorminer      success 0/15   med time   62.34s
+  mmfork-cuthill  success 0/15   med time   62.14s
+  clmm            success 0/15   med time   62.15s
+  template        success 0/3   med time    0.00s
+  clique          success 0/3   med time    0.02s
+  pssa            success 0/15   med time   63.73s
+  attraction      success 0/15   med time   63.21s
+
+-- P16  n=360  p=0.08 [FRONTIER: minorminer 0/15]
+  minorminer      success 0/15   med time   63.89s
+  mmfork-cuthill  success 0/15   med time   63.57s
+  clmm            success 0/15   med time   64.91s
+  template        success 0/3   med time    0.00s
+  clique          success 0/3   med time    0.02s
+  pssa            success 0/15   med time   65.52s
+  attraction      success 0/15   med time   66.05s
+
+-- P16  n=480  p=0.08 [FRONTIER: minorminer 0/15]
+  minorminer      success 0/15   med time   66.93s
+  mmfork-cuthill  success 0/15   med time   67.02s
+  clmm            success 0/15   med time   67.02s
+  template        success 0/3   med time    0.00s
+  clique          success 0/3   med time    0.02s
+  pssa            success 0/15   med time   67.82s
+  attraction      success 0/15   med time   71.76s
+
+-- P16  n=100  p=0.05
+  minorminer      success 15/15   med time    0.80s   acl_spur mean 2.515 median 2.500
+  mmfork-cuthill  success 5/15   med time    0.01s   pairs   5  dACL_spur mean  -0.064 median  -0.050  W/L/T 4/1/0
+  clmm            success 15/15   med time    0.36s   pairs  15  dACL_spur mean  +0.236 median  +0.250  W/L/T 2/13/0
+  template        success 3/3   med time    0.03s   pairs  15  dACL_spur mean  +4.015 median  +4.040  W/L/T 0/15/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  +4.015 median  +4.040  W/L/T 0/15/0
+  pssa            success 15/15   med time    0.48s   pairs  15  dACL_spur mean  +4.185 median  +4.230  W/L/T 0/15/0
+  attraction      success 15/15   med time    3.47s   pairs  15  dACL_spur mean  -0.183 median  -0.160  W/L/T 13/2/0
+
+-- P16  n=160  p=0.05
+  minorminer      success 15/15   med time    6.81s   acl_spur mean 6.196 median 6.169
+  mmfork-cuthill  success 15/15   med time    8.29s   pairs  15  dACL_spur mean  +0.130 median  +0.075  W/L/T 5/10/0
+  clmm            success 15/15   med time    5.35s   pairs  15  dACL_spur mean  +1.042 median  +1.113  W/L/T 0/15/0
+  template        success 3/3   med time    0.13s   pairs  15  dACL_spur mean  +5.252 median  +5.338  W/L/T 0/15/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  +5.252 median  +5.338  W/L/T 0/15/0
+  pssa            success 15/15   med time    0.88s   pairs  15  dACL_spur mean  +5.466 median  +5.588  W/L/T 0/15/0
+  attraction      success 15/15   med time   12.91s   pairs  15  dACL_spur mean  -0.176 median  -0.131  W/L/T 10/5/0
+
+-- P16  n=240  p=0.05
+  minorminer      success 15/15   med time   20.39s   acl_spur mean 14.677 median 14.579
+  mmfork-cuthill  success 15/15   med time   19.18s   pairs  15  dACL_spur mean  +0.338 median  +0.363  W/L/T 5/10/0
+  clmm            success 15/15   med time   20.38s   pairs  15  dACL_spur mean  +0.785 median  +1.017  W/L/T 4/11/0
+  template        success 0/3   med time    0.00s
+  clique          success 0/3   med time    0.02s
+  pssa            success 0/15   med time   63.97s
+  attraction      success 15/15   med time   36.51s   pairs  15  dACL_spur mean  -0.131 median  -0.096  W/L/T 8/7/0
+
+-- P16  n=340  p=0.05 [FRONTIER: minorminer 0/15]
+  minorminer      success 0/15   med time   61.83s
+  mmfork-cuthill  success 0/15   med time   62.24s
+  clmm            success 0/15   med time   62.37s
+  template        success 0/3   med time    0.00s
+  clique          success 0/3   med time    0.02s
+  pssa            success 0/15   med time   67.02s
+  attraction      success 0/15   med time   63.27s
+
+-- P16  n=460  p=0.05 [FRONTIER: minorminer 0/15]
+  minorminer      success 0/15   med time   63.23s
+  mmfork-cuthill  success 0/15   med time   63.89s
+  clmm            success 0/15   med time   64.08s
+  template        success 0/3   med time    0.00s
+  clique          success 0/3   med time    0.02s
+  pssa            success 0/15   med time   65.78s
+  attraction      success 0/15   med time   65.64s
+
+-- P16  n=600  p=0.05 [FRONTIER: minorminer 0/15]
+  minorminer      success 0/15   med time   67.19s
+  mmfork-cuthill  success 0/15   med time   69.36s
+  clmm            success 0/15   med time   66.29s
+  template        success 0/3   med time    0.00s
+  clique          success 0/3   med time    0.02s
+  pssa            success 0/15   med time   64.26s
+  attraction      success 0/15   med time   70.85s
+
+-- Z12  n=60  p=1
+  minorminer      success 5/5   med time    8.59s   acl_spur mean 5.920 median 5.783
+  mmfork-cuthill  success 5/5   med time   12.13s   pairs   5  dACL_spur mean  -0.230 median  -0.167  W/L/T 4/1/0
+  clmm            success 5/5   med time    5.37s   pairs   5  dACL_spur mean  -0.237 median  -0.017  W/L/T 3/2/0
+  template        success 1/1   med time    0.02s   pairs   5  dACL_spur mean  -0.487 median  -0.350  W/L/T 5/0/0
+  clique          success 1/1   med time    0.02s   pairs   5  dACL_spur mean  -0.487 median  -0.350  W/L/T 5/0/0
+  pssa            success 5/5   med time    0.30s   pairs   5  dACL_spur mean  -0.487 median  -0.350  W/L/T 5/0/0
+  attraction      success 5/5   med time   35.41s   pairs   5  dACL_spur mean  -0.120 median  +0.000  W/L/T 2/2/1
+
+-- Z12  n=100  p=1
+  minorminer      success 5/5   med time   43.21s   acl_spur mean 9.430 median 9.430
+  mmfork-cuthill  success 5/5   med time   60.21s   pairs   5  dACL_spur mean  +0.120 median  -0.020  W/L/T 3/2/0
+  clmm            success 5/5   med time   40.88s   pairs   5  dACL_spur mean  -1.488 median  -1.480  W/L/T 5/0/0
+  template        success 1/1   med time    0.05s   pairs   5  dACL_spur mean  -1.470 median  -1.470  W/L/T 5/0/0
+  clique          success 1/1   med time    0.03s   pairs   5  dACL_spur mean  -1.470 median  -1.470  W/L/T 5/0/0
+  pssa            success 5/5   med time    0.39s   pairs   5  dACL_spur mean  -1.470 median  -1.470  W/L/T 5/0/0
+  attraction      success 5/5   med time   60.55s   pairs   5  dACL_spur mean  +1.386 median  +1.410  W/L/T 0/5/0
+
+-- Z12  n=140  p=1
+  minorminer      success 4/5   med time   61.02s   acl_spur mean 15.175 median 15.086
+  mmfork-cuthill  success 5/5   med time   62.02s   pairs   4  dACL_spur mean  -0.152 median  +0.157  W/L/T 2/2/0
+  clmm            success 5/5   med time   60.66s   pairs   4  dACL_spur mean  -4.630 median  -4.468  W/L/T 4/0/0
+  template        success 1/1   med time    0.18s   pairs   4  dACL_spur mean  -4.704 median  -4.614  W/L/T 4/0/0
+  clique          success 1/1   med time    0.02s   pairs   4  dACL_spur mean  -4.704 median  -4.614  W/L/T 4/0/0
+  pssa            success 5/5   med time    0.49s   pairs   4  dACL_spur mean  -4.704 median  -4.614  W/L/T 4/0/0
+  attraction      success 0/5   med time   70.31s
+
+-- Z12  n=179  p=1 [FRONTIER: minorminer 0/5]
+  minorminer      success 0/5   med time   66.72s
+  mmfork-cuthill  success 0/5   med time   67.00s
+  clmm            success 5/5   med time   64.22s   [unpairable: mm 0 successes]  acl_spur mean 12.953
+  template        success 1/1   med time    0.25s   [unpairable: mm 0 successes]  acl_spur mean 12.978
+  clique          success 1/1   med time    0.02s   [unpairable: mm 0 successes]  acl_spur mean 12.978
+  pssa            success 5/5   med time    0.50s   [unpairable: mm 0 successes]  acl_spur mean 12.978
+  attraction      success 0/5   med time   76.90s
+
+-- Z12  n=180  p=1 [FRONTIER: minorminer 0/5]
+  minorminer      success 0/5   med time   67.17s
+  mmfork-cuthill  success 0/5   med time   67.22s
+  clmm            success 5/5   med time   63.85s   [unpairable: mm 0 successes]  acl_spur mean 12.977
+  template        success 1/1   med time    0.25s   [unpairable: mm 0 successes]  acl_spur mean 12.978
+  clique          success 1/1   med time    0.02s   [unpairable: mm 0 successes]  acl_spur mean 12.978
+  pssa            success 5/5   med time    0.47s   [unpairable: mm 0 successes]  acl_spur mean 12.978
+  attraction      success 0/5   med time   75.80s
+
+-- Z12  n=184  p=1 [FRONTIER: minorminer 0/5]
+  minorminer      success 0/5   med time   65.69s
+  mmfork-cuthill  success 0/5   med time   69.89s
+  clmm            success 5/5   med time   65.33s   [unpairable: mm 0 successes]  acl_spur mean 12.978
+  template        success 1/1   med time    0.26s   [unpairable: mm 0 successes]  acl_spur mean 12.978
+  clique          success 1/1   med time    0.02s   [unpairable: mm 0 successes]  acl_spur mean 12.978
+  pssa            success 5/5   med time    0.53s   [unpairable: mm 0 successes]  acl_spur mean 12.978
+  attraction      success 0/5   med time   76.89s
+
+-- Z12  n=189  p=1 [FRONTIER: minorminer 0/5]
+  minorminer      success 0/5   med time   64.27s
+  mmfork-cuthill  success 0/5   med time   65.16s
+  clmm            success 0/5   med time   75.60s
+  template        success 0/1   med time    0.00s
+  clique          success 0/1   med time    0.02s
+  pssa            success 0/5   med time   65.69s
+  attraction      success 0/5   med time   78.69s
+
+-- Z12  n=40  p=0.9
+  minorminer      success 15/15   med time    2.56s   acl_spur mean 4.103 median 4.075
+  mmfork-cuthill  success 15/15   med time    2.30s   pairs  15  dACL_spur mean  -0.060 median  -0.050  W/L/T 9/6/0
+  clmm            success 15/15   med time    0.93s   pairs  15  dACL_spur mean  -0.205 median  -0.175  W/L/T 13/2/0
+  template        success 3/3   med time    0.01s   pairs  15  dACL_spur mean  -0.203 median  -0.175  W/L/T 13/2/0
+  clique          success 3/3   med time    0.03s   pairs  15  dACL_spur mean  -0.203 median  -0.175  W/L/T 13/2/0
+  pssa            success 15/15   med time    0.25s   pairs  15  dACL_spur mean  -0.212 median  -0.175  W/L/T 13/2/0
+  attraction      success 15/15   med time    8.71s   pairs  15  dACL_spur mean  -0.047 median  +0.000  W/L/T 7/7/1
+
+-- Z12  n=60  p=0.9
+  minorminer      success 15/15   med time    9.36s   acl_spur mean 5.843 median 5.750
+  mmfork-cuthill  success 15/15   med time   11.17s   pairs  15  dACL_spur mean  -0.033 median  -0.017  W/L/T 9/6/0
+  clmm            success 15/15   med time    4.84s   pairs  15  dACL_spur mean  -0.148 median  +0.000  W/L/T 7/6/2
+  template        success 3/3   med time    0.02s   pairs  15  dACL_spur mean  -0.410 median  -0.317  W/L/T 15/0/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  -0.410 median  -0.317  W/L/T 15/0/0
+  pssa            success 15/15   med time    0.30s   pairs  15  dACL_spur mean  -0.410 median  -0.317  W/L/T 15/0/0
+  attraction      success 15/15   med time   25.58s   pairs  15  dACL_spur mean  -0.013 median  +0.017  W/L/T 6/8/1
+
+-- Z12  n=80  p=0.9
+  minorminer      success 15/15   med time   23.91s   acl_spur mean 7.786 median 7.725
+  mmfork-cuthill  success 15/15   med time   36.05s   pairs  15  dACL_spur mean  -0.189 median  -0.213  W/L/T 9/6/0
+  clmm            success 15/15   med time   15.10s   pairs  15  dACL_spur mean  -0.936 median  -0.825  W/L/T 15/0/0
+  template        success 3/3   med time    0.03s   pairs  15  dACL_spur mean  -1.336 median  -1.275  W/L/T 15/0/0
+  clique          success 3/3   med time    0.03s   pairs  15  dACL_spur mean  -1.336 median  -1.275  W/L/T 15/0/0
+  pssa            success 15/15   med time    0.36s   pairs  15  dACL_spur mean  -1.336 median  -1.275  W/L/T 15/0/0
+  attraction      success 15/15   med time   57.96s   pairs  15  dACL_spur mean  +0.009 median  +0.213  W/L/T 6/9/0
+
+-- Z12  n=100  p=0.9
+  minorminer      success 15/15   med time   60.81s   acl_spur mean 9.564 median 9.450
+  mmfork-cuthill  success 15/15   med time   60.03s   pairs  15  dACL_spur mean  +0.177 median  +0.100  W/L/T 6/9/0
+  clmm            success 15/15   med time   38.55s   pairs  15  dACL_spur mean  -1.622 median  -1.520  W/L/T 15/0/0
+  template        success 3/3   med time    0.04s   pairs  15  dACL_spur mean  -1.604 median  -1.490  W/L/T 15/0/0
+  clique          success 3/3   med time    0.03s   pairs  15  dACL_spur mean  -1.604 median  -1.490  W/L/T 15/0/0
+  pssa            success 15/15   med time    0.41s   pairs  15  dACL_spur mean  -1.604 median  -1.490  W/L/T 15/0/0
+  attraction      success 15/15   med time   60.91s   pairs  15  dACL_spur mean  +1.091 median  +1.110  W/L/T 0/15/0
+
+-- Z12  n=140  p=0.9
+  minorminer      success 15/15   med time   61.31s   acl_spur mean 16.108 median 15.357
+  mmfork-cuthill  success 15/15   med time   61.12s   pairs  15  dACL_spur mean  -0.316 median  +0.021  W/L/T 7/8/0
+  clmm            success 15/15   med time   63.22s   pairs  15  dACL_spur mean  -5.429 median  -4.736  W/L/T 15/0/0
+  template        success 3/3   med time    0.17s   pairs  15  dACL_spur mean  -5.644 median  -4.886  W/L/T 15/0/0
+  clique          success 3/3   med time    0.03s   pairs  15  dACL_spur mean  -5.644 median  -4.886  W/L/T 15/0/0
+  pssa            success 15/15   med time    0.48s   pairs  15  dACL_spur mean  -5.644 median  -4.886  W/L/T 15/0/0
+  attraction      success 0/15   med time   70.14s
+
+-- Z12  n=180  p=0.9 [FRONTIER: minorminer 0/15]
+  minorminer      success 0/15   med time   68.80s
+  mmfork-cuthill  success 0/15   med time   66.48s
+  clmm            success 15/15   med time   64.50s   [unpairable: mm 0 successes]  acl_spur mean 12.976
+  template        success 3/3   med time    0.23s   [unpairable: mm 0 successes]  acl_spur mean 12.976
+  clique          success 3/3   med time    0.03s   [unpairable: mm 0 successes]  acl_spur mean 12.976
+  pssa            success 15/15   med time    0.50s   [unpairable: mm 0 successes]  acl_spur mean 12.976
+  attraction      success 0/15   med time   74.45s
+
+-- Z12  n=40  p=0.7
+  minorminer      success 15/15   med time    1.84s   acl_spur mean 3.882 median 3.875
+  mmfork-cuthill  success 15/15   med time    2.08s   pairs  15  dACL_spur mean  -0.062 median  -0.050  W/L/T 9/6/0
+  clmm            success 15/15   med time    0.63s   pairs  15  dACL_spur mean  -0.007 median  -0.025  W/L/T 8/7/0
+  template        success 3/3   med time    0.00s   pairs  15  dACL_spur mean  -0.007 median  -0.025  W/L/T 8/7/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  -0.007 median  -0.025  W/L/T 8/7/0
+  pssa            success 15/15   med time    0.26s   pairs  15  dACL_spur mean  -0.015 median  -0.025  W/L/T 8/7/0
+  attraction      success 15/15   med time    6.57s   pairs  15  dACL_spur mean  +0.043 median  +0.025  W/L/T 5/8/2
+
+-- Z12  n=60  p=0.7
+  minorminer      success 15/15   med time    8.67s   acl_spur mean 5.697 median 5.717
+  mmfork-cuthill  success 15/15   med time    9.50s   pairs  15  dACL_spur mean  -0.043 median  -0.050  W/L/T 9/6/0
+  clmm            success 15/15   med time    3.41s   pairs  15  dACL_spur mean  +0.002 median  -0.050  W/L/T 8/7/0
+  template        success 3/3   med time    0.01s   pairs  15  dACL_spur mean  -0.274 median  -0.300  W/L/T 14/1/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  -0.274 median  -0.300  W/L/T 14/1/0
+  pssa            success 15/15   med time    0.31s   pairs  15  dACL_spur mean  -0.274 median  -0.300  W/L/T 14/1/0
+  attraction      success 15/15   med time   20.64s   pairs  15  dACL_spur mean  -0.006 median  -0.067  W/L/T 9/6/0
+
+-- Z12  n=80  p=0.7
+  minorminer      success 15/15   med time   23.91s   acl_spur mean 7.589 median 7.487
+  mmfork-cuthill  success 15/15   med time   22.81s   pairs  15  dACL_spur mean  -0.162 median  -0.138  W/L/T 11/4/0
+  clmm            success 15/15   med time   10.70s   pairs  15  dACL_spur mean  -0.797 median  -0.700  W/L/T 15/0/0
+  template        success 3/3   med time    0.03s   pairs  15  dACL_spur mean  -1.147 median  -1.037  W/L/T 15/0/0
+  clique          success 3/3   med time    0.03s   pairs  15  dACL_spur mean  -1.147 median  -1.037  W/L/T 15/0/0
+  pssa            success 15/15   med time    0.36s   pairs  15  dACL_spur mean  -1.139 median  -1.037  W/L/T 15/0/0
+  attraction      success 15/15   med time   57.65s   pairs  15  dACL_spur mean  +0.088 median  +0.037  W/L/T 6/8/1
+
+-- Z12  n=100  p=0.7
+  minorminer      success 15/15   med time   48.36s   acl_spur mean 9.579 median 9.590
+  mmfork-cuthill  success 15/15   med time   41.94s   pairs  15  dACL_spur mean  -0.031 median  -0.110  W/L/T 9/6/0
+  clmm            success 15/15   med time   26.12s   pairs  15  dACL_spur mean  -1.653 median  -1.670  W/L/T 15/0/0
+  template        success 3/3   med time    0.04s   pairs  15  dACL_spur mean  -1.639 median  -1.660  W/L/T 15/0/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  -1.639 median  -1.660  W/L/T 15/0/0
+  pssa            success 15/15   med time    0.49s   pairs  15  dACL_spur mean  -1.639 median  -1.660  W/L/T 15/0/0
+  attraction      success 15/15   med time   60.51s   pairs  15  dACL_spur mean  +0.459 median  +0.520  W/L/T 3/12/0
+
+-- Z12  n=140  p=0.7
+  minorminer      success 15/15   med time   60.99s   acl_spur mean 15.373 median 15.050
+  mmfork-cuthill  success 15/15   med time   61.48s   pairs  15  dACL_spur mean  -0.911 median  -0.700  W/L/T 13/2/0
+  clmm            success 15/15   med time   62.09s   pairs  15  dACL_spur mean  -4.679 median  -4.493  W/L/T 15/0/0
+  template        success 3/3   med time    0.13s   pairs  15  dACL_spur mean  -4.913 median  -4.614  W/L/T 15/0/0
+  clique          success 3/3   med time    0.03s   pairs  15  dACL_spur mean  -4.913 median  -4.614  W/L/T 15/0/0
+  pssa            success 15/15   med time    0.59s   pairs  15  dACL_spur mean  -4.913 median  -4.614  W/L/T 15/0/0
+  attraction      success 6/15   med time   68.01s   pairs   6  dACL_spur mean  +4.802 median  +5.039  W/L/T 1/5/0
+
+-- Z12  n=180  p=0.7 [FRONTIER: minorminer 0/15]
+  minorminer      success 0/15   med time   66.82s
+  mmfork-cuthill  success 0/15   med time   65.80s
+  clmm            success 15/15   med time   62.52s   [unpairable: mm 0 successes]  acl_spur mean 12.967
+  template        success 3/3   med time    0.19s   [unpairable: mm 0 successes]  acl_spur mean 12.970
+  clique          success 3/3   med time    0.03s   [unpairable: mm 0 successes]  acl_spur mean 12.970
+  pssa            success 15/15   med time    0.56s   [unpairable: mm 0 successes]  acl_spur mean 12.970
+  attraction      success 0/15   med time   71.38s
+
+-- Z12  n=220  p=0.7 [FRONTIER: minorminer 0/15]
+  minorminer      success 0/15   med time   68.88s
+  mmfork-cuthill  success 0/15   med time   69.70s
+  clmm            success 0/15   med time   72.15s
+  template        success 0/3   med time    0.00s
+  clique          success 0/3   med time    0.02s
+  pssa            success 0/15   med time   67.32s
+  attraction      success 0/15   med time   78.82s
+
+-- Z12  n=60  p=0.5
+  minorminer      success 15/15   med time    5.68s   acl_spur mean 5.444 median 5.367
+  mmfork-cuthill  success 15/15   med time    5.43s   pairs  15  dACL_spur mean  -0.166 median  -0.100  W/L/T 9/6/0
+  clmm            success 15/15   med time    2.32s   pairs  15  dACL_spur mean  +0.192 median  +0.267  W/L/T 3/12/0
+  template        success 3/3   med time    0.01s   pairs  15  dACL_spur mean  -0.122 median  -0.067  W/L/T 9/3/3
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  -0.122 median  -0.067  W/L/T 9/3/3
+  pssa            success 15/15   med time    0.29s   pairs  15  dACL_spur mean  -0.117 median  -0.050  W/L/T 9/4/2
+  attraction      success 15/15   med time   15.76s   pairs  15  dACL_spur mean  -0.051 median  -0.050  W/L/T 9/5/1
+
+-- Z12  n=80  p=0.5
+  minorminer      success 15/15   med time   13.93s   acl_spur mean 7.404 median 7.463
+  mmfork-cuthill  success 15/15   med time   16.53s   pairs  15  dACL_spur mean  -0.227 median  -0.212  W/L/T 11/4/0
+  clmm            success 15/15   med time    6.38s   pairs  15  dACL_spur mean  -0.679 median  -0.675  W/L/T 15/0/0
+  template        success 3/3   med time    0.02s   pairs  15  dACL_spur mean  -0.992 median  -1.038  W/L/T 15/0/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  -0.992 median  -1.038  W/L/T 15/0/0
+  pssa            success 15/15   med time    0.35s   pairs  15  dACL_spur mean  -0.992 median  -1.038  W/L/T 15/0/0
+  attraction      success 15/15   med time   40.40s   pairs  15  dACL_spur mean  -0.090 median  -0.025  W/L/T 8/7/0
+
+-- Z12  n=100  p=0.5
+  minorminer      success 15/15   med time   33.30s   acl_spur mean 9.463 median 9.300
+  mmfork-cuthill  success 15/15   med time   41.59s   pairs  15  dACL_spur mean  -0.353 median  -0.240  W/L/T 12/3/0
+  clmm            success 15/15   med time   16.53s   pairs  15  dACL_spur mean  -1.565 median  -1.390  W/L/T 15/0/0
+  template        success 3/3   med time    0.03s   pairs  15  dACL_spur mean  -1.570 median  -1.430  W/L/T 15/0/0
+  clique          success 3/3   med time    0.03s   pairs  15  dACL_spur mean  -1.570 median  -1.430  W/L/T 15/0/0
+  pssa            success 15/15   med time    0.42s   pairs  15  dACL_spur mean  -1.570 median  -1.430  W/L/T 15/0/0
+  attraction      success 15/15   med time   60.13s   pairs  15  dACL_spur mean  -0.024 median  -0.010  W/L/T 8/7/0
+
+-- Z12  n=140  p=0.5
+  minorminer      success 15/15   med time   60.56s   acl_spur mean 14.179 median 14.171
+  mmfork-cuthill  success 15/15   med time   60.69s   pairs  15  dACL_spur mean  -0.287 median  -0.179  W/L/T 10/5/0
+  clmm            success 15/15   med time   40.01s   pairs  15  dACL_spur mean  -3.567 median  -3.479  W/L/T 15/0/0
+  template        success 3/3   med time    0.11s   pairs  15  dACL_spur mean  -3.748 median  -3.757  W/L/T 15/0/0
+  clique          success 3/3   med time    0.03s   pairs  15  dACL_spur mean  -3.748 median  -3.757  W/L/T 15/0/0
+  pssa            success 15/15   med time    0.58s   pairs  15  dACL_spur mean  -3.748 median  -3.757  W/L/T 15/0/0
+  attraction      success 15/15   med time   60.73s   pairs  15  dACL_spur mean  +1.380 median  +1.364  W/L/T 0/15/0
+
+-- Z12  n=180  p=0.5 [FRONTIER: minorminer 0/15]
+  minorminer      success 0/15   med time   64.60s
+  mmfork-cuthill  success 0/15   med time   65.24s
+  clmm            success 15/15   med time   47.68s   [unpairable: mm 0 successes]  acl_spur mean 12.936
+  template        success 3/3   med time    0.14s   [unpairable: mm 0 successes]  acl_spur mean 12.935
+  clique          success 3/3   med time    0.02s   [unpairable: mm 0 successes]  acl_spur mean 12.935
+  pssa            success 15/15   med time    0.43s   [unpairable: mm 0 successes]  acl_spur mean 12.935
+  attraction      success 0/15   med time   66.91s
+
+-- Z12  n=240  p=0.5 [FRONTIER: minorminer 0/15]
+  minorminer      success 0/15   med time   67.81s
+  mmfork-cuthill  success 0/15   med time   69.28s
+  clmm            success 0/15   med time   73.21s
+  template        success 0/3   med time    0.00s
+  clique          success 0/3   med time    0.02s
+  pssa            success 0/15   med time   64.65s
+  attraction      success 0/15   med time   73.98s
+
+-- Z12  n=60  p=0.3
+  minorminer      success 15/15   med time    3.30s   acl_spur mean 4.644 median 4.550
+  mmfork-cuthill  success 15/15   med time    3.44s   pairs  15  dACL_spur mean  -0.111 median  -0.100  W/L/T 11/4/0
+  clmm            success 15/15   med time    2.66s   pairs  15  dACL_spur mean  +0.036 median  +0.017  W/L/T 7/8/0
+  template        success 3/3   med time    0.01s   pairs  15  dACL_spur mean  +0.450 median  +0.467  W/L/T 1/14/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  +0.450 median  +0.467  W/L/T 1/14/0
+  pssa            success 15/15   med time    0.28s   pairs  15  dACL_spur mean  +0.450 median  +0.467  W/L/T 1/14/0
+  attraction      success 15/15   med time    7.90s   pairs  15  dACL_spur mean  -0.103 median  -0.067  W/L/T 12/3/0
+
+-- Z12  n=100  p=0.3
+  minorminer      success 15/15   med time   18.47s   acl_spur mean 8.649 median 8.690
+  mmfork-cuthill  success 15/15   med time   20.07s   pairs  15  dACL_spur mean  -0.189 median  -0.240  W/L/T 12/3/0
+  clmm            success 15/15   med time    7.99s   pairs  15  dACL_spur mean  -0.916 median  -0.950  W/L/T 15/0/0
+  template        success 3/3   med time    0.03s   pairs  15  dACL_spur mean  -0.943 median  -0.950  W/L/T 15/0/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  -0.943 median  -0.950  W/L/T 15/0/0
+  pssa            success 15/15   med time    0.36s   pairs  15  dACL_spur mean  -0.943 median  -0.950  W/L/T 15/0/0
+  attraction      success 15/15   med time   39.83s   pairs  15  dACL_spur mean  -0.095 median  -0.130  W/L/T 10/5/0
+
+-- Z12  n=140  p=0.3
+  minorminer      success 15/15   med time   57.11s   acl_spur mean 13.092 median 12.793
+  mmfork-cuthill  success 15/15   med time   60.31s   pairs  15  dACL_spur mean  -0.218 median  -0.093  W/L/T 9/6/0
+  clmm            success 15/15   med time   20.62s   pairs  15  dACL_spur mean  -2.649 median  -2.279  W/L/T 15/0/0
+  template        success 3/3   med time    0.07s   pairs  15  dACL_spur mean  -2.811 median  -2.514  W/L/T 15/0/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  -2.811 median  -2.514  W/L/T 15/0/0
+  pssa            success 15/15   med time    0.43s   pairs  15  dACL_spur mean  -2.811 median  -2.514  W/L/T 15/0/0
+  attraction      success 15/15   med time   60.52s   pairs  15  dACL_spur mean  +0.474 median  +0.521  W/L/T 4/11/0
+
+-- Z12  n=180  p=0.3 [FRONTIER: minorminer 0/15]
+  minorminer      success 0/15   med time   63.04s
+  mmfork-cuthill  success 0/15   med time   63.38s
+  clmm            success 15/15   med time   29.89s   [unpairable: mm 0 successes]  acl_spur mean 12.786
+  template        success 3/3   med time    0.14s   [unpairable: mm 0 successes]  acl_spur mean 12.787
+  clique          success 3/3   med time    0.03s   [unpairable: mm 0 successes]  acl_spur mean 12.787
+  pssa            success 15/15   med time    0.44s   [unpairable: mm 0 successes]  acl_spur mean 12.787
+  attraction      success 0/15   med time   64.48s
+
+-- Z12  n=240  p=0.3 [FRONTIER: minorminer 0/15]
+  minorminer      success 0/15   med time   64.43s
+  mmfork-cuthill  success 0/15   med time   64.93s
+  clmm            success 0/15   med time   66.80s
+  template        success 0/3   med time    0.00s
+  clique          success 0/3   med time    0.02s
+  pssa            success 0/15   med time   66.45s
+  attraction      success 0/15   med time   67.85s
+
+-- Z12  n=300  p=0.3 [FRONTIER: minorminer 0/15]
+  minorminer      success 0/15   med time   67.28s
+  mmfork-cuthill  success 0/15   med time   64.58s
+  clmm            success 0/15   med time   69.90s
+  template        success 0/3   med time    0.00s
+  clique          success 0/3   med time    0.02s
+  pssa            success 0/15   med time   63.38s
+  attraction      success 0/15   med time   72.83s
+
+-- Z12  n=60  p=0.2
+  minorminer      success 15/15   med time    1.29s   acl_spur mean 3.488 median 3.450
+  mmfork-cuthill  success 15/15   med time    1.60s   pairs  15  dACL_spur mean  +0.074 median  +0.083  W/L/T 3/11/1
+  clmm            success 15/15   med time    0.99s   pairs  15  dACL_spur mean  +0.330 median  +0.283  W/L/T 0/15/0
+  template        success 3/3   med time    0.01s   pairs  15  dACL_spur mean  +1.268 median  +1.283  W/L/T 0/15/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  +1.268 median  +1.283  W/L/T 0/15/0
+  pssa            success 15/15   med time    0.28s   pairs  15  dACL_spur mean  +1.268 median  +1.283  W/L/T 0/15/0
+  attraction      success 15/15   med time    4.36s   pairs  15  dACL_spur mean  +0.054 median  +0.050  W/L/T 7/8/0
+
+-- Z12  n=100  p=0.2
+  minorminer      success 15/15   med time   14.46s   acl_spur mean 7.269 median 7.190
+  mmfork-cuthill  success 15/15   med time   14.33s   pairs  15  dACL_spur mean  -0.121 median  -0.110  W/L/T 10/5/0
+  clmm            success 15/15   med time    4.47s   pairs  15  dACL_spur mean  +0.263 median  +0.320  W/L/T 2/13/0
+  template        success 3/3   med time    0.02s   pairs  15  dACL_spur mean  +0.221 median  +0.290  W/L/T 3/12/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  +0.221 median  +0.290  W/L/T 3/12/0
+  pssa            success 15/15   med time    0.36s   pairs  15  dACL_spur mean  +0.221 median  +0.290  W/L/T 3/12/0
+  attraction      success 15/15   med time   23.16s   pairs  15  dACL_spur mean  +0.100 median  +0.070  W/L/T 7/8/0
+
+-- Z12  n=140  p=0.2
+  minorminer      success 15/15   med time   33.06s   acl_spur mean 11.797 median 11.721
+  mmfork-cuthill  success 15/15   med time   37.04s   pairs  15  dACL_spur mean  -0.393 median  -0.307  W/L/T 13/2/0
+  clmm            success 15/15   med time   12.46s   pairs  15  dACL_spur mean  -1.580 median  -1.407  W/L/T 15/0/0
+  template        success 3/3   med time    0.07s   pairs  15  dACL_spur mean  -1.756 median  -1.686  W/L/T 15/0/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  -1.756 median  -1.686  W/L/T 15/0/0
+  pssa            success 15/15   med time    0.43s   pairs  15  dACL_spur mean  -1.756 median  -1.686  W/L/T 15/0/0
+  attraction      success 15/15   med time   60.40s   pairs  15  dACL_spur mean  -0.229 median  -0.179  W/L/T 10/5/0
+
+-- Z12  n=200  p=0.2 [FRONTIER: minorminer 0/15]
+  minorminer      success 0/15   med time   62.57s
+  mmfork-cuthill  success 0/15   med time   62.49s
+  clmm            success 15/15   med time   43.37s   [unpairable: mm 0 successes]  acl_spur mean 16.012
+  template        success 0/3   med time    0.00s
+  clique          success 0/3   med time    0.02s
+  pssa            success 0/15   med time   63.23s
+  attraction      success 0/15   med time   64.48s
+
+-- Z12  n=260  p=0.2 [FRONTIER: minorminer 0/15]
+  minorminer      success 0/15   med time   64.06s
+  mmfork-cuthill  success 0/15   med time   64.18s
+  clmm            success 0/15   med time   64.29s
+  template        success 0/3   med time    0.00s
+  clique          success 0/3   med time    0.03s
+  pssa            success 0/15   med time   65.58s
+  attraction      success 0/15   med time   66.26s
+
+-- Z12  n=340  p=0.2 [FRONTIER: minorminer 0/15]
+  minorminer      success 0/15   med time   67.00s
+  mmfork-cuthill  success 0/15   med time   66.66s
+  clmm            success 0/15   med time   66.98s
+  template        success 0/3   med time    0.00s
+  clique          success 0/3   med time    0.02s
+  pssa            success 0/15   med time   64.68s
+  attraction      success 0/15   med time   70.66s
+
+-- Z12  n=60  p=0.12
+  minorminer      success 15/15   med time    0.49s   acl_spur mean 2.311 median 2.283
+  mmfork-cuthill  success 15/15   med time    0.54s   pairs  15  dACL_spur mean  -0.002 median  +0.033  W/L/T 6/8/1
+  clmm            success 15/15   med time    0.41s   pairs  15  dACL_spur mean  +0.016 median  +0.017  W/L/T 6/9/0
+  template        success 3/3   med time    0.01s   pairs  15  dACL_spur mean  +1.872 median  +1.950  W/L/T 0/15/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  +1.872 median  +1.950  W/L/T 0/15/0
+  pssa            success 15/15   med time    0.28s   pairs  15  dACL_spur mean  +1.872 median  +1.950  W/L/T 0/15/0
+  attraction      success 15/15   med time    2.35s   pairs  15  dACL_spur mean  -0.064 median  -0.033  W/L/T 10/3/2
+
+-- Z12  n=100  p=0.12
+  minorminer      success 15/15   med time    5.26s   acl_spur mean 5.231 median 5.160
+  mmfork-cuthill  success 15/15   med time    5.72s   pairs  15  dACL_spur mean  +0.057 median  +0.110  W/L/T 7/8/0
+  clmm            success 15/15   med time    3.63s   pairs  15  dACL_spur mean  +0.765 median  +0.650  W/L/T 0/15/0
+  template        success 3/3   med time    0.02s   pairs  15  dACL_spur mean  +1.805 median  +1.820  W/L/T 0/15/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  +1.805 median  +1.820  W/L/T 0/15/0
+  pssa            success 15/15   med time    0.36s   pairs  15  dACL_spur mean  +1.805 median  +1.820  W/L/T 0/15/0
+  attraction      success 15/15   med time   10.39s   pairs  15  dACL_spur mean  -0.064 median  -0.100  W/L/T 10/4/1
+
+-- Z12  n=160  p=0.12
+  minorminer      success 15/15   med time   27.07s   acl_spur mean 11.156 median 11.094
+  mmfork-cuthill  success 15/15   med time   24.48s   pairs  15  dACL_spur mean  -0.098 median  -0.169  W/L/T 9/6/0
+  clmm            success 15/15   med time    8.06s   pairs  15  dACL_spur mean  -0.240 median  -0.175  W/L/T 10/5/0
+  template        success 3/3   med time    0.08s   pairs  15  dACL_spur mean  -0.377 median  -0.269  W/L/T 11/4/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  -0.377 median  -0.269  W/L/T 11/4/0
+  pssa            success 15/15   med time    0.45s   pairs  15  dACL_spur mean  -0.377 median  -0.269  W/L/T 11/4/0
+  attraction      success 15/15   med time   42.59s   pairs  15  dACL_spur mean  +0.329 median  +0.406  W/L/T 6/9/0
+
+-- Z12  n=220  p=0.12 [FRONTIER: minorminer 0/15]
+  minorminer      success 0/15   med time   61.89s
+  mmfork-cuthill  success 0/15   med time   61.66s
+  clmm            success 6/15   med time   61.23s   [unpairable: mm 0 successes]  acl_spur mean 16.861
+  template        success 0/3   med time    0.00s
+  clique          success 0/3   med time    0.02s
+  pssa            success 0/15   med time   65.03s
+  attraction      success 0/15   med time   63.36s
+
+-- Z12  n=300  p=0.12 [FRONTIER: minorminer 0/15]
+  minorminer      success 0/15   med time   62.80s
+  mmfork-cuthill  success 0/15   med time   62.66s
+  clmm            success 0/15   med time   63.44s
+  template        success 0/3   med time    0.00s
+  clique          success 0/3   med time    0.02s
+  pssa            success 0/15   med time   64.28s
+  attraction      success 0/15   med time   65.16s
+
+-- Z12  n=400  p=0.12 [FRONTIER: minorminer 0/15]
+  minorminer      success 0/15   med time   66.35s
+  mmfork-cuthill  success 0/15   med time   65.41s
+  clmm            success 0/15   med time   66.13s
+  template        success 0/3   med time    0.00s
+  clique          success 0/3   med time    0.02s
+  pssa            success 0/15   med time   63.62s
+  attraction      success 0/15   med time   69.34s
+
+-- Z12  n=80  p=0.08
+  minorminer      success 15/15   med time    0.68s   acl_spur mean 2.380 median 2.325
+  mmfork-cuthill  success 10/15   med time    0.65s   pairs  10  dACL_spur mean  -0.048 median  -0.125  W/L/T 7/3/0
+  clmm            success 15/15   med time    0.58s   pairs  15  dACL_spur mean  +0.060 median  +0.112  W/L/T 4/11/0
+  template        success 3/3   med time    0.01s   pairs  15  dACL_spur mean  +2.578 median  +2.638  W/L/T 0/15/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  +2.578 median  +2.638  W/L/T 0/15/0
+  pssa            success 15/15   med time    0.31s   pairs  15  dACL_spur mean  +2.578 median  +2.638  W/L/T 0/15/0
+  attraction      success 15/15   med time    2.79s   pairs  15  dACL_spur mean  -0.120 median  -0.138  W/L/T 9/5/1
+
+-- Z12  n=120  p=0.08
+  minorminer      success 15/15   med time    3.89s   acl_spur mean 4.937 median 4.950
+  mmfork-cuthill  success 15/15   med time    5.01s   pairs  15  dACL_spur mean  -0.098 median  -0.033  W/L/T 10/5/0
+  clmm            success 15/15   med time    3.73s   pairs  15  dACL_spur mean  +0.481 median  +0.475  W/L/T 1/14/0
+  template        success 3/3   med time    0.03s   pairs  15  dACL_spur mean  +2.629 median  +2.608  W/L/T 0/15/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  +2.629 median  +2.608  W/L/T 0/15/0
+  pssa            success 15/15   med time    0.40s   pairs  15  dACL_spur mean  +2.629 median  +2.608  W/L/T 0/15/0
+  attraction      success 15/15   med time   10.43s   pairs  15  dACL_spur mean  -0.073 median  -0.008  W/L/T 8/6/1
+
+-- Z12  n=180  p=0.08
+  minorminer      success 15/15   med time   21.42s   acl_spur mean 10.101 median 10.067
+  mmfork-cuthill  success 15/15   med time   20.47s   pairs  15  dACL_spur mean  -0.047 median  +0.117  W/L/T 6/9/0
+  clmm            success 15/15   med time    7.73s   pairs  15  dACL_spur mean  +0.551 median  +0.622  W/L/T 3/11/1
+  template        success 3/3   med time    0.12s   pairs  15  dACL_spur mean  +1.508 median  +1.583  W/L/T 0/15/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  +1.508 median  +1.583  W/L/T 0/15/0
+  pssa            success 15/15   med time    0.54s   pairs  15  dACL_spur mean  +1.508 median  +1.583  W/L/T 0/15/0
+  attraction      success 15/15   med time   33.50s   pairs  15  dACL_spur mean  -0.123 median  +0.011  W/L/T 7/8/0
+
+-- Z12  n=260  p=0.08 [FRONTIER: minorminer 0/15]
+  minorminer      success 0/15   med time   61.40s
+  mmfork-cuthill  success 0/15   med time   61.71s
+  clmm            success 0/15   med time   61.54s
+  template        success 0/3   med time    0.00s
+  clique          success 0/3   med time    0.02s
+  pssa            success 0/15   med time   65.79s
+  attraction      success 0/15   med time   62.80s
+
+-- Z12  n=360  p=0.08 [FRONTIER: minorminer 0/15]
+  minorminer      success 0/15   med time   63.04s
+  mmfork-cuthill  success 0/15   med time   63.81s
+  clmm            success 0/15   med time   64.23s
+  template        success 0/3   med time    0.00s
+  clique          success 0/3   med time    0.02s
+  pssa            success 0/15   med time   65.10s
+  attraction      success 0/15   med time   65.47s
+
+-- Z12  n=480  p=0.08 [FRONTIER: minorminer 0/15]
+  minorminer      success 0/15   med time   65.98s
+  mmfork-cuthill  success 0/15   med time   66.00s
+  clmm            success 0/15   med time   66.61s
+  template        success 0/3   med time    0.00s
+  clique          success 0/3   med time    0.02s
+  pssa            success 0/15   med time   63.94s
+  attraction      success 0/15   med time   69.32s
+
+-- Z12  n=100  p=0.05
+  minorminer      success 15/15   med time    0.52s   acl_spur mean 2.130 median 2.130
+  mmfork-cuthill  success 5/15   med time    0.01s   pairs   5  dACL_spur mean  +0.014 median  +0.070  W/L/T 2/3/0
+  clmm            success 15/15   med time    0.35s   pairs  15  dACL_spur mean  +0.089 median  +0.090  W/L/T 5/10/0
+  template        success 3/3   med time    0.02s   pairs  15  dACL_spur mean  +3.250 median  +3.280  W/L/T 0/15/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  +3.250 median  +3.280  W/L/T 0/15/0
+  pssa            success 15/15   med time    0.35s   pairs  15  dACL_spur mean  +3.250 median  +3.280  W/L/T 0/15/0
+  attraction      success 15/15   med time    2.85s   pairs  15  dACL_spur mean  -0.106 median  -0.120  W/L/T 10/3/2
+
+-- Z12  n=160  p=0.05
+  minorminer      success 15/15   med time    3.98s   acl_spur mean 5.118 median 5.081
+  mmfork-cuthill  success 15/15   med time    5.20s   pairs  15  dACL_spur mean  -0.000 median  +0.050  W/L/T 7/8/0
+  clmm            success 15/15   med time    4.17s   pairs  15  dACL_spur mean  +0.646 median  +0.656  W/L/T 0/14/1
+  template        success 3/3   med time    0.10s   pairs  15  dACL_spur mean  +4.034 median  +4.131  W/L/T 0/15/0
+  clique          success 3/3   med time    0.02s   pairs  15  dACL_spur mean  +4.034 median  +4.131  W/L/T 0/15/0
+  pssa            success 15/15   med time    0.57s   pairs  15  dACL_spur mean  +4.034 median  +4.131  W/L/T 0/15/0
+  attraction      success 15/15   med time   11.13s   pairs  15  dACL_spur mean  -0.349 median  -0.306  W/L/T 15/0/0
+
+-- Z12  n=240  p=0.05
+  minorminer      success 15/15   med time   12.90s   acl_spur mean 11.605 median 11.592
+  mmfork-cuthill  success 15/15   med time   14.43s   pairs  15  dACL_spur mean  +0.209 median  +0.158  W/L/T 6/9/0
+  clmm            success 15/15   med time   11.99s   pairs  15  dACL_spur mean  +0.666 median  +0.742  W/L/T 4/11/0
+  template        success 0/3   med time    0.00s
+  clique          success 0/3   med time    0.02s
+  pssa            success 0/15   med time   67.17s
+  attraction      success 15/15   med time   37.58s   pairs  15  dACL_spur mean  -0.449 median  -0.642  W/L/T 12/3/0
+
+-- Z12  n=340  p=0.05 [FRONTIER: minorminer 0/15]
+  minorminer      success 0/15   med time   61.87s
+  mmfork-cuthill  success 0/15   med time   61.78s
+  clmm            success 0/15   med time   62.03s
+  template        success 0/3   med time    0.00s
+  clique          success 0/3   med time    0.02s
+  pssa            success 0/15   med time   62.46s
+  attraction      success 0/15   med time   62.83s
+
+-- Z12  n=460  p=0.05 [FRONTIER: minorminer 0/15]
+  minorminer      success 0/15   med time   63.04s
+  mmfork-cuthill  success 0/15   med time   63.01s
+  clmm            success 0/15   med time   63.48s
+  template        success 0/3   med time    0.00s
+  clique          success 0/3   med time    0.03s
+  pssa            success 0/15   med time   67.30s
+  attraction      success 0/15   med time   65.18s
+
+-- Z12  n=600  p=0.05 [FRONTIER: minorminer 0/15]
+  minorminer      success 0/15   med time   64.63s
+  mmfork-cuthill  success 0/15   med time   64.65s
+  clmm            success 0/15   med time   66.07s
+  template        success 0/3   med time    0.00s
+  clique          success 0/3   med time    0.02s
+  pssa            success 0/15   med time   66.45s
+  attraction      success 0/15   med time   67.35s
+
+rows: 8235   csv: /data/dabh/ember/docs/paper3/data/e0_crossover.csv
