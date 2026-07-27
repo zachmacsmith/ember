@@ -543,3 +543,42 @@ load-bearing; two anatomy findings salvaged) · P6 anatomy: attach filter and
 lexicographic pricing load-bearing (predictions), beta-dhat sparse split (novel,
 confirmed) · KG2 2-swap LIVES (+3.6..4.8%) · KG3 subsumed by E0. Survivors to M4:
 p3-ate, p3-clmm, p3-clmm-core (density-gated role), p3-mmpolish, p3-race8.
+
+### 4.10 M4 — frozen eval, K=15, significance (2026-07-27)
+
+PRE-REGISTERED 2026-07-27. **TUNING FREEZE: every arm's configuration is frozen at
+e917c918** (no algorithm-code change after this entry counts for M4; the eval
+instance seeds 901-915 have never been generated or run before this launch).
+Scripts: m4_eval.py + m4_analysis.py @ e917c918. Stage main: 14 frozen cells x
+{minorminer, mmfork-cuthill, p3-template, p3-ate, p3-clmm, p3-clmm-core,
+p3-mmpolish, pssa, attraction} x ER inst seeds 901-915 (K_n instance-invariant,
+seeds only) x algo seeds 10-14 x 60 s = 6,314 rows, hyde06 48W. Stage race: the 6
+selection cells x 4 modes x 15 inst x 5 base seeds = 1,800 runs, outer5x8.
+Bars (confirmation of M3 verdicts at eval scale, Wilcoxon signed-rank per cell +
+Holm within-arm across cells, rank-biserial reported):
+- p3-ate: Holm-significant (p<0.05) paired win vs MM on every above-p* cell, and
+  no significant loss anywhere. Variance table: ate/template cross-seed std ratio
+  vs MM reported (0.00x expected above p*).
+- p3-clmm: >=1 Holm-significant mid-band win (B1 at scale); clmm-core reported
+  under its density-gated role (dense cells only).
+- p3-mmpolish: Holm-significant win on >=2 mid/sparse cells.
+- p3-race8: the two fairness reads on the template-free cells, Wilcoxon p<0.05.
+- Frontier: success counts on K180/K179 (report; MM expected 0/75-ish).
+Success rates separate/unpaired; acl_spur column; wall within-batch only.
+
+### 4.11 M5 — structured no-regression sweep (2026-07-27)
+
+PRE-REGISTERED 2026-07-27. CLI route: experiments/m5_noregress.yaml @ e917c918
+(structured ∪ lattice presets = 3,388 ids, pegasus_16, arms {minorminer, p3-ate,
+p3-clmm, p3-mmpolish}, 1 trial, 60 s, master seed 4242, 56 workers; "(instance,
+trial) pairing [CLI]" label mandatory on every table). Analyzer: m5_analyze.py @
+e917c918 (pairs on graph_id, family x size-band buckets, raw ACL column — CLI has
+no spur; stated on the table). Bar (verbatim from the plan): no family mean dACL >
++0.10 or success-rate drop > 1 pt for any p3 arm vs minorminer; else the failing
+arm ships behind a density/regime guard and the sweep re-runs once with the guard.
+Prediction (committed): p3-ate ties MM on sparse/structured families (auto-select
+falls back to MM) and wins dense-structured (complete/turan/dense bipartite);
+p3-clmm regresses on sparse families (its seeds hurt below the crossover — E0) and
+is expected to need the density gate; p3-mmpolish never regresses.
+
+--- results appended below per experiment; nothing above edited after launch ---
