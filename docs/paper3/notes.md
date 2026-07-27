@@ -663,3 +663,33 @@ m4_headline.txt/.md; layout supplement §4.10b appends after its run):
   excluded from the selection claim per pre-registration).
 - Frontier (Table 3): K180/K179 — MM, cuthill, mmpolish, attraction 0/5 each;
   template/ate/clmm/clmm-core/pssa 5/5 (ate/clmm at template-or-better ACL).
+
+### 4.12 Errata & clarifications (2026-07-27, from the manuscript-drafting audit)
+
+Dated corrections; original entries above are left as written (append-only).
+
+1. **§4.1 "no non-monotonicity anywhere" — WRONG as written.** The P16 p* ladder
+   reads 160→0.12 then 180→0.3. The apparent reversal is the win-rate definition
+   starving on MM's feasibility fade at (180, 0.3) (MM 9/15 → fewer both-succeed
+   pairs), not a true crossover reversal; the underlying template-vs-MM margin
+   keeps improving with n. The manuscript carries this as a footnote to the p*
+   table.
+2. **§4.5 ATE (100,0.2) — transcription error.** Correct values: P16 −0.750
+   (−8.2%, 25/0), Z12 −0.320 (−4.4%, 25/0). The entry's "−4.4% both topos" glued
+   Z12's number onto P16.
+3. **§4.10 "eval margins within ~1–2 pp of dev" — ER cells only.** P16 K140
+   swung −33.5% (dev) → −19.5% (eval): n=5 pairs and MM's cliff-seed variance
+   (med-std 3.09) dominate that cell's margin; the K_n headline numbers carry the
+   n=5 caveat wherever quoted.
+4. **§4.1 data-quality (i) resolution (previously unrecorded):** the
+   mmfork-cuthill disconnected-source failure was fixed same-day at dd15edb3
+   (wrapper places isolated vertices on free qubits and prunes them from
+   var_order; regression tests test_forked_disconnected_source_with_order /
+   test_forked_edgeless_source). No frozen dev/eval cell contains a disconnected
+   instance, so no M3/M4 row was affected.
+5. **Sha convention:** notes.md pre-registrations cite the commit CONTAINING the
+   script content (correct for reproduction); QUEUE.md rows had cited the
+   one-later "stamp" commits — QUEUE aligned to notes as of this entry.
+6. **Ceiling-gap range:** canonical MM-only figure is 16–57% (K60 +16%, K100
+   +39%, K140 +57% above the template); paper2's "30–60%" title spans all search
+   arms, not MM alone.
