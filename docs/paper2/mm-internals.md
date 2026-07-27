@@ -16,13 +16,15 @@ paper.**
   as the installed pip package. The algorithm is header-only C++ in
   `include/find_embedding/*.hpp`.
 - The working tree carries **our fork patch applied on top** (`scripts/mm_fork.patch`:
-  the `var_order=` and `history_alpha=` switches, ~86 inserted lines in
+  the `var_order=` and `history_alpha=` switches, plus — since paper3 P4/P6,
+  2026-07-26 — `short_audit=`/`audit_budget=`/`dirty_skip=` and
+  `chain_tree=`/`root_boltzmann=`; ~450 inserted lines in `embedding.hpp`,
   `embedding_problem.hpp`, `pathfinder.hpp`, `util.hpp`, and the Cython bindings).
-  Both switches are parity-guarded: defaults are byte-identical to stock (same
-  embeddings, same RNG stream), enforced by the build self-test and
-  `tests/algorithms/test_mmfork_history.py`. Line numbers cited below refer to the
-  patched working tree; in patched files they may sit a few lines off from pristine
-  0.2.22.
+  Every switch is parity-guarded: defaults are byte-identical to stock (same
+  embeddings, same RNG stream), enforced by the build self-test,
+  `tests/algorithms/test_mmfork_history.py`, and `tests/algorithms/test_p3_fork.py`.
+  Line numbers cited below refer to the patched working tree; in patched files they
+  may sit noticeably off from pristine 0.2.22 (pathfinder.hpp grew ~250 lines).
 - To re-verify a claim: `grep -n <symbol> external/minorminer-fork/include/find_embedding/*.hpp`.
 
 ## 2. Program structure
@@ -165,5 +167,10 @@ latter is inert inside real MM (§3.13, the history 2×2).
   `find_embedding` call).
 - Order: `params.fixed_var_order` (`embedding_problem.hpp:374`).
 - Tree ablation arm: revive `construct_chain` behind a switch (the *dumber* union
-  build — "what does MM's Steiner trick buy?", §3.14).
+  build — "what does MM's Steiner trick buy?", §3.14). **Built** (paper3 P6):
+  `chain_tree=` 1 = union, 2 = pure SPH (attach filter dropped), dispatched at both
+  construct sites; plus `root_boltzmann=` (the 2014 paper's unshipped root rule).
 - Shortener economics: audition policy in `find_short_chain` (`short_audit`, §3.17).
+  **Built** (paper3 P4): `short_audit=` 1 estimate-only / 2 budgeted (`audit_budget=`),
+  and `dirty_skip=` (fingerprint-tracked negative cache in the chainlength phase).
+  As-built details: `docs/paper3/proposals/{shortener,anatomy}.md`.
