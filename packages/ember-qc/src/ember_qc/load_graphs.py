@@ -38,6 +38,8 @@ Public API:
 import functools
 import hashlib
 import json
+import os
+from datetime import datetime
 import shutil
 import sys
 import tempfile
@@ -219,9 +221,25 @@ def _graph_dedup_info() -> tuple:
     return skip_to_canonical, frozenset(name_collision_ids)
 
 
+def _verified_marker_path(graph_dir: Path) -> Path:
+    return graph_dir / ".verified.json"
+
+
+def _manifest_fingerprint() -> str:
+    return hashlib.sha256(MANIFEST_PATH.read_bytes()).hexdigest()[:32]
+
+
 def verify_manifest(files: Optional[List[Tuple[int, Path]]] = None,
                     graph_dir: Path = GRAPHS_DIR) -> None:
     """Verify graph files match their SHA-256 hashes recorded in manifest.json.
+
+    A successful pass stamps ``<graph_dir>/.verified.json`` (keyed to the
+    manifest's own hash), and later calls return immediately while that marker
+    matches — files are also hash-verified once at download time, so the
+    load-time pass is redundant after it has succeeded once. Set
+    ``EMBER_FORCE_VERIFY=1`` to bypass the marker (the ``ember graphs verify``
+    CLI always checks and ignores the marker). The marker is invalidated
+    automatically when the packaged manifest changes (library upgrade).
 
     Args:
         files:     List of (graph_id, Path) pairs to check. If None, every
@@ -233,6 +251,15 @@ def verify_manifest(files: Optional[List[Tuple[int, Path]]] = None,
         RuntimeError:      if any checked file is missing or its hash does not
                            match — indicates a corrupt install.
     """
+    marker = _verified_marker_path(graph_dir)
+    if not os.environ.get("EMBER_FORCE_VERIFY"):
+        try:
+            stamped = json.loads(marker.read_text())
+            if stamped.get("manifest") == _manifest_fingerprint():
+                return  # verified before under this exact manifest — skip
+        except (OSError, ValueError):
+            pass  # no/corrupt marker — verify normally
+
     manifest = _manifest_by_id()
 
     if files is None:
@@ -262,6 +289,15 @@ def verify_manifest(files: Optional[List[Tuple[int, Path]]] = None,
                 f"  actual:   {actual}\n"
                 "The file has been modified. Re-install the package to restore it."
             )
+
+    try:  # stamp: this cache verified under this manifest — skip next time
+        marker.write_text(json.dumps({
+            "manifest": _manifest_fingerprint(),
+            "verified_at": datetime.now().isoformat(timespec="seconds"),
+            "files_checked": len(targets),
+        }))
+    except OSError:
+        pass  # read-only cache dir — verification simply reruns next time
 
 
 # ==============================================================================
