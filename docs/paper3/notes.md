@@ -605,3 +605,31 @@ authored YAML had narrowed. Selection now parses to 4,488 graphs. The §4.11 bar
 applies verbatim to all five families and both baselines.
 
 --- results appended below; nothing above this line is edited after launch ---
+
+SECOND AMENDMENT to §4.11 (pre-launch, 2026-07-27, user directive): M5 is now the
+COMPLETE Ember benchmark — every library graph on every supported architecture at
+the Ember paper's flagship sizes (chimera_16x16x4, pegasus_16, zephyr_12), replacing
+the sampled sweep entirely (m5_noregress.yaml retired unlaunched; generator + six
+batch YAMLs: experiments/gen_m5_full.py -> m5full_{c16,p16,z12}[_layout].yaml).
+- Eligibility: per-topology pigeonhole only (n <= qubit count): 27,628 / 31,140 /
+  30,221 graphs — MORE inclusive than the Ember paper's embeddability sets;
+  "attempted and failed" is data. Oversized graphs are definitionally infeasible
+  and excluded (running them proves nothing and risks unwatchdogged stalls).
+- Arms: main batches {minorminer, p3-template, p3-ate, p3-clmm, p3-mmpolish} on the
+  full eligible sets; minorminer-layout runs the n<=1000 subsets (25,010 graphs per
+  topo — 80% of the library; p-norm layout on multi-thousand-node sources can stall
+  CLI workers, which have no watchdog). p3-race8 excluded: it burns the full 60 s
+  by design on every row (~1,500 core-h alone) and its claims are settled at §4.6/
+  §4.10 on the selection cells.
+- Pairing: (instance, trial) [CLI]; layout rows pair cross-batch against the main
+  batch's minorminer rows at IDENTICAL derived seeds (seed derivation is
+  batch-independent: root:algorithm:graph:topology:trial). Wall-time comparisons
+  remain within-batch only.
+- Volume/cost: ~520k rows (444,945 main + 75,030 layout); estimate 1,000–1,600
+  core-h ≈ 18–29 h at 56 workers, sequential batches per QUEUE.md (order: p16,
+  z12, c16, then the three layout batches).
+- Bar: unchanged (§4.11), applied per (topology, family): no family mean dACL >
+  +0.10 or success drop > 1 pt for any p3 arm vs minorminer, else regime-guard +
+  one re-run. Prediction addition: on C16 (degree-6 fabric) the template regime is
+  expected to shrink (busclique C16 max clique ~64) — p3-ate must degrade to MM
+  gracefully there; that graceful degradation IS the C16 claim.
