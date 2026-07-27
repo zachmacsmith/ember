@@ -1,0 +1,74 @@
+====================================================================================================
+p3_rank_stability summary -- 8 polish quanta; gate quantum q4 (proposals/portfolio.md)
+trajectories: 144 complete, 0 legalize failures, 0 partial
+====================================================================================================
+
+warm-start check: 124/144 trajectories with raw q1 ACL <= legal ACL; WORST VIOLATION +3.030 at (100, 0.5, 101, 5)
+  raw upticks along trajectories: 233/1152 consecutive steps increase (max +3.030)
+  WARNING: q1 > legal on some trajectories -- inspect the warm restart before trusting the probe
+
+== P3 gate: Spearman rho(acl_best@q, acl_best@q8) across algo seeds ==
+instance                ok     q1    q2    q3    q4    q5    q6    q7   | rho(q4, spur)
+n=100 p=0.1  i=101   16   +0.27 +0.75 +0.89 +0.94 +0.95 +0.97 +1.00  |  +0.95
+n=100 p=0.1  i=102   16   +0.38 +0.70 +0.59 +0.53 +0.67 +0.70 +0.76  |  +0.52
+n=100 p=0.1  i=103   16   -0.35 -0.08 +0.55 +0.78 +0.84 +0.86 +0.87  |  +0.80
+n=100 p=0.5  i=101   16   +0.82 +0.87 +0.90 +0.91 +0.92 +0.92 +0.96  |  +0.86
+n=100 p=0.5  i=102   16   +0.85 +0.91 +0.96 +0.96 +0.96 +0.98 +0.98  |  +0.81
+n=100 p=0.5  i=103   16   +0.81 +0.87 +0.88 +0.91 +0.95 +0.95 +0.94  |  +0.75
+n=140 p=0.2  i=101   16   +0.89 +0.90 +0.87 +0.89 +0.91 +0.96 +0.98  |  +0.88
+n=140 p=0.2  i=102   16   +0.68 +0.74 +0.80 +0.78 +0.67 +0.86 +0.84  |  +0.74
+n=140 p=0.2  i=103   16   +0.73 +0.75 +0.83 +0.84 +0.86 +0.89 +0.96  |  +0.84
+pooled (instance-centered, N=144)   +0.72 +0.78 +0.83 +0.88 +0.90 +0.94 +0.97
+pooled vs spur ACL   (N=144)    +0.68 +0.75 +0.80 +0.84 +0.85 +0.89 +0.93
+
+GATE (portfolio.md: rho >= 0.5 at the halfway quantum q4; rho < 0.5 -> no racer):
+  per-instance rho@q4: median +0.885; 9/9 instances >= 0.5
+  pooled (instance-centered) rho@q4 = +0.876 (p=1e-46, N=144) -> PASS
+
+== P4 patience curve: mean ACL vs cumulative time (complete trajectories) ==
+-- n=100 p=0.1  (48 trajectories)
+   stage      mean_t_cum   mean_acl   mean_acl_best
+   q0legal         0.9s      8.748      8.748
+   q1              8.0s      5.565      5.565
+   q2             15.1s      5.345      5.345
+   q3             22.2s      5.279      5.266
+   q4             29.3s      5.223      5.215
+   q5             36.4s      5.209      5.190
+   q6             43.4s      5.192      5.170
+   q7             50.5s      5.181      5.158
+   q8             57.6s      5.163      5.137
+   spur           57.6s      5.035      5.035
+-- n=100 p=0.5  (48 trajectories)
+   stage      mean_t_cum   mean_acl   mean_acl_best
+   q0legal         3.2s     16.832     16.832
+   q1             10.9s     16.434     16.031
+   q2             18.6s     16.006     15.605
+   q3             26.4s     15.813     15.308
+   q4             34.0s     15.487     14.993
+   q5             41.6s     15.337     14.773
+   q6             49.3s     15.167     14.632
+   q7             57.0s     14.989     14.468
+   q8             64.8s     14.761     14.308
+   spur           65.0s     12.928     12.928
+-- n=140 p=0.2  (48 trajectories)
+   stage      mean_t_cum   mean_acl   mean_acl_best
+   q0legal         3.8s     24.307     24.307
+   q1             11.4s     21.281     21.281
+   q2             19.1s     20.272     20.260
+   q3             26.7s     19.779     19.744
+   q4             34.5s     19.225     19.153
+   q5             42.2s     19.032     18.885
+   q6             49.9s     18.614     18.511
+   q7             57.5s     18.407     18.291
+   q8             65.2s     18.152     18.049
+   spur           65.7s     16.571     16.571
+
+== P4 diminishing returns: mean share of total acl_best improvement per quantum ==
+-- n=100 p=0.1: q1 87.9%  q2  6.2%  q3  2.3%  q4  1.4%  q5  0.7%  q6  0.5%  q7  0.3%  q8  0.6%
+     cumulative:  87.9%   94.2%   96.5%   97.9%   98.6%   99.1%   99.4%  100.0%   (mean total drop 3.611 ACL; 0 zero-improvement trajs)
+-- n=100 p=0.5: q1 34.6%  q2 16.9%  q3 11.7%  q4 10.0%  q5  6.9%  q6  3.2%  q7  5.3%  q8 11.4%
+     cumulative:  34.6%   51.4%   63.1%   73.1%   80.1%   83.3%   88.6%  100.0%   (mean total drop 3.188 ACL; 10 zero-improvement trajs)
+-- n=140 p=0.2: q1 46.7%  q2 17.1%  q3  8.8%  q4  9.4%  q5  4.2%  q6  6.5%  q7  3.3%  q8  4.1%
+     cumulative:  46.7%   63.8%   72.6%   81.9%   86.2%   92.6%   95.9%  100.0%   (mean total drop 6.258 ACL; 0 zero-improvement trajs)
+
+rows: 1440   csv: /Users/dabh/ember/docs/paper3/data/p3_rank_stability.csv

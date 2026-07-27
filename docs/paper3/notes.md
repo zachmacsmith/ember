@@ -143,3 +143,26 @@ Bars / decision tree:
   time-matched Pareto.
 
 --- results appended below; nothing above this line is edited after launch ---
+
+RESULTS (2026-07-26, 144/144 trajectories complete, 0 legalize failures):
+
+- **GATE PASS.** Spearman ρ(acl_best@q4, acl_best@q8) per instance: median **+0.885**,
+  9/9 instances ≥ 0.5 (range +0.53..+0.96); pooled instance-centered ρ@q4 = **+0.876**
+  (p ≈ 1e-46, N=144). Even q1 pools at +0.72. Correlation to the terminal-spur column
+  ρ(q4, spur) = +0.52..+0.95 per instance. **The racer is unlocked** — selection on
+  early-POLISH ACL works precisely where legal-stage selection was dead (§3.16
+  r ≈ −0.01): the basin's quality becomes visible after one quantum of grind.
+- **P4 patience readout:** improvement share by quantum is regime-split — sparse
+  n=100 p=0.1: q1 = 87.9% of the total drop (cumulative 96.5% by q3); dense n=100
+  p=0.5: q1 = 34.6% and q8 still adds 11.4% (not converged at 64 s); n=140 p=0.2
+  in between (q1 46.7%). Stock MM's uniform patience misallocates: sparse should
+  stop early, dense should grind longer. Terminal spur is worth another −0.13
+  (sparse) to −1.8 (dense) ACL on top of q8 — large on dense, reinforcing rule 3.
+- Caveat: 20/144 trajectories show raw q1 > legal ACL (worst +3.03) — raw
+  per-quantum ACL is not monotone under warm restart (MM's passes wander before
+  improving; acl_best is monotone by construction and is what the gate uses).
+  Warm-start integrity itself is confirmed (q1 chain-overlap Jaccard 0.14–0.95 vs
+  ~0.001 for a re-init; smoke had 3/3 q1 ≤ legal).
+- Data: p3_rank_stability.csv (1,440 rows), summary in p3_rank_stability_summary.txt.
+  Decision per pre-registration: build the P3 racer (late-M2), baseline
+  best-of-K-parallel stock MM per protocol rule 2.

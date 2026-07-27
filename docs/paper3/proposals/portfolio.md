@@ -1,6 +1,8 @@
 # P3 — Portfolio/racer under the strict fairness frame (`p3-race-*`)
 
-DEMOTED pending its gate. Framing fixed by the user 2026-07-26: **"same wall-clock
+GATE PASSED 2026-07-26 (notes §4.2: median per-instance ρ@q4 = +0.885, 9/9 ≥ 0.5,
+pooled +0.876) — the racer build is unlocked; the strict fairness frame below is
+unchanged and binding. Framing fixed by the user 2026-07-26: **"same wall-clock
 budget, same cores, two strategies race."** The baseline for ANY multi-run scheme is
 best-of-K-parallel stock MM — MM given the identical multi-run privilege — never
 single-shot MM. If the residual over that baseline is ~0, that is reported and P3 ships
