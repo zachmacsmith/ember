@@ -117,3 +117,29 @@ Bars / decision tree:
   (its kill gate has a second chance at M3 with core-seeding variants).
 
 --- results appended below; nothing above this line is edited after launch ---
+
+### 4.2 Rank-stability probe — the P3 gate + P4 patience curve (2026-07-26)
+
+PRE-REGISTERED 2026-07-26
+
+Question: does ACL early in MM's polish predict final ACL across seeds of the same
+instance? §3.16 killed selection on LEGAL-stage ACL (r ≈ −0.01); this asks whether
+selection on EARLY-POLISH ACL works instead — the gate for P3's successive-halving
+racer. The same trajectories give P4's patience/diminishing-returns curve.
+
+Script: docs/paper3/data/p3_rank_stability.py @ bf1a9713. Host: local mac, 8 workers
+(gate is a within-run correlation; absolute seconds are mac-specific and feed no
+cross-arm table — P4's Pareto re-measures on hyde06).
+
+Cells/seeds/budget: ER (n,p) ∈ {(100,0.1), (140,0.2), (100,0.5)} × instance seeds
+{101,102,103} × 16 algo seeds; per (instance,seed): legalize (patience=0, ≤8 s) then
+8 warm-restart polish quanta × 7 s; terminal spur row extra.
+
+Bars / decision tree:
+- **P3 gate: median per-instance Spearman ρ(acl_best@q4, acl_best@q8) ≥ 0.5 → the
+  racer proceeds (build late in M2). ρ < 0.5 → no racer**; portfolio.md demoted to
+  plain heterogeneous measurement at M3 (pre-declared).
+- P4: no bar — the per-quantum improvement shares are design input for short_audit's
+  time-matched Pareto.
+
+--- results appended below; nothing above this line is edited after launch ---
