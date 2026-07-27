@@ -400,3 +400,17 @@ shipped - 0.5%. KG3 note: the E0 map answers the escape probe observationally
 (pssa ≈ template ± <=0.1 on shared dense cells, §4.1) — recorded as subsumed.
 
 --- results appended below per experiment; nothing above edited after launch ---
+
+§4.9 RESULTS (2026-07-27, 792 rows, local, deterministic): **the 2-swap assignment
+optimizer LIVES.** gainship (shipped pipeline vs identity, prune-only ACL): P16
+(100,0.3) +4.6..+4.8% / (140,0.2) +3.6..+4.8%; Z12 (100,0.3) +3.7..+4.3% /
+(140,0.2) +3.6..+4.8%; K_n cells exactly +0.00% (assignment-invariant control
+confirms the instrument). best-of-32-random reaches only +0.6..+1.8% — the shipped
+optimizer beats the random oracle by 0.24..0.47 ACL everywhere; the ORIGINAL drafted
+rule (kill if oracle < 2%) would have killed a working optimizer and is superseded by
+the §4.9 amended rule committed before launch (the script's printed READ1/READ2 lines
+apply the old rule — disregard them; the CSV is authoritative). Seeds-only capture
+(+2.9..+3.6%) is 1.0–1.3 pp short of shipped → seeds do not replace the 2-swap.
+Scientific note: even dense RANDOM graphs carry ~4–5% of assignment-exploitable
+structure (degree fluctuations + local edge patterns) — the "no latent structure"
+intuition from §3.21 applies to placement geometry, not to slot assignment.

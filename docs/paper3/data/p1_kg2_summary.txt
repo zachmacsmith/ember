@@ -1,0 +1,53 @@
+====================================================================================================
+P1 KG2 assignment honesty gate — column: acl_spur (prune-only template evaluation; see docstring).
+READ1: median best-of-random gain over identity < 2% -> 2-swap DIES (seeds-only). READ2: seeds capture
+>= 80% of the identity->best-of-random spread -> keep seeds-only. Deterministic; no MM anywhere.
+====================================================================================================
+
+-- P16  n=140  p=1  [K_n: assignment-invariant control]
+   i101: id  13.171  cu  13.171  sp  13.171  ship  13.171  rand[min/med/max]  13.171/ 13.171/ 13.171  gain32 +0.00%  gainship +0.00%  capture  1.00
+   CELL medians: gain32 +0.00%  gainseed +0.00%  gainship +0.00%  capture  1.00  shipped-minus-best32  +0.000
+   READ1 (oracle gain < 2%): FIRES — 2-swap dies (seeds-only)   READ2 (seeds capture >= 80%): FIRES — seeds-only
+
+-- P16  n=100  p=0.3
+   i101: id   9.520  cu   9.440  sp   9.350  ship   9.070  rand[min/med/max]   9.400/  9.510/  9.580  gain32 +1.26%  gainship +4.73%  capture  1.42
+   i102: id   9.500  cu   9.440  sp   9.430  ship   9.120  rand[min/med/max]   9.370/  9.490/  9.580  gain32 +1.37%  gainship +4.00%  capture  0.54
+   i103: id   9.420  cu   9.460  sp   9.460  ship   9.120  rand[min/med/max]   9.410/  9.515/  9.610  gain32 +0.11%  gainship +3.18%  capture  0.00
+   i104: id   9.520  cu   9.400  sp   9.400  ship   9.050  rand[min/med/max]   9.400/  9.510/  9.620  gain32 +1.26%  gainship +4.94%  capture  1.00
+   i105: id   9.440  cu   9.550  sp   9.370  ship   9.150  rand[min/med/max]   9.430/  9.505/  9.580  gain32 +0.11%  gainship +3.07%  capture  7.00
+   CELL medians: gain32 +1.26%  gainseed +0.74%  gainship +4.00%  capture  1.00  shipped-minus-best32  -0.290
+   READ1 (oracle gain < 2%): FIRES — 2-swap dies (seeds-only)   READ2 (seeds capture >= 80%): FIRES — seeds-only
+
+-- P16  n=140  p=0.2
+   i101: id  12.593  cu  12.086  sp  12.064  ship  11.886  rand[min/med/max]  12.414/ 12.525/ 12.671  gain32 +1.42%  gainship +5.62%  capture  2.96
+   i102: id  12.443  cu  12.000  sp  12.193  ship  11.821  rand[min/med/max]  12.379/ 12.518/ 12.643  gain32 +0.52%  gainship +4.99%  capture  6.89
+   i103: id  12.543  cu  12.157  sp  12.393  ship  11.964  rand[min/med/max]  12.350/ 12.514/ 12.614  gain32 +1.54%  gainship +4.61%  capture  2.00
+   i104: id  12.529  cu  12.221  sp  12.200  ship  11.964  rand[min/med/max]  12.400/ 12.539/ 12.657  gain32 +1.03%  gainship +4.50%  capture  2.56
+   i105: id  12.450  cu  11.979  sp  12.379  ship  11.850  rand[min/med/max]  12.321/ 12.493/ 12.600  gain32 +1.03%  gainship +4.82%  capture  3.67
+   CELL medians: gain32 +1.03%  gainseed +3.56%  gainship +4.82%  capture  2.96  shipped-minus-best32  -0.471
+   READ1 (oracle gain < 2%): FIRES — 2-swap dies (seeds-only)   READ2 (seeds capture >= 80%): FIRES — seeds-only
+
+-- Z12  n=140  p=1  [K_n: assignment-invariant control]
+   i101: id  10.471  cu  10.471  sp  10.471  ship  10.471  rand[min/med/max]  10.471/ 10.471/ 10.471  gain32 +0.00%  gainship +0.00%  capture  1.00
+   CELL medians: gain32 +0.00%  gainseed +0.00%  gainship +0.00%  capture  1.00  shipped-minus-best32  +0.000
+   READ1 (oracle gain < 2%): FIRES — 2-swap dies (seeds-only)   READ2 (seeds capture >= 80%): FIRES — seeds-only
+
+-- Z12  n=100  p=0.3
+   i101: id   7.720  cu   7.500  sp   7.540  ship   7.400  rand[min/med/max]   7.640/  7.720/  7.810  gain32 +1.04%  gainship +4.15%  capture  2.75
+   i102: id   7.740  cu   7.500  sp   7.670  ship   7.410  rand[min/med/max]   7.610/  7.730/  7.810  gain32 +1.68%  gainship +4.26%  capture  1.85
+   i103: id   7.660  cu   7.620  sp   7.620  ship   7.380  rand[min/med/max]   7.660/  7.730/  7.830  gain32 +0.00%  gainship +3.66%  capture  1.00
+   i104: id   7.760  cu   7.500  sp   7.530  ship   7.440  rand[min/med/max]   7.640/  7.735/  7.810  gain32 +1.55%  gainship +4.12%  capture  2.17
+   i105: id   7.700  cu   7.600  sp   7.630  ship   7.390  rand[min/med/max]   7.650/  7.745/  7.810  gain32 +0.65%  gainship +4.03%  capture  2.00
+   CELL medians: gain32 +1.04%  gainseed +2.85%  gainship +4.12%  capture  2.00  shipped-minus-best32  -0.240
+   READ1 (oracle gain < 2%): FIRES — 2-swap dies (seeds-only)   READ2 (seeds capture >= 80%): FIRES — seeds-only
+
+-- Z12  n=140  p=0.2
+   i101: id  10.100  cu   9.679  sp   9.750  ship   9.614  rand[min/med/max]   9.943/ 10.018/ 10.164  gain32 +1.56%  gainship +4.81%  capture  2.68
+   i102: id   9.986  cu   9.679  sp   9.714  ship   9.514  rand[min/med/max]   9.929/ 10.057/ 10.143  gain32 +0.57%  gainship +4.72%  capture  5.38
+   i103: id  10.036  cu   9.729  sp   9.857  ship   9.657  rand[min/med/max]   9.857/ 10.046/ 10.121  gain32 +1.78%  gainship +3.77%  capture  1.72
+   i104: id  10.029  cu   9.764  sp   9.857  ship   9.671  rand[min/med/max]   9.950/ 10.046/ 10.150  gain32 +0.78%  gainship +3.56%  capture  3.36
+   i105: id  10.021  cu   9.650  sp   9.857  ship   9.607  rand[min/med/max]   9.921/ 10.004/ 10.121  gain32 +1.00%  gainship +4.13%  capture  3.71
+   CELL medians: gain32 +1.00%  gainseed +3.08%  gainship +4.13%  capture  3.36  shipped-minus-best32  -0.314
+   READ1 (oracle gain < 2%): FIRES — 2-swap dies (seeds-only)   READ2 (seeds capture >= 80%): FIRES — seeds-only
+
+rows: 792   csv: /Users/dabh/ember/docs/paper3/data/p1_kg2.csv
