@@ -51,6 +51,14 @@ def _resolved_yaml_name(yaml_path: Optional[Path]) -> str:
 
 def _build_resolved_params(args: argparse.Namespace, yaml_params: dict) -> dict:
     p = dict(yaml_params)
+    # The documented YAML keys (workers/trials/warmup — docs/experiment-yaml.md)
+    # differ from the internal param names; without this translation they were
+    # silently ignored and fell through to config defaults (workers -> 1).
+    for yaml_key, param_key in (("workers", "n_workers"),
+                                ("trials", "n_trials"),
+                                ("warmup", "warmup_trials")):
+        if yaml_key in p and param_key not in p:
+            p[param_key] = p.pop(yaml_key)
     cli_overrides = {
         "algorithms":     args.algorithms,
         "graphs":         args.graphs,
