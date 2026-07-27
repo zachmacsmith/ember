@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
-# Build the Ember search-guidance fork of minorminer: stock 0.2.22 + a var_order=
-# parameter that injects a custom vertex order into the FULL find_embedding search.
+# Build the Ember fork of minorminer: stock 0.2.22 + parity-guarded switches
+# (var_order=, history_alpha=, and the paper3 P4/P6 set: short_audit=,
+# audit_budget=, dirty_skip=, chain_tree=, root_boltzmann=), each byte-identical
+# to stock at its default.
 #
-# Idempotent: clones the pinned tag if absent, applies scripts/mm_fork.patch (the
-# ~90-line C++/Cython diff) if not already applied, then builds ONLY the
+# Idempotent: clones the pinned tag if absent, applies scripts/mm_fork.patch
+# (the C++/Cython diff) if not already applied, then builds ONLY the
 # _minorminer extension in place. Produces
 #   external/minorminer-fork/minorminer/_minorminer*.so
 # which ember_qc/algorithms/minorminer_forked.py loads standalone (it coexists in
@@ -53,7 +55,7 @@ if [ -z "$SO" ]; then
   exit 1
 fi
 echo ">> built: $SO"
-echo ">> parity + var_order self-test ..."
+echo ">> parity + switch self-test ..."
 "$PY" - "$FORK/minorminer" <<'PYEOF'
 import sys, networkx as nx, dwave_networkx as dnx
 sys.path.insert(0, sys.argv[1])
@@ -66,14 +68,20 @@ acl = lambda e: sum(len(c) for c in e.values())/len(e)
 a = [acl(s.find_embedding(S, T, random_seed=k)) for k in range(8)]
 b = [acl(f.find_embedding(S, T, random_seed=k, **DEF)) for k in range(8)]
 assert a == b, f"PARITY FAILED: {a} != {b}"
-c = [acl(f.find_embedding(S, T, random_seed=k, history_alpha=0.0, **DEF)) for k in range(8)]
-assert a == c, f"PARITY FAILED at history_alpha=0: {a} != {c}"
+# every fork switch, explicitly at its default, must stay byte-inert
+OFF = dict(history_alpha=0.0, short_audit=0, audit_budget=3, dirty_skip=0,
+           chain_tree=0, root_boltzmann=0.0)
+c = [acl(f.find_embedding(S, T, random_seed=k, **OFF, **DEF)) for k in range(8)]
+assert a == c, f"PARITY FAILED with all switches at defaults: {a} != {c}"
 order = sorted(src.nodes(), key=lambda v: -src.degree(v))
-e = f.find_embedding(S, T, random_seed=0, var_order=order, **DEF)
-assert len(e) == src.number_of_nodes(), "var_order run did not embed all nodes"
-e = f.find_embedding(S, T, random_seed=0, history_alpha=1.0, **DEF)
-assert len(e) == src.number_of_nodes(), "history_alpha run did not embed all nodes"
-print("   parity OK (fork==stock with var_order unset AND with history_alpha=0);")
-print("   var_order and history_alpha accepted and valid")
+ON = [dict(var_order=order), dict(history_alpha=1.0), dict(short_audit=1),
+      dict(short_audit=2, audit_budget=3), dict(dirty_skip=1),
+      dict(chain_tree=1), dict(chain_tree=2), dict(root_boltzmann=2.0)]
+for kw in ON:
+    e = f.find_embedding(S, T, random_seed=0, **kw, **DEF)
+    assert len(e) == src.number_of_nodes(), f"engaged run {kw} did not embed all nodes"
+print("   parity OK (fork==stock with every switch unset AND at explicit defaults);")
+print("   var_order/history_alpha/short_audit/audit_budget/dirty_skip/chain_tree/")
+print("   root_boltzmann accepted and valid when engaged")
 PYEOF
 echo ">> done."
