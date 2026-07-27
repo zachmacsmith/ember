@@ -67,3 +67,11 @@ max_beta).
 - 4.0.4 Salvaged from `new-algorithm`: `ember_qc/anneal.py` (SVMC + random Ising),
   solution-quality pipeline scripts (parked in `data/solution_quality/`), the
   ceiling-probe pattern (reimplemented as `e0_ceiling.py`).
+- 4.0.5 hyde06 bring-up complete (2026-07-26): /data has 15 TB free; repo rsync'd
+  (tracked files only — deploys are always of committed state); uv CPython 3.10.x venv;
+  pins verified identical to local (networkx 3.4.2 / numpy 2.2.6 / scipy 1.15.3 /
+  minorminer 0.2.22 / dwave-networkx 0.8.19); fork built, **parity OK**; instance-hash
+  cross-check mac↔hyde06: `6bdf7fd108125ea3` == match; 210 MM-family contract tests
+  pass. busgraph_cache warmed under /data/dabh/xdg: **P16 max clique = 180 (as
+  expected), Z12 max clique = 184** — Zephyr's clique capacity exceeds Pegasus's despite
+  fewer qubits (degree 20); cache builds were seconds, not minutes, on this host.
