@@ -711,3 +711,16 @@ this entry — m4_analysis's fixed arm list omits the supplement, computed direc
   defers to stock MM, which ≈ layout there). The "beats the practitioner default"
   quote is licensed cell-by-cell.
 - M4 is now fully closed (main + race + supplement).
+
+7. **(2026-07-28) Harness bug found during M5 bring-up — YAML worker counts were
+   silently ignored.** `_build_resolved_params` copied YAML keys verbatim but the
+   runner reads internal names: documented `workers:` never mapped to `n_workers`
+   (fell through to default 1); `trials`/`warmup` had the same mismatch, masked by
+   coinciding defaults. Every YAML-driven `ember run` in this repo's history was
+   single-worker (the paper2 23k sweep used the `--workers` CLI flag, which always
+   worked). Fixed at 48aab69b with alias translation + unit check; upstream Ember
+   should inherit the fix. Also at M5 bring-up: eager full-selection loading
+   (serial hours + 27 GB parent + per-task target pickling) replaced by lazy
+   worker-side materialization at 1e754132 (A/B verified: identical (seed, ACL)
+   rows vs the eager path; zero test regressions). Neither change affects any
+   §4.1-§4.10 result (all script-route or CLI-flag runs).
