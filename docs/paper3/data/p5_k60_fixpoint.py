@@ -33,7 +33,9 @@ def main() -> None:
     acl0 = q0 / N
     print(f"start: qubits={q0} ACL={acl0:.4f} (expect 404 / 6.7333)", flush=True)
 
-    polished = anytime_polish(emb, source, target, deadline=DEADLINE_S)
+    polished = anytime_polish(
+        emb, source, target, deadline=time.perf_counter() + DEADLINE_S
+    )
     q1 = sum(len(c) for c in polished.values())
     acl1 = q1 / N
     ok = is_valid_embedding(polished, source, target)
