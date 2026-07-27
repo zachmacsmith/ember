@@ -166,3 +166,43 @@ RESULTS (2026-07-26, 144/144 trajectories complete, 0 legalize failures):
 - Data: p3_rank_stability.csv (1,440 rows), summary in p3_rank_stability_summary.txt.
   Decision per pre-registration: build the P3 racer (late-M2), baseline
   best-of-K-parallel stock MM per protocol rule 2.
+
+### 4.3 P5b-dense: the K60 pair-move probe — the ceiling is not tight (2026-07-27)
+
+Pre-registration and full results live in `proposals/polish.md` (kept there during the
+parallel worktree wave; this entry is the lab-record pointer). Script
+p5_k60_pairmoves.py @ 2e06a7f6, run @ 4e748890, deterministic, local mac, 27.6 min.
+
+**Verdict: the pre-registered negative is FALSIFIED.** On the exact §3.26 instrument
+(busclique K60 + spur-prune, 404 qubits, ACL 6.7333): x1 exact single-vertex repair
+improves 2/60 vertices (proven); x2 joint pair repair improves **103 of the first 400
+pairs** (94×−1 qubit, 9×−2; 71 proven pair-optimal), and **58 pairs improve where BOTH
+endpoints are proven single-move stuck** (radius up to 4) — the partner chain relocates
+laterally at unchanged length to free the needed qubit. Genuine joint-move blindness,
+exhibited with validity certificates. Caveats: 62% of x2 searches unproven under the
+5 s cap (weakens only negatives); sweep truncated at 400/1770 by the pre-registered
+rule (only ADDS unfound moves). Premise correction: spur-prune is NOT a no-op on K_n
+(busclique leaves coverage-redundant qubits: 4 at K60/P16); §3.26 anchors unaffected.
+
+Two-sided reading (recorded verbatim in polish.md): (a) the constructive ceiling is
+not tight — an exact-repair polish stacked on the template lowers it further,
+strengthening P1; (b) none of this rescues MM: its move set still cannot find these
+moves (§3.26) — the missing move class is now exhibited, not inferred.
+
+### 4.4 K60 exact-move fixpoint — how far does the ceiling move? (2026-07-27)
+
+PRE-REGISTERED 2026-07-27
+
+Question: the sequential achievable gain on the K60 template under anytime_polish
+(spur/shorten/x1/x2, longest-first, deterministic) — the ceiling-shift number §4.3
+could not provide (moves measured from the same base are not additive).
+
+Script: docs/paper3/data/p5_k60_fixpoint.py @ <sha of this commit>. Local mac,
+deterministic, 30-min deadline, no wall-clock claims (measurement, not a race).
+
+Bars: none (measurement). Decision: the fixpoint ACL becomes the template+polish
+reference line for P1's M3 bars and the paper's ceiling discussion; if the gain is
+≥ ~0.1 ACL, `p3-template` grows an optional exact-polish stage (flag, default TBD at
+M3) — evaluated under the same 60 s budget discipline as everything else.
+
+--- results appended below; nothing above this line is edited after launch ---
