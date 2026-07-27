@@ -1,0 +1,72 @@
+====================================================================================================
+P6 fork-anatomy probes — column: acl_spur (rule 3); dACL vs stock on both-succeed (inst_seed, algo_seed) pairs;
+success rates separate/unpaired (rule 4). Report-only anatomy: any arm beating stock by median < -1% escalates
+to a 15-seed confirm before a paper claim (anatomy.md decision tree).
+====================================================================================================
+
+-- ER(60, p=0.1695)  [avg deg 10.0]   stock: success 25/25  acl_spur med   3.850
+  [tree ] tree-union success 25/25  wall med    1.3s   pairs 25  med d  +0.067 ( +1.73%)  W/L/T 9/14/2
+  [tree ] tree-sph   success 25/25  wall med    0.9s   pairs 25  med d  +0.150 ( +3.90%)  W/L/T 8/17/0
+  [root ] boltz-0.5  success 25/25  wall med    1.1s   pairs 25  med d  +0.033 ( +0.86%)  W/L/T 10/15/0
+  [root ] boltz-2.0  success 25/25  wall med    1.2s   pairs 25  med d  +0.000 ( +0.00%)  W/L/T 12/11/2
+  [root ] boltz-8.0  success 25/25  wall med    1.5s   pairs 25  med d  +0.167 ( +4.33%)  W/L/T 7/17/1
+  [beta ] beta-2.0   success 4/25  wall med   60.0s   pairs  4  med d  -0.058 ( -1.56%)  W/L/T 3/1/0   [SURPRISE: beats stock — 15-seed confirm]
+  [beta ] beta-16.0  success 25/25  wall med    1.5s   pairs 25  med d  +0.000 ( +0.00%)  W/L/T 1/0/24
+  [beta ] beta-dhat  success 25/25  wall med    2.0s  dhat=['3.0', '4.0']   pairs 25  med d  -0.033 ( -0.86%)  W/L/T 14/11/0
+
+-- ER(100, p=0.101)  [avg deg 10.0]   stock: success 25/25  acl_spur med   5.730
+  [tree ] tree-union success 25/25  wall med    4.4s   pairs 25  med d  -0.010 ( -0.17%)  W/L/T 14/11/0
+  [tree ] tree-sph   success 25/25  wall med    3.0s   pairs 25  med d  -0.090 ( -1.57%)  W/L/T 14/11/0   [SURPRISE: beats stock — 15-seed confirm]
+  [root ] boltz-0.5  success 25/25  wall med    4.0s   pairs 25  med d  +0.010 ( +0.17%)  W/L/T 11/13/1
+  [root ] boltz-2.0  success 25/25  wall med    3.8s   pairs 25  med d  -0.110 ( -1.92%)  W/L/T 15/10/0   [SURPRISE: beats stock — 15-seed confirm]
+  [root ] boltz-8.0  success 25/25  wall med    5.3s   pairs 25  med d  -0.080 ( -1.40%)  W/L/T 14/11/0   [SURPRISE: beats stock — 15-seed confirm]
+  [beta ] beta-2.0   success 0/25  wall med   60.5s   [no both-succeed pairs]
+  [beta ] beta-16.0  success 25/25  wall med    4.5s   pairs 25  med d  +0.000 ( +0.00%)  W/L/T 6/1/18
+  [beta ] beta-dhat  success 25/25  wall med    5.7s  dhat=['4.0', '5.0']   pairs 25  med d  -0.170 ( -2.97%)  W/L/T 16/9/0   [SURPRISE: beats stock — 15-seed confirm]
+
+-- ER(100, p=0.3)  [avg deg 29.7]   stock: success 25/25  acl_spur med  10.930
+  [tree ] tree-union success 25/25  wall med   26.7s   pairs 25  med d  +0.560 ( +5.12%)  W/L/T 3/22/0
+  [tree ] tree-sph   success 25/25  wall med   28.4s   pairs 25  med d  +0.150 ( +1.37%)  W/L/T 9/16/0
+  [root ] boltz-0.5  success 25/25  wall med   25.0s   pairs 25  med d  +0.010 ( +0.09%)  W/L/T 11/14/0
+  [root ] boltz-2.0  success 25/25  wall med   22.8s   pairs 25  med d  +0.100 ( +0.91%)  W/L/T 12/13/0
+  [root ] boltz-8.0  success 25/25  wall med   31.7s   pairs 25  med d  +0.030 ( +0.27%)  W/L/T 11/13/1
+  [beta ] beta-2.0   success 0/25  wall med   61.3s   [no both-succeed pairs]
+  [beta ] beta-16.0  success 25/25  wall med   23.8s   pairs 25  med d  +0.000 ( +0.00%)  W/L/T 6/7/12
+  [beta ] beta-dhat  success 1/25  wall med   61.1s  dhat=['2.0', '3.0']   pairs  1  med d  +0.480 ( +4.50%)  W/L/T 0/1/0
+
+-- ER(140, p=0.07194)  [avg deg 10.0]   stock: success 25/25  acl_spur med   7.357
+  [tree ] tree-union success 25/25  wall med    8.9s   pairs 25  med d  +0.214 ( +2.91%)  W/L/T 7/18/0
+  [tree ] tree-sph   success 25/25  wall med    5.7s   pairs 25  med d  +0.207 ( +2.82%)  W/L/T 10/15/0
+  [root ] boltz-0.5  success 25/25  wall med    7.1s   pairs 25  med d  +0.207 ( +2.81%)  W/L/T 9/16/0
+  [root ] boltz-2.0  success 25/25  wall med    7.4s   pairs 25  med d  +0.164 ( +2.23%)  W/L/T 7/18/0
+  [root ] boltz-8.0  success 25/25  wall med    7.3s   pairs 25  med d  +0.300 ( +4.08%)  W/L/T 6/19/0
+  [beta ] beta-2.0   success 0/25  wall med   60.7s   [no both-succeed pairs]
+  [beta ] beta-16.0  success 25/25  wall med    8.3s   pairs 25  med d  +0.000 ( +0.00%)  W/L/T 10/10/5
+  [beta ] beta-dhat  success 25/25  wall med   13.7s  dhat=['4.0']   pairs 25  med d  -0.164 ( -2.23%)  W/L/T 18/7/0   [SURPRISE: beats stock — 15-seed confirm]
+
+-- ER(140, p=0.2)  [avg deg 27.8]   stock: success 25/25  acl_spur med  14.643
+  [beta ] beta-2.0   success 0/25  wall med   61.8s   [no both-succeed pairs]
+  [beta ] beta-16.0  success 25/25  wall med   40.0s   pairs 25  med d  +0.021 ( +0.15%)  W/L/T 12/13/0
+  [beta ] beta-dhat  success 0/25  wall med   61.6s  dhat=['3.0']   [no both-succeed pairs]
+
+-- ER(140, p=0.3)  [avg deg 41.7]   stock: success 25/25  acl_spur med  16.436
+  [tree ] tree-union success 25/25  wall med   51.4s   pairs 25  med d  +1.229 ( +7.47%)  W/L/T 3/22/0
+  [tree ] tree-sph   success 25/25  wall med   60.2s   pairs 25  med d  +2.579 (+15.69%)  W/L/T 0/25/0
+  [root ] boltz-0.5  success 25/25  wall med   60.5s   pairs 25  med d  -0.121 ( -0.74%)  W/L/T 14/11/0
+  [root ] boltz-2.0  success 25/25  wall med   60.3s   pairs 25  med d  +0.057 ( +0.35%)  W/L/T 12/13/0
+  [root ] boltz-8.0  success 25/25  wall med   60.5s   pairs 25  med d  +0.693 ( +4.22%)  W/L/T 5/20/0
+  [beta ] beta-2.0   success 0/25  wall med   62.7s   [no both-succeed pairs]
+  [beta ] beta-16.0  success 25/25  wall med   57.5s   pairs 25  med d  -0.093 ( -0.56%)  W/L/T 13/11/1
+  [beta ] beta-dhat  success 0/25  wall med   62.6s  dhat=['2.0']   [no both-succeed pairs]
+
+-- ER(180, p=0.05587)  [avg deg 10.0]   stock: success 25/25  acl_spur med   9.122
+  [tree ] tree-union success 25/25  wall med   12.3s   pairs 25  med d  +0.722 ( +7.92%)  W/L/T 7/18/0
+  [tree ] tree-sph   success 25/25  wall med    9.6s   pairs 25  med d  +0.261 ( +2.86%)  W/L/T 11/14/0
+  [root ] boltz-0.5  success 25/25  wall med   11.9s   pairs 25  med d  +0.267 ( +2.92%)  W/L/T 7/18/0
+  [root ] boltz-2.0  success 25/25  wall med   13.5s   pairs 25  med d  +0.133 ( +1.46%)  W/L/T 8/17/0
+  [root ] boltz-8.0  success 25/25  wall med   13.2s   pairs 25  med d  +0.144 ( +1.58%)  W/L/T 11/14/0
+  [beta ] beta-2.0   success 0/25  wall med   60.8s   [no both-succeed pairs]
+  [beta ] beta-16.0  success 25/25  wall med   15.8s   pairs 25  med d  -0.139 ( -1.52%)  W/L/T 14/11/0   [SURPRISE: beats stock — 15-seed confirm]
+  [beta ] beta-dhat  success 21/25  wall med   33.1s  dhat=['4.0', '5.0']   pairs 21  med d  -0.433 ( -4.79%)  W/L/T 16/5/0   [SURPRISE: beats stock — 15-seed confirm]
+
+rows: 1450   csv: /data/dabh/ember/docs/paper3/data/p6_probes.csv

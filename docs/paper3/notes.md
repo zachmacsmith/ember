@@ -468,3 +468,41 @@ on (180,0.1)): patience expires and MM leaves budget on the table; (ii) **the
 feasibility cliff is budget-dependent**: (180,0.3) success 0/25 → 4 → 14 → 23/25
 across budgets 5→180 s — E0's "density-flat cliff at n=140" is a 60 s statement, and
 frontier claims must state their budget (time-to-first-legal is the right axis).
+
+§4.8 RESULTS (2026-07-27, 1,450 rows): predictions confirmed on two of three fronts,
+one genuine surprise thread on the third.
+- **P6a (tree): stock's filtered nearest-attach Steiner is the best of the three**,
+  as predicted. union +1.7..+7.9% worse; pure-SPH catastrophic on dense (+15.7% at
+  (140,0.3), 0/25 wins) — the refcount>1 attach filter is load-bearing exactly where
+  chains are long. (2014-paper union at deg-10 n=100 is a wash, -0.17%.)
+- **P6b (Boltzmann root): null-to-worse**, as predicted (T=8 clearly worse on most
+  cells; scattered weak -1.4..-1.9% blips at one cell are inside the multiple-
+  comparison noise floor; included in the §4.8b confirm anyway per the tree).
+- **P6c (finite beta): the surprise.** beta=2 ANNIHILATES feasibility (0/25 on
+  nearly every cell; 4/25 at n=60) — lexicographic overlap pricing is load-bearing
+  for viability, prediction confirmed with dramatic effect. BUT **beta-dhat — the
+  2014 paper's own D^occ spec — BEATS the shipped pricing on sparse deg-10 cells**:
+  -0.9% (n=60), -2.97% (n=100, 16/9), -2.23% (n=140, 18/7), -4.79% (n=180, 16/5 at
+  21/25 success), and beta-16 -1.52% at n=180; while failing outright on dense
+  (0-1/25 at p>=0.2). Reading: the shipped program's abandonment of the paper's
+  finite-beta pricing bought dense feasibility and PAYS 2-5% ACL on sparse — a
+  regime split inside MM's own cost function, and a sparse-regime lever where §3.21
+  located only "the constant". Wall cost: beta-dhat converges slower (14-33 s vs
+  6-16 s stock at 60 s budget — same budget, so the ACL read is fair).
+
+### 4.8b P6 surprise confirm — 15-seed re-test (2026-07-27)
+
+PRE-REGISTERED 2026-07-27. Per the §4.8 decision tree: every arm flagged < -1%
+median re-runs at 15 algo seeds before any claim. Script: p6_probes.py @ 94d5e046
+rerun with --confirm mode = cells {deg-10 n in {100, 140, 180}} x arms {stock,
+tree-sph, boltz-2.0, boltz-8.0, beta-16.0, beta-dhat} x inst seeds 101-105 x algo
+seeds 0-14 x 60 s (if the script lacks a --confirm flag, an equivalent explicit
+cell/arm/seed invocation or minimal flag addition at a fresh sha is permitted and
+recorded here). Bars: a surprise CONFIRMS iff median paired dACL_spur < -1% with
+>=60% win rate at 15 seeds on the same cell; beta-dhat additionally reports success
+separately (21/25 at n=180 in §4.8). Confirmed beta-dhat -> the anatomy section
+gains the "paper-vs-program pricing regime split" claim and a candidate follow-up
+(density-gated beta inside ATE's search arm — NOT built at M3). Unconfirmed -> noise
+paragraph.
+
+--- results appended below; nothing above this line is edited after launch ---
