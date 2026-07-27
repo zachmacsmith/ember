@@ -82,7 +82,7 @@ Bars / decision tree:
 
 ## RESULTS — P5b-dense K60 probe (2026-07-27, run @ 4e748890)
 
-CSV: `data/p5_k60_pairmoves.csv` (461 move rows; smoke calibration in
+CSV: `data/p5_k60_pairmoves.csv` (460 move rows; smoke calibration in
 `p5_k60_pairmoves_smoke.csv`). Wall 27.6 min, local mac, deterministic/seedless.
 
 **Verdict: the pre-registered negative is FALSIFIED. Improving pair moves exist on the
@@ -144,7 +144,7 @@ Files:
   scenario in miniature); engine-vs-brute-force cross-check (incl. multiplicity-2
   requirements); anytime monotonicity/determinism/deadline; arm sanity. Contract
   suite: 15/15 for `p3-mmpolish`.
-- `docs/paper3/data/p5_k60_pairmoves.py` (223 LOC) — this probe.
+- `docs/paper3/data/p5_k60_pairmoves.py` (218 LOC) — this probe.
 - P5a (`terminal_polish` in `data/_runner_common.py`) predates this work (landed with
   the M0/E0 scaffold @ caf62119) and is unchanged; every runner logs `acl`+`acl_spur`.
 
