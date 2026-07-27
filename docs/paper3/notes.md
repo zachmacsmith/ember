@@ -506,3 +506,19 @@ gains the "paper-vs-program pricing regime split" claim and a candidate follow-u
 paragraph.
 
 --- results appended below; nothing above this line is edited after launch ---
+
+§4.6 RESULTS (2026-07-27, 600 rows, hyde06 outer5x8): **P3 racer bar PASSES on the
+template-free cells — the selection claim is real.** On (160,0.05), where the
+template never wins (race winners: mm 20-25, cuthill 1-4, clmm-core 0-1 of 25):
+P16 seq -2.31% (84%) / par -5.57% (96%); Z12 seq -4.97% (88%) / par -7.53% (100%)
+vs the seed-matched best-of-8 controls — both pre-registered fairness reads, both
+topologies. Mechanism (honest): parallel best-of-8 stock MM finishes in 7.0-8.7 s
+median (patience expires — the §4.7 budget-on-the-table finding) and the racer
+converts the remaining wall-clock into ACL via warm-restart grinding of the best
+basins; sequential racing additionally beats uniform 7.5-s slicing by adaptive
+allocation. At equal wall-clock on equal cores, race8 beats the strongest stock-MM
+multi-run configuration under MM's own stopping rules on 6/6 cells (mid cells
+-1.9..-17.6% — but winner=template there 21-25/25, excluded from the selection
+claim per pre-registration; the mid-band numbers are the ATE story wearing a racer
+hat). Z12 (100,0.2) par read -1.86% at 76% misses the -2% bar — reported, not
+claimed. Data: m3_race.csv.

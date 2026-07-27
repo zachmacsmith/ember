@@ -1,0 +1,59 @@
+====================================================================================================
+M3 racer summary — column: acl_spur (rule 3); pairs on (inst_seed, base_seed), both-succeed only.
+PRE-REGISTERED reads: [seq] race8-seq vs bestof8-seq (1 core) and [par] race8-par vs bestof8-par (8 cores).
+Bar (portfolio.md): race <= baseline on >=70% of pairs AND median paired dACL_spur <= -2%.
+====================================================================================================
+
+-- P16  n=100  p=0.3
+  race8-seq    success 25/25  acl_spur med   9.110  wall med   60.2s  winners {'template': 25}
+  bestof8-seq  success 25/25  acl_spur med  11.050  wall med   60.3s  winners {'mm': 25}
+  bestof8-par  success 25/25  acl_spur med  10.460  wall med   38.4s  winners {'mm': 25}
+  race8-par    success 25/25  acl_spur med   9.110  wall med   60.2s  winners {'template': 25}
+  [seq] race8-seq vs bestof8-seq: n=25  med d  -1.940 (-17.56%)  W/L/T 25/0/0  pct(a<=b) 100.0%
+  [par] race8-par vs bestof8-par: n=25  med d  -1.350 (-12.91%)  W/L/T 25/0/0  pct(a<=b) 100.0%
+
+-- P16  n=100  p=0.2
+  race8-seq    success 25/25  acl_spur med   8.450  wall med   60.1s  winners {'template': 25}
+  bestof8-seq  success 25/25  acl_spur med   9.230  wall med   60.2s  winners {'mm': 25}
+  bestof8-par  success 25/25  acl_spur med   8.840  wall med   21.5s  winners {'mm': 25}
+  race8-par    success 25/25  acl_spur med   8.450  wall med   60.1s  winners {'template': 25}
+  [seq] race8-seq vs bestof8-seq: n=25  med d  -0.810 ( -8.78%)  W/L/T 25/0/0  pct(a<=b) 100.0%
+  [par] race8-par vs bestof8-par: n=25  med d  -0.400 ( -4.52%)  W/L/T 25/0/0  pct(a<=b) 100.0%
+
+-- P16  n=160  p=0.05
+  race8-seq    success 25/25  acl_spur med   5.869  wall med   60.1s  winners {'mm': 20, 'cuthill': 4, 'clmm-core': 1}
+  bestof8-seq  success 25/25  acl_spur med   5.944  wall med   46.3s  winners {'mm': 25}
+  bestof8-par  success 25/25  acl_spur med   5.950  wall med    8.7s  winners {'mm': 25}
+  race8-par    success 25/25  acl_spur med   5.725  wall med   60.1s  winners {'mm': 22, 'cuthill': 3}
+  [seq] race8-seq vs bestof8-seq: n=25  med d  -0.138 ( -2.31%)  W/L/T 20/4/1  pct(a<=b)  84.0%
+  [par] race8-par vs bestof8-par: n=25  med d  -0.331 ( -5.57%)  W/L/T 24/1/0  pct(a<=b)  96.0%
+
+-- Z12  n=100  p=0.3
+  race8-seq    success 25/25  acl_spur med   7.400  wall med   60.3s  winners {'template': 25}
+  bestof8-seq  success 25/25  acl_spur med   8.950  wall med   60.2s  winners {'mm': 25}
+  bestof8-par  success 25/25  acl_spur med   8.290  wall med   30.0s  winners {'mm': 25}
+  race8-par    success 25/25  acl_spur med   7.400  wall med   60.4s  winners {'template': 25}
+  [seq] race8-seq vs bestof8-seq: n=25  med d  -1.520 (-16.98%)  W/L/T 25/0/0  pct(a<=b) 100.0%
+  [par] race8-par vs bestof8-par: n=25  med d  -0.870 (-10.49%)  W/L/T 25/0/0  pct(a<=b) 100.0%
+
+-- Z12  n=100  p=0.2
+  race8-seq    success 25/25  acl_spur med   6.900  wall med   60.2s  winners {'template': 23, 'clmm': 1, 'clmm-core': 1}
+  bestof8-seq  success 25/25  acl_spur med   7.250  wall med   60.1s  winners {'mm': 25}
+  bestof8-par  success 25/25  acl_spur med   7.000  wall med   19.6s  winners {'mm': 25}
+  race8-par    success 25/25  acl_spur med   6.860  wall med   60.2s  winners {'template': 21, 'clmm-core': 2, 'clmm': 1, 'cuthill': 1}
+  [seq] race8-seq vs bestof8-seq: n=25  med d  -0.360 ( -4.97%)  W/L/T 25/0/0  pct(a<=b) 100.0%
+  [par] race8-par vs bestof8-par: n=25  med d  -0.130 ( -1.86%)  W/L/T 18/6/1  pct(a<=b)  76.0%
+
+-- Z12  n=160  p=0.05
+  race8-seq    success 25/25  acl_spur med   4.650  wall med   60.1s  winners {'mm': 25}
+  bestof8-seq  success 25/25  acl_spur med   4.900  wall med   37.4s  winners {'mm': 25}
+  bestof8-par  success 25/25  acl_spur med   4.900  wall med    7.0s  winners {'mm': 25}
+  race8-par    success 25/25  acl_spur med   4.438  wall med   60.1s  winners {'mm': 24, 'cuthill': 1}
+  [seq] race8-seq vs bestof8-seq: n=25  med d  -0.244 ( -4.97%)  W/L/T 22/3/0  pct(a<=b)  88.0%
+  [par] race8-par vs bestof8-par: n=25  med d  -0.369 ( -7.53%)  W/L/T 25/0/0  pct(a<=b) 100.0%
+
+POOLED across cells:
+  [seq] race8-seq vs bestof8-seq: n=150  med d  -0.595 ( -7.46%)  W/L/T 142/7/1  pct(a<=b)  95.3%
+  [par] race8-par vs bestof8-par: n=150  med d  -0.450 ( -5.97%)  W/L/T 142/7/1  pct(a<=b)  95.3%
+
+rows: 600   csv: /data/dabh/ember/docs/paper3/data/m3_race.csv
