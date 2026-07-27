@@ -178,3 +178,36 @@ class TestRegistry:
         assert is_valid_embedding(result["embedding"], src, tgt)
         again = ALGORITHM_REGISTRY[arm].embed(src, tgt, timeout=30.0, seed=0)
         assert result["embedding"] == again["embedding"]
+
+
+def test_forked_disconnected_source_with_order():
+    """§4.1 data-quality (i): isolated vertices must be placed, and the pruned
+    order must still engage (E0 saw <30 ms failures on disconnected sources)."""
+    import networkx as nx
+    import dwave_networkx as dnx
+    from ember_qc.algorithms.minorminer_forked import forked_find_embedding
+    from ember_qc.algorithms.search_orders import ORDERINGS
+    from ember_qc.embedding_backend import is_valid_embedding
+
+    src = nx.convert_node_labels_to_integers(nx.gnp_random_graph(100, 0.05, seed=101))
+    assert nx.number_connected_components(src) == 3  # incl. isolated vertex 48
+    tgt = dnx.pegasus_graph(6)
+    r = forked_find_embedding(src, tgt, order=ORDERINGS["cuthill"](src),
+                              seed=0, timeout=30, fallback=False)
+    emb = r["embedding"]
+    assert emb and set(emb) == set(src.nodes())
+    assert is_valid_embedding(emb, src, tgt)
+
+
+def test_forked_edgeless_source():
+    import networkx as nx
+    import dwave_networkx as dnx
+    from ember_qc.algorithms.minorminer_forked import forked_find_embedding
+
+    src = nx.empty_graph(5)
+    r = forked_find_embedding(src, dnx.chimera_graph(2), seed=0, timeout=5,
+                              fallback=False)
+    emb = r["embedding"]
+    assert set(emb) == set(range(5))
+    qubits = [q for c in emb.values() for q in c]
+    assert len(qubits) == len(set(qubits)) == 5

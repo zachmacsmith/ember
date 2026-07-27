@@ -153,6 +153,17 @@ def forked_find_embedding(
                 "success": False, "status": "FAILURE", "error": str(exc)}
     S, T = list(source.edges()), list(target.edges())
 
+    # Isolated source vertices never reach the C++ core (edge-list input drops
+    # them — the §3.23 bug class). Two consequences fixed here: (1) they must be
+    # placed on free qubits after the main call; (2) they must be pruned from
+    # ``order``, else its length mismatches the core's num_v and the C++ guard
+    # silently disables the custom order (observed in E0: <30 ms failures on
+    # exactly the disconnected instances, notes.md §4.1 data-quality (i)).
+    isolated = [v for v in source.nodes() if source.degree(v) == 0]
+    if isolated and order is not None:
+        _iso = set(isolated)
+        order = [v for v in order if v not in _iso]
+
     engaged = (order is not None or history_alpha or short_audit or dirty_skip
                or chain_tree or root_boltzmann or max_beta is not None)
 
@@ -183,12 +194,24 @@ def forked_find_embedding(
             return None
         return {int(k): [int(q) for q in v] for k, v in e.items() if v}
 
-    emb = _run(timeout, engaged)
-    # Fallback: a modified run that fails (empty/raised) retries as stock MM so
-    # the variants never do worse than minorminer on *success*.
-    if (not emb) and engaged and fallback:
-        remaining = None if deadline is None else max(1.0, deadline - time.perf_counter())
-        emb = _run(remaining, False)
+    if not S:
+        emb = {}  # edgeless source: nothing for the core to do; placement below
+    else:
+        emb = _run(timeout, engaged)
+        # Fallback: a modified run that fails (empty/raised) retries as stock MM
+        # so the variants never do worse than minorminer on *success*.
+        if (not emb) and engaged and fallback:
+            remaining = None if deadline is None else max(1.0, deadline - time.perf_counter())
+            emb = _run(remaining, False)
+
+    if emb is not None and isolated:
+        used = {q for chain in emb.values() for q in chain}
+        free = (q for q in sorted(target.nodes()) if q not in used)
+        try:
+            for v in isolated:
+                emb[int(v)] = [int(next(free))]
+        except StopIteration:  # target exhausted — genuine failure
+            emb = None
 
     elapsed = time.perf_counter() - start
     if not emb:
