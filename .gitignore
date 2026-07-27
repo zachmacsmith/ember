@@ -100,3 +100,4 @@ scripts/reassign_graph_ids.py
 
 # minorminer fork build artifact (recreated by scripts/build_mm_fork.sh)
 external/minorminer-fork/
+packages/ember-qc/src/ember_qc/graphs/library/.verified.json

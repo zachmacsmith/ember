@@ -2,7 +2,7 @@
 
 M4 frozen-eval analysis [FULL] — column: acl_spur (tables 1-4; rule 3), wall s (table 5).
 
-eval CSV: /Users/dabh/ember/docs/paper3/data/m4_eval.csv (6314 rows)   race CSV: /Users/dabh/ember/docs/paper3/data/m4_race.csv (1800 rows)
+eval CSV: /Users/dabh/ember/docs/paper3/data/m4_eval.csv (7084 rows)   race CSV: /Users/dabh/ember/docs/paper3/data/m4_race.csv (1800 rows)
 
 Registries: EVAL instances 901-915 (K_n cells instance-invariant, one instance recorded as 901), eval algo seeds 10-14, 60 s, paired script route (rule 1).
 
