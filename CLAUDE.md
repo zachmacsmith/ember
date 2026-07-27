@@ -1,29 +1,38 @@
-# Ember — `factored` branch
+# Ember — `paper3` branch
 
-This branch changes **minorminer's algorithm itself** and measures each change. It contains,
-on top of `main`'s benchmarking framework, exactly two things:
+Mission: beat stock minorminer 0.2.22 on **dense random graphs** (primary; MM is the
+structureless fallback in practice), without regressing on structured (secondary).
+Thesis: embedding has two regimes split by a density crossover p*(n) — search below
+(§3.21: sparse ER is bisection-limited, MM already optimal-scaling), construction above
+(§3.26: every search method is 16–57% over the clique-template ceiling and MM's polish
+cannot improve the template). Program plan, portfolio (P1 ATE … P6 anatomy), and
+milestones: `docs/paper3/` — read `protocol.md` (measurement constitution, BINDING),
+`notes.md` (§4.x lab record), `proposals/*.md`, `survey.md`, `QUEUE.md` (hyde06 lock).
 
-1. **`ember_qc/algorithms/factored/`** — minorminer's search with its three separable
-   choices factored into independently swappable axes: qubit **cost** (history term; `alpha=0`
-   recovers MM's `diam^occ`), chain **tree** (SPH Steiner vs. MM's union-of-paths), vertex
-   **order** (Cuthill–McKee vs. random). Minorminer is one corner of the family; every claim
-   is one switch flipped against that corner.
-2. **The minorminer C++ fork** (`scripts/mm_fork.patch` + `build_mm_fork.sh`) — stock
-   minorminer 0.2.22 plus two switches, byte-identical to stock when both are unset:
-   `var_order=` (caller-supplied vertex order) and `history_alpha=` (the §3.5 history
-   cost inside MM's real dynamics; see notes.md §3.12). Registered as `mmfork` /
-   `mmfork-<order>` / `mmfork-history`. This is the gold standard for comparability:
-   the control arm is literally stock minorminer.
+**Ground rules (supersets of factored's; violations are protocol breaches):**
+- Pair by (instance, seed) via the script route (`benchmark_one` with the same seed per
+  arm); the CLI salts seeds with the algorithm name → CLI tables say "(instance, trial)".
+- **No best-of-K arm is ever compared against single-shot MM.** Multi-run schemes race
+  best-of-K-parallel stock MM at equal wall-clock on equal cores. Internal best-of-N is
+  legal only when the whole arm fits inside one MM run's budget.
+- Identical cheap polish on all arms: log `acl` AND `acl_spur`, tables use one column.
+- Dev instance seeds 101–115 / eval 901–915 (frozen, disjoint; eval untouched until the
+  M4 freeze). Success rates separate/unpaired; ΔACL on both-succeed pairs only.
+- Pre-register every experiment (bar + decision tree) in notes.md §4.x before launch.
+- Every minorminer change is a toggleable switch, default stock, one flip at a time,
+  parity self-test green. Verify MM claims against source, never the 2014 paper
+  (`docs/paper2/mm-internals.md` has the anatomy with file:line cites).
+- hyde06 runs: repo at /data/dabh/ember (NEVER $HOME), ≤64 workers (64 physical cores /
+  128 SMT), ≤48 for timing-bearing runs, one batch at a time via QUEUE.md.
+- New arms register as `p3-*` by ADDING files under `ember_qc/algorithms/paper3/`
+  (auto-imported) — never edit shared registration lines in parallel work.
 
-**Ground rules.** Every change to minorminer must be a toggleable switch, defaulted to stock
-behavior, measured one flip at a time against the stock corner — paired by (instance, seed),
-never unpaired (survivor bias). Verify any claim about minorminer against its source, never
-its paper — the shipped program has repeatedly outgrown the 2014 description (notes §3.8, §3.14). Design rationale and the chronological lab record: `docs/paper2/notes.md`.
-Organized references: `docs/paper2/mm-internals.md` (what shipped minorminer
-actually does, with file:line citations into `external/minorminer-fork`) and
-`docs/paper2/attraction.md` (the attraction embedder: as-built spec, idea ledger,
-roadmap). Consult these before re-deriving minorminer behavior or re-proposing
-tried ideas.
-
-The abandoned prior work (Reweave wrapper, speculative embedders, learning line) lives only
-on the `new-algorithm` branch. Do not reintroduce it.
+Inherited from `factored` (all still present here): the factored router,
+`ember_qc/algorithms/factored/`, the mm C++ fork toolchain (`scripts/mm_fork.patch`,
+`build_mm_fork.sh`; rebuild per machine), `docs/paper2/` (notes §1–§3.31,
+mm-internals.md, attraction.md — consult before re-deriving MM behavior or re-proposing
+tried ideas; the DEAD-levers list in notes §3.13/§3.16/paper2 is binding). Salvaged from
+`new-algorithm`: `ember_qc/anneal.py` + `docs/paper3/data/solution_quality/` (SVMC
+solution-quality pipeline). Everything else on `new-algorithm` (Reweave, speculative
+embedders, learning line) stays abandoned — do not reintroduce; its measurement sins are
+catalogued in notes.md §4.0.2 and are what `protocol.md` exists to prevent.
