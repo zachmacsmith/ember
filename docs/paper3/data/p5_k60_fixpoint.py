@@ -5,15 +5,19 @@ Deterministic, seedless, ~<=30 min. Output: p5_k60_fixpoint.txt (+ stdout).
 """
 from __future__ import annotations
 
+import os
+import sys
 import time
 
 import dwave_networkx as dnx
 import networkx as nx
 from minorminer import busclique
 
-from ember_qc.algorithms.factored.polish import spur_prune
-from ember_qc.algorithms.paper3.joint_repair import anytime_polish
-from ember_qc.embedding_backend import is_valid_embedding
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from _runner_common import terminal_polish  # noqa: E402
+
+from ember_qc.algorithms.paper3.joint_repair import anytime_polish  # noqa: E402
+from ember_qc.embedding_backend import is_valid_embedding  # noqa: E402
 
 DEADLINE_S = 30 * 60
 N = 60
@@ -24,7 +28,7 @@ def main() -> None:
     source = nx.complete_graph(N)
     raw = busclique.busgraph_cache(target).find_clique_embedding(N)
     emb = {i: list(raw[k]) for i, k in enumerate(sorted(raw))}
-    emb = spur_prune(emb, source, target)
+    emb = terminal_polish(emb, source, target, deadline_s=30.0)
     q0 = sum(len(c) for c in emb.values())
     acl0 = q0 / N
     print(f"start: qubits={q0} ACL={acl0:.4f} (expect 404 / 6.7333)", flush=True)
