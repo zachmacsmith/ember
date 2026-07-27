@@ -331,3 +331,72 @@ finding — 30 min of exact repair bought −2.5%, so under the 60 s discipline 
 slice is capturable; the flag's M3 evaluation must use the 60 s budget, and the
 full-depth number belongs to the ceiling discussion, not the product arm. Updated
 regime picture: MM@K60 7.83 (§3.26) / template 6.73 / template+exact-moves ≤ 6.57.
+
+### 4.5 M3 dev-suite kill gates (2026-07-27)
+
+PRE-REGISTERED 2026-07-27. Script: dev_suite.py @ 94d5e046. Frozen dev suite
+(protocol.md) × arms {minorminer, mmfork-cuthill, p3-template, p3-ate, p3-clmm,
+p3-clmm-core, p3-mmpolish, pssa, attraction} × inst seeds 101–105 × algo seeds 0–4 ×
+60 s; hyde06 ≤48 workers; acl_spur; paired vs minorminer AND vs p3-template.
+Bars (per the drafted blocks in proposals/{ate,clmm,polish}.md, applied verbatim):
+- P1 (p3-ate): median paired dACL_spur <= -2% vs MM on >= half the dev cells with
+  p > p* ((100,0.3), (140,0.2), K140, past-cliff feasibility), AND never worse than
+  MM (median) on any below-p* cell. Fail -> ATE demoted to p3-template-only arm.
+- P2 B1: >=1 mid-band cell ((100,0.2), (140,0.12)) with p3-clmm paired win (here:
+  median < 0 and >=60% win rate; Wilcoxon at M4 scale). B2: p3-clmm-core beats
+  p3-clmm anywhere (ACL or success). B3: frontier cells report-only.
+- p3-mmpolish: beats minorminer (its own base + polish) by median < 0 on >=2 mid
+  cells at equal 60 s — else the mid-band polish claim dies (K_n side settled
+  §4.3/4.4).
+- Context arms report-only. Success rates separate/unpaired everywhere.
+
+### 4.6 M3 racer vs rule-2 baselines (2026-07-27)
+
+PRE-REGISTERED 2026-07-27. Script: m3_race.py @ 94d5e046. Cells P16/Z12 (100,0.2),
+(100,0.3), (160,0.05); inst 101–105 × base seeds 0–4 × 60 s; modes (a) p3-race8
+sequential (b) best-of-8 sequential (c) best-of-8 PARALLEL (8 cores, seed-matched to
+b) (d) race parallel (8 cores). hyde06 --outer-workers 5 (~41 procs). Bars: the
+racer claim = (a) beats (b) [1-core fairness] AND (d) beats (c) [8-core fairness] on
+median paired dACL_spur on >=2 of the 4 sparse/mid cells; on (100,0.3)
+template-floor wins are expected and excluded from the selection claim
+(winner=template rows analyzed separately). Fail -> P3 ships as systems observation
+(§4.1 ceiling already shows bo-K weak); variance/anytime/success-union reported
+regardless.
+
+### 4.7 M3 shortener Pareto (2026-07-27)
+
+PRE-REGISTERED 2026-07-27. Script: p4_pareto.py @ 94d5e046. Cells P16 ER(180,0.1),
+ER(180,0.3), ER(140,0.2); inst 101–105 × algo seeds 0–4; budgets {5,15,60,180} s;
+arms {stock, short_audit=1, short_audit=2+j3, dirty_skip=1} via fork
+(fallback=False). Bar (shortener.md draft, verbatim): a switch survives iff at >=1
+budget it wins median paired dACL_spur with >=60% both-succeed win rate, or
+|d|<=1% at <=0.5x stock wall (within-batch walls; headline re-measured workers=1
+idle). Stock dominates everywhere -> P4 dies, patience curve ships as anatomy.
+Prediction (committed): audit=1 dies on ACL; audit=2 survives via the speed clause
+at small budgets; dirty survives at >=60 s.
+
+### 4.8 M3 anatomy probes P6a/b/c (2026-07-27)
+
+PRE-REGISTERED 2026-07-27. Script: p6_probes.py @ 94d5e046. Cells: deg-10 ladder
+n∈{60,100,140,180} + ER(100,0.3) + ER(140,0.3) (+ (140,0.2) as the near-cliff cell
+for P6c — substituted for the draft's ER(260,0.2), outside the feasible set per
+§4.1 output 4). Arms: stock; chain_tree∈{1,2}; root_boltzmann∈{0.5,2,8};
+max_beta∈{2,16,dhat}. Predictions (committed, from anatomy.md): stock beats union
+by a few % ACL; sph-pure ≈ stock; Boltzmann null at T<=2; finite beta worse on
+feasibility near the cliff, ≈null on ACL where both succeed. Report-only; any arm
+beating stock by >=1% median escalates to a 15-seed confirm before any claim.
+
+### 4.9 M3 assignment honesty gate KG2 (2026-07-27)
+
+PRE-REGISTERED 2026-07-27. Script: p1_kg2.py @ 94d5e046, local run (template-side
+only, ~minutes). Cells: the 6 template-win dev cells. Per instance: identity,
+cuthill seed, spectral seed, shipped 2-swap, 32 random assignments (prune-only,
+uniform). AMENDED KILL RULE (sharpened BEFORE launch — the drafted rule assumed the
+random oracle bounds the shipped pipeline; the build smoke showed shipped BEATING
+best-of-32-random, which must not fire a kill): the 2-swap optimizer dies iff
+max(shipped, best-of-32-random) gain < 2% over identity; if shipped >= 2% it lives
+regardless of the random oracle; seeds-only replaces it iff best-seed >=
+shipped - 0.5%. KG3 note: the E0 map answers the escape probe observationally
+(pssa ≈ template ± <=0.1 on shared dense cells, §4.1) — recorded as subsumed.
+
+--- results appended below per experiment; nothing above edited after launch ---
