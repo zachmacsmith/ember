@@ -146,6 +146,16 @@ via neighbour-chain coupling (a neighbour prunes the qubit our first contact
 touched, forcing a longer interval). Unit test asserts the measured envelope with
 margin (total gap ≤ 10%, per-vertex |diff| ≤ 3, ≥60% exact).
 
+**Build smoke (mac, dev-only, 2 algo seeds, raw `acl` column, NOT a pre-registered
+result).** P16, 30 s, instance seed 101: ER(100,.5) template 9.63 vs MM
+{12.54, 12.62} (−23%); K100 template 9.78 vs MM {17.22, 13.82} (−29..−43%,
+replicating §3.26); ER(160,.12) template-with-cuthill 12.62 vs MM {16.16, 17.14}
+(−22..−26%) — a surprise vs the predicted p* ∈ [0.25, 0.6]: p*(160) on P16 appears
+to be BELOW 0.12 (E0 will map it). `p3-ate` selected the template in all 6 runs;
+its internal MM stage reproduced stock MM exactly whenever MM finished inside the
+reduced budget (s1 ER100 12.62=12.62; both ER160 pairs identical to 3 decimals).
+Template stage cost: 0.5–2.1 s (n=100–160, spur_prune-dominated).
+
 **Deviations from the spec (with why).**
 
 1. The 100 ms assignment cap is implemented as a deterministic proposal-count
