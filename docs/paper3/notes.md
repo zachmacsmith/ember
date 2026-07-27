@@ -633,3 +633,33 @@ batch YAMLs: experiments/gen_m5_full.py -> m5full_{c16,p16,z12}[_layout].yaml).
   one re-run. Prediction addition: on C16 (degree-6 fabric) the template regime is
   expected to shrink (busclique C16 max clique ~64) — p3-ate must degrade to MM
   gracefully there; that graceful degradation IS the C16 claim.
+
+§4.10 RESULTS (2026-07-27; main 6,314 rows + race 1,800 rows; full tables in
+m4_headline.txt/.md; layout supplement §4.10b appends after its run):
+
+- **Every M3 verdict CONFIRMS on fresh eval instances (901-915, K=15) with Holm-
+  corrected significance — no tuning inflation anywhere** (eval margins within
+  ~1-2 pp of dev margins).
+- p3-ate: all above-p* cells Holm p = 6.3e-13, rank-biserial 0.99-1.00, sweeps
+  72-75/75; margins -6.5..-18.4% (ER) and -19.5/-32.9% (K140 P16/Z12, n=5
+  unanimous); EXACT all-tie vs MM on both sparse controls (never-worse verified at
+  K=15); K180/K179 5/5 vs MM 0/5. **Zero cross-seed variance above p* (0.00x),
+  exactly 1.00x where it defers to MM.**
+- p3-clmm: dense/mid wins Holm-significant (-6..-15.9% P16); sparse losses
+  significant as expected (+13..+16%, regime-gated in product); the Z12 mid-band
+  weakness reproduces ((100,0.2) +1.1%, (140,0.12) +5.2%) — reported as the
+  topology asymmetry. clmm-core: stronger at (140,0.2) (-14.8%), worse at
+  (140,0.12) (+3.7%) — the density gate holds; **variance 0.06x median** (core
+  seeding near-determinizes the search).
+- p3-mmpolish: Holm-significant at 10/12 MM-feasible cells (p ~ 6e-13, 75/0/0
+  sweeps typical, -0.5..-1.4%); (140,0.2) P16 misses Holm (0.065, 75% wins);
+  Z12 K140 +4.5% (0/5) — the known cliff weakness, excluded from the product's
+  regime. mmfork-cuthill (context): -1.5..-2.5% significant on 5 cells.
+- **Racer (Table 4): the selection claim confirms at eval scale.** Template-free
+  sparse cells ((160,0.05), excl-tpl = full 75 pairs): P16 -3.25% seq (80%,
+  p=1.8e-9) / -6.42% par (96%, p=7.9e-14); Z12 -4.27% seq (88%, p=1.2e-11) /
+  -7.87% par (97%, p=7.9e-14). Pooled: seq -7.73% (95%, p=1.5e-72, 450 pairs).
+  Mid cells: winner=template 72-75/75 (the ATE story wearing a racer hat,
+  excluded from the selection claim per pre-registration).
+- Frontier (Table 3): K180/K179 — MM, cuthill, mmpolish, attraction 0/5 each;
+  template/ate/clmm/clmm-core/pssa 5/5 (ate/clmm at template-or-better ACL).
