@@ -1,0 +1,5 @@
+K60/P16 exact-move fixpoint (2026-07-27)
+start:  qubits=404  ACL=6.7333
+end:    qubits=394  ACL=6.5667  valid=True
+gain:   10 qubits  dACL=0.1667
+wall:   1800.2s (deadline 1800s)

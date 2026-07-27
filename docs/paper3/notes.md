@@ -206,3 +206,13 @@ reference line for P1's M3 bars and the paper's ceiling discussion; if the gain 
 M3) — evaluated under the same 60 s budget discipline as everything else.
 
 --- results appended below; nothing above this line is edited after launch ---
+
+RESULTS (2026-07-27): **404 → 394 qubits, ACL 6.7333 → 6.5667 (−0.1667, −2.5%),
+valid.** Wall 1800.2 s — the run is DEADLINE-BOUND, not converged: 6.5667 is an upper
+bound on the K60 template+polish ceiling, and the §4.3 caveat (unproven negatives,
+unswept pairs) means further gains may exist. Decision rule fires (≥0.1 ACL):
+`p3-template` gets an optional exact-polish flag at M3, but the ECONOMICS are the real
+finding — 30 min of exact repair bought −2.5%, so under the 60 s discipline only a
+slice is capturable; the flag's M3 evaluation must use the 60 s budget, and the
+full-depth number belongs to the ceiling discussion, not the product arm. Updated
+regime picture: MM@K60 7.83 (§3.26) / template 6.73 / template+exact-moves ≤ 6.57.
