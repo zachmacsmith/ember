@@ -493,8 +493,8 @@ one genuine surprise thread on the third.
 ### 4.8b P6 surprise confirm — 15-seed re-test (2026-07-27)
 
 PRE-REGISTERED 2026-07-27. Per the §4.8 decision tree: every arm flagged < -1%
-median re-runs at 15 algo seeds before any claim. Script: p6_probes.py @ 94d5e046
-rerun with --confirm mode = cells {deg-10 n in {100, 140, 180}} x arms {stock,
+median re-runs at 15 algo seeds before any claim. Script: p6_probes.py --confirm @ 9bec9817 (flag added per the escape clause)
+mode = cells {deg-10 n in {100, 140, 180}} x arms {stock,
 tree-sph, boltz-2.0, boltz-8.0, beta-16.0, beta-dhat} x inst seeds 101-105 x algo
 seeds 0-14 x 60 s (if the script lacks a --confirm flag, an equivalent explicit
 cell/arm/seed invocation or minimal flag addition at a fresh sha is permitted and
