@@ -1,0 +1,72 @@
+====================================================================================================
+P4 shortener-economics Pareto — column: acl_spur (rule 3); pairs on (inst_seed, algo_seed) within (cell, budget).
+Bar: a switch SURVIVES iff at >=1 budget it wins median dACL_spur vs stock with >=60% win rate, or |median d| <= 1%
+of stock median at <= 0.5x stock median wall (within-batch walls; headline re-measured at workers=1 idle).
+====================================================================================================
+
+-- ER(140, 0.2)  budget 5s   stock: success 25/25  acl_spur med  18.407  wall med    5.3s
+  audit1  success 25/25  wall med    5.5s   pairs 25  med d  +0.721 ( +3.92%)  winrate  12.0%
+  audit2  success 25/25  wall med    5.5s   pairs 25  med d  +0.600 ( +3.26%)  winrate  12.0%
+  dirty   success 25/25  wall med    5.3s   pairs 25  med d  +0.000 ( +0.00%)  winrate   0.0%
+
+-- ER(140, 0.2)  budget 15s   stock: success 25/25  acl_spur med  15.686  wall med   15.4s
+  audit1  success 25/25  wall med   15.5s   pairs 25  med d  +0.879 ( +5.60%)  winrate   8.0%
+  audit2  success 25/25  wall med   15.6s   pairs 25  med d  +0.721 ( +4.60%)  winrate  16.0%
+  dirty   success 25/25  wall med   15.3s   pairs 25  med d  +0.000 ( +0.00%)  winrate   0.0%
+
+-- ER(140, 0.2)  budget 60s   stock: success 25/25  acl_spur med  14.643  wall med   40.8s
+  audit1  success 25/25  wall med   38.9s   pairs 25  med d  +0.722 ( +4.93%)  winrate  16.0%
+  audit2  success 25/25  wall med   52.6s   pairs 25  med d  +0.386 ( +2.63%)  winrate  36.0%
+  dirty   success 25/25  wall med   40.9s   pairs 25  med d  +0.000 ( +0.00%)  winrate   0.0%
+
+-- ER(140, 0.2)  budget 180s   stock: success 25/25  acl_spur med  14.621  wall med   40.8s
+  audit1  success 25/25  wall med   38.8s   pairs 25  med d  +0.722 ( +4.93%)  winrate  20.0%
+  audit2  success 25/25  wall med   52.4s   pairs 25  med d  +0.293 ( +2.00%)  winrate  36.0%
+  dirty   success 25/25  wall med   40.9s   pairs 25  med d  +0.000 ( +0.00%)  winrate   0.0%
+
+-- ER(180, 0.1)  budget 5s   stock: success 25/25  acl_spur med  18.872  wall med    5.2s
+  audit1  success 25/25  wall med    5.2s   pairs 25  med d  +0.306 ( +1.62%)  winrate  36.0%
+  audit2  success 25/25  wall med    5.3s   pairs 25  med d  +0.306 ( +1.62%)  winrate  20.0%
+  dirty   success 25/25  wall med    5.2s   pairs 25  med d  +0.000 ( +0.00%)  winrate   8.0%
+
+-- ER(180, 0.1)  budget 15s   stock: success 25/25  acl_spur med  16.533  wall med   15.3s
+  audit1  success 25/25  wall med   15.4s   pairs 25  med d  +0.539 ( +3.26%)  winrate  24.0%
+  audit2  success 25/25  wall med   15.3s   pairs 25  med d  +0.311 ( +1.88%)  winrate  32.0%
+  dirty   success 25/25  wall med   15.2s   pairs 25  med d  +0.000 ( +0.00%)  winrate   0.0%
+
+-- ER(180, 0.1)  budget 60s   stock: success 25/25  acl_spur med  15.783  wall med   22.3s
+  audit1  success 25/25  wall med   31.8s   pairs 25  med d  +0.389 ( +2.46%)  winrate  44.0%
+  audit2  success 25/25  wall med   35.0s   pairs 25  med d  -0.400 ( -2.53%)  winrate  56.0%
+  dirty   success 25/25  wall med   22.2s   pairs 25  med d  +0.000 ( +0.00%)  winrate   0.0%
+
+-- ER(180, 0.1)  budget 180s   stock: success 25/25  acl_spur med  15.783  wall med   22.3s
+  audit1  success 25/25  wall med   32.1s   pairs 25  med d  +0.389 ( +2.46%)  winrate  44.0%
+  audit2  success 25/25  wall med   35.0s   pairs 25  med d  -0.400 ( -2.53%)  winrate  56.0%
+  dirty   success 25/25  wall med   22.4s   pairs 25  med d  +0.000 ( +0.00%)  winrate   0.0%
+
+-- ER(180, 0.3)  budget 5s   stock: success 0/25  acl_spur med     nan  wall med    7.7s
+  audit1  success 0/25  wall med    7.8s   [no both-succeed pairs]
+  audit2  success 0/25  wall med    7.7s   [no both-succeed pairs]
+  dirty   success 0/25  wall med    7.7s   [no both-succeed pairs]
+
+-- ER(180, 0.3)  budget 15s   stock: success 4/25  acl_spur med  21.550  wall med   18.7s
+  audit1  success 4/25  wall med   18.5s   pairs  4  med d  -0.156 ( -0.72%)  winrate  75.0%   [WIN-CLAUSE]
+  audit2  success 4/25  wall med   18.6s   pairs  4  med d  +0.125 ( +0.58%)  winrate  50.0%
+  dirty   success 4/25  wall med   18.5s   pairs  4  med d  +0.000 ( +0.00%)  winrate  25.0%
+
+-- ER(180, 0.3)  budget 60s   stock: success 14/25  acl_spur med  21.822  wall med   60.6s
+  audit1  success 14/25  wall med   60.9s   pairs 14  med d  +0.394 ( +1.81%)  winrate  35.7%
+  audit2  success 14/25  wall med   61.1s   pairs 14  med d  +0.353 ( +1.62%)  winrate  14.3%
+  dirty   success 14/25  wall med   60.8s   pairs 14  med d  +0.000 ( +0.00%)  winrate  14.3%
+
+-- ER(180, 0.3)  budget 180s   stock: success 23/25  acl_spur med  21.350  wall med  106.7s
+  audit1  success 23/25  wall med   96.5s   pairs 23  med d  +0.594 ( +2.78%)  winrate  17.4%
+  audit2  success 23/25  wall med   95.7s   pairs 23  med d  +0.533 ( +2.50%)  winrate  17.4%
+  dirty   success 23/25  wall med  106.9s   pairs 23  med d  +0.000 ( +0.00%)  winrate   0.0%
+
+PARETO VERDICT (pre-registered bar):
+  audit1  SURVIVES — ER(180,0.3)@15s WIN-CLAUSE
+  audit2  DIES — on no (cell, budget) point
+  dirty   DIES — on no (cell, budget) point
+
+rows: 1200   csv: /data/dabh/ember/docs/paper3/data/p4_pareto.csv

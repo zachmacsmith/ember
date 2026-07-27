@@ -450,3 +450,21 @@ intuition from §3.21 applies to placement geometry, not to slot assignment.
 - Ops: Z12 K140 MM 4/5 (cliff-edge flakiness, matches E0); attraction 0/5 on all
   K_n cells at 70-81 s (cooperative overrun, watchdog never fired); all other arms
   100% success on MM-feasible cells.
+
+§4.7 RESULTS (2026-07-27, 1,200 rows): **P4 dies in substance.** dirty_skip produces
+byte-identical ACL everywhere (med d exactly +0.000, no wall saving: 40.9 vs 40.8 s —
+skips fire only in the failing tail, which is a negligible share at these scales).
+audit2 +1.6..+2.6% worse at every substantive point; audit1 +1.8..+4.9% worse except
+one 4-pair cell ((180,0.3)@15 s: -0.72%, 3/4 wins) where the win-clause TECHNICALLY
+fired — we decline the claim (4 pairs is below any evidential floor; pre-registration
+lesson recorded: bars need minimum-pairs floors). The §3.17 fixed-wall-clock bet
+LOSES: cheaper auditions do not buy compensating sweeps — the exhaustive audition is
+load-bearing for polish quality (its cost is the accuracy, matching the M2
+micro-timing). Registered arms stay for the anatomy section only.
+
+Two anatomy findings worth the run: (i) **stock MM converges before its budget on
+mid cells** — wall median 40.8 s at BOTH 60 s and 180 s budgets on (140,0.2) (22.3 s
+on (180,0.1)): patience expires and MM leaves budget on the table; (ii) **the
+feasibility cliff is budget-dependent**: (180,0.3) success 0/25 → 4 → 14 → 23/25
+across budgets 5→180 s — E0's "density-flat cliff at n=140" is a 60 s statement, and
+frontier claims must state their budget (time-to-first-legal is the right axis).
