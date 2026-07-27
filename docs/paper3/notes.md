@@ -75,3 +75,45 @@ max_beta).
   pass. busgraph_cache warmed under /data/dabh/xdg: **P16 max clique = 180 (as
   expected), Z12 max clique = 184** — Zephyr's clique capacity exceeds Pegasus's despite
   fewer qubits (degree 20); cache builds were seconds, not minutes, on this host.
+
+### 4.1 E0 — the density-resolved crossover map (2026-07-26)
+
+PRE-REGISTERED 2026-07-26
+
+Question: for each topology (P16, Z12), at which (n, p) does each strategy family win
+(search=MM, seeded=CLMM, constructive=template/clique, alt-search=pssa/attraction/
+cuthill), where is MM's feasibility cliff, and how much headroom above MM exists per
+cell? The map ember's papers never drew (§3.21 measured one sparse diagonal; §3.26 four
+dense anchors).
+
+Script: docs/paper3/data/e0_crossover.py @ caf62119. Companion deflator:
+e0_ceiling.py @ caf62119 (runs after dev-suite selection).
+
+Cells / arms / seeds / budget: 109 cells (p ∈ {0.05..0.9} ladders + K_n anchors incl.
+Z12 frontier rungs around max clique 184) × {minorminer, mmfork-cuthill, clmm, template,
+clique, pssa, attraction} × 3 instances (seeds 101–103; K_n cells 1 instance —
+instance-seed-independent) × 5 algo seeds (0–4; deterministic arms once) × 60 s.
+≈8,235 rows. hyde06, 48 workers, BLAS/OMP=1.
+
+Pre-registered decision outputs:
+1. p*(n) per topology = smallest grid-p where `template` beats `minorminer` on the
+   acl_spur column with ≥70% both-succeed win rate AND median paired ΔACL < 0, per
+   n-ladder.
+2. Headroom map: per cell, best-non-MM-arm median paired ΔACL_spur% vs MM.
+3. CLMM verdict: does clique seeding beat stock MM 0.2.22 anywhere MM succeeds?
+4. Feasibility-cliff table: per (topo, p), largest n with MM success ≥ 4/5.
+5. Standing dev suite frozen by FIXED rule: per topology — the two cells straddling
+   p* on the n≈100 and n≈140 ladders (4), densest feasible K_n anchor + one rung past
+   MM's cliff (2), one sparse control (p=0.05, mid-n), one near-cliff mid-density cell
+   (largest n with MM success 4/5 at p=0.2) → ≤16 cells total.
+
+Bars / decision tree:
+- **G1 (premise gate): at least one dense-random ER cell (p ≥ 0.2) shows ≥5%
+  best-arm median headroom over MM → proceed to M2 builds. Otherwise STOP and rescope
+  with the user before any algorithm code.**
+- Template wins somewhere below p=0.9 → P1 ATE proceeds (KG1 pass). Never below
+  p=0.9 → P1's ER claim dies; dense-structured/K_n story only.
+- CLMM beats MM nowhere (ACL) → P2's ACL claim demoted to success/frontier only
+  (its kill gate has a second chance at M3 with core-seeding variants).
+
+--- results appended below; nothing above this line is edited after launch ---
