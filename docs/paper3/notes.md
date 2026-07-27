@@ -197,7 +197,7 @@ Question: the sequential achievable gain on the K60 template under anytime_polis
 (spur/shorten/x1/x2, longest-first, deterministic) — the ceiling-shift number §4.3
 could not provide (moves measured from the same base are not additive).
 
-Script: docs/paper3/data/p5_k60_fixpoint.py @ <sha of this commit>. Local mac,
+Script: docs/paper3/data/p5_k60_fixpoint.py @ 50479b69. Local mac,
 deterministic, 30-min deadline, no wall-clock claims (measurement, not a race).
 
 Bars: none (measurement). Decision: the fixpoint ACL becomes the template+polish
