@@ -588,7 +588,7 @@ is expected to need the density gate; p3-mmpolish never regresses.
 PRE-REGISTERED 2026-07-27 (before launch; added on user directive — the original
 kickoff asked for MM "including with p-norm layout, the documented practitioner
 default", and no paper3 experiment had carried the arm). Script: m4_eval.py --stage
-main --arms minorminer-layout @ <sha stamped at commit> (dev_suite ARMS gains
+main --arms minorminer-layout @ 3ea487e4 (dev_suite ARMS gains
 "minorminer-layout"; registry arm = minorminer.layout.find_embedding, p-norm
 placement). Cells/seeds/budget: the 14 frozen eval cells x eval inst seeds 901-915 x
 algo seeds 10-14 x 60 s (rows append to m4_eval.csv; m4_analysis pairs it vs
