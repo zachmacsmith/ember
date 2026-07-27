@@ -522,3 +522,24 @@ multi-run configuration under MM's own stopping rules on 6/6 cells (mid cells
 claim per pre-registration; the mid-band numbers are the ATE story wearing a racer
 hat). Z12 (100,0.2) par read -1.86% at 76% misses the -2% bar — reported, not
 claimed. Data: m3_race.csv.
+
+§4.8b RESULTS (2026-07-27, 1,350 rows, 15 seeds): **beta-dhat CONFIRMS on all three
+cells** — n=100: -2.62% (47/28/0 = 63%); n=140: -3.89% (65/10/0 = 87%); n=180:
+-5.00% (53/11/0 = 83%) with success 64/75 (the feasibility cost is real and grows
+with n; reported separately per rule 4). Claim (anatomy section): finite
+diameter-scaled beta — the 2014 paper's OWN D^occ pricing spec — beats shipped
+minorminer's lexicographic overlap pricing by 2.6-5% ACL on sparse deg-10 graphs,
+at a feasibility cost that makes the shipped default the right GLOBAL choice; the
+program's pricing trade has a measurable regime split. Candidate follow-up
+(post-paper): density-gated beta inside the search arm. The other §4.8 flags
+dissolve at 15 seeds: tree-sph 57% win rate (< 60% bar, n=100 only), beta-16 59%
+(n=140 only), boltz-8 null; boltz-2.0 confirms exactly at the 60% bar on its single
+cell (n=100, -2.27%) — recorded as a cell-specific curiosity, no claim.
+
+**M3 CLOSED (2026-07-27). Gate scoreboard:** P1 ate PASS (dominant) · P2 clmm B1/B2
+PASS (topology + regime caveats recorded) · p3-mmpolish PASS (mid/sparse add-on) ·
+P3 racer PASS on template-free cells (both fairness reads) · P4 DIES (audition
+load-bearing; two anatomy findings salvaged) · P6 anatomy: attach filter and
+lexicographic pricing load-bearing (predictions), beta-dhat sparse split (novel,
+confirmed) · KG2 2-swap LIVES (+3.6..4.8%) · KG3 subsumed by E0. Survivors to M4:
+p3-ate, p3-clmm, p3-clmm-core (density-gated role), p3-mmpolish, p3-race8.

@@ -1,0 +1,28 @@
+====================================================================================================
+P6 fork-anatomy probes — column: acl_spur (rule 3); dACL vs stock on both-succeed (inst_seed, algo_seed) pairs;
+success rates separate/unpaired (rule 4). Report-only anatomy: any arm beating stock by median < -1% escalates
+to a 15-seed confirm before a paper claim (anatomy.md decision tree).
+====================================================================================================
+
+-- ER(100, p=0.101)  [avg deg 10.0]   stock: success 75/75  acl_spur med   5.730
+  [tree ] tree-sph   success 75/75  wall med    3.0s   pairs 75  med d  -0.090 ( -1.57%)  W/L/T 43/31/1   [SURPRISE: beats stock — 15-seed confirm]
+  [root ] boltz-2.0  success 75/75  wall med    4.1s   pairs 75  med d  -0.130 ( -2.27%)  W/L/T 45/29/1   [SURPRISE: beats stock — 15-seed confirm]
+  [root ] boltz-8.0  success 75/75  wall med    5.0s   pairs 75  med d  -0.070 ( -1.22%)  W/L/T 42/33/0   [SURPRISE: beats stock — 15-seed confirm]
+  [beta ] beta-16.0  success 75/75  wall med    4.0s   pairs 75  med d  +0.000 ( +0.00%)  W/L/T 20/13/42
+  [beta ] beta-dhat  success 75/75  wall med    5.8s  dhat=['4.0', '5.0']   pairs 75  med d  -0.150 ( -2.62%)  W/L/T 47/28/0   [SURPRISE: beats stock — 15-seed confirm]
+
+-- ER(140, p=0.07194)  [avg deg 10.0]   stock: success 75/75  acl_spur med   7.529
+  [tree ] tree-sph   success 75/75  wall med    5.8s   pairs 75  med d  +0.050 ( +0.66%)  W/L/T 36/39/0
+  [root ] boltz-2.0  success 75/75  wall med    8.2s   pairs 75  med d  +0.000 ( +0.00%)  W/L/T 37/37/1
+  [root ] boltz-8.0  success 75/75  wall med    8.8s   pairs 75  med d  -0.071 ( -0.95%)  W/L/T 40/35/0
+  [beta ] beta-16.0  success 75/75  wall med    8.7s   pairs 75  med d  -0.086 ( -1.14%)  W/L/T 44/25/6   [SURPRISE: beats stock — 15-seed confirm]
+  [beta ] beta-dhat  success 75/75  wall med   13.9s  dhat=['4.0']   pairs 75  med d  -0.293 ( -3.89%)  W/L/T 65/10/0   [SURPRISE: beats stock — 15-seed confirm]
+
+-- ER(180, p=0.05587)  [avg deg 10.0]   stock: success 75/75  acl_spur med   9.222
+  [tree ] tree-sph   success 75/75  wall med    9.0s   pairs 75  med d  +0.206 ( +2.23%)  W/L/T 29/46/0
+  [root ] boltz-2.0  success 75/75  wall med   13.2s   pairs 75  med d  +0.067 ( +0.72%)  W/L/T 33/42/0
+  [root ] boltz-8.0  success 75/75  wall med   12.6s   pairs 75  med d  +0.122 ( +1.33%)  W/L/T 34/41/0
+  [beta ] beta-16.0  success 75/75  wall med   14.1s   pairs 75  med d  -0.044 ( -0.48%)  W/L/T 42/33/0
+  [beta ] beta-dhat  success 64/75  wall med   30.8s  dhat=['4.0', '5.0']   pairs 64  med d  -0.458 ( -5.00%)  W/L/T 53/11/0   [SURPRISE: beats stock — 15-seed confirm]
+
+rows: 1350   csv: /data/dabh/ember/docs/paper3/data/p6_probes_confirm.csv
