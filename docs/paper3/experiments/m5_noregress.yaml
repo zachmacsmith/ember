@@ -1,0 +1,51 @@
+# docs/paper3/experiments/m5_noregress.yaml
+# =============================================================================
+# M5 — structured/lattice no-regression sweep (paper3; CLI route).
+#
+# Protocol notes (protocol.md):
+#   - Rule 1: the CLI salts per-trial seeds with the algorithm name, so this
+#     batch is "(instance, trial) pairing [CLI]" — breadth sweep, never pooled
+#     with script-route statistics.
+#   - Rule 3 caveat: the CLI computes no spur-pruned column; the analysis
+#     (docs/paper3/data/m5_analyze.py) pairs raw avg_chain_length vs raw
+#     avg_chain_length for every arm — stated in its output.
+#   - Pre-registered M5 bar (notes.md §4.x entry before launch): per manifest
+#     family, FAIL if any p3 arm vs minorminer has mean dACL > +0.10 or a
+#     success-rate drop > 1 percentage point.
+#
+# graphs: the union of the packaged presets `structured` + `lattice`
+#   (packages/ember-qc/src/ember_qc/graphs/presets.csv). The selection parser
+#   (ember_qc.load_graphs.parse_graph_selection) resolves a preset name only
+#   when it is the ENTIRE selection string — "structured, lattice" is NOT
+#   valid syntax — so the two presets' selection strings are expanded
+#   verbatim below (verified to parse to the identical 3,388-graph union;
+#   ~3,352 are pegasus-compatible per the manifest, the rest are skipped by
+#   the pre-run compatibility check).
+#
+# Run (hyde06, from /data/dabh/ember, after `ember graphs install structured`
+# and `ember graphs install lattice`):
+#   .venv/bin/ember run docs/paper3/experiments/m5_noregress.yaml
+# Analysis (local): .venv/bin/python docs/paper3/data/m5_analyze.py <batch_dir>
+# =============================================================================
+
+name: m5_structured_noregress
+
+algorithms:
+  - minorminer
+  - p3-ate
+  - p3-clmm
+  - p3-mmpolish
+
+graphs: "1000-1055, 1200-1407, 1550-1651, 1653-1667, 1669-1697, 1800-1863, 2000-2063, 2200-2262, 2400-2462, 2600-3006, 3008-3010, 3012-3016, 3018-3025, 3027-3032, 3034-3036, 3038-3042, 3044-3047, 3049, 3051, 3053, 3055, 3057-3058, 3060-3062, 3064, 3066-3068, 3070-3071, 3073-3075, 3077-3081, 3083-3084, 3086, 3088, 3090-3101, 3103, 3105, 3107, 3109-3110, 3112-3115, 3117-3121, 3123-3235, 3350-3700, 3800-4298, 4300, 4302, 4304-4312, 4314, 4316-4319, 4321-4323, 4325, 4327, 4329-4331, 4333, 4335-4338, 4340, 4342-4344, 4346-4359, 4361, 4363, 4365-4369, 4371, 4373-4374, 4376-4382, 4384-4386, 4388, 4390, 4392-4397, 4399, 4401-4403, 4405-4409, 4411-4414, 4416, 4418-4428, 4430-4433, 4435, 4437-4439, 4441-4443, 4445, 4447-4456, 4458-4460, 4462-4464, 4466-4469, 4471-4475, 4477, 4479, 4481, 4483, 4485, 4487-4490, 4492-4496, 4498, 4500, 4502, 4504, 4506-4507, 4509-4511, 4513, 4515-4517, 4519-4521, 4523, 4525-4528, 4530, 4532, 4534-4536, 4538, 4540-4644, 4750-4760, 4900-4910, 5050-5074, 5076-5077, 5200-5273, 5400-5440, 31800-31995, 32100-32226, 32228-32230, 32232-32234, 32236-32238, 32240, 32242-32244, 32246, 32248-32250, 32350-32492, 32494-32496, 32498-32500, 32502, 32504-32506, 32508, 32510-32517, 32600-32671, 32800-32871, 33000-33071, 33200-33275, 33400-33425"
+
+topologies:
+  - pegasus_16
+
+trials: 1
+warmup: 0
+timeout: 60.0
+seed: 4242          # CLI EVAL master seed (protocol rule 4)
+workers: 56
+output_dir: results/m5_noregress
+
+note: "(instance, trial) pairing [CLI]; paper3 M5 no-regression: p3 arms vs minorminer on the structured+lattice presets (expanded union, see header); pegasus_16, 60 s, eval master seed 4242; walls are within-batch context only (56 workers > the 48-worker limit for wall_time tables — rule 5)"
