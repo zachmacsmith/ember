@@ -48,7 +48,7 @@ from ember_qc.algorithms.paper3._template_core import (
 logger = logging.getLogger(__name__)
 
 _MIN_MM_BUDGET_S = 0.05     # below this we do not bother starting an MM stage
-_VERSION = "1.0.0"
+_VERSION = "1.1.0"   # 1.1: sparse-overflow guard in p3-ate (§4.11 M5)
 
 
 def _acl(embedding: Dict) -> float:
@@ -227,26 +227,35 @@ class P3ATE(EmbeddingAlgorithm):
             if state is None:
                 meta["template_mode"] = "unavailable"
             else:
-                # Below K_max the template path costs ~ms and gets the full
-                # deadline (its internal caps keep it tiny); above K_max its
-                # MM-periphery stage would eat the whole budget, so it gets
-                # half and stock MM keeps the rest (as-built split).
+                # Below K_max the template path costs ~0.5-2 s and gets the
+                # full deadline (its internal caps keep it small); above K_max
+                # its MM-periphery stage would eat the whole budget, so it gets
+                # half and stock MM keeps the rest — but ONLY in the dense
+                # overflow regime where core+periphery ever wins (§4.11 M5
+                # guard): on sparse n > K_max sources (lattices etc.) the
+                # halved MM budget cost success with nothing to show, so the
+                # template stage is skipped and MM keeps everything.
+                _OVERFLOW_MIN_DENSITY = 0.15
                 if n <= state.kmax:
                     tmpl_deadline = deadline
-                else:
+                elif nx.density(source_graph) >= _OVERFLOW_MIN_DENSITY:
                     tmpl_deadline = t0 + 0.5 * timeout
-                try:
-                    r = _template_arm(source_graph, target_graph, state,
-                                      tmpl_deadline, seed)
-                    meta.update(r.get("metadata", {}))
-                    if r["embedding"] is not None:
-                        tmpl_emb = r["embedding"]
-                        meta["acl_template"] = round(_acl(tmpl_emb), 4)
-                    else:
-                        meta["template_err"] = r["err"]
-                except Exception as e:  # template arm must never sink the product
-                    logger.error("p3-ate template stage error: %s", e)
-                    meta["template_err"] = f"{type(e).__name__}: {e}"
+                else:
+                    tmpl_deadline = None
+                    meta["template_mode"] = "skipped_sparse_overflow"
+                if tmpl_deadline is not None:
+                    try:
+                        r = _template_arm(source_graph, target_graph, state,
+                                          tmpl_deadline, seed)
+                        meta.update(r.get("metadata", {}))
+                        if r["embedding"] is not None:
+                            tmpl_emb = r["embedding"]
+                            meta["acl_template"] = round(_acl(tmpl_emb), 4)
+                        else:
+                            meta["template_err"] = r["err"]
+                    except Exception as e:  # template arm must never sink the product
+                        logger.error("p3-ate template stage error: %s", e)
+                        meta["template_err"] = f"{type(e).__name__}: {e}"
 
             # ── stage 2: stock MM with the remaining budget ─────────────────
             mm_emb = None

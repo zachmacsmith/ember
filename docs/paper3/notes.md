@@ -724,3 +724,33 @@ this entry — m4_analysis's fixed arm list omits the supplement, computed direc
    worker-side materialization at 1e754132 (A/B verified: identical (seed, ACL)
    rows vs the eager path; zero test regressions). Neither change affects any
    §4.1-§4.10 result (all script-route or CLI-flag runs).
+
+§4.11 RESULTS — P16 main batch (2026-07-28; 155,700 rows; m5_analyze verdict table
+archived with the batch): **the bar FIRED — 42 family x arm violations — and the
+pre-registered remedy (regime guards + one re-run) is applied.** Decomposition:
+1. **p3-clmm ACL losses on sparse/structured families** (star +1.28, wheel +1.48,
+   grid +0.27, kagome +0.39, planted +0.36...): the §4.11 committed prediction,
+   verbatim. Remedy: density gate at 0.15 — below it the arm passes through to
+   full-budget stock MM (metadata selection=guard_passthrough_mm); guard=False
+   kwarg preserves the faithful literature control for script-route science.
+2. **p3-ate success drops concentrated on large sparse lattices** (bcc 4.2 pt,
+   triangular 3.6, grid 1.3...): ALL from the n > K_max core+periphery path's
+   50/50 budget split halving MM's effective budget on time-marginal instances.
+   ACL never regressed on ANY of the 31,140 graphs (the never-worse ACL property
+   held library-wide). Remedy: attempt core+periphery only at density >= 0.15
+   (the overflow regime where it ever wins); sparse overflow -> MM keeps the
+   full budget (template_mode=skipped_sparse_overflow).
+3. **p3-mmpolish success drops on hard families** (binary_tree 9.1 pt,
+   frustrated_square 6.9, weak_strong 4.1...): the fixed 70/30 budget split —
+   instances needing >70% of budget to legalize flipped to failure. Remedy
+   (v1.1): MM gets the FULL budget; polish spends only the leftover wall (§4.7:
+   MM patience-expires early on most instances) — success == stock MM by
+   construction on time-marginal instances, polish gains preserved elsewhere.
+Also noted: several 1.0-1.4 pt "violations" are single-graph flips in 12-72-graph
+families under CLI per-arm seed noise — the 1 pt bar is below the noise floor at
+that granularity; reported as-is, remedied incidentally by the guards. Arm
+versions bumped to 1.1.0; M4 (closed) measured v1.0 — the guards alter only
+off-regime behavior (no M4 headline cell is affected except (140,0.12) for
+clmm, which becomes passthrough). Re-run plan: z12/c16/layout batches run the
+guarded arms from scratch; P16 re-runs the three guarded arms only (minorminer/
+p3-template rows reused; pairing on graph_id at identical derived seeds).

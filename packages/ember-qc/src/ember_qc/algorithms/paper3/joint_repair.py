@@ -711,21 +711,22 @@ def anytime_polish(embedding: Embedding, source: nx.Graph, target: nx.Graph,
 
 @register_algorithm("p3-mmpolish")
 class P3MMPolish(EmbeddingAlgorithm):
-    """Stock minorminer (~70 % of budget) + P5 anytime polish (the rest).
+    """Stock minorminer (FULL budget) + P5 anytime polish on the leftover wall.
 
-    The control-arm-plus-polish shape of P5b-midband: MM produces the
-    embedding, then the symmetric exact-repair polish spends the remaining
-    budget. Contract-clean: never raises, plain ints, tiny-timeout safe,
-    deterministic per seed (fixpoint reached long before the deadline on
-    contract-suite instances), no stdout. Source is passed to minorminer as a
+    v1.1 (§4.11 M5 guard): MM gets the entire budget — it patience-expires
+    early on most instances (§4.7 "budget on the table"), and the polish spends
+    only whatever wall remains to the same deadline. On time-marginal
+    instances MM consumes everything, the polish is skipped, and success is
+    identical to stock MM by construction (the v1.0 fixed 70/30 split cost
+    success on instances needing 70-100 % of the budget to legalize).
+    Contract-clean: never raises, plain ints, tiny-timeout safe,
+    deterministic per seed, no stdout. Source is passed to minorminer as a
     GRAPH OBJECT (edge-list form drops isolated vertices).
     """
 
-    MM_FRACTION = 0.7
-
     @property
     def version(self) -> str:
-        return "1.0.0"
+        return "1.1.0"
 
     def embed(self, source_graph, target_graph, timeout=60.0, **kwargs) -> dict:
         start = time.perf_counter()
@@ -740,10 +741,9 @@ class P3MMPolish(EmbeddingAlgorithm):
             except (TypeError, ValueError):
                 budget = 60.0
             deadline = start + budget
-            mm_budget = max(0.05, self.MM_FRACTION * budget)
             raw = minorminer.find_embedding(
                 source_graph, list(target_graph.edges()),
-                timeout=mm_budget, verbose=0, random_seed=int(seed),
+                timeout=budget, verbose=0, random_seed=int(seed),
             )
             if not raw:
                 return {"embedding": {}, "time": time.perf_counter() - start,

@@ -281,43 +281,77 @@ def _clmm_embed(source_graph: nx.Graph, target_graph: nx.Graph,
 # registered arms
 # ---------------------------------------------------------------------------
 
+_GUARD_MIN_DENSITY = 0.15   # §4.11 M5 guard: seed only in the win regime
+
+
+def _guarded_embed(source_graph, target_graph, timeout, seed, core_seeding,
+                   guard):
+    """v1.1 density gate: below the measured win regime (E0/M5: seeds hurt on
+    sparse/structured sources), pass through to plain full-budget stock MM so
+    the arm is exactly minorminer off-regime. ``guard=False`` (script-route
+    kwargs) restores the unguarded faithful behavior for science runs."""
+    if guard and nx.density(source_graph) < _GUARD_MIN_DENSITY:
+        t0 = time.perf_counter()
+        try:
+            import minorminer
+            raw = minorminer.find_embedding(
+                source_graph, list(target_graph.edges()),
+                timeout=timeout, random_seed=seed, verbose=0)
+            if not raw:
+                return {"embedding": {}, "time": time.perf_counter() - t0,
+                        "success": False, "status": "FAILURE"}
+            emb = {int(w): [int(q) for q in c] for w, c in raw.items()}
+            return {"embedding": emb, "time": time.perf_counter() - t0,
+                    "metadata": {"selection": "guard_passthrough_mm"}}
+        except Exception as e:  # contract: never raise
+            logger.error("p3-clmm guard passthrough error: %s", e)
+            return {"embedding": {}, "time": time.perf_counter() - t0,
+                    "success": False, "status": "FAILURE", "error": str(e)}
+    return _clmm_embed(source_graph, target_graph, timeout, seed,
+                       core_seeding=core_seeding)
+
+
 @register_algorithm("p3-clmm")
 class ClmmAlgorithm(EmbeddingAlgorithm):
     """CLMM (Zbinden et al. 2020): right-sized busclique clique chains as
     initial_chains for single-shot stock minorminer; degree/random seed-vertex
-    selection at density 0.3. The faithful-reproduction literature control."""
+    selection at density 0.3. v1.1: density-gated (passthrough to stock MM
+    below density 0.15 — §4.11 M5 guard); guard=False kwarg restores the
+    faithful literature-control behavior."""
 
     _requires = ["minorminer"]
     supported_counters: List[str] = []
 
     @property
     def version(self) -> str:
-        return "1.0.0"
+        return "1.1.0"
 
     def embed(self, source_graph, target_graph, timeout=60.0, **kwargs):
         seed = kwargs.get("seed", None)
         if seed is None:
             seed = 42
-        return _clmm_embed(source_graph, target_graph, float(timeout),
-                           int(seed), core_seeding=False)
+        return _guarded_embed(source_graph, target_graph, float(timeout),
+                              int(seed), core_seeding=False,
+                              guard=kwargs.get("guard", True))
 
 
 @register_algorithm("p3-clmm-core")
 class ClmmCoreAlgorithm(EmbeddingAlgorithm):
     """CLMM++: seed the degeneracy core (peel by degeneracy order to <= k
     vertices) with spur-pruned busclique chains; periphery left entirely to
-    stock minorminer's search."""
+    stock minorminer's search. v1.1: density-gated like p3-clmm."""
 
     _requires = ["minorminer"]
     supported_counters: List[str] = []
 
     @property
     def version(self) -> str:
-        return "1.0.0"
+        return "1.1.0"
 
     def embed(self, source_graph, target_graph, timeout=60.0, **kwargs):
         seed = kwargs.get("seed", None)
         if seed is None:
             seed = 42
-        return _clmm_embed(source_graph, target_graph, float(timeout),
-                           int(seed), core_seeding=True)
+        return _guarded_embed(source_graph, target_graph, float(timeout),
+                              int(seed), core_seeding=True,
+                              guard=kwargs.get("guard", True))

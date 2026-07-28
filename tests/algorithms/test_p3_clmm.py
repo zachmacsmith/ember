@@ -131,10 +131,18 @@ class TestSelectionRules:
         assert r["metadata"]["n_seeded"] == C4_MAXCLIQUE
 
     def test_arm_reports_lowdeg_branch_when_sparse_and_k_lt_n(self):
+        # v1.1: the density guard would pass this sparse source through to
+        # stock MM — guard=False exercises the faithful Zbinden branch.
         src = nx.gnp_random_graph(30, 0.08, seed=4)  # n=30 > k=16, sparse
-        r = CLMM.embed(src, C4, timeout=10.0, seed=0)
+        r = CLMM.embed(src, C4, timeout=10.0, seed=0, guard=False)
         _assert_valid(r, src, C4)
         assert r["metadata"]["selection"] == "lowdeg"
+
+    def test_guard_passthrough_below_density_gate(self):
+        src = nx.gnp_random_graph(30, 0.08, seed=4)  # density < 0.15
+        r = CLMM.embed(src, C4, timeout=10.0, seed=0)
+        _assert_valid(r, src, C4)
+        assert r["metadata"]["selection"] == "guard_passthrough_mm"
 
     def test_arm_reports_all_branch_when_k_ge_n(self):
         src = nx.gnp_random_graph(12, 0.3, seed=6)   # n=12 <= k=16
