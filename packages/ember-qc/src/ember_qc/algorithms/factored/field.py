@@ -116,6 +116,7 @@ class TileGrid:
 
     def __init__(self, target: nx.Graph, pos: Dict[int, Point],
                  fallback_bins: int = 16):
+        self.graph = target  # reference only (coupler lookups, s3.33)
         qubits = sorted(pos)
         coords = np.array([pos[q] for q in qubits], dtype=float)
         tio = _tile_orient(target)
@@ -582,15 +583,35 @@ def assign_rows_cols(pos: Dict[int, Point], ext: Dict[int, Point],
     return new_pos, len(parts)
 
 
+def _couples(grid: TileGrid, r: int, s_h: int, c: int, s_v: int) -> bool:
+    """True iff the h-wire (row r, sub s_h) and the v-wire (col c, sub s_v)
+    share a physical coupler at their crossing tile (c, r). Missing qubits
+    (dead, or wire absent at that tile) -> False. On Chimera every in-tile
+    pair couples; on Pegasus only ~56% do (s3.33) -- which wires you pick
+    decides whether a crossing is real."""
+    qh = grid.wire_map.get((1, r, s_h), {}).get(c)
+    qv = grid.wire_map.get((0, c, s_v), {}).get(r)
+    return qh is not None and qv is not None and grid.graph.has_edge(qh, qv)
+
+
 def _color_claim_bars(grid: TileGrid, claimed: set,
                       chains: Dict[int, List[int]], orientation: int,
-                      bars: List[Tuple[int, float, float, int]]) -> None:
-    """Color explicit interval bars onto physical wires and claim contiguous
-    runs. ``bars``: (line, start, end, v) tuples of one orientation. Bars
-    sharing a line with disjoint intervals may share a wire; overlapping
-    ones may not -- interval graph coloring, solved exactly by the greedy
+                      bars: List[Tuple[int, float, float, int]], *,
+                      score_fn=None, assignments: Optional[dict] = None,
+                      stride: int = 1) -> None:
+    """Color explicit interval bars onto physical wires and claim runs.
+    ``bars``: (line, start, end, v) tuples of one orientation. Bars sharing
+    a line with disjoint intervals may share a wire; overlapping ones may
+    not -- interval graph coloring, solved exactly by the greedy
     left-endpoint sweep. Oversubscribed bars are skipped (left point-seeded
-    by the caller's guarantee pass)."""
+    by the caller's guarantee pass).
+
+    ``score_fn(v, line, candidate_color)``: when given, pick the FREE color
+    maximizing the score (tie -> lowest sub) instead of the first free one
+    -- coloring stays exact (any free color is feasible; the score only
+    breaks the freedom). ``assignments``: out-param, v -> (line, color).
+    ``stride``: claim every stride-th tile of the run (1 = contiguous;
+    >1 leaves the router negotiation room, s3.33)."""
     by_line: Dict[int, list] = {}
     for line, a, b, v in bars:
         by_line.setdefault(line, []).append((a, b, v))
@@ -603,12 +624,21 @@ def _color_claim_bars(grid: TileGrid, claimed: set,
             # free colors whose interval ended
             for c in [c for c, e in used_colors.items() if e <= a]:
                 del used_colors[c]
-            color = next((c for c in subs if c not in used_colors), None)
-            if color is None:
+            free = [c for c in subs if c not in used_colors]
+            if not free:
                 continue  # line oversubscribed; leave this bar point-seeded
+            if score_fn is None:
+                color = free[0]
+            else:
+                color = max(free, key=lambda cc: (score_fn(v, line, cc), -cc))
             used_colors[color] = b
+            if assignments is not None:
+                assignments[v] = (line, color)
             run = grid.wire_map.get((orientation, line, color), {})
-            for t in range(int(math.floor(a)), int(math.ceil(b)) + 1):
+            t0 = int(math.floor(a))
+            for t in range(t0, int(math.ceil(b)) + 1):
+                if (t - t0) % max(stride, 1):
+                    continue
                 q = run.get(t)
                 if q is not None and q not in claimed:
                     claimed.add(q)
@@ -840,12 +870,22 @@ def bar_force_iv(grid: TileGrid, psi: np.ndarray, pos: Dict[int, Point],
 
 
 def wire_seeds_iv(grid: TileGrid, pos: Dict[int, Point],
-                  bars: BarIntervals) -> Dict[int, List[int]]:
+                  bars: BarIntervals,
+                  src_adj: Optional[Dict[int, List[int]]] = None,
+                  stride: int = 1) -> Dict[int, List[int]]:
     """Interval-native wire-coherent seeds (span-state sibling of
     :func:`wire_seeds`). Derived bars are one-sided in general, so claims
     run over the ACTUAL interval, anchored at the owner's row/column --
     never a centered approximation. Untyped grids fall back to
-    nearest-qubit sampling along the intervals (~1 per tile)."""
+    nearest-qubit sampling along the intervals (~1 per tile).
+
+    ``src_adj``: enables t-COORDINATED coloring (s3.33): rows are colored
+    first (greedy, as always); columns are then colored preferring the sub
+    whose wire actually COUPLES to the most contact partners'
+    already-assigned row wires at the crossing tiles -- the coupler
+    awareness both discrete operations otherwise lack. None = legacy
+    behavior. ``stride``: claim every stride-th qubit of each run
+    (negotiation slack; 1 = contiguous)."""
     claimed: set = set()
     chains: Dict[int, List[int]] = {v: [] for v in pos}
 
@@ -873,8 +913,8 @@ def wire_seeds_iv(grid: TileGrid, pos: Dict[int, Point],
                     chains[v].append(q)
         return {v: c for v, c in chains.items() if c}
 
-    for orientation in (1, 0):  # h-bars along rows, then v-bars along columns
-        tuples = []
+    def _tuples(orientation: int):
+        out = []
         for v in sorted(pos):
             h_iv, v_iv = bars[v]
             iv = h_iv if orientation == 1 else v_iv
@@ -883,8 +923,239 @@ def wire_seeds_iv(grid: TileGrid, pos: Dict[int, Point],
                 continue
             line = int(round(float(pos[v][1] if orientation == 1
                                    else pos[v][0])))
-            tuples.append((line, float(iv[0]), float(iv[1]), v))
-        _color_claim_bars(grid, claimed, chains, orientation, tuples)
+            out.append((line, float(iv[0]), float(iv[1]), v))
+        return out
+
+    # phase 1: rows, greedy (record who got which wire)
+    h_assign: Dict[int, Tuple[int, int]] = {}
+    _color_claim_bars(grid, claimed, chains, 1, _tuples(1),
+                      assignments=h_assign, stride=stride)
+
+    # phase 2: columns, coupler-scored when src_adj is given
+    score_fn = None
+    if src_adj is not None:
+        def score_fn(v, line, cand):
+            v_iv = bars[v][1]
+            n = 0
+            for u in src_adj.get(v, []):
+                ha = h_assign.get(u)
+                if ha is None:
+                    continue
+                r_u, s_u = ha
+                if not (v_iv[0] - 1e-9 <= r_u <= v_iv[1] + 1e-9):
+                    continue
+                if _couples(grid, r_u, s_u, line, cand):
+                    n += 1
+            return n
+    _color_claim_bars(grid, claimed, chains, 0, _tuples(0),
+                      score_fn=score_fn, stride=stride)
 
     _ensure_seeds(grid, claimed, chains, pos)
     return {v: c for v, c in chains.items() if c}
+
+
+def slack_relax(pos: Dict[int, Point], src_adj: Dict[int, List[int]], *,
+                eta: float = 0.25, steps: int = 2,
+                clamp: float = 0.49) -> Dict[int, Point]:
+    """Fractional refinement that CANNOT change any assigned line: run
+    span_step a few times, then clamp every coordinate back into +-clamp of
+    its original rounded line (round() invariant, clamp < 0.5). Restores
+    the negotiation slack that integer-locked seeds lack (the s3.32
+    diagnosis: the field states' accidental virtue was uncommitted
+    positions) without touching the packing."""
+    base = {v: np.round(np.asarray(p, dtype=float)) for v, p in pos.items()}
+    out = {v: np.asarray(p, dtype=float).copy() for v, p in pos.items()}
+    for _ in range(max(steps, 0)):
+        out = span_step(out, src_adj, eta=eta, max_step=clamp)
+    return {v: np.clip(out[v], base[v] - clamp, base[v] + clamp)
+            for v in out}
+
+
+# ==============================================================================
+# PRODUCT MODE (notes s3.32): the fabric as two coupled 1-D wire layers
+# ==============================================================================
+#
+# Max's original framing: the hardware is ~ (grid x complete bipartite per
+# tile) — a horizontal wire layer organized into rows and a vertical layer
+# into columns, glued only by tile-local all-to-all. In the product view a
+# variable is one interval in each layer; the plane "cross" is just their
+# superposition. Coordinate descent on the SAME span energy: alternately
+# assign rows (columns frozen — each participant's h-interval is then a
+# fixed-length 1-D interval, and rows are an exact interval-packing problem)
+# and columns (rows frozen). Capacity is enforced per line by overlap DEPTH
+# (interval-graph clique number) — the greedy wire *coloring* disappears
+# from the algorithm; only the depth test remains. Iteration 0 projects onto
+# the feasible set (spreading from a compact init necessarily RAISES span
+# energy — that step is unconditional); later iterations accept a half-step
+# only if E does not increase, so the alternation is monotone on the
+# feasible set. Known risk (the Sinkhorn discussion): block descent can
+# stall at joint blind spots; the optional Metropolis swap sweeps are the
+# minimum-dose noise applied exactly along the permutation directions
+# (default OFF — a contingency, not a mechanism).
+
+
+def line_depth(intervals: List[Tuple[float, float]]) -> int:
+    """Max overlap depth of (a, b) intervals (endpoint sweep; the interval
+    graph's clique number). Touching endpoints do not overlap."""
+    if not intervals:
+        return 0
+    events = []
+    for a, b in intervals:
+        events.append((float(a), 1))
+        events.append((float(b), -1))
+    events.sort(key=lambda e: (e[0], e[1]))
+    depth = best = 0
+    for _, delta in events:
+        depth += delta
+        if depth > best:
+            best = depth
+    return best
+
+
+def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
+                      grid: TileGrid, *, iters: int = 8, kappa: float = 13.0,
+                      floor: bool = True, derate: float = 1.0,
+                      swap_sweeps: int = 0, swap_temp: float = 0.5,
+                      seed: int = 0):
+    """Alternating 1-D arrangement of the capacity-forced variables.
+
+    Participants (deg/kappa - 1 > 0) are packed into integer rows and
+    columns; sparse variables are untouched (their dynamics stay with
+    span_step). Returns (new_pos, info) with info = {"E": trajectory,
+    "iters": full iterations run, "unplaced": count with no feasible line,
+    "assigned": participant count}.
+    """
+    participants = [v for v in sorted(pos)
+                    if len([u for u in src_adj.get(v, []) if u in pos])
+                    / kappa - 1.0 > 0]
+    new_pos = {v: np.asarray(p, dtype=float).copy() for v, p in pos.items()}
+    info = {"E": [span_energy(new_pos, src_adj)], "iters": 0,
+            "unplaced": 0, "assigned": len(participants)}
+    if not participants:
+        return new_pos, info
+
+    def _intervals(axis: int) -> Dict[int, Tuple[float, float]]:
+        # fixed-length interval per participant on the frozen axis
+        other = 0 if axis == 1 else 1
+        out = {}
+        for v in participants:
+            nbrs = [u for u in src_adj.get(v, []) if u in new_pos]
+            xs = [float(new_pos[u][other]) for u in nbrs] \
+                + [float(new_pos[v][other])]
+            a, b = min(xs), max(xs)
+            if floor:
+                # half of the contact-capacity floor lives on each layer
+                need = (len(nbrs) / kappa - 1.0) / 2.0
+                deficit = need - (b - a)
+                if deficit > 0:
+                    a -= deficit / 2.0
+                    b += deficit / 2.0
+            out[v] = (a, b)
+        return out
+
+    def _half(axis: int, force: bool) -> bool:
+        """Pack participants into lines along ``axis``; accept if E does not
+        increase (or unconditionally when ``force``: the feasibility
+        projection). Returns True if the state changed."""
+        pool = (grid.cap[:, :, 1].mean(axis=1) if axis == 1
+                else grid.cap[:, :, 0].mean(axis=0))
+        nlines = grid.H if axis == 1 else grid.W
+        ivs = _intervals(axis)
+        order = sorted(participants,
+                       key=lambda v: (float(new_pos[v][axis]), v))
+        lines: Dict[int, list] = {i: [] for i in range(nlines)}
+        trial = {v: new_pos[v].copy() for v in new_pos}
+        miss = 0
+        for v in order:
+            y0 = float(new_pos[v][axis])
+            placed = False
+            for ln in sorted(range(nlines), key=lambda i: (abs(i - y0), i)):
+                if line_depth(lines[ln] + [ivs[v]]) <= derate * pool[ln]:
+                    lines[ln].append(ivs[v])
+                    trial[v][axis] = float(ln)
+                    placed = True
+                    break
+            if not placed:
+                miss += 1  # no feasible line; stays put
+        e_old = span_energy(new_pos, src_adj)
+        e_new = span_energy(trial, src_adj)
+        if force or e_new <= e_old + 1e-9:
+            changed = any(not np.allclose(trial[v], new_pos[v])
+                          for v in participants)
+            for v in participants:
+                new_pos[v] = trial[v]
+            info["unplaced"] = miss
+            info["E"].append(e_new)
+            return changed
+        info["E"].append(e_old)
+        return False
+
+    for it in range(max(iters, 1)):
+        force = (it == 0)
+        moved = _half(axis=1, force=force)
+        moved = _half(axis=0, force=force) or moved
+        info["iters"] = it + 1
+        if not moved and not force:
+            break
+
+    if swap_sweeps > 0:
+        # Contingency: Metropolis swaps along each axis — noise applied only
+        # in the permutation directions block descent cannot explore.
+        rng = np.random.default_rng(seed)
+        e_cur = span_energy(new_pos, src_adj)
+        n_p = len(participants)
+        for _ in range(swap_sweeps):
+            for axis in (1, 0):
+                for _ in range(n_p):
+                    i, j = rng.integers(0, n_p, size=2)
+                    u, v = participants[int(i)], participants[int(j)]
+                    if u == v or new_pos[u][axis] == new_pos[v][axis]:
+                        continue
+                    new_pos[u][axis], new_pos[v][axis] = \
+                        float(new_pos[v][axis]), float(new_pos[u][axis])
+                    e_try = span_energy(new_pos, src_adj)
+                    d_e = e_try - e_cur
+                    if d_e <= 0 or rng.random() < math.exp(
+                            -d_e / max(swap_temp, 1e-9)):
+                        e_cur = e_try
+                    else:  # revert
+                        new_pos[u][axis], new_pos[v][axis] = \
+                            float(new_pos[v][axis]), float(new_pos[u][axis])
+        info["E"].append(e_cur)
+    return new_pos, info
+
+
+def bar_domains(grid: TileGrid, pos: Dict[int, Point], bars: BarIntervals,
+                src_adj: Dict[int, List[int]], *, kappa: float = 13.0,
+                margin: int = 1) -> Dict[int, List[int]]:
+    """Per-variable qubit domains for minorminer's ``restrict_chains``: shape
+    transmitted as a CONSTRAINT REGION instead of a constructed chain — MM
+    keeps every sub-tile identity choice (no wire coloring on this path).
+
+    Capacity-gated: only variables with deg/kappa - 1 > 0 get a domain
+    (missing entries are unrestricted in minorminer). Domain = h-wire qubits
+    in the row band round(y_v) +- margin over the h-interval (+- margin),
+    union v-wire qubits in the symmetric column band. Untyped grids: {}.
+    """
+    if not grid.typed:
+        return {}
+    tp = grid.coords @ grid.M.T + grid.c  # tile coords of all qubits
+    tx, ty = tp[:, 0], tp[:, 1]
+    rtx, rty = np.round(tx), np.round(ty)
+    out: Dict[int, List[int]] = {}
+    for v in sorted(pos):
+        nbrs = [u for u in src_adj.get(v, []) if u in pos]
+        if len(nbrs) / kappa - 1.0 <= 0:
+            continue
+        h_iv, v_iv = bars[v]
+        r = round(float(pos[v][1]))
+        c = round(float(pos[v][0]))
+        m = float(margin)
+        sel_h = ((grid.orient == 1)
+                 & (rty >= r - m) & (rty <= r + m)
+                 & (tx >= float(h_iv[0]) - m) & (tx <= float(h_iv[1]) + m))
+        sel_v = ((grid.orient == 0)
+                 & (rtx >= c - m) & (rtx <= c + m)
+                 & (ty >= float(v_iv[0]) - m) & (ty <= float(v_iv[1]) + m))
+        out[v] = [grid.qubits[int(i)] for i in np.flatnonzero(sel_h | sel_v)]
+    return out

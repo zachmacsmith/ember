@@ -166,6 +166,61 @@ one ER regression (+0.44, span-tb only; span-defaults hold parity).
 (4) **span dominates cross on every measured cell with strictly fewer
 knobs** — cross deletion is Max's call. Options on record in s3.31.
 
+### Product mode — alternating 1-D arrangement (built + probed 2026-07-27; notes s3.32)
+
+**s3.33 build (2026-07-27, Max: "let's do 1 and 2"): coupler-aware coloring
++ handoff slack.** Premise verified: Pegasus tiles couple only ~56% of h/v
+wire pairs (80/144 at a P4 tile; Chimera 16/16 — mechanism no-ops there).
+Built, all default-off: `wire_couple` (t-coordinated coloring: columns
+prefer subs that couple to contact partners' assigned row wires at the
+crossing tiles — the coloring stays exact, the score only breaks the
+freedom), `slack_steps` (slack_relax: fractionalize within assigned lines,
+round() invariant), `seed_stride` (claim every stride-th qubit — partial
+confidence). **Pre-registered gates, set before any run:** testbed K100
+coupled(+slack) finalist ≤ 13.46 to run the pipeline probe; ≤ 13.15
+confirms the coupler mechanism (beats the field dynamics); < 13.44 = first
+K100 search win vs stock mm. Mechanism check: realized couplable-contact
+fraction must RISE under +couple, else the scoring is miswired — debug
+before interpreting ACL. Mandatory K140 regression check: the s3.32 cliff
+win (arrange-1shot 19.69, paired 3/3) must survive coupled seeds. Routing
+×3 seeds per finalist (s3.32 bimodality lesson). Status/verdict (same day, notes s3.33):
+coupler mechanism REAL at tight packing (15.09 -> 14.51, all seeds) but
+the gate FAILED at every operating point (best 14.51 vs 13.46); slack
+inert as built (floor/ceil swallows sub-tile shifts); the
+couplable-fraction metric saturates and needs a per-crossing redesign.
+Sharpest finding: uniform exact packing QUANTIZES row counts
+(10/11/12/13/16 — the field's winning 14-row state is unreachable), and
+routed ACL is non-monotone in rows; the field states' residual advantage
+is heterogeneity, not physics. Knobs stay default-off. Per-regime
+standings: field dynamics owns comfortable-dense (13.15), arrange owns
+the cliff (19.69 K140, paired 3/3).
+
+The product-topology framing made operational: capacity-forced variables
+packed into integer rows/columns by monotone coordinate descent on the span
+energy (exact per-line interval packing; capacity = overlap depth — no wire
+coloring in the algorithm). `span_dynamics="arrange"`; no field calls on
+that path; swap-Metropolis contingency default OFF (E-neutral on K_n, as
+the symmetry argument predicted). As an optimizer: 2 iterations / ~0 s
+replaces 300 field steps / ~20 s, exact feasibility, zero schedule knobs.
+
+**Verdict (mini-probe vs s3.31 baselines): K140 — first ACL win over stock
+minorminer on any dense cell: arrange-1shot 19.69, arrange 20.45, vs mm
+20.70, all 3/3 legal** (point/cross fail 0/3). K100 unbeaten (arrange
+14.60; the 13.46 bar stands; testbed keep-alive failed at 14.22 — the
+E-vs-routability wedge, measured a third way: tightest-E states route
+worst). Guard ws_n486 3.41 = the standing span-arm offset, arrange inert on
+sparse by capacity gating. Defaults unchanged; the emerging role is
+regime-specific — product mode + wire seeds as the cliff/hard-frontier
+configuration. Next: hard-frontier eval with arrange-1shot; irregular-dense
+cells; slack-aware objective for the K100 residual.
+
+**Domains handoff PARKED on an upstream minorminer 0.2.22 bug** (report
+upstream): `restrict_chains` + `initial_chains` on the same variable hangs
+indefinitely ignoring the timeout (isolated repro; restrict alone returns
+instantly; disjoint variable sets safe); segfaults also observed with
+non-trivial domains. `bar_domains` is built + tested; `seed_mode="domains"`
+raises until a fork-level fix exists.
+
 ### Extent-state v2 verdict (2026-07-19; notes s3.29)
 
 Tip-coupling + assignment built and probed; **bar failed 0-for-2, K140 bars

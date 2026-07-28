@@ -1,0 +1,14 @@
+<stdin>:1: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+derate=0.9: rows=11 E=2000
+derate=0.85: rows=12 E=2200
+derate=0.8: rows=12 E=2200
+derate=0.75: rows=13 E=2400
+derate=0.72: rows=13 E=2400
+derate=0.7: rows=16 E=2900
+derate=0.68: rows=16 E=2900
+derate=0.65: rows=16 E=2900
+derate=0.75 rows=13 base: ACLs=[19.23, 19.1, 18.52] mean=18.95
+derate=0.75 rows=13 +couple: ACLs=[18.65, 14.73, 16.13] mean=16.50
+derate=0.72 rows=13 base: ACLs=[19.23, 19.1, 18.52] mean=18.95
+derate=0.72 rows=13 +couple: ACLs=[18.65, 14.43, 16.13] mean=16.40
+done-fill

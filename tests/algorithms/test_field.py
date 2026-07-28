@@ -483,3 +483,139 @@ class TestWireSeeds:
         bars = {0: (np.array([2.0, 6.0]), np.array([5.0, 5.0]))}
         seeds = wire_seeds_iv(grid, pos, bars)
         assert len(seeds[0]) >= 4  # center + ~1 qubit per interval tile
+
+
+from ember_qc.algorithms.factored.field import (
+    _couples, alternate_arrange, bar_domains, line_depth, slack_relax,
+)
+
+
+class TestProductMode:
+    def _grid(self, B=20, cap=1.0):
+        g = nx.convert_node_labels_to_integers(nx.grid_2d_graph(B, B))
+        grid = TileGrid(g, nx.spectral_layout(g), fallback_bins=B)
+        grid.cap[:, :, :] = cap
+        return grid
+
+    def test_line_depth(self):
+        assert line_depth([]) == 0
+        # touching endpoints do not overlap
+        assert line_depth([(0, 2), (2, 4)]) == 1
+        assert line_depth([(0, 2), (1, 3), (2, 4)]) == 2
+        assert line_depth([(0, 4), (1, 3), (2, 5)]) == 3
+
+    def test_arrange_packs_distinct_rows_and_is_monotone(self):
+        grid = self._grid()
+        n = 16  # deg 15 > kappa: all participate
+        pos = {v: np.array([10.0 + 0.01 * v, 10.0 + 0.01 * v])
+               for v in range(n)}
+        adj = {v: [u for u in range(n) if u != v] for v in range(n)}
+        new, info = alternate_arrange(pos, adj, grid, iters=8)
+        assert info["assigned"] == n
+        rows = [int(round(new[v][1])) for v in range(n)]
+        cols = [int(round(new[v][0])) for v in range(n)]
+        # pool depth 1 per line: overlapping intervals need distinct lines
+        assert len(set(rows)) == n and len(set(cols)) == n
+        # monotone after the feasibility projection (iteration 0 = 2 entries)
+        tail = info["E"][3:]
+        assert all(b <= a + 1e-6 for a, b in zip(tail, tail[1:]))
+        again, _ = alternate_arrange(pos, adj, grid, iters=8)
+        assert all(np.allclose(new[v], again[v]) for v in pos)
+
+    def test_arrange_leaves_sparse_untouched(self):
+        grid = self._grid()
+        pos = {v: np.array([float(v), 3.7]) for v in range(8)}
+        adj = {v: [u for u in (v - 1, v + 1) if 0 <= u < 8] for v in range(8)}
+        new, info = alternate_arrange(pos, adj, grid)
+        assert info["assigned"] == 0
+        assert all(np.allclose(new[v], pos[v]) for v in pos)
+
+    def test_couples_chimera_all_pairs(self):
+        g = dnx.chimera_graph(4, 4, 4)
+        grid = TileGrid(g, target_layout(g))
+        for s in range(4):
+            for s2 in range(4):
+                assert _couples(grid, 1, s, 2, s2)
+
+    def test_couples_pegasus_partial(self):
+        g = dnx.pegasus_graph(4)
+        grid = TileGrid(g, target_layout(g))
+        hsubs = sorted({s for (u, ln, s) in grid.wire_map
+                        if u == 1 and ln == 1})
+        vsubs = sorted({s for (u, ln, s) in grid.wire_map
+                        if u == 0 and ln == 1})
+        vals = [_couples(grid, 1, s, 1, s2) for s in hsubs for s2 in vsubs]
+        assert any(vals) and not all(vals)  # the ~56% structure is real
+
+    def test_couples_missing_wire_false(self):
+        g = dnx.chimera_graph(4, 4, 4)
+        grid = TileGrid(g, target_layout(g))
+        assert not _couples(grid, 1, 99, 2, 0)
+
+    def test_coupled_coloring_prefers_couplable(self):
+        g = dnx.pegasus_graph(4)
+        grid = TileGrid(g, target_layout(g))
+        # u=0: h-bar on row 1 over cols [0,2]; v=1: v-bar on col 1 over
+        # rows [0,2]; single edge (0,1). Their only possible coupler is at
+        # the crossing tile (1,1) between the two chosen wires.
+        pos = {0: np.array([0.0, 1.0]), 1: np.array([1.0, 1.0])}
+        bars = {0: (np.array([0.0, 2.0]), np.array([1.0, 1.0])),
+                1: (np.array([1.0, 1.0]), np.array([0.0, 2.0]))}
+        adj = {0: [1], 1: [0]}
+        # phase 1 gives u the first free h-sub; check a couplable v-sub
+        # exists for it at all (else the instance can't test the mechanism)
+        hsubs = sorted({s for (u, ln, s) in grid.wire_map
+                        if u == 1 and ln == 1})
+        vsubs = sorted({s for (u, ln, s) in grid.wire_map
+                        if u == 0 and ln == 1})
+        assert any(_couples(grid, 1, hsubs[0], 1, s2) for s2 in vsubs)
+        cpl = wire_seeds_iv(grid, pos, bars, src_adj=adj)
+        assert any(g.has_edge(a, b) for a in cpl[0] for b in cpl[1])
+        again = wire_seeds_iv(grid, pos, bars, src_adj=adj)
+        assert cpl == again  # deterministic
+
+    def test_stride_claims_alternate_tiles(self):
+        g = dnx.chimera_graph(8, 8, 4)
+        grid = TileGrid(g, target_layout(g))
+        pos = {0: np.array([2.0, 5.0])}
+        bars = {0: (np.array([2.0, 7.0]), np.array([5.0, 5.0]))}
+        s1 = wire_seeds_iv(grid, pos, bars, stride=1)
+        s2 = wire_seeds_iv(grid, pos, bars, stride=2)
+        conv = dnx.chimera_coordinates(8, 8, 4)
+        js1 = sorted(j for (_, j, _, _) in
+                     (conv.linear_to_chimera(q) for q in s1[0]))
+        js2 = sorted(j for (_, j, _, _) in
+                     (conv.linear_to_chimera(q) for q in s2[0]))
+        assert js2 == js1[::2]  # every other tile, same wire
+
+    def test_slack_relax_line_invariant(self):
+        pos = {v: np.array([float(v), 3.0]) for v in range(6)}
+        adj = {v: [u for u in (v - 1, v + 1) if 0 <= u < 6] for v in range(6)}
+        out = slack_relax(pos, adj, eta=0.4, steps=3)
+        for v in pos:
+            assert np.all(np.round(out[v]) == np.round(pos[v]))  # same lines
+        assert any(not np.allclose(out[v], pos[v]) for v in pos)  # but moved
+        again = slack_relax(pos, adj, eta=0.4, steps=3)
+        assert all(np.allclose(out[v], again[v]) for v in pos)
+
+    def test_bar_domains_gating_and_bands(self):
+        g = dnx.chimera_graph(8, 8, 4)
+        grid = TileGrid(g, target_layout(g))
+        n = 15  # v0 has deg 14 > kappa; leaves have deg 1
+        pos = {0: np.array([4.0, 3.0])}
+        pos.update({v: np.array([2.0 + 0.2 * v, 3.0]) for v in range(1, n)})
+        adj = {0: list(range(1, n))}
+        adj.update({v: [0] for v in range(1, n)})
+        bars = {0: (np.array([2.0, 6.0]), np.array([1.0, 5.0]))}
+        bars.update({v: (np.array([pos[v][0]] * 2), np.array([3.0, 3.0]))
+                     for v in range(1, n)})
+        doms = bar_domains(grid, pos, bars, adj, margin=1)
+        assert set(doms) == {0}  # capacity-gated: only the hub
+        conv = dnx.chimera_coordinates(8, 8, 4)
+        assert len(doms[0]) > 0
+        for q in doms[0]:
+            i, j, u, k = conv.linear_to_chimera(q)
+            if u == 1:   # h-wire: row band around row 3, cols in [2-1, 6+1]
+                assert abs(i - 3) <= 1 and 1 <= j <= 7
+            else:        # v-wire: col band around col 4, rows in [1-1, 5+1]
+                assert abs(j - 4) <= 1 and 0 <= i <= 6

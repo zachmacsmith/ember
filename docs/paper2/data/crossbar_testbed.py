@@ -120,7 +120,8 @@ def main():
     print("done")
 
 
-if __name__ == "__main__" and "s7" not in sys.argv and "span" not in sys.argv:
+if __name__ == "__main__" and not any(
+        m in sys.argv for m in ("s7", "span", "arrange", "couple")):
     main()
 
 
@@ -301,8 +302,170 @@ def span_sweep(n=100):
     print("done-span")
 
 
+def arrange_sweep(n=100):
+    """Product-mode sweep (notes s3.32): alternating 1-D arrangement, no
+    field, no schedules — derate is the only axis (plus one swap-contingency
+    arm, default-off in the pipeline). Finalists route BOTH handoffs:
+    wire_seeds_iv (constructed chains) and bar_domains (restrict_chains)."""
+    import minorminer as mm
+    from ember_qc.algorithms.factored.field import (
+        alternate_arrange, bar_domains, bar_widths, deposit_bars,
+        derive_bars, span_energy, wire_seeds_iv)
+    from ember_qc.algorithms.factored.polish import spur_prune
+    from ember_qc.embedding_backend import build_adjacency
+
+    target = dnx.pegasus_graph(16)
+    grid = TileGrid(target, target_layout(target))
+    adj = build_adjacency(target)
+    T_edges = list(target.edges())
+    src = nx.complete_graph(n)
+    src_adj = {v: [u for u in range(n) if u != v] for v in range(n)}
+    cent0 = source_positions(src, np.zeros(2), np.ones(2))
+    saved_cap = grid.cap.copy()
+    bounds = (grid.W, grid.H)
+
+    arms = [(1.0, 0), (0.85, 0), (0.65, 0), (0.85, 20)]
+    print(f"ARRANGE sweep: K{n}, arms (derate, swap_sweeps) = {arms}")
+    results = []
+    for derate, sweeps in arms:
+        tp = {v: np.array([7.5, 7.5]) +
+              (grid.to_tile(cent0[v]) - grid.to_tile(np.array([0.5, 0.5]))) * 0.3
+              for v in cent0}
+        t0 = time.time()
+        tp, info = alternate_arrange(tp, src_adj, grid, iters=8,
+                                     derate=derate, swap_sweeps=sweeps,
+                                     swap_temp=0.5, seed=0)
+        dt = time.time() - t0
+        bars = derive_bars(tp, src_adj, bounds=bounds)
+        demand = deposit_bars(grid, tp, bars)
+        viol = float(np.maximum(0.0, demand - grid.cap).sum())
+        rows = [float(tp[v][1]) for v in tp]
+        widths = bar_widths(bars)
+        em = float(np.mean([widths[v].sum() for v in widths]))
+        E = span_energy(tp, src_adj)
+        print(f"derate={derate} sweeps={sweeps}: E={E:7.0f} viol={viol:6.0f} "
+              f"ext={em:5.1f} rows={len(set(int(round(r)) for r in rows)):3d} "
+              f"unplaced={info['unplaced']} iters={info['iters']} "
+              f"E_traj={[int(e) for e in info['E'][:6]]} ({dt:.1f}s)",
+              flush=True)
+        results.append((viol, (derate, sweeps), dict(tp)))
+
+    # NOTE (s3.32): the domains handoff (restrict_chains) is DISABLED — stock
+    # minorminer 0.2.22 hangs past its timeout or segfaults when
+    # restrict_chains carries non-trivial domains (P6 and P16, isolated
+    # repros; worse with initial_chains, and in the shortening phase at
+    # default chainlength_patience). bar_domains stays tested and ready for
+    # a fork-level fix.
+    print("\nfinalist route checks (wire handoff, all arms):")
+    for viol, params, tp in results:
+        bars = derive_bars(tp, src_adj, bounds=bounds)
+        seeds = wire_seeds_iv(grid, tp, bars)
+        emb = mm.find_embedding(src, T_edges, initial_chains=seeds,
+                                chainlength_patience=0,
+                                random_seed=0, timeout=60)
+        if not emb:
+            print(f"  {params} wire: viol={viol:.0f} -> route FAILED",
+                  flush=True)
+            continue
+        emb = spur_prune(emb, {v: sorted(src.neighbors(v)) for v in src},
+                         adj)
+        pol = mm.find_embedding(src, T_edges, initial_chains=emb,
+                                skip_initialization=True, random_seed=0,
+                                timeout=60)
+        acl = (sum(len(c) for c in pol.values()) / len(pol)) if pol else None
+        print(f"  {params} wire: viol={viol:.0f} -> legal, polished "
+              f"ACL={acl:.2f} (field-span 13.15, mm ~13.6, template 9.78)",
+              flush=True)
+    print("done-arrange")
+
+
 if __name__ == "__main__" and "s7" in sys.argv:
     s7_sweep(int(sys.argv[2]) if len(sys.argv) > 2 else 100)
 
 if __name__ == "__main__" and "span" in sys.argv:
     span_sweep(int(sys.argv[2]) if len(sys.argv) > 2 else 100)
+
+def couple_sweep(n=100):
+    """s3.33 handoff sweep: FIXED arrange dynamics per derate, arms over the
+    seed handoff only — coupler-aware coloring (wire_couple), fractional
+    slack (slack_relax), partial-confidence stride. Mechanism check per arm:
+    realized couplable-contact fraction (source edges whose seed chains
+    contain a physically coupled qubit pair). Routing x3 seeds per arm
+    (s3.32 bimodality lesson)."""
+    import minorminer as mm
+    from ember_qc.algorithms.factored.field import (
+        alternate_arrange, derive_bars, slack_relax, wire_seeds_iv)
+    from ember_qc.algorithms.factored.polish import spur_prune
+    from ember_qc.embedding_backend import build_adjacency
+
+    target = dnx.pegasus_graph(16)
+    grid = TileGrid(target, target_layout(target))
+    adj = build_adjacency(target)
+    T_edges = list(target.edges())
+    src = nx.complete_graph(n)
+    src_adj = {v: [u for u in range(n) if u != v] for v in range(n)}
+    cent0 = source_positions(src, np.zeros(2), np.ones(2))
+    bounds = (grid.W, grid.H)
+
+    def couplable_frac(chains):
+        hit = tot = 0
+        for u in range(n):
+            cu = chains.get(u, [])
+            for v in range(u + 1, n):
+                tot += 1
+                cv = chains.get(v, [])
+                if any(b in adj.get(a, ()) for a in cu for b in cv):
+                    hit += 1
+        return hit / max(tot, 1)
+
+    ARMS = [
+        ("base", False, 0, 1),
+        ("+couple", True, 0, 1),
+        ("+slack", False, 2, 1),
+        ("+stride2", False, 0, 2),
+        ("+couple+slack", True, 2, 1),
+        ("+cpl+slk+str2", True, 2, 2),
+    ]
+    print(f"COUPLE sweep: K{n}, derates (1.0, 0.65), arms {[a[0] for a in ARMS]}")
+    for derate in (1.0, 0.65):
+        tp0 = {v: np.array([7.5, 7.5]) + (grid.to_tile(cent0[v])
+               - grid.to_tile(np.array([0.5, 0.5]))) * 0.3 for v in cent0}
+        tp0, _ = alternate_arrange(tp0, src_adj, grid, iters=8, derate=derate)
+        for name, couple, slack, stride in ARMS:
+            tp = (slack_relax(tp0, src_adj, eta=0.25, steps=slack)
+                  if slack else tp0)
+            bars = derive_bars(tp, src_adj, bounds=bounds)
+            seeds = wire_seeds_iv(grid, tp, bars,
+                                  src_adj=src_adj if couple else None,
+                                  stride=stride)
+            cf = couplable_frac(seeds)
+            nq = sum(len(c) for c in seeds.values())
+            acls = []
+            for rs in (0, 1, 2):
+                emb = mm.find_embedding(src, T_edges, initial_chains=seeds,
+                                        chainlength_patience=0,
+                                        random_seed=rs, timeout=60)
+                if not emb:
+                    acls.append(None)
+                    continue
+                emb = spur_prune(emb, {v: sorted(src.neighbors(v))
+                                       for v in src}, adj)
+                pol = mm.find_embedding(src, T_edges, initial_chains=emb,
+                                        skip_initialization=True,
+                                        random_seed=rs, timeout=60)
+                acls.append(round(sum(len(c) for c in pol.values())
+                                  / len(pol), 2) if pol else None)
+            ok = [a for a in acls if a is not None]
+            print(f"derate={derate} {name:14s}: couplable={cf:.3f} "
+                  f"seedq={nq:5d} ACLs={acls} mean="
+                  f"{sum(ok)/len(ok):.2f}" if ok else
+                  f"derate={derate} {name:14s}: couplable={cf:.3f} ALL FAIL",
+                  flush=True)
+    print("done-couple")
+
+
+if __name__ == "__main__" and "arrange" in sys.argv:
+    arrange_sweep(int(sys.argv[2]) if len(sys.argv) > 2 else 100)
+
+if __name__ == "__main__" and "couple" in sys.argv:
+    couple_sweep(int(sys.argv[2]) if len(sys.argv) > 2 else 100)

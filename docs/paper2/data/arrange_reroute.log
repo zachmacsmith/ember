@@ -1,0 +1,8 @@
+<stdin>:2: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+derate=1.0 rs=1: polished 15.09
+derate=1.0 rs=2: polished 15.09
+derate=0.85 rs=1: polished 18.10
+derate=0.85 rs=2: polished 13.84
+derate=0.65 rs=1: polished 13.85
+derate=0.65 rs=2: polished 14.15
+done-reroute

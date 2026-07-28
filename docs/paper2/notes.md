@@ -1406,6 +1406,178 @@ testbed-style budgeting — the 13.96->13.15 residual says ~0.8 more is
 available, still shy of the bar); (c) concede dense ACL to the template
 arm (9.78, untouched by every search method all program).
 
+### 3.32 Product mode: alternation replaces the field; first ACL win over MM, at the cliff (2026-07-27)
+
+Built per the three discussion outcomes (Max: "let's build some of this"):
+**(1) alternating 1-D arrangement** — the product-topology framing made
+operational. `alternate_arrange` (field.py): capacity-forced variables are
+packed into integer rows (columns frozen; every h-interval is then a fixed
+1-D interval and rows are exact interval packing, capacity = overlap DEPTH
+per line — the wire *coloring* disappears from the algorithm, only the
+clique-number test remains) alternating with columns; iteration 0 is the
+unconditional feasibility projection, later half-steps accept only if span
+energy does not increase (monotone coordinate descent on the s3.31 E).
+Pipeline knob `span_dynamics="arrange"`: span_step + alternation, NO field
+calls. **(2) domains handoff** — `bar_domains` builds per-variable
+cross-region domains for minorminer's `restrict_chains` (shape as a
+constraint, MM keeps all sub-tile identity choices). **(3) swap
+contingency** — Metropolis swaps along permutation directions only,
+default OFF. +4 tests (502 pass).
+
+**Upstream bug found (report to dwavesystems):** stock minorminer 0.2.22
+with `restrict_chains` + `initial_chains` on the same variable HANGS
+indefinitely, ignoring its own timeout (repro: K20 -> P6, margin-1 domains,
+90+ s against timeout=5; restrict alone returns in 0.0 s; disjoint
+initial/restrict variable sets are safe). Parallel testing also hit
+segfaults with non-trivial domains in other configurations. The domains
+handoff is therefore PARKED behind a hard error (`seed_mode="domains"`
+raises), `bar_domains` tested and ready, pending a fork-level fix.
+
+**Router-free testbed (arrange_sweep_k100.log):** the alternation is a
+dramatically better OPTIMIZER — converges in 2 iterations / ~0 s to the
+states the field dynamics needs 300 steps / ~20 s to find, with exact
+feasibility (viol=0 at derate 1.0 AND 0.85; the field never got below ~2 at
+stock) and zero schedule knobs. But its routed finalists all miss the
+field's mark: best 14.22 (derate 0.65) vs field-span 13.15 — the
+pre-registered testbed keep-alive (<= 13.46) FAILED. Third independent
+measurement of the E-vs-routability wedge: minimum implied qubit mass at a
+given derate is NOT the router's preferred operating point; slack beats
+tightness (10 rows E=1800 -> 15.08; 12 rows E=2200 -> 18.14(!); 16 rows
+E=2900 -> 14.22). Swap sweeps: E-neutral on K_n exactly as the symmetry
+argument predicted (2200 -> 2200); contingency stays off.
+
+**Pipeline mini-probe (arrange_probe.csv; K100/K140/ws_n486, 3 seeds, 60 s;
+baselines from span_probe.csv, same seeds):**
+
+| cell | point | span-tb | mm-full | arrange | arrange-1shot |
+|---|---|---|---|---|---|
+| K100 | 14.30 | 15.11 | 13.44 | 14.60 | 15.86 |
+| K140 | fail | 21.84 (3/3) | 20.70 | **20.45 (3/3)** | **19.69 (3/3)** |
+| ws_n486 | 3.26 | 3.12 | 3.89 | 3.41 | 3.88 |
+
+(arrange = span + arrange dynamics + wire seeds, rounds as usual;
+arrange-1shot = same, max_rounds=1, round_frac=0.5.)
+
+Findings:
+
+1. **K140: first ACL win over stock minorminer on a dense cell, ever, in
+   this program — arrange-1shot 19.69 (seeds 19.88/19.31/19.88) and
+   arrange 20.45, both under mm's 20.70, both 3/3 legal** (point and cross
+   still fail 0/3). The cliff — the regime the strategic emphasis declared
+   decisive — is now held by the product-mode configuration: alternation
+   places, wire seeds transmit, MM legalizes and polishes. The s3.31
+   feasibility parity (span-tb 21.84) is upgraded to an outright win.
+2. **K100 stays unbeaten** (arrange 14.60: better than span-tb 15.11 and
+   cross 14.80, behind point 14.30, mm 13.44, and the field one-shot
+   13.96). The 13.46 bar remains standing against every pipeline
+   configuration. Comfortable-dense and at-the-cliff keep preferring
+   opposite protocols, and the preference INVERTED between dynamics
+   (field: 1shot better at K100, rounds better at K140; arrange: the
+   reverse) — n=3, recorded as an open pattern, not a theory.
+3. **Guard: ws_n486 arrange 3.41** ~ the s3.31 span-default 3.37 (the
+   alternation is inert on sparse by capacity gating, as designed; the
+   +0.15 vs point is the standing span-arm offset, not an arrange
+   regression). arrange-1shot 3.88 is expected-bad on sparse (rounds do
+   the work there) and is not a default-candidate arm.
+4. **Wall-clock:** arrange rounds cost ~0 s of geometry; K140 runs finish
+   in 29-61 s vs span-tb's routinely exhausted budget — the win at the
+   cliff comes with budget to spare (1shot used ~30 s of 60).
+
+Verdict vs pre-registration: K140 gate PASSED and exceeded (ACL win, not
+just 3/3); K100 <= 15.11 PASSED (14.60), stretch bars not met; testbed
+keep-alive FAILED (14.22 > 13.46); guard within the known span offset.
+
+*Addendum (same day, bug scope):* the "restrict alone is safe / the hang
+needs initial_chains on the same variable" characterization above is too
+narrow — on P16 with K100 margin-1 domains, `restrict_chains` WITHOUT any
+`initial_chains` (chainlength_patience=0, timeout=20) hangs past a 60 s
+wall kill, 3/3 trials (`data/restrict_bug_repro.py`). The P6 0.0 s return
+was small-instance luck, not a safety condition. Any upstream report
+should state: non-trivial domains at scale hang regardless of seeding;
+default-patience configurations additionally segfault. Paired-by-seed
+check of the K140 headline (repo rule): arrange-1shot wins all three
+seeds vs mm-full (19.87/20.24, 19.88/21.26, 19.31/20.58; mean -1.01) —
+the win is not a mean artifact.
+Defaults unchanged (`state="point"`, `span_dynamics="field"`) — the flip
+candidate that emerges is REGIME-SPECIFIC: product mode + wire seeds as
+the cliff/hard-frontier configuration, not a global default.
+
+Next options recorded: (a) hard-frontier eval (s3.23 neither-bucket) with
+arrange-1shot — the K140 result says this is now the strongest card;
+(b) irregular-dense cells (spin_glass/turan) — the switch-point argument;
+(c) fork-level restrict_chains fix to unlock the domains handoff;
+(d) the K100 residual (13.46 bar) stays open — the E-vs-routability wedge
+needs a slack-aware objective (pack to ~85%? optimize E + congestion
+margin?) before any dynamics can close it.
+
+### 3.33 Coupler-aware coloring + handoff slack: mechanism real, gate failed; the field's true residual advantage is heterogeneity (2026-07-27)
+
+Built (all default-off; 508 tests): `wire_couple` — t-coordinated coloring
+(rows greedy as always; columns pick the FREE sub maximizing actual
+couplers to contact partners' assigned row wires at the crossing tiles;
+coloring stays exact, the score only breaks the freedom), `slack_steps`
+(slack_relax: span_step refinement clamped to +-0.49 of each assigned line
+— round() invariant), `seed_stride` (claim every stride-th qubit).
+Premise measured first: Pegasus tiles couple only ~56% of h/v wire pairs
+(80/144 at a P4 tile; Chimera 16/16, mechanism no-ops there).
+
+**Testbed (couple_sweep_k100.log; fixed arrange states, handoff arms only,
+x3 routing seeds):**
+
+| arm (derate 1.0) | ACL mean | (derate 0.65) | ACL mean |
+|---|---|---|---|
+| base | 15.09 | | 14.43 |
+| +couple | **14.51** | | 14.68 |
+| +slack | 15.09 (=base) | | 14.43 (=base) |
+| +stride2 | 14.66 (var, best 13.84) | | 14.41 |
+| +couple+slack | 14.51 | | 15.27 |
+
+Findings, in order:
+
+1. **The coupler mechanism is real where packing is tight**: derate 1.0,
+   15.09 -> 14.51, better on all three routing seeds individually (-0.6
+   ACL). At loose packing (0.65) it is a small negative — when rows have
+   slack the router finds couplers itself, and the score's reshuffling of
+   wire choices only perturbs.
+2. **Slack as built is exactly inert** — identical seeds to base: for K_n
+   full-width bars the sub-0.5-tile endpoint shifts are swallowed by
+   floor/ceil in the claim loop. Hypothesis unexercised, not refuted.
+3. **The mechanism metric saturated**: couplable-contact fraction = 1.000
+   even for blind seeds — 20-30-qubit crosses always have SOME coupler
+   pair. It measures existence, not the coupler budget at designated
+   crossings; needs a per-crossing definition before it can gate anything.
+4. **Gate FAILED at every operating point**: best arrange-family K100 =
+   14.51 vs 13.46 (proceed), 13.15 (field), 13.44 (mm). Pipeline probe not
+   run, defaults unchanged, per pre-registration.
+5. **The derate fill-in (couple_fill.log) closes the row-count confound
+   with a sharper finding**: uniform exact packing QUANTIZES — rows jump
+   10, 11, 12, 13, 16 as derate sweeps 1.0 -> 0.65; the field's 14-row
+   operating point (its 13.15 state) is UNREACHABLE by any uniform derate.
+   And the 13-row states route terribly (base 18.95; +couple 16.4). Routed
+   ACL vs rows for arrange states is non-monotone garbage (10: 15.1,
+   12: ~18 bimodal, 13: 19.0, 16: 14.4) while the field's 14-row
+   heterogeneous state sits at 13.15 below all of them.
+
+Diagnosis: couplers explain ~0.6 of the arrange-vs-field routing gap and
+are now fixable machinery (kept, default-off). The remaining advantage of
+the field states is their INHOMOGENEITY: uneven row loads, varied interval
+endpoints, fractional positions — a diversity of local configurations that
+gives the router options. Exact uniform packing is the router's worst
+customer at fixed coarse quality: maximal confidence, zero variety, and a
+quantized row count that skips the sweet spot. (s3.29 measured "100% packed
+starves the router"; this round adds "uniformly packed at ANY derate
+starves it too".)
+
+Options recorded for Max: (a) heterogeneous packing — per-row load targets
+drawn unevenly (or per-row derate jitter) so the packer can express
+14-row-like states; cheap testbed experiment; (b) declare the per-regime
+split and move on: field dynamics owns comfortable-dense (13.15-class
+states), arrange owns the cliff (s3.32's 19.69 K140 paired win) — the
+best-of-both selection is already house style (template-arm precedent),
+and the hard-frontier eval (the strategic goal) is ready to run with the
+per-regime winners; (c) redesign the couplable metric (per-designated-
+crossing) before any further coupler work.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).

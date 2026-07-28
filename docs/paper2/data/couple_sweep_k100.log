@@ -1,0 +1,16 @@
+/data/max/ember/docs/paper2/data/crossbar_testbed.py:25: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+COUPLE sweep: K100, derates (1.0, 0.65), arms ['base', '+couple', '+slack', '+stride2', '+couple+slack', '+cpl+slk+str2']
+derate=1.0 base          : couplable=1.000 seedq= 2000 ACLs=[15.08, 15.09, 15.09] mean=15.09
+derate=1.0 +couple       : couplable=0.997 seedq= 2000 ACLs=[14.47, 14.69, 14.38] mean=14.51
+derate=1.0 +slack        : couplable=1.000 seedq= 2000 ACLs=[15.08, 15.09, 15.09] mean=15.09
+derate=1.0 +stride2      : couplable=0.477 seedq= 1000 ACLs=[14.91, 15.24, 13.84] mean=14.66
+derate=1.0 +couple+slack : couplable=0.997 seedq= 2000 ACLs=[14.47, 14.69, 14.38] mean=14.51
+derate=1.0 +cpl+slk+str2 : couplable=0.485 seedq= 1000 ACLs=[15.17, 14.07, 15.33] mean=14.86
+derate=0.65 base          : couplable=1.000 seedq= 3000 ACLs=[14.86, 14.29, 14.15] mean=14.43
+derate=0.65 +couple       : couplable=1.000 seedq= 3000 ACLs=[14.94, 14.83, 14.27] mean=14.68
+derate=0.65 +slack        : couplable=1.000 seedq= 3000 ACLs=[14.86, 14.29, 14.15] mean=14.43
+derate=0.65 +stride2      : couplable=0.443 seedq= 1600 ACLs=[14.04, 14.77, 14.41] mean=14.41
+derate=0.65 +couple+slack : couplable=1.000 seedq= 3000 ACLs=[15.86, 14.96, 14.98] mean=15.27
+derate=0.65 +cpl+slk+str2 : couplable=0.456 seedq= 1600 ACLs=[14.51, 14.68, 15.8] mean=15.00
+done-couple

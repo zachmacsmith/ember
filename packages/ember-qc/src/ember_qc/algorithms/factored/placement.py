@@ -308,8 +308,29 @@ class AttractConfig:
                                # now); cross: "bars" = nearest-qubit bar
                                # tracing | "wire" = wire-coherent contiguous
                                # runs (interval coloring, s3.30); span:
-                               # "wire" = interval-native wire_seeds_iv
-                               # (any non-"point" value maps to it)
+                               # "wire" = interval-native wire_seeds_iv |
+                               # "domains" = restrict_chains regions
+                               # (s3.32: shape as a constraint, MM keeps all
+                               # sub-tile identity choices)
+    span_dynamics: str = "field"  # span only: "field" = HPWL subgradient +
+                               # Poisson repulsion (as built, s3.31) |
+                               # "arrange" = product mode (s3.32):
+                               # span_step + alternating 1-D interval
+                               # packing; no field calls on this path
+    domain_margin: int = 1     # seed_mode="domains": tile slack around the
+                               # derived bars (anti-placement guard at the
+                               # cliff; 2 is the single fallback)
+    wire_couple: bool = False  # span+wire only (s3.33): t-coordinated
+                               # coloring -- columns prefer wire subs that
+                               # actually couple to contact partners'
+                               # assigned row wires at the crossing tiles.
+                               # Default stock (off) until the probe.
+    slack_steps: int = 0       # span only (s3.33): fractionalize positions
+                               # within their assigned lines (slack_relax)
+                               # before seed derivation; 0 = off
+    seed_stride: int = 1       # span+wire only (s3.33): claim every
+                               # stride-th qubit of each wire run (router
+                               # negotiation room); 1 = contiguous (stock)
     extent_eta: float = 0.5    # extent growth step (contact demand)
     extent_cost: float = 0.1   # extent rent (qubits aren't free)
     field_ext_w: float = 0.5   # v2 tip-potential coupling: extent force =
@@ -351,6 +372,7 @@ def _mm_route(source_graph: nx.Graph, target_graph: nx.Graph, *,
               seeds: Optional[Dict[int, int]] = None,
               chains: Optional[Dict[int, List[int]]] = None,
               warm: Optional[Embedding] = None,
+              restrict: Optional[Dict[int, List[int]]] = None,
               seed: int = 0, timeout: float = 60.0) -> Embedding:
     """Stock minorminer, in one of two roles: seeded cheap legalization
     (``seeds``: snapped singletons, ``chainlength_patience=0``) or the full
@@ -374,6 +396,10 @@ def _mm_route(source_graph: nx.Graph, target_graph: nx.Graph, *,
         init = chains if chains is not None else \
             {v: [q] for v, q in (seeds or {}).items()}
         kwargs.update(initial_chains=init, chainlength_patience=0)
+        if restrict:
+            # legalization only — the warm polish call stays unrestricted
+            # (free-polish doctrine, notes s3.22)
+            kwargs["restrict_chains"] = restrict
     return minorminer.find_embedding(
         source_graph, list(target_graph.edges()), **kwargs) or {}
 
@@ -418,8 +444,9 @@ def attract_embed(
                 deposit_cross, fit_extents, wire_seeds)
         elif cfg.state == "span":
             from ember_qc.algorithms.factored.field import (
-                assign_rows_cols, bar_force_iv, bar_widths, deposit_bars,
-                derive_bars, span_energy, span_step, wire_seeds_iv)
+                alternate_arrange, assign_rows_cols, bar_domains,
+                bar_force_iv, bar_widths, deposit_bars, derive_bars,
+                slack_relax, span_energy, span_step, wire_seeds_iv)
         adj = build_adjacency(target_graph)
         qubits = sorted(adj)
         nodes = sorted(source_graph.nodes())
@@ -467,10 +494,13 @@ def attract_embed(
         round_E: List[float] = []  # span state: coarse energy per round
 
         def _route(seed_chains: Dict[int, List[int]], rng: int,
-                   cap: float) -> Optional[Embedding]:
+                   cap: float,
+                   restrict: Optional[Dict[int, List[int]]] = None
+                   ) -> Optional[Embedding]:
             if cfg.backend == "mm":
                 return _mm_route(source_graph, target_graph,
-                                 chains=seed_chains, seed=rng, timeout=cap)
+                                 chains=seed_chains, restrict=restrict,
+                                 seed=rng, timeout=cap)
             res = embed_factored(
                 source_graph, target_graph, timeout=cap, seed=rng,
                 config=cfg.router, initial_chains=seed_chains,
@@ -509,6 +539,19 @@ def attract_embed(
                     cent = {v: tile_grid.Minv @ (tpts[v] - tile_grid.c)
                             for v in cent}
                     pfield.last_demand = demand
+                    continue
+                if cfg.state == "span" and cfg.span_dynamics == "arrange":
+                    # product mode (s3.32): no field calls on this path;
+                    # capacity is enforced exactly per line inside the
+                    # alternation (grid.cap already carries cap_derate)
+                    tpts = {v: tile_grid.to_tile(p) for v, p in cent.items()}
+                    tpts = span_step(tpts, src_adj, eta=cfg.eta)
+                    tpts, arr_info = alternate_arrange(
+                        tpts, src_adj, tile_grid, iters=8, kappa=cfg.kappa,
+                        floor=cfg.span_floor, seed=seed)
+                    last_assigned = arr_info["assigned"]
+                    cent = {v: tile_grid.Minv @ (tpts[v] - tile_grid.c)
+                            for v in cent}
                     continue
                 if cfg.state == "span":
                     tpts = {v: tile_grid.to_tile(p) for v, p in cent.items()}
@@ -557,14 +600,31 @@ def attract_embed(
             if cfg.state == "span":
                 tpts = {v: tile_grid.to_tile(p) for v, p in cent.items()}
                 round_E.append(round(span_energy(tpts, src_adj), 1))
+            round_restrict = None
             if cfg.state == "cross" and cfg.seed_mode != "point":
                 tpts = {v: tile_grid.to_tile(p) for v, p in cent.items()}
                 seed_chains = (wire_seeds(tile_grid, tpts, ext)
                                if cfg.seed_mode == "wire"
                                else bar_seeds(tile_grid, tpts, ext))
+            elif cfg.state == "span" and cfg.seed_mode == "domains":
+                # DISABLED (notes s3.32): stock minorminer 0.2.22 hangs past
+                # its timeout / segfaults when restrict_chains carries
+                # non-trivial domains (isolated repros on P6 and P16). The
+                # domain construction (bar_domains) stays tested and ready;
+                # re-enable only against a fixed fork.
+                raise ValueError(
+                    "seed_mode='domains' is disabled: stock minorminer's "
+                    "restrict_chains hangs/segfaults with non-trivial "
+                    "domains (notes s3.32)")
             elif cfg.state == "span" and cfg.seed_mode != "point":
                 tpts = {v: tile_grid.to_tile(p) for v, p in cent.items()}
-                seed_chains = wire_seeds_iv(tile_grid, tpts, _span_bars(tpts))
+                if cfg.slack_steps > 0:
+                    tpts = slack_relax(tpts, src_adj, eta=cfg.eta * 0.5,
+                                       steps=cfg.slack_steps)
+                seed_chains = wire_seeds_iv(
+                    tile_grid, tpts, _span_bars(tpts),
+                    src_adj=src_adj if cfg.wire_couple else None,
+                    stride=cfg.seed_stride)
             else:
                 seed_chains = {v: [q] for v, q in
                                snap(cent, coords, qubits,
@@ -574,7 +634,7 @@ def attract_embed(
             if cap <= 0:
                 break
             rng = seed * 100 + (outer if cfg.vary_rng else rng_rerolls)
-            emb = _route(seed_chains, rng, cap)
+            emb = _route(seed_chains, rng, cap, restrict=round_restrict)
             rounds_run += 1
             # mu update: once per router round (fresh-calibration cadence)
             if pfield is not None and pfield.last_demand is not None:
