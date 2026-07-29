@@ -66,13 +66,13 @@ class Factored(EmbeddingAlgorithm):
 
 @register_algorithm("attraction")
 class Attraction(EmbeddingAlgorithm):
-    """Placement-first embedder (paper 2 attraction family, notes §3.18+):
-    spectral initialization, Laplacian attraction + density-overflow repulsion
-    in target-layout coordinates, snapped seeds, then the strongest available
-    routing/polish from that placement (default: minorminer seeded cheap
-    legalization per round + unconstrained warm-started grind; a fully
-    minorminer-free arm via ``backend="native", polish="native"``). See
-    ``factored.AttractConfig``."""
+    """Placement-first embedder (paper 2 attraction family, notes §3.18+;
+    consolidated to one pipeline 2026-07-29): spectral init, stair-energy
+    subgradient attraction + alternating 1-D interval arrangement of the
+    capacity-forced variables (with insertion order-search), wire-coherent
+    seeds, then stock minorminer seeded cheap legalization per round and an
+    unconstrained warm-started grind. Capacity gating makes the dense
+    machinery inert on sparse sources. See ``factored.AttractConfig``."""
 
     @property
     def version(self) -> str:

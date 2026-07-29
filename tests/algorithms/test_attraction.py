@@ -1,12 +1,12 @@
 """
 tests/algorithms/test_attraction.py
 =====================================
-Tests for the attraction embedder (ember_qc.algorithms.factored.placement):
-seeded routing via ``initial_chains``, the geometry primitives, and the
-end-to-end pipeline (validity, determinism, registry contract).
+Tests for the attraction embedder (ember_qc.algorithms.factored.placement),
+post-consolidation (one pipeline: stair attraction + alternating arrangement
++ wire seeds + minorminer legalize/polish): seeded routing via
+``initial_chains``, the geometry primitives, and the end-to-end pipeline
+(validity, determinism, registry contract).
 """
-import math
-
 import networkx as nx
 import numpy as np
 import pytest
@@ -15,13 +15,10 @@ from ember_qc.registry import ALGORITHM_REGISTRY, validate_embedding
 from ember_qc.embedding_backend import build_adjacency
 from ember_qc.algorithms.factored import (
     AttractConfig,
-    RouterConfig,
     attract_embed,
     embed_factored,
 )
 from ember_qc.algorithms.factored.placement import (
-    DensityField,
-    relax,
     snap,
     source_positions,
     target_layout,
@@ -86,36 +83,19 @@ class TestGeometry:
         assert np.all(np.isfinite(pts))
         assert len({tuple(np.round(p, 9)) for p in pts}) == len(pts)
 
-    def test_relax_moves_toward_neighbours(self):
-        g = nx.path_graph(3)
-        src_adj = {v: sorted(g.neighbors(v)) for v in g}
-        cent = {0: np.array([0.0, 0.0]), 1: np.array([10.0, 0.0]),
-                2: np.array([20.0, 0.0])}
-        out = relax(cent, src_adj, eta=0.5)
-        assert out[1][0] == pytest.approx(10.0)  # middle stays at its mean
-        assert 0.0 < out[0][0] < 10.0            # ends pull inward
-
-    def test_density_push_leaves_underfull_alone(self):
-        coords = np.array([[float(i), float(j)] for i in range(8) for j in range(8)])
-        f = DensityField(coords, bins=4)
-        cent = {0: np.array([0.5, 0.5])}
-        out = f.push(cent, {0: 1.0})
-        assert np.allclose(out[0], cent[0])
-
-    def test_density_push_moves_overfull(self):
-        coords = np.array([[float(i), float(j)] for i in range(8) for j in range(8)])
-        f = DensityField(coords, bins=4)
-        # pile 20 centroids of charge 3 into one corner bin (capacity 4)
-        cent = {v: np.array([0.2, 0.2]) for v in range(20)}
-        out = f.push(cent, {v: 3.0 for v in cent})
-        assert any(not np.allclose(out[v], cent[v]) for v in cent)
-
     def test_snap_distinct_qubits(self):
         coords = np.array([[float(i), 0.0] for i in range(10)])
         qubits = list(range(10))
         cent = {v: np.array([0.0, 0.0]) for v in range(5)}  # all want qubit 0
         seeds = snap(cent, coords.copy(), qubits, degree_order=list(range(5)))
         assert len(set(seeds.values())) == 5
+
+    def test_target_layout_native_and_fallback(self, chimera):
+        pos = target_layout(chimera)
+        assert set(pos) == set(chimera.nodes())
+        plain = nx.convert_node_labels_to_integers(nx.grid_2d_graph(4, 4))
+        pos2 = target_layout(plain)
+        assert set(pos2) == set(plain.nodes())
 
 
 class TestAttractEmbed:
@@ -126,19 +106,24 @@ class TestAttractEmbed:
         assert validate_embedding(a["embedding"], source, chimera)
         assert a["embedding"] == b["embedding"]
 
-    def test_native_arm_valid_and_deterministic(self, chimera, source):
-        a = attract_embed(source, chimera, timeout=60, seed=0,
-                          backend="native", polish="native")
-        b = attract_embed(source, chimera, timeout=60, seed=0,
-                          backend="native", polish="native")
-        assert a["embedding"], "native attraction failed on an easy instance"
-        assert validate_embedding(a["embedding"], source, chimera)
-        assert a["embedding"] == b["embedding"]
-
     def test_dense_source(self, chimera):
         res = attract_embed(nx.complete_graph(8), chimera, timeout=60, seed=0)
         assert res["embedding"]
         assert validate_embedding(res["embedding"], nx.complete_graph(8), chimera)
+
+    def test_dense_source_engages_arrangement(self, chimera):
+        # deg > kappa forces participation: the dense machinery must engage
+        k = nx.complete_graph(16)
+        res = attract_embed(k, chimera, timeout=60, seed=0)
+        assert res["embedding"]
+        assert validate_embedding(res["embedding"], k, chimera)
+        assert res["diag"]["assigned"] == 16
+        assert res["round_E"], "stair energy trajectory missing"
+
+    def test_sparse_source_is_capacity_gated(self, chimera, source):
+        # every deg <= kappa: no participants, the arrangement must be inert
+        res = attract_embed(source, chimera, timeout=60, seed=0)
+        assert res["diag"]["assigned"] == 0
 
     def test_registry_contract(self, chimera, source):
         algo = ALGORITHM_REGISTRY["attraction"]
@@ -147,9 +132,10 @@ class TestAttractEmbed:
         assert "time" in res
         assert validate_embedding(res["embedding"], source, chimera)
 
-    def test_overrides_reach_router_and_config(self, chimera, source):
+    def test_overrides_reach_config_and_unknowns_ignored(self, chimera, source):
+        # unknown kwargs (including pre-consolidation knobs) are ignored
         res = attract_embed(source, chimera, timeout=60, seed=0,
-                            max_rounds=1, alpha=0.0, gamma=0.0)
+                            max_rounds=1, state="cross", gamma=0.0)
         assert res.get("rounds", 0) <= 1
         if res["embedding"]:
             assert validate_embedding(res["embedding"], source, chimera)
@@ -161,13 +147,6 @@ class TestAttractEmbed:
         assert any(a is not None for a in acls)
         assert res["legal_acl"] is not None
 
-    def test_selection_modes_both_valid(self, chimera, source):
-        for sel in ("last", "best_legal"):
-            res = attract_embed(source, chimera, timeout=60, seed=0,
-                                selection=sel, max_rounds=3)
-            assert res["embedding"], f"selection={sel} failed"
-            assert validate_embedding(res["embedding"], source, chimera)
-
     def test_vary_rng_false_deterministic(self, chimera, source):
         a = attract_embed(source, chimera, timeout=60, seed=2,
                           vary_rng=False, max_rounds=3)
@@ -176,21 +155,12 @@ class TestAttractEmbed:
         assert a["embedding"] and a["embedding"] == b["embedding"]
         assert a["round_acls"] == b["round_acls"]
 
-    def test_poisson_field_valid_and_deterministic(self, chimera, source):
-        a = attract_embed(source, chimera, timeout=60, seed=0,
-                          field="poisson", max_rounds=4)
-        b = attract_embed(source, chimera, timeout=60, seed=0,
-                          field="poisson", max_rounds=4)
-        assert a["embedding"], "poisson-field attraction failed"
-        assert validate_embedding(a["embedding"], source, chimera)
-        assert a["embedding"] == b["embedding"]
-        assert "field_diag" in a
-
-    def test_poisson_field_dense_source(self, chimera):
+    def test_wire_exact_valid_and_reports_metric(self, chimera):
         k = nx.complete_graph(10)
-        res = attract_embed(k, chimera, timeout=60, seed=0, field="poisson")
-        assert res["embedding"]
+        res = attract_embed(k, chimera, timeout=60, seed=0, wire_exact=True)
+        assert res["embedding"], "wire_exact arm failed on K10"
         assert validate_embedding(res["embedding"], k, chimera)
+        assert "designated" in res["diag"]
 
     def test_feasibility_fallback(self, chimera, source):
         # round_frac=0 exhausts the rounds budget instantly: the rounds loop
@@ -202,20 +172,16 @@ class TestAttractEmbed:
         assert res["rounds"] == 1  # the fallback attempt only
         assert len(res["round_acls"]) == 1
 
-    def test_cross_state_valid_and_deterministic(self, chimera, source):
-        a = attract_embed(source, chimera, timeout=60, seed=0,
-                          state="cross", max_rounds=4)
-        b = attract_embed(source, chimera, timeout=60, seed=0,
-                          state="cross", max_rounds=4)
-        assert a["embedding"], "cross-state attraction failed"
-        assert validate_embedding(a["embedding"], source, chimera)
-        assert a["embedding"] == b["embedding"]
-        assert "extent_mean" in a["field_diag"]
+    def test_untyped_target_fallback(self, source):
+        target = nx.convert_node_labels_to_integers(nx.grid_2d_graph(12, 12))
+        res = attract_embed(nx.random_regular_graph(3, 12, seed=2), target,
+                            timeout=30, seed=0)
+        assert res["embedding"], "untyped-grid fallback failed"
 
-    def test_cross_state_dense_and_bar_seeds(self, chimera):
-        k = nx.complete_graph(10)
-        for mode in ("point", "bars"):
-            res = attract_embed(k, chimera, timeout=60, seed=0,
-                                state="cross", seed_mode=mode)
-            assert res["embedding"], f"cross/{mode} failed on K10"
-            assert validate_embedding(res["embedding"], k, chimera)
+    def test_isolated_vertices_survive(self, chimera):
+        g = nx.gnp_random_graph(10, 0.4, seed=3)
+        g.add_nodes_from([100, 101])  # isolated
+        res = attract_embed(g, chimera, timeout=60, seed=0)
+        assert res["embedding"]
+        assert 100 in res["embedding"] and 101 in res["embedding"]
+        assert validate_embedding(res["embedding"], g, chimera)

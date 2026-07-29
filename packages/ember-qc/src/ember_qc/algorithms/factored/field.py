@@ -1,41 +1,43 @@
 """
 ember_qc/algorithms/factored/field.py
 ======================================
-The VLSI-style coarse model for the attraction embedder (attraction.md roadmap
-items 4-6, design settled 2026-07-18): a **typed tile grid** (per-tile
-horizontal/vertical wire pools — VLSI gcell track capacities), **segment-smeared
-demand** (RUDY-style: each variable's mass is spread along straight segments
-toward its neighbours, charging every traversed tile — the mechanism the old
-point-deposit field lacked, and the reason it was blind to §3.21's cut
-constraint), and a **Poisson-solved repulsion field** sourced one-sidedly from
-violation only:
+The coarse layer of the attraction embedder, post-consolidation (2026-07-29,
+archive commit 612ced3e holds every superseded variant): the **typed tile
+grid** over the target, the **stair (single-coverage) readout** of positions,
+the **alternating 1-D arrangement** that packs capacity-forced variables into
+integer rows/columns, and **wire-coherent seed derivation**.
 
-    source = hinge_w * relu(rho - cap)^2  +  mu
-    mu    <- max(0, mu + alpha_mu * (rho - cap))     once per router round
+The model (notes s3.31/s3.34): position is the ONLY state — one (x, y) per
+variable in continuous tile space. Everything extended about a variable is a
+deterministic READOUT of positions: any embedding of v must reach its
+neighbours, so v owes arms spanning its assigned contacts' coordinates. Under
+the DIAGONAL RULE (busclique's staircase generalized), edge (u, v) is covered
+at u's h-arm x v's v-arm iff (y_u, u) < (y_v, v) — one designated crossing
+per edge, so total arm length is the single-coverage chain length itself
+(VLSI HPWL with directional nets), not a simulated proxy. Dynamics =
+subgradient descent on that energy; capacity = exact per-line interval
+overlap depth inside the arrangement; order search (insertion sweeps) covers
+the permutation directions gradients and order-preserving packing cannot
+reach.
 
-Zero force everywhere when nothing violates (slack fabric is silent — the
-squared hinge is exactly zero on slack, no softplus tails); when violation
-exists the solved potential gives every centroid a long-range gradient (Gauss:
-an interior centroid of an overfull blob feels force proportional to the total
-enclosed excess — the fix for the one-bin push's plateau problem). The mu term
-is the Lagrange-multiplier memory (complementary slackness; same update family
-as the §3.5 history term). Neumann boundary with mean-subtracted source
-(ePlace's convention); the grid Laplacian is pseudo-inverted once per instance
-(grids are <= ~32x32 — dense linear algebra is microseconds here).
-
-Approximations, recorded: no self-force exclusion (a variable feels the total
-field including its own deposit — small at these grid resolutions, VLSI makes
-the same continuum approximation); anisotropy weights uniform per neighbour
-(measured anisotropy is a deferred knob); Zephyr falls back to untyped
-drawing-space bins for now (its qubits span unit cells; a faithful typed
-tiling adds complexity without measured benefit yet — revisit if Zephyr
-becomes a benchmark target).
+Load-bearing invariants (correctness, not tuning):
+  * bars are never recentered — the contact-at-(x_u, y_v) guarantee, wire
+    seeding's line = round(y_v), and the energy identity assume each bar
+    sits on its owner's row/column;
+  * every packing is order-preserving — the stair rule is keyed on the
+    coordinate ORDER, so a half-step must only permute values;
+  * every discrete projection is gated on the true stair energy (except the
+    iteration-0 feasibility projection, unconditional by design);
+  * seed derivation is ALWAYS best-effort — oversubscribed bars and
+    unsatisfied crossings are left for the router, no error paths;
+  * participation is capacity-gated (deg/kappa - 1 > 0), so the dense
+    machinery is structurally inert on sparse sources.
 """
 
 from __future__ import annotations
 
 import math
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import networkx as nx
 import numpy as np
@@ -80,23 +82,14 @@ def _tile_orient(target: nx.Graph) -> Optional[Dict[int, Tuple[int, int, int]]]:
                 out[q] = (int(x), int(y), int(u), int(t) * 4 + int(k))
             return out
         if family == "zephyr":
-            # Zephyr qubits span unit cells; use orientation from coordinates
-            # and let the caller bin positions for tiles (return None tiles).
+            # Zephyr qubits span unit cells; a faithful typed tiling is the
+            # queued adapter (its junctions are COMPLETE — the Pegasus 56%
+            # coupler pathology is absent there, notes s3.37). Untyped
+            # fallback until then.
             return None
     except Exception:
         return None
     return None
-
-
-def _interp(g: np.ndarray, W: int, H: int, x: float, y: float) -> float:
-    """Bilinear sample of grid ``g`` (H, W) at a continuous tile point."""
-    x = float(np.clip(x, 0.0, W - 1.0))
-    y = float(np.clip(y, 0.0, H - 1.0))
-    x0, y0 = int(x), int(y)
-    x1, y1 = min(x0 + 1, W - 1), min(y0 + 1, H - 1)
-    fx, fy = x - x0, y - y0
-    return ((1 - fx) * (1 - fy) * g[y0, x0] + fx * (1 - fy) * g[y0, x1]
-            + (1 - fx) * fy * g[y1, x0] + fx * fy * g[y1, x1])
 
 
 class TileGrid:
@@ -110,13 +103,12 @@ class TileGrid:
 
     Positions map between drawing space and continuous tile space through an
     affine fit (tiles are regular in hardware space and drawing layouts are
-    near-affine images of it); forces computed in tile space return to drawing
-    space through the inverse linear part.
+    near-affine images of it).
     """
 
     def __init__(self, target: nx.Graph, pos: Dict[int, Point],
                  fallback_bins: int = 16):
-        self.graph = target  # reference only (coupler lookups, s3.33)
+        self.graph = target  # reference only (coupler lookups)
         qubits = sorted(pos)
         coords = np.array([pos[q] for q in qubits], dtype=float)
         tio = _tile_orient(target)
@@ -175,268 +167,142 @@ class TileGrid:
     def to_drawing_delta(self, d_tile: Point) -> Point:
         return self.Minv @ np.asarray(d_tile, dtype=float)
 
-    # ------------------------------------------------------------ deposits --
-
-    def splat(self, demand: np.ndarray, pt: Point, m_v: float,
-              m_h: float) -> None:
-        """Bilinear deposit of (vertical-pool, horizontal-pool) mass at a
-        tile-space point."""
-        x = float(np.clip(pt[0], 0.0, self.W - 1.0))
-        y = float(np.clip(pt[1], 0.0, self.H - 1.0))
-        x0, y0 = int(x), int(y)
-        x1, y1 = min(x0 + 1, self.W - 1), min(y0 + 1, self.H - 1)
-        fx, fy = x - x0, y - y0
-        for (yy, xx, w) in ((y0, x0, (1 - fx) * (1 - fy)),
-                            (y0, x1, fx * (1 - fy)),
-                            (y1, x0, (1 - fx) * fy),
-                            (y1, x1, fx * fy)):
-            demand[yy, xx, 0] += m_v * w
-            demand[yy, xx, 1] += m_h * w
-
-    def deposit(self, cent: Dict[int, Point], lam: Dict[int, float],
-                src_adj: Dict[int, List[int]], *, smear: bool = True,
-                samples_per_tile: float = 2.0) -> np.ndarray:
-        """Proposal demand map, shape (H, W, 2).
-
-        With ``smear``: each variable v spreads lam[v] along the straight
-        segments from its position toward each neighbour's position (uniform
-        per-neighbour weights), sampled densely enough to charge every
-        traversed tile; each sample splits between the horizontal pool
-        (fraction |dx|/(|dx|+|dy|) of the segment direction) and the vertical
-        pool. Isolated variables (and smear=False) deposit at their own tile,
-        split evenly across pools.
-        """
-        demand = np.zeros((self.H, self.W, 2))
-
-        def _splat(pt: Point, m_v: float, m_h: float) -> None:
-            self.splat(demand, pt, m_v, m_h)
-
-        tpos = {v: self.to_tile(p) for v, p in cent.items()}
-        for v, p in tpos.items():
-            mass = float(lam.get(v, 1.0))
-            nbrs = src_adj.get(v, []) if smear else []
-            nbrs = [u for u in nbrs if u in tpos]
-            if not nbrs:
-                _splat(p, mass * 0.5, mass * 0.5)
-                continue
-            share = mass / len(nbrs)
-            for u in nbrs:
-                d = tpos[u] - p
-                length = float(np.hypot(d[0], d[1]))
-                frac_h = abs(d[0]) / (abs(d[0]) + abs(d[1]) + 1e-12)
-                k = max(2, int(math.ceil(length * samples_per_tile)) + 1)
-                per = share / k
-                for s in range(k):
-                    pt = p + d * (s / (k - 1)) * 0.5  # v's half of the edge
-                    _splat(pt, per * (1 - frac_h), per * frac_h)
-        return demand
-
-
-class PoissonField:
-    """One-sided violation-sourced Poisson repulsion on a TileGrid.
-
-    ``source = hinge_w * (relu(rho-cap)/cap_scale)^2 + mu`` summed over the two
-    pools; ``solve`` returns the potential with Neumann boundaries (grid
-    Laplacian pseudo-inverse, factorized once; mean-subtracted source — the
-    compatibility condition, ePlace's DC-drop). ``force_at`` interpolates
-    -grad(psi) at tile-space points, clipped to ``max_step`` tiles: the
-    explicit trust-region bound on placement steps.
-    """
-
-    def __init__(self, grid: TileGrid, *, hinge_w: float = 1.0,
-                 mu_alpha: float = 0.5, max_step: float = 1.0):
-        self.grid = grid
-        self.hinge_w = float(hinge_w)
-        self.mu_alpha = float(mu_alpha)
-        self.max_step = float(max_step)
-        self.mu = np.zeros_like(grid.cap)
-        self.cap_scale = max(float(grid.cap.sum(axis=2).mean()), 1e-9)
-        self.last_demand: Optional[np.ndarray] = None
-
-        H, W = grid.H, grid.W
-        n = H * W
-        L = np.zeros((n, n))
-        for y in range(H):
-            for x in range(W):
-                i = y * W + x
-                for yy, xx in ((y - 1, x), (y + 1, x), (y, x - 1), (y, x + 1)):
-                    if 0 <= yy < H and 0 <= xx < W:
-                        j = yy * W + xx
-                        L[i, i] += 1.0
-                        L[i, j] -= 1.0
-        self._Lpinv = np.linalg.pinv(L)
-
-    # -------------------------------------------------------------- source --
-
-    def _violation(self, demand: np.ndarray) -> np.ndarray:
-        return np.maximum(0.0, demand - self.grid.cap) / self.cap_scale
-
-    def potential(self, demand: np.ndarray) -> np.ndarray:
-        v = self._violation(demand)
-        source = (self.hinge_w * np.square(v) + self.mu).sum(axis=2)
-        if not source.any():
-            return np.zeros((self.grid.H, self.grid.W))
-        rhs = (source - source.mean()).ravel()
-        return (self._Lpinv @ rhs).reshape(self.grid.H, self.grid.W)
-
-    def force_at(self, psi: np.ndarray, pts: Dict[int, Point],
-                 scale: float) -> Dict[int, Point]:
-        """-grad(psi) at each tile-space point, scaled and trust-region
-        clipped. Returns tile-space displacements."""
-        gy, gx = np.gradient(psi)
-        W, H = self.grid.W, self.grid.H
-        out: Dict[int, Point] = {}
-        for v, p in pts.items():
-            d = -scale * np.array([_interp(gx, W, H, p[0], p[1]),
-                                   _interp(gy, W, H, p[0], p[1])])
-            norm = float(np.hypot(d[0], d[1]))
-            if norm > self.max_step:
-                d *= self.max_step / norm
-            out[v] = d
-        return out
-
-    # ------------------------------------------------------------ mu update --
-
-    def update_mu(self, demand: np.ndarray) -> None:
-        """Projected subgradient step, once per router round (fresh
-        calibration): rises with violation, decays while slack, floors at 0."""
-        if self.mu_alpha == 0.0:
-            return
-        step = (demand - self.grid.cap) / self.cap_scale
-        self.mu = np.maximum(0.0, self.mu + self.mu_alpha * step)
-
-    def diagnostics(self, demand: Optional[np.ndarray]) -> Dict[str, float]:
-        out = {"mu_total": round(float(self.mu.sum()), 4)}
-        if self.mu.sum() > 0 and demand is not None:
-            slack = demand <= self.grid.cap
-            out["mu_stale_frac"] = round(
-                float(self.mu[slack].sum() / self.mu.sum()), 4)
-        else:
-            out["mu_stale_frac"] = 0.0
-        if demand is not None:
-            out["max_violation"] = round(
-                float(np.maximum(0.0, demand - self.grid.cap).max()), 4)
-        return out
-
 
 # ==============================================================================
-# EXTENT STATE (Option A, notes s3.26-3.28): variables as axis-aligned crosses
+# STAIR READOUT (notes s3.34): per-edge single coverage
 # ==============================================================================
 #
-# Each variable is (position, w, h): a horizontal bar of length w and a
-# vertical bar of length h through its position, in tile units. An edge (u,v)
-# is satisfied when one's h-bar crosses the other's v-bar; the *contact
-# deficit* of the cheaper orientation is
-#
-#     d_hv = relu(|x_v-x_u| - w_u/2) + relu(|y_u-y_v| - h_v/2)
-#
-# (u's h-bar reaches v's column AND v's v-bar reaches u's row), and gradient
-# descent on sum(d^2) generalizes Laplacian attraction: at zero extents d is
-# the L1 distance, so sparse sources collapse to today's point model, while
-# cliques grow bars and the busclique crossbar becomes an equilibrium of the
-# same dynamics. Extents pay rent (extent_cost) so nothing grows without
-# contact demand. lambda_v = 1 + w_v + h_v by construction.
+# Busclique's construction (verified in source, clique_cache.hpp
+# inflate_first_ell) is the staircase: arms (i+1, width-2-i), row+column ~
+# constant, each pair meeting exactly once above the diagonal. The
+# generalization is the DIAGONAL RULE, a pure readout of positions: edge
+# (u, v) is covered at u's h-arm x v's v-arm iff (y_u, u) < (y_v, v) — the
+# y-lower variable reaches across columns, the y-upper reaches up rows. Arms
+# span only their ASSIGNED contacts. The rule is keyed on y-ORDER, so it is
+# invariant under the order-preserving packing in alternate_arrange.
+# Cost accepted (measured, s3.34): single coverage forfeits the redundancy
+# that made double-covered seeds auto-legal; on Pegasus (~56% in-tile
+# coupler density) the router repairs the designated crossings that the
+# blind coloring misses — the repair is short-range and cheap next to the
+# 2x seed-mass saving.
+
+BarIntervals = Dict[int, Tuple[np.ndarray, np.ndarray]]
 
 
-def contact_step(pos: Dict[int, Point], ext: Dict[int, Point],
-                 src_adj: Dict[int, List[int]], *, eta: float,
-                 extent_eta: float, extent_cost: float,
-                 max_step: float = 1.0):
-    """One gradient step on the total squared contact deficit.
-
-    Returns (new_pos, new_ext); per-variable forces are degree-averaged and
-    trust-region clipped at ``max_step`` tiles. Deterministic (sorted
-    iteration; hard-min orientation choice with d_hv on ties).
-    """
-    fpos = {v: np.zeros(2) for v in pos}
-    fext = {v: np.zeros(2) for v in pos}
-    deg = {v: max(1, len([u for u in src_adj.get(v, []) if u in pos]))
-           for v in pos}
-
-    def _accumulate(a, b):
-        """Deficit + gradients for a's h-bar crossing b's v-bar."""
-        dx = pos[b][0] - pos[a][0]
-        dy = pos[a][1] - pos[b][1]
-        a1 = abs(dx) - ext[a][0] / 2.0   # a's h-bar must reach b's column
-        a2 = abs(dy) - ext[b][1] / 2.0   # b's v-bar must reach a's row
-        d = max(0.0, a1) + max(0.0, a2)
-        return d, a1, a2, dx, dy
-
-    for v in sorted(pos):
-        for u in src_adj.get(v, []):
-            if u <= v or u not in pos:
-                continue
-            d_hv = _accumulate(u, v)   # u's h-bar x v's v-bar
-            d_vh = _accumulate(v, u)   # v's h-bar x u's v-bar
-            if d_hv[0] <= d_vh[0]:
-                d, a1, a2, dx, dy = d_hv
-                hbar, vbar = u, v
-            else:
-                d, a1, a2, dx, dy = d_vh
-                hbar, vbar = v, u
-            if d <= 0.0:
-                continue
-            if a1 > 0:  # pull columns together, grow the h-bar
-                gx = 2.0 * d * (1.0 if dx > 0 else -1.0)
-                fpos[vbar][0] -= gx
-                fpos[hbar][0] += gx
-                fext[hbar][0] += d
-            if a2 > 0:  # pull rows together, grow the v-bar
-                gy = 2.0 * d * (1.0 if dy > 0 else -1.0)
-                fpos[hbar][1] -= gy
-                fpos[vbar][1] += gy
-                fext[vbar][1] += d
-
-    new_pos, new_ext = {}, {}
+def _stair_contacts(pos: Dict[int, Point],
+                    src_adj: Dict[int, List[int]]):
+    """Assigned contacts per variable under the diagonal rule. Returns
+    {v: (h_us, v_us)}: neighbour ids whose COLUMNS v's h-arm must reach,
+    and neighbour ids whose ROWS its v-arm must reach."""
+    out = {}
     for v in pos:
-        dp = eta * fpos[v] / deg[v]
+        h_us: List[int] = []
+        v_us: List[int] = []
+        yv = float(pos[v][1])
+        for u in src_adj.get(v, []):
+            if u not in pos or u == v:
+                continue
+            if (yv, v) < (float(pos[u][1]), u):
+                h_us.append(u)
+            else:
+                v_us.append(u)
+        out[v] = (h_us, v_us)
+    return out
+
+
+def derive_bars_stair(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
+                      *, kappa: float = 13.0, floor: bool = True,
+                      bounds: Optional[Tuple[int, int]] = None
+                      ) -> BarIntervals:
+    """Single-coverage bars: v's h-arm spans the columns of its h-assigned
+    contacts (+ its own column); v-arm spans the rows of its v-assigned
+    contacts (+ its own row). Pure function of positions; never recentered.
+
+    ``floor``: contact capacity (s3.30) — a chain of L qubits hosts at most
+    ~kappa*L contacts, so total arm length owes w + h >= deg(v)/kappa - 1;
+    any deficit is split evenly per axis and widened symmetrically.
+    ``bounds=(W, H)`` clips intervals into the grid.
+    """
+    contacts = _stair_contacts(pos, src_adj)
+    out: BarIntervals = {}
+    for v in sorted(pos):
+        h_us, v_us = contacts[v]
+        xs = [float(pos[u][0]) for u in h_us] + [float(pos[v][0])]
+        ys = [float(pos[u][1]) for u in v_us] + [float(pos[v][1])]
+        h_iv = np.array([min(xs), max(xs)])
+        v_iv = np.array([min(ys), max(ys)])
+        if floor:
+            deg = len([u for u in src_adj.get(v, []) if u in pos])
+            need = deg / kappa - 1.0
+            deficit = need - float((h_iv[1] - h_iv[0]) + (v_iv[1] - v_iv[0]))
+            if deficit > 0:
+                h_iv = h_iv + np.array([-deficit / 4.0, deficit / 4.0])
+                v_iv = v_iv + np.array([-deficit / 4.0, deficit / 4.0])
+        if bounds is not None:
+            h_iv = np.clip(h_iv, 0.0, bounds[0] - 1.0)
+            v_iv = np.clip(v_iv, 0.0, bounds[1] - 1.0)
+        out[v] = (h_iv, v_iv)
+    return out
+
+
+def stair_energy(pos: Dict[int, Point],
+                 src_adj: Dict[int, List[int]]) -> float:
+    """Total arm length under the diagonal rule (un-floored) — the
+    single-coverage chain-length objective."""
+    contacts = _stair_contacts(pos, src_adj)
+    e = 0.0
+    for v in pos:
+        h_us, v_us = contacts[v]
+        xs = [float(pos[u][0]) for u in h_us] + [float(pos[v][0])]
+        ys = [float(pos[u][1]) for u in v_us] + [float(pos[v][1])]
+        e += (max(xs) - min(xs)) + (max(ys) - min(ys))
+    return e
+
+
+def stair_step(pos: Dict[int, Point], src_adj: Dict[int, List[int]], *,
+               eta: float, max_step: float = 1.0) -> Dict[int, Point]:
+    """One subgradient step on :func:`stair_energy`. Each variable owns two
+    directional nets — {v + h-assigned contacts} along x, {v + v-assigned
+    contacts} along y — and the extremes of each net are pulled inward
+    (HPWL subgradient, ties by (coord, id)). Net membership changes when
+    the y-order changes; nets are recomputed every call, which is standard
+    subgradient semantics. Normalized by incident-net count (deg + 2);
+    displacements trust-region clipped at ``max_step`` tiles."""
+    contacts = _stair_contacts(pos, src_adj)
+    f = {v: np.zeros(2) for v in pos}
+    nets = {v: 2 + len([u for u in src_adj.get(v, []) if u in pos])
+            for v in pos}
+    for v in sorted(pos):
+        h_us, v_us = contacts[v]
+        for axis, members in ((0, h_us + [v]), (1, v_us + [v])):
+            if len(members) < 2:
+                continue
+            hi = max(members, key=lambda u: (float(pos[u][axis]), u))
+            lo = min(members, key=lambda u: (float(pos[u][axis]), u))
+            if float(pos[hi][axis]) - float(pos[lo][axis]) <= 1e-12:
+                continue
+            f[hi][axis] -= 1.0
+            f[lo][axis] += 1.0
+    out: Dict[int, Point] = {}
+    for v in pos:
+        dp = eta * f[v] / nets[v]
         n = float(np.hypot(dp[0], dp[1]))
         if n > max_step:
             dp *= max_step / n
-        new_pos[v] = pos[v] + dp
-        de = extent_eta * fext[v] / deg[v] - extent_cost * ext[v]
-        de = np.clip(de, -max_step, max_step)
-        new_ext[v] = np.maximum(0.0, ext[v] + de)
-    return new_pos, new_ext
-
-
-def deposit_cross(grid: TileGrid, pos: Dict[int, Point],
-                  ext: Dict[int, Point],
-                  samples_per_tile: float = 2.0) -> np.ndarray:
-    """Typed demand from cross shapes: the h-bar deposits w units into the
-    horizontal pool along its row, the v-bar h units into the vertical pool
-    along its column, plus one unit at the variable's own tile (split evenly).
-    Total mass per variable = 1 + w + h."""
-    demand = np.zeros((grid.H, grid.W, 2))
-    for v in sorted(pos):
-        p = pos[v]
-        w, h = float(ext[v][0]), float(ext[v][1])
-        grid.splat(demand, p, 0.5, 0.5)
-        if w > 1e-9:
-            k = max(2, int(math.ceil(w * samples_per_tile)) + 1)
-            for s in range(k):
-                x = p[0] - w / 2.0 + w * s / (k - 1)
-                grid.splat(demand, np.array([x, p[1]]), 0.0, w / k)
-        if h > 1e-9:
-            k = max(2, int(math.ceil(h * samples_per_tile)) + 1)
-            for s in range(k):
-                y = p[1] - h / 2.0 + h * s / (k - 1)
-                grid.splat(demand, np.array([p[0], y]), h / k, 0.0)
-    return demand
-
-
-def fit_extents(grid: TileGrid, emb: Dict[int, List[int]],
-                pos_map: Dict[int, Point]) -> Dict[int, Point]:
-    """Measured extents: per-axis bounding width of each realized chain's
-    qubits in tile space (the upward map for the extent state)."""
-    out: Dict[int, Point] = {}
-    for v, chain in emb.items():
-        pts = np.array([grid.to_tile(pos_map[q]) for q in chain])
-        if len(pts) == 1:
-            out[v] = np.zeros(2)
-        else:
-            out[v] = pts.max(axis=0) - pts.min(axis=0)
+        out[v] = pos[v] + dp
     return out
+
+
+def bar_widths(bars: BarIntervals) -> Dict[int, Point]:
+    """(w, h) view of interval bars — diagnostics helper."""
+    return {v: np.array([float(h_iv[1] - h_iv[0]),
+                         float(v_iv[1] - v_iv[0])])
+            for v, (h_iv, v_iv) in bars.items()}
+
+
+# ==============================================================================
+# SEED DERIVATION: bars -> wire-coherent qubit chains
+# ==============================================================================
 
 
 def _nearest_free(grid: TileGrid, claimed: set, pt_tile: Point,
@@ -457,137 +323,11 @@ def _nearest_free(grid: TileGrid, claimed: set, pt_tile: Point,
     return None
 
 
-def bar_seeds(grid: TileGrid, pos: Dict[int, Point],
-              ext: Dict[int, Point]) -> Dict[int, List[int]]:
-    """Multi-qubit seed chains tracing each variable's bars (~1 qubit/tile,
-    orientation-matched where the grid is typed). Every variable gets at least
-    its center qubit; qubits are claimed at most once (sorted-variable order).
-    Chains may be disconnected -- the router repairs; this is the s3.10-risk
-    switch (seed_mode="bars"), measured separately from the cross state.
-    """
-    claimed: set = set()
-    out: Dict[int, List[int]] = {}
-
-    for v in sorted(pos):
-        p = pos[v]
-        chain: List[int] = []
-        q0 = _nearest_free(grid, claimed, p, None)
-        if q0 is not None:
-            claimed.add(q0)
-            chain.append(q0)
-        w, h = float(ext[v][0]), float(ext[v][1])
-        for s in range(1, int(w) + 1):
-            for x in (p[0] - w / 2.0 + (s - 0.5) * w / max(1, int(w)),):
-                q = _nearest_free(grid, claimed, np.array([x, p[1]]),
-                                  1 if grid.typed else None)
-                if q is not None:
-                    claimed.add(q)
-                    chain.append(q)
-        for s in range(1, int(h) + 1):
-            y = p[1] - h / 2.0 + (s - 0.5) * h / max(1, int(h))
-            q = _nearest_free(grid, claimed, np.array([p[0], y]),
-                              0 if grid.typed else None)
-            if q is not None:
-                claimed.add(q)
-                chain.append(q)
-        if chain:
-            out[v] = chain
-    return out
-
-
-def bar_force(grid: TileGrid, psi: np.ndarray, pos: Dict[int, Point],
-              ext: Dict[int, Point], *, scale: float, ext_w: float,
-              max_step: float = 1.0):
-    """v2 field-bar coupling, from E = density * integral of psi over the bar
-    (v1 sampled the field only at the center -- source distributed, response
-    point-sampled; Max's far-tip scenario produced no corrective signal).
-
-    Translation force = -grad(psi) averaged over ~1-per-tile samples along
-    both bars (+ center). Extent force per bar = -ext_w * mean(psi at the two
-    tips): growing a bar adds charge at its tips, so bars refuse to grow into
-    -- and retract out of -- high-potential regions. Both trust-region
-    clipped at ``max_step``. Returns (dpos, dext_field) in tile units.
-    """
-    gy, gx = np.gradient(psi)
-    W, H = grid.W, grid.H
-    dpos: Dict[int, Point] = {}
-    dext: Dict[int, Point] = {}
-    for v in sorted(pos):
-        p = pos[v]
-        w, h = float(ext[v][0]), float(ext[v][1])
-        samples = [p]
-        for k in range(1, int(w) + 1):
-            for sx in (p[0] - w / 2.0 + (k - 0.5) * w / max(1, int(w)),):
-                samples.append(np.array([sx, p[1]]))
-        for k in range(1, int(h) + 1):
-            sy = p[1] - h / 2.0 + (k - 0.5) * h / max(1, int(h))
-            samples.append(np.array([p[0], sy]))
-        g = np.mean([[_interp(gx, W, H, q[0], q[1]),
-                      _interp(gy, W, H, q[0], q[1])] for q in samples], axis=0)
-        d = -scale * g
-        n = float(np.hypot(d[0], d[1]))
-        if n > max_step:
-            d *= max_step / n
-        dpos[v] = d
-
-        tip_w = 0.5 * (_interp(psi, W, H, p[0] - w / 2.0, p[1])
-                       + _interp(psi, W, H, p[0] + w / 2.0, p[1]))
-        tip_h = 0.5 * (_interp(psi, W, H, p[0], p[1] - h / 2.0)
-                       + _interp(psi, W, H, p[0], p[1] + h / 2.0))
-        de = np.clip(-ext_w * np.array([tip_w, tip_h]), -max_step, max_step)
-        dext[v] = de
-    return dpos, dext
-
-
-def assign_rows_cols(pos: Dict[int, Point], ext: Dict[int, Point],
-                     grid: TileGrid, *, threshold: float = 2.0):
-    """The discrete symmetry break (notes s3.28: gradient flow cannot decide
-    who owns which row/column -- stacked bars are a zero-gradient
-    configuration). Variables with total extent above ``threshold`` are
-    rank-ordered and hard-snapped to distinct integer rows (h-bars, by y) and
-    columns (v-bars, by x), capacity-many per row/column; sorting is
-    order-preserving = the minimal-total-displacement 1D transport plan. Bar
-    LENGTHS are untouched; sub-threshold variables (the sparse regime) are
-    untouched; reassignment is per-round, not a one-shot cage. Returns new
-    positions dict (participants moved, others identical objects).
-    """
-    parts = [v for v in sorted(pos) if ext[v][0] + ext[v][1] > threshold]
-    if not parts:
-        return dict(pos), 0
-    new_pos = dict(pos)
-
-    def _assign(axis: int, pool: int, size: int):
-        # per-row (or column) bar budget from that line's mean pool capacity
-        # (axis==1: rows (y); line capacity = mean over x of h-pool per row)
-        line_cap = grid.cap[:, :, pool].mean(axis=1 if axis == 1 else 0)
-        order = sorted(parts, key=lambda v: (float(pos[v][axis]), v))
-        med = float(np.median([pos[v][axis] for v in parts]))
-        n_lines = size
-        per_line = [max(1, int(line_cap[i])) for i in range(n_lines)]
-        # slots: lines ordered by distance from the median line, then filled
-        lines = sorted(range(n_lines), key=lambda i: (abs(i - med), i))
-        slots: List[int] = []
-        for ln in lines:
-            slots.extend([ln] * per_line[ln])
-            if len(slots) >= len(order):
-                break
-        slots = sorted(slots[:len(order)] if len(slots) >= len(order)
-                       else slots + [lines[-1]] * (len(order) - len(slots)))
-        for v, ln in zip(order, slots):
-            p = np.array(new_pos[v], dtype=float)
-            p[axis] = float(ln)
-            new_pos[v] = p
-
-    _assign(axis=1, pool=1, size=grid.H)   # h-bars -> rows (y), h-pool
-    _assign(axis=0, pool=0, size=grid.W)   # v-bars -> columns (x), v-pool
-    return new_pos, len(parts)
-
-
 def _couples(grid: TileGrid, r: int, s_h: int, c: int, s_v: int) -> bool:
     """True iff the h-wire (row r, sub s_h) and the v-wire (col c, sub s_v)
     share a physical coupler at their crossing tile (c, r). Missing qubits
     (dead, or wire absent at that tile) -> False. On Chimera every in-tile
-    pair couples; on Pegasus only ~56% do (s3.33) -- which wires you pick
+    pair couples; on Pegasus only ~56% do (s3.33) — which wires you pick
     decides whether a crossing is real."""
     qh = grid.wire_map.get((1, r, s_h), {}).get(c)
     qv = grid.wire_map.get((0, c, s_v), {}).get(r)
@@ -596,22 +336,13 @@ def _couples(grid: TileGrid, r: int, s_h: int, c: int, s_v: int) -> bool:
 
 def _color_claim_bars(grid: TileGrid, claimed: set,
                       chains: Dict[int, List[int]], orientation: int,
-                      bars: List[Tuple[int, float, float, int]], *,
-                      score_fn=None, assignments: Optional[dict] = None,
-                      stride: int = 1) -> None:
+                      bars: List[Tuple[int, float, float, int]]) -> None:
     """Color explicit interval bars onto physical wires and claim runs.
     ``bars``: (line, start, end, v) tuples of one orientation. Bars sharing
     a line with disjoint intervals may share a wire; overlapping ones may
-    not -- interval graph coloring, solved exactly by the greedy
+    not — interval graph coloring, solved exactly by the greedy
     left-endpoint sweep. Oversubscribed bars are skipped (left point-seeded
-    by the caller's guarantee pass).
-
-    ``score_fn(v, line, candidate_color)``: when given, pick the FREE color
-    maximizing the score (tie -> lowest sub) instead of the first free one
-    -- coloring stays exact (any free color is feasible; the score only
-    breaks the freedom). ``assignments``: out-param, v -> (line, color).
-    ``stride``: claim every stride-th tile of the run (1 = contiguous;
-    >1 leaves the router negotiation room, s3.33)."""
+    by the caller's guarantee pass)."""
     by_line: Dict[int, list] = {}
     for line, a, b, v in bars:
         by_line.setdefault(line, []).append((a, b, v))
@@ -627,18 +358,10 @@ def _color_claim_bars(grid: TileGrid, claimed: set,
             free = [c for c in subs if c not in used_colors]
             if not free:
                 continue  # line oversubscribed; leave this bar point-seeded
-            if score_fn is None:
-                color = free[0]
-            else:
-                color = max(free, key=lambda cc: (score_fn(v, line, cc), -cc))
+            color = free[0]
             used_colors[color] = b
-            if assignments is not None:
-                assignments[v] = (line, color)
             run = grid.wire_map.get((orientation, line, color), {})
-            t0 = int(math.floor(a))
-            for t in range(t0, int(math.ceil(b)) + 1):
-                if (t - t0) % max(stride, 1):
-                    continue
+            for t in range(int(math.floor(a)), int(math.ceil(b)) + 1):
                 q = run.get(t)
                 if q is not None and q not in claimed:
                     claimed.add(q)
@@ -657,235 +380,16 @@ def _ensure_seeds(grid: TileGrid, claimed: set,
                 chains[v].append(q)
 
 
-def wire_seeds(grid: TileGrid, pos: Dict[int, Point],
-               ext: Dict[int, Point]) -> Dict[int, List[int]]:
-    """Wire-coherent seed chains (the sub-tile last mile, notes s3.30): bars
-    sharing an integer row with disjoint x-intervals may share a physical
-    wire; overlapping ones may not -- interval graph coloring, solved exactly
-    by the greedy left-endpoint sweep. Each bar then claims the CONTIGUOUS
-    run of its colored wire's qubits across its span, so seed chains are
-    real coupled paths instead of stitched-together nearest qubits (which
-    inflated routed ACL by ~30%). Falls back to nearest-qubit sampling on
-    untyped grids. Center qubit is always included. Bars here are CENTERED
-    (cross state: pos ± ext/2); the span state's one-sided intervals go
-    through :func:`wire_seeds_iv`.
-    """
-    if not grid.typed:
-        return bar_seeds(grid, pos, ext)
-
-    claimed: set = set()
-    chains: Dict[int, List[int]] = {v: [] for v in pos}
-
-    for orientation in (1, 0):  # h-bars along rows, then v-bars along columns
-        bars = []
-        for v in sorted(pos):
-            length = float(ext[v][0] if orientation == 1 else ext[v][1])
-            if length < 1.0:
-                continue
-            line = int(round(float(pos[v][1] if orientation == 1
-                                   else pos[v][0])))
-            a = float(pos[v][0] if orientation == 1 else pos[v][1]) - length / 2
-            bars.append((line, a, a + length, v))
-        _color_claim_bars(grid, claimed, chains, orientation, bars)
-
-    _ensure_seeds(grid, claimed, chains, pos)
-    return {v: c for v, c in chains.items() if c}
-
-
-# ==============================================================================
-# SPAN STATE (notes s3.31): derived extents -- position is the only state
-# ==============================================================================
-#
-# The s3.28-3.30 lesson: extents were never legitimate state. Any embedding
-# of v must reach its neighbours, so v's bars owe exactly the span of its
-# neighbours' coordinates -- a deterministic READOUT of positions, not a
-# quantity to evolve under growth/rent/retraction forces. State shrinks to
-# one (x, y) per variable; the implied cross is
-#
-#     h-bar: row y_v, x-interval spanning {x_u : u in N[v] + v}
-#     v-bar: col x_v, y-interval spanning {y_u : u in N[v] + v}
-#
-# Contact for edge (u, v) is at (x_u, y_v), inside both bars BY CONSTRUCTION.
-# Never recenter a bar: that guarantee, wire_seeds' line = round(y_v), and
-# the energy identity below all depend on the bar sitting on its owner's
-# row/column. The energy
-#
-#     E = sum_v [xspan(N[v]) + yspan(N[v])]
-#
-# is exactly the total bar length of the implied embedding (qubit mass minus
-# n) -- VLSI half-perimeter wirelength with one net per closed neighbourhood.
-# Chain length is the objective itself, not a simulated quantity. Collapse is
-# infeasible in-model (stacked variables still deposit 1 + w + h each; the
-# pool overfills), so the s3.30 collapse pathology cannot arise; the
-# deg(v)/kappa contact-capacity floor survives only as a readout-side clamp.
-
-BarIntervals = Dict[int, Tuple[np.ndarray, np.ndarray]]
-
-
-def derive_bars(pos: Dict[int, Point], src_adj: Dict[int, List[int]], *,
-                kappa: float = 13.0, floor: bool = True,
-                bounds: Optional[Tuple[int, int]] = None) -> BarIntervals:
-    """Implied bars: v's h-bar is the x-interval of N[v] + v at row y_v, its
-    v-bar the y-interval at column x_v. Pure function of positions.
-
-    ``floor``: contact capacity (s3.30) -- a chain of L qubits hosts at most
-    ~kappa*L contacts, so total bar length owes w + h >= deg(v)/kappa - 1;
-    any deficit is split evenly per axis and widened symmetrically about the
-    interval. ``bounds=(W, H)`` clips intervals into the grid.
-    """
-    out: BarIntervals = {}
-    for v in sorted(pos):
-        nbrs = [u for u in src_adj.get(v, []) if u in pos]
-        xs = [float(pos[u][0]) for u in nbrs] + [float(pos[v][0])]
-        ys = [float(pos[u][1]) for u in nbrs] + [float(pos[v][1])]
-        h_iv = np.array([min(xs), max(xs)])
-        v_iv = np.array([min(ys), max(ys)])
-        if floor:
-            need = len(nbrs) / kappa - 1.0
-            deficit = need - float((h_iv[1] - h_iv[0]) + (v_iv[1] - v_iv[0]))
-            if deficit > 0:
-                h_iv = h_iv + np.array([-deficit / 4.0, deficit / 4.0])
-                v_iv = v_iv + np.array([-deficit / 4.0, deficit / 4.0])
-        if bounds is not None:
-            h_iv = np.clip(h_iv, 0.0, bounds[0] - 1.0)
-            v_iv = np.clip(v_iv, 0.0, bounds[1] - 1.0)
-        out[v] = (h_iv, v_iv)
-    return out
-
-
-def span_energy(pos: Dict[int, Point],
-                src_adj: Dict[int, List[int]]) -> float:
-    """E = sum_v [xspan(N[v] + v) + yspan(N[v] + v)]: the total bar length of
-    the implied cross embedding (un-floored; implied qubit mass = n + E)."""
-    e = 0.0
-    for v in pos:
-        nbrs = [u for u in src_adj.get(v, []) if u in pos]
-        xs = [float(pos[u][0]) for u in nbrs] + [float(pos[v][0])]
-        ys = [float(pos[u][1]) for u in nbrs] + [float(pos[v][1])]
-        e += (max(xs) - min(xs)) + (max(ys) - min(ys))
-    return e
-
-
-def span_step(pos: Dict[int, Point], src_adj: Dict[int, List[int]], *,
-              eta: float, max_step: float = 1.0) -> Dict[int, Point]:
-    """One subgradient step on :func:`span_energy`: per net (closed
-    neighbourhood), per axis, a unit force pulls the two extreme members
-    inward -- the HPWL subgradient; interior members feel nothing. Ties are
-    broken by (coordinate, vertex id), so the step is deterministic.
-    Per-vertex force is normalized by incident-net count (deg + 1), matching
-    relax()'s eta scale; displacements trust-region clipped at ``max_step``
-    tiles."""
-    f = {v: np.zeros(2) for v in pos}
-    nets = {v: 1 + len([u for u in src_adj.get(v, []) if u in pos])
-            for v in pos}
-    for v in sorted(pos):
-        members = [u for u in src_adj.get(v, []) if u in pos] + [v]
-        if len(members) < 2:
-            continue
-        for axis in (0, 1):
-            hi = max(members, key=lambda u: (float(pos[u][axis]), u))
-            lo = min(members, key=lambda u: (float(pos[u][axis]), u))
-            if float(pos[hi][axis]) - float(pos[lo][axis]) <= 1e-12:
-                continue
-            f[hi][axis] -= 1.0
-            f[lo][axis] += 1.0
-    out: Dict[int, Point] = {}
-    for v in pos:
-        dp = eta * f[v] / nets[v]
-        n = float(np.hypot(dp[0], dp[1]))
-        if n > max_step:
-            dp *= max_step / n
-        out[v] = pos[v] + dp
-    return out
-
-
-def bar_widths(bars: BarIntervals) -> Dict[int, Point]:
-    """(w, h) view of interval bars -- the ext-shaped shim that lets
-    :func:`assign_rows_cols` consume derived bars unchanged."""
-    return {v: np.array([float(h_iv[1] - h_iv[0]),
-                         float(v_iv[1] - v_iv[0])])
-            for v, (h_iv, v_iv) in bars.items()}
-
-
-def deposit_bars(grid: TileGrid, pos: Dict[int, Point], bars: BarIntervals,
-                 samples_per_tile: float = 2.0) -> np.ndarray:
-    """Typed demand from implied bars (interval sibling of
-    :func:`deposit_cross`): the h-interval deposits its length into the
-    horizontal pool along row y_v, the v-interval into the vertical pool
-    along column x_v, plus one unit at the variable's own tile (split
-    evenly). Total mass per variable = 1 + w + h -- exact traversal charging
-    of the shape that will actually be seeded; no RUDY approximation."""
-    demand = np.zeros((grid.H, grid.W, 2))
-    for v in sorted(pos):
-        p = pos[v]
-        h_iv, v_iv = bars[v]
-        w = float(h_iv[1] - h_iv[0])
-        h = float(v_iv[1] - v_iv[0])
-        grid.splat(demand, p, 0.5, 0.5)
-        if w > 1e-9:
-            k = max(2, int(math.ceil(w * samples_per_tile)) + 1)
-            for s in range(k):
-                x = float(h_iv[0]) + w * s / (k - 1)
-                grid.splat(demand, np.array([x, p[1]]), 0.0, w / k)
-        if h > 1e-9:
-            k = max(2, int(math.ceil(h * samples_per_tile)) + 1)
-            for s in range(k):
-                y = float(v_iv[0]) + h * s / (k - 1)
-                grid.splat(demand, np.array([p[0], y]), h / k, 0.0)
-    return demand
-
-
-def bar_force_iv(grid: TileGrid, psi: np.ndarray, pos: Dict[int, Point],
-                 bars: BarIntervals, *, scale: float,
-                 max_step: float = 1.0) -> Dict[int, Point]:
-    """Translation-only field force on implied bars: -grad(psi) averaged over
-    ~1-per-tile samples along both intervals plus the center point. No tip
-    or extent terms -- extents are not state here; the field steers
-    positions and the bars re-derive. Trust-region clipped at ``max_step``
-    tiles. Returns tile-space displacements."""
-    gy, gx = np.gradient(psi)
-    W, H = grid.W, grid.H
-    out: Dict[int, Point] = {}
-    for v in sorted(pos):
-        p = pos[v]
-        h_iv, v_iv = bars[v]
-        w = float(h_iv[1] - h_iv[0])
-        h = float(v_iv[1] - v_iv[0])
-        samples = [p]
-        for k in range(1, int(w) + 1):
-            sx = float(h_iv[0]) + (k - 0.5) * w / max(1, int(w))
-            samples.append(np.array([sx, p[1]]))
-        for k in range(1, int(h) + 1):
-            sy = float(v_iv[0]) + (k - 0.5) * h / max(1, int(h))
-            samples.append(np.array([p[0], sy]))
-        g = np.mean([[_interp(gx, W, H, q[0], q[1]),
-                      _interp(gy, W, H, q[0], q[1])] for q in samples],
-                    axis=0)
-        d = -scale * g
-        n = float(np.hypot(d[0], d[1]))
-        if n > max_step:
-            d *= max_step / n
-        out[v] = d
-    return out
-
-
 def wire_seeds_iv(grid: TileGrid, pos: Dict[int, Point],
-                  bars: BarIntervals,
-                  src_adj: Optional[Dict[int, List[int]]] = None,
-                  stride: int = 1) -> Dict[int, List[int]]:
-    """Interval-native wire-coherent seeds (span-state sibling of
-    :func:`wire_seeds`). Derived bars are one-sided in general, so claims
-    run over the ACTUAL interval, anchored at the owner's row/column --
-    never a centered approximation. Untyped grids fall back to
-    nearest-qubit sampling along the intervals (~1 per tile).
-
-    ``src_adj``: enables t-COORDINATED coloring (s3.33): rows are colored
-    first (greedy, as always); columns are then colored preferring the sub
-    whose wire actually COUPLES to the most contact partners'
-    already-assigned row wires at the crossing tiles -- the coupler
-    awareness both discrete operations otherwise lack. None = legacy
-    behavior. ``stride``: claim every stride-th qubit of each run
-    (negotiation slack; 1 = contiguous)."""
+                  bars: BarIntervals) -> Dict[int, List[int]]:
+    """Wire-coherent seed chains (the sub-tile last mile, notes s3.30): each
+    bar claims the CONTIGUOUS run of its greedily-colored wire's qubits
+    across its interval, so seed chains are real coupled paths instead of
+    stitched-together nearest qubits (which inflated routed ACL by ~30%).
+    Derived bars are one-sided in general, so claims run over the ACTUAL
+    interval, anchored at the owner's row/column — never a centered
+    approximation. Untyped grids fall back to nearest-qubit sampling along
+    the intervals (~1 per tile). Every variable gets at least one qubit."""
     claimed: set = set()
     chains: Dict[int, List[int]] = {v: [] for v in pos}
 
@@ -926,30 +430,8 @@ def wire_seeds_iv(grid: TileGrid, pos: Dict[int, Point],
             out.append((line, float(iv[0]), float(iv[1]), v))
         return out
 
-    # phase 1: rows, greedy (record who got which wire)
-    h_assign: Dict[int, Tuple[int, int]] = {}
-    _color_claim_bars(grid, claimed, chains, 1, _tuples(1),
-                      assignments=h_assign, stride=stride)
-
-    # phase 2: columns, coupler-scored when src_adj is given
-    score_fn = None
-    if src_adj is not None:
-        def score_fn(v, line, cand):
-            v_iv = bars[v][1]
-            n = 0
-            for u in src_adj.get(v, []):
-                ha = h_assign.get(u)
-                if ha is None:
-                    continue
-                r_u, s_u = ha
-                if not (v_iv[0] - 1e-9 <= r_u <= v_iv[1] + 1e-9):
-                    continue
-                if _couples(grid, r_u, s_u, line, cand):
-                    n += 1
-            return n
-    _color_claim_bars(grid, claimed, chains, 0, _tuples(0),
-                      score_fn=score_fn, stride=stride)
-
+    _color_claim_bars(grid, claimed, chains, 1, _tuples(1))
+    _color_claim_bars(grid, claimed, chains, 0, _tuples(0))
     _ensure_seeds(grid, claimed, chains, pos)
     return {v: c for v, c in chains.items() if c}
 
@@ -981,7 +463,7 @@ def _line_tracks(items: List[Tuple[float, float, int]]
 def wire_seeds_matched(grid: TileGrid, pos: Dict[int, Point],
                        bars: BarIntervals,
                        src_adj: Dict[int, List[int]], *,
-                       sweeps: int = 4, stride: int = 1,
+                       sweeps: int = 4,
                        junction_w: float = 2.0):
     """Coupler-exact wire seeds (notes s3.37): per-line maximum-weight
     matching of tracks to physical subs, alternating columns<->rows —
@@ -991,6 +473,11 @@ def wire_seeds_matched(grid: TileGrid, pos: Dict[int, Point],
     count is monotone across line re-solves and the loop stops when it
     plateaus.
 
+    SELF-JUNCTIONS (a variable's own h-arm x v-arm corner) are in the
+    objective at ``junction_w`` > 1: the corner is what makes its chain
+    CONNECTED — omitting it let the matcher trade corners for contacts
+    (K100 connectivity 100->44, s3.37).
+
     ALWAYS best-effort: whatever crossings remain unsatisfied are simply
     left for the router to repair, exactly as with the greedy coloring —
     no error paths, no legality requirement. ``sweeps=0`` evaluates the
@@ -999,7 +486,7 @@ def wire_seeds_matched(grid: TileGrid, pos: Dict[int, Point],
     per-designated-crossing metric (crossings between two colored arms).
     Untyped grids fall back to :func:`wire_seeds_iv`."""
     if not grid.typed:
-        chains = wire_seeds_iv(grid, pos, bars, stride=stride)
+        chains = wire_seeds_iv(grid, pos, bars)
         return chains, 0, 0
     from scipy.optimize import linear_sum_assignment
 
@@ -1038,11 +525,6 @@ def wire_seeds_matched(grid: TileGrid, pos: Dict[int, Point],
         for u in contacts[v][0]:          # u assigned to v's h-arm
             if u in arm_of[0]:
                 crossings.append((v, u, row, arm_of[0][u][0], 1.0, False))
-    # SELF-JUNCTIONS (s3.37 fix, Max 2026-07-31): a variable's own
-    # h-arm x v-arm corner is what makes its chain CONNECTED — omitting
-    # it let the matcher trade corners for contacts (K100 conn 100->44).
-    # Weighted above a single contact: a broken chain costs the router a
-    # reconnection path, not just one missed edge.
     for v in sorted(pos):
         if v in arm_of[1] and v in arm_of[0]:
             crossings.append((v, v, arm_of[1][v][0], arm_of[0][v][0],
@@ -1119,10 +601,8 @@ def wire_seeds_matched(grid: TileGrid, pos: Dict[int, Point],
                     continue
                 run = grid.wire_map.get((o, line, sub), {})
                 for a, b, v in t:
-                    t0 = int(math.floor(a))
-                    for tt in range(t0, int(math.ceil(b)) + 1):
-                        if (tt - t0) % max(stride, 1):
-                            continue
+                    for tt in range(int(math.floor(a)),
+                                    int(math.ceil(b)) + 1):
                         q = run.get(tt)
                         if q is not None and q not in claimed:
                             claimed.add(q)
@@ -1132,164 +612,66 @@ def wire_seeds_matched(grid: TileGrid, pos: Dict[int, Point],
             satisfied_count(), total)
 
 
-def slack_relax(pos: Dict[int, Point], src_adj: Dict[int, List[int]], *,
-                eta: float = 0.25, steps: int = 2,
-                clamp: float = 0.49) -> Dict[int, Point]:
-    """Fractional refinement that CANNOT change any assigned line: run
-    span_step a few times, then clamp every coordinate back into +-clamp of
-    its original rounded line (round() invariant, clamp < 0.5). Restores
-    the negotiation slack that integer-locked seeds lack (the s3.32
-    diagnosis: the field states' accidental virtue was uncommitted
-    positions) without touching the packing."""
-    base = {v: np.round(np.asarray(p, dtype=float)) for v, p in pos.items()}
-    out = {v: np.asarray(p, dtype=float).copy() for v, p in pos.items()}
-    for _ in range(max(steps, 0)):
-        out = span_step(out, src_adj, eta=eta, max_step=clamp)
-    return {v: np.clip(out[v], base[v] - clamp, base[v] + clamp)
-            for v in out}
+def bar_domains(grid: TileGrid, pos: Dict[int, Point], bars: BarIntervals,
+                src_adj: Dict[int, List[int]], *, kappa: float = 13.0,
+                margin: int = 1) -> Dict[int, List[int]]:
+    """Per-variable qubit domains for minorminer's ``restrict_chains``: shape
+    transmitted as a CONSTRAINT REGION instead of a constructed chain — MM
+    keeps every sub-tile identity choice (no wire coloring on this path).
+
+    PARKED (Max, 2026-07-29): kept as the exact-handoff interface for the
+    strip-minorminer-down agenda; blocked on stock minorminer 0.2.22's
+    restrict_chains hang/segfault with non-trivial domains (repro:
+    docs/paper2/data/restrict_bug_repro.py). The unblock is a fork-level
+    patch when its hour comes.
+
+    Capacity-gated: only variables with deg/kappa - 1 > 0 get a domain
+    (missing entries are unrestricted in minorminer). Domain = h-wire qubits
+    in the row band round(y_v) +- margin over the h-interval (+- margin),
+    union v-wire qubits in the symmetric column band. Untyped grids: {}.
+    """
+    if not grid.typed:
+        return {}
+    tp = grid.coords @ grid.M.T + grid.c  # tile coords of all qubits
+    tx, ty = tp[:, 0], tp[:, 1]
+    rtx, rty = np.round(tx), np.round(ty)
+    out: Dict[int, List[int]] = {}
+    for v in sorted(pos):
+        nbrs = [u for u in src_adj.get(v, []) if u in pos]
+        if len(nbrs) / kappa - 1.0 <= 0:
+            continue
+        h_iv, v_iv = bars[v]
+        r = round(float(pos[v][1]))
+        c = round(float(pos[v][0]))
+        m = float(margin)
+        sel_h = ((grid.orient == 1)
+                 & (rty >= r - m) & (rty <= r + m)
+                 & (tx >= float(h_iv[0]) - m) & (tx <= float(h_iv[1]) + m))
+        sel_v = ((grid.orient == 0)
+                 & (rtx >= c - m) & (rtx <= c + m)
+                 & (ty >= float(v_iv[0]) - m) & (ty <= float(v_iv[1]) + m))
+        out[v] = [grid.qubits[int(i)] for i in np.flatnonzero(sel_h | sel_v)]
+    return out
 
 
 # ==============================================================================
-# STAIRCASE READOUT (notes s3.34): per-edge single coverage
+# ALTERNATING ARRANGEMENT (notes s3.32): the fabric as two coupled 1-D layers
 # ==============================================================================
 #
-# The cross readout pays for every edge TWICE (both variables' bars span
-# their full neighbourhoods; every edge has two crossings) — measured 2x
-# overpay: seed ACL 20 vs implied 10 vs busclique 9.78 on K100. Busclique's
-# construction (verified in source, clique_cache.hpp inflate_first_ell) is
-# the staircase: arms (i+1, width-2-i), row+column ~ constant, each pair
-# meeting exactly once above the diagonal. The generalization is the
-# DIAGONAL RULE, a pure readout of positions: edge (u, v) is covered at
-# u's h-arm x v's v-arm iff (y_u, u) < (y_v, v) — the upper variable
-# reaches across columns, the lower reaches up rows. Arms span only their
-# ASSIGNED contacts, so sparse arms shrink below the cross readout's.
-# The rule is keyed on y-ORDER, so it is invariant under the
-# order-preserving row packing in alternate_arrange — the sort's
-# order-preservation is load-bearing for correctness here.
-# Cost forfeited: the redundancy that made double-covered seeds auto-legal;
-# with one designated crossing per edge, the ~56% Pegasus coupler density
-# bites and the coupled coloring / router repair must carry legality.
-
-
-def _stair_contacts(pos: Dict[int, Point],
-                    src_adj: Dict[int, List[int]]):
-    """Assigned contacts per variable under the diagonal rule. Returns
-    {v: (h_us, v_us)}: neighbour ids whose COLUMNS v's h-arm must reach,
-    and neighbour ids whose ROWS its v-arm must reach."""
-    out = {}
-    for v in pos:
-        h_us: List[int] = []
-        v_us: List[int] = []
-        yv = float(pos[v][1])
-        for u in src_adj.get(v, []):
-            if u not in pos or u == v:
-                continue
-            if (yv, v) < (float(pos[u][1]), u):
-                h_us.append(u)
-            else:
-                v_us.append(u)
-        out[v] = (h_us, v_us)
-    return out
-
-
-def derive_bars_stair(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
-                      *, kappa: float = 13.0, floor: bool = True,
-                      bounds: Optional[Tuple[int, int]] = None
-                      ) -> BarIntervals:
-    """Single-coverage bars: v's h-arm spans the columns of its h-assigned
-    contacts (+ its own column); v-arm spans the rows of its v-assigned
-    contacts (+ its own row). Same floor/clip semantics and return type as
-    :func:`derive_bars`, so all downstream consumers compose unchanged."""
-    contacts = _stair_contacts(pos, src_adj)
-    out: BarIntervals = {}
-    for v in sorted(pos):
-        h_us, v_us = contacts[v]
-        xs = [float(pos[u][0]) for u in h_us] + [float(pos[v][0])]
-        ys = [float(pos[u][1]) for u in v_us] + [float(pos[v][1])]
-        h_iv = np.array([min(xs), max(xs)])
-        v_iv = np.array([min(ys), max(ys)])
-        if floor:
-            deg = len([u for u in src_adj.get(v, []) if u in pos])
-            need = deg / kappa - 1.0
-            deficit = need - float((h_iv[1] - h_iv[0]) + (v_iv[1] - v_iv[0]))
-            if deficit > 0:
-                h_iv = h_iv + np.array([-deficit / 4.0, deficit / 4.0])
-                v_iv = v_iv + np.array([-deficit / 4.0, deficit / 4.0])
-        if bounds is not None:
-            h_iv = np.clip(h_iv, 0.0, bounds[0] - 1.0)
-            v_iv = np.clip(v_iv, 0.0, bounds[1] - 1.0)
-        out[v] = (h_iv, v_iv)
-    return out
-
-
-def stair_energy(pos: Dict[int, Point],
-                 src_adj: Dict[int, List[int]]) -> float:
-    """Total arm length under the diagonal rule (un-floored) — the true
-    single-coverage objective; ~ half of span_energy on K_n."""
-    contacts = _stair_contacts(pos, src_adj)
-    e = 0.0
-    for v in pos:
-        h_us, v_us = contacts[v]
-        xs = [float(pos[u][0]) for u in h_us] + [float(pos[v][0])]
-        ys = [float(pos[u][1]) for u in v_us] + [float(pos[v][1])]
-        e += (max(xs) - min(xs)) + (max(ys) - min(ys))
-    return e
-
-
-def stair_step(pos: Dict[int, Point], src_adj: Dict[int, List[int]], *,
-               eta: float, max_step: float = 1.0) -> Dict[int, Point]:
-    """One subgradient step on :func:`stair_energy`. Each variable owns two
-    directional nets — {v + h-assigned contacts} along x, {v + v-assigned
-    contacts} along y — and the extremes of each net are pulled inward
-    (HPWL subgradient, ties by (coord, id)). Net membership changes when
-    the y-order changes; nets are recomputed every call, which is standard
-    subgradient semantics. Normalized by incident-net count (deg + 2)."""
-    contacts = _stair_contacts(pos, src_adj)
-    f = {v: np.zeros(2) for v in pos}
-    nets = {v: 2 + len([u for u in src_adj.get(v, []) if u in pos])
-            for v in pos}
-    for v in sorted(pos):
-        h_us, v_us = contacts[v]
-        for axis, members in ((0, h_us + [v]), (1, v_us + [v])):
-            if len(members) < 2:
-                continue
-            hi = max(members, key=lambda u: (float(pos[u][axis]), u))
-            lo = min(members, key=lambda u: (float(pos[u][axis]), u))
-            if float(pos[hi][axis]) - float(pos[lo][axis]) <= 1e-12:
-                continue
-            f[hi][axis] -= 1.0
-            f[lo][axis] += 1.0
-    out: Dict[int, Point] = {}
-    for v in pos:
-        dp = eta * f[v] / nets[v]
-        n = float(np.hypot(dp[0], dp[1]))
-        if n > max_step:
-            dp *= max_step / n
-        out[v] = pos[v] + dp
-    return out
-
-
-# ==============================================================================
-# PRODUCT MODE (notes s3.32): the fabric as two coupled 1-D wire layers
-# ==============================================================================
-#
-# Max's original framing: the hardware is ~ (grid x complete bipartite per
-# tile) — a horizontal wire layer organized into rows and a vertical layer
-# into columns, glued only by tile-local all-to-all. In the product view a
-# variable is one interval in each layer; the plane "cross" is just their
-# superposition. Coordinate descent on the SAME span energy: alternately
-# assign rows (columns frozen — each participant's h-interval is then a
-# fixed-length 1-D interval, and rows are an exact interval-packing problem)
-# and columns (rows frozen). Capacity is enforced per line by overlap DEPTH
-# (interval-graph clique number) — the greedy wire *coloring* disappears
-# from the algorithm; only the depth test remains. Iteration 0 projects onto
-# the feasible set (spreading from a compact init necessarily RAISES span
-# energy — that step is unconditional); later iterations accept a half-step
-# only if E does not increase, so the alternation is monotone on the
-# feasible set. Known risk (the Sinkhorn discussion): block descent can
-# stall at joint blind spots; the optional Metropolis swap sweeps are the
-# minimum-dose noise applied exactly along the permutation directions
-# (default OFF — a contingency, not a mechanism).
+# The hardware is ~ (grid x complete bipartite per tile) — a horizontal wire
+# layer organized into rows and a vertical layer into columns, glued only by
+# tile-local coupling. A variable is one interval in each layer; the plane
+# "cross" is their superposition. Coordinate descent on the stair energy:
+# alternately assign rows (columns frozen — each participant's h-interval is
+# then a fixed-length 1-D interval, and rows are an exact interval-packing
+# problem) and columns (rows frozen). Capacity is enforced per line by
+# overlap DEPTH (interval-graph clique number) — no wire coloring inside the
+# optimizer, only the depth test. Iteration 0 projects onto the feasible set
+# (spreading from a compact init necessarily RAISES energy — that step is
+# unconditional); later iterations accept a half-step only if E does not
+# increase, so the alternation is monotone on the feasible set. Diagonal
+# alignment (s3.35) couples the two 1-D orders; insertion sweeps (s3.36) are
+# the general order move where adjacent structure is plateau-bound.
 
 
 def line_depth(intervals: List[Tuple[float, float]]) -> int:
@@ -1389,29 +771,26 @@ def insertion_sweeps(order: List[int], src_adj: Dict[int, List[int]], *,
 
 def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                       grid: TileGrid, *, iters: int = 8, kappa: float = 13.0,
-                      floor: bool = True, derate: float = 1.0,
-                      swap_sweeps: int = 0, swap_temp: float = 0.5,
-                      seed: int = 0, readout: str = "cross",
-                      insert_sweeps: int = 0):
-    """Alternating 1-D arrangement of the capacity-forced variables.
+                      floor: bool = True, insert_sweeps: int = 0):
+    """Alternating 1-D arrangement of the capacity-forced variables, on the
+    stair energy.
 
     Participants (deg/kappa - 1 > 0) are packed into integer rows and
     columns; sparse variables are untouched (their dynamics stay with
-    span_step). Returns (new_pos, info) with info = {"E": trajectory,
+    stair_step). Returns (new_pos, info) with info = {"E": trajectory,
     "iters": full iterations run, "unplaced": count with no feasible line,
     "assigned": participant count}.
 
-    ``readout="stair"``: intervals and the accepted energy come from the
-    single-coverage diagonal rule (s3.34). The rule is keyed on the
-    coordinate ORDER of the frozen axis's counterpart, and the packing is
-    order-preserving, so the per-edge orientation assignment is invariant
-    across a half-step — computed from the pre-step order, still valid
-    after packing.
+    Intervals and the accepted energy come from the single-coverage
+    diagonal rule (s3.34). The rule is keyed on the coordinate ORDER of the
+    frozen axis's counterpart, and the packing is order-preserving, so the
+    per-edge orientation assignment is invariant across a half-step —
+    computed from the pre-step order, still valid after packing.
     """
     participants = [v for v in sorted(pos)
                     if len([u for u in src_adj.get(v, []) if u in pos])
                     / kappa - 1.0 > 0]
-    efn = stair_energy if readout == "stair" else span_energy
+    efn = stair_energy
     new_pos = {v: np.asarray(p, dtype=float).copy() for v, p in pos.items()}
     info = {"E": [efn(new_pos, src_adj)], "iters": 0,
             "unplaced": 0, "assigned": len(participants)}
@@ -1421,18 +800,13 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
     def _intervals(axis: int) -> Dict[int, Tuple[float, float]]:
         # fixed-length interval per participant on the frozen axis
         other = 0 if axis == 1 else 1
-        contacts = (_stair_contacts(new_pos, src_adj)
-                    if readout == "stair" else None)
+        contacts = _stair_contacts(new_pos, src_adj)
         out = {}
         for v in participants:
             nbrs = [u for u in src_adj.get(v, []) if u in new_pos]
-            if contacts is not None:
-                ids = contacts[v][0] if axis == 1 else contacts[v][1]
-                xs = [float(new_pos[u][other]) for u in ids] \
-                    + [float(new_pos[v][other])]
-            else:
-                xs = [float(new_pos[u][other]) for u in nbrs] \
-                    + [float(new_pos[v][other])]
+            ids = contacts[v][0] if axis == 1 else contacts[v][1]
+            xs = [float(new_pos[u][other]) for u in ids] \
+                + [float(new_pos[v][other])]
             a, b = min(xs), max(xs)
             if floor:
                 # half of the contact-capacity floor lives on each layer
@@ -1461,7 +835,7 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
             y0 = float(new_pos[v][axis])
             placed = False
             for ln in sorted(range(nlines), key=lambda i: (abs(i - y0), i)):
-                if line_depth(lines[ln] + [ivs[v]]) <= derate * pool[ln]:
+                if line_depth(lines[ln] + [ivs[v]]) <= pool[ln]:
                     lines[ln].append(ivs[v])
                     trial[v][axis] = float(ln)
                     placed = True
@@ -1503,8 +877,7 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
     for it in range(max(iters, 1)):
         force = (it == 0)
         moved = _half(axis=1, force=force)
-        if readout == "stair":
-            _align_diagonal()
+        _align_diagonal()
         moved = _half(axis=0, force=force) or moved
         info["iters"] = it + 1
         if not moved and not force:
@@ -1514,7 +887,7 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
         # s3.36: best-insertion order search — the general global move.
         # Propose in rank space, apply as a PERMUTATION of the existing
         # y-values (multiset preserved, the _align_diagonal trick), realign
-        # and repack, dispose by TRUE stair/span energy with full revert.
+        # and repack, dispose by TRUE stair energy with full revert.
         for _composite in range(2):
             order0 = sorted(participants,
                             key=lambda v: (float(new_pos[v][1]), v))
@@ -1527,8 +900,7 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
             ys = sorted(float(new_pos[v][1]) for v in participants)
             for r, v in enumerate(new_order):
                 new_pos[v][1] = ys[r]
-            if readout == "stair":
-                _align_diagonal()
+            _align_diagonal()
             _half(axis=1, force=False)
             _half(axis=0, force=False)
             e_post = efn(new_pos, src_adj)
@@ -1538,64 +910,4 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                 break
             info["E"].append(e_post)
 
-    if swap_sweeps > 0:
-        # Contingency: Metropolis swaps along each axis — noise applied only
-        # in the permutation directions block descent cannot explore.
-        rng = np.random.default_rng(seed)
-        e_cur = efn(new_pos, src_adj)
-        n_p = len(participants)
-        for _ in range(swap_sweeps):
-            for axis in (1, 0):
-                for _ in range(n_p):
-                    i, j = rng.integers(0, n_p, size=2)
-                    u, v = participants[int(i)], participants[int(j)]
-                    if u == v or new_pos[u][axis] == new_pos[v][axis]:
-                        continue
-                    new_pos[u][axis], new_pos[v][axis] = \
-                        float(new_pos[v][axis]), float(new_pos[u][axis])
-                    e_try = efn(new_pos, src_adj)
-                    d_e = e_try - e_cur
-                    if d_e <= 0 or rng.random() < math.exp(
-                            -d_e / max(swap_temp, 1e-9)):
-                        e_cur = e_try
-                    else:  # revert
-                        new_pos[u][axis], new_pos[v][axis] = \
-                            float(new_pos[v][axis]), float(new_pos[u][axis])
-        info["E"].append(e_cur)
     return new_pos, info
-
-
-def bar_domains(grid: TileGrid, pos: Dict[int, Point], bars: BarIntervals,
-                src_adj: Dict[int, List[int]], *, kappa: float = 13.0,
-                margin: int = 1) -> Dict[int, List[int]]:
-    """Per-variable qubit domains for minorminer's ``restrict_chains``: shape
-    transmitted as a CONSTRAINT REGION instead of a constructed chain — MM
-    keeps every sub-tile identity choice (no wire coloring on this path).
-
-    Capacity-gated: only variables with deg/kappa - 1 > 0 get a domain
-    (missing entries are unrestricted in minorminer). Domain = h-wire qubits
-    in the row band round(y_v) +- margin over the h-interval (+- margin),
-    union v-wire qubits in the symmetric column band. Untyped grids: {}.
-    """
-    if not grid.typed:
-        return {}
-    tp = grid.coords @ grid.M.T + grid.c  # tile coords of all qubits
-    tx, ty = tp[:, 0], tp[:, 1]
-    rtx, rty = np.round(tx), np.round(ty)
-    out: Dict[int, List[int]] = {}
-    for v in sorted(pos):
-        nbrs = [u for u in src_adj.get(v, []) if u in pos]
-        if len(nbrs) / kappa - 1.0 <= 0:
-            continue
-        h_iv, v_iv = bars[v]
-        r = round(float(pos[v][1]))
-        c = round(float(pos[v][0]))
-        m = float(margin)
-        sel_h = ((grid.orient == 1)
-                 & (rty >= r - m) & (rty <= r + m)
-                 & (tx >= float(h_iv[0]) - m) & (tx <= float(h_iv[1]) + m))
-        sel_v = ((grid.orient == 0)
-                 & (rtx >= c - m) & (rtx <= c + m)
-                 & (ty >= float(v_iv[0]) - m) & (ty <= float(v_iv[1]) + m))
-        out[v] = [grid.qubits[int(i)] for i in np.flatnonzero(sel_h | sel_v)]
-    return out

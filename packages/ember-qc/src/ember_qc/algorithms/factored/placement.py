@@ -1,47 +1,47 @@
 """
 ember_qc/algorithms/factored/placement.py
 ==========================================
-The **attraction** embedder (paper 2, notes §3.18–§3.21): placement-first
-embedding. The placement layer decides *where* variables live; the strongest
-available routing and polish then work from that placement, unconstrained.
+The **attraction** embedder (paper 2): placement-first embedding, one
+algorithm since the 2026-07-29 consolidation (archive commit 612ced3e holds
+the superseded point/cross/span-field variants; verdicts in
+docs/paper2/attraction.md).
 
-Philosophy (notes, 2026-07-17 discussions): make the placement carry the
-information, so that whatever builds chains from it naturally builds good
-ones — and then let the polish move wherever is genuinely better. The
-placement earns its keep by improving the endpoint of an *unconstrained*
-polish (the v1 result: −0.34 ACL vs the same-budget unguided control); a
-placement that only looks good under a polish forbidden to leave it was not
-real. Hobbling the polisher to protect the layout is therefore explicitly
-rejected here (first tried, then measured worse: the region-biased finish cut
-17% where minorminer's free grind cuts ~37%).
+The placement layer decides *where* variables live — globally and jointly,
+the decision one-chain-at-a-time local search cannot revise — and the
+strongest available routing and polish then work from that placement,
+unconstrained. The placement earns its keep by improving the endpoint of an
+*unconstrained* polish (free-polish doctrine, notes §3.22); hobbling the
+polisher to protect the layout was tried and measured worse.
 
-Pipeline:
+Pipeline per call:
 
-1. **init** — spectral layout of the source graph scaled into the target's
-   drawing coordinates (no router call, no minorminer basin as an anchor;
-   degenerate spectra — e.g. complete graphs — fall back to a circle and let
-   the density field do the shaping).
-2. **geometry rounds** — Laplacian attraction (each centroid moves toward the
-   mean of its problem-graph neighbours) plus binned density-overflow
-   repulsion (the §3.19 v1 force law: capacity = working qubits per bin,
-   demand = per-variable expected chain length, overfull bins push centroids
-   toward the least-pressured neighbouring bin). Router-free.
-3. **snap** — variables claim distinct nearest qubits, high degree first.
-4. **seeded routing** — legalization from the snapped singletons.
-   ``backend="mm"`` (default): stock minorminer with ``initial_chains`` and
-   ``chainlength_patience=0`` — the cheap ~10% phase, C++ speed.
-   ``backend="native"``: the factored router (SPH trees, negotiated cost with
-   history) — the minorminer-free arm, kept for the purity ablation.
-5. **feedback** — realized chain centroids re-enter the geometry loop; a few
-   outer rounds of geometry → routing, best kept by legal ACL.
-6. **finish** — ``polish="mm"`` (default): stock minorminer's full
-   chainlength grind warm-started from the best round
-   (``skip_initialization``), free to move anything anywhere.
-   ``polish="native"``: spur-prune + free-space shortening (uniform prices by
-   default; ``gamma > 0`` restores the region-biased ablation arm).
+1. **init** — spectral layout of the source scaled into the target's drawing
+   box (a warm-start heuristic, not load-bearing: the s3.36
+   init-independence result); circle fallback for degenerate spectra.
+2. **geometry** (per round) — one ``stair_step`` (HPWL subgradient on the
+   single-coverage stair energy) then ``alternate_arrange`` (alternating 1-D
+   interval packing of the capacity-forced variables into integer
+   rows/columns, diagonal alignment, insertion order-search). Sparse sources
+   have no participants and pass through untouched — the capacity gate is
+   what keeps the dense machinery from taxing easy instances.
+3. **seeds** — ``derive_bars_stair`` (arms are a pure readout of positions)
+   then ``wire_seeds_iv``: greedy interval coloring onto physical wires,
+   contiguous runs, always best-effort. ``wire_exact=True`` swaps in the
+   per-line matching (``wire_seeds_matched``, s3.37).
+4. **routing** — stock minorminer seeded cheap legalization
+   (``initial_chains``, ``chainlength_patience=0``), each call capped by the
+   rounds budget (``round_frac`` of timeout; the polish reserve is by
+   construction).
+5. **feedback** — spur-prune, realized chain centroids re-enter the geometry;
+   repeat while the rounds budget and ``max_rounds`` allow. The trajectory
+   endpoint (last legal round) feeds the finish.
+6. **feasibility fallback** — if no round legalized: one *uncapped*
+   snap-seeded attempt with all remaining time (degradation mode =
+   spectral-seeded stock MM, the net feasibility winner of §3.23).
+7. **finish** — stock minorminer's full grind warm-started from the selected
+   round (``skip_initialization``), unconstrained.
 
-Deterministic per ``seed`` (minorminer arms are deterministic per
-``random_seed`` as well).
+Deterministic per ``seed``.
 """
 
 from __future__ import annotations
@@ -49,21 +49,18 @@ from __future__ import annotations
 import logging
 import math
 import time
-from dataclasses import dataclass, field as dc_field, fields, replace
-from typing import Dict, List, Optional, Sequence, Tuple
+from dataclasses import dataclass, fields, replace
+from typing import Dict, List, Optional, Sequence
 
 import networkx as nx
 import numpy as np
 
 from ember_qc.embedding_backend import (
-    Adjacency,
-    CostMap,
     Embedding,
     build_adjacency,
     is_valid_embedding,
 )
-from ember_qc.algorithms.factored.loop import RouterConfig, embed_factored
-from ember_qc.algorithms.factored.polish import shorten_chains, spur_prune
+from ember_qc.algorithms.factored.polish import spur_prune
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +69,7 @@ Centroids = Dict[int, Point]
 
 
 # ==============================================================================
-# GEOMETRY
+# GEOMETRY HELPERS
 # ==============================================================================
 
 def target_layout(target: nx.Graph) -> Dict[int, Point]:
@@ -98,7 +95,7 @@ def source_positions(source: nx.Graph, lo: Point, hi: Point) -> Centroids:
     """Initial centroids: spectral layout of the source scaled into the middle
     80% of the target's bounding box. Degenerate spectra (complete graphs,
     tiny graphs, disconnected sources with collapsing components) fall back to
-    a deterministic circle — the density field does the shaping from there.
+    a deterministic circle — the arrangement does the shaping from there.
     """
     nodes = sorted(source.nodes())
     n = len(nodes)
@@ -121,77 +118,10 @@ def source_positions(source: nx.Graph, lo: Point, hi: Point) -> Centroids:
     return {v: arr[i] for i, v in enumerate(nodes)}
 
 
-def relax(cent: Centroids, src_adj: Dict[int, List[int]], eta: float) -> Centroids:
-    """One Laplacian-attraction step: move each centroid ``eta`` of the way
-    toward the mean of its problem-graph neighbours' centroids."""
-    new: Centroids = {}
-    for v, p in cent.items():
-        nbrs = src_adj.get(v, [])
-        if nbrs:
-            target = np.mean([cent[u] for u in nbrs], axis=0)
-            new[v] = p + eta * (target - p)
-        else:
-            new[v] = p
-    return new
-
-
-class DensityField:
-    """Binned density-overflow repulsion (notes §3.19, the v1 force law).
-
-    Capacity per bin is measured from the layout — the number of working
-    qubits whose drawing position falls in the bin, so broken qubits are
-    handled by construction. Demand per centroid is its charge (expected
-    chain length). Centroids in overfull bins move up to one bin toward the
-    least-pressured of the 8 neighbouring bins, scaled by the overflow.
-    """
-
-    def __init__(self, coords: np.ndarray, bins: int):
-        self.B = bins
-        self.mins = coords.min(axis=0)
-        span = coords.max(axis=0) - self.mins
-        self.width = np.maximum(span / bins, 1e-9)
-        self.cap = np.zeros((bins, bins))
-        for xy in coords:
-            i, j = self._bin(xy)
-            self.cap[i, j] += 1
-
-    def _bin(self, p: Point) -> Tuple[int, int]:
-        ij = np.clip(((p - self.mins) / self.width).astype(int), 0, self.B - 1)
-        return int(ij[0]), int(ij[1])
-
-    def _center(self, i: int, j: int) -> Point:
-        return self.mins + (np.array([i, j]) + 0.5) * self.width
-
-    def push(self, cent: Centroids, charges: Dict[int, float]) -> Centroids:
-        where = {v: self._bin(p) for v, p in cent.items()}
-        demand = np.zeros_like(self.cap)
-        for v, ij in where.items():
-            demand[ij] += charges[v]
-        pressure = np.where(self.cap > 0, demand / np.maximum(self.cap, 1), np.inf)
-        new: Centroids = {}
-        for v, p in cent.items():
-            i, j = where[v]
-            pr = pressure[i, j]
-            if pr <= 1.0:
-                new[v] = p
-                continue
-            best, best_pr = (i, j), pr
-            for di in (-1, 0, 1):
-                for dj in (-1, 0, 1):
-                    a, b = i + di, j + dj
-                    if 0 <= a < self.B and 0 <= b < self.B and pressure[a, b] < best_pr:
-                        best, best_pr = (a, b), pressure[a, b]
-            if best == (i, j):
-                new[v] = p
-            else:
-                step = min(1.0, pr - 1.0)
-                new[v] = p + step * (self._center(*best) - self._center(i, j))
-        return new
-
-
 def snap(cent: Centroids, coords: np.ndarray, qubits: Sequence[int],
          degree_order: Sequence[int]) -> Dict[int, int]:
-    """Each variable (high degree first) claims the nearest unclaimed qubit."""
+    """Each variable (high degree first) claims the nearest unclaimed qubit.
+    Used by the feasibility fallback."""
     taken = np.zeros(len(qubits), dtype=bool)
     seeds: Dict[int, int] = {}
     for v in degree_order:
@@ -207,176 +137,47 @@ def centroids_of(chains: Embedding, pos: Dict[int, Point]) -> Centroids:
     return {v: np.mean([pos[q] for q in c], axis=0) for v, c in chains.items()}
 
 
-def region_prices(cent: Centroids, coords: np.ndarray, qubits: Sequence[int],
-                  gamma: float, scale: float):
-    """Per-vertex qubit prices for the finishing shorten:
-    ``1 + gamma * (dist(q, centroid_v) / scale)^2``. Local rebuilds cost ~1;
-    wandering across the fabric costs a few multiples — a bias on which short
-    tree the search finds, never a wall (acceptance is on true qubit count).
-    Maps are built lazily and cached per vertex.
-    """
-    cache: Dict[int, CostMap] = {}
-    s2 = max(scale * scale, 1e-12)
-
-    def prices_for(v: int) -> CostMap:
-        p = cache.get(v)
-        if p is None:
-            diff = coords - cent[v]
-            d2 = np.einsum("ij,ij->i", diff, diff) / s2
-            p = dict(zip(qubits, (1.0 + gamma * d2).tolist()))
-            cache[v] = p
-        return p
-
-    return prices_for
-
-
 # ==============================================================================
 # DRIVER
 # ==============================================================================
 
 @dataclass(frozen=True)
 class AttractConfig:
-    """One point in the attraction family.
+    """The attraction embedder's knobs (post-consolidation: one pipeline).
 
-    ``backend``/``polish`` choose the routing and finishing machinery:
-    ``"mm"`` (default) is stock minorminer — seeded cheap legalization per
-    round, full warm-started grind at the end; ``"native"`` is the factored
-    router / free-space shortener (the minorminer-free arm). Native-router
-    defaults are the paper-2 deterministic corner (Cuthill–McKee, SPH,
-    negotiated cost with history).
+    Unknown keyword arguments to :func:`attract_embed` are ignored, so
+    pre-consolidation knobs silently fall back to the single pipeline.
     """
-    max_rounds: int = 10       # cap on geometry -> snap -> route cycles
+    max_rounds: int = 10       # cap on geometry -> seeds -> route cycles
     round_frac: float = 0.4    # fraction of timeout the rounds phase may use;
-                               # the rest is reserved for the polish. Rounds
-                               # stop when this budget or max_rounds runs out
-                               # (adaptive R: hard instances collapse to 1).
-    geo_iters: int = 1         # relax+push steps per cycle. 1 = the validated
-                               # v1 trust-region cadence (one proxy step per
-                               # router projection); larger values over-optimize
-                               # the coarse model beyond its calibration (the
-                               # v3 regression, notes §3.23).
-    selection: str = "last"    # which legal round feeds the polish:
-                               # "last" (trajectory endpoint, default) or
-                               # "best_legal" (v3 behavior; doubtful per §3.16)
+                               # the rest is reserved for the polish (where
+                               # minorminer earns ~35% ACL, mm-internals §6).
+                               # Adaptive R: hard instances collapse to 1.
+    geo_iters: int = 1         # stair_step + arrange cycles per round
+    eta: float = 0.5           # attraction (subgradient) step size, tiles
     vary_rng: bool = True      # False: identical router RNG every round, so
                                # ONLY geometry varies between rounds — the
                                # attribution arm (failed rounds still re-roll)
-    eta: float = 0.5           # attraction step size
-    bins: Optional[int] = None  # density grid resolution; None = auto
-    lam0: float = 3.0          # initial expected-chain-length charge
-    lam_tau: float = 0.5       # damping of the charge update
-                               # lam <- (1-tau)*lam + tau*realized — the
-                               # charge-feedback-instability mitigation
-                               # (attraction.md ledger); tau=1 = raw (v3.1)
-    # ---- coarse field (VLSI round; field.py) --------------------------------
-    field: str = "poisson"     # "poisson" = typed tile grid + smeared demand +
-                               # hinge^2+mu Poisson repulsion (default since the
-                               # 2026-07-18 field probe: improved the dense cell
-                               # -1.3 ACL and widened the ws win -0.34, no
-                               # regressions) | "push" = v3.1 one-bin density
-                               # push (control arm)
-    smear: bool = True         # poisson only: segment-smeared deposits
-                               # (False = point deposits, monopole ablation)
-    hinge_w: float = 1.0       # present-term weight (0 disables)
-    mu_alpha: float = 0.0      # multiplier-field memory step. Default 0 by
-                               # parsimony since the 2026-07-19 ablation: mu
-                               # measured inert next to the hinge^2 present
-                               # term (dACL within noise on all four cells,
-                               # despite 30-60% stale mu-mass) -- the s3.13
-                               # pattern again: a memory mechanism is inert
-                               # when another mechanism already covers its job.
-                               # >0 re-enables (the +mu arm).
-    field_step: float = 0.5    # force scale, tiles per round (trust-region
-                               # clipped at 1 tile by the field)
-    ramp_rounds: int = 3       # mu-ramp: field weight scales in over rounds
-    # ---- extent state (Option A; field.py CrossState, notes s3.26+) --------
-    state: str = "point"       # "point" (current default) | "cross": each
-                               # variable is (position, h-extent, v-extent);
-                               # contact-deficit descent replaces relax and
-                               # deposits follow the variable's OWN bars
-                               # (s3.28-29 arms, kept for comparison) |
-                               # "span" (notes s3.31): position is the ONLY
-                               # state; extents are a READOUT (v's bars span
-                               # its closed neighbourhood's coordinates),
-                               # attraction is the HPWL subgradient on
-                               # span energy = implied qubit mass, deposits
-                               # are the implied bars (exact). Sparse limit
-                               # == point model; dense limit -> crossbar.
-                               # Default flips only if the pre-registered
-                               # probe bar clears.
-    seed_mode: str = "point"   # cross/span: "point" = snap singleton (as
-                               # now); cross: "bars" = nearest-qubit bar
-                               # tracing | "wire" = wire-coherent contiguous
-                               # runs (interval coloring, s3.30); span:
-                               # "wire" = interval-native wire_seeds_iv |
-                               # "domains" = restrict_chains regions
-                               # (s3.32: shape as a constraint, MM keeps all
-                               # sub-tile identity choices)
-    span_dynamics: str = "field"  # span only: "field" = HPWL subgradient +
-                               # Poisson repulsion (as built, s3.31) |
-                               # "arrange" = product mode (s3.32):
-                               # span_step + alternating 1-D interval
-                               # packing; no field calls on this path
-    domain_margin: int = 1     # seed_mode="domains": tile slack around the
-                               # derived bars (anti-placement guard at the
-                               # cliff; 2 is the single fallback)
-    wire_couple: bool = False  # span+wire only (s3.33): t-coordinated
-                               # coloring -- columns prefer wire subs that
-                               # actually couple to contact partners'
-                               # assigned row wires at the crossing tiles.
-                               # Default stock (off) until the probe.
-    slack_steps: int = 0       # span only (s3.33): fractionalize positions
-                               # within their assigned lines (slack_relax)
-                               # before seed derivation; 0 = off
-    seed_stride: int = 1       # span+wire only (s3.33): claim every
-                               # stride-th qubit of each wire run (router
-                               # negotiation room); 1 = contiguous (stock)
-    wire_exact: bool = False   # span+wire only (s3.37): coupler-exact
-                               # seeds via alternating per-line matchings
-                               # (always best-effort; leftovers go to the
-                               # router). Default stock (off).
-    insert_sweeps: int = 0     # span+arrange only (s3.36): best-insertion
-                               # order-search sweeps inside the alternation
-                               # (the general global move; 0 = off, stock)
-    readout: str = "cross"     # span only (s3.34): "cross" = double
-                               # coverage (both bars span the whole
-                               # neighbourhood; stock) | "stair" = the
-                               # single-coverage diagonal rule (busclique's
-                               # staircase generalized): each edge pays for
-                               # exactly one crossing; arms span assigned
-                               # contacts only. Selects derive fn, step fn,
-                               # energy, and the alternation's intervals.
-    extent_eta: float = 0.5    # extent growth step (contact demand)
-    extent_cost: float = 0.1   # extent rent (qubits aren't free)
-    field_ext_w: float = 0.5   # v2 tip-potential coupling: extent force =
-                               # -field_ext_w * psi(bar tips). 0 = v1 (field
-                               # cannot actuate extents)
-    assign: bool = True        # v2 symmetry break (cross only): per-round
-                               # rank-order assignment of bars to distinct
-                               # integer rows/columns. False = v1 ablation arm
-    assign_threshold: float = 2.0  # min total extent to enter assignment
-                               # (points stay free; sparse regime untouched)
-    assign_every: int = 1      # span only: assignment cadence within the
-                               # geometry iterations (testbed s3.31: ak=5
-                               # routed better than ak=1 at K100)
-    kappa: float = 13.0        # span only: contact capacity (usable couplers
-                               # per chain qubit; Pegasus ~13, the s3.26
-                               # degree-counting bound). Derived-bar floor is
-                               # w + h >= deg(v)/kappa - 1.
-    span_floor: bool = True    # span only: apply the contact-capacity floor
-                               # to derived bars (readout-side clamp, s3.30)
-    cap_derate: float = 1.0    # span only: capacity scale during rounds.
-                               # 1.0 = stock; s7's 0.65 was cross-tuned and
-                               # is swept independently in the span testbed.
-    backend: str = "mm"        # per-round seeded routing: "mm" | "native"
-    polish: str = "mm"         # finishing pass: "mm" | "native"
-    gamma: float = 0.0         # native polish only: region-bias strength
-                               # (0 = unconstrained; >0 is the ablation arm —
-                               # measured worse, kept for the record)
-    shorten_sweeps: int = 8    # native polish only
-    router: RouterConfig = dc_field(default_factory=lambda: RouterConfig(
-        order="cuthill", tree="sph", cost="negotiated", alpha=1.0,
-        max_passes=32, polish=False))
+    arrange_iters: int = 8     # alternation iterations per arrange call
+    insert_sweeps: int = 8     # best-insertion order-search sweeps inside the
+                               # alternation (s3.36; the move that makes block
+                               # structure emerge from any init). 0 = off.
+    kappa: float = 13.0        # contact capacity (usable couplers per chain
+                               # qubit; Pegasus ~13, the s3.26 degree bound).
+                               # Also the participation gate: deg/kappa - 1 > 0
+                               # enters the arrangement, everyone else is free.
+    span_floor: bool = True    # apply the contact-capacity floor to derived
+                               # bars (readout-side clamp, s3.30)
+    cap_derate: float = 1.0    # capacity scale during rounds (<1 keeps the
+                               # packing off 100% utilization; packing at
+                               # exactly full starves routing slack, s3.29/31)
+    wire_exact: bool = False   # coupler-exact seeds via per-line matchings
+                               # (s3.37; always best-effort). Off by default:
+                               # blind greedy holds the K100 champion; the
+                               # matching holds K140/spin_glass/turan records
+                               # and is the co-design frontier.
+    bins: Optional[int] = None  # untyped-target fallback grid resolution;
+                               # None = auto
 
 
 def _auto_bins(n_qubits: int) -> int:
@@ -384,23 +185,19 @@ def _auto_bins(n_qubits: int) -> int:
 
 
 def _mm_route(source_graph: nx.Graph, target_graph: nx.Graph, *,
-              seeds: Optional[Dict[int, int]] = None,
               chains: Optional[Dict[int, List[int]]] = None,
               warm: Optional[Embedding] = None,
-              restrict: Optional[Dict[int, List[int]]] = None,
               seed: int = 0, timeout: float = 60.0) -> Embedding:
     """Stock minorminer, in one of two roles: seeded cheap legalization
-    (``seeds``: snapped singletons, ``chainlength_patience=0``) or the full
+    (``chains``: derived seed chains, ``chainlength_patience=0``) or the full
     warm-started polish (``warm``: a legal embedding, ``skip_initialization``).
-    Returns ``{}`` on failure. Lazy import so the native arm has no
-    minorminer dependency.
+    Returns ``{}`` on failure.
 
     The source is passed as a graph object, NOT an edge list: the edge-list
     form silently drops isolated vertices, and minorminer then rejects
     ``initial_chains`` entries for them ("labels that weren't referred to by
     any edges" — 1,546 failures in the first full-Ember sweep before this
-    fix). The graph form preserves them with singleton chains, matching the
-    ``minorminer`` wrapper's behavior.
+    fix). The graph form preserves them with singleton chains.
     """
     import minorminer
 
@@ -408,13 +205,7 @@ def _mm_route(source_graph: nx.Graph, target_graph: nx.Graph, *,
     if warm is not None:
         kwargs.update(initial_chains=warm, skip_initialization=True)
     else:
-        init = chains if chains is not None else \
-            {v: [q] for v, q in (seeds or {}).items()}
-        kwargs.update(initial_chains=init, chainlength_patience=0)
-        if restrict:
-            # legalization only — the warm polish call stays unrestricted
-            # (free-polish doctrine, notes s3.22)
-            kwargs["restrict_chains"] = restrict
+        kwargs.update(initial_chains=chains or {}, chainlength_patience=0)
     return minorminer.find_embedding(
         source_graph, list(target_graph.edges()), **kwargs) or {}
 
@@ -431,8 +222,7 @@ def attract_embed(
     """Functional entry point; returns an ember-qc result dict (never raises).
 
     ``overrides`` matching :class:`AttractConfig` fields replace those fields;
-    ``RouterConfig`` fields (``alpha``, ``order``, ...) are forwarded to the
-    inner router; unknown keyword arguments are ignored.
+    unknown keyword arguments are ignored.
     """
     start = time.perf_counter()
     deadline = start + timeout if timeout else None
@@ -445,29 +235,13 @@ def attract_embed(
         cfg = config if config is not None else AttractConfig()
         known = {f.name for f in fields(AttractConfig)}
         picked = {k: v for k, v in overrides.items() if k in known}
-        router_known = {f.name for f in fields(RouterConfig)}
-        router_picked = {k: v for k, v in overrides.items()
-                         if k in router_known and k not in known}
         if picked:
             cfg = replace(cfg, **picked)
-        if router_picked:
-            cfg = replace(cfg, router=replace(cfg.router, **router_picked))
 
-        if cfg.state == "cross":
-            from ember_qc.algorithms.factored.field import (
-                assign_rows_cols, bar_force, bar_seeds, contact_step,
-                deposit_cross, fit_extents, wire_seeds)
-        elif cfg.state == "span":
-            from ember_qc.algorithms.factored.field import (
-                alternate_arrange, assign_rows_cols, bar_domains,
-                bar_force_iv, bar_widths, deposit_bars, derive_bars,
-                derive_bars_stair, slack_relax, span_energy, span_step,
-                stair_energy, stair_step, wire_seeds_iv,
-                wire_seeds_matched)
-            _derive = (derive_bars_stair if cfg.readout == "stair"
-                       else derive_bars)
-            _step = stair_step if cfg.readout == "stair" else span_step
-            _efn = stair_energy if cfg.readout == "stair" else span_energy
+        from ember_qc.algorithms.factored.field import (
+            TileGrid, alternate_arrange, bar_widths, derive_bars_stair,
+            stair_energy, stair_step, wire_seeds_iv, wire_seeds_matched)
+
         adj = build_adjacency(target_graph)
         qubits = sorted(adj)
         nodes = sorted(source_graph.nodes())
@@ -479,55 +253,26 @@ def attract_embed(
         pos = target_layout(target_graph)
         coords = np.array([pos[q] for q in qubits], dtype=float)
         lo, hi = coords.min(axis=0), coords.max(axis=0)
-        span = float(np.linalg.norm(hi - lo))
-        density = DensityField(coords, bins=cfg.bins or _auto_bins(len(qubits)))
-        tile_grid = pfield = None
-        if cfg.field == "poisson" or cfg.state in ("cross", "span"):
-            from ember_qc.algorithms.factored.field import (
-                PoissonField, TileGrid)
-            tile_grid = TileGrid(target_graph, pos,
-                                 fallback_bins=cfg.bins or _auto_bins(len(qubits)))
-            if cfg.state == "span" and cfg.cap_derate != 1.0:
-                tile_grid.cap = tile_grid.cap * cfg.cap_derate
-            pfield = PoissonField(tile_grid, hinge_w=cfg.hinge_w,
-                                  mu_alpha=cfg.mu_alpha)
+        grid = TileGrid(target_graph, pos,
+                        fallback_bins=cfg.bins or _auto_bins(len(qubits)))
+        if cfg.cap_derate != 1.0:
+            grid.cap = grid.cap * cfg.cap_derate
+        bounds = (grid.W, grid.H)
 
-        def _span_bars(tpts):
-            # derived bars are a pure readout of positions (notes s3.31;
-            # s3.34: readout="stair" switches to single coverage)
-            return _derive(tpts, src_adj, kappa=cfg.kappa,
-                           floor=cfg.span_floor,
-                           bounds=(tile_grid.W, tile_grid.H))
+        def _bars(tpts):
+            # arms are a pure readout of positions (s3.31/s3.34)
+            return derive_bars_stair(tpts, src_adj, kappa=cfg.kappa,
+                                     floor=cfg.span_floor, bounds=bounds)
 
         cent = source_positions(source_graph, lo, hi)
-        ext = {v: np.zeros(2) for v in cent}  # cross state: (w, h) in tiles
-        lam = cfg.lam0
-        chain_len: Dict[int, float] = {}
-        best_emb: Optional[Embedding] = None
-        best_acl = math.inf
-        best_cent: Optional[Centroids] = None
         last_emb: Optional[Embedding] = None
         last_acl = math.inf
-        last_cent: Optional[Centroids] = None
         rounds_run = 0
-        last_assigned = 0
+        last_info: dict = {"assigned": 0}
         rng_rerolls = 0  # advances RNG after failed rounds when vary_rng=False
         round_acls: List[Optional[float]] = []
-        round_E: List[float] = []  # span state: coarse energy per round
-
-        def _route(seed_chains: Dict[int, List[int]], rng: int,
-                   cap: float,
-                   restrict: Optional[Dict[int, List[int]]] = None
-                   ) -> Optional[Embedding]:
-            if cfg.backend == "mm":
-                return _mm_route(source_graph, target_graph,
-                                 chains=seed_chains, restrict=restrict,
-                                 seed=rng, timeout=cap)
-            res = embed_factored(
-                source_graph, target_graph, timeout=cap, seed=rng,
-                config=cfg.router, initial_chains=seed_chains,
-            )
-            return res.get("embedding") or None
+        round_E: List[float] = []
+        seed_sat: Optional[str] = None  # wire_exact: designated-crossing metric
 
         # Rounds phase: capped at round_frac of the budget so the polish (the
         # phase where minorminer earns ~35% ACL, notes §3.15) cannot be starved.
@@ -536,138 +281,30 @@ def attract_embed(
             now = time.perf_counter()
             if rounds_deadline is not None and now >= rounds_deadline:
                 break
-            charges = {v: chain_len.get(v, lam) for v in cent}
-            for g_it in range(cfg.geo_iters):
-                if cfg.state == "cross":
-                    tpts = {v: tile_grid.to_tile(p) for v, p in cent.items()}
-                    tpts, ext = contact_step(
-                        tpts, ext, src_adj, eta=cfg.eta,
-                        extent_eta=cfg.extent_eta,
-                        extent_cost=cfg.extent_cost)
-                    demand = deposit_cross(tile_grid, tpts, ext)
-                    psi = pfield.potential(demand)
-                    ramp = min(1.0, (outer + 1) / max(cfg.ramp_rounds, 1))
-                    dts, dexts = bar_force(
-                        tile_grid, psi, tpts, ext,
-                        scale=cfg.field_step * ramp,
-                        ext_w=cfg.field_ext_w * ramp)
-                    ext = {v: np.maximum(0.0, ext[v] + dexts[v])
-                           for v in ext}
-                    tpts = {v: tpts[v] + dts[v] for v in tpts}
-                    if cfg.assign:
-                        tpts, last_assigned = assign_rows_cols(
-                            tpts, ext, tile_grid,
-                            threshold=cfg.assign_threshold)
-                    cent = {v: tile_grid.Minv @ (tpts[v] - tile_grid.c)
-                            for v in cent}
-                    pfield.last_demand = demand
-                    continue
-                if cfg.state == "span" and cfg.span_dynamics == "arrange":
-                    # product mode (s3.32): no field calls on this path;
-                    # capacity is enforced exactly per line inside the
-                    # alternation (grid.cap already carries cap_derate)
-                    tpts = {v: tile_grid.to_tile(p) for v, p in cent.items()}
-                    tpts = _step(tpts, src_adj, eta=cfg.eta)
-                    tpts, arr_info = alternate_arrange(
-                        tpts, src_adj, tile_grid, iters=8, kappa=cfg.kappa,
-                        floor=cfg.span_floor, seed=seed,
-                        readout=cfg.readout,
-                        insert_sweeps=cfg.insert_sweeps)
-                    last_assigned = arr_info["assigned"]
-                    cent = {v: tile_grid.Minv @ (tpts[v] - tile_grid.c)
-                            for v in cent}
-                    continue
-                if cfg.state == "span":
-                    tpts = {v: tile_grid.to_tile(p) for v, p in cent.items()}
-                    tpts = _step(tpts, src_adj, eta=cfg.eta)
-                    bars = _span_bars(tpts)
-                    demand = deposit_bars(tile_grid, tpts, bars)
-                    psi = pfield.potential(demand)
-                    ramp = min(1.0, (outer + 1) / max(cfg.ramp_rounds, 1))
-                    dts = bar_force_iv(tile_grid, psi, tpts, bars,
-                                       scale=cfg.field_step * ramp)
-                    tpts = {v: tpts[v] + dts[v] for v in tpts}
-                    if cfg.assign and g_it % max(cfg.assign_every, 1) == 0:
-                        # widths re-derived post-move; the assignment acts on
-                        # positions only and extents re-derive afterwards --
-                        # no reconciliation step exists or is needed.
-                        # Participation is capacity-gated (s3.31 rule): only
-                        # variables whose contact floor forces extension
-                        # (deg/kappa - 1 > 0) enter the row/column sort;
-                        # incidental spread stays free, so the assignment is
-                        # inert on sparse sources (win-guard protection).
-                        widths = bar_widths(_span_bars(tpts))
-                        for v in widths:
-                            if len(src_adj.get(v, [])) / cfg.kappa - 1.0 <= 0:
-                                widths[v] = np.zeros(2)
-                        tpts, last_assigned = assign_rows_cols(
-                            tpts, widths, tile_grid,
-                            threshold=cfg.assign_threshold)
-                    cent = {v: tile_grid.Minv @ (tpts[v] - tile_grid.c)
-                            for v in cent}
-                    pfield.last_demand = demand
-                    continue
-                cent = relax(cent, src_adj, cfg.eta)
-                if pfield is not None:
-                    demand = tile_grid.deposit(cent, charges, src_adj,
-                                               smear=cfg.smear)
-                    psi = pfield.potential(demand)
-                    ramp = min(1.0, (outer + 1) / max(cfg.ramp_rounds, 1))
-                    tpts = {v: tile_grid.to_tile(p) for v, p in cent.items()}
-                    dts = pfield.force_at(psi, tpts,
-                                          scale=cfg.field_step * ramp)
-                    cent = {v: cent[v] + tile_grid.to_drawing_delta(dts[v])
-                            for v in cent}
-                    pfield.last_demand = demand
-                else:
-                    cent = density.push(cent, charges)
-            if cfg.state == "span":
-                tpts = {v: tile_grid.to_tile(p) for v, p in cent.items()}
-                round_E.append(round(_efn(tpts, src_adj), 1))
-            round_restrict = None
-            if cfg.state == "cross" and cfg.seed_mode != "point":
-                tpts = {v: tile_grid.to_tile(p) for v, p in cent.items()}
-                seed_chains = (wire_seeds(tile_grid, tpts, ext)
-                               if cfg.seed_mode == "wire"
-                               else bar_seeds(tile_grid, tpts, ext))
-            elif cfg.state == "span" and cfg.seed_mode == "domains":
-                # DISABLED (notes s3.32): stock minorminer 0.2.22 hangs past
-                # its timeout / segfaults when restrict_chains carries
-                # non-trivial domains (isolated repros on P6 and P16). The
-                # domain construction (bar_domains) stays tested and ready;
-                # re-enable only against a fixed fork.
-                raise ValueError(
-                    "seed_mode='domains' is disabled: stock minorminer's "
-                    "restrict_chains hangs/segfaults with non-trivial "
-                    "domains (notes s3.32)")
-            elif cfg.state == "span" and cfg.seed_mode != "point":
-                tpts = {v: tile_grid.to_tile(p) for v, p in cent.items()}
-                if cfg.slack_steps > 0:
-                    tpts = slack_relax(tpts, src_adj, eta=cfg.eta * 0.5,
-                                       steps=cfg.slack_steps)
-                if cfg.wire_exact:
-                    seed_chains, _sat, _tot = wire_seeds_matched(
-                        tile_grid, tpts, _span_bars(tpts), src_adj,
-                        stride=cfg.seed_stride)
-                else:
-                    seed_chains = wire_seeds_iv(
-                        tile_grid, tpts, _span_bars(tpts),
-                        src_adj=src_adj if cfg.wire_couple else None,
-                        stride=cfg.seed_stride)
+            tpts = {v: grid.to_tile(p) for v, p in cent.items()}
+            for _g in range(cfg.geo_iters):
+                tpts = stair_step(tpts, src_adj, eta=cfg.eta)
+                tpts, last_info = alternate_arrange(
+                    tpts, src_adj, grid, iters=cfg.arrange_iters,
+                    kappa=cfg.kappa, floor=cfg.span_floor,
+                    insert_sweeps=cfg.insert_sweeps)
+            cent = {v: grid.Minv @ (tpts[v] - grid.c) for v in cent}
+            round_E.append(round(stair_energy(tpts, src_adj), 1))
+
+            if cfg.wire_exact:
+                seed_chains, sat, tot = wire_seeds_matched(
+                    grid, tpts, _bars(tpts), src_adj)
+                seed_sat = f"{sat}/{tot}"
             else:
-                seed_chains = {v: [q] for v, q in
-                               snap(cent, coords, qubits,
-                                    degree_order).items()}
+                seed_chains = wire_seeds_iv(grid, tpts, _bars(tpts))
             cap = (rounds_deadline - time.perf_counter()) if rounds_deadline \
                 else 60.0
             if cap <= 0:
                 break
             rng = seed * 100 + (outer if cfg.vary_rng else rng_rerolls)
-            emb = _route(seed_chains, rng, cap, restrict=round_restrict)
+            emb = _mm_route(source_graph, target_graph, chains=seed_chains,
+                            seed=rng, timeout=cap)
             rounds_run += 1
-            # mu update: once per router round (fresh-calibration cadence)
-            if pfield is not None and pfield.last_demand is not None:
-                pfield.update_mu(pfield.last_demand)
             if not emb:
                 round_acls.append(None)
                 rng_rerolls += 1  # geometry unchanged on failure: must re-roll
@@ -676,93 +313,58 @@ def attract_embed(
             a = sum(len(c) for c in emb.values()) / len(emb)
             round_acls.append(round(a, 3))
             cent = centroids_of(emb, pos)
-            # damped charge updates (charge-feedback-instability mitigation).
-            # Span state skips them: deposit mass is 1 + derived spans, a
-            # forward function of positions -- the measured-chain-length
-            # feedback channel (and its instability) does not exist there.
-            tau = cfg.lam_tau
-            if cfg.state != "span":
-                lam = (1.0 - tau) * lam + tau * a
-                realized = {v: float(len(c)) for v, c in emb.items()}
-                chain_len = {v: (1.0 - tau) * chain_len.get(v, r) + tau * r
-                             for v, r in realized.items()}
-            if cfg.state == "cross":
-                meas = fit_extents(tile_grid, emb, pos)
-                ext = {v: (1.0 - tau) * ext.get(v, np.zeros(2))
-                       + tau * meas.get(v, np.zeros(2)) for v in ext}
-            last_emb, last_acl, last_cent = emb, a, dict(cent)
-            if a < best_acl:
-                best_emb, best_acl, best_cent = emb, a, dict(cent)
+            last_emb, last_acl = emb, a
 
         # Feasibility fallback: no round legalized within the rounds budget —
-        # one uncapped seeded attempt with everything that remains. Degradation
-        # mode = "spectral-seeded stock MM" (net feasibility winner in §3.23).
-        if best_emb is None:
+        # one uncapped snap-seeded attempt with everything that remains.
+        # Degradation mode = "spectral-seeded stock MM" (§3.23's net
+        # feasibility winner).
+        if last_emb is None:
             remaining = (deadline - time.perf_counter()) if deadline else 60.0
             if remaining > 0:
                 fb = {v: [q] for v, q in
                       snap(cent, coords, qubits, degree_order).items()}
-                emb = _route(fb, seed * 100 + 99, remaining)
+                emb = _mm_route(source_graph, target_graph, chains=fb,
+                                seed=seed * 100 + 99, timeout=remaining)
                 rounds_run += 1
                 if emb:
                     emb = spur_prune(emb, src_adj, adj, deadline=deadline)
                     a = sum(len(c) for c in emb.values()) / len(emb)
                     round_acls.append(round(a, 3))
-                    c = centroids_of(emb, pos)
-                    best_emb, best_acl, best_cent = emb, a, dict(c)
-                    last_emb, last_acl, last_cent = emb, a, dict(c)
+                    last_emb, last_acl = emb, a
                 else:
                     round_acls.append(None)
 
-        if best_emb is None:
+        if last_emb is None:
             return _failure(rounds=rounds_run, round_acls=round_acls)
 
-        if cfg.selection == "best_legal":
-            chosen, chosen_acl, chosen_cent = best_emb, best_acl, best_cent
-        else:  # "last": the trajectory endpoint
-            chosen, chosen_acl, chosen_cent = last_emb, last_acl, last_cent
-
         remaining = (deadline - time.perf_counter()) if deadline else 60.0
-        if cfg.polish == "mm" and remaining > 0:
-            finished = _mm_route(source_graph, target_graph, warm=chosen,
-                                 seed=seed, timeout=remaining) or chosen
+        if remaining > 0:
+            finished = _mm_route(source_graph, target_graph, warm=last_emb,
+                                 seed=seed, timeout=remaining) or last_emb
         else:
-            prices_for = (region_prices(chosen_cent, coords, qubits,
-                                        cfg.gamma, scale=span / 2.0)
-                          if cfg.gamma > 0 else None)
-            finished = shorten_chains(
-                chosen, src_adj, adj,
-                deadline=deadline, max_sweeps=cfg.shorten_sweeps,
-                vertex_prices=prices_for,
-            )
-            finished = spur_prune(finished, src_adj, adj, deadline=deadline)
-        # Paranoia guard, same as the router's: a broken finishing pass must
-        # never corrupt a legal result.
+            finished = last_emb
+        # Paranoia guard: a broken finishing pass must never corrupt a legal
+        # result.
         if not is_valid_embedding(finished, source_graph, target_graph, adj=adj):
-            finished = chosen
+            finished = last_emb
 
-        result = {"embedding": finished,
-                  "time": time.perf_counter() - start,
-                  "rounds": rounds_run,
-                  "round_acls": round_acls,
-                  "legal_acl": round(chosen_acl, 3)}
-        if pfield is not None:
-            result["field_diag"] = pfield.diagnostics(pfield.last_demand)
-            if cfg.state == "cross":
-                sizes = np.array([ext[v].sum() for v in ext]) if ext else                     np.zeros(1)
-                result["field_diag"]["extent_mean"] = round(float(sizes.mean()), 3)
-                result["field_diag"]["extent_max"] = round(float(sizes.max()), 3)
-                result["field_diag"]["assigned"] = int(last_assigned)
-            elif cfg.state == "span":
-                tpts = {v: tile_grid.to_tile(p) for v, p in cent.items()}
-                widths = bar_widths(_span_bars(tpts))
-                sizes = (np.array([widths[v].sum() for v in widths])
-                         if widths else np.zeros(1))
-                result["field_diag"]["extent_mean"] = round(float(sizes.mean()), 3)
-                result["field_diag"]["extent_max"] = round(float(sizes.max()), 3)
-                result["field_diag"]["assigned"] = int(last_assigned)
-                result["round_E"] = round_E
-        return result
+        tpts = {v: grid.to_tile(p) for v, p in cent.items()}
+        widths = bar_widths(_bars(tpts))
+        sizes = (np.array([widths[v].sum() for v in widths])
+                 if widths else np.zeros(1))
+        diag = {"assigned": int(last_info.get("assigned", 0)),
+                "extent_mean": round(float(sizes.mean()), 3),
+                "extent_max": round(float(sizes.max()), 3)}
+        if seed_sat is not None:
+            diag["designated"] = seed_sat
+        return {"embedding": finished,
+                "time": time.perf_counter() - start,
+                "rounds": rounds_run,
+                "round_acls": round_acls,
+                "round_E": round_E,
+                "legal_acl": round(last_acl, 3),
+                "diag": diag}
     except Exception as exc:
         logger.error("attraction embed error: %s", exc)
         return _failure(error=str(exc))
