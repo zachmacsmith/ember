@@ -1920,6 +1920,50 @@ from the pre-consolidation harness (12.51 K100 greedy, 17.04 K140 matched,
 8.04 turan matched) remain the reproduction targets; wire_exact holds
 three of them behind its switch.
 
+### 3.39 Multi-dense-patch probe (weak_strong_cluster): patch-size crossover found; rounds beat 1shot off the single-block regime (2026-07-29)
+
+Max's question after the consolidation Q&A ("how do cliques end up
+together / who pushes sparse away / what does the permuter know"): probe
+the several-dense-patches family. Cells: c disjoint K32/K64 cliques, ONE
+inter-edge per cluster pair (ids 33571/33601/33640/33574) — every member a
+participant, inter-edges participant-participant (visible to the insertion
+proxy; the sparse-fringe blind spot does NOT apply here). 3 arms x 3 seeds
+x 60 s, P16, 8 niced workers (machine carried a 60-core batch; ~68 free).
+`data/wsc_probe.py` / `.log` / `.csv`.
+
+| cell | 1shot (default) | rounds | mm |
+|---|---|---|---|
+| 3xK32 (n96) | 6.14 | 5.18 | **4.68** |
+| 5xK32 (n160) | 5.68 | 5.47 | **4.99** |
+| 8xK32 (n256) | 5.34 | 5.34 | **5.15** |
+| 3xK64 (n192) | 9.79 | 9.67 | 9.89 (**we win, both arms**) |
+
+1. **Patch-size crossover, cleanly measured.** K32 patches sit below the
+   size where the staircase construction pays: mm's irregular local
+   negotiation is near-optimal there and our block discipline is pure
+   overhead (-1.46 at c3). The gap shrinks monotonically as the fabric
+   fills (c8: -0.19), and at K64 patches both our arms beat mm — on a
+   graph busclique cannot address at all. Same shape as the s3.26
+   template-vs-search finding: constructive structure wins only above a
+   patch-size threshold, here bracketed between K32 and K64.
+2. **Rounds beat 1shot decisively off the single-block regime** (c3xK32:
+   5.18 vs 6.14; ws_n486 previously 3.41 vs 3.76). Reading: feedback
+   rounds re-place PATCHES relative to each other from realized centroids
+   — the inter-block geometry is exactly what one shot cannot revise. With
+   s3.38's opposite result on single-block dense (rounds destroy
+   insertion-found order), the adaptive-rounds design question now has a
+   clean shape: single dense component -> 1shot; multiple
+   patches/sparse-coupled -> rounds. Candidate gate: component count of
+   the participant subgraph (computable from the existing capacity gate,
+   no topology detection). UNDESIGNED — needs its own decision round
+   (default remains 1shot).
+3. Agenda implications: (a) the K32-patch loss is the below-cliff overhead
+   question, not the corridor question (inter-edges here are
+   participant-participant); the corridor/sparse-traversal suspect remains
+   unmeasured — a wsc variant with sparse bridges or low-degree fringe
+   would isolate it; (b) K64-patch win is the first direct evidence for
+   the beats-busclique-off-clique thesis on multi-patch terrain.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).
