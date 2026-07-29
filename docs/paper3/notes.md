@@ -754,3 +754,30 @@ off-regime behavior (no M4 headline cell is affected except (140,0.12) for
 clmm, which becomes passthrough). Re-run plan: z12/c16/layout batches run the
 guarded arms from scratch; P16 re-runs the three guarded arms only (minorminer/
 p3-template rows reused; pairing on graph_id at identical derived seeds).
+
+§4.11 RESULTS — Z12 main batch (2026-07-29; 151,105 rows; first architecture fully
+under the v1.1 guards): **bar-as-written FAILS (16 violations, down from P16's 42);
+the noise-aware reading PASSES with one documented regime boundary.**
+- **The guards enabled a direct seed-noise null**: on the 26 families below the
+  density gate, guarded p3-clmm IS minorminer at a different derived seed — the
+  arm-vs-MM success differences there measure the CLI (instance, trial) pairing
+  noise floor directly: mean -0.00 pt, sd 1.57 pt, max |4.55| pt across families,
+  perfectly symmetric. Every residual success violation (1.4-4.5 pt: bcc, cubic,
+  frustrated_square, king, cycle, wheel — for all three arms, which are all
+  MM-equivalent there post-guard) lies INSIDE this null. Verdict: seed noise,
+  quantified, not regression. The 1 pt bar is below the noise floor at
+  full-library single-trial granularity (recorded as a bar-calibration lesson;
+  no code change — tightening arms against measured noise would be tuning on
+  test).
+- **ACL violations**: hypercube (+0.18..+0.42, ALL arms incl. polish-monotone
+  mmpolish) = 7 successes over 11 graphs at straddling density — small-sample
+  seed luck. **johnson +0.228 for p3-clmm is REAL** (density 0.172, genuinely
+  seeded; 74 graphs): a regime boundary for the mid-band arm on dense structured
+  sources — and on the same family **p3-ate BEATS MM by -0.63** (7.112 vs 7.739;
+  the template fits johnson geometry and evaluate-both selects it). The product
+  story is intact: clmm's boundary is documented; the product arm covers it and
+  wins.
+- p3-ate: zero ACL regressions library-wide again (johnson is a WIN); all its
+  success deltas inside the null. p3-mmpolish: broad small ACL wins persist
+  under the v1.1 leftover-budget design (turan -0.256, spin-glass-class families
+  similar), success deltas inside the null.
