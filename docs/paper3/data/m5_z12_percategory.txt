@@ -1,0 +1,37 @@
+category                   n   mm%                   ate              mmpolish                  clmm              template
+--------------------------------------------------------------------------------------------------------------------------
+watts_strogatz         11988  66.5    +0.0%  47%W   tie    -3.2%  65%W   WIN    +0.0%  43%W   tie   +25.0%  17%W  LOSS
+barabasi_albert         3416  66.3    +0.0%  45%W   tie    -1.6%  56%W   WIN    +0.0%  37%W   tie   +12.0%  25%W  LOSS
+regular                 3375  57.8    -1.0%  53%W   tie    -2.9%  64%W   WIN    +0.0%  48%W   tie   +16.0%  29%W  LOSS
+random_er               3024  72.1    +0.0%  43%W   tie    +0.0%  46%W   tie    +0.0%  39%W   tie    +3.6%  28%W  LOSS
+planted_solution        2616  91.2    +0.0%  44%W   tie    -0.2%  50%W   tie    +0.0%  44%W   tie   +33.9%  13%W  LOSS
+sbm                     1125  76.9    +0.0%  48%W   tie    -2.1%  57%W   WIN    +0.0%  41%W   tie   +26.9%  19%W  LOSS
+generalized_petersen     755  91.7    +0.0%  43%W   tie    +0.0%  47%W   tie    +0.0%  45%W   tie   +22.4%  13%W  LOSS
+turan                    607  83.2    -5.6%  60%W   WIN    -2.4%  57%W   WIN    -4.5%  59%W   WIN    +0.0%  49%W   tie
+spin_glass               598  69.2    -3.5%  62%W   WIN    -2.6%  61%W   WIN    +0.0%  49%W   tie    +6.6%  43%W  LOSS
+weak_strong_cluster      444  54.5    +0.0%  50%W   tie    -4.3%  83%W   WIN    +0.0%  45%W   tie   +15.3%  13%W  LOSS
+circulant                337  86.9    +0.0%  43%W   tie    -0.7%  53%W   tie    +0.0%  46%W   tie   +25.0%  11%W  LOSS
+random_planar            216  88.9    +0.0%  42%W   tie    -2.1%  58%W   WIN    +1.8%  35%W  LOSS   +43.0%   2%W  LOSS
+bipartite                208  81.2   -12.3%  66%W   WIN    +0.0%  38%W   tie   -12.0%  64%W   WIN   -12.3%  62%W   WIN
+triangular_lattice       182  90.1    +0.0%  42%W   tie    -2.4%  59%W   WIN    +0.0%  46%W   tie   +28.2%   9%W  LOSS
+honeycomb                151  72.8    +0.7%  40%W  LOSS    +0.0%  43%W   tie    +0.0%  47%W   tie   +10.1%  20%W  LOSS
+grid                     143  82.5    +0.0%  38%W   tie    +0.0%  48%W   tie    +0.0%  46%W   tie   +17.2%   6%W  LOSS
+kagome                   130  71.5    +1.1%  45%W   tie    -1.5%  55%W   WIN    +0.0%  49%W   tie   +17.3%  18%W  LOSS
+johnson                   74  43.2    -6.4%  81%W   WIN    -4.1%  84%W   WIN    +4.5%  31%W  LOSS    -3.6%  62%W   WIN
+cubic_lattice             74  56.8    +0.0%  40%W   tie    +0.0%  45%W   tie    +0.4%  34%W   tie    +9.0%  20%W  LOSS
+king_graph                70  72.9    +0.8%  37%W  LOSS    -5.2%  65%W   WIN    -1.0%  52%W   tie   +30.0%  10%W  LOSS
+frustrated_square         70  74.3    +0.6%  40%W  LOSS    -5.7%  70%W   WIN    +0.2%  45%W   tie   +29.9%  14%W  LOSS
+shastry_sutherland        66 100.0    +1.1%  36%W  LOSS    -2.8%  62%W   WIN    +0.0%  45%W   tie   +14.9%  17%W  LOSS
+cycle                     63  96.8    +0.0%  22%W   tie    +0.0%  21%W   tie    +0.0%  25%W   tie    +0.1%  10%W   tie
+star                      63  71.4    +0.0%  38%W   tie    +0.0%  29%W   tie    +0.0%  24%W   tie    +0.0%  40%W   tie
+path                      63  95.2    +0.0%   0%W   tie    +0.0%   0%W   tie    +0.0%   0%W   tie    +0.2%   0%W   tie
+wheel                     62  93.5    +0.0%  40%W   tie    +0.0%  45%W   tie    +0.0%  36%W   tie   +35.0%   7%W  LOSS
+lfr_benchmark             61  68.9    -0.1%  50%W   tie    -5.0%  71%W   WIN    -2.8%  60%W   WIN    +4.9%  36%W  LOSS
+complete                  56  78.6    -9.6%  66%W   WIN    -0.8%  52%W   tie    -5.1%  61%W   WIN    -8.1%  59%W   WIN
+kneser                    41  56.1    -9.5%  87%W   WIN    -1.4%  65%W   WIN    -2.5%  65%W   WIN    -8.9%  61%W   WIN
+hardware_native           41  48.8   -14.2%  74%W   WIN    +5.9%  42%W  LOSS    -3.0%  63%W   WIN   +34.1%  25%W  LOSS
+tree                      26  92.3    +0.0%  21%W   tie    +0.0%  33%W   tie    +0.0%  29%W   tie    +6.5%  21%W  LOSS
+bcc_lattice               22  63.6    +1.7%  38%W  LOSS    -2.1%  57%W   WIN    +6.2%  46%W   tie   +20.9%  15%W  LOSS
+named_special             12 100.0    +0.0%   8%W   tie    +0.0%   0%W   tie    +0.0%   8%W   tie   +27.1%   0%W  LOSS
+hypercube                 11  63.6    +3.7%   0%W  LOSS    +0.0%  14%W   tie    +0.0%  14%W   tie   +50.0%   0%W  LOSS
+binary_tree               11  81.8    +0.0%  11%W   tie    +0.0%  11%W   tie    +0.0%  11%W   tie    +6.7%  11%W  LOSS
