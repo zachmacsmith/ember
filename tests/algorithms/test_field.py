@@ -486,8 +486,289 @@ class TestWireSeeds:
 
 
 from ember_qc.algorithms.factored.field import (
-    _couples, alternate_arrange, bar_domains, line_depth, slack_relax,
+    _couples, _stair_contacts, alternate_arrange, bar_domains,
+    derive_bars_stair, insertion_sweeps, line_depth, slack_relax,
+    stair_energy, stair_step,
 )
+
+
+from ember_qc.algorithms.factored.field import (
+    _line_tracks, wire_seeds_matched,
+)
+
+
+class TestWireSeedsMatched:
+    def test_line_tracks_depth(self):
+        items = [(0.0, 4.0, 1), (1.0, 3.0, 2), (2.0, 5.0, 3), (4.5, 6.0, 4)]
+        tr = _line_tracks(items)
+        assert len(tr) == 3  # depth at x=2.5 is 3
+        # disjoint arms share: (0,4) and (4.5,6) in one track
+        assert any(len(t) == 2 for t in tr)
+
+    def _stair_state(self, n=20, P=4):
+        g = dnx.pegasus_graph(P)
+        grid = TileGrid(g, target_layout(g))
+        adj = {v: [u for u in range(n) if u != v] for v in range(n)}
+        from ember_qc.algorithms.factored.field import (
+            alternate_arrange, derive_bars_stair, stair_step)
+        pos = {v: np.array([1.5 + 0.05 * v, 1.5 + 0.05 * v])
+               for v in range(n)}
+        pos = stair_step(pos, adj, eta=0.3)
+        pos, _ = alternate_arrange(pos, adj, grid, iters=8, readout="stair")
+        bars = derive_bars_stair(pos, adj, bounds=(grid.W, grid.H))
+        return g, grid, adj, pos, bars
+
+    def test_matching_beats_or_equals_greedy(self):
+        g, grid, adj, pos, bars = self._stair_state()
+        _, sat0, tot0 = wire_seeds_matched(grid, pos, bars, adj, sweeps=0)
+        chains, sat, tot = wire_seeds_matched(grid, pos, bars, adj, sweeps=4)
+        assert tot == tot0 and tot > 0
+        assert sat >= sat0
+        allq = [q for c in chains.values() for q in c]
+        assert len(allq) == len(set(allq))  # disjoint
+        again, sat2, _ = wire_seeds_matched(grid, pos, bars, adj, sweeps=4)
+        assert chains == again and sat2 == sat  # deterministic
+
+    def test_matching_finds_couplable_pair_greedy_misses(self):
+        # force the designated arms onto tracks (i, j) whose greedy subs do
+        # NOT couple, while hs[i] has SOME couplable v-partner: greedy init
+        # scores 0, the matching must score 1
+        g = dnx.pegasus_graph(4)
+        grid = TileGrid(g, target_layout(g))
+        found = None
+        for r in range(1, grid.H - 1):
+            for c in range(1, grid.W - 1):
+                hs = sorted({s for (u, ln, s) in grid.wire_map
+                             if u == 1 and ln == r})
+                vs = sorted({s for (u, ln, s) in grid.wire_map
+                             if u == 0 and ln == c})
+                if len(hs) < 3 or len(vs) < 3:
+                    continue
+                for i in range(len(hs)):
+                    for j in range(len(vs)):
+                        if (not _couples(grid, r, hs[i], c, vs[j])
+                                and any(_couples(grid, r, hs[i], c, s2)
+                                        for s2 in vs)):
+                            found = (r, c, i, j)
+                            break
+                    if found:
+                        break
+                if found:
+                    break
+            if found:
+                break
+        assert found is not None, "no greedy-miss configuration on P4?"
+        r, c, i, j = found
+        pos, bars, adj = {}, {}, {}
+        vid = 0
+        for k in range(i):   # h-fillers occupying tracks 0..i-1 on row r
+            pos[vid] = np.array([c - 1.0, float(r)])
+            bars[vid] = (np.array([c - 1.0 - 0.01 * (k + 1), c + 1.0]),
+                         np.array([float(r)] * 2))
+            adj[vid] = []
+            vid += 1
+        for k in range(j):   # v-fillers occupying tracks 0..j-1 on col c
+            pos[vid] = np.array([float(c), r + 1.0])
+            bars[vid] = (np.array([float(c)] * 2),
+                         np.array([r - 1.0 - 0.01 * (k + 1), r + 1.0]))
+            adj[vid] = []
+            vid += 1
+        vh, uv = vid, vid + 1  # designated pair: vh's h-arm x uv's v-arm
+        pos[vh] = np.array([c - 1.0, float(r)])
+        bars[vh] = (np.array([c - 1.0, c + 1.0]), np.array([float(r)] * 2))
+        pos[uv] = np.array([float(c), r + 1.0])
+        bars[uv] = (np.array([float(c)] * 2), np.array([r - 1.0, r + 1.0]))
+        adj[vh] = [uv]
+        adj[uv] = [vh]
+        _, sat0, tot = wire_seeds_matched(grid, pos, bars, adj, sweeps=0)
+        _, sat, _ = wire_seeds_matched(grid, pos, bars, adj, sweeps=4)
+        assert tot == 1
+        assert sat0 == 0   # greedy tracks (i, j) miss by construction
+        assert sat == 1    # the matching recovers it
+
+    def test_stride_and_untyped_fallback(self):
+        g, grid, adj, pos, bars = self._stair_state()
+        c2, _, _ = wire_seeds_matched(grid, pos, bars, adj, sweeps=1,
+                                      stride=2)
+        c1, _, _ = wire_seeds_matched(grid, pos, bars, adj, sweeps=1)
+        assert sum(len(c) for c in c2.values()) < sum(
+            len(c) for c in c1.values())
+        gu = nx.convert_node_labels_to_integers(nx.grid_2d_graph(10, 10))
+        gridu = TileGrid(gu, nx.spectral_layout(gu), fallback_bins=10)
+        ch, s, t = wire_seeds_matched(gridu, {0: np.array([2.0, 5.0])},
+                                      {0: (np.array([2.0, 6.0]),
+                                           np.array([5.0, 5.0]))},
+                                      {0: []})
+        assert ch and s == 0 and t == 0  # graceful untyped fallback
+
+
+class TestInsertionSweeps:
+    def test_bipartite_blocks_emerge_from_interleaved(self):
+        # K5,5 with blocks maximally interleaved in the initial order:
+        # insertion must separate them (the biclique order)
+        a = list(range(5))          # block A: 0..4
+        b = list(range(5, 10))      # block B: 5..9
+        adj = {v: (b if v in a else a) for v in range(10)}
+        interleaved = [0, 5, 1, 6, 2, 7, 3, 8, 4, 9]
+        new_order, traj = insertion_sweeps(interleaved, adj, max_sweeps=8)
+        first_half = set(new_order[:5])
+        assert first_half == set(a) or first_half == set(b)
+        assert traj[-1] < traj[0]  # energy strictly improved
+        again, _ = insertion_sweeps(interleaved, adj, max_sweeps=8)
+        assert new_order == again  # deterministic
+
+    def test_clique_is_noop(self):
+        n = 8
+        adj = {v: [u for u in range(n) if u != v] for v in range(n)}
+        order = list(range(n))
+        new_order, traj = insertion_sweeps(order, adj, max_sweeps=8)
+        assert new_order == order          # permutation-symmetric: no move
+        assert len(traj) == 2              # one sweep, no improvement, exit
+
+    def test_monotone_energy(self):
+        # random-ish structured graph: energy trajectory never increases
+        g = nx.random_regular_graph(4, 12, seed=7)
+        adj = {v: sorted(g.neighbors(v)) for v in g}
+        order = sorted(g.nodes(), key=lambda v: (v * 7919) % 12)
+        _, traj = insertion_sweeps(order, adj, max_sweeps=8)
+        assert all(b <= a + 1e-9 for a, b in zip(traj, traj[1:]))
+
+    def test_arrange_insert_no_worse_and_deterministic(self):
+        g = nx.convert_node_labels_to_integers(nx.grid_2d_graph(20, 20))
+        grid = TileGrid(g, nx.spectral_layout(g), fallback_bins=20)
+        grid.cap[:, :, :] = 1.0
+        n = 16
+        pos = {v: np.array([10.0 + 0.01 * v, 10.0 + 0.01 * v])
+               for v in range(n)}
+        adj = {v: [u for u in range(n) if u != v] for v in range(n)}
+        base, ib = alternate_arrange(pos, adj, grid, iters=8,
+                                     readout="stair")
+        ins, ii = alternate_arrange(pos, adj, grid, iters=8,
+                                    readout="stair", insert_sweeps=4)
+        assert ii["E"][-1] <= ib["E"][-1] + 1e-6  # composite E-gate holds
+        again, _ = alternate_arrange(pos, adj, grid, iters=8,
+                                     readout="stair", insert_sweeps=4)
+        assert all(np.allclose(ins[v], again[v]) for v in pos)
+
+
+class TestStaircase:
+    """Single-coverage diagonal-rule readout (notes s3.34)."""
+
+    def _k(self, n):
+        return {v: [u for u in range(n) if u != v] for v in range(n)}
+
+    def test_diagonal_clique_is_the_staircase(self):
+        # K5 on the diagonal: arm lengths follow row + column = constant
+        pos = {v: np.array([float(v), float(v)]) for v in range(5)}
+        bars = derive_bars_stair(pos, self._k(5), floor=False)
+        for v in range(5):
+            h_iv, v_iv = bars[v]
+            assert h_iv[1] - h_iv[0] == pytest.approx(4.0 - v)  # right-reach
+            assert v_iv[1] - v_iv[0] == pytest.approx(float(v))  # up-reach
+        # ends of the staircase: all-row and all-column
+        assert bars[0][1][1] - bars[0][1][0] == pytest.approx(0.0)
+        assert bars[4][0][1] - bars[4][0][0] == pytest.approx(0.0)
+
+    def test_single_coverage_and_no_mirror(self):
+        pos = {v: np.array([float(v), float(v)]) for v in range(5)}
+        adj = self._k(5)
+        bars = derive_bars_stair(pos, adj, floor=False)
+        for u in range(5):
+            for v in range(u + 1, 5):
+                # designated crossing (x_v, y_u): u's h-arm covers col v,
+                # v's v-arm covers row u
+                assert bars[u][0][0] - 1e-9 <= v <= bars[u][0][1] + 1e-9
+                assert bars[v][1][0] - 1e-9 <= u <= bars[v][1][1] + 1e-9
+                # mirror crossing (x_u, y_v) is NOT required: u's v-arm
+                # does not reach row v
+                assert not (bars[u][1][0] <= v <= bars[u][1][1])
+
+    def test_stair_energy_is_half_of_cross_on_diagonal_clique(self):
+        from ember_qc.algorithms.factored.field import span_energy
+        pos = {v: np.array([float(v), float(v)]) for v in range(8)}
+        adj = self._k(8)
+        assert stair_energy(pos, adj) == pytest.approx(
+            span_energy(pos, adj) / 2.0)
+
+    def test_sparse_arms_shrink_below_cross_readout(self):
+        from ember_qc.algorithms.factored.field import derive_bars
+        pos = {v: np.array([float(v), 3.0]) for v in range(6)}
+        adj = {v: [u for u in (v - 1, v + 1) if 0 <= u < 6] for v in range(6)}
+        stair = derive_bars_stair(pos, adj, floor=False)
+        cross = derive_bars(pos, adj, floor=False)
+        for v in range(6):
+            for k in (0, 1):
+                assert (stair[v][k][1] - stair[v][k][0]
+                        <= cross[v][k][1] - cross[v][k][0] + 1e-9)
+
+    def test_stair_step_moves_extremes_and_descends(self):
+        pos = {0: np.array([0.0, 0.0]), 1: np.array([2.0, 0.0]),
+               2: np.array([4.0, 0.0])}
+        adj = {0: [1], 1: [0, 2], 2: [1]}
+        e0 = stair_energy(pos, adj)
+        new = stair_step(pos, adj, eta=0.5)
+        assert new[0][0] > 0.0 and new[2][0] < 4.0
+        assert np.allclose(new[1], pos[1])
+        assert stair_energy(new, adj) < e0
+        again = stair_step(pos, adj, eta=0.5)
+        assert all(np.allclose(new[v], again[v]) for v in pos)
+
+    def test_arrange_stair_packs_and_descends(self):
+        g = nx.convert_node_labels_to_integers(nx.grid_2d_graph(20, 20))
+        grid = TileGrid(g, nx.spectral_layout(g), fallback_bins=20)
+        grid.cap[:, :, :] = 1.0
+        n = 16
+        pos = {v: np.array([10.0 + 0.01 * v, 10.0 + 0.01 * v])
+               for v in range(n)}
+        new, info = alternate_arrange(pos, self._k(n), grid, iters=8,
+                                      readout="stair")
+        rows = [int(round(new[v][1])) for v in range(n)]
+        assert len(set(rows)) == n
+        tail = info["E"][3:]
+        assert all(b <= a + 1e-6 for a, b in zip(tail, tail[1:]))
+        # single coverage is cheaper than double at the same packing
+        _, info_x = alternate_arrange(pos, self._k(n), grid, iters=8)
+        assert info["E"][-1] < info_x["E"][-1]
+
+    def test_alignment_couples_orders_and_halves_energy(self):
+        # K16 from an anti-diagonal-ish init: alignment must couple x-rank
+        # to y-rank and bring E near n*side (the busclique diagonal)
+        g = nx.convert_node_labels_to_integers(nx.grid_2d_graph(20, 20))
+        grid = TileGrid(g, nx.spectral_layout(g), fallback_bins=20)
+        grid.cap[:, :, :] = 1.0
+        n = 16
+        pos = {v: np.array([10.0 - 0.3 * v, 4.0 + 0.3 * v])  # x anti-ordered
+               for v in range(n)}
+        adj = {v: [u for u in range(n) if u != v] for v in range(n)}
+        new, info = alternate_arrange(pos, adj, grid, iters=8,
+                                      readout="stair")
+        xr = sorted(range(n), key=lambda v: (new[v][0], v))
+        yr = sorted(range(n), key=lambda v: (new[v][1], v))
+        assert xr == yr  # orders coupled: the diagonal
+        # E ~ n * side for the staircase (16 rows at cap 1 -> side ~ 15)
+        assert info["E"][-1] <= 16 * 16
+
+    def test_alignment_noop_when_no_participants(self):
+        pos = {v: np.array([float(5 - v), 3.0 + v]) for v in range(6)}
+        adj = {v: [u for u in (v - 1, v + 1) if 0 <= u < 6] for v in range(6)}
+        g = nx.convert_node_labels_to_integers(nx.grid_2d_graph(12, 12))
+        grid = TileGrid(g, nx.spectral_layout(g), fallback_bins=12)
+        new, info = alternate_arrange(pos, adj, grid, readout="stair")
+        assert info["assigned"] == 0
+        assert all(np.allclose(new[v], pos[v]) for v in pos)
+
+    def test_orientation_assignment_order_invariant(self):
+        rng_ys = [3.7, 1.2, 9.9, 5.5, 0.3, 7.1, 2.8, 6.6]
+        pos = {v: np.array([float(v), rng_ys[v]]) for v in range(8)}
+        adj = self._k(8)
+        before = _stair_contacts(pos, adj)
+        order = sorted(range(8), key=lambda v: (rng_ys[v], v))
+        packed = {v: np.array([float(v), float(order.index(v))])
+                  for v in range(8)}
+        after = _stair_contacts(packed, adj)
+        for v in range(8):
+            assert sorted(before[v][0]) == sorted(after[v][0])
+            assert sorted(before[v][1]) == sorted(after[v][1])
 
 
 class TestProductMode:

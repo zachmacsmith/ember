@@ -90,6 +90,126 @@ Magic numbers, none swept: η=0.5, λ₀=3.0, round_frac=0.4, max_rounds=10, bin
 
 ## C. Idea ledger
 
+### Wire-exactness — alternating per-line matchings (built 2026-07-31; notes s3.37)
+
+The s3.36 residual decomposes ~60% coupler repair / ~40% seed slop. Fix:
+`wire_seeds_matched` — per line, arms grouped into TRACKS (interval color
+classes; #tracks = depth, so tracks->subs matching never breaks the
+chi=omega feasibility), tracks matched to physical subs by maximum-weight
+bipartite matching (scipy linear_sum_assignment, 12x12/line), alternating
+columns<->rows: coordinate ascent on satisfied DESIGNATED crossings, exact
+per half-step, monotone, deterministic. Hungarian = discrete OT at eps=0
+(Sinkhorn's exact limit — Max's early intuition closes the loop).
+**Runtime is ALWAYS best-effort (Max): unsatisfied crossings are left for
+the router, exactly as with greedy coloring; no error paths.** Tier
+discipline: matchings only; below-bar => report + discuss, no SAT/ILP
+escalation.
+
+**Pre-registered bars (before any run):** mechanism — designated-crossing
+satisfaction >= 99% on K100 (blind-greedy baseline 95.7%), strict
+improvement everywhere (spin_glass 92% the big target); K100 routed <=
+11.2 (the s3.26 bar, now the EXPECTED outcome); spin_glass < 17.5; K140
+<= ~17.0; turan holds <= ~8.5; sparse untouched (participants only);
+matching wall-time <= ~1 s at n_p~163. K_n sanity: ~100% satisfaction
+expected (busclique existence); if seeds come out fully legal, record the
+router-optional milestone. Verdict (same day; notes s3.37): mechanism bar REFUTED — matching plateaus ~62-67% (greedy = chance ~56%); two causes named: the objective omits SELF-JUNCTIONS (K100 connectivity 100->44, routed regressed 12.51->13.25) and the busclique existence proof does not transfer to coupler-blind layouts (perfect assignment may not exist post-hoc; co-design needed). Where corners don't bind it already wins: turan 8.04 (record; mm 8.26 beaten), K140 17.17 (record). STOPPED per tier discipline; design-round item (i) APPROVED by Max same day ('the self-coupler thing definitely should be fixed'): junction-weighted objective built (junction_w=2.0; contacts metric unchanged for comparability). Mini-bars for the rerun: K100 conn >= 95/100 and routed <= 12.51; spin_glass <= 18.05; turan <= ~8.1 and K140 <= ~17.2 hold. Junction-fix rerun verdict: conn restored everywhere (K100 100/100, spin_glass 150/163); records K140 17.04 + spin_glass 17.50; turan 8.04 held; K100 matched still trails blind greedy (13.13 vs 12.51) — open, co-design domain. Remaining agenda: geometry/wire co-design (Pegasus-era problem — Zephyr's junctions are COMPLETE per dnx topology, the 56% pathology absent there; Zephyr currently untyped in TileGrid, adapter queued), corridor reservation.
+
+
+### Insertion order search + random-init standard (built 2026-07-30; notes s3.36)
+
+The general global move after s3.35 measured adjacent swaps plateau-bound:
+`insertion_sweeps` — best-insertion (rank relocation) on the participants'
+queue, exact integer-slot semantics (the fractional-rank shortcut collapses
+— rank stacking, s3.30's pathology reborn in the proxy — caught by the
+clique no-op test), candidates adjacent to neighbours' slots, monotone,
+deterministic; wired into alternate_arrange as `insert_sweeps` (default 0)
+with propose-in-rank-space / dispose-by-true-E composite gating.
+Corridor/routing-capacity reservation explicitly OUT OF SCOPE (Max: naive
+reservation sabotages cliques; needs its own design round) — open question
+on record: arrange mode does not price non-participant traversal
+(suspected weak_strong_cluster loss mode).
+
+**Pre-registered bars (before any run):** PRIMARY — turan_n162 with
+insertion: block separation EMERGES (mean-rank gap of the two sides >
+0.9 * n/2) and routed < 10.97; stretch <= 9.5 (~mm+15%).
+INIT-INDEPENDENCE — random-init arms within ~5% routed of spectral arms on
+all four cells (spectral demoted to warm-start heuristic).
+GUARDS — K100 <= ~12.5+noise, K140 <= ~17.6+noise, spin_glass <=
+~18.1+noise, all 3/3. WALL-TIME — insertion phase <= 2x the alternation's
+own wall-time (printed per call); K_n must no-op in one sweep
+(permutation-symmetric, verified in tests). Failure modes on record: no
+block emergence -> paired/block insertion next, NOT a bipartite rule;
+random-init fails while spectral passes -> structure was living in the
+init; report as-is. Verdict (same day; notes s3.36): PRIMARY BAR PASSED COMPLETELY — blocks emerged 81/81 from BOTH inits; turan routed 8.47/8.24 (random BEATS mm's 8.26). Guards passed. Init-independence 3/4 (K100 random fails — insertion provably inert on K_n; the deficit is continuous contraction, attraction's real job; 1-step harness artifact, cheap remeasure pending). Wall-time bar miscalibrated (letter failed at 20x an 0.05 s alternation; absolute 0.2-5 s ~ 3-8% of one routing call). Dense board now swept vs stock mm: 12.51/17.39/17.59/8.24 vs 13.44/20.70/25.37/8.26. Open: corridor reservation (own design round), K_n template gap, pipeline confirmation.
+
+
+### Diagonal alignment + order-search (built 2026-07-30; notes s3.35)
+
+The s3.34 K100 residual (E 1211 vs template 878) was mis-attributed to
+within-row nesting; the true cause: the two 1-D orders were UNCORRELATED
+(rows sorted by y-noise, columns by x-noise), so h-arms reach backward.
+Busclique's diagonal = x-rank == y-rank; aligned, E = n*side ~ 880 exactly
+(K4 arithmetic in conversation, 2026-07-30). Built: `_align_diagonal` in
+alternate_arrange (stair readout only) — a pure PERMUTATION of the
+participants' existing x-values (x-rank := y-rank), E-gated like every
+projection; acts only in attraction's null directions. Max's call: no
+dual proposals — committed diagonal bias, the standing E-gate is the only
+safety. Row-first vs column-first: mirror-symmetric, transient-only
+difference; row-first kept. ALSO REALIZED (kills the per-edge orientation
+variable proposal): the diagonal rule already CONTAINS the biclique — if
+the y-order separates bipartite blocks, one side's chains are pure
+h-lines and the other's pure v-lines. Turan's failure was an ORDER
+problem (interleaved blocks from the circle init), so the general move is
+order-search on y = the existing swap sweeps, now scoring stair E.
+
+**Pre-registered emergence bars (one configuration, no topology
+detection; before any run):** K100 aligned — E <= ~950, seeds <= ~11,
+routed <= 11.2 (the s3.26 bar becomes the PRIMARY bar for the first
+time). Turan_n162 — swap sweeps must discover block separation
+(E drops materially vs swap-free; routed < 10.97 = improvement,
+<= 8.26 = parity with mm). K140 — no regression (3/3, ~<= 19.5+noise).
+spin_glass_n163 — hold ~<= 21. Sparse guards structurally untouched
+(no participants). Verdict (same day; notes s3.35): K100 12.51 — FIRST search win over stock mm in program history (13.44); K140 record 17.64 (-3.1 vs mm); spin_glass 18.05 (alignment general — irregular cell -2.5); turan: adjacent swaps measured PLATEAU-BOUND exactly as pre-registered (E 2276->2219 vs optimal ~1094; mm 8.26 is near-optimal there); blocks did not emerge; swap contingency inert everywhere at 30 sweeps. Next (unbuilt): rank-RELOCATION order moves + the random-init emergence arm (init-independence standard, Max 2026-07-30: p-norm/spectral layouts are warm-start heuristics, never load-bearing).
+
+
+### Staircase readout — per-edge single coverage (built 2026-07-29; notes s3.34)
+
+The 2x-overpay fix: the cross readout pays every edge at two crossings
+(seed ACL 20 vs implied 10 vs busclique 9.78, measured 2026-07-29).
+Busclique's construction verified in source = the staircase (arms
+row+col ~ constant, one crossing per pair). Generalization = the DIAGONAL
+RULE, a pure readout: edge (u,v) covered at u's h-arm x v's v-arm iff
+(y_u,u) < (y_v,v); arms span assigned contacts only. State unchanged
+(positions); order-preserving packing keeps the assignment invariant
+(the sort is now load-bearing for correctness). Built behind
+`readout="stair"` (default "cross" = stock): derive_bars_stair,
+stair_energy, stair_step, alternation readout param; +7 tests (515 pass).
+
+**Pre-registered bars (before any run):** sanity — staircase seed ACL at
+derate 1.0 ~ 10-11 (cross readout: 20); if ~20 the rule is miswired, stop.
+Testbed gate: K100 stair(+couple) polished <= 13.15 to run the pipeline
+probe; **stretch <= 11.2 (the s3.26 bar, within 15% of template — plausible
+for the first time)**. K140: 3/3 legal, no regression vs 21.84/19.69.
+Risk on record: single coverage forfeits the redundancy that made
+double-covered seeds auto-legal; the 56% coupler density now bites at
+designated crossings — expect seeds NOT legal, `+couple` essential, MM
+doing real (short-range) repair. If repair overhead eats the 2x gain,
+verdict = single coverage needs busclique-grade t-coordination (next:
+exact per-line matching).
+
+**Verdict (same day; notes s3.34): K100 gate FAILED (14.21 vs 13.15 —
+though best-ever for arrange-family) BUT: K140 program record 19.51, 3/3,
+paired win over stock mm on every seed; halving confirmed (seeds 20->14,
+repair costs ~0.2); polish collapse (seed ~= routed — converging on the
+constructive no-router limit); coupled scoring retired (0-for-4).
+First-ever irregular-dense measurement: spin_glass_n163 WIN 20.53 vs mm
+25.37 (2/3) — paired + feasibility, the home-turf thesis confirmed;
+turan_n162 LOSS (8.26 vs 10.97) — the diagonal rule is clique-shaped,
+bipartite needs a block-aware orientation rule. K100 residual = packing
+NESTING (E 1211 vs template 878; one-arm-per-wire complementary-length
+pairing vs our similar-length stacking). Options in s3.34.**
+
+
 ### Span state — derived extents (design settled 2026-07-23; notes s3.31)
 
 The simplification after the s3.28–3.30 failures, from Max's "is there a way

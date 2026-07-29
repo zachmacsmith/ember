@@ -26,9 +26,15 @@ CSV_PATH = os.path.join(HERE, "arrange_probe.csv")
 BASE_CSV = os.path.join(HERE, "span_probe.csv")
 SEEDS = (0, 1, 2)
 TIMEOUT = 60
-CELLS = ("K100", "K140", "ws_n486")
+CELLS = ("turan_n162", "spin_glass_n163")  # deferred irregular-dense run
 
 ARMS = [
+    ("stair", {"state": "span", "span_dynamics": "arrange",
+               "seed_mode": "wire", "readout": "stair"}),
+    ("stair-1shot", {"state": "span", "span_dynamics": "arrange",
+                     "seed_mode": "wire", "readout": "stair",
+                     "max_rounds": 1, "round_frac": 0.5}),
+    # s3.32 arms retained for the irregular-dense cells (never probed there)
     ("arrange", {"state": "span", "span_dynamics": "arrange",
                  "seed_mode": "wire"}),
     ("arrange-1shot", {"state": "span", "span_dynamics": "arrange",
@@ -43,9 +49,12 @@ def _load_cell(name):
         return nx.complete_graph(100)
     if name == "K140":
         return nx.complete_graph(140)
-    if name == "ws_n486":
+    ids = {"ws_n486": 17188,        # s3.31 win guard
+           "turan_n162": 2647,      # irregular dense (s3.23 loss family)
+           "spin_glass_n163": 37309}  # irregular dense, d0.30
+    if name in ids:
         from ember_qc.load_graphs import load_graph
-        return load_graph(17188)
+        return nx.convert_node_labels_to_integers(load_graph(ids[name]))
     raise ValueError(name)
 
 
@@ -57,8 +66,15 @@ def _run(job):
     src = _load_cell(cell)
     target = dnx.pegasus_graph(16)
     t0 = time.perf_counter()
-    r = attract_embed(src, target, timeout=TIMEOUT, seed=seed, **kw)
-    emb = r.get("embedding") or {}
+    if arm == "mm-full":
+        import minorminer
+        emb = minorminer.find_embedding(
+            src, list(target.edges()), random_seed=seed,
+            timeout=TIMEOUT) or {}
+        r = {}
+    else:
+        r = attract_embed(src, target, timeout=TIMEOUT, seed=seed, **kw)
+        emb = r.get("embedding") or {}
     return dict(cell=cell, arm=arm, seed=seed,
                 final_acl=round(sum(len(c) for c in emb.values()) / len(emb), 3)
                 if emb else None,
@@ -70,8 +86,11 @@ def _run(job):
 def main():
     jobs = [(cell, arm, kw, s) for cell in CELLS for s in SEEDS
             for arm, kw in ARMS]
+    # mm-full baselines for the cells absent from span_probe.csv
+    jobs += [(cell, "mm-full", {}, s)
+             for cell in ("turan_n162", "spin_glass_n163") for s in SEEDS]
     rows = []
-    with ProcessPoolExecutor(max_workers=9) as ex:
+    with ProcessPoolExecutor(max_workers=40) as ex:
         for row in ex.map(_run, jobs):
             print(f"{row['cell']} {row['arm']} seed {row['seed']}: "
                   f"{row['final_acl']} ({row['time']}s)", flush=True)
@@ -96,6 +115,9 @@ def main():
         parts = [f"{cell:9s}"]
         for arm in ("point", "span-tb", "mm-full"):
             vals = [v for v in base.get((cell, arm), []) if v is not None]
+            vals += [r["final_acl"] for r in rows
+                     if r["cell"] == cell and r["arm"] == arm
+                     and r["final_acl"]]
             parts.append(f"{arm}={sum(vals)/len(vals):.2f}({len(vals)})"
                          if vals else f"{arm}=fail")
         for arm, _ in ARMS:

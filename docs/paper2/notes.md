@@ -1578,6 +1578,278 @@ and the hard-frontier eval (the strategic goal) is ready to run with the
 per-regime winners; (c) redesign the couplable metric (per-designated-
 crossing) before any further coupler work.
 
+### 3.34 Staircase readout: K100 gate failed, K140 record, first irregular-dense win (2026-07-29)
+
+Built behind `readout="stair"` (default "cross"; 515 tests): the diagonal
+rule — edge (u,v) covered at u's h-arm x v's v-arm iff (y_u,u) < (y_v,v);
+arms span assigned contacts only; `derive_bars_stair` / `stair_energy` /
+`stair_step`; alternation packs staircase intervals (the orientation
+assignment is keyed on y-ORDER, hence invariant under the order-preserving
+pack — the sort is now load-bearing for correctness, tested).
+
+**Testbed (stair_sweep_k100.log; routing x3 seeds):**
+
+| cell/arm | E | seedACL | conn | cov | routed mean |
+|---|---|---|---|---|---|
+| K100 d1.0 base | 1211 | 14.0 | 83/100 | 95.5% | **14.21** |
+| K100 d1.0 +couple | 1211 | 14.0 | 75/100 | 95.8% | 14.69 |
+| K100 d0.85 base | 1506 | 17.0 | 88/100 | 97.2% | 15.40 |
+| K100 d0.85 +couple | 1506 | 17.0 | 91/100 | 96.8% | 14.95 |
+| K140 d1.0 base | 2458 | 19.5 | 111/140 | 98.9% | **19.51 (3/3)** |
+
+Findings:
+
+1. **The halving is real**: seeds 20.0 -> 14.0 (cross -> stair), legality
+   forfeited exactly as pre-registered (17 disconnected chains, 4.5%
+   uncovered edges) and the router repairs it for ~+0.2 ACL. Routed 14.21
+   beats every cross-arrange arm ever measured (14.51+). **Gate FAILED
+   anyway** (14.21 > 13.15); stretch 11.2 untouched; pipeline stair probe
+   not run, defaults unchanged.
+2. **K140 program record: 19.51 mean {19.41, 19.62, 19.49}, 3/3, beats
+   stock mm on every paired seed** (20.24/21.26/20.58; mean -1.19), from
+   the single-shot testbed protocol with spread 0.21 — the most consistent
+   dense result the program has produced.
+3. **Polish collapse**: seed ~= routed at both cells (14.0->14.21,
+   19.5->19.51). As seeds approach constructive quality the router's
+   contribution — and its vacancy appetite (s3.33) — fades toward
+   busclique's no-router limit. The triangular occupancy also frees ~45%
+   of in-block qubits as a by-product (1311 used vs ~2100 cross), so the
+   workspace question resolves itself from both ends.
+4. **Coupled scoring: 0-for-4 across s3.33-s3.34 arms** (noisy-negative
+   every time redundancy or repair suffices). Retired as a default
+   candidate; the coupler problem returns only if exact per-line matching
+   is ever built.
+5. **K100 residual localized**: E=1211 vs template ~878 (+38%) — a packing
+   NESTING gap: busclique puts one arm per wire with complementary lengths
+   sharing rows end-to-end; our order-preserving sort stacks similar
+   lengths, so same-length arms can never share a wire. The gap is now a
+   1-D packing problem, not a search or router problem.
+
+**Irregular-dense (deferred s3.23-loss cells, first measurement ever;
+arrange_probe.csv, 3 seeds, 60 s):**
+
+| cell | mm-full | stair | stair-1shot | arrange | arrange-1shot |
+|---|---|---|---|---|---|
+| spin_glass_n163 d0.30 | 25.37 (2/3) | 20.87 (3/3) | **20.53 (3/3)** | 21.44 | 22.31 |
+| turan_n162 (~K81,81) | **8.26 (3/3)** | 11.28 | 11.11 | 10.97 | 16.15 |
+
+6. **First irregular-dense WIN, and it is large: spin_glass_n163 —
+   stair-1shot 20.53 vs mm 25.37, paired 20.98/23.29 and 20.33/27.44 plus
+   a feasibility win on the seed mm fails outright (2/3).** -19% ACL and
+   better feasibility on exactly the cell class the strategic emphasis
+   predicted (degree variance makes template restriction overpay; mm
+   struggles at 60 s). The home-turf thesis finally has its first direct
+   confirmation in the dense regime.
+7. **Turan loss names the next gap**: turan_n162 is ~complete bipartite,
+   and the diagonal rule is clique-shaped — bipartite sources have a
+   native two-block construction (one side lives on rows, the other on
+   columns; busclique's biclique) that the staircase cannot express; mm
+   finds it implicitly (8.26 vs our 10.97). Candidate mechanism: a
+   block-aware orientation rule (2-color the source, e.g. by spectral
+   sign, and assign orientation by block instead of by y-order).
+
+Options recorded for Max: (a) nesting-aware packing (finding 5 — the
+remaining K100 headroom, a pure 1-D problem); (b) the bipartite/block
+orientation rule (finding 7); (c) pipeline confirmation probe for stair at
+the cliff + spin_glass (testbed numbers 19.51/20.53 need the
+rounds-vs-1shot pipeline treatment before any default flips); (d) the
+hard-frontier eval with stair-1shot as the flagship arm.
+
+### 3.35 Diagonal alignment: three records and a first; adjacent swaps measured inert (2026-07-30)
+
+The s3.34 K100 residual was mis-attributed to within-row nesting; the true
+cause was UNCORRELATED axis orders (rows sorted by y-noise, columns by
+x-noise), which makes h-arms reach backward. Busclique's diagonal =
+x-rank == y-rank; aligned, E = n*side (K4 arithmetic: aligned E 12 vs
+misaligned 14, growing with n). Built: `_align_diagonal` in
+alternate_arrange (stair readout) — a pure PERMUTATION of the
+participants' existing x-values (x-rank := y-rank), E-gated like every
+projection, acting only in attraction's null directions. Max's calls:
+committed diagonal bias (no dual proposals; the standing E-gate is the
+only safety), row-first kept (row/col order is mirror-symmetric up to one
+transient iteration). Also realized, killing the per-edge orientation
+variable AND the proposed bipartite rule: **the diagonal rule already
+contains the biclique** — a y-order separating bipartite blocks makes one
+side pure h-lines and the other pure v-lines; turan's failure was an
+ORDER problem (interleaved blocks from the circle init).
+
+**Emergence check (one configuration, no topology detection;
+emergence_check.py / .log; routing x3):**
+
+| cell | E | seedACL | conn | cov | routed | prev best | mm |
+|---|---|---|---|---|---|---|---|
+| K100 | 900 | 10.9 | 100/100 | 95.7% | **12.51** | 14.21 | 13.44 |
+| K140 | 1729 | 14.2 | 63/140 | 98.4% | **17.64** | 19.51 | 20.70 |
+| turan swaps=0 | 2276 | 15.5 | 159/162 | 98.1% | 14.20 | 10.97* | **8.26** |
+| turan swaps=30 | 2219 | 15.6 | 115/162 | 97.5% | 13.92 | | |
+| spin_glass swaps=0 | 2283 | 14.9 | 107/163 | 91.7% | **18.05** | 20.53 | 25.37 (2/3) |
+| spin_glass swaps=30 | 2277 | 14.9 | 106/163 | 92.1% | 18.55 | | |
+
+(*pipeline rounds protocol; testbed single-shot not directly comparable.)
+
+1. **K100: first search win over stock minorminer in program history**
+   (12.51 vs 13.44), E=900 vs the ~880 arithmetic — the alignment claim
+   held almost exactly. The old 13.15 gate falls; the 11.2 primary bar
+   stands (template gap now 2.7; residual = coupler repair + ordering).
+2. **K140 record 17.64** (3/3; -3.1 vs mm) despite conn dropping to
+   63/140 — tighter packing worsens corner coupling, repair stays cheap.
+3. **Alignment is general, not a clique trick**: spin_glass (irregular)
+   improved 20.53 -> 18.05; the E-gate admitted the permutation where it
+   paid on a graph with no clique structure.
+4. **Pre-registered prediction CONFIRMED: adjacent swaps are
+   plateau-bound.** Turan E moved 2276 -> 2219 in 30 sweeps against an
+   optimal ~1094 (= 2ab/k; mm's 8.26 is near-OPTIMAL there — losing that
+   cell to mm means losing to the true construction). Arm spans are
+   maxes, so single adjacent swaps have dE ~= 0 from interleaved orders;
+   the Metropolis contingency in its current form has no teeth anywhere
+   (spin_glass likewise inert). Blocks did not emerge.
+5. Diagnosis + the general fix (recorded, unbuilt): **rank RELOCATION
+   (insertion) moves** — move one variable's position in the order to
+   anywhere; this flips ALL its edge orientations at once, giving
+   first-order energy signal exactly where adjacent swaps see flatness.
+   Insertion is the canonical 1-D arrangement neighborhood: block
+   separation (bipartite), community contiguity, and degree ordering are
+   all consequences of one topology-blind move class.
+6. **Init-independence standard (Max)**: the scaffolding + order moves
+   must take RANDOM initializations to the same solutions; spectral
+   layout is demoted to a warm-start heuristic, never load-bearing. The
+   random-init arm is the pre-registered emergence test for the
+   relocation build: turan bar = E approaching ~1100 and routed closing
+   toward mm's 8.26 BY EMERGENCE; K100/K140/spin_glass as no-regression
+   guards, from both spectral and random inits.
+
+### 3.36 Insertion order search: blocks emerge from random init; turan falls; the dense board is swept vs minorminer (2026-07-30)
+
+Built: `insertion_sweeps` (field.py) — best-insertion on the participants'
+queue with EXACT integer-slot semantics (a fractional-rank shortcut was
+tried and collapsed by rank-stacking — s3.30's pathology reborn in the
+proxy, caught by the clique no-op test); candidates adjacent to
+neighbours' slots; monotone, deterministic; numpy O(n^2) per candidate
+(participants fabric-bounded). Wired into alternate_arrange
+(`insert_sweeps`, default 0) as propose-in-rank-space /
+dispose-by-true-E with full composite revert; pipeline knob
+`AttractConfig.insert_sweeps` (default 0). 521 tests.
+
+**Emergence check (16 arms: 4 cells x insert {0,8} x init
+{spectral, random}; emergence_insert.log; routing x3):**
+
+| cell | arm | E | seedACL | routed | blocksep | t_ins |
+|---|---|---|---|---|---|---|
+| turan_n162 | spectral, ins=0 | 2276 | 15.5 | 14.12 | 0.9/81 | — |
+| turan_n162 | spectral, ins=8 | 1811 | 11.7 | **8.47** | **81/81** | 1.7s |
+| turan_n162 | random, ins=8 | 1782 | 11.5 | **8.24** | **81/81** | 2.0s |
+| K100 | spectral, ins=8 | 900 | 10.9 | 12.51 | — | 0.24s |
+| K140 | spectral, ins=8 | 1729 | 14.2 | 17.39 | — | 0.67s |
+| spin_glass | random, ins=8 | 2267 | 15.1 | 17.59 | — | 4.6s |
+
+Scorecard vs the pre-registered bars:
+
+1. **PRIMARY BAR: PASSED COMPLETELY. Block separation emerged perfectly
+   (blocksep 81.0/81, bar was >72.9) on turan from BOTH inits**, with all
+   162 chains connected (pure lines), and routed **8.47 (spectral) /
+   8.24 (random)** vs the 10.97 bar and the 9.5 stretch. The random-init
+   arm **beats stock minorminer (8.26)** on the one cell where mm is
+   near-optimal (2ab/k bound ~7.7+1). The biclique construction was
+   DISCOVERED, not programmed: one topology-blind move set, from random
+   positions.
+2. **Guards: PASSED** (K100 12.51 =, K140 17.39 — slightly better than
+   s3.35's 17.64, spin_glass 18.05 =, all 3/3). K_n insertion no-ops in
+   one sweep as the symmetry argument requires.
+3. **Init-independence: 3/4.** turan (8.24 vs 8.47 — random BETTER),
+   spin_glass (17.59 vs 18.05 — random better), K140 (+3.9%, inside the
+   5% band). **K100 FAILS (14.95 vs 12.51)** — and instructively:
+   insertion is provably inert on K_n (all orders equivalent), so the
+   deficit is in the CONTINUOUS geometry (the harness ran ONE stair_step
+   before packing; a random cloud hasn't contracted in one step). The
+   failure localizes attraction's true role: warm-start contraction,
+   which spectral was silently providing. Cheap follow-up: ~20
+   stair_steps for random inits, remeasure.
+4. **Wall-time bar: FAILED as written, satisfied in intent.** t_ins is
+   20x t_arr (the alternation is 0.03-0.09 s — 2x of almost-zero was a
+   miscalibrated bar), but absolute cost is 0.2-5 s ~ 3-8% of one 60 s
+   routing call. The "cheap global optimization" claim stands on
+   absolute terms; the bar's letter does not. Recorded as
+   miscalibration, not waved through.
+
+Standing after this round, dense cells vs stock minorminer: K100 12.51
+vs 13.44; K140 17.39 vs 20.70; spin_glass 17.59 vs 25.37 (2/3); turan
+8.24 vs 8.26. **Every measured dense cell class now at parity or won**
+— the last loss cell fell to emergence. Remaining gaps: template on pure
+K_n (9.78 vs 12.51; nesting/coupler-exactness territory), the K100
+random-init contraction fix, pipeline confirmation of testbed numbers,
+and the OPEN corridor-reservation design question (arrange mode still
+does not price non-participant traversal; Max: naive reservation would
+sabotage cliques — needs its own design round before mixed/clustered
+graphs are attempted).
+
+### 3.37 Wire matching: turan and K140 records, K100/spin_glass regress; the 99% bar refuted and the reason found (2026-07-31)
+
+Built: `_line_tracks` + `wire_seeds_matched` (field.py; scipy
+linear_sum_assignment per line, columns<->rows coordinate ascent on
+satisfied designated crossings; ALWAYS best-effort — leftovers to the
+router; `wire_exact` pipeline knob, default off; 525 tests). The honest
+per-designated-crossing metric replaces the saturating any-pair one.
+
+**Results (exact_check.log; stair+insert seeds, spectral, routing x3):**
+
+| cell | designated greedy | designated matched | routed greedy | routed matched |
+|---|---|---|---|---|
+| K100 | 2752/4895 (56%) | 3110 (64%) | 12.51 | 13.25 (conn 100->44!) |
+| K140 | 59% | 63% | 17.79 | **17.17** |
+| turan_n162 | 57% | 62% | 8.47 | **8.04** |
+| spin_glass | 54% | 67% | 18.05 | 18.69 |
+
+1. **The blind coloring satisfies designated crossings at exactly the
+   background coupler density (~56%)** — chance level, as geometry
+   predicts. The saturating any-pair metric had hidden this completely.
+2. **Mechanism bar (>=99%) FAILED — the matching plateaus at ~62-67%.**
+   Two named causes: (a) **the objective omits SELF-JUNCTIONS** — a
+   variable's own h-arm x v-arm corner (chain connectivity!) is not in
+   the crossings list, so the matching happily sacrifices corners for
+   contacts: K100 connectivity collapsed 100/100 -> 44/100 and routed
+   REGRESSED 12.51 -> 13.25 (spin_glass likewise 18.05 -> 18.69). Greedy
+   was accidentally kinder to corners. (b) **the busclique existence
+   proof does NOT transfer**: it guarantees a perfect wire assignment for
+   busclique's OWN co-designed geometry; our packer fixes rows/columns
+   coupler-blind first, and for that layout a perfect assignment may not
+   exist at all. 100% likely requires geometry<->wire CO-DESIGN, not
+   wire assignment after the fact.
+3. **Where corners don't bind, the matching already pays**: turan 8.04
+   (3/3; new record; mm 8.26 now beaten clearly, 2ab/k bound ~7.7 in
+   sight) and K140 17.17 (new record; mm 20.70; template 13.17) — both
+   cells where chains are single lines (turan) or corner-poor. Matching
+   cost is trivial (t_match 0.12-0.34 s).
+4. Per the pre-registered tier discipline: STOPPED here — no objective
+   patching or solver escalation without discussion. Agenda for the
+   design round: (i) add self-junctions to the matching objective
+   (weighted — connectivity is worth more than one contact; likely
+   reverses both regressions; arguably a bug-fix to the crossing list,
+   but it changes the objective, so it waits); (ii) the deeper
+   co-design question: rows/columns are currently assigned coupler-blind
+   and wire assignment inherits an impossible layout — options range
+   from t-aware packing tie-breaks to joint geometry/wire passes;
+   (iii) the corridor-reservation question remains open alongside.
+
+Defaults unchanged everywhere (`wire_exact=False`). Standing dense board
+(best arms): K100 12.51, K140 17.17, spin_glass 18.05, turan 8.04 — vs mm
+13.44 / 20.70 / 25.37 / 8.26; template K100 9.78, K140 13.17.
+
+*Addendum (junction fix, same day; Max: "the self-coupler thing definitely
+should be fixed"; junction_check.log):* self-junctions added to the
+matching objective at weight 2.0 (contacts metric definitionally
+unchanged). Rerun, matched arms: **K100 conn 100/100 restored** (from 44;
+mini-bar passed) but routed 13.13 — still behind blind-greedy's 12.51
+(mini-bar failed; the regression shrank from 13.25 but persists — K100's
+dense all-pairs crossing structure appears to route better off greedy's
+uniform chance-pattern than off the matcher's concentrated one; open,
+belongs to the co-design discussion). **K140 17.04 (new record; conn
+74->125)**, **spin_glass 17.50 (new record; conn 111->150; mini-bar
+passed)**, turan 8.04 held (pure lines, junctions vacuous). Standing board
+after the junction fix: K100 12.51 (greedy seeds), K140 17.04, spin_glass
+17.50, turan 8.04 — three of four cells now carried by matched wires; vs
+mm 13.44 / 20.70 / 25.37 / 8.26. Co-design stakes now localized to K100's
+last 2.7 vs template.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).

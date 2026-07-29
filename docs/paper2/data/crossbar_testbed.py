@@ -121,7 +121,7 @@ def main():
 
 
 if __name__ == "__main__" and not any(
-        m in sys.argv for m in ("s7", "span", "arrange", "couple")):
+        m in sys.argv for m in ("s7", "span", "arrange", "couple", "stair")):
     main()
 
 
@@ -467,5 +467,86 @@ def couple_sweep(n=100):
 if __name__ == "__main__" and "arrange" in sys.argv:
     arrange_sweep(int(sys.argv[2]) if len(sys.argv) > 2 else 100)
 
+def stair_sweep(n=100):
+    """s3.34 staircase gate: arrange dynamics with readout="stair"
+    (single-coverage diagonal rule), derates (1.0, 0.85); arms base/+couple.
+    Reports seed ACL (sanity: ~10-11 at derate 1.0, vs 20 for cross),
+    legality diagnostics (connected chains, edge coverage — single coverage
+    forfeits the redundancy that made cross seeds auto-legal), then routes
+    x3 seeds. Also routes K140 for the winning arm (cliff regression)."""
+    import minorminer as mm
+    from ember_qc.algorithms.factored.field import (
+        alternate_arrange, derive_bars_stair, stair_energy, stair_step,
+        wire_seeds_iv)
+    from ember_qc.algorithms.factored.polish import spur_prune
+    from ember_qc.embedding_backend import build_adjacency
+
+    target = dnx.pegasus_graph(16)
+    grid = TileGrid(target, target_layout(target))
+    adj = build_adjacency(target)
+    T_edges = list(target.edges())
+    bounds = (grid.W, grid.H)
+
+    def run_cell(nn, derate, couple, routes=3):
+        src = nx.complete_graph(nn)
+        src_adj = {v: [u for u in range(nn) if u != v] for v in range(nn)}
+        cent0 = source_positions(src, np.zeros(2), np.ones(2))
+        tp = {v: np.array([7.5, 7.5]) + (grid.to_tile(cent0[v])
+              - grid.to_tile(np.array([0.5, 0.5]))) * 0.3 for v in cent0}
+        tp = stair_step(tp, src_adj, eta=0.3)
+        tp, info = alternate_arrange(tp, src_adj, grid, iters=8,
+                                     derate=derate, readout="stair")
+        bars = derive_bars_stair(tp, src_adj, bounds=bounds)
+        seeds = wire_seeds_iv(grid, tp, bars,
+                              src_adj=src_adj if couple else None)
+        seed_acl = sum(len(c) for c in seeds.values()) / len(seeds)
+        conn = sum(1 for v, c in seeds.items()
+                   if nx.is_connected(target.subgraph(c)))
+        cov = sum(1 for u in range(nn) for v in range(u + 1, nn)
+                  if any(b in adj.get(a, ()) for a in seeds[u]
+                         for b in seeds[v]))
+        m = nn * (nn - 1) // 2
+        acls = []
+        for rs in range(routes):
+            emb = mm.find_embedding(src, T_edges, initial_chains=seeds,
+                                    chainlength_patience=0, random_seed=rs,
+                                    timeout=60)
+            if not emb:
+                acls.append(None)
+                continue
+            emb = spur_prune(emb, {v: sorted(src.neighbors(v))
+                                   for v in src}, adj)
+            pol = mm.find_embedding(src, T_edges, initial_chains=emb,
+                                    skip_initialization=True, random_seed=rs,
+                                    timeout=60)
+            acls.append(round(sum(len(c) for c in pol.values()) / len(pol), 2)
+                        if pol else None)
+        ok = [a for a in acls if a is not None]
+        mean = f"{sum(ok)/len(ok):.2f}" if ok else "FAIL"
+        print(f"K{nn} derate={derate} couple={couple}: "
+              f"E={stair_energy(tp, src_adj):.0f} seedACL={seed_acl:.1f} "
+              f"conn={conn}/{nn} cov={cov}/{m} ACLs={acls} mean={mean}",
+              flush=True)
+        return ok
+
+    print(f"STAIR sweep: K{n} (sanity seedACL ~10-11; gate <=13.15; "
+          f"stretch <=11.2; cross-seed baseline 20.0)")
+    best = (None, None)
+    for derate in (1.0, 0.85):
+        for couple in (False, True):
+            ok = run_cell(n, derate, couple)
+            if ok and (best[0] is None or sum(ok)/len(ok) < best[0]):
+                best = (sum(ok)/len(ok), (derate, couple))
+    if best[1] is not None:
+        derate, couple = best[1]
+        print(f"\nK140 cliff check with winning arm (derate={derate}, "
+              f"couple={couple}):", flush=True)
+        run_cell(140, derate, couple)
+    print("done-stair")
+
+
 if __name__ == "__main__" and "couple" in sys.argv:
     couple_sweep(int(sys.argv[2]) if len(sys.argv) > 2 else 100)
+
+if __name__ == "__main__" and "stair" in sys.argv:
+    stair_sweep(int(sys.argv[2]) if len(sys.argv) > 2 else 100)

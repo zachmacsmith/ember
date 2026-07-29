@@ -1,0 +1,19 @@
+/data/max/ember/docs/paper2/data/emergence_check.py:14: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+K100 init=spectral insert=0: E=900 assigned=100 seedACL=10.9 conn=100/100 cov=4738/4950 ACLs=[12.39, 12.3, 12.85] mean=12.51 t_arr=0.03s t_ins=0.00s
+K140 init=spectral insert=0: E=1729 assigned=140 seedACL=14.2 conn=63/140 cov=9575/9730 ACLs=[17.68, 17.16, 17.32] mean=17.39 t_arr=0.09s t_ins=0.00s
+turan_n162 init=spectral insert=0: E=2276 assigned=162 seedACL=15.5 conn=159/162 cov=6436/6561 ACLs=[14.91, 14.07, 13.39] mean=14.12 blocksep=0.9/81 t_arr=0.08s t_ins=0.00s
+spin_glass_n163 init=spectral insert=0: E=2283 assigned=163 seedACL=14.9 conn=107/163 cov=3589/3915 ACLs=[18.57, 17.72, 17.86] mean=18.05 t_arr=0.04s t_ins=0.00s
+K100 init=spectral insert=8: E=900 assigned=100 seedACL=10.9 conn=100/100 cov=4738/4950 ACLs=[12.39, 12.3, 12.85] mean=12.51 t_arr=0.03s t_ins=0.24s
+K140 init=spectral insert=8: E=1729 assigned=140 seedACL=14.2 conn=63/140 cov=9575/9730 ACLs=[17.68, 17.16, 17.32] mean=17.39 t_arr=0.08s t_ins=0.67s
+turan_n162 init=spectral insert=8: E=1811 assigned=162 seedACL=11.7 conn=162/162 cov=6489/6561 ACLs=[8.41, 8.42, 8.59] mean=8.47 blocksep=81.0/81 t_arr=0.08s t_ins=1.67s
+spin_glass_n163 init=spectral insert=8: E=2212 assigned=163 seedACL=14.5 conn=106/163 cov=3602/3915 ACLs=[18.53, 18.1, 17.51] mean=18.05 t_arr=0.04s t_ins=4.94s
+K100 init=random insert=0: E=1287 assigned=100 seedACL=13.8 conn=63/100 cov=4806/4950 ACLs=[14.55, 14.67, 15.62] mean=14.95 t_arr=0.03s t_ins=0.00s
+K140 init=random insert=0: E=1791 assigned=140 seedACL=13.7 conn=95/140 cov=9115/9730 ACLs=[18.04, 17.99, 17.66] mean=17.90 t_arr=0.05s t_ins=0.00s
+turan_n162 init=random insert=0: E=2294 assigned=162 seedACL=15.6 conn=64/162 cov=6095/6561 ACLs=[9.53, 10.74, 10.0] mean=10.09 blocksep=8.0/81 t_arr=0.06s t_ins=0.00s
+spin_glass_n163 init=random insert=0: E=2353 assigned=163 seedACL=15.5 conn=111/163 cov=3705/3915 ACLs=[18.28, 17.77, 17.57] mean=17.87 t_arr=0.02s t_ins=0.00s
+K100 init=random insert=8: E=1287 assigned=100 seedACL=13.8 conn=63/100 cov=4806/4950 ACLs=[14.55, 14.67, 15.62] mean=14.95 t_arr=0.03s t_ins=0.24s
+K140 init=random insert=8: E=1791 assigned=140 seedACL=13.7 conn=95/140 cov=9115/9730 ACLs=[18.04, 18.47, 17.66] mean=18.06 t_arr=0.06s t_ins=0.83s
+turan_n162 init=random insert=8: E=1782 assigned=162 seedACL=11.5 conn=162/162 cov=6274/6561 ACLs=[8.0, 8.58, 8.13] mean=8.24 blocksep=81.0/81 t_arr=0.07s t_ins=2.00s
+spin_glass_n163 init=random insert=8: E=2267 assigned=163 seedACL=15.1 conn=94/163 cov=3715/3915 ACLs=[17.08, 17.98, 17.7] mean=17.59 t_arr=0.03s t_ins=4.60s
+done-emergence

@@ -954,6 +954,184 @@ def wire_seeds_iv(grid: TileGrid, pos: Dict[int, Point],
     return {v: c for v, c in chains.items() if c}
 
 
+def _line_tracks(items: List[Tuple[float, float, int]]
+                 ) -> List[List[Tuple[float, float, int]]]:
+    """Group one line's arm intervals (sorted (a, b, v) tuples) into TRACKS:
+    the color classes of the exact greedy interval coloring. Disjoint arms
+    share a track; #tracks = overlap depth (chi = omega), so tracks -> subs
+    is a feasible one-to-one matching whenever the packer's depth test
+    held. The matching step then chooses WHICH sub each track gets; it can
+    never break feasibility."""
+    tracks: List[List[Tuple[float, float, int]]] = []
+    ends: List[float] = []
+    for a, b, v in sorted(items):
+        placed = False
+        for i, e in enumerate(ends):
+            if e <= a:
+                tracks[i].append((a, b, v))
+                ends[i] = b
+                placed = True
+                break
+        if not placed:
+            tracks.append([(a, b, v)])
+            ends.append(b)
+    return tracks
+
+
+def wire_seeds_matched(grid: TileGrid, pos: Dict[int, Point],
+                       bars: BarIntervals,
+                       src_adj: Dict[int, List[int]], *,
+                       sweeps: int = 4, stride: int = 1,
+                       junction_w: float = 2.0):
+    """Coupler-exact wire seeds (notes s3.37): per-line maximum-weight
+    matching of tracks to physical subs, alternating columns<->rows —
+    coordinate ascent on the number of DESIGNATED crossings that land on
+    real couplers (the diagonal rule's contacts). Each half-step is exact
+    (scipy linear_sum_assignment, <=12x12 per line); the total satisfied
+    count is monotone across line re-solves and the loop stops when it
+    plateaus.
+
+    ALWAYS best-effort: whatever crossings remain unsatisfied are simply
+    left for the router to repair, exactly as with the greedy coloring —
+    no error paths, no legality requirement. ``sweeps=0`` evaluates the
+    greedy initial assignment (the measurement baseline). Returns
+    (chains, satisfied, total) where satisfied/total is the honest
+    per-designated-crossing metric (crossings between two colored arms).
+    Untyped grids fall back to :func:`wire_seeds_iv`."""
+    if not grid.typed:
+        chains = wire_seeds_iv(grid, pos, bars, stride=stride)
+        return chains, 0, 0
+    from scipy.optimize import linear_sum_assignment
+
+    # per-orientation line structure: line -> tracks of (a, b, v)
+    tracks: Dict[int, Dict[int, list]] = {1: {}, 0: {}}
+    arm_of: Dict[int, dict] = {1: {}, 0: {}}   # v -> (line, track_idx)
+    subs_of: Dict[Tuple[int, int], List[int]] = {}
+    for o in (1, 0):
+        by_line: Dict[int, list] = {}
+        for v in sorted(pos):
+            h_iv, v_iv = bars[v]
+            iv = h_iv if o == 1 else v_iv
+            if float(iv[1] - iv[0]) < 1.0:
+                continue
+            line = int(round(float(pos[v][1] if o == 1 else pos[v][0])))
+            by_line.setdefault(line, []).append(
+                (float(iv[0]), float(iv[1]), v))
+        for line, items in sorted(by_line.items()):
+            tr = _line_tracks(items)
+            tracks[o][line] = tr
+            subs_of[(o, line)] = sorted(
+                {int(s) for (u, ln, s) in grid.wire_map
+                 if u == o and ln == line})
+            for ti, t in enumerate(tr):
+                for (_a, _b, v) in t:
+                    arm_of[o][v] = (line, ti)
+
+    # designated crossings between two colored arms:
+    # edge covered at v's h-arm x u's v-arm -> tile (col_u, row_v)
+    contacts = _stair_contacts(pos, src_adj)
+    crossings = []  # (v_h, u_v, row, col, weight, is_junction)
+    for v in sorted(pos):
+        if v not in arm_of[1]:
+            continue
+        row = arm_of[1][v][0]
+        for u in contacts[v][0]:          # u assigned to v's h-arm
+            if u in arm_of[0]:
+                crossings.append((v, u, row, arm_of[0][u][0], 1.0, False))
+    # SELF-JUNCTIONS (s3.37 fix, Max 2026-07-31): a variable's own
+    # h-arm x v-arm corner is what makes its chain CONNECTED — omitting
+    # it let the matcher trade corners for contacts (K100 conn 100->44).
+    # Weighted above a single contact: a broken chain costs the router a
+    # reconnection path, not just one missed edge.
+    for v in sorted(pos):
+        if v in arm_of[1] and v in arm_of[0]:
+            crossings.append((v, v, arm_of[1][v][0], arm_of[0][v][0],
+                              float(junction_w), True))
+    total = sum(1 for c in crossings if not c[5])
+
+    # assignment state: (o, line, track_idx) -> sub; greedy init
+    assign: Dict[Tuple[int, int, int], Optional[int]] = {}
+    for o in (1, 0):
+        for line, tr in tracks[o].items():
+            S = subs_of[(o, line)]
+            for ti in range(len(tr)):
+                assign[(o, line, ti)] = S[ti] if ti < len(S) else None
+
+    # crossings indexed by each side's (line, track)
+    by_h: Dict[Tuple[int, int], list] = {}
+    by_v: Dict[Tuple[int, int], list] = {}
+    for cr in crossings:
+        vh, uv, row, col = cr[0], cr[1], cr[2], cr[3]
+        by_h.setdefault((row, arm_of[1][vh][1]), []).append(cr)
+        by_v.setdefault((col, arm_of[0][uv][1]), []).append(cr)
+
+    def _sat(weighted: bool):
+        n_ok = 0.0
+        for (vh, uv, row, col, w, junc) in crossings:
+            sh = assign[(1, row, arm_of[1][vh][1])]
+            sv = assign[(0, col, arm_of[0][uv][1])]
+            if sh is not None and sv is not None \
+                    and _couples(grid, row, sh, col, sv):
+                n_ok += w if weighted else (0.0 if junc else 1.0)
+        return n_ok
+
+    def satisfied_count() -> int:
+        return int(_sat(weighted=False))
+
+    best = _sat(weighted=True)
+    for _ in range(max(sweeps, 0)):
+        for o in (0, 1):  # columns given rows, then rows given columns
+            oo = 1 - o
+            index = by_v if o == 0 else by_h
+            for line, tr in sorted(tracks[o].items()):
+                S = subs_of[(o, line)]
+                if not S or not tr:
+                    continue
+                W = np.zeros((len(tr), len(S)))
+                for ti in range(len(tr)):
+                    for (vh, uv, row, col, w, _j) in index.get((line, ti), []):
+                        other = assign[(oo, row if oo == 1 else col,
+                                        arm_of[oo][vh if oo == 1 else uv][1])]
+                        if other is None:
+                            continue
+                        for sj, s in enumerate(S):
+                            ok = (_couples(grid, row, other, col, s)
+                                  if o == 0 else
+                                  _couples(grid, row, s, col, other))
+                            if ok:
+                                W[ti, sj] += w
+                ri, ci = linear_sum_assignment(-W[:min(len(tr), len(S))])
+                for ti, sj in zip(ri, ci):
+                    assign[(o, line, ti)] = S[sj]
+        cur = _sat(weighted=True)
+        if cur <= best + 1e-9:
+            break
+        best = cur
+
+    # claim qubit runs from the final assignment
+    claimed: set = set()
+    chains: Dict[int, List[int]] = {v: [] for v in pos}
+    for o in (1, 0):
+        for line, tr in sorted(tracks[o].items()):
+            for ti, t in enumerate(tr):
+                sub = assign[(o, line, ti)]
+                if sub is None:
+                    continue
+                run = grid.wire_map.get((o, line, sub), {})
+                for a, b, v in t:
+                    t0 = int(math.floor(a))
+                    for tt in range(t0, int(math.ceil(b)) + 1):
+                        if (tt - t0) % max(stride, 1):
+                            continue
+                        q = run.get(tt)
+                        if q is not None and q not in claimed:
+                            claimed.add(q)
+                            chains[v].append(q)
+    _ensure_seeds(grid, claimed, chains, pos)
+    return ({v: c for v, c in chains.items() if c},
+            satisfied_count(), total)
+
+
 def slack_relax(pos: Dict[int, Point], src_adj: Dict[int, List[int]], *,
                 eta: float = 0.25, steps: int = 2,
                 clamp: float = 0.49) -> Dict[int, Point]:
@@ -969,6 +1147,126 @@ def slack_relax(pos: Dict[int, Point], src_adj: Dict[int, List[int]], *,
         out = span_step(out, src_adj, eta=eta, max_step=clamp)
     return {v: np.clip(out[v], base[v] - clamp, base[v] + clamp)
             for v in out}
+
+
+# ==============================================================================
+# STAIRCASE READOUT (notes s3.34): per-edge single coverage
+# ==============================================================================
+#
+# The cross readout pays for every edge TWICE (both variables' bars span
+# their full neighbourhoods; every edge has two crossings) — measured 2x
+# overpay: seed ACL 20 vs implied 10 vs busclique 9.78 on K100. Busclique's
+# construction (verified in source, clique_cache.hpp inflate_first_ell) is
+# the staircase: arms (i+1, width-2-i), row+column ~ constant, each pair
+# meeting exactly once above the diagonal. The generalization is the
+# DIAGONAL RULE, a pure readout of positions: edge (u, v) is covered at
+# u's h-arm x v's v-arm iff (y_u, u) < (y_v, v) — the upper variable
+# reaches across columns, the lower reaches up rows. Arms span only their
+# ASSIGNED contacts, so sparse arms shrink below the cross readout's.
+# The rule is keyed on y-ORDER, so it is invariant under the
+# order-preserving row packing in alternate_arrange — the sort's
+# order-preservation is load-bearing for correctness here.
+# Cost forfeited: the redundancy that made double-covered seeds auto-legal;
+# with one designated crossing per edge, the ~56% Pegasus coupler density
+# bites and the coupled coloring / router repair must carry legality.
+
+
+def _stair_contacts(pos: Dict[int, Point],
+                    src_adj: Dict[int, List[int]]):
+    """Assigned contacts per variable under the diagonal rule. Returns
+    {v: (h_us, v_us)}: neighbour ids whose COLUMNS v's h-arm must reach,
+    and neighbour ids whose ROWS its v-arm must reach."""
+    out = {}
+    for v in pos:
+        h_us: List[int] = []
+        v_us: List[int] = []
+        yv = float(pos[v][1])
+        for u in src_adj.get(v, []):
+            if u not in pos or u == v:
+                continue
+            if (yv, v) < (float(pos[u][1]), u):
+                h_us.append(u)
+            else:
+                v_us.append(u)
+        out[v] = (h_us, v_us)
+    return out
+
+
+def derive_bars_stair(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
+                      *, kappa: float = 13.0, floor: bool = True,
+                      bounds: Optional[Tuple[int, int]] = None
+                      ) -> BarIntervals:
+    """Single-coverage bars: v's h-arm spans the columns of its h-assigned
+    contacts (+ its own column); v-arm spans the rows of its v-assigned
+    contacts (+ its own row). Same floor/clip semantics and return type as
+    :func:`derive_bars`, so all downstream consumers compose unchanged."""
+    contacts = _stair_contacts(pos, src_adj)
+    out: BarIntervals = {}
+    for v in sorted(pos):
+        h_us, v_us = contacts[v]
+        xs = [float(pos[u][0]) for u in h_us] + [float(pos[v][0])]
+        ys = [float(pos[u][1]) for u in v_us] + [float(pos[v][1])]
+        h_iv = np.array([min(xs), max(xs)])
+        v_iv = np.array([min(ys), max(ys)])
+        if floor:
+            deg = len([u for u in src_adj.get(v, []) if u in pos])
+            need = deg / kappa - 1.0
+            deficit = need - float((h_iv[1] - h_iv[0]) + (v_iv[1] - v_iv[0]))
+            if deficit > 0:
+                h_iv = h_iv + np.array([-deficit / 4.0, deficit / 4.0])
+                v_iv = v_iv + np.array([-deficit / 4.0, deficit / 4.0])
+        if bounds is not None:
+            h_iv = np.clip(h_iv, 0.0, bounds[0] - 1.0)
+            v_iv = np.clip(v_iv, 0.0, bounds[1] - 1.0)
+        out[v] = (h_iv, v_iv)
+    return out
+
+
+def stair_energy(pos: Dict[int, Point],
+                 src_adj: Dict[int, List[int]]) -> float:
+    """Total arm length under the diagonal rule (un-floored) — the true
+    single-coverage objective; ~ half of span_energy on K_n."""
+    contacts = _stair_contacts(pos, src_adj)
+    e = 0.0
+    for v in pos:
+        h_us, v_us = contacts[v]
+        xs = [float(pos[u][0]) for u in h_us] + [float(pos[v][0])]
+        ys = [float(pos[u][1]) for u in v_us] + [float(pos[v][1])]
+        e += (max(xs) - min(xs)) + (max(ys) - min(ys))
+    return e
+
+
+def stair_step(pos: Dict[int, Point], src_adj: Dict[int, List[int]], *,
+               eta: float, max_step: float = 1.0) -> Dict[int, Point]:
+    """One subgradient step on :func:`stair_energy`. Each variable owns two
+    directional nets — {v + h-assigned contacts} along x, {v + v-assigned
+    contacts} along y — and the extremes of each net are pulled inward
+    (HPWL subgradient, ties by (coord, id)). Net membership changes when
+    the y-order changes; nets are recomputed every call, which is standard
+    subgradient semantics. Normalized by incident-net count (deg + 2)."""
+    contacts = _stair_contacts(pos, src_adj)
+    f = {v: np.zeros(2) for v in pos}
+    nets = {v: 2 + len([u for u in src_adj.get(v, []) if u in pos])
+            for v in pos}
+    for v in sorted(pos):
+        h_us, v_us = contacts[v]
+        for axis, members in ((0, h_us + [v]), (1, v_us + [v])):
+            if len(members) < 2:
+                continue
+            hi = max(members, key=lambda u: (float(pos[u][axis]), u))
+            lo = min(members, key=lambda u: (float(pos[u][axis]), u))
+            if float(pos[hi][axis]) - float(pos[lo][axis]) <= 1e-12:
+                continue
+            f[hi][axis] -= 1.0
+            f[lo][axis] += 1.0
+    out: Dict[int, Point] = {}
+    for v in pos:
+        dp = eta * f[v] / nets[v]
+        n = float(np.hypot(dp[0], dp[1]))
+        if n > max_step:
+            dp *= max_step / n
+        out[v] = pos[v] + dp
+    return out
 
 
 # ==============================================================================
@@ -1012,11 +1310,89 @@ def line_depth(intervals: List[Tuple[float, float]]) -> int:
     return best
 
 
+def insertion_sweeps(order: List[int], src_adj: Dict[int, List[int]], *,
+                     max_sweeps: int = 8):
+    """Best-insertion order search in rank space (notes s3.36) — the general
+    global move for the queue abstraction. Relocating one variable flips
+    ALL its edge orientations across the jumped interval at once, giving
+    first-order energy signal exactly where adjacent swaps are
+    plateau-bound (s3.35).
+
+    Evaluated with EXACT integer-slot semantics (remove + reinsert, the
+    jumped block shifts by one) — a fractional-rank shortcut was tried and
+    collapses (rank stacking, the s3.30 pathology reborn in the proxy).
+    Candidate targets sit adjacent to the moved variable's neighbours'
+    slots (descent, not per-variable optimality, is the contract).
+    Full-vector energy per candidate is O(n^2) numpy — participants are
+    fabric-bounded (~<= 200), so a sweep is ~10^8 flops of BLAS, well under
+    a second. Deterministic; returns (new_order, energy_trajectory)."""
+    members = list(order)
+    n = len(members)
+    if n <= 2:
+        return list(members), [0.0]
+    idx = {v: i for i, v in enumerate(members)}
+    A = np.zeros((n, n), dtype=bool)
+    for v in members:
+        for u in src_adj.get(v, []):
+            j = idx.get(u)
+            if j is not None and j != idx[v]:
+                A[idx[v], j] = True
+    has = A.any(axis=1)
+
+    def energy(p):
+        P = np.where(A, p[None, :], -np.inf)
+        M = P.max(axis=1)
+        Pm = np.where(A, p[None, :], np.inf)
+        m = Pm.min(axis=1)
+        e = np.where(has,
+                     np.maximum(M - p, 0.0) + np.maximum(p - m, 0.0), 0.0)
+        return float(e.sum())
+
+    p = np.arange(n, dtype=float)  # p[variable-index] = slot
+    e_cur = energy(p)
+    traj = [e_cur]
+    sweep_vis = sorted(range(n), key=lambda i: members[i])
+    for _ in range(max(max_sweeps, 1)):
+        improved = False
+        for vi in sweep_vis:
+            if not has[vi]:
+                continue
+            i = int(p[vi])
+            cand = set()
+            for s in p[A[vi]]:
+                cand.add(int(s))
+                cand.add(int(s) + 1)
+            cand = {min(max(j, 0), n - 1) for j in cand} - {i}
+            best_e, best_p = e_cur - 1e-9, None
+            for j in sorted(cand):
+                p2 = p.copy()
+                if j > i:
+                    mask = (p > i) & (p <= j)
+                    p2[mask] -= 1.0
+                else:
+                    mask = (p >= j) & (p < i)
+                    p2[mask] += 1.0
+                p2[vi] = float(j)
+                e2 = energy(p2)
+                if e2 < best_e:
+                    best_e, best_p = e2, p2
+            if best_p is not None:
+                p, e_cur = best_p, best_e
+                improved = True
+        traj.append(e_cur)
+        if not improved:
+            break
+    new_order = [members[i] for i in
+                 sorted(range(n), key=lambda i: (p[i], members[i]))]
+    return new_order, traj
+
+
 def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                       grid: TileGrid, *, iters: int = 8, kappa: float = 13.0,
                       floor: bool = True, derate: float = 1.0,
                       swap_sweeps: int = 0, swap_temp: float = 0.5,
-                      seed: int = 0):
+                      seed: int = 0, readout: str = "cross",
+                      insert_sweeps: int = 0):
     """Alternating 1-D arrangement of the capacity-forced variables.
 
     Participants (deg/kappa - 1 > 0) are packed into integer rows and
@@ -1024,12 +1400,20 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
     span_step). Returns (new_pos, info) with info = {"E": trajectory,
     "iters": full iterations run, "unplaced": count with no feasible line,
     "assigned": participant count}.
+
+    ``readout="stair"``: intervals and the accepted energy come from the
+    single-coverage diagonal rule (s3.34). The rule is keyed on the
+    coordinate ORDER of the frozen axis's counterpart, and the packing is
+    order-preserving, so the per-edge orientation assignment is invariant
+    across a half-step — computed from the pre-step order, still valid
+    after packing.
     """
     participants = [v for v in sorted(pos)
                     if len([u for u in src_adj.get(v, []) if u in pos])
                     / kappa - 1.0 > 0]
+    efn = stair_energy if readout == "stair" else span_energy
     new_pos = {v: np.asarray(p, dtype=float).copy() for v, p in pos.items()}
-    info = {"E": [span_energy(new_pos, src_adj)], "iters": 0,
+    info = {"E": [efn(new_pos, src_adj)], "iters": 0,
             "unplaced": 0, "assigned": len(participants)}
     if not participants:
         return new_pos, info
@@ -1037,11 +1421,18 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
     def _intervals(axis: int) -> Dict[int, Tuple[float, float]]:
         # fixed-length interval per participant on the frozen axis
         other = 0 if axis == 1 else 1
+        contacts = (_stair_contacts(new_pos, src_adj)
+                    if readout == "stair" else None)
         out = {}
         for v in participants:
             nbrs = [u for u in src_adj.get(v, []) if u in new_pos]
-            xs = [float(new_pos[u][other]) for u in nbrs] \
-                + [float(new_pos[v][other])]
+            if contacts is not None:
+                ids = contacts[v][0] if axis == 1 else contacts[v][1]
+                xs = [float(new_pos[u][other]) for u in ids] \
+                    + [float(new_pos[v][other])]
+            else:
+                xs = [float(new_pos[u][other]) for u in nbrs] \
+                    + [float(new_pos[v][other])]
             a, b = min(xs), max(xs)
             if floor:
                 # half of the contact-capacity floor lives on each layer
@@ -1077,8 +1468,8 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                     break
             if not placed:
                 miss += 1  # no feasible line; stays put
-        e_old = span_energy(new_pos, src_adj)
-        e_new = span_energy(trial, src_adj)
+        e_old = efn(new_pos, src_adj)
+        e_new = efn(trial, src_adj)
         if force or e_new <= e_old + 1e-9:
             changed = any(not np.allclose(trial[v], new_pos[v])
                           for v in participants)
@@ -1090,19 +1481,68 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
         info["E"].append(e_old)
         return False
 
+    def _align_diagonal():
+        """s3.35: couple the two 1-D orders. Under the stair rule, h-arms
+        reach later-y contacts; if later-in-y is also later-in-x, every
+        h-arm is one-sided (the busclique diagonal; E -> n*side on K_n).
+        Implemented as a pure permutation of the participants' EXISTING
+        x-values (x-rank := y-rank) — zero new geometry, acts entirely in
+        directions where the attraction gradient vanishes; the standard
+        order-preserving column packing then preserves the aligned order."""
+        by_rank = sorted(participants,
+                         key=lambda v: (float(new_pos[v][1]), v))
+        old_xs = {v: float(new_pos[v][0]) for v in participants}
+        xs = sorted(old_xs.values())
+        e_pre = efn(new_pos, src_adj)
+        for rank, v in enumerate(by_rank):
+            new_pos[v][0] = xs[rank]
+        if efn(new_pos, src_adj) > e_pre + 1e-9:  # same gate as every
+            for v in participants:                # other projection
+                new_pos[v][0] = old_xs[v]
+
     for it in range(max(iters, 1)):
         force = (it == 0)
         moved = _half(axis=1, force=force)
+        if readout == "stair":
+            _align_diagonal()
         moved = _half(axis=0, force=force) or moved
         info["iters"] = it + 1
         if not moved and not force:
             break
 
+    if insert_sweeps > 0 and participants:
+        # s3.36: best-insertion order search — the general global move.
+        # Propose in rank space, apply as a PERMUTATION of the existing
+        # y-values (multiset preserved, the _align_diagonal trick), realign
+        # and repack, dispose by TRUE stair/span energy with full revert.
+        for _composite in range(2):
+            order0 = sorted(participants,
+                            key=lambda v: (float(new_pos[v][1]), v))
+            new_order, _tr = insertion_sweeps(order0, src_adj,
+                                              max_sweeps=insert_sweeps)
+            if new_order == order0:
+                break
+            e_pre = efn(new_pos, src_adj)
+            snap = {v: new_pos[v].copy() for v in participants}
+            ys = sorted(float(new_pos[v][1]) for v in participants)
+            for r, v in enumerate(new_order):
+                new_pos[v][1] = ys[r]
+            if readout == "stair":
+                _align_diagonal()
+            _half(axis=1, force=False)
+            _half(axis=0, force=False)
+            e_post = efn(new_pos, src_adj)
+            if e_post > e_pre + 1e-9:
+                for v in participants:
+                    new_pos[v] = snap[v]
+                break
+            info["E"].append(e_post)
+
     if swap_sweeps > 0:
         # Contingency: Metropolis swaps along each axis — noise applied only
         # in the permutation directions block descent cannot explore.
         rng = np.random.default_rng(seed)
-        e_cur = span_energy(new_pos, src_adj)
+        e_cur = efn(new_pos, src_adj)
         n_p = len(participants)
         for _ in range(swap_sweeps):
             for axis in (1, 0):
@@ -1113,7 +1553,7 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                         continue
                     new_pos[u][axis], new_pos[v][axis] = \
                         float(new_pos[v][axis]), float(new_pos[u][axis])
-                    e_try = span_energy(new_pos, src_adj)
+                    e_try = efn(new_pos, src_adj)
                     d_e = e_try - e_cur
                     if d_e <= 0 or rng.random() < math.exp(
                             -d_e / max(swap_temp, 1e-9)):

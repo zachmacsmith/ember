@@ -1,0 +1,11 @@
+/data/max/ember/docs/paper2/data/crossbar_testbed.py:25: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+STAIR sweep: K100 (sanity seedACL ~10-11; gate <=13.15; stretch <=11.2; cross-seed baseline 20.0)
+K100 derate=1.0 couple=False: E=1211 seedACL=14.0 conn=83/100 cov=4726/4950 ACLs=[14.07, 13.93, 14.62] mean=14.21
+K100 derate=1.0 couple=True: E=1211 seedACL=14.0 conn=75/100 cov=4743/4950 ACLs=[15.63, 13.61, 14.84] mean=14.69
+K100 derate=0.85 couple=False: E=1506 seedACL=17.0 conn=88/100 cov=4809/4950 ACLs=[15.22, 15.76, 15.22] mean=15.40
+K100 derate=0.85 couple=True: E=1506 seedACL=17.0 conn=91/100 cov=4790/4950 ACLs=[14.98, 14.81, 15.06] mean=14.95
+
+K140 cliff check with winning arm (derate=1.0, couple=False):
+K140 derate=1.0 couple=False: E=2458 seedACL=19.5 conn=111/140 cov=9619/9730 ACLs=[19.41, 19.62, 19.49] mean=19.51
+done-stair

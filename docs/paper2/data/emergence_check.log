@@ -1,0 +1,9 @@
+/data/max/ember/docs/paper2/data/emergence_check.py:14: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+K100 swaps=0: E=900 assigned=100 seedACL=10.9 conn=100/100 cov=4738/4950 ACLs=[12.39, 12.3, 12.85] mean=12.51
+K140 swaps=0: E=1729 assigned=140 seedACL=14.2 conn=63/140 cov=9575/9730 ACLs=[17.79, 17.8, 17.32] mean=17.64
+turan_n162 swaps=0: E=2276 assigned=162 seedACL=15.5 conn=159/162 cov=6436/6561 ACLs=[14.91, 14.07, 13.62] mean=14.20
+turan_n162 swaps=30: E=2219 assigned=162 seedACL=15.6 conn=115/162 cov=6400/6561 ACLs=[14.4, 13.53, 13.84] mean=13.92
+spin_glass_n163 swaps=0: E=2283 assigned=163 seedACL=14.9 conn=107/163 cov=3589/3915 ACLs=[18.57, 17.72, 17.86] mean=18.05
+spin_glass_n163 swaps=30: E=2277 assigned=163 seedACL=14.9 conn=106/163 cov=3604/3915 ACLs=[18.09, 19.32, 18.23] mean=18.55
+done-emergence

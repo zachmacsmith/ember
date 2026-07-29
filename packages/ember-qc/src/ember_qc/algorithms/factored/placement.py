@@ -331,6 +331,21 @@ class AttractConfig:
     seed_stride: int = 1       # span+wire only (s3.33): claim every
                                # stride-th qubit of each wire run (router
                                # negotiation room); 1 = contiguous (stock)
+    wire_exact: bool = False   # span+wire only (s3.37): coupler-exact
+                               # seeds via alternating per-line matchings
+                               # (always best-effort; leftovers go to the
+                               # router). Default stock (off).
+    insert_sweeps: int = 0     # span+arrange only (s3.36): best-insertion
+                               # order-search sweeps inside the alternation
+                               # (the general global move; 0 = off, stock)
+    readout: str = "cross"     # span only (s3.34): "cross" = double
+                               # coverage (both bars span the whole
+                               # neighbourhood; stock) | "stair" = the
+                               # single-coverage diagonal rule (busclique's
+                               # staircase generalized): each edge pays for
+                               # exactly one crossing; arms span assigned
+                               # contacts only. Selects derive fn, step fn,
+                               # energy, and the alternation's intervals.
     extent_eta: float = 0.5    # extent growth step (contact demand)
     extent_cost: float = 0.1   # extent rent (qubits aren't free)
     field_ext_w: float = 0.5   # v2 tip-potential coupling: extent force =
@@ -446,7 +461,13 @@ def attract_embed(
             from ember_qc.algorithms.factored.field import (
                 alternate_arrange, assign_rows_cols, bar_domains,
                 bar_force_iv, bar_widths, deposit_bars, derive_bars,
-                slack_relax, span_energy, span_step, wire_seeds_iv)
+                derive_bars_stair, slack_relax, span_energy, span_step,
+                stair_energy, stair_step, wire_seeds_iv,
+                wire_seeds_matched)
+            _derive = (derive_bars_stair if cfg.readout == "stair"
+                       else derive_bars)
+            _step = stair_step if cfg.readout == "stair" else span_step
+            _efn = stair_energy if cfg.readout == "stair" else span_energy
         adj = build_adjacency(target_graph)
         qubits = sorted(adj)
         nodes = sorted(source_graph.nodes())
@@ -472,10 +493,11 @@ def attract_embed(
                                   mu_alpha=cfg.mu_alpha)
 
         def _span_bars(tpts):
-            # derived bars are a pure readout of positions (notes s3.31)
-            return derive_bars(tpts, src_adj, kappa=cfg.kappa,
-                               floor=cfg.span_floor,
-                               bounds=(tile_grid.W, tile_grid.H))
+            # derived bars are a pure readout of positions (notes s3.31;
+            # s3.34: readout="stair" switches to single coverage)
+            return _derive(tpts, src_adj, kappa=cfg.kappa,
+                           floor=cfg.span_floor,
+                           bounds=(tile_grid.W, tile_grid.H))
 
         cent = source_positions(source_graph, lo, hi)
         ext = {v: np.zeros(2) for v in cent}  # cross state: (w, h) in tiles
@@ -545,17 +567,19 @@ def attract_embed(
                     # capacity is enforced exactly per line inside the
                     # alternation (grid.cap already carries cap_derate)
                     tpts = {v: tile_grid.to_tile(p) for v, p in cent.items()}
-                    tpts = span_step(tpts, src_adj, eta=cfg.eta)
+                    tpts = _step(tpts, src_adj, eta=cfg.eta)
                     tpts, arr_info = alternate_arrange(
                         tpts, src_adj, tile_grid, iters=8, kappa=cfg.kappa,
-                        floor=cfg.span_floor, seed=seed)
+                        floor=cfg.span_floor, seed=seed,
+                        readout=cfg.readout,
+                        insert_sweeps=cfg.insert_sweeps)
                     last_assigned = arr_info["assigned"]
                     cent = {v: tile_grid.Minv @ (tpts[v] - tile_grid.c)
                             for v in cent}
                     continue
                 if cfg.state == "span":
                     tpts = {v: tile_grid.to_tile(p) for v, p in cent.items()}
-                    tpts = span_step(tpts, src_adj, eta=cfg.eta)
+                    tpts = _step(tpts, src_adj, eta=cfg.eta)
                     bars = _span_bars(tpts)
                     demand = deposit_bars(tile_grid, tpts, bars)
                     psi = pfield.potential(demand)
@@ -599,7 +623,7 @@ def attract_embed(
                     cent = density.push(cent, charges)
             if cfg.state == "span":
                 tpts = {v: tile_grid.to_tile(p) for v, p in cent.items()}
-                round_E.append(round(span_energy(tpts, src_adj), 1))
+                round_E.append(round(_efn(tpts, src_adj), 1))
             round_restrict = None
             if cfg.state == "cross" and cfg.seed_mode != "point":
                 tpts = {v: tile_grid.to_tile(p) for v, p in cent.items()}
@@ -621,10 +645,15 @@ def attract_embed(
                 if cfg.slack_steps > 0:
                     tpts = slack_relax(tpts, src_adj, eta=cfg.eta * 0.5,
                                        steps=cfg.slack_steps)
-                seed_chains = wire_seeds_iv(
-                    tile_grid, tpts, _span_bars(tpts),
-                    src_adj=src_adj if cfg.wire_couple else None,
-                    stride=cfg.seed_stride)
+                if cfg.wire_exact:
+                    seed_chains, _sat, _tot = wire_seeds_matched(
+                        tile_grid, tpts, _span_bars(tpts), src_adj,
+                        stride=cfg.seed_stride)
+                else:
+                    seed_chains = wire_seeds_iv(
+                        tile_grid, tpts, _span_bars(tpts),
+                        src_adj=src_adj if cfg.wire_couple else None,
+                        stride=cfg.seed_stride)
             else:
                 seed_chains = {v: [q] for v, q in
                                snap(cent, coords, qubits,

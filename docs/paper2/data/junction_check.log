@@ -1,0 +1,11 @@
+/data/max/ember/docs/paper2/data/emergence_check.py:14: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+K100 init=spectral insert=8 exact=False: E=900 assigned=100 seedACL=10.9 conn=100/100 cov=4738/4950 ACLs=[12.39, 12.3, 12.85] mean=12.51 designated=2752/4895 (greedy) t_arr=0.03s t_ins=0.28s
+K140 init=spectral insert=8 exact=False: E=1729 assigned=140 seedACL=14.2 conn=63/140 cov=9575/9730 ACLs=[17.79, 18.26, 17.32] mean=17.79 designated=5726/9681 (greedy) t_arr=0.09s t_ins=0.80s
+turan_n162 init=spectral insert=8 exact=False: E=1811 assigned=162 seedACL=11.7 conn=162/162 cov=6489/6561 ACLs=[8.41, 8.42, 8.59] mean=8.47 blocksep=81.0/81 designated=3739/6561 (greedy) t_arr=0.09s t_ins=1.96s
+spin_glass_n163 init=spectral insert=8 exact=False: E=2212 assigned=163 seedACL=14.5 conn=106/163 cov=3602/3915 ACLs=[18.53, 18.1, 17.51] mean=18.05 designated=2082/3891 (greedy) t_arr=0.05s t_ins=5.80s
+K100 init=spectral insert=8 exact=True: E=900 assigned=100 seedACL=10.9 conn=100/100 cov=4740/4950 ACLs=[13.42, 13.17, 12.79] mean=13.13 designated=3046/4895 t_match=0.17s t_arr=0.03s t_ins=0.28s
+K140 init=spectral insert=8 exact=True: E=1729 assigned=140 seedACL=14.2 conn=125/140 cov=9483/9730 ACLs=[17.91, 16.73, 16.48] mean=17.04 designated=6100/9681 t_match=0.21s t_arr=0.08s t_ins=0.66s
+turan_n162 init=spectral insert=8 exact=True: E=1811 assigned=162 seedACL=11.7 conn=162/162 cov=6470/6561 ACLs=[8.0, 8.13, 8.0] mean=8.04 blocksep=81.0/81 designated=4040/6561 t_match=0.09s t_arr=0.09s t_ins=1.65s
+spin_glass_n163 init=spectral insert=8 exact=True: E=2212 assigned=163 seedACL=14.5 conn=150/163 cov=3591/3915 ACLs=[16.88, 17.98, 17.63] mean=17.50 designated=2575/3891 t_match=0.13s t_arr=0.05s t_ins=6.05s
+done-emergence
