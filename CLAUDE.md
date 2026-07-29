@@ -20,10 +20,12 @@ behavior, measured one flip at a time against the stock corner — paired by (in
 never unpaired (survivor bias). Verify any claim about minorminer against its source, never
 its paper — the shipped program has repeatedly outgrown the 2014 description (notes §3.8, §3.14). Design rationale and the chronological lab record: `docs/paper2/notes.md`.
 Organized references: `docs/paper2/mm-internals.md` (what shipped minorminer
-actually does, with file:line citations into `external/minorminer-fork`) and
-`docs/paper2/attraction.md` (the attraction embedder: as-built spec, idea ledger,
-roadmap). Consult these before re-deriving minorminer behavior or re-proposing
-tried ideas.
+actually does, with file:line citations into `external/minorminer-fork`),
+`docs/paper2/anatomy.md` (the attraction embedder as-built: every component of
+the current single pipeline and why it exists), and `docs/paper2/attraction.md`
+(the idea ledger and fossil record — every tried/refuted/superseded variant
+with its verdict; superseded code lives at archive commit `612ced3e`). Consult
+these before re-deriving minorminer behavior or re-proposing tried ideas.
 
 The abandoned prior work (Reweave wrapper, speculative embedders, learning line) lives only
 on the `new-algorithm` branch. Do not reintroduce it.

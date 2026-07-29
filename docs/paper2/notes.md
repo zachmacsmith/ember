@@ -1850,6 +1850,76 @@ after the junction fix: K100 12.51 (greedy seeds), K140 17.04, spin_glass
 mm 13.44 / 20.70 / 25.37 / 8.26. Co-design stakes now localized to K100's
 last 2.7 vs template.
 
+### 3.38 The consolidation: one algorithm, defaults flipped, spin_glass record; rounds measured harmful on dense (2026-07-29)
+
+Max's directive: one algorithm he can follow; code is regenerable, ideas
+are not — `attraction.md` keeps the fossil record, `anatomy.md` is now the
+clean as-built spec of only the current pipeline. Decisions taken in
+discussion: wire_exact stays an off-default switch; the native purity arm
+deleted from attraction (`factored` stays registered); bar_domains KEPT
+parked as the exact-handoff interface for the strip-minorminer-down agenda
+(fork-level patch of the restrict_chains bug when needed; no upstream
+report). Archive commit `612ced3e` holds everything deleted; the full
+deletion list with per-item verdicts is in attraction.md's consolidation
+ledger entry.
+
+Build: `field.py` 1602->~1000 lines (TileGrid + stair readout + arrange +
+insertion + wire seeds + matched seeds + parked bar_domains only),
+`placement.py` 769->~400 (single pipeline; 12 knobs), tests 780->745 pass
+(35 deleted-machinery tests removed; ported: kappa-floor and wire-run
+properties onto the stair/interval functions). Pre-existing failures
+unchanged (4F + 80E, identical on the archive commit).
+
+**Probe** (`data/consolidation_probe.py`; bars pre-registered in the plan
+file before any run; 3 seeds x 60 s, P16). Run 1 (24 workers) DISCARDED:
+machine load ~70 made wall-clock timeouts starve the rounds budget —
+spin_glass 0/3 for every arm including mm 1/3, while a direct sequential
+run legalized in 2 rounds (legal 17.7); contention lesson recorded. Scoring
+run (8 workers), means over legal seeds:
+
+| cell | 1shot (NEW DEFAULT) | rounds | mm |
+|---|---|---|---|
+| K100 | **13.41** | 13.49 | 13.77 |
+| K140 | **18.55** (3/3) | 20.20 | 21.91 |
+| turan_n162 | 8.40 | 12.73 | **8.26** |
+| spin_glass_n163 | **17.22** (3/3, record; was 17.50) | 18.04 | 24.53 (2/3) |
+| regular_n316 | 3.56 | 3.56 | 4.02 |
+| ws_n486 | 3.76 | **3.41** | 3.89 |
+| ER100_d10 | 5.88 | 5.94 | 5.67 |
+
+1. **Protocol rule fired: 1shot beat rounds on 4/4 dense cells** ->
+   default = `max_rounds=1, round_frac=0.5`. The mechanism reads clean:
+   feedback re-derives geometry from realized centroids and the next
+   arrange cannot recover insertion-found order within budget (turan 12.73
+   vs 8.40 is the smoking gun — the s3.31 "transfer economics" cost,
+   now measured as the dominant term). Rounds still help SPARSE quality
+   (ws 3.41 vs 3.76: seeded re-rolls, the s3.23 mechanism) — a
+   participant-gated adaptive-rounds rule is the obvious unbuilt
+   candidate, parked for a design decision.
+2. **Minimum bars: met except turan by 0.14** (parity; mm near-optimal
+   there per the 2ab/k bound). spin_glass is the headline: irregular-dense,
+   mm fails 1/3 and averages 24.5; we legalize 3/3 at 17.22 — the
+   home-turf thesis carrying the consolidation.
+3. **Target bars (harness records in-pipeline): spin_glass + turan met;
+   K100 13.41 vs 12.51, K140 18.55 vs 17.04 NOT met.** Suspect (1)
+   compact init probed under a pre-registered acceptance rule and
+   REVERTED: K100/K140 -0.15 but turan +2.0 / spin_glass +0.5 — compact
+   init interleaves blocks harder than insertion recovers (the s3.35
+   circle-init lesson re-measured). Drafting lesson on record: the
+   acceptance rule listed only K100 + guards, so its letter passed while
+   the trade was plainly bad; overridden by the consolidation's own
+   minimum bars. Suspect (2) insertion plumbing: confirmed working
+   (turan 8.40 ~ harness 8.24/8.47). Suspect (3) eta and the residual
+   harness-protocol deltas (one arrangement x3 routing seeds vs per-seed
+   re-derivation) left open — cross-run absolutes swing with machine load
+   (mm 13.72-14.33 between runs), so settle it on a quiet box.
+
+Standing dense board after consolidation (paired, this probe): 13.41 /
+18.55 / 17.22 / 8.40 vs mm 13.77 / 21.91 / 24.53 / 8.26. Records carried
+from the pre-consolidation harness (12.51 K100 greedy, 17.04 K140 matched,
+8.04 turan matched) remain the reproduction targets; wire_exact holds
+three of them behind its switch.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).

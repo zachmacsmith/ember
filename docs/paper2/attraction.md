@@ -41,7 +41,13 @@ The honest description of this algorithm family (2026-07-17 discussion):
   pure placement, zero polish. The attraction family with density-limited collapse
   interpolates between that and the sparse local-search regime.
 
-## B. As-built: v3 hybrid (registered as `attraction`)
+## B. As-built: v3 hybrid (registered as `attraction`) — HISTORICAL
+
+**Superseded by the 2026-07-29 consolidation (ledger entry at the top of
+§C): the registered `attraction` is now the single stair+arrange pipeline,
+spec'd in `anatomy.md`; the v3 hybrid below and every superseded variant
+live at archive commit `612ced3e`.** This section is kept as the fossil
+record of the pre-consolidation pipeline.
 
 Code: `packages/ember-qc/src/ember_qc/algorithms/factored/placement.py`; seeded
 routing via `initial_chains` in `loop.py`; optional region-priced shortening via
@@ -89,6 +95,64 @@ Magic numbers, none swept: η=0.5, λ₀=3.0, round_frac=0.4, max_rounds=10, bin
 γ=0 (region bias off by default; >0 is the refuted ablation arm).
 
 ## C. Idea ledger
+
+### THE CONSOLIDATION — one algorithm (2026-07-29; notes s3.38)
+
+Max's call ("I can barely follow one version... it's the ideas and our
+discussions that count"): the registered `attraction` is now the single
+stair+arrange+insertion+wire-seeds pipeline; everything superseded is
+DELETED from the tree and lives at archive commit `612ced3e` + this ledger.
+Current as-built spec: `anatomy.md`. Deleted, with verdicts: point state
+(relax + DensityField push; dense losses s3.23), cross state (extents as
+state; s3.28-31, span dominated with fewer knobs), span field dynamics
+(PoissonField, RUDY smear, deposits/forces, assign_rows_cols; arrange owns
+every measured dense cell since s3.35-36), mu multiplier field (inert,
+s3.26), slack_relax (inert as built, s3.33), wire_couple (superseded by
+wire_exact), seed_stride, swap-Metropolis contingency (inert at 30 sweeps,
+s3.35), region-priced polish gamma (refuted s3.22), selection="best_legal"
+(s3.16), native backend/polish purity arm (Max's call; `factored` stays
+registered), charge feedback lam0/lam_tau (span deposits are forward
+functions of positions). KEPT parked: bar_domains + restrict_bug_repro.py
+(Max: the exact-handoff interface for the STRIP-MINORMINER-DOWN agenda —
+"how much of minorminer can we strip down; its exhaustive searching should
+be rendered unnecessary by our guidance"; unblock = fork-level patch of the
+restrict_chains hang when its hour comes, no upstream report wanted).
+wire_exact stays the one seed switch, default off (K100 champion is blind
+greedy; matching holds K140/spin_glass/turan records).
+
+**Defaults flipped to the champion config**: insert_sweeps=8 (was 0),
+readout/dynamics/seeds hardwired stair/arrange/wire, and — per the probe's
+pre-registered protocol rule — **max_rounds=1, round_frac=0.5** (1shot beat
+the rounds protocol on ALL four dense cells; rounds re-derive geometry from
+realized centroids and destroy insertion-found order, turan 12.73 vs 8.40).
+Tests 745 pass (35 deleted-machinery tests removed).
+
+**Consolidation probe** (pre-registered bars in the plan + s3.38; 3 seeds,
+60 s, P16, 8 workers; the first 24-worker run was DISCARDED as
+contention-confounded — load ~70, spin_glass 0/3 for every arm including
+mm, while a sequential run legalized in 2 rounds): new default (1shot) vs
+paired stock mm — K100 13.41 vs 13.77 W; K140 18.55 vs 21.91 W 3/3;
+**spin_glass 17.22 vs 24.53 (mm 2/3) W — new record** (old 17.50); turan
+8.40 vs 8.26 (-0.14, parity; mm near-optimal there); regular_n316 3.56 vs
+4.02 W; ws_n486 3.76 vs 3.89 W; ER100_d10 5.88 vs 5.67 (~noise). Minimum
+bars met except the turan hair; target bars met on spin_glass + turan,
+K100/K140 target (<=12.6/<=17.6) NOT met in-pipeline. Gap suspect (1)
+compact init: probed (init30, pre-registered acceptance) — K100/K140 -0.15
+but turan +2.0 / spin_glass +0.5 (compact init interleaves blocks harder
+than insertion recovers; the s3.35 circle-init lesson) — REVERTED; the
+acceptance rule as written passed on its letter (it omitted non-K100 dense
+cells) and was overridden by the consolidation's own minimum bars, noted
+here as a pre-registration drafting lesson. Suspects (2) insertion
+plumbing: confirmed working in-pipeline (turan 8.40 ~ harness 8.24/8.47).
+Remaining opens on record: (a) the K100/K140 in-pipeline residual vs the
+harness records (12.51/17.04) — suspect eta and harness protocol details
+(mean-over-routing-seeds on ONE arrangement vs per-seed re-derivation);
+cross-run absolutes are noisy on the shared box (mm itself swung
+13.72-14.33 between runs) so chase this on a quiet machine; (b) ws_n486:
+rounds beat 1shot there (3.41 vs 3.76) — seeded re-rolls help sparse
+quality; a participant-gated adaptive-rounds rule (dense => 1shot, sparse
+=> rounds, using the existing capacity gate, no topology detection) is the
+obvious candidate, UNDESIGNED, needs its own decision.
 
 ### Wire-exactness — alternating per-line matchings (built 2026-07-31; notes s3.37)
 

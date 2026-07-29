@@ -1,0 +1,90 @@
+/data/max/ember/docs/paper2/data/consolidation_probe.py:67: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/consolidation_probe.py:67: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/consolidation_probe.py:67: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/consolidation_probe.py:67: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/consolidation_probe.py:67: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/consolidation_probe.py:67: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/consolidation_probe.py:67: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/consolidation_probe.py:67: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+K100 default seed 0: 14.92 (62.6s) {'assigned': 100, 'extent_mean': 8.76, 'extent_max': 9.0}
+K100 1shot seed 0: 13.37 (60.8s) {'assigned': 100, 'extent_mean': 6.918, 'extent_max': 7.637}
+K100 mm seed 0: 13.2 (60.3s) 
+K100 default seed 1: 13.95 (61.4s) {'assigned': 100, 'extent_mean': 8.508, 'extent_max': 10.005}
+K100 1shot seed 1: 13.04 (39.3s) {'assigned': 100, 'extent_mean': 7.748, 'extent_max': 8.696}
+K100 mm seed 1: 13.96 (61.0s) 
+K100 default seed 2: 14.42 (61.4s) {'assigned': 100, 'extent_mean': 9.35, 'extent_max': 10.0}
+K100 1shot seed 2: 13.38 (61.4s) {'assigned': 100, 'extent_mean': 6.964, 'extent_max': 7.756}
+K100 mm seed 2: 13.99 (61.9s) 
+K140 default seed 0: 20.193 (62.5s) {'assigned': 140, 'extent_mean': 12.714, 'extent_max': 13.0}
+K140 1shot seed 0: 19.364 (62.9s) {'assigned': 140, 'extent_mean': 10.005, 'extent_max': 11.068}
+K140 mm seed 0: 20.45 (62.5s) 
+K140 default seed 1: 20.571 (63.4s) {'assigned': 140, 'extent_mean': 13.0, 'extent_max': 13.0}
+K140 1shot seed 1: 16.629 (59.8s) {'assigned': 140, 'extent_mean': 9.986, 'extent_max': 10.554}
+K140 mm seed 1: 23.121 (62.9s) 
+K140 default seed 2: 20.443 (61.7s) {'assigned': 140, 'extent_mean': 12.45, 'extent_max': 13.0}
+K140 1shot seed 2: 19.221 (61.8s) {'assigned': 140, 'extent_mean': 10.433, 'extent_max': 12.224}
+K140 mm seed 2: 22.157 (61.2s) 
+turan_n162 default seed 0: 11.864 (61.7s) {'assigned': 162, 'extent_mean': 11.469, 'extent_max': 15.0}
+turan_n162 1shot seed 0: 9.796 (60.8s) {'assigned': 162, 'extent_mean': 9.208, 'extent_max': 12.113}
+turan_n162 mm seed 0: 9.136 (33.6s) 
+turan_n162 default seed 1: 13.117 (60.9s) {'assigned': 162, 'extent_mean': 10.466, 'extent_max': 16.356}
+turan_n162 1shot seed 1: 12.333 (60.4s) {'assigned': 162, 'extent_mean': 11.355, 'extent_max': 14.804}
+turan_n162 mm seed 1: 7.815 (46.6s) 
+turan_n162 default seed 2: 11.877 (61.5s) {'assigned': 162, 'extent_mean': 11.26, 'extent_max': 15.0}
+turan_n162 1shot seed 2: 9.105 (61.3s) {'assigned': 162, 'extent_mean': 10.186, 'extent_max': 13.531}
+turan_n162 mm seed 2: 7.815 (49.5s) 
+spin_glass_n163 default seed 0: 17.742 (54.3s) {'assigned': 163, 'extent_mean': 13.503, 'extent_max': 15.0}
+spin_glass_n163 1shot seed 0: 17.914 (61.4s) {'assigned': 163, 'extent_mean': 11.191, 'extent_max': 14.835}
+spin_glass_n163 mm seed 0: 22.589 (60.1s) 
+spin_glass_n163 default seed 1: 17.767 (60.3s) {'assigned': 163, 'extent_mean': 13.767, 'extent_max': 15.0}
+spin_glass_n163 1shot seed 1: 17.135 (61.3s) {'assigned': 163, 'extent_mean': 10.793, 'extent_max': 13.906}
+spin_glass_n163 mm seed 1: None (64.5s) 
+spin_glass_n163 default seed 2: 18.914 (60.7s) {'assigned': 163, 'extent_mean': 13.853, 'extent_max': 15.0}
+spin_glass_n163 1shot seed 2: 18.061 (60.7s) {'assigned': 163, 'extent_mean': 11.452, 'extent_max': 14.88}
+spin_glass_n163 mm seed 2: 25.706 (60.4s) 
+regular_n316 default seed 0: 3.158 (13.8s) {'assigned': 0, 'extent_mean': 3.781, 'extent_max': 8.619}
+regular_n316 1shot seed 0: 3.93 (4.2s) {'assigned': 0, 'extent_mean': 3.669, 'extent_max': 10.224}
+regular_n316 mm seed 0: 3.953 (4.2s) 
+regular_n316 default seed 1: 3.481 (14.0s) {'assigned': 0, 'extent_mean': 3.532, 'extent_max': 9.216}
+regular_n316 1shot seed 1: 3.585 (4.1s) {'assigned': 0, 'extent_mean': 3.886, 'extent_max': 11.619}
+regular_n316 mm seed 1: 4.234 (3.6s) 
+regular_n316 default seed 2: 3.494 (13.0s) {'assigned': 0, 'extent_mean': 3.846, 'extent_max': 10.65}
+regular_n316 1shot seed 2: 3.674 (6.0s) {'assigned': 0, 'extent_mean': 3.917, 'extent_max': 10.31}
+regular_n316 mm seed 2: 3.861 (3.9s) 
+ws_n486 default seed 0: 3.757 (21.8s) {'assigned': 0, 'extent_mean': 3.96, 'extent_max': 16.477}
+ws_n486 1shot seed 0: 4.039 (5.6s) {'assigned': 0, 'extent_mean': 3.99, 'extent_max': 14.735}
+ws_n486 mm seed 0: 4.455 (3.8s) 
+ws_n486 default seed 1: 3.786 (24.0s) {'assigned': 0, 'extent_mean': 3.696, 'extent_max': 13.761}
+ws_n486 1shot seed 1: 3.907 (11.0s) {'assigned': 0, 'extent_mean': 3.815, 'extent_max': 14.453}
+ws_n486 mm seed 1: 3.617 (9.9s) 
+ws_n486 default seed 2: 3.395 (17.6s) {'assigned': 0, 'extent_mean': 3.52, 'extent_max': 11.796}
+ws_n486 1shot seed 2: 3.364 (6.5s) {'assigned': 0, 'extent_mean': 3.883, 'extent_max': 15.22}
+ws_n486 mm seed 2: 3.584 (5.4s) 
+ER100_d10 default seed 0: 5.58 (9.6s) {'assigned': 16, 'extent_mean': 4.673, 'extent_max': 7.108}
+ER100_d10 1shot seed 0: 5.47 (6.7s) {'assigned': 16, 'extent_mean': 4.864, 'extent_max': 7.682}
+ER100_d10 mm seed 0: 5.66 (7.2s) 
+ER100_d10 default seed 1: 6.12 (9.6s) {'assigned': 16, 'extent_mean': 4.789, 'extent_max': 7.888}
+ER100_d10 1shot seed 1: 5.58 (7.8s) {'assigned': 16, 'extent_mean': 5.111, 'extent_max': 8.356}
+ER100_d10 mm seed 1: 5.51 (6.0s) 
+ER100_d10 default seed 2: 5.86 (10.1s) {'assigned': 16, 'extent_mean': 4.513, 'extent_max': 6.887}
+ER100_d10 1shot seed 2: 5.86 (6.0s) {'assigned': 16, 'extent_mean': 4.657, 'extent_max': 8.124}
+ER100_d10 mm seed 2: 5.84 (4.9s) 
+wrote 63 rows -> /data/max/ember/docs/paper2/data/consolidation_probe.csv
+
+summary (mean over legal seeds; n legal in parens):
+K100             default=14.43(3)  1shot=13.26(3)  mm=13.72(3)
+K140             default=20.40(3)  1shot=18.40(3)  mm=21.91(3)
+turan_n162       default=12.29(3)  1shot=10.41(3)  mm=8.26(3)
+spin_glass_n163  default=18.14(3)  1shot=17.70(3)  mm=24.15(2)
+regular_n316     default=3.38(3)  1shot=3.73(3)  mm=4.02(3)
+ws_n486          default=3.65(3)  1shot=3.77(3)  mm=3.89(3)
+ER100_d10        default=5.85(3)  1shot=5.64(3)  mm=5.67(3)
+done-consolidation

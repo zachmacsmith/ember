@@ -113,6 +113,10 @@ def source_positions(source: nx.Graph, lo: Point, hi: Point) -> Centroids:
         angles = 2.0 * math.pi * np.arange(n) / max(n, 1)
         arr = np.stack([np.cos(angles), np.sin(angles)], axis=1)
     arr = (arr - arr.min(axis=0)) / np.maximum(arr.max(axis=0) - arr.min(axis=0), 1e-9)
+    # middle-80% span. The harness-style compact init (middle-30%) was probed
+    # at consolidation (consolidation_probe_init30.log): K100/K140 -0.15 but
+    # turan +2.0 / spin_glass +0.5 -- compact init interleaves blocks harder
+    # than insertion recovers (the s3.35 circle-init lesson again). Reverted.
     margin = 0.1 * (hi - lo)
     arr = lo + margin + arr * (hi - lo - 2.0 * margin)
     return {v: arr[i] for i, v in enumerate(nodes)}
@@ -148,11 +152,20 @@ class AttractConfig:
     Unknown keyword arguments to :func:`attract_embed` are ignored, so
     pre-consolidation knobs silently fall back to the single pipeline.
     """
-    max_rounds: int = 10       # cap on geometry -> seeds -> route cycles
-    round_frac: float = 0.4    # fraction of timeout the rounds phase may use;
+    max_rounds: int = 1        # geometry -> seeds -> route cycles. Default 1
+                               # (the 1-shot protocol) per the consolidation
+                               # probe's pre-registered rule: 1shot beat the
+                               # rounds protocol on all four dense cells
+                               # (rounds re-derive geometry from realized
+                               # centroids and destroy insertion-found order
+                               # -- turan 12.73 vs 8.40). Rounds (>1) were
+                               # better on ws_n486 (3.41 vs 3.76): seeded
+                               # re-rolls help sparse quality; the
+                               # participant-gated adaptive-rounds idea is on
+                               # record in attraction.md, undesigned.
+    round_frac: float = 0.5    # fraction of timeout the rounds phase may use;
                                # the rest is reserved for the polish (where
                                # minorminer earns ~35% ACL, mm-internals §6).
-                               # Adaptive R: hard instances collapse to 1.
     geo_iters: int = 1         # stair_step + arrange cycles per round
     eta: float = 0.5           # attraction (subgradient) step size, tiles
     vary_rng: bool = True      # False: identical router RNG every round, so
