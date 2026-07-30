@@ -96,6 +96,23 @@ Magic numbers, none swept: η=0.5, λ₀=3.0, round_frac=0.4, max_rounds=10, bin
 
 ## C. Idea ledger
 
+### The reunification — corners-only state confirmed; contact model retires with honors (2026-07-30; notes s3.47)
+
+The missing measurement: the registered pipeline (L-representation) run
+routed on Z12. It dominates the contact model on K100 (12.21 vs 15.50),
+turán (14.03 3/3 vs 15.53 2/3), spin_glass (19.85 2/3 vs 0/3) and ties
+within the mm null on ER (4.81 vs 4.72; null 0.11) — per-edge freedom
+buys nothing measurable at 60× the state. Corners + derived arms +
+derived orientations + (on Zephyr) derived seats is the representation
+all graphs secretly want; the contact detour's value was forcing that
+understanding (seats the true constraint; junction-completeness the
+enabler; gauge freedom the enemy; mm's lexicographic overlap pricing —
+Max's correction — the reason best-effort seeds must be CONNECTED and
+overlap-free). Z12 standings: we hold ER (both models beat mm, twice
+each); mm holds the other three. Next opportunity on record:
+`wire_exact=True` on Z12 — the s3.37 matching, built for exactly the
+junction-complete fabric it never had. No default changes.
+
 ### Contact Stage 2 — one bar of four; gridlock + the stubborn pile (2026-07-30; notes s3.46)
 
 Connected BFS readout + per-contact preconditioning, probed. ER win

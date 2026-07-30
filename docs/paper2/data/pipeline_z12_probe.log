@@ -1,0 +1,31 @@
+/data/max/ember/docs/paper2/data/pipeline_z12_probe.py:52: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/pipeline_z12_probe.py:52: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/pipeline_z12_probe.py:52: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/pipeline_z12_probe.py:52: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/pipeline_z12_probe.py:52: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/pipeline_z12_probe.py:52: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+K100 seed 0: 12.74 (61.2s) {'assigned': 100, 'assigned_rows': 100, 'assigned_cols': 100, 'insert_reverts': 0, 'mono_time': 0.4817, 'extent_mean': 14.797, 'extent_max': 17.761}
+K100 seed 1: 12.67 (61.0s) {'assigned': 100, 'assigned_rows': 100, 'assigned_cols': 100, 'insert_reverts': 0, 'mono_time': 0.3561, 'extent_mean': 14.957, 'extent_max': 17.81}
+K100 seed 2: 11.22 (61.6s) {'assigned': 100, 'assigned_rows': 100, 'assigned_cols': 100, 'insert_reverts': 0, 'mono_time': 0.3722, 'extent_mean': 16.622, 'extent_max': 19.317}
+ER100_d10 seed 0: 4.86 (7.2s) {'assigned': 65, 'assigned_rows': 24, 'assigned_cols': 61, 'insert_reverts': 0, 'mono_time': 0.0393, 'extent_mean': 9.24, 'extent_max': 17.733}
+ER100_d10 seed 1: 4.8 (6.0s) {'assigned': 65, 'assigned_rows': 24, 'assigned_cols': 61, 'insert_reverts': 0, 'mono_time': 0.0366, 'extent_mean': 8.488, 'extent_max': 13.778}
+ER100_d10 seed 2: 4.76 (8.0s) {'assigned': 65, 'assigned_rows': 24, 'assigned_cols': 61, 'insert_reverts': 0, 'mono_time': 0.0408, 'extent_mean': 8.85, 'extent_max': 16.862}
+turan_n162 seed 0: 12.679 (61.7s) {'assigned': 162, 'assigned_rows': 162, 'assigned_cols': 162, 'insert_reverts': 0, 'mono_time': 0.4784, 'extent_mean': 19.485, 'extent_max': 30.826}
+turan_n162 seed 1: 15.074 (60.1s) {'assigned': 162, 'assigned_rows': 162, 'assigned_cols': 162, 'insert_reverts': 0, 'mono_time': 0.4461, 'extent_mean': 17.898, 'extent_max': 25.412}
+turan_n162 seed 2: 14.34 (60.8s) {'assigned': 162, 'assigned_rows': 162, 'assigned_cols': 162, 'insert_reverts': 0, 'mono_time': 0.368, 'extent_mean': 18.627, 'extent_max': 26.155}
+spin_glass_n163 seed 0: 16.963 (60.4s) {'assigned': 163, 'assigned_rows': 154, 'assigned_cols': 160, 'insert_reverts': 1, 'mono_time': 0.4358, 'extent_mean': 20.829, 'extent_max': 25.839}
+spin_glass_n163 seed 1: None (65.4s) 
+spin_glass_n163 seed 2: 22.742 (60.4s) {'assigned': 163, 'assigned_rows': 154, 'assigned_cols': 160, 'insert_reverts': 1, 'mono_time': 0.3674, 'extent_mean': 22.658, 'extent_max': 30.0}
+
+summary (pipeline = registered attraction default on Z12):
+K100              pipeline=12.21(3)  contact=15.50(3)  mm=10.28(3)  mm2=11.33(3)
+ER100_d10         pipeline=4.81(3)  contact=4.72(3)  mm=4.97(3)  mm2=4.86(3)
+turan_n162        pipeline=14.03(3)  contact=15.53(2)  mm=12.01(3)  mm2=10.99(3)
+spin_glass_n163   pipeline=19.85(2)  contact=FAIL(0)  mm=17.87(3)  mm2=18.36(2)
+done-pipeline-z12

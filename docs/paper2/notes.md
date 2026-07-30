@@ -2462,6 +2462,46 @@ Score: 1 of 4 bars. Per the failure protocol: report + discuss.
 Positive core intact: ER win reproduced twice (4.65/4.72 vs mm
 4.97/mm2 4.86); the model's home cell is stable. No default changes.
 
+### 3.47 The reunification experiment: the L-model matches or beats the contact model everywhere; corners-only state confirmed (2026-07-30)
+
+The measurement the contact rounds never made (`pipeline_z12_probe.py`):
+the registered attraction default (corners + derived arms + arrange +
+wire seeds, Zephyr adapter, derived κ ≈ 17) under the full routed
+protocol on the four Z12 cells. Decision framing pre-registered in the
+script header.
+
+| cell | pipeline | contact (s3.46) | mm | mm2 |
+|---|---|---|---|---|
+| K100 | **12.21 (3/3)** | 15.50 | 10.28 | 11.33 |
+| ER100_d10 | **4.81 (3/3)** | 4.72 | 4.97 | 4.86 |
+| turan | **14.03 (3/3)** | 15.53 (2/3) | 12.01 | 10.99 |
+| spin_glass | **19.85 (2/3)** | 0/3 | 17.87 (3/3) | 18.36 |
+
+**Verdict: reunification CONFIRMED.** The pipeline dominates the contact
+model on three cells and ties it within the mm null on the fourth (ER
+gap 0.09 vs null 0.11) — per-edge freedom buys nothing measurable even
+on the contact model's home cell, at 60× the state and none of the
+structure. The corners-only state (arms, orientations, seats all
+derived) is the right representation; the contact detour's enduring
+value is the UNDERSTANDING it forced: seats are the real constraint,
+Zephyr's junction-completeness makes them a theorem given distinct
+wires, gauge freedom is the optimizer's enemy, and mm's overlap pricing
+is lexicographic (Max's correction, from mm-internals — the
+"overlap-is-chill" fiction traced to the paper-vs-program table).
+
+Z12 standings after the first-ever untuned pipeline run there: WE hold
+ER (4.81 and 4.72 both beat mm 4.97 — two independent models, twice
+each); mm holds K100 (10.28), turan (12.01), spin_glass (17.87 3/3 vs
+our 2/3). Zephyr is mm-friendly terrain (paper3's finding, now at cell
+level for our own line). The obvious next opportunity, recorded: the
+crystal-cell gap on Z12 is exactly where s3.37's wire-exact matching was
+throttled by Pegasus's 56% junctions — on Zephyr the matching's
+existence assumptions hold; `wire_exact=True` on Z12 is unmeasured.
+
+Contact model disposition: retires to probe-callable status with the
+ledger carrying its lessons; `contact.py` stays (tested, FD-gated) as
+the measurement instrument it proved to be. No default changes.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).
