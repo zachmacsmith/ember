@@ -96,6 +96,23 @@ Magic numbers, none swept: η=0.5, λ₀=3.0, round_frac=0.4, max_rounds=10, bin
 
 ## C. Idea ledger
 
+### The Poisson round — term verified, cells unmoved; diagnosis needed (2026-07-30; notes s3.44)
+
+Two-term pressure (hinge feasibility + Poisson interior gradient; the
+pure electrostatic form measured contrast-blind and amended same day —
+G kills constants, so ½sᵀGs alone drives overload toward UNIFORMITY,
+not zero). FD gate green on the summed weights; plateau unit tests
+pass. **Go/no-go FAILED: the pinned cells are unmoved** (28.9/57.7 vs
+27.4/56.1 at λ 16k) — the plateau was true but not binding there.
+Feasible spread states exist by mass counting; descent can't find them.
+Recorded diagnoses for the next decision: early-settle tolerance
+semantics at large λ·P; hot-spot α throttling (wants a diagonal
+preconditioner); or something structural in the readout (Max's "scary"
+question). NEXT: a diagnosis probe (P trajectory, per-variable steps,
+and whether a hand-built feasible layout is even downhill-reachable)
+before any further mechanism. Probe phases not launched; no default
+changes.
+
 ### The Armijo integrator — numerics fixed; the plateau is the real wall (2026-07-30; notes s3.43)
 
 contract v2.1: frozen-model Armijo backtracking + hardening tail

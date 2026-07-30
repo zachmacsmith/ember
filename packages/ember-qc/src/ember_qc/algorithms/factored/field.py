@@ -706,6 +706,32 @@ def _target_kappa(grid: TileGrid) -> float:
     return max(2.0, 2.0 * g.number_of_edges() / n - 2.0)
 
 
+_LPINV_CACHE: Dict[Tuple[int, int], np.ndarray] = {}
+
+
+def _lpinv(H: int, W: int) -> np.ndarray:
+    """Pseudoinverse of the (H*W) grid Laplacian with Neumann boundaries —
+    the pre-consolidation PoissonField construction (archive 612ced3e),
+    module-cached per grid shape."""
+    key = (H, W)
+    G = _LPINV_CACHE.get(key)
+    if G is None:
+        n = H * W
+        L = np.zeros((n, n))
+        for yy in range(H):
+            for xx in range(W):
+                i = yy * W + xx
+                for y2, x2 in ((yy - 1, xx), (yy + 1, xx),
+                               (yy, xx - 1), (yy, xx + 1)):
+                    if 0 <= y2 < H and 0 <= x2 < W:
+                        j = y2 * W + x2
+                        L[i, i] += 1.0
+                        L[i, j] -= 1.0
+        G = np.linalg.pinv(L)
+        _LPINV_CACHE[key] = G
+    return G
+
+
 class PressureState:
     """Frozen-within-step structure for the pressure term (notes s3.42(a)):
     contact SETS and floor pads are frozen; ends, memberships, and
@@ -742,6 +768,12 @@ class PressureState:
         self.row_cap = grid.cap[:, :, 1].mean(axis=1) * derate
         self.col_cap = grid.cap[:, :, 0].mean(axis=0) * derate
         self.W, self.H = grid.W, grid.H
+        # Poisson machinery (s3.44): per-axis Laplacian pseudoinverses and
+        # the historical cap_scale normalization
+        self.Gr = _lpinv(grid.H, grid.W)
+        self.Gc = _lpinv(grid.W, grid.H)
+        self.cs_r = max(float(self.row_cap.mean()), 1e-9)
+        self.cs_c = max(float(self.col_cap.mean()), 1e-9)
 
 
 def _axis_loads(ends_lo, ends_hi, perp, cap, n_lines, n_pos):
@@ -763,18 +795,34 @@ def _axis_loads(ends_lo, ends_hi, perp, cap, n_lines, n_pos):
     return L, r0, frac, r1
 
 
+def _psi_weights(L: np.ndarray, cap: np.ndarray, G: np.ndarray,
+                 cap_scale: float):
+    """(o, energy, W) for one axis grid — the s3.44(a)+amendment two-term
+    composition: P_axis = sum o^2 + 1/2 sum s*psi (hinge = feasibility,
+    Poisson = interior gradient; G kills constants so the pure
+    electrostatic form is contrast-blind). W = dP/dL = 2*o +
+    psi*1[over]/cap_scale."""
+    o = np.maximum(0.0, L - cap[:, None])
+    sN = o / cap_scale
+    psi = (G @ sN.ravel()).reshape(L.shape)
+    e_axis = float((o ** 2).sum() + 0.5 * (sN * psi).sum())
+    Wt = 2.0 * o + np.where(o > 0.0, psi, 0.0) / cap_scale
+    return o, e_axis, Wt
+
+
 def pressure_energy(state: PressureState, x: np.ndarray,
                     y: np.ndarray) -> float:
-    """P = sum over lines/cells of relu(load - cap)^2, both axes."""
+    """P per axis = sum o^2 + 1/2 sum s*psi (s3.44 + amendment: hinge
+    feasibility term + Poisson interior-gradient term)."""
     a_h = x[state.Hm].min(1) - state.pad
     b_h = x[state.Hm].max(1) + state.pad
     a_v = y[state.Vm].min(1) - state.pad
     b_v = y[state.Vm].max(1) + state.pad
     Lr, _, _, _ = _axis_loads(a_h, b_h, y, state.row_cap, state.H, state.W)
     Lc, _, _, _ = _axis_loads(a_v, b_v, x, state.col_cap, state.W, state.H)
-    o_r = np.maximum(0.0, Lr - state.row_cap[:, None])
-    o_c = np.maximum(0.0, Lc - state.col_cap[:, None])
-    return float((o_r ** 2).sum() + (o_c ** 2).sum())
+    _, e_r, _ = _psi_weights(Lr, state.row_cap, state.Gr, state.cs_r)
+    _, e_c, _ = _psi_weights(Lc, state.col_cap, state.Gc, state.cs_c)
+    return e_r + e_c
 
 
 def pressure_forces(state: PressureState, x: np.ndarray, y: np.ndarray):
@@ -796,8 +844,10 @@ def pressure_forces(state: PressureState, x: np.ndarray, y: np.ndarray):
                                  state.H, state.W)
     Lc, c0, fc, c1 = _axis_loads(a_v, b_v, x, state.col_cap,
                                  state.W, state.H)
-    o_r = np.maximum(0.0, Lr - state.row_cap[:, None])
-    o_c = np.maximum(0.0, Lc - state.col_cap[:, None])
+    # s3.44 substitution: the cell weight dP/dL is psi*1[over]/cap_scale
+    # (was 2*overload in the local-hinge form, retired as plateau-blind)
+    _, _, o_r = _psi_weights(Lr, state.row_cap, state.Gr, state.cs_r)
+    _, _, o_c = _psi_weights(Lc, state.col_cap, state.Gc, state.cs_c)
     fx = np.zeros(n)
     fy = np.zeros(n)
     xi = x[state.Hm]
@@ -812,29 +862,29 @@ def pressure_forces(state: PressureState, x: np.ndarray, y: np.ndarray):
         tb = int(np.clip(np.floor(b_h[i]), 0, state.W - 1))
         wa = (1.0 - fr[i]) * o_r[r0[i], ta] + fr[i] * o_r[r1[i], ta]
         wb = (1.0 - fr[i]) * o_r[r0[i], tb] + fr[i] * o_r[r1[i], tb]
-        fx[hmin[i]] -= 2.0 * wa * (-1.0)   # dP/da' = -2*omega*o -> force -..
-        fx[hmax[i]] -= 2.0 * wb * (+1.0)
+        fx[hmin[i]] -= wa * (-1.0)   # dP/da' = -omega*W -> force = +omega*W
+        fx[hmax[i]] -= wb * (+1.0)
         # v-bar of i
         ta = int(np.clip(np.floor(a_v[i]), 0, state.H - 1))
         tb = int(np.clip(np.floor(b_v[i]), 0, state.H - 1))
         wa = (1.0 - fc[i]) * o_c[c0[i], ta] + fc[i] * o_c[c1[i], ta]
         wb = (1.0 - fc[i]) * o_c[c0[i], tb] + fc[i] * o_c[c1[i], tb]
-        fy[vmin[i]] -= 2.0 * wa * (-1.0)
-        fy[vmax[i]] -= 2.0 * wb * (+1.0)
+        fy[vmin[i]] -= wa * (-1.0)
+        fy[vmax[i]] -= wb * (+1.0)
         # perpendicular membership terms (owner i)
         t0, t1 = int(np.floor(a_h[i])), int(np.floor(b_h[i]))
         s = 0.0
         for t in range(max(t0, 0), min(t1, state.W - 1) + 1):
             cov = min(b_h[i], t + 1.0) - max(a_h[i], float(t))
             if cov > 0:
-                s += cov * 2.0 * (o_r[r1[i], t] - o_r[r0[i], t])
+                s += cov * (o_r[r1[i], t] - o_r[r0[i], t])
         fy[i] -= s
         t0, t1 = int(np.floor(a_v[i])), int(np.floor(b_v[i]))
         s = 0.0
         for t in range(max(t0, 0), min(t1, state.H - 1) + 1):
             cov = min(b_v[i], t + 1.0) - max(a_v[i], float(t))
             if cov > 0:
-                s += cov * 2.0 * (o_c[c1[i], t] - o_c[c0[i], t])
+                s += cov * (o_c[c1[i], t] - o_c[c0[i], t])
         fx[i] -= s
     return fx, fy
 

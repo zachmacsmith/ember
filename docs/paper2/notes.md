@@ -2256,7 +2256,56 @@ cells still contribute nothing (one-sidedness preserved). Kinks: at
 capacity crossings 1[over] jumps (P is C⁰ there) — measure-zero, same FD
 sampling discipline; ψ itself is smooth in s.
 
-*(Build + probe verdict to follow as (b).)*
+**Amendment (same day, pre-probe, from the first build measurement):**
+the pure electrostatic form has a flaw the derivation should have caught:
+G annihilates constants, so **P_pois measures overload CONTRAST, not
+overload** — a uniformly-overloaded configuration has ψ = 0 and P = 0,
+and descent drives excess toward uniformity rather than zero (measured:
+the small synthetic settled at residual 3.16, WORSE than the local form's
+1.46). Fix: the standard two-term composition — **P = P_hinge + P_pois**
+(the local hinge², whose zero is exactly feasibility, plus the Poisson
+term, which supplies the interior gradient the hinge lacks). Both terms
+share the identical chain-rule structure, so the cell weight is simply
+the sum: dP/dL = 2·o + ψ·1[over]/cap_scale. The FD gate tests the sum.
+(Two-term present+long-range compositions are the classical resolution —
+same family as hinge²+μ in s3.25 and McMurchie–Ebeling.)
+
+#### (b) Build + go/no-go verdict (2026-07-30)
+
+Built per (a)+amendment: `_lpinv` cache (the 612ced3e PoissonField
+construction), `_psi_weights` two-term composition, FD gradient gate
+green on the summed weights, plateau unit tests pass, 518 total.
+
+**Go/no-go smoke FAILED**: the pinned cells are unmoved — P16 spin_glass
+28.9 (was 27.4), Z12 turán 57.7 (was 56.1), λ hardened to 16384, stalls
+low, descent monotone. The Poisson interior gradient exists (unit tests
+prove it) and does not move the real cells: **the plateau was true but
+not binding there.** A back-of-envelope feasibility check says spread
+configurations exist (total floored mass ≪ total capacity on both
+cells), so the obstruction is in the descent's ability to find them, not
+in existence. Candidate diagnoses, recorded for the next decision:
+
+1. **Early-settle semantics**: relative-tolerance settlement (1e-4) on
+   E_total at large λ·P can fire while absolute progress is still
+   meaningful — the trajectory may simply be cut off (check: is P still
+   falling when settle fires?).
+2. **Hot-spot step throttling**: α is set by the max per-variable force;
+   a few extreme-overload cells dominate it, so interior variables move
+   microscopically per step — classic ill-conditioning wanting a
+   diagonal preconditioner (per-variable step scales or coordinate-wise
+   backtracking).
+3. **Something structural in the readout** still unaccounted — the
+   possibility Max's "is it scary that a group property can be
+   implemented directly in the energy" question was pointing at; if (1)
+   and (2) are exonerated by a trajectory diagnosis, this rises.
+
+Probe phases not launched. Verdict: two consecutive from-the-record
+fixes (Armijo, Poisson) have each been individually validated and
+neither moves the pinned cells — the honest read is that the failure is
+not yet diagnosed, and the next step should be a DIAGNOSIS probe
+(trajectory of P, per-variable step sizes, and a hand-constructed
+feasible layout's E_total vs the settled one — is the feasible state
+even downhill-reachable?) before any further mechanism is built.
 
 ## 4. References
 
