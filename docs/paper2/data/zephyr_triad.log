@@ -1,0 +1,38 @@
+
+===== Part 2: template truth (busclique on Z12)
+/data/max/ember/docs/paper2/data/zephyr_triad.py:93: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+  Z12 K_max = 184
+  K100 template ACL = 8.00
+  K140 template ACL = 11.00
+  turan_n162: K162-restriction template ACL = 6.00
+  spin_glass_n163: K163-restriction template ACL = 11.64
+
+===== Part 3: chain shapes on Z12 (segments per chain)
+  K100             mm: ACL=10.04 segs/chain mean=2.93 med=3 max=5 seg_len=3.64
+  K100             ours: ACL=12.27 segs/chain mean=3.91 med=4 max=10 seg_len=3.53
+  ER100_d10        mm: ACL=5.00 segs/chain mean=2.48 med=2 max=5 seg_len=2.17
+  ER100_d10        ours: ACL=4.86 segs/chain mean=2.45 med=2 max=5 seg_len=2.16
+  turan_n162       mm: ACL=10.54 segs/chain mean=1.39 med=1 max=4 seg_len=8.74
+  turan_n162       ours: ACL=12.68 segs/chain mean=1.85 med=1 max=8 seg_len=8.88
+  spin_glass_n163  mm: ACL=18.14 segs/chain mean=4.81 med=4 max=12 seg_len=4.42
+  spin_glass_n163  ours: ACL=16.96 segs/chain mean=4.53 med=4 max=10 seg_len=4.37
+===== Part 1: wire_exact=True on Z12
+  K100 seed 0: 12.74 designated=3046/4946
+  K100 seed 1: 12.67 designated=3046/4946
+  K100 seed 2: 12.63 designated=3046/4946
+  ER100_d10 seed 0: 4.86 designated=91/340
+  ER100_d10 seed 1: 4.8 designated=91/340
+  ER100_d10 seed 2: 4.76 designated=91/340
+  turan_n162 seed 0: 13.488 designated=1680/6561
+  turan_n162 seed 1: 15.753 designated=1680/6561
+  turan_n162 seed 2: 14.074 designated=1680/6561
+  spin_glass_n163 seed 0: 16.963 designated=909/3686
+  spin_glass_n163 seed 1: None designated=None
+  spin_glass_n163 seed 2: 23.313 designated=909/3686
+  summary:
+  K100              exact=12.68(3)  pipe47=12.21  designated=3046/4946  mm=10.28  mm2=11.33
+  ER100_d10         exact=4.81(3)  pipe47=4.81  designated=91/340  mm=4.97  mm2=4.86
+  turan_n162        exact=14.44(3)  pipe47=14.03  designated=1680/6561  mm=12.01  mm2=10.99
+  spin_glass_n163   exact=20.14(2)  pipe47=19.85  designated=909/3686  mm=17.87  mm2=18.36
+done-triad

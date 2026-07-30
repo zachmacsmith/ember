@@ -2502,6 +2502,72 @@ Contact model disposition: retires to probe-callable status with the
 ledger carrying its lessons; `contact.py` stays (tested, FD-gated) as
 the measurement instrument it proved to be. No default changes.
 
+### 3.48 The Zephyr triad: the terrain belongs to templates, not minorminer; the matching has a Zephyr coordinate bug; shapes converge post-polish (2026-07-30)
+
+`zephyr_triad.py`, three parts, readings pre-registered in the plan.
+
+**Part 2 — template truth (the commanding result).** Z12 K_max = 184 —
+so EVERY cell we contest (n ≤ 163) is inside clique-template coverage,
+which was never true on P16 (K_max ~150). The truth table:
+
+| cell | template(-restriction) | mm | our pipeline |
+|---|---|---|---|
+| K100 | 8.00 | 10.28 (1.29×) | 12.21 (1.53×) |
+| K140 | 11.00 | ~18.6+ | 19.34 (P16) |
+| turan_n162 | **6.00** | 12.01 (2.0×) | 14.03 (2.3×) |
+| spin_glass_n163 | **11.64** | 17.87 (1.54×) | 19.85 (1.7×) |
+
+**Minorminer did not conquer Zephyr — busclique did.** mm sits 1.3–2.0×
+above template-restriction on every dense cell; the crude K_n-restriction
+(relabel + spur_prune, 60 s of nothing) HALVES mm's turán. The "mm got
+good on Zephyr" story from s3.47 was measured against the wrong
+adversary: the real reigning algorithm on Z12 dense terrain is the
+constructive template, and both search lines (mm and ours) are far from
+it. The program's thesis (flexible near-busclique structure) now has a
+measured mountain with a number on it: turán at 6.00.
+
+**Part 3 — chain shapes (post-polish caveat: MM's grind reshapes, so
+this measures the OPTIMUM's shape more than the seeds').** Segments per
+chain, mm vs ours: ER 2.48/2.45 (agree), turán **1.39/1.85 median 1**
+(both discover straight-wire chains — the biclique-optimal shape; the
+L-model's shape is RIGHT here, its placement is 2.3× off), K100
+2.93/3.91 (mm uses ~3 segments — even mm deviates from the pure L),
+spin_glass **4.81/4.53 median 4** (chains are 4–5-segment paths; the
+single-bend L is the wrong Zephyr shape for irregular-dense). Note ours
+≈ mm on shape stats nearly everywhere — the differentiator is WHERE
+chains sit, not their form; and single-seed noise even had ours beating
+mm on spin_glass this run (16.96 vs 18.14).
+
+**Part 1 — wire_exact on Z12: neutral, and the metric exposed a bug.**
+Routed ≈ the s3.47 pipeline within noise on all four cells. Designated
+satisfaction: K100 61.6% — the exact Pegasus plateau, on the fabric
+whose junctions are complete; ER/turán/spin_glass 25–27%, BELOW Pegasus
+levels. Per the pre-registered reading this is a Zephyr-specific bug,
+and the suspect is identified: `_couples(grid, r, s_h, c, s_v)` indexes
+an h-wire's run by the perpendicular LINE index (c ∈ 0..2m), but Zephyr
+runs are keyed by position p = 2z+j (0..2m−1) — two different coordinate
+spaces (they coincide on Pegasus/Chimera, diverge on Zephyr). The
+matching optimized, and the metric counted, against garbage lookups.
+Every wire_exact/coupler claim on Zephyr is unfounded until `_couples`
+gets a per-family crossing-index map. Fix ticket on the ledger; the
+greedy default path is unaffected (its runs are real coupled paths —
+adapter-tested).
+
+**Synthesis — the data picks the road.** Not packing tuning (shapes and
+stats say our placements are mm-class already), not the multi-segment
+representation first (a real question, but second-order next to a 2×
+gap), and not the matching (bugged on this fabric). The road is
+**template-gap closure on Z12**: the terrain's true champion embeds
+turán at 6.00 with zero search, and neither search line is within 2× of
+it. Options for the next decision, in tension with each other: (a)
+contain — the §3.26 template-rival arm (run the restriction, keep the
+better; brutal numbers, but it's busclique's win, not ours); (b) learn —
+make the L-model FIND restriction-like structure (on turán it already
+produces the right SHAPE at the wrong places; the delta is pure
+organization, exactly the crystal machinery's jurisdiction, now with a
+6.00 target instead of folklore); (c) both, with (a) as the floor while
+(b) is the research line. Max's call.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).

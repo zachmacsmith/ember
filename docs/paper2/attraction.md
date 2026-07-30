@@ -96,6 +96,24 @@ Magic numbers, none swept: η=0.5, λ₀=3.0, round_frac=0.4, max_rounds=10, bin
 
 ## C. Idea ledger
 
+### The Zephyr triad — the terrain belongs to templates; a coordinate bug in _couples; shapes converge (2026-07-30; notes s3.48)
+
+Template truth: Z12 K_max = 184 covers every contested cell; the crude
+K_n-restriction embeds turán at **6.00** (mm 12.01, us 14.03), spin_glass
+at 11.64 (mm 17.87), K100 at 8.00 (mm 10.28) — **minorminer did not
+conquer Zephyr, busclique did**; both search lines sit 1.3–2.3× above
+the constructive optimum. Chain shapes (post-polish): turán chains are
+straight wires (our shape is right, our organization 2.3× off);
+spin_glass wants 4–5-segment paths (the L is wrong there); ours ≈ mm on
+shape stats — placement, not form, differentiates. wire_exact on Z12:
+routed-neutral, and the designated metric exposed a REAL BUG — `_couples`
+indexes Zephyr wire runs by line index where runs are keyed by position
+p = 2z+j (spaces coincide on Pegasus/Chimera only); all Zephyr coupler-
+matching claims unfounded until fixed (ticket). Road picked by the data:
+template-gap closure — contain (template-rival arm as floor) and/or
+learn (make the crystal machinery find restriction-like organization;
+turán target 6.00). Max's call.
+
 ### The reunification — corners-only state confirmed; contact model retires with honors (2026-07-30; notes s3.47)
 
 The missing measurement: the registered pipeline (L-representation) run
