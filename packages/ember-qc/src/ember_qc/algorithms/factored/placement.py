@@ -177,8 +177,9 @@ class AttractConfig:
                                # structure emerge from any init). 0 = off.
     kappa: float = 13.0        # contact capacity (usable couplers per chain
                                # qubit; Pegasus ~13, the s3.26 degree bound).
-                               # Also the participation gate: deg/kappa - 1 > 0
-                               # enters the arrangement, everyone else is free.
+                               # Floor physics ONLY since s3.40 — arrangement
+                               # participation is by derived arm length
+                               # (per-axis interval >= 1 tile), not degree.
     span_floor: bool = True    # apply the contact-capacity floor to derived
                                # bars (readout-side clamp, s3.30)
     cap_derate: float = 1.0    # capacity scale during rounds (<1 keeps the

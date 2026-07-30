@@ -1,0 +1,133 @@
+/data/max/ember/docs/paper2/data/refine_probe.py:61: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/refine_probe.py:61: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/refine_probe.py:61: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/refine_probe.py:61: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/refine_probe.py:61: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/refine_probe.py:61: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/refine_probe.py:61: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/refine_probe.py:61: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+K100 default seed 0: 12.62 (34.8s) {'assigned': 100, 'assigned_rows': 100, 'assigned_cols': 100, 'insert_reverts': 0, 'mono_time': 0.2319, 'extent_mean': 7.142, 'extent_max': 7.968}
+K100 mm seed 0: 13.35 (62.5s) 
+K100 mm2 seed 0: 11.7 (28.0s) 
+K100 default seed 1: 13.22 (28.1s) {'assigned': 100, 'assigned_rows': 100, 'assigned_cols': 100, 'insert_reverts': 0, 'mono_time': 0.2321, 'extent_mean': 7.9, 'extent_max': 8.789}
+K100 mm seed 1: 14.24 (60.2s) 
+K100 mm2 seed 1: 14.84 (55.5s) 
+K100 default seed 2: 13.42 (60.9s) {'assigned': 100, 'assigned_rows': 100, 'assigned_cols': 100, 'insert_reverts': 0, 'mono_time': 0.2337, 'extent_mean': 7.236, 'extent_max': 8.698}
+K100 mm seed 2: 13.99 (61.7s) 
+K100 mm2 seed 2: 15.82 (60.2s) 
+K140 default seed 0: 19.657 (61.3s) {'assigned': 140, 'assigned_rows': 140, 'assigned_cols': 140, 'insert_reverts': 0, 'mono_time': 0.8185, 'extent_mean': 9.855, 'extent_max': 11.005}
+K140 mm seed 0: 20.45 (62.1s) 
+K140 mm2 seed 0: 26.229 (61.1s) 
+K140 default seed 1: 18.407 (60.4s) {'assigned': 140, 'assigned_rows': 140, 'assigned_cols': 140, 'insert_reverts': 0, 'mono_time': 0.8072, 'extent_mean': 9.692, 'extent_max': 9.692}
+K140 mm seed 1: 23.121 (62.9s) 
+K140 mm2 seed 1: 16.85 (61.7s) 
+K140 default seed 2: 19.95 (61.9s) {'assigned': 140, 'assigned_rows': 140, 'assigned_cols': 140, 'insert_reverts': 0, 'mono_time': 0.8538, 'extent_mean': 9.906, 'extent_max': 10.519}
+K140 mm seed 2: 22.157 (62.8s) 
+K140 mm2 seed 2: 22.171 (64.2s) 
+ER100_d10 default seed 0: 5.95 (5.5s) {'assigned': 41, 'assigned_rows': 22, 'assigned_cols': 31, 'insert_reverts': 0, 'mono_time': 0.0285, 'extent_mean': 4.616, 'extent_max': 8.066}
+ER100_d10 mm seed 0: 5.66 (7.5s) 
+ER100_d10 mm2 seed 0: 5.62 (5.4s) 
+ER100_d10 default seed 1: 6.38 (4.2s) {'assigned': 41, 'assigned_rows': 22, 'assigned_cols': 31, 'insert_reverts': 0, 'mono_time': 0.0283, 'extent_mean': 4.858, 'extent_max': 7.942}
+ER100_d10 mm seed 1: 5.51 (6.1s) 
+ER100_d10 mm2 seed 1: 6.18 (3.6s) 
+ER100_d10 default seed 2: 6.18 (6.7s) {'assigned': 41, 'assigned_rows': 22, 'assigned_cols': 31, 'insert_reverts': 0, 'mono_time': 0.028, 'extent_mean': 4.847, 'extent_max': 7.638}
+ER100_d10 mm seed 2: 5.84 (5.5s) 
+ER100_d10 mm2 seed 2: 5.81 (8.1s) 
+turan_n162 default seed 0: 15.278 (60.4s) {'assigned': 162, 'assigned_rows': 162, 'assigned_cols': 162, 'insert_reverts': 0, 'mono_time': 0.2256, 'extent_mean': 11.973, 'extent_max': 16.746}
+turan_n162 mm seed 0: 9.136 (40.6s) 
+turan_n162 mm2 seed 0: 9.765 (65.5s) 
+turan_n162 default seed 1: 18.093 (60.6s) {'assigned': 162, 'assigned_rows': 162, 'assigned_cols': 162, 'insert_reverts': 0, 'mono_time': 0.2261, 'extent_mean': 12.49, 'extent_max': 16.365}
+turan_n162 mm seed 1: 7.815 (49.3s) 
+turan_n162 mm2 seed 1: 9.0 (65.6s) 
+turan_n162 default seed 2: 16.074 (61.5s) {'assigned': 162, 'assigned_rows': 162, 'assigned_cols': 162, 'insert_reverts': 0, 'mono_time': 0.2361, 'extent_mean': 11.813, 'extent_max': 16.301}
+turan_n162 mm seed 2: 7.815 (51.6s) 
+turan_n162 mm2 seed 2: 8.0 (62.4s) 
+spin_glass_n163 default seed 0: 18.528 (61.1s) {'assigned': 163, 'assigned_rows': 159, 'assigned_cols': 163, 'insert_reverts': 0, 'mono_time': 0.2032, 'extent_mean': 10.994, 'extent_max': 13.99}
+spin_glass_n163 mm seed 0: 22.589 (60.8s) 
+spin_glass_n163 mm2 seed 0: 19.939 (61.6s) 
+spin_glass_n163 default seed 1: 18.491 (45.1s) {'assigned': 163, 'assigned_rows': 159, 'assigned_cols': 163, 'insert_reverts': 0, 'mono_time': 0.2022, 'extent_mean': 11.7, 'extent_max': 15.429}
+spin_glass_n163 mm seed 1: None (64.0s) 
+spin_glass_n163 mm2 seed 1: 20.804 (60.7s) 
+spin_glass_n163 default seed 2: 18.319 (49.8s) {'assigned': 163, 'assigned_rows': 159, 'assigned_cols': 163, 'insert_reverts': 0, 'mono_time': 0.2055, 'extent_mean': 10.772, 'extent_max': 13.964}
+spin_glass_n163 mm seed 2: 25.515 (60.2s) 
+spin_glass_n163 mm2 seed 2: 21.945 (56.8s) 
+regular_n316 default seed 0: 3.313 (7.6s) {'assigned': 281, 'assigned_rows': 234, 'assigned_cols': 187, 'insert_reverts': 0, 'mono_time': 0.0569, 'extent_mean': 3.693, 'extent_max': 8.941}
+regular_n316 mm seed 0: 3.953 (4.1s) 
+regular_n316 mm2 seed 0: 4.348 (3.5s) 
+regular_n316 default seed 1: 3.332 (7.6s) {'assigned': 281, 'assigned_rows': 234, 'assigned_cols': 187, 'insert_reverts': 0, 'mono_time': 0.0495, 'extent_mean': 4.017, 'extent_max': 10.086}
+regular_n316 mm seed 1: 4.234 (4.8s) 
+regular_n316 mm2 seed 1: 3.848 (2.5s) 
+regular_n316 default seed 2: 3.687 (7.1s) {'assigned': 281, 'assigned_rows': 234, 'assigned_cols': 187, 'insert_reverts': 0, 'mono_time': 0.0572, 'extent_mean': 3.865, 'extent_max': 12.146}
+regular_n316 mm seed 2: 3.861 (4.6s) 
+regular_n316 mm2 seed 2: 4.693 (3.1s) 
+ws_n486 default seed 0: 4.115 (14.1s) {'assigned': 94, 'assigned_rows': 43, 'assigned_cols': 72, 'insert_reverts': 1, 'mono_time': 0.3155, 'extent_mean': 3.295, 'extent_max': 11.341}
+ws_n486 mm seed 0: 4.455 (4.7s) 
+ws_n486 mm2 seed 0: 3.788 (6.6s) 
+ws_n486 default seed 1: 3.539 (12.5s) {'assigned': 94, 'assigned_rows': 43, 'assigned_cols': 72, 'insert_reverts': 1, 'mono_time': 0.2793, 'extent_mean': 3.152, 'extent_max': 10.09}
+ws_n486 mm seed 1: 3.617 (5.4s) 
+ws_n486 mm2 seed 1: 4.01 (10.7s) 
+ws_n486 default seed 2: 3.708 (12.3s) {'assigned': 94, 'assigned_rows': 43, 'assigned_cols': 72, 'insert_reverts': 1, 'mono_time': 0.2716, 'extent_mean': 3.293, 'extent_max': 12.307}
+ws_n486 mm seed 2: 3.584 (5.7s) 
+ws_n486 mm2 seed 2: 3.895 (9.8s) 
+wsc_c3_sz32_n96 default seed 0: 6.062 (8.6s) {'assigned': 6, 'assigned_rows': 3, 'assigned_cols': 3, 'insert_reverts': 0, 'mono_time': 0.0073, 'extent_mean': 5.497, 'extent_max': 8.788}
+wsc_c3_sz32_n96 mm seed 0: 4.604 (7.4s) 
+wsc_c3_sz32_n96 mm2 seed 0: 4.938 (6.3s) 
+wsc_c3_sz32_n96 default seed 1: 5.875 (11.5s) {'assigned': 6, 'assigned_rows': 3, 'assigned_cols': 3, 'insert_reverts': 0, 'mono_time': 0.0111, 'extent_mean': 5.038, 'extent_max': 12.451}
+wsc_c3_sz32_n96 mm seed 1: 4.615 (4.7s) 
+wsc_c3_sz32_n96 mm2 seed 1: 4.51 (6.3s) 
+wsc_c3_sz32_n96 default seed 2: 6.219 (5.3s) {'assigned': 6, 'assigned_rows': 3, 'assigned_cols': 3, 'insert_reverts': 0, 'mono_time': 0.0073, 'extent_mean': 4.528, 'extent_max': 13.148}
+wsc_c3_sz32_n96 mm seed 2: 4.812 (3.6s) 
+wsc_c3_sz32_n96 mm2 seed 2: 4.865 (3.2s) 
+wsc_c5_sz32_n160 default seed 0: 5.287 (14.1s) {'assigned': 10, 'assigned_rows': 5, 'assigned_cols': 5, 'insert_reverts': 0, 'mono_time': 0.0124, 'extent_mean': 3.287, 'extent_max': 7.466}
+wsc_c5_sz32_n160 mm seed 0: 4.862 (6.6s) 
+wsc_c5_sz32_n160 mm2 seed 0: 4.769 (9.7s) 
+wsc_c5_sz32_n160 default seed 1: 5.15 (15.0s) {'assigned': 10, 'assigned_rows': 5, 'assigned_cols': 5, 'insert_reverts': 0, 'mono_time': 0.0121, 'extent_mean': 2.984, 'extent_max': 9.995}
+wsc_c5_sz32_n160 mm seed 1: 5.075 (5.7s) 
+wsc_c5_sz32_n160 mm2 seed 1: 4.869 (6.8s) 
+wsc_c5_sz32_n160 default seed 2: 4.969 (20.5s) {'assigned': 10, 'assigned_rows': 5, 'assigned_cols': 5, 'insert_reverts': 0, 'mono_time': 0.0143, 'extent_mean': 3.354, 'extent_max': 9.026}
+wsc_c5_sz32_n160 mm seed 2: 5.031 (8.5s) 
+wsc_c5_sz32_n160 mm2 seed 2: 5.263 (13.3s) 
+wsc_c8_sz32_n256 default seed 0: 5.25 (17.6s) {'assigned': 15, 'assigned_rows': 8, 'assigned_cols': 7, 'insert_reverts': 0, 'mono_time': 0.0291, 'extent_mean': 2.507, 'extent_max': 5.2}
+wsc_c8_sz32_n256 mm seed 0: 4.852 (12.4s) 
+wsc_c8_sz32_n256 mm2 seed 0: 5.066 (10.0s) 
+wsc_c8_sz32_n256 default seed 1: 4.984 (15.9s) {'assigned': 15, 'assigned_rows': 8, 'assigned_cols': 7, 'insert_reverts': 0, 'mono_time': 0.0358, 'extent_mean': 2.845, 'extent_max': 6.07}
+wsc_c8_sz32_n256 mm seed 1: 5.191 (17.0s) 
+wsc_c8_sz32_n256 mm2 seed 1: 5.289 (9.7s) 
+wsc_c8_sz32_n256 default seed 2: 4.953 (28.3s) {'assigned': 15, 'assigned_rows': 8, 'assigned_cols': 7, 'insert_reverts': 0, 'mono_time': 0.0396, 'extent_mean': 2.717, 'extent_max': 6.253}
+wsc_c8_sz32_n256 mm seed 2: 5.41 (20.8s) 
+wsc_c8_sz32_n256 mm2 seed 2: 4.918 (15.4s) 
+wsc_c3_sz64_n192 default seed 0: 9.198 (55.4s) {'assigned': 192, 'assigned_rows': 192, 'assigned_cols': 192, 'insert_reverts': 1, 'mono_time': 2.7266, 'extent_mean': 5.29, 'extent_max': 9.08}
+wsc_c3_sz64_n192 mm seed 0: 9.229 (33.9s) 
+wsc_c3_sz64_n192 mm2 seed 0: 8.609 (43.6s) 
+wsc_c3_sz64_n192 default seed 1: 9.208 (40.5s) {'assigned': 192, 'assigned_rows': 192, 'assigned_cols': 192, 'insert_reverts': 1, 'mono_time': 2.2952, 'extent_mean': 5.589, 'extent_max': 9.767}
+wsc_c3_sz64_n192 mm seed 1: 9.177 (58.8s) 
+wsc_c3_sz64_n192 mm2 seed 1: 8.844 (32.1s) 
+wsc_c3_sz64_n192 default seed 2: 9.458 (41.3s) {'assigned': 192, 'assigned_rows': 192, 'assigned_cols': 192, 'insert_reverts': 1, 'mono_time': 2.2381, 'extent_mean': 5.047, 'extent_max': 9.129}
+wsc_c3_sz64_n192 mm seed 2: 11.25 (20.9s) 
+wsc_c3_sz64_n192 mm2 seed 2: 9.068 (55.9s) 
+/data/max/ember/docs/paper2/data/refine_probe.py:88: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+wrote 99 rows -> /data/max/ember/docs/paper2/data/refine_probe.csv
+
+summary (mean over legal seeds; n legal in parens):
+K100                default=13.09(3)  mm=13.86(3)  mm2=14.12(3)
+K140                default=19.34(3)  mm=21.91(3)  mm2=21.75(3)
+ER100_d10           default=6.17(3)  mm=5.67(3)  mm2=5.87(3)
+turan_n162          default=16.48(3)  mm=8.26(3)  mm2=8.92(3)
+spin_glass_n163     default=18.45(3)  mm=24.05(2)  mm2=20.90(3)
+regular_n316        default=3.44(3)  mm=4.02(3)  mm2=4.30(3)
+ws_n486             default=3.79(3)  mm=3.89(3)  mm2=3.90(3)
+wsc_c3_sz32_n96     default=6.05(3)  mm=4.68(3)  mm2=4.77(3)
+wsc_c5_sz32_n160    default=5.14(3)  mm=4.99(3)  mm2=4.97(3)
+wsc_c8_sz32_n256    default=5.06(3)  mm=5.15(3)  mm2=5.09(3)
+wsc_c3_sz64_n192    default=9.29(3)  mm=9.89(3)  mm2=8.84(3)
+turan-random-init: ACLs=[11.0, 11.5, 12.0] mean=11.50  E=3335 mono_swaps=392 mono_t=0.1551s reverts=0
+done-refine

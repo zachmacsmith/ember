@@ -37,9 +37,9 @@ fallback that does everything well when nothing better is known — near
 busclique's constructive optimum on cliques, with the flexibility to beat
 both busclique and minorminer on dense problems that *aren't* exact
 cliques (first confirmations: spin_glass_n163 and turán, §3.34–3.36). Easy
-instances must stay cheap: the capacity gate (§4) makes the dense machinery
-structurally inert on sparse sources, so the expensive part simply never
-engages where it has no business running.
+instances must stay cheap: the arm-length criterion (§4) makes the dense
+machinery structurally inert wherever chains are sub-tile, so the expensive
+part simply never engages where it has no business running.
 
 ## 1. The state: positions only
 
@@ -111,31 +111,44 @@ rank order and meters out one line per capacity-quantum (order-preserving =
 minimal-total-displacement 1-D transport). Attraction decides *order and
 adjacency*; packing decides *spacing*.
 
-**Participation is capacity-gated**: only variables with deg/κ − 1 > 0
-enter. Sparse sources have no participants; the arrangement is structurally
-inert on them, and the pipeline degrades to "spectral-seeded minorminer
-with light steering" — the win-guard rule, with no topology detection.
+**Participation is by arm length, per axis** (2026-07-29 refinement): a
+variable enters row-packing iff its floored h-interval spans ≥ 1 tile — it
+owes a wire run — and column-packing symmetrically. "A chain has an extent"
+is detected by the chain *having an extent* (a readout combining the κ
+floor with actual geometric spread), not by degree. A compact K15 never
+engages (sub-tile floor — minorminer's territory, per the s3.39
+crossover); a low-degree variable with one long edge packs on that axis
+only; sparse sources with sub-tile edges are structurally untouched. κ
+survives only inside the floor.
 
 Sub-moves, in order per iteration:
 
-- **`_align_diagonal`** (s3.35): x-rank := y-rank, a pure permutation of the
-  participants' existing x-values. Uncorrelated row/column orders made
-  h-arms reach backward; aligned, K_n's E collapses to ~n·side (the
-  busclique diagonal emerges). Acts entirely in directions where the
-  attraction gradient vanishes; E-gated like every projection. The rule
-  also *contains* the biclique: a y-order separating bipartite blocks makes
-  one side pure h-lines and the other pure v-lines.
-- **`insertion_sweeps`** (s3.36, on by default: `insert_sweeps=8`):
-  best-insertion order search on the participants' y-queue. Relocating one
-  variable flips ALL its edge orientations across the jumped interval at
-  once — first-order signal exactly where adjacent swaps are plateau-bound.
-  Exact integer-slot semantics (the fractional shortcut collapses into rank
-  stacking); composite gating: propose in rank space, realign + repack,
-  dispose by true stair energy with full revert. This is the move that made
-  block structure *emerge from random init* (turán 8.24, beating mm's
-  8.26) — the init-independence standard: rank is frozen under both
-  continuous descent (slide-past raises energy first) and order-preserving
-  packing, so an explicit order move had to exist.
+- **`edge_monotonize`** (s3.40; replaced the global `_align_diagonal`):
+  per-edge x-value transpositions where the x-order disagrees with the
+  y-order, accepted on strict stair-E decrease, swept to fixpoint. Leverage
+  scales with |Δx| — geometric edges self-neutralize, dense-structure edges
+  do real reordering — so the sparse/dense interpolation is a property of
+  the move, with no gate and no cluster awareness. Patches diagonalize in
+  place (no cross-patch pressure; side-by-side tilings reachable). Measured
+  insight: the diagonal is *sufficient, not necessary* — E requires
+  contiguous suffix value-sets, and the E-equivalent mixed ("tent")
+  couplings this move finds route as well or better (K100 13.14 vs the
+  staircase era's 13.41).
+- **`insertion_sweeps`** (s3.36/s3.40, on by default: `insert_sweeps=8`):
+  best-insertion order search over the long-arm variables' y-queue,
+  **priced at the y-values the permutation will assign** (rank space treats
+  all gaps as one slot — a lie on clustered layouts) plus a lexicographic
+  ε-rank tie-break (post-packing values quantize onto lines; a pure value
+  landscape has flat plateaus that strict-improvement search cannot
+  descend — the s3.40 bisection finding). Non-member neighbours fold in as
+  fixed anchors, so edges into the sparse world guide relocations instead
+  of only vetoing at the gate. Composite gating unchanged: propose in rank
+  space, re-monotonize + repack, dispose by true stair energy with full
+  revert (revert count surfaced in `diag`). Open miss on record: from a
+  *random* init on multipartite, local transpositions + insertion stall
+  ~1.5 ACL short of what the old global permutation reached (9.93 vs 8.24,
+  s3.40) — spectral init covers it in practice; candidate fixes on the
+  ledger.
 
 ## 5. Seed derivation — bars to real qubit chains
 

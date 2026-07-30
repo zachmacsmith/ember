@@ -30,8 +30,9 @@ Load-bearing invariants (correctness, not tuning):
     iteration-0 feasibility projection, unconditional by design);
   * seed derivation is ALWAYS best-effort — oversubscribed bars and
     unsatisfied crossings are left for the router, no error paths;
-  * participation is capacity-gated (deg/kappa - 1 > 0), so the dense
-    machinery is structurally inert on sparse sources.
+  * participation is by derived ARM LENGTH, per axis (interval >= 1 tile:
+    the variable owes a wire run), so the dense machinery is structurally
+    inert wherever chains are sub-tile; kappa survives only in the floor.
 """
 
 from __future__ import annotations
@@ -804,8 +805,20 @@ def insertion_sweeps(order: List[int], src_adj: Dict[int, List[int]], *,
             j = idx.get(u)
             if j is not None and j != idx[v]:
                 A[idx[v], j] = True
-    val = (np.asarray(values, dtype=float) if values is not None
-           else np.arange(n, dtype=float))
+    if values is not None:
+        # Lexicographic pricing (the refine-probe turan bisection,
+        # 2026-07-29): insertion runs after packing has quantized y onto
+        # integer lines, so the raw value multiset is full of TIES and the
+        # value-priced landscape becomes flat plateaus — no strict descent
+        # within a tie class (E 3335 vs rank's 2098 on random-init turan;
+        # rank pricing was accidentally a plateau-smoothing tie-break).
+        # Price at value first, rank second: the epsilon (1e-4/slot, max
+        # ~0.05 tiles at fabric scale) is far below the 1-tile line
+        # quantum, so real gaps still dominate — truthful on cluster gaps,
+        # strict on plateaus.
+        val = np.asarray(values, dtype=float) + 1e-4 * np.arange(n)
+    else:
+        val = np.arange(n, dtype=float)
     if anchors is not None:
         lo_fix = np.asarray(anchors[0], dtype=float)
         hi_fix = np.asarray(anchors[1], dtype=float)

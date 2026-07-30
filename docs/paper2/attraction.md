@@ -96,6 +96,27 @@ Magic numbers, none swept: η=0.5, λ₀=3.0, round_frac=0.4, max_rounds=10, bin
 
 ## C. Idea ledger
 
+### Local interpolation refinements (built + probed 2026-07-29; notes s3.40)
+
+Max's design ask: one simple rule interpolating between perfect clique
+embedding and geometric layout, never aware of any particular cluster.
+Built: `edge_monotonize` (per-edge x-transpositions, strict E-gate —
+replaces the global `_align_diagonal`; leverage ∝ edge length IS the
+interpolation), arm-length per-axis participation (interval ≥ 1 tile
+replaces deg > κ; κ is floor physics only), value-priced insertion with
+fixed anchors (+ the lexicographic ε-tie-break after the bisection found
+the tie-plateau: post-packing y-values quantize, flat proxy, no strict
+descent — rank pricing had been an accidental smoother). Discovered: the
+diagonal is sufficient not necessary (contiguous-suffix "tent" states are
+E-equivalent and ROUTE fine — K100 13.09/13.14, best ever). Post-fix
+board holds or improves everywhere except two recorded misses: random-init
+turán 9.93 vs the 8.5 emergence bar (the global permutation's long jumps
+are not fully replaced by local transpositions — candidate fixes on
+record: E-tie monotone bias, block insertion, or accept spectral
+dependence on multipartite) and ER +0.25. wsc: c8×K32 and c3×K64 now
+WINS; c3×K32 gap −1.16 → patches-too-small confirmed as the dominant
+small-patch story. Deleted: `_align_diagonal`, the degree gate.
+
 ### THE CONSOLIDATION — one algorithm (2026-07-29; notes s3.38)
 
 Max's call ("I can barely follow one version... it's the ideas and our

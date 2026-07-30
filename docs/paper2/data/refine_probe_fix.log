@@ -1,0 +1,41 @@
+<stdin>:9: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+<stdin>:9: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+<stdin>:9: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+<stdin>:9: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+<stdin>:9: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+<stdin>:9: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+<stdin>:9: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+<stdin>:9: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+K100 0 12.62
+K100 1 13.22
+K100 2 13.58
+ER100_d10 0 5.71
+ER100_d10 1 6.2
+ER100_d10 2 6.44
+turan_n162 0 8.642
+turan_n162 1 8.914
+turan_n162 2 9.241
+wsc_c3_sz32_n96 0 5.896
+wsc_c3_sz32_n96 1 5.958
+wsc_c3_sz32_n96 2 5.677
+wsc_c5_sz32_n160 0 5.35
+wsc_c5_sz32_n160 1 5.231
+wsc_c5_sz32_n160 2 5.175
+wsc_c8_sz32_n256 0 4.93
+wsc_c8_sz32_n256 1 5.094
+wsc_c8_sz32_n256 2 4.906
+wsc_c3_sz64_n192 0 9.234
+wsc_c3_sz64_n192 1 9.255
+wsc_c3_sz64_n192 2 9.167
+<string>:88: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+
+summary (default arm, post-epsilon-fix):
+  K100               13.14(3)
+  ER100_d10          6.12(3)
+  turan_n162         8.93(3)
+  wsc_c3_sz32_n96    5.84(3)
+  wsc_c5_sz32_n160   5.25(3)
+  wsc_c8_sz32_n256   4.98(3)
+  wsc_c3_sz64_n192   9.22(3)
+turan-random-init: ACLs=[9.29, 10.76, 9.74] mean=9.93  E=2098 mono_swaps=392 mono_t=0.2372s reverts=0
+done-fixcheck

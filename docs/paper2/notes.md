@@ -1964,6 +1964,80 @@ x 60 s, P16, 8 niced workers (machine carried a 60-core batch; ~68 free).
    would isolate it; (b) K64-patch win is the first direct evidence for
    the beats-busclique-off-clique thesis on multi-patch terrain.
 
+### 3.40 Local interpolation refinements: the diagonal demoted to a theorem, degree demoted to a readout; the tie-plateau found and fixed; two honest misses (2026-07-29)
+
+Design round from Max's "it feels bad to be aware of any particular
+cluster... a simple rule that interpolates between perfect clique embedding
+and the right layout for geometric graphs" — after the mixed-size-placement
+discussion identified the global x-rank:=y-rank alignment as the un-real
+part (one 1D order for the whole graph; side-by-side patch tilings
+unreachable; deg>κ a binary cliff conscripting non-clique hubs). Built, all
+three approved refinements ("implement all 3 and see how it goes"):
+
+1. **`edge_monotonize`** replaces `_align_diagonal`: per-edge x-value
+   transpositions, strict stair-E gate, sorted-edge sweeps to fixpoint.
+   Leverage ∝ |Δx|: geometric edges self-neutralize, clique edges do real
+   reordering — the sparse/dense interpolation is a property of the move.
+   Patches diagonalize in place; no cross-patch pressure exists.
+2. **Arm-length participation** replaces the degree gate: a variable enters
+   row/column packing per-axis iff its floored stair interval ≥ 1 tile (it
+   owes a wire run). κ survives only in the floor. The K14/K15 cliff and
+   degree conscription are gone; a compact K15 is MM's business, a
+   low-degree variable with one long edge packs on that axis only.
+3. **Value-priced insertion + fixed anchors**: the proxy prices slots at
+   the y-values the permutation will assign (rank space lies on clustered
+   layouts); non-member neighbours fold in as constant bounds (they guide,
+   not just veto). Composite revert counter surfaced in diag.
+
+**Found along the way (unit test, K16): the diagonal was sufficient, never
+necessary.** Stair E requires contiguous SUFFIX VALUE-SETS; per-edge descent
+finds E-equivalent mixed couplings — part diagonal, part mirrored, "tents"
+(build the y-suffix downward, extend the contiguous x-block left OR right
+each step; every L/R sequence is optimal; busclique is the all-right
+corner). ρ(x-rank, y-rank) ≈ 0.17 at E 242 vs ideal 240. K100 then ROUTED
+BETTER than the pure staircase era (13.09/13.14 vs 13.41) — the router does
+not care which member of the optimal family it gets.
+
+**Probe** (`refine_probe.py`; bars pre-registered in the plan; +mm2
+passthrough null — measured null widths: turán 0.66, spin_glass 3+ ACL
+between mm seeds). First run FAILED turán catastrophically (16.48 vs 8.26;
+random-init 11.50 vs the ≤8.5 bar). **Bisection** (`refine_bisect.py`,
+monkeypatch arms): monotonization innocent (E 3335 vs 3308 without);
+**value pricing guilty** (rank restores 2098 in both combos). Mechanism:
+insertion runs after packing QUANTIZES y onto integer lines → the value
+multiset is full of ties → the value-priced landscape is flat plateaus and
+strict-improvement search cannot descend. **Rank pricing was never
+"correct" — it was an accidental plateau-smoothing tie-break.** Fix:
+lexicographic pricing, value + 1e-4·slot (max ~0.05 tiles, far under the
+1-tile line quantum) — restores E 2098 exactly; one line.
+
+**Post-fix board (default arm; mm/mm2 from the same probe):** K100
+**13.14** (mm 13.86/14.12; and 13.09 pre-fix — best pipeline numbers ever),
+K140 19.34 (mm 21.91/21.75, 3/3), spin_glass 18.45 (mm 24.05 2-of-3 /
+20.90, 3/3), turán 8.93 (mm 8.26, mm2 8.92 — parity at the null edge),
+regular 3.44, ws 3.79, ER 6.12 (mm 5.67/5.87). wsc ladder: c3×K32 gap
+−1.16 (from −1.46), c5 −0.26, **c8 4.98 vs 5.15 WIN**, **c3×K64 9.22 vs
+9.89 WIN**. Verdicts:
+
+- The c3×K32 gap did NOT close → the global diagonal was not the cause of
+  the small-patch loss; **patches-too-small confirmed** as the dominant
+  story (the below-crossover overhead of s3.39).
+- **EMERGENCE bar MISSED**: random-init turán 9.93 (E 2098; spectral 8.93;
+  the old global-alignment machinery got 8.24 from random init, s3.36).
+  The global permutation could jump between distant orderings in one move;
+  per-edge transpositions + insertion descend the same landscape locally
+  and stall ~1.5 ACL short from bad inits. The known fight, now measured.
+  Candidate next moves (NOT built): an E-tie-biased monotone preference;
+  block-insertion (relocate runs, not singles); or accepting spectral
+  dependence on multipartite (spectral is cheap and always available).
+- ER slipped ~+0.25 beyond the null — small, real, unattributed.
+- Wall-time fine (mono 0.24 s at n=162, under the insertion phase).
+
+Kept as default: the board improves or holds everywhere except the two
+recorded misses, and the design is the one Max asked for — no rule mentions
+a cluster, a diagonal, or a degree threshold; κ is physics only. Both
+misses stay open on the ledger.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).
