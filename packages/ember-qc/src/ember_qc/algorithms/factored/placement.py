@@ -367,6 +367,10 @@ def attract_embed(
         sizes = (np.array([widths[v].sum() for v in widths])
                  if widths else np.zeros(1))
         diag = {"assigned": int(last_info.get("assigned", 0)),
+                "assigned_rows": int(last_info.get("assigned_rows", 0)),
+                "assigned_cols": int(last_info.get("assigned_cols", 0)),
+                "insert_reverts": int(last_info.get("insert_reverts", 0)),
+                "mono_time": float(last_info.get("mono_time", 0.0)),
                 "extent_mean": round(float(sizes.mean()), 3),
                 "extent_max": round(float(sizes.max()), 3)}
         if seed_sat is not None:

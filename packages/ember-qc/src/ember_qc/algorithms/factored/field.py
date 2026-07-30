@@ -692,8 +692,79 @@ def line_depth(intervals: List[Tuple[float, float]]) -> int:
     return best
 
 
+def edge_monotonize(pos: Dict[int, Point], src_adj: Dict[int, List[int]], *,
+                    max_sweeps: int = 16):
+    """Per-edge diagonalization (2026-07-29 refinement; replaces the global
+    x-rank := y-rank alignment). For each edge whose x-order disagrees with
+    its y-order, propose swapping the two x-values — a multiset-preserving
+    transposition, the local analog of the old global permutation — accepted
+    only on a STRICT stair-energy decrease. Leverage scales with
+    |x_u − x_v|: short (geometric) edges move almost nothing, long
+    (dense-structure) edges do real reordering — the sparse/dense
+    interpolation is a property of the move, not of any gate.
+
+    On K_n every pair is an edge, so the sweep is a full sorting network and
+    converges to a monotone (diagonal or anti-diagonal — mirror-equivalent)
+    arrangement; across disjoint dense patches no cross-patch pressure
+    exists, so patches diagonalize IN PLACE and side-by-side tilings stay
+    reachable (the configuration the global alignment provably destroyed).
+
+    x-swaps never change ``_stair_contacts`` (contacts key on y-order), so
+    the per-edge orientation assignment is invariant through the sweep and
+    only h-spans change — the gate is evaluated on the h-span total, with
+    the (constant) v-span total omitted. Deterministic (sorted edge order,
+    strict gate). Returns (new_pos, info): info carries sweep/swap counts
+    and wall time (the pre-registered wall-time bar reads it).
+    """
+    import time as _time
+    t0 = _time.perf_counter()
+    nodes = sorted(pos)
+    idx = {v: i for i, v in enumerate(nodes)}
+    x = np.array([float(pos[v][0]) for v in nodes])
+    y = np.array([float(pos[v][1]) for v in nodes])
+
+    contacts = _stair_contacts(pos, src_adj)
+    # h-net of w = {w} ∪ h-contacts(w); padded index matrix (self-padding is
+    # span-neutral, so no mask is needed)
+    hnets = [[idx[w]] + [idx[u] for u in contacts[w][0]] for w in nodes]
+    width = max(len(h) for h in hnets)
+    H = np.array([h + [h[0]] * (width - len(h)) for h in hnets])
+
+    def h_total(xv: np.ndarray) -> float:
+        vals = xv[H]
+        return float((vals.max(axis=1) - vals.min(axis=1)).sum())
+
+    edges = [(idx[v], idx[u]) for v in nodes
+             for u in src_adj.get(v, []) if u in idx and u > v]
+    cur = h_total(x)
+    sweeps = swaps = 0
+    for _ in range(max(max_sweeps, 1)):
+        sweeps += 1
+        improved = False
+        for iu, iv in edges:
+            dx = x[iu] - x[iv]
+            dy = y[iu] - y[iv]
+            if abs(dx) < 1e-9 or abs(dy) < 1e-9 or dx * dy > 0:
+                continue  # degenerate or already monotone
+            x[iu], x[iv] = x[iv], x[iu]
+            new = h_total(x)
+            if new < cur - 1e-9:
+                cur = new
+                swaps += 1
+                improved = True
+            else:
+                x[iu], x[iv] = x[iv], x[iu]
+        if not improved:
+            break
+    out = {v: np.array([x[idx[v]], float(pos[v][1])]) for v in nodes}
+    return out, {"sweeps": sweeps, "swaps": swaps,
+                 "time": round(_time.perf_counter() - t0, 4)}
+
+
 def insertion_sweeps(order: List[int], src_adj: Dict[int, List[int]], *,
-                     max_sweeps: int = 8):
+                     max_sweeps: int = 8,
+                     values: Optional[np.ndarray] = None,
+                     anchors: Optional[Tuple[np.ndarray, np.ndarray]] = None):
     """Best-insertion order search in rank space (notes s3.36) — the general
     global move for the queue abstraction. Relocating one variable flips
     ALL its edge orientations across the jumped interval at once, giving
@@ -707,7 +778,21 @@ def insertion_sweeps(order: List[int], src_adj: Dict[int, List[int]], *,
     slots (descent, not per-variable optimality, is the contract).
     Full-vector energy per candidate is O(n^2) numpy — participants are
     fabric-bounded (~<= 200), so a sweep is ~10^8 flops of BLAS, well under
-    a second. Deterministic; returns (new_order, energy_trajectory)."""
+    a second. Deterministic; returns (new_order, energy_trajectory).
+
+    ``values`` (2026-07-29 refinement): the sorted y-value multiset the
+    final permutation will be applied to. When given, the proxy prices a
+    slot at the VALUE it would hold (``values[slot]``) instead of the slot
+    index — rank space treats all gaps as 1, which is a lie exactly on
+    clustered layouts (adjacent ranks can be 0.01 or 7 tiles apart). None
+    = legacy slot pricing (uniform values).
+
+    ``anchors`` = (lo_fix, hi_fix), arrays aligned with ``order``: per
+    member, the min/max y of its NON-member neighbours (+inf/-inf when
+    none). Folded into the proxy's span bounds, so edges into the sparse
+    world GUIDE relocations instead of only vetoing them at the caller's
+    composite gate; an anchor also contributes one candidate slot (the
+    value's insertion point)."""
     members = list(order)
     n = len(members)
     if n <= 2:
@@ -719,15 +804,24 @@ def insertion_sweeps(order: List[int], src_adj: Dict[int, List[int]], *,
             j = idx.get(u)
             if j is not None and j != idx[v]:
                 A[idx[v], j] = True
-    has = A.any(axis=1)
+    val = (np.asarray(values, dtype=float) if values is not None
+           else np.arange(n, dtype=float))
+    if anchors is not None:
+        lo_fix = np.asarray(anchors[0], dtype=float)
+        hi_fix = np.asarray(anchors[1], dtype=float)
+    else:
+        lo_fix = np.full(n, np.inf)
+        hi_fix = np.full(n, -np.inf)
+    has = A.any(axis=1) | (hi_fix > -np.inf) | (lo_fix < np.inf)
 
     def energy(p):
-        P = np.where(A, p[None, :], -np.inf)
-        M = P.max(axis=1)
-        Pm = np.where(A, p[None, :], np.inf)
-        m = Pm.min(axis=1)
+        pv = val[p.astype(int)]
+        P = np.where(A, pv[None, :], -np.inf)
+        M = np.maximum(P.max(axis=1), hi_fix)
+        Pm = np.where(A, pv[None, :], np.inf)
+        m = np.minimum(Pm.min(axis=1), lo_fix)
         e = np.where(has,
-                     np.maximum(M - p, 0.0) + np.maximum(p - m, 0.0), 0.0)
+                     np.maximum(M - pv, 0.0) + np.maximum(pv - m, 0.0), 0.0)
         return float(e.sum())
 
     p = np.arange(n, dtype=float)  # p[variable-index] = slot
@@ -744,6 +838,10 @@ def insertion_sweeps(order: List[int], src_adj: Dict[int, List[int]], *,
             for s in p[A[vi]]:
                 cand.add(int(s))
                 cand.add(int(s) + 1)
+            if hi_fix[vi] > -np.inf:
+                cand.add(int(np.searchsorted(val, hi_fix[vi])))
+            if lo_fix[vi] < np.inf:
+                cand.add(int(np.searchsorted(val, lo_fix[vi])))
             cand = {min(max(j, 0), n - 1) for j in cand} - {i}
             best_e, best_p = e_cur - 1e-9, None
             for j in sorted(cand):
@@ -772,37 +870,39 @@ def insertion_sweeps(order: List[int], src_adj: Dict[int, List[int]], *,
 def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                       grid: TileGrid, *, iters: int = 8, kappa: float = 13.0,
                       floor: bool = True, insert_sweeps: int = 0):
-    """Alternating 1-D arrangement of the capacity-forced variables, on the
-    stair energy.
+    """Alternating 1-D arrangement on the stair energy.
 
-    Participants (deg/kappa - 1 > 0) are packed into integer rows and
-    columns; sparse variables are untouched (their dynamics stay with
-    stair_step). Returns (new_pos, info) with info = {"E": trajectory,
-    "iters": full iterations run, "unplaced": count with no feasible line,
-    "assigned": participant count}.
+    Participation is **per-axis by derived arm length** (2026-07-29
+    refinement): a variable enters row-packing iff its floored h-interval
+    is >= 1 tile (it needs a wire run to lie on), column-packing iff its
+    v-interval is — "a chain has an extent" is detected by the chain having
+    an extent, not by degree. kappa survives only inside the floor. Short-
+    arm variables are structurally untouched at every stage. Returns
+    (new_pos, info); info = {"E": trajectory, "iters", "unplaced",
+    "assigned" (union of last-packed sets; also per-axis counts),
+    "insert_reverts", "mono_swaps", "mono_time"}.
 
     Intervals and the accepted energy come from the single-coverage
-    diagonal rule (s3.34). The rule is keyed on the coordinate ORDER of the
+    diagonal rule (s3.34); the rule is keyed on the coordinate ORDER of the
     frozen axis's counterpart, and the packing is order-preserving, so the
-    per-edge orientation assignment is invariant across a half-step —
-    computed from the pre-step order, still valid after packing.
+    per-edge orientation assignment is invariant across a half-step.
+    Order coupling is per-edge (``edge_monotonize``), not global — patches
+    diagonalize in place and side-by-side tilings are reachable.
     """
-    participants = [v for v in sorted(pos)
-                    if len([u for u in src_adj.get(v, []) if u in pos])
-                    / kappa - 1.0 > 0]
     efn = stair_energy
     new_pos = {v: np.asarray(p, dtype=float).copy() for v, p in pos.items()}
-    info = {"E": [efn(new_pos, src_adj)], "iters": 0,
-            "unplaced": 0, "assigned": len(participants)}
-    if not participants:
-        return new_pos, info
+    info = {"E": [efn(new_pos, src_adj)], "iters": 0, "unplaced": 0,
+            "assigned": 0, "assigned_rows": 0, "assigned_cols": 0,
+            "insert_reverts": 0, "mono_swaps": 0, "mono_time": 0.0}
+    packed_last: Dict[int, set] = {1: set(), 0: set()}
 
     def _intervals(axis: int) -> Dict[int, Tuple[float, float]]:
-        # fixed-length interval per participant on the frozen axis
+        # floored stair interval per variable on the frozen axis (all
+        # variables — participation is decided from the result)
         other = 0 if axis == 1 else 1
         contacts = _stair_contacts(new_pos, src_adj)
         out = {}
-        for v in participants:
+        for v in sorted(new_pos):
             nbrs = [u for u in src_adj.get(v, []) if u in new_pos]
             ids = contacts[v][0] if axis == 1 else contacts[v][1]
             xs = [float(new_pos[u][other]) for u in ids] \
@@ -818,16 +918,26 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
             out[v] = (a, b)
         return out
 
+    def _mono():
+        nonlocal new_pos
+        new_pos, mi = edge_monotonize(new_pos, src_adj)
+        info["mono_swaps"] += mi["swaps"]
+        info["mono_time"] = round(info["mono_time"] + mi["time"], 4)
+
     def _half(axis: int, force: bool) -> bool:
-        """Pack participants into lines along ``axis``; accept if E does not
-        increase (or unconditionally when ``force``: the feasibility
+        """Pack the axis's long-arm variables into lines; accept if E does
+        not increase (or unconditionally when ``force``: the feasibility
         projection). Returns True if the state changed."""
         pool = (grid.cap[:, :, 1].mean(axis=1) if axis == 1
                 else grid.cap[:, :, 0].mean(axis=0))
         nlines = grid.H if axis == 1 else grid.W
         ivs = _intervals(axis)
-        order = sorted(participants,
-                       key=lambda v: (float(new_pos[v][axis]), v))
+        parts = [v for v in sorted(new_pos)
+                 if ivs[v][1] - ivs[v][0] >= 1.0]
+        if not parts:
+            info["E"].append(efn(new_pos, src_adj))
+            return False
+        order = sorted(parts, key=lambda v: (float(new_pos[v][axis]), v))
         lines: Dict[int, list] = {i: [] for i in range(nlines)}
         trial = {v: new_pos[v].copy() for v in new_pos}
         miss = 0
@@ -846,68 +956,76 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
         e_new = efn(trial, src_adj)
         if force or e_new <= e_old + 1e-9:
             changed = any(not np.allclose(trial[v], new_pos[v])
-                          for v in participants)
-            for v in participants:
+                          for v in parts)
+            for v in parts:
                 new_pos[v] = trial[v]
+            packed_last[axis] = set(parts)
             info["unplaced"] = miss
             info["E"].append(e_new)
             return changed
         info["E"].append(e_old)
         return False
 
-    def _align_diagonal():
-        """s3.35: couple the two 1-D orders. Under the stair rule, h-arms
-        reach later-y contacts; if later-in-y is also later-in-x, every
-        h-arm is one-sided (the busclique diagonal; E -> n*side on K_n).
-        Implemented as a pure permutation of the participants' EXISTING
-        x-values (x-rank := y-rank) — zero new geometry, acts entirely in
-        directions where the attraction gradient vanishes; the standard
-        order-preserving column packing then preserves the aligned order."""
-        by_rank = sorted(participants,
-                         key=lambda v: (float(new_pos[v][1]), v))
-        old_xs = {v: float(new_pos[v][0]) for v in participants}
-        xs = sorted(old_xs.values())
-        e_pre = efn(new_pos, src_adj)
-        for rank, v in enumerate(by_rank):
-            new_pos[v][0] = xs[rank]
-        if efn(new_pos, src_adj) > e_pre + 1e-9:  # same gate as every
-            for v in participants:                # other projection
-                new_pos[v][0] = old_xs[v]
-
     for it in range(max(iters, 1)):
         force = (it == 0)
         moved = _half(axis=1, force=force)
-        _align_diagonal()
+        _mono()
         moved = _half(axis=0, force=force) or moved
         info["iters"] = it + 1
         if not moved and not force:
             break
 
-    if insert_sweeps > 0 and participants:
-        # s3.36: best-insertion order search — the general global move.
-        # Propose in rank space, apply as a PERMUTATION of the existing
-        # y-values (multiset preserved, the _align_diagonal trick), realign
-        # and repack, dispose by TRUE stair energy with full revert.
+    if insert_sweeps > 0:
+        # s3.36 best-insertion order search, value-priced (2026-07-29):
+        # members = long-arm variables (floored w + h >= 1 tile); the proxy
+        # prices slots at the y-VALUES the permutation will assign (rank
+        # space lies on clustered layouts), with non-member neighbours
+        # folded in as fixed anchors (they guide, not just veto). Propose
+        # in rank space, apply as a permutation of the existing y-values,
+        # re-monotonize and repack, dispose by TRUE stair energy with full
+        # revert.
+        widths = bar_widths(derive_bars_stair(
+            new_pos, src_adj, kappa=kappa, floor=floor))
+        members = [v for v in sorted(new_pos)
+                   if float(widths[v][0] + widths[v][1]) >= 1.0]
         for _composite in range(2):
-            order0 = sorted(participants,
+            if len(members) < 3:
+                break
+            order0 = sorted(members,
                             key=lambda v: (float(new_pos[v][1]), v))
-            new_order, _tr = insertion_sweeps(order0, src_adj,
-                                              max_sweeps=insert_sweeps)
+            ys = np.array(sorted(float(new_pos[v][1]) for v in members))
+            member_set = set(members)
+            lo_fix = np.full(len(order0), np.inf)
+            hi_fix = np.full(len(order0), -np.inf)
+            for i, v in enumerate(order0):
+                ext = [float(new_pos[u][1]) for u in src_adj.get(v, [])
+                       if u in new_pos and u not in member_set]
+                if ext:
+                    lo_fix[i] = min(ext)
+                    hi_fix[i] = max(ext)
+            new_order, _tr = insertion_sweeps(
+                order0, src_adj, max_sweeps=insert_sweeps,
+                values=ys, anchors=(lo_fix, hi_fix))
             if new_order == order0:
                 break
             e_pre = efn(new_pos, src_adj)
-            snap = {v: new_pos[v].copy() for v in participants}
-            ys = sorted(float(new_pos[v][1]) for v in participants)
+            # full-state snapshot: the composite's inner moves (monotonize
+            # is universal, packing re-derives participation) may touch
+            # non-members, and the revert must be total
+            snap = {v: new_pos[v].copy() for v in new_pos}
             for r, v in enumerate(new_order):
-                new_pos[v][1] = ys[r]
-            _align_diagonal()
+                new_pos[v][1] = float(ys[r])
+            _mono()
             _half(axis=1, force=False)
             _half(axis=0, force=False)
             e_post = efn(new_pos, src_adj)
             if e_post > e_pre + 1e-9:
-                for v in participants:
-                    new_pos[v] = snap[v]
+                new_pos = snap
+                info["insert_reverts"] += 1
                 break
             info["E"].append(e_post)
 
+    info["assigned_rows"] = len(packed_last[1])
+    info["assigned_cols"] = len(packed_last[0])
+    info["assigned"] = len(packed_last[1] | packed_last[0])
     return new_pos, info

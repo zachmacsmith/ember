@@ -120,10 +120,16 @@ class TestAttractEmbed:
         assert res["diag"]["assigned"] == 16
         assert res["round_E"], "stair energy trajectory missing"
 
-    def test_sparse_source_is_capacity_gated(self, chimera, source):
-        # every deg <= kappa: no participants, the arrangement must be inert
+    def test_diag_reports_arm_gating_fields(self, chimera, source):
+        # participation is arm-length (per axis) since the 2026-07-29
+        # refinement; the mechanism itself is unit-tested in test_field
+        # (TestArmLengthGating) — here just assert the diagnostics surface
         res = attract_embed(source, chimera, timeout=60, seed=0)
-        assert res["diag"]["assigned"] == 0
+        d = res["diag"]
+        for key in ("assigned", "assigned_rows", "assigned_cols",
+                    "insert_reverts", "mono_time"):
+            assert key in d
+        assert d["assigned"] <= len(source)
 
     def test_registry_contract(self, chimera, source):
         algo = ALGORITHM_REGISTRY["attraction"]

@@ -21,6 +21,7 @@ from ember_qc.algorithms.factored.field import (
     bar_domains,
     bar_widths,
     derive_bars_stair,
+    edge_monotonize,
     insertion_sweeps,
     line_depth,
     stair_energy,
@@ -180,11 +181,11 @@ class TestArrangement:
 
     def test_arrange_packs_distinct_rows_and_is_monotone(self):
         grid = self._grid()
-        n = 16  # deg 15 > kappa: all participate
+        n = 16  # kappa=3 makes the floor force extension (arm-length gate)
         pos = {v: np.array([10.0 + 0.01 * v, 10.0 + 0.01 * v])
                for v in range(n)}
         adj = {v: [u for u in range(n) if u != v] for v in range(n)}
-        new, info = alternate_arrange(pos, adj, grid, iters=8)
+        new, info = alternate_arrange(pos, adj, grid, iters=8, kappa=3.0)
         assert info["assigned"] == n
         rows = [int(round(new[v][1])) for v in range(n)]
         cols = [int(round(new[v][0])) for v in range(n)]
@@ -193,31 +194,162 @@ class TestArrangement:
         # monotone after the feasibility projection (iteration 0 = 2 entries)
         tail = info["E"][3:]
         assert all(b <= a + 1e-6 for a, b in zip(tail, tail[1:]))
-        again, _ = alternate_arrange(pos, adj, grid, iters=8)
+        again, _ = alternate_arrange(pos, adj, grid, iters=8, kappa=3.0)
         assert all(np.allclose(new[v], again[v]) for v in pos)
 
-    def test_arrange_leaves_sparse_untouched(self):
+    def test_arrange_leaves_short_arms_untouched(self):
+        # sub-tile spans (geometric graph): no variable owes a wire run, so
+        # the arrangement is structurally inert — the arm-length criterion,
+        # not a degree gate
         grid = self._grid()
-        pos = {v: np.array([float(v), 3.7]) for v in range(8)}
+        pos = {v: np.array([0.5 * v, 3.7]) for v in range(8)}
         adj = {v: [u for u in (v - 1, v + 1) if 0 <= u < 8] for v in range(8)}
         new, info = alternate_arrange(pos, adj, grid)
         assert info["assigned"] == 0
         assert all(np.allclose(new[v], pos[v]) for v in pos)
 
-    def test_alignment_couples_orders(self):
-        # K16 from an anti-diagonal-ish init: alignment must couple x-rank
-        # to y-rank (the busclique diagonal) and keep E near n*side
+    def test_orders_couple_on_clique(self):
+        # K16 from an anti-diagonal-ish init: per-edge monotonization must
+        # land near the staircase optimum. Exact global rank equality was a
+        # SIDE EFFECT of the old global alignment (which re-imposed it after
+        # the packer's spill-boundary scrambles); the honest invariants are
+        # the energy (ideal aligned E = 2*sum(n-1-k) = 240 here) and a
+        # strongly monotone coupling of the two orders (either sign —
+        # diagonal and anti-diagonal staircases are mirror-equivalent).
         grid = self._grid()
         n = 16
         pos = {v: np.array([10.0 - 0.3 * v, 4.0 + 0.3 * v])  # x anti-ordered
                for v in range(n)}
         adj = {v: [u for u in range(n) if u != v] for v in range(n)}
-        new, info = alternate_arrange(pos, adj, grid, iters=8)
-        xr = sorted(range(n), key=lambda v: (new[v][0], v))
-        yr = sorted(range(n), key=lambda v: (new[v][1], v))
-        assert xr == yr  # orders coupled: the diagonal
-        # E ~ n * side for the staircase (16 rows at cap 1 -> side ~ 15)
-        assert info["E"][-1] <= 16 * 16
+        new, info = alternate_arrange(pos, adj, grid, iters=8, kappa=3.0)
+        # Measured insight (2026-07-29, this refinement): the stair energy
+        # requires contiguous SUFFIX VALUE-SETS, which global monotonicity
+        # achieves but does not uniquely achieve — per-edge descent finds
+        # E-equivalent mixed (part diagonal, part mirrored) couplings
+        # (rho ~ 0.17 here at E 242 vs ideal 240). The diagonal was
+        # sufficient, never necessary; whether E-equivalent mixtures ROUTE
+        # equally well is a probe question (K100/K140 guards), not a unit
+        # assertion. The invariant is the energy.
+        assert info["E"][-1] <= 250  # ideal 240; global-alignment era ~same
+
+    def test_side_by_side_patches_stay_side_by_side(self):
+        # two K12s in disjoint column bands with overlapping rows: the old
+        # global alignment interleaved their columns (one global order); the
+        # per-edge move has no cross-patch pressure, so the bands must stay
+        # disjoint while each patch aligns internally
+        grid = self._grid(B=20, cap=2.0)
+        a = list(range(12))
+        b = list(range(12, 24))
+        pos = {}
+        for i, v in enumerate(a):
+            pos[v] = np.array([2.0 + 0.3 * i, 6.0 + 0.5 * i])
+        for i, v in enumerate(b):
+            pos[v] = np.array([14.0 + 0.3 * i, 6.0 + 0.5 * i])
+        adj = {v: [u for u in (a if v in a else b) if u != v]
+               for v in range(24)}
+        new, info = alternate_arrange(pos, adj, grid, iters=8, kappa=3.0)
+        xa = [float(new[v][0]) for v in a]
+        xb = [float(new[v][0]) for v in b]
+        assert max(xa) < min(xb)  # column bands still disjoint
+        ya = sorted(a, key=lambda v: (new[v][1], v))
+        xa_r = sorted(a, key=lambda v: (new[v][0], v))
+        assert xa_r == ya or xa_r == ya[::-1]  # patch A internally aligned
+
+
+class TestEdgeMonotonize:
+    def _k(self, n):
+        return {v: [u for u in range(n) if u != v] for v in range(n)}
+
+    def test_sorted_clique_is_fixpoint(self):
+        pos = {v: np.array([float(v), float(v)]) for v in range(8)}
+        new, info = edge_monotonize(pos, self._k(8))
+        assert info["swaps"] == 0
+        assert all(np.allclose(new[v], pos[v]) for v in pos)
+
+    def test_scrambled_clique_descends_to_monotone(self):
+        n = 10
+        xs = [3.0, 7.0, 1.0, 9.0, 0.0, 5.0, 8.0, 2.0, 6.0, 4.0]
+        pos = {v: np.array([xs[v], float(v)]) for v in range(n)}
+        e0 = stair_energy(pos, self._k(n))
+        new, info = edge_monotonize(pos, self._k(n))
+        assert stair_energy(new, self._k(n)) < e0
+        # converged state: no strictly-improving inverted edge remains, and
+        # the x multiset is preserved (transpositions only)
+        assert sorted(float(new[v][0]) for v in new) == sorted(xs)
+        again, _ = edge_monotonize(pos, self._k(n))
+        assert all(np.allclose(new[v], again[v]) for v in pos)
+
+    def test_contacts_invariant_under_swaps(self):
+        n = 8
+        xs = [5.0, 2.0, 7.0, 0.0, 6.0, 1.0, 4.0, 3.0]
+        pos = {v: np.array([xs[v], float(v)]) for v in range(n)}
+        before = _stair_contacts(pos, self._k(n))
+        new, _ = edge_monotonize(pos, self._k(n))
+        after = _stair_contacts(new, self._k(n))
+        for v in range(n):
+            assert before[v] == after[v]
+
+    def test_short_edges_self_neutralize(self):
+        # geometric path with sub-tile edges and one x/y sign disagreement:
+        # any accepted swap moves coordinates by < the edge length, so the
+        # layout is at most perturbed at edge scale — and typically the
+        # swap is not even strictly improving (spans unchanged on a path)
+        pos = {v: np.array([0.4 * v, 0.4 * v]) for v in range(6)}
+        pos[3] = np.array([0.85, 1.2])  # tiny local inversion vs node 2
+        adj = {v: [u for u in (v - 1, v + 1) if 0 <= u < 6] for v in range(6)}
+        new, _ = edge_monotonize(pos, adj)
+        for v in pos:
+            assert np.linalg.norm(new[v] - pos[v]) <= 0.5  # edge-scale only
+
+    def test_no_cross_patch_pressure(self):
+        # two disjoint K6 patches, each internally inverted, placed in
+        # different column bands: monotonization sorts each internally but
+        # never exchanges x-values ACROSS patches (no edge, no proposal)
+        a, b = list(range(6)), list(range(6, 12))
+        pos = {}
+        for i, v in enumerate(a):
+            pos[v] = np.array([2.0 - 0.3 * i, float(i)])       # band [0.5, 2]
+        for i, v in enumerate(b):
+            pos[v] = np.array([12.0 - 0.3 * i, float(i)])      # band [10.5, 12]
+        adj = {v: [u for u in (a if v in a else b) if u != v]
+               for v in range(12)}
+        new, _ = edge_monotonize(pos, adj)
+        assert all(float(new[v][0]) <= 2.0 + 1e-9 for v in a)
+        assert all(float(new[v][0]) >= 10.5 - 1e-9 for v in b)
+
+
+class TestArmLengthGating:
+    def _grid(self, B=20, cap=2.0):
+        g = nx.convert_node_labels_to_integers(nx.grid_2d_graph(B, B))
+        grid = TileGrid(g, nx.spectral_layout(g), fallback_bins=B)
+        grid.cap[:, :, :] = cap
+        return grid
+
+    def test_tight_clique_below_floor_not_packed(self):
+        # K15 at sub-tile spread with the physical kappa: floor per axis
+        # ~0.08, spans ~0.14 — nobody owes a wire run, nothing is packed
+        grid = self._grid()
+        n = 15
+        pos = {v: np.array([10.0 + 0.01 * v, 10.0 + 0.01 * v])
+               for v in range(n)}
+        adj = {v: [u for u in range(n) if u != v] for v in range(n)}
+        new, info = alternate_arrange(pos, adj, grid, iters=8)  # kappa=13
+        assert info["assigned"] == 0
+        assert all(np.allclose(new[v], pos[v]) for v in pos)
+
+    def test_long_shortcut_packs_on_its_axis_only(self):
+        # a low-degree variable with one long horizontal edge: its h-arm
+        # exceeds a tile (it owns a wire run) but its v-arm does not — it
+        # enters row-packing only. Degree could never express this.
+        grid = self._grid()
+        pos = {0: np.array([2.0, 5.3]), 1: np.array([8.0, 5.3]),
+               2: np.array([2.4, 5.3])}
+        adj = {0: [1, 2], 1: [0], 2: [0]}
+        new, info = alternate_arrange(pos, adj, grid, iters=2)
+        assert info["assigned_rows"] >= 1     # the long h-arms packed
+        assert info["assigned_cols"] == 0     # no v-arm exceeds a tile
+        for v in pos:  # x untouched by row-packing
+            assert float(new[v][0]) == pytest.approx(float(pos[v][0]))
 
 
 class TestInsertionSweeps:
@@ -259,11 +391,47 @@ class TestInsertionSweeps:
         pos = {v: np.array([10.0 + 0.01 * v, 10.0 + 0.01 * v])
                for v in range(n)}
         adj = {v: [u for u in range(n) if u != v] for v in range(n)}
-        base, ib = alternate_arrange(pos, adj, grid, iters=8)
-        ins, ii = alternate_arrange(pos, adj, grid, iters=8, insert_sweeps=4)
+        base, ib = alternate_arrange(pos, adj, grid, iters=8, kappa=3.0)
+        ins, ii = alternate_arrange(pos, adj, grid, iters=8, kappa=3.0,
+                                    insert_sweeps=4)
         assert ii["E"][-1] <= ib["E"][-1] + 1e-6  # composite E-gate holds
-        again, _ = alternate_arrange(pos, adj, grid, iters=8, insert_sweeps=4)
+        assert ii["insert_reverts"] in (0, 1)     # diagnostic surfaced
+        again, _ = alternate_arrange(pos, adj, grid, iters=8, kappa=3.0,
+                                     insert_sweeps=4)
         assert all(np.allclose(ins[v], again[v]) for v in pos)
+
+    def test_value_pricing_respects_cluster_gaps(self):
+        # two 4-member clusters at y-values {0..3} and {20..23}; one edge
+        # from a low-cluster member to a high-cluster member. Rank pricing
+        # sees the gap as 1 slot; value pricing sees 17 tiles. The move it
+        # must NOT make: drag the whole low cluster across the gap for one
+        # edge. Proxy energies are checked directly via the trajectory.
+        members = list(range(8))
+        adj = {v: [u for u in ((0, 1, 2, 3) if v < 4 else (4, 5, 6, 7))
+                   if u != v] for v in members}
+        adj[3] = adj[3] + [4]
+        adj[4] = adj[4] + [3]
+        values = np.array([0.0, 1.0, 2.0, 3.0, 20.0, 21.0, 22.0, 23.0])
+        new_order, traj = insertion_sweeps(
+            members, adj, max_sweeps=8, values=values)
+        # both clusters must remain contiguous blocks in the final order
+        first = set(new_order[:4])
+        assert first == {0, 1, 2, 3} or first == {4, 5, 6, 7}
+        assert all(b <= a + 1e-9 for a, b in zip(traj, traj[1:]))
+
+    def test_anchor_pulls_member_toward_fixed_neighbour(self):
+        # 4 members, no member-member edges except a chain to keep 'has'
+        # true; member 0 has a non-member neighbour anchored at high y:
+        # with anchors it must relocate to the top slot
+        members = [0, 1, 2, 3]
+        adj = {0: [1, 99], 1: [0, 2], 2: [1, 3], 3: [2], 99: [0]}
+        values = np.array([0.0, 1.0, 2.0, 10.0])
+        lo = np.array([np.inf, np.inf, np.inf, np.inf])
+        hi = np.array([-np.inf, -np.inf, -np.inf, -np.inf])
+        lo[0], hi[0] = 9.5, 9.5  # anchor near the top value
+        new_order, _ = insertion_sweeps(members, adj, max_sweeps=8,
+                                        values=values, anchors=(lo, hi))
+        assert new_order[-1] == 0  # member 0 took the top slot
 
 
 class TestWireSeeds:
@@ -357,7 +525,9 @@ class TestWireSeedsMatched:
         pos = {v: np.array([1.5 + 0.05 * v, 1.5 + 0.05 * v])
                for v in range(n)}
         pos = stair_step(pos, adj, eta=0.3)
-        pos, _ = alternate_arrange(pos, adj, grid, iters=8)
+        # kappa=3: floor-forced extension so the arm-length gate engages on
+        # this compact synthetic init (the physical kappa needs real spread)
+        pos, _ = alternate_arrange(pos, adj, grid, iters=8, kappa=3.0)
         bars = derive_bars_stair(pos, adj, bounds=(grid.W, grid.H))
         return g, grid, adj, pos, bars
 
