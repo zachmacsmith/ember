@@ -2181,6 +2181,43 @@ normalization (direction-only steps with a decaying schedule); (iii)
 within-cycle λ continuation instead of per-cycle jumps. All three are
 integrator-only; the derivation and tests stand as-is.
 
+### 3.43 The Armijo integrator: numerics fixed, and the pre-registered plateau confirmed as the real obstruction (2026-07-30)
+
+Built per plan: contract v2.1 — descent direction = the true −∇ of the
+frozen-within-step model (wire nets + PressureState fixed at step start),
+α0 from the 1-tile trust region, deterministic backtracking (7 halvings),
+acceptance only on frozen-E decrease, settlement by relative-E tolerance,
+plus a **hardening tail** (penalty continuation: double λ and re-settle
+until the residual clears or a fixed cap fires). New tests: monotone
+trajectory contract, stiff-barrier settlement, sign conventions; 518 pass.
+
+**The integrator works**: bang-bang is dead (stalled steps 11–20 out of
+134–388; every accepted step descends by construction; wall time 3.5–10 s
+on the s3.42 failing cells vs 10–22 before). **And that is precisely what
+exposed the real obstruction**: with λ hardened to 16384, residual
+overload sits pinned at 27 (P16 spin_glass) / 56 (Z12 turán). Not
+thrash — the s3.42 pre-registered PLATEAU rule, firing exactly as
+written: local pressure can only shrink bars axially and slide them
+toward *less-loaded adjacent* lines; inside a uniformly overloaded blob
+the differential is zero, so only the rim peels (~one line per
+settlement) and the interior is gradient-blind despite arbitrarily large
+λ. Gauss's-law problem, third appearance in the program (s3.19's one-bin
+push; s3.42's naming of the risk; now measured under a provably-monotone
+integrator, which removes every alternative explanation). Small-scale
+synthetics show the same floor in miniature (residual ~1.5–1.8; unit
+bars annotated accordingly).
+
+Probe phases NOT launched (the leak bar already fails at smoke; routing
+plateau layouts was measured in s3.41). **Decision point per the
+pre-registered rule**: the recorded fallback is the Poisson-solved
+pressure source — replace the pointwise hinge with the electrostatic
+energy of the overload source (interior variables then feel the total
+enclosed excess; the s3.19-era machinery exists in git history), with
+its own mini-derivation + FD tests under the s3.42 discipline. This is a
+physics change and awaits Max. Everything else stands: derivation, FD
+tests, the integrator, the cycles mechanism, and the phase-picture frame
+whose liquid corner is exactly what's blocked on this one term.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).

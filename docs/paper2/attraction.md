@@ -96,6 +96,19 @@ Magic numbers, none swept: η=0.5, λ₀=3.0, round_frac=0.4, max_rounds=10, bin
 
 ## C. Idea ledger
 
+### The Armijo integrator — numerics fixed; the plateau is the real wall (2026-07-30; notes s3.43)
+
+contract v2.1: frozen-model Armijo backtracking + hardening tail
+(penalty continuation to λ 16k). Bang-bang dead, descent monotone by
+construction, wall-time halved — and the residual stays pinned (27/56 on
+the s3.42 cells): the pre-registered PLATEAU rule fired. Local pressure
+is gradient-blind inside uniformly overloaded blobs (only the rim peels);
+Gauss's-law problem, third appearance (s3.19, s3.42-risk, now measured
+clean). Probe not launched (leak bar fails at smoke). DECISION PENDING
+(Max): the recorded fallback — Poisson-solved pressure source
+(electrostatic energy of the overload; interior feels enclosed excess) —
+own mini-derivation + FD tests under the s3.42 discipline.
+
 ### The pressure round — physics verified, integrator failed (2026-07-30; notes s3.42)
 
 The phase-picture synthesis (gas/crystal/liquid as ground states of

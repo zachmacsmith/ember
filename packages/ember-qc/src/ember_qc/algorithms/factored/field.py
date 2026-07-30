@@ -946,7 +946,7 @@ def contract_layout(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
 
     info = {"E": [], "cycle_E": [], "blocked": 0, "growth_overfill": 0.0,
             "mono_swaps": 0, "steps": 0, "residual_overload": 0.0,
-            "lam": []}
+            "lam": [], "stalled_steps": 0}
     lam_final = lam0 * (lam_factor ** (max(cycles, 1) - 1))
 
     def _pstate():
@@ -970,21 +970,83 @@ def contract_layout(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
             y = np.clip(cy + amp * (y - cy), 0.0, H - 1.0)
             amp *= 0.5
             last_order = None
+        e_prev = None
+        settle_hits = 0
         for it in range(max(steps, 1)):
             _nets()
             fx, fy = _force()
-            scale = eta if deg_weight else eta / (deg + 2.0)
-            dx = fx * scale
-            dy = fy * scale
             if pressure:
+                # v2.1 Armijo integrator (s3.43): descent direction is the
+                # true -grad of the FROZEN-within-step model (wire nets +
+                # PressureState fixed at step start — the function whose
+                # gradient we computed); alpha0 puts the largest per-
+                # variable displacement at 1 tile (trust region), then
+                # deterministic backtracking. E_frozen is monotone by
+                # construction — bang-bang is structurally impossible.
                 st = _pstate()
                 pfx, pfy = pressure_forces(st, x, y)
-                dx = dx + eta * lam * pfx
-                dy = dy + eta * lam * pfy
-            dx = np.clip(dx, -1.0, 1.0)
-            dy = np.clip(dy, -1.0, 1.0)
+                dxv = fx + lam * pfx
+                dyv = fy + lam * pfy
+                dmax = max(float(np.abs(dxv).max()),
+                           float(np.abs(dyv).max()), 1e-12)
+                HmF, VmF = Hm, Vm  # frozen references (replaced, not mutated)
+
+                def _e_frozen(xx, yy):
+                    ew = float((xx[HmF].max(1) - xx[HmF].min(1)).sum()
+                               + (yy[VmF].max(1) - yy[VmF].min(1)).sum())
+                    return ew + lam * pressure_energy(st, xx, yy)
+
+                e_cur = _e_frozen(x, y)
+                alpha = 1.0 / dmax
+                accepted = False
+                for _k in range(7):
+                    tx = np.clip(x + alpha * dxv, 0.0, W - 1.0)
+                    ty = np.clip(y + alpha * dyv, 0.0, H - 1.0)
+                    e_try = _e_frozen(tx, ty)
+                    if e_try <= e_cur - 1e-9:
+                        x, y = tx, ty
+                        accepted = True
+                        break
+                    alpha *= 0.5
+                if not accepted:
+                    info["stalled_steps"] = info.get("stalled_steps", 0) + 1
+                    e_try = e_cur
+                last_order = None
+                # settlement: relative frozen-E improvement < 1e-4 for 5
+                # consecutive steps (displacement is meaningless under
+                # backtracking)
+                if e_prev is not None and \
+                        (e_prev - e_try) < 1e-4 * max(abs(e_prev), 1.0):
+                    settle_hits += 1
+                else:
+                    settle_hits = 0
+                e_prev = e_try
+                info["steps"] += 1
+                if it % 10 == 0:
+                    info["E"].append(round(_energy(), 1))
+                if mono_every and (it + 1) % mono_every == 0:
+                    snap_xy = (x.copy(), y.copy())
+                    e_pre = _etotal(lam)
+                    cur = {v: np.array([x[idx[v]], y[idx[v]]])
+                           for v in nodes}
+                    cur, mi = edge_monotonize(cur, src_adj)
+                    x = np.array([float(cur[v][0]) for v in nodes])
+                    y = np.array([float(cur[v][1]) for v in nodes])
+                    last_order = None
+                    if _etotal(lam) > e_pre + 1e-9:
+                        x, y = snap_xy
+                        last_order = None
+                    else:
+                        info["mono_swaps"] += mi["swaps"]
+                    e_prev = None  # mono may have moved the landscape
+                if settle_hits >= 5:
+                    break
+                continue
+            scale = eta if deg_weight else eta / (deg + 2.0)
+            dx = np.clip(fx * scale, -1.0, 1.0)
+            dy = np.clip(fy * scale, -1.0, 1.0)
             nx_, ny_ = x + dx, y + dy
-            if not pressure:
+            if True:
                 # Stage-1 leaky wall (control arm, s3.41): sequential
                 # entry gating on line depth
                 h_a, h_b, v_a, v_b = _intervals()
@@ -1083,6 +1145,69 @@ def contract_layout(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
     x, y = best_xy
     if pressure and best_over is not None:
         info["residual_overload"] = best_over
+    if pressure and info["residual_overload"] > 0.5:
+        # hardening tail (v2.1): penalty continuation on the chosen
+        # settlement — keep doubling lambda and re-settling (short Armijo
+        # runs) until the residual clears or the fixed cap fires. The
+        # best-cycle scoring can let modest infeasibility win when wire
+        # differences outweigh lambda*P; feasibility is non-negotiable at
+        # handoff, so the tail escalates until attraction yields.
+        lam_h = lam_final
+        for _round in range(10):
+            if info["residual_overload"] <= 0.5:
+                break
+            lam_h *= 2.0
+            e_prev = None
+            hits = 0
+            for _it in range(50):
+                _nets()
+                fx, fy = _force()
+                st = _pstate()
+                pfx, pfy = pressure_forces(st, x, y)
+                dxv = fx + lam_h * pfx
+                dyv = fy + lam_h * pfy
+                dmax = max(float(np.abs(dxv).max()),
+                           float(np.abs(dyv).max()), 1e-12)
+                HmF, VmF = Hm, Vm
+
+                def _e_frozen(xx, yy):
+                    ew = float((xx[HmF].max(1) - xx[HmF].min(1)).sum()
+                               + (yy[VmF].max(1) - yy[VmF].min(1)).sum())
+                    return ew + lam_h * pressure_energy(st, xx, yy)
+
+                e_cur = _e_frozen(x, y)
+                alpha = 1.0 / dmax
+                e_try = e_cur
+                for _k in range(7):
+                    tx = np.clip(x + alpha * dxv, 0.0, W - 1.0)
+                    ty = np.clip(y + alpha * dyv, 0.0, H - 1.0)
+                    e_new = _e_frozen(tx, ty)
+                    if e_new <= e_cur - 1e-9:
+                        x, y = tx, ty
+                        e_try = e_new
+                        break
+                    alpha *= 0.5
+                last_order = None
+                if e_prev is not None and \
+                        (e_prev - e_try) < 1e-4 * max(abs(e_prev), 1.0):
+                    hits += 1
+                    if hits >= 5:
+                        break
+                else:
+                    hits = 0
+                e_prev = e_try
+            st = _pstate()
+            a_h = x[st.Hm].min(1) - st.pad
+            b_h = x[st.Hm].max(1) + st.pad
+            a_v = y[st.Vm].min(1) - st.pad
+            b_v = y[st.Vm].max(1) + st.pad
+            Lr, _, _, _ = _axis_loads(a_h, b_h, y, st.row_cap, st.H, st.W)
+            Lc, _, _, _ = _axis_loads(a_v, b_v, x, st.col_cap, st.W, st.H)
+            info["residual_overload"] = round(max(
+                float(np.maximum(0.0, Lr - st.row_cap[:, None]).max()),
+                float(np.maximum(0.0, Lc - st.col_cap[:, None]).max())), 2)
+        info["lam_hard"] = round(lam_h, 1)
+        info["final_E"] = round(_energy(), 1)
     info["time"] = round(_time.perf_counter() - t0, 3)
     out = {v: np.array([x[idx[v]], y[idx[v]]]) for v in nodes}
     return out, info
