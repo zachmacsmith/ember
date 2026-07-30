@@ -1,6 +1,9 @@
 # M5 Zephyr Z12 — full-library results (main batch, §4.11)
 
 30,221 eligible graphs × {minorminer, p3-template, p3-ate, p3-clmm, p3-mmpolish},
+NOTE (2026-07-30): 10 p3-mmpolish success rows exceeded the 65 s budget (worst 143 s;
+latent _find_split bug, fixed v1.1.1 — notes §4.12.8) and are excluded from final
+tables; immaterial to every median shown here.
 60 s/attempt, seed 4242, arms v1.1 (guards active). Pairing: (instance, trial) [CLI]
 — per-arm derived seeds differ; the measured seed-noise floor on success rates is
 sd 1.57 pt / max 4.55 pt per family (notes §4.11-Z12, passthrough null).

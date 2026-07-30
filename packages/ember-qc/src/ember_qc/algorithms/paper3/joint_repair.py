@@ -79,6 +79,9 @@ X1_NODE_CAP = 150_000     # search-node cap for a single-vertex repair
 X2_NODE_CAP = 400_000     # search-node cap for a joint pair repair
 X1_MOVE_S = 1.5           # per-move wall cap inside anytime_polish (x1)
 X2_MOVE_S = 3.0           # per-move wall cap inside anytime_polish (x2)
+_SPLIT_MAX_T = 22         # |U| ceiling for the exact split check (2^22 = 4.2M
+                          # subsets ~ tens of ms-seconds); larger candidates are
+                          # unproven skips — v1.1.1 C16 runaway fix (§4.12)
 
 
 class RepairOutcome(NamedTuple):
@@ -342,9 +345,20 @@ class _CoverSearch:
         between the halves (the ripped source edge's coupler). Iterates the
         2^|U| ordered subsets ascending (deterministic first hit); coverage
         masks are checked before the connectivity BFS.
+
+        BUDGET (v1.1.1, the C16 runaway fix — notes §4.12): the subset loop
+        previously ran without deadline/cap checks; on long-chain fabrics
+        (Chimera degree 6) candidates reach |U| = 25-40, i.e. 2^30-2^40
+        subsets, which turned a "3 s" move into hours. Now: candidates with
+        |U| > _SPLIT_MAX_T are skipped as unproven, and the loop ticks the
+        shared node/deadline accounting every 4096 subsets (raising
+        _StopSearch on expiry, same semantics as the enumeration phase).
         """
         gu, gv = self.split
         t = len(s_list)
+        if t > _SPLIT_MAX_T:                 # 2^t infeasible — unproven skip
+            self.proven = False
+            return None
         pos = {q: i for i, q in enumerate(s_list)}
         local_nbr = [0] * t
         for i, q in enumerate(s_list):
@@ -374,6 +388,8 @@ class _CoverSearch:
             gv_local.append(lm)
         full = (1 << t) - 1
         for a in range(1, full):
+            if (a & 0xFFF) == 0:             # tick every 4096 subsets
+                self._tick()
             b = full ^ a
             if any(a & lm == 0 for lm in gu_local):
                 continue
@@ -726,7 +742,7 @@ class P3MMPolish(EmbeddingAlgorithm):
 
     @property
     def version(self) -> str:
-        return "1.1.0"
+        return "1.1.1"   # 1.1.1: _find_split budget enforcement (C16 runaway)
 
     def embed(self, source_graph, target_graph, timeout=60.0, **kwargs) -> dict:
         start = time.perf_counter()

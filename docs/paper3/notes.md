@@ -781,3 +781,19 @@ the noise-aware reading PASSES with one documented regime boundary.**
   success deltas inside the null. p3-mmpolish: broad small ACL wins persist
   under the v1.1 leftover-budget design (turan -0.256, spin-glass-class families
   similar), success deltas inside the null.
+
+8. **(2026-07-30) C16 runaway: `_find_split` had no budget enforcement.** The exact
+   pair-split check iterated 2^|U| subsets with no deadline/cap ticks. Invisible on
+   P16/Z12 (|U| <= ~14 -> 16k subsets); on Chimera's degree-6 long chains |U|
+   reaches 25-40 -> 2^30-2^40 subsets, turning "3 s" moves into hours (worst
+   observed: 19.5 h on one row; the C16 batch collapsed to ~1.4k rows/h with
+   workers pinned). Fixed at v1.1.1: |U| > 22 -> unproven skip; tick shared
+   node/deadline accounting every 4096 subsets; regression test
+   test_joint_repair_bounded_on_long_chain_pairs. CONTAMINATION AUDIT: Z12 — 10
+   successful mmpolish rows exceeded 65 s (worst 143 s; the other 3,784 >65 s rows
+   are MM-stage cooperative-overshoot FAILURES, no ACL impact); P16 — 11 successful
+   rows (worst 158 s). Those 21 rows are flagged for exclusion from final tables
+   (immaterial to any reported median); the C16 partial batch (29k rows, 21 h) is
+   DISCARDED and re-run entirely under v1.1.1. The §4.4 K60 fixpoint number is
+   unaffected (P16 template, small |U|); the §4.3 probe ran per-move deadlines on
+   P16 (worst pair wall 3.04 s recorded — bounded).

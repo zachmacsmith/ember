@@ -274,3 +274,28 @@ class TestArm:
                          timeout=1.0, seed=0)
         assert isinstance(res, dict)
         assert res["embedding"] == {}
+
+
+def test_joint_repair_bounded_on_long_chain_pairs():
+    """§4.12 C16-runaway regression: _find_split's 2^|U| subset loop must honor
+    the move deadline (worst pre-fix observation: 19.5 h in one '3 s' move on
+    Chimera's long chains)."""
+    import time
+    import networkx as nx
+    import dwave_networkx as dnx
+    import minorminer
+    from ember_qc.algorithms.paper3.joint_repair import joint_repair_2
+
+    src = nx.gnp_random_graph(40, 0.4, seed=11)
+    tgt = dnx.chimera_graph(8)
+    raw = minorminer.find_embedding(src, list(tgt.edges()), random_seed=3,
+                                    timeout=30)
+    assert raw, "fixture embed failed"
+    emb = {int(w): [int(q) for q in c] for w, c in raw.items()}
+    # longest-combined source-adjacent pair — the pre-fix blowup shape
+    pair = max(src.edges(), key=lambda e: len(emb[e[0]]) + len(emb[e[1]]))
+    t0 = time.perf_counter()
+    joint_repair_2(emb, src, tgt, int(pair[0]), int(pair[1]),
+                   deadline=time.perf_counter() + 1.0)
+    wall = time.perf_counter() - t0
+    assert wall < 10.0, f"joint_repair_2 overran its deadline: {wall:.1f}s"
