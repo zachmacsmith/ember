@@ -2307,6 +2307,66 @@ not yet diagnosed, and the next step should be a DIAGNOSIS probe
 feasible layout's E_total vs the settled one — is the feasible state
 even downhill-reachable?) before any further mechanism is built.
 
+**Step-0 diagnosis addendum (2026-07-30, `data/diag_feasible.py`, Z12
+turán): OPTIMIZER-STUCK, decisively.** A hand-built √n×√n spread layout
+scores E_total 191,614 vs the settled state's 401,166 (less than half)
+at overload 9.2 vs 57.7 — a dramatically better state is downhill of the
+descent and unreached (suspect #2, hot-spot α throttling / basin
+transport, convicted; suspect #1's tolerance semantics at most
+secondary). Second finding: even the hand-spread layout retains overload
+9.2 — under the stair readout, turán's PINNED contacts concentrate load
+that no node positioning fully relieves, feeding suspect #3 and the
+contact round (s3.45) directly.
+
+### 3.45 The contact round: place the edges (Option B unshelved) (2026-07-30)
+
+#### (a) The model — committed before any code, per the standing discipline
+
+Max's reframing ("is minor embedding actually a problem about edges
+rather than nodes?") = the 2026-07-19 ledger's Option B, held in reserve.
+Qubits host wires; **couplers host edges** — so place the edges.
+
+- **State**: one contact point c_e per source edge, in tile space
+  (|E| × 2 reals). Nothing else is state: variables are NETS — v's chain
+  is whatever routes through v's contact set, so chain cost is a
+  net-wirelength readout, and the current stair model is exactly this
+  model with contacts FROZEN at (x_u, y_v).
+- **Energy**: E = Σ_v hpwl(C_v) + λ·P(density), C_v = {c_e : v ∈ e}.
+  hpwl = x-span + y-span of C_v (bbox proxy for the net's Steiner
+  routing; undercounts high-degree nets by a bounded routing factor —
+  accepted for Stage 1, recorded). Subgradient: per net, per axis, unit
+  pulls on the extreme CONTACTS ((value, edge-id) tie-break); each
+  contact sums pulls from its two nets.
+- **Density**: per-tile JUNCTION load — bilinear splat of contacts onto
+  tiles vs the tile's junction capacity J(tile) = count of physical
+  h↔v couplers there (computed once from wire_map + graph edges).
+  P = the s3.44 two-term form (hinge² + ½sψ Poisson) applied to this
+  point load. **No chain rule through any readout: the placed object is
+  the capacity-consuming object.** ∂P/∂c_e flows through the bilinear
+  splat weights only (the classical ePlace gradient).
+- **Dynamics**: spread init (contacts at endpoint midpoints of a spread
+  node layout), the s3.43 Armijo integrator verbatim (frozen-model
+  descent: nets' extreme-attribution and the splat's cell assignment
+  frozen within a step), cycles with decaying reshake, hardening tail.
+  Deterministic throughout.
+- **The bridge, restated as bookkeeping**: every edge needs a seat;
+  blob area = |E| / junction-density; K_n = the densest seating (the
+  triangle/staircase emerges as minimal net-bboxes over all-pairs
+  seats); ER at density p interpolates linearly. κ dissolves into local
+  junction geometry.
+- **Null directions, recorded for later rounds**: within-net contact
+  permutations; seat swaps between edges sharing an endpoint. The
+  insertion lessons will reincarnate here; out of Stage-1 scope.
+- **Readout (Stage 1, deliberately crude, best-effort doctrine)**: snap
+  contacts to nearest free physical couplers (greedy, sorted edge id,
+  seat-exclusive); the h-side qubit goes to the endpoint whose contact
+  set is horizontally wider (tie: lower id); seeds = per-variable unions
+  of their contact-side qubits (possibly disconnected — MM legalizes;
+  s3.28 measured disconnected seeds repairable). Routing protocol
+  unchanged (patience-0 legalize + spur_prune + warm polish).
+
+*(Build + probe verdict to follow as (b).)*
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).
