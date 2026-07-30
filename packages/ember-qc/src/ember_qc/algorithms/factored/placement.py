@@ -175,11 +175,14 @@ class AttractConfig:
     insert_sweeps: int = 8     # best-insertion order-search sweeps inside the
                                # alternation (s3.36; the move that makes block
                                # structure emerge from any init). 0 = off.
-    kappa: float = 13.0        # contact capacity (usable couplers per chain
-                               # qubit; Pegasus ~13, the s3.26 degree bound).
-                               # Floor physics ONLY since s3.40 — arrangement
-                               # participation is by derived arm length
-                               # (per-axis interval >= 1 tile), not degree.
+    kappa: Optional[float] = None  # contact capacity (usable couplers per
+                               # chain qubit). None (default) = derived from
+                               # the target: mean working-qubit degree - 2
+                               # (Pegasus ~13.3, matching the long-hardwired
+                               # 13; Zephyr ~18; Chimera ~4) — the constant
+                               # stopped being Pegasus-specific in the
+                               # contraction round. Floor physics ONLY since
+                               # s3.40 — participation is by arm length.
     span_floor: bool = True    # apply the contact-capacity floor to derived
                                # bars (readout-side clamp, s3.30)
     cap_derate: float = 1.0    # capacity scale during rounds (<1 keeps the
@@ -253,8 +256,9 @@ def attract_embed(
             cfg = replace(cfg, **picked)
 
         from ember_qc.algorithms.factored.field import (
-            TileGrid, alternate_arrange, bar_widths, derive_bars_stair,
-            stair_energy, stair_step, wire_seeds_iv, wire_seeds_matched)
+            TileGrid, _target_kappa, alternate_arrange, bar_widths,
+            derive_bars_stair, stair_energy, stair_step, wire_seeds_iv,
+            wire_seeds_matched)
 
         adj = build_adjacency(target_graph)
         qubits = sorted(adj)
@@ -272,10 +276,11 @@ def attract_embed(
         if cfg.cap_derate != 1.0:
             grid.cap = grid.cap * cfg.cap_derate
         bounds = (grid.W, grid.H)
+        kappa = cfg.kappa if cfg.kappa is not None else _target_kappa(grid)
 
         def _bars(tpts):
             # arms are a pure readout of positions (s3.31/s3.34)
-            return derive_bars_stair(tpts, src_adj, kappa=cfg.kappa,
+            return derive_bars_stair(tpts, src_adj, kappa=kappa,
                                      floor=cfg.span_floor, bounds=bounds)
 
         cent = source_positions(source_graph, lo, hi)
@@ -300,7 +305,7 @@ def attract_embed(
                 tpts = stair_step(tpts, src_adj, eta=cfg.eta)
                 tpts, last_info = alternate_arrange(
                     tpts, src_adj, grid, iters=cfg.arrange_iters,
-                    kappa=cfg.kappa, floor=cfg.span_floor,
+                    kappa=kappa, floor=cfg.span_floor,
                     insert_sweeps=cfg.insert_sweeps)
             cent = {v: grid.Minv @ (tpts[v] - grid.c) for v in cent}
             round_E.append(round(stair_energy(tpts, src_adj), 1))

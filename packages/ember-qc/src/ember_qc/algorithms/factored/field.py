@@ -83,11 +83,30 @@ def _tile_orient(target: nx.Graph) -> Optional[Dict[int, Tuple[int, int, int]]]:
                 out[q] = (int(x), int(y), int(u), int(t) * 4 + int(k))
             return out
         if family == "zephyr":
-            # Zephyr qubits span unit cells; a faithful typed tiling is the
-            # queued adapter (its junctions are COMPLETE — the Pegasus 56%
-            # coupler pathology is absent there, notes s3.37). Untyped
-            # fallback until then.
-            return None
+            # Typed Zephyr adapter (2026-07-29, contraction round; conventions
+            # pinned against dnx.zephyr_layout): coordinates (u, w, k, j, z);
+            # u=0 vertical at column w, u=1 horizontal at row w; position
+            # along the wire p = 2z + j — consecutive p on the same
+            # (u, w, k) wire are COUPLED (verified), so wire_map runs are
+            # real paths. Half-cell tile resolution: (2m+1) lines x (2m)
+            # positions; sub = k (j lives in the position, which is what
+            # makes runs contiguous). Zephyr junctions are near-complete —
+            # the Pegasus 56% coupler pathology is absent (s3.37).
+            m = g.get("rows")
+            t = g.get("tile")
+            conv = dnx.zephyr_coordinates(m, t)
+            out = {}
+            for q in target.nodes():
+                if labels == "coordinate":
+                    u, w, k, j, z = q
+                else:
+                    u, w, k, j, z = conv.linear_to_zephyr(q)
+                p = 2 * int(z) + int(j)
+                if int(u) == 0:   # vertical: column w, spans y
+                    out[q] = (int(w), p, 0, int(k))
+                else:             # horizontal: row w, spans x
+                    out[q] = (p, int(w), 1, int(k))
+            return out
     except Exception:
         return None
     return None
@@ -673,6 +692,209 @@ def bar_domains(grid: TileGrid, pos: Dict[int, Point], bars: BarIntervals,
 # increase, so the alternation is monotone on the feasible set. Diagonal
 # alignment (s3.35) couples the two 1-D orders; insertion sweeps (s3.36) are
 # the general order move where adjacent structure is plateau-bound.
+
+
+def _target_kappa(grid: TileGrid) -> float:
+    """Derived contact capacity: mean working-qubit degree of the target
+    minus 2 (intra-chain links), floored at 2. Pegasus ~13.3 (matching the
+    long-hardwired 13), Zephyr ~18, Chimera ~4 — the constant stops being
+    Pegasus-specific (2026-07-29 contraction round)."""
+    g = grid.graph
+    n = g.number_of_nodes()
+    if not n:
+        return 2.0
+    return max(2.0, 2.0 * g.number_of_edges() / n - 2.0)
+
+
+def contract_layout(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
+                    grid: TileGrid, *, steps: int = 300, eta: float = 0.2,
+                    deg_weight: bool = True, cycles: int = 1,
+                    expand: float = 2.0, kappa: Optional[float] = None,
+                    floor: bool = True, cap_derate: float = 1.0,
+                    mono_every: int = 25):
+    """Contraction dynamics (Stage 1 of the contraction design round,
+    2026-07-29): start from a SPREAD (trivially feasible) layout and
+    descend the stair energy with capacity as EXCLUDED VOLUME approached
+    from below — full lines admit no entrants, so feasibility-by-entrants
+    is an invariant and no forced projection ever exists. Attraction does
+    the placement work (``deg_weight=True``: unnormalized subgradient —
+    hubs pulled by many nets move fastest, Max's magnets); order structure
+    is maintained by ``edge_monotonize`` every ``mono_every`` steps.
+
+    ``cycles`` (the repetition amendment): after each settlement, re-expand
+    all positions about the layout centroid by a decaying amplitude
+    (``expand``, halved per cycle, clipped into the fabric) and contract
+    again — settle-and-reshake; jams get another chance with the previous
+    cycle's organization as bias.
+
+    Entry gating is exact and sequential (sorted order, admitted entrants
+    immediately count as residents); interval-GROWTH overfill (residents'
+    arms lengthening in place) is measured, not blocked — Stage 1
+    diagnostics decide whether Stage 2 needs growth handling. Only
+    intervals >= 1 tile occupy depth (sub-tile arms claim no wires,
+    consistent with participation and seeding).
+
+    Returns (new_pos, info): E trajectory (sampled), per-cycle final E,
+    blocked-entry count, growth-overfill max, wall time.
+    """
+    import time as _time
+    t0 = _time.perf_counter()
+    if kappa is None:
+        kappa = _target_kappa(grid)
+    nodes = sorted(pos)
+    n = len(nodes)
+    idx = {v: i for i, v in enumerate(nodes)}
+    x = np.array([float(pos[v][0]) for v in nodes])
+    y = np.array([float(pos[v][1]) for v in nodes])
+    deg = np.array([len([u for u in src_adj.get(v, []) if u in idx])
+                    for v in nodes], dtype=float)
+    need = np.maximum(0.0, deg / kappa - 1.0)  # floor per variable (w+h)
+    row_pool = grid.cap[:, :, 1].mean(axis=1) * cap_derate
+    col_pool = grid.cap[:, :, 0].mean(axis=0) * cap_derate
+    W, H = grid.W, grid.H
+
+    Hm = Vm = None          # padded net-index matrices (h-nets / v-nets)
+    last_order = None
+
+    def _nets():
+        nonlocal Hm, Vm, last_order
+        order = np.lexsort((np.arange(n), y))
+        if last_order is not None and np.array_equal(order, last_order):
+            return
+        last_order = order
+        contacts = _stair_contacts(
+            {v: np.array([x[idx[v]], y[idx[v]]]) for v in nodes}, src_adj)
+        hn = [[idx[v]] + [idx[u] for u in contacts[v][0]] for v in nodes]
+        vn = [[idx[v]] + [idx[u] for u in contacts[v][1]] for v in nodes]
+        wH = max(len(r) for r in hn)
+        wV = max(len(r) for r in vn)
+        Hm = np.array([r + [r[0]] * (wH - len(r)) for r in hn])
+        Vm = np.array([r + [r[0]] * (wV - len(r)) for r in vn])
+
+    def _energy() -> float:
+        _nets()
+        return float((x[Hm].max(1) - x[Hm].min(1)).sum()
+                     + (y[Vm].max(1) - y[Vm].min(1)).sum())
+
+    def _force():
+        # unit pulls on each net's extreme members (HPWL subgradient),
+        # accumulated with scatter-add; self-padded rows are span-neutral
+        # but argmax may select a pad — pads point at r[0] = the owner,
+        # and owner-extreme pulls are legitimate, so no correction needed.
+        fx = np.zeros(n)
+        fy = np.zeros(n)
+        hv = x[Hm]
+        np.add.at(fx, Hm[np.arange(n), hv.argmax(1)], -1.0)
+        np.add.at(fx, Hm[np.arange(n), hv.argmin(1)], 1.0)
+        vv = y[Vm]
+        np.add.at(fy, Vm[np.arange(n), vv.argmax(1)], -1.0)
+        np.add.at(fy, Vm[np.arange(n), vv.argmin(1)], 1.0)
+        return fx, fy
+
+    def _intervals():
+        # floored per-axis intervals from the net matrices (h: x-span at
+        # row y; v: y-span at column x); deficit split as in _half
+        h_a, h_b = x[Hm].min(1), x[Hm].max(1)
+        v_a, v_b = y[Vm].min(1), y[Vm].max(1)
+        if floor:
+            half = np.maximum(0.0, need / 2.0)
+            dh = np.maximum(0.0, half - (h_b - h_a)) / 2.0
+            dv = np.maximum(0.0, half - (v_b - v_a)) / 2.0
+            h_a, h_b = h_a - dh, h_b + dh
+            v_a, v_b = v_a - dv, v_b + dv
+        return h_a, h_b, v_a, v_b
+
+    info = {"E": [], "cycle_E": [], "blocked": 0, "growth_overfill": 0.0,
+            "mono_swaps": 0, "steps": 0}
+    amp = float(expand)
+    for cyc in range(max(cycles, 1)):
+        if cyc > 0:  # reshake: decaying expansion about the centroid
+            cx, cy = x.mean(), y.mean()
+            x = np.clip(cx + amp * (x - cx), 0.0, W - 1.0)
+            y = np.clip(cy + amp * (y - cy), 0.0, H - 1.0)
+            amp *= 0.5
+            last_order = None
+        for it in range(max(steps, 1)):
+            _nets()
+            fx, fy = _force()
+            scale = eta if deg_weight else eta / (deg + 2.0)
+            dx = np.clip(fx * scale, -1.0, 1.0)
+            dy = np.clip(fy * scale, -1.0, 1.0)
+            h_a, h_b, v_a, v_b = _intervals()
+            # sequential entry gating, rows then columns
+            rows_of = np.clip(np.round(y).astype(int), 0, H - 1)
+            cols_of = np.clip(np.round(x).astype(int), 0, W - 1)
+            row_iv: Dict[int, list] = {}
+            col_iv: Dict[int, list] = {}
+            for i in range(n):
+                if h_b[i] - h_a[i] >= 1.0:
+                    row_iv.setdefault(rows_of[i], []).append(
+                        (float(h_a[i]), float(h_b[i])))
+                if v_b[i] - v_a[i] >= 1.0:
+                    col_iv.setdefault(cols_of[i], []).append(
+                        (float(v_a[i]), float(v_b[i])))
+            nx_, ny_ = x + dx, y + dy
+            for i in range(n):
+                r_new = int(np.clip(round(ny_[i]), 0, H - 1))
+                if r_new != rows_of[i] and h_b[i] - h_a[i] >= 1.0:
+                    iv = (float(h_a[i]), float(h_b[i]))
+                    if line_depth(row_iv.get(r_new, []) + [iv]) \
+                            > row_pool[r_new]:
+                        ny_[i] = rows_of[i] + 0.49 * np.sign(dy[i])
+                        info["blocked"] += 1
+                    else:
+                        row_iv.setdefault(r_new, []).append(iv)
+                c_new = int(np.clip(round(nx_[i]), 0, W - 1))
+                if c_new != cols_of[i] and v_b[i] - v_a[i] >= 1.0:
+                    iv = (float(v_a[i]), float(v_b[i]))
+                    if line_depth(col_iv.get(c_new, []) + [iv]) \
+                            > col_pool[c_new]:
+                        nx_[i] = cols_of[i] + 0.49 * np.sign(dx[i])
+                        info["blocked"] += 1
+                    else:
+                        col_iv.setdefault(c_new, []).append(iv)
+            moved = float(np.abs(nx_ - x).sum() + np.abs(ny_ - y).sum())
+            x = np.clip(nx_, 0.0, W - 1.0)
+            y = np.clip(ny_, 0.0, H - 1.0)
+            last_order = None
+            info["steps"] += 1
+            if it % 10 == 0:
+                info["E"].append(round(_energy(), 1))
+            if mono_every and (it + 1) % mono_every == 0:
+                cur = {v: np.array([x[idx[v]], y[idx[v]]]) for v in nodes}
+                cur, mi = edge_monotonize(cur, src_adj)
+                info["mono_swaps"] += mi["swaps"]
+                x = np.array([float(cur[v][0]) for v in nodes])
+                y = np.array([float(cur[v][1]) for v in nodes])
+                last_order = None
+            if moved < 1e-3:
+                break
+        # growth-overfill diagnostic at settlement
+        _nets()
+        h_a, h_b, v_a, v_b = _intervals()
+        over = 0.0
+        rows_of = np.clip(np.round(y).astype(int), 0, H - 1)
+        by_row: Dict[int, list] = {}
+        for i in range(n):
+            if h_b[i] - h_a[i] >= 1.0:
+                by_row.setdefault(rows_of[i], []).append(
+                    (float(h_a[i]), float(h_b[i])))
+        for r, ivs in by_row.items():
+            over = max(over, line_depth(ivs) - row_pool[r])
+        info["growth_overfill"] = max(info["growth_overfill"],
+                                      round(float(over), 2))
+        e_cyc = _energy()
+        info["cycle_E"].append(round(e_cyc, 1))
+        # keep the best settlement across cycles: a reshake may settle
+        # worse, and the handoff wants the best layout found, not the last
+        if cyc == 0 or e_cyc < info["final_E"]:
+            info["final_E"] = round(e_cyc, 1)
+            info["best_cycle"] = cyc
+            best_xy = (x.copy(), y.copy())
+    x, y = best_xy
+    info["time"] = round(_time.perf_counter() - t0, 3)
+    out = {v: np.array([x[idx[v]], y[idx[v]]]) for v in nodes}
+    return out, info
 
 
 def line_depth(intervals: List[Tuple[float, float]]) -> int:

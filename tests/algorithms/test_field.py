@@ -17,9 +17,11 @@ from ember_qc.algorithms.factored.field import (
     _couples,
     _line_tracks,
     _stair_contacts,
+    _target_kappa,
     alternate_arrange,
     bar_domains,
     bar_widths,
+    contract_layout,
     derive_bars_stair,
     edge_monotonize,
     insertion_sweeps,
@@ -607,6 +609,193 @@ class TestWireSeedsMatched:
                                            np.array([5.0, 5.0]))},
                                       {0: []})
         assert ch and s == 0 and t == 0  # graceful untyped fallback
+
+
+class TestZephyrGrid:
+    def _grid(self, m=3, t=4):
+        g = dnx.zephyr_graph(m, t)
+        return g, TileGrid(g, target_layout(g))
+
+    def test_typed_and_caps_sum(self):
+        g, grid = self._grid()
+        assert grid.typed
+        assert grid.cap.sum() == g.number_of_nodes()
+
+    def test_wire_runs_are_coupled_paths(self):
+        g, grid = self._grid()
+        # every wire (u, line, sub): consecutive tile positions must couple
+        checked = 0
+        for (u, line, sub), run in sorted(grid.wire_map.items())[:40]:
+            ps = sorted(run)
+            qs = [run[p] for p in ps]
+            for (p1, q1), (p2, q2) in zip(zip(ps, qs), zip(ps[1:], qs[1:])):
+                if p2 == p1 + 1:
+                    assert g.has_edge(q1, q2), (u, line, sub, p1, p2)
+                    checked += 1
+        assert checked > 50
+
+    def test_junctions_near_complete(self):
+        # the design motivation for the Zephyr move: crossing h/v wire
+        # pairs at a shared tile couple at far higher density than
+        # Pegasus's ~0.56 (measure and assert; expected near-complete
+        # over wires that actually cross)
+        g, grid = self._grid()
+        import dwave_networkx as dnx2
+        pg = dnx2.pegasus_graph(4)
+        pgrid = TileGrid(pg, target_layout(pg))
+
+        def density(gr):
+            hits = tot = 0
+            for r in range(2, gr.H - 2):
+                for c in range(2, gr.W - 2):
+                    hs = sorted({s for (u, ln, s) in gr.wire_map
+                                 if u == 1 and ln == r})
+                    vs = sorted({s for (u, ln, s) in gr.wire_map
+                                 if u == 0 and ln == c})
+                    for sh in hs:
+                        qh = gr.wire_map.get((1, r, sh), {}).get(c)
+                        if qh is None:
+                            continue
+                        for sv in vs:
+                            qv = gr.wire_map.get((0, c, sv), {}).get(r)
+                            if qv is None:
+                                continue
+                            tot += 1
+                            hits += _couples(gr, r, sh, c, sv)
+            return hits / max(tot, 1)
+
+        dz, dp = density(grid), density(pgrid)
+        assert dz > dp + 0.2  # materially denser junctions than Pegasus
+        assert dz > 0.85      # near-complete
+
+    def test_wire_seeds_on_zephyr(self):
+        g, grid = self._grid()
+        n = 12
+        adj = {v: [u for u in range(n) if u != v] for v in range(n)}
+        pos = {v: np.array([1.0 + 0.3 * v, 1.0 + 0.3 * v])
+               for v in range(n)}
+        pos = stair_step(pos, adj, eta=0.3)
+        pos, _ = alternate_arrange(pos, adj, grid, iters=8, kappa=3.0)
+        bars = derive_bars_stair(pos, adj, bounds=(grid.W, grid.H))
+        seeds = wire_seeds_iv(grid, pos, bars)
+        allq = [q for c in seeds.values() for q in c]
+        assert len(allq) == len(set(allq))
+        assert set(seeds) == set(range(n))
+        # multi-qubit runs are coupled paths
+        import networkx as nx2
+        for v, c in seeds.items():
+            if len(c) > 1 and nx2.is_connected(g.subgraph(c)):
+                break
+        else:
+            assert False, "no connected multi-qubit run found"
+
+    def test_derived_kappa(self):
+        g, grid = self._grid()
+        import dwave_networkx as dnx2
+        pgrid = TileGrid(dnx2.pegasus_graph(6),
+                         target_layout(dnx2.pegasus_graph(6)))
+        kz, kp = _target_kappa(grid), _target_kappa(pgrid)
+        # small instances have boundary-depressed mean degree (Z3 ~14.7,
+        # P6 ~11.2; at scale Z12 ~18, P16 ~13.3 matching the old constant).
+        # The scale-free invariant: Zephyr denser than Pegasus.
+        assert kz > kp
+        assert 10.0 < kp < 14.0
+
+
+class TestContractLayout:
+    def _grid(self, B=20, cap=2.0):
+        g = nx.convert_node_labels_to_integers(nx.grid_2d_graph(B, B))
+        grid = TileGrid(g, nx.spectral_layout(g), fallback_bins=B)
+        grid.cap[:, :, :] = cap
+        return grid
+
+    def _spread_k(self, n, B=20, seed=7):
+        rng = np.random.default_rng(seed)
+        pos = {v: np.array([1.0 + (B - 3.0) * rng.random(),
+                            1.0 + (B - 3.0) * rng.random()])
+               for v in range(n)}
+        adj = {v: [u for u in range(n) if u != v] for v in range(n)}
+        return pos, adj
+
+    def test_energy_decreases_and_deterministic(self):
+        grid = self._grid()
+        pos, adj = self._spread_k(16)
+        e0 = stair_energy(pos, adj)
+        new, info = contract_layout(pos, adj, grid, steps=120, kappa=3.0)
+        assert info["final_E"] < e0
+        again, _ = contract_layout(pos, adj, grid, steps=120, kappa=3.0)
+        assert all(np.allclose(new[v], again[v]) for v in pos)
+
+    def test_entry_gating_blocks_full_line(self):
+        grid = self._grid(cap=1.0)  # depth 1 per line: brutal wall
+        pos, adj = self._spread_k(12)
+        new, info = contract_layout(pos, adj, grid, steps=150, kappa=3.0)
+        assert info["blocked"] > 0  # the wall was hit
+        # entry-invariant: rows occupied by >=1-tile h-arms respect depth
+        bars = derive_bars_stair(new, adj, kappa=3.0,
+                                 bounds=(grid.W, grid.H))
+        by_row = {}
+        for v, (h_iv, _v_iv) in bars.items():
+            if h_iv[1] - h_iv[0] >= 1.0:
+                by_row.setdefault(int(round(float(new[v][1]))), []).append(
+                    (float(h_iv[0]), float(h_iv[1])))
+        worst = max((line_depth(iv) for iv in by_row.values()), default=0)
+        # growth overfill is measured, not forbidden; it must be bounded
+        assert worst <= 1 + info["growth_overfill"] + 1e-9
+
+    def test_deg_weight_moves_hub_faster(self):
+        grid = self._grid()
+        # star: hub 0 with 8 leaves, all spread
+        pos = {0: np.array([15.0, 15.0])}
+        pos.update({v: np.array([2.0 + v, 2.0]) for v in range(1, 9)})
+        adj = {0: list(range(1, 9))}
+        adj.update({v: [0] for v in range(1, 9)})
+        w, _ = contract_layout(pos, adj, grid, steps=1, kappa=13.0,
+                               deg_weight=True, mono_every=0)
+        u, _ = contract_layout(pos, adj, grid, steps=1, kappa=13.0,
+                               deg_weight=False, mono_every=0)
+        hub_w = np.linalg.norm(w[0] - pos[0])
+        hub_u = np.linalg.norm(u[0] - pos[0])
+        assert hub_w > hub_u  # unnormalized: the popular magnet rushes
+
+    def test_patches_coalesce_separately(self):
+        grid = self._grid(B=24)
+        a, b = list(range(12)), list(range(12, 24))
+        rng = np.random.default_rng(3)
+        pos = {}
+        for v in a:
+            pos[v] = np.array([2.0 + 6.0 * rng.random(),
+                               4.0 + 14.0 * rng.random()])
+        for v in b:
+            pos[v] = np.array([16.0 + 6.0 * rng.random(),
+                               4.0 + 14.0 * rng.random()])
+        adj = {v: [u for u in (a if v in a else b) if u != v]
+               for v in range(24)}
+        new, _ = contract_layout(pos, adj, grid, steps=200, kappa=3.0)
+        xa = [float(new[v][0]) for v in a]
+        xb = [float(new[v][0]) for v in b]
+        assert max(xa) < min(xb)  # coalesced in place, never interleaved
+
+    def test_cycles_reshake_runs_and_records(self):
+        grid = self._grid()
+        pos, adj = self._spread_k(16, seed=11)
+        new, info = contract_layout(pos, adj, grid, steps=80, cycles=3,
+                                    kappa=3.0)
+        assert len(info["cycle_E"]) == 3
+        # best-settlement return: the handoff layout is the best cycle's
+        assert info["final_E"] == min(info["cycle_E"])
+        assert stair_energy(new, adj) == pytest.approx(info["final_E"],
+                                                       abs=0.1)
+
+    def test_sparse_subtile_graph_barely_moves_lines(self):
+        grid = self._grid()
+        pos = {v: np.array([5.0 + 0.4 * v, 9.0]) for v in range(6)}
+        adj = {v: [u for u in (v - 1, v + 1) if 0 <= u < 6]
+               for v in range(6)}
+        new, info = contract_layout(pos, adj, grid, steps=50, mono_every=0)
+        assert info["blocked"] == 0  # nothing owes a wire; wall untouched
+        for v in pos:  # contraction is gentle at sub-tile scale
+            assert np.linalg.norm(new[v] - pos[v]) < 2.0
 
 
 class TestBarDomains:
