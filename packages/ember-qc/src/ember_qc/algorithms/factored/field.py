@@ -706,12 +706,146 @@ def _target_kappa(grid: TileGrid) -> float:
     return max(2.0, 2.0 * g.number_of_edges() / n - 2.0)
 
 
+class PressureState:
+    """Frozen-within-step structure for the pressure term (notes s3.42(a)):
+    contact SETS and floor pads are frozen; ends, memberships, and
+    argmin/argmax attribution are computed live from positions. Rows and
+    columns are symmetric; this object holds both."""
+
+    def __init__(self, pos: Dict[int, Point], src_adj: Dict[int, List[int]],
+                 grid: TileGrid, *, kappa: Optional[float] = None,
+                 floor: bool = True, derate: float = 1.0):
+        if kappa is None:
+            kappa = _target_kappa(grid)
+        self.nodes = sorted(pos)
+        self.idx = {v: i for i, v in enumerate(self.nodes)}
+        n = len(self.nodes)
+        contacts = _stair_contacts(pos, src_adj)
+        self.h_sets = [[self.idx[v]] + [self.idx[u] for u in contacts[v][0]]
+                       for v in self.nodes]
+        self.v_sets = [[self.idx[v]] + [self.idx[u] for u in contacts[v][1]]
+                       for v in self.nodes]
+        wH = max(len(r) for r in self.h_sets)
+        wV = max(len(r) for r in self.v_sets)
+        self.Hm = np.array([r + [r[0]] * (wH - len(r)) for r in self.h_sets])
+        self.Vm = np.array([r + [r[0]] * (wV - len(r)) for r in self.v_sets])
+        # frozen floor pads (per side, both axes; derive_bars_stair split)
+        x = np.array([float(pos[v][0]) for v in self.nodes])
+        y = np.array([float(pos[v][1]) for v in self.nodes])
+        deg = np.array([len([u for u in src_adj.get(v, []) if u in self.idx])
+                        for v in self.nodes], dtype=float)
+        w0 = x[self.Hm].max(1) - x[self.Hm].min(1)
+        h0 = y[self.Vm].max(1) - y[self.Vm].min(1)
+        need = np.maximum(0.0, deg / kappa - 1.0)
+        self.pad = (np.maximum(0.0, need - (w0 + h0)) / 4.0 if floor
+                    else np.zeros(n))
+        self.row_cap = grid.cap[:, :, 1].mean(axis=1) * derate
+        self.col_cap = grid.cap[:, :, 0].mean(axis=0) * derate
+        self.W, self.H = grid.W, grid.H
+
+
+def _axis_loads(ends_lo, ends_hi, perp, cap, n_lines, n_pos):
+    """Load matrix L(line, t) from bars [lo, hi] with bilinear line
+    membership from ``perp``; returns (L, r0, frac) for reuse."""
+    L = np.zeros((n_lines, n_pos))
+    r0 = np.clip(np.floor(perp).astype(int), 0, n_lines - 1)
+    frac = np.clip(perp - r0, 0.0, 1.0)
+    r1 = np.minimum(r0 + 1, n_lines - 1)
+    for i in range(len(ends_lo)):
+        a, b = ends_lo[i], ends_hi[i]
+        t0, t1 = int(np.floor(a)), int(np.floor(b))
+        for t in range(max(t0, 0), min(t1, n_pos - 1) + 1):
+            cov = min(b, t + 1.0) - max(a, float(t))
+            if cov <= 0:
+                continue
+            L[r0[i], t] += (1.0 - frac[i]) * cov
+            L[r1[i], t] += frac[i] * cov
+    return L, r0, frac, r1
+
+
+def pressure_energy(state: PressureState, x: np.ndarray,
+                    y: np.ndarray) -> float:
+    """P = sum over lines/cells of relu(load - cap)^2, both axes."""
+    a_h = x[state.Hm].min(1) - state.pad
+    b_h = x[state.Hm].max(1) + state.pad
+    a_v = y[state.Vm].min(1) - state.pad
+    b_v = y[state.Vm].max(1) + state.pad
+    Lr, _, _, _ = _axis_loads(a_h, b_h, y, state.row_cap, state.H, state.W)
+    Lc, _, _, _ = _axis_loads(a_v, b_v, x, state.col_cap, state.W, state.H)
+    o_r = np.maximum(0.0, Lr - state.row_cap[:, None])
+    o_c = np.maximum(0.0, Lc - state.col_cap[:, None])
+    return float((o_r ** 2).sum() + (o_c ** 2).sum())
+
+
+def pressure_forces(state: PressureState, x: np.ndarray, y: np.ndarray):
+    """-grad P per the s3.42(a) derivation. Returns (fx, fy) = the force
+    (negative gradient), NOT yet scaled by lambda.
+
+    Axial: the (value, id)-tie-broken argmin/argmax member of each bar's
+    set is billed 2*omega*o at the bar's end cell (left end: extending
+    left adds coverage -> gradient -2*omega*o(t_a) on a', force pushes the
+    min holder RIGHT into the bar when the end cell is overloaded).
+    Perpendicular: the owner is billed sum_t cov * 2*[o(r1,t) - o(r0,t)]
+    on its membership coordinate."""
+    n = len(x)
+    a_h = x[state.Hm].min(1) - state.pad
+    b_h = x[state.Hm].max(1) + state.pad
+    a_v = y[state.Vm].min(1) - state.pad
+    b_v = y[state.Vm].max(1) + state.pad
+    Lr, r0, fr, r1 = _axis_loads(a_h, b_h, y, state.row_cap,
+                                 state.H, state.W)
+    Lc, c0, fc, c1 = _axis_loads(a_v, b_v, x, state.col_cap,
+                                 state.W, state.H)
+    o_r = np.maximum(0.0, Lr - state.row_cap[:, None])
+    o_c = np.maximum(0.0, Lc - state.col_cap[:, None])
+    fx = np.zeros(n)
+    fy = np.zeros(n)
+    xi = x[state.Hm]
+    hmin = state.Hm[np.arange(n), xi.argmin(1)]
+    hmax = state.Hm[np.arange(n), xi.argmax(1)]
+    yi = y[state.Vm]
+    vmin = state.Vm[np.arange(n), yi.argmin(1)]
+    vmax = state.Vm[np.arange(n), yi.argmax(1)]
+    for i in range(n):
+        # h-bar of i: axial billing on the extreme holders
+        ta = int(np.clip(np.floor(a_h[i]), 0, state.W - 1))
+        tb = int(np.clip(np.floor(b_h[i]), 0, state.W - 1))
+        wa = (1.0 - fr[i]) * o_r[r0[i], ta] + fr[i] * o_r[r1[i], ta]
+        wb = (1.0 - fr[i]) * o_r[r0[i], tb] + fr[i] * o_r[r1[i], tb]
+        fx[hmin[i]] -= 2.0 * wa * (-1.0)   # dP/da' = -2*omega*o -> force -..
+        fx[hmax[i]] -= 2.0 * wb * (+1.0)
+        # v-bar of i
+        ta = int(np.clip(np.floor(a_v[i]), 0, state.H - 1))
+        tb = int(np.clip(np.floor(b_v[i]), 0, state.H - 1))
+        wa = (1.0 - fc[i]) * o_c[c0[i], ta] + fc[i] * o_c[c1[i], ta]
+        wb = (1.0 - fc[i]) * o_c[c0[i], tb] + fc[i] * o_c[c1[i], tb]
+        fy[vmin[i]] -= 2.0 * wa * (-1.0)
+        fy[vmax[i]] -= 2.0 * wb * (+1.0)
+        # perpendicular membership terms (owner i)
+        t0, t1 = int(np.floor(a_h[i])), int(np.floor(b_h[i]))
+        s = 0.0
+        for t in range(max(t0, 0), min(t1, state.W - 1) + 1):
+            cov = min(b_h[i], t + 1.0) - max(a_h[i], float(t))
+            if cov > 0:
+                s += cov * 2.0 * (o_r[r1[i], t] - o_r[r0[i], t])
+        fy[i] -= s
+        t0, t1 = int(np.floor(a_v[i])), int(np.floor(b_v[i]))
+        s = 0.0
+        for t in range(max(t0, 0), min(t1, state.H - 1) + 1):
+            cov = min(b_v[i], t + 1.0) - max(a_v[i], float(t))
+            if cov > 0:
+                s += cov * 2.0 * (o_c[c1[i], t] - o_c[c0[i], t])
+        fx[i] -= s
+    return fx, fy
+
+
 def contract_layout(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                     grid: TileGrid, *, steps: int = 300, eta: float = 0.2,
-                    deg_weight: bool = True, cycles: int = 1,
+                    deg_weight: bool = False, cycles: int = 1,
                     expand: float = 2.0, kappa: Optional[float] = None,
                     floor: bool = True, cap_derate: float = 1.0,
-                    mono_every: int = 25):
+                    mono_every: int = 25, pressure: bool = True,
+                    lam0: float = 0.25, lam_factor: float = 4.0):
     """Contraction dynamics (Stage 1 of the contraction design round,
     2026-07-29): start from a SPREAD (trivially feasible) layout and
     descend the stair energy with capacity as EXCLUDED VOLUME approached
@@ -727,15 +861,21 @@ def contract_layout(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
     again — settle-and-reshake; jams get another chance with the previous
     cycle's organization as bias.
 
-    Entry gating is exact and sequential (sorted order, admitted entrants
-    immediately count as residents); interval-GROWTH overfill (residents'
-    arms lengthening in place) is measured, not blocked — Stage 1
-    diagnostics decide whether Stage 2 needs growth handling. Only
-    intervals >= 1 tile occupy depth (sub-tile arms claim no wires,
-    consistent with participation and seeding).
+    ``pressure=True`` (v2, the pressure round, notes s3.42): capacity is a
+    BARRIER IN THE ENERGY — E_total = E_wire + lambda_P * P with P the
+    line-overload hinge^2 on bilinear bar loads, and forces taken by the
+    exact chain rule through the readout (axial billing on span-extreme
+    contributors — the third-party push the Stage-1 entry gate could not
+    express — plus perpendicular membership slides). lambda_P ramps with
+    the cycle index (lam0 * lam_factor^cycle: soft early, hard late; the
+    one schedule). Settlements are compared at the FINAL lambda, so
+    feasible settlements win the best-cycle selection. Mono composites are
+    gated on E_total. ``pressure=False`` retains the Stage-1 entry-gating
+    wall (the leaky control arm, s3.41).
 
-    Returns (new_pos, info): E trajectory (sampled), per-cycle final E,
-    blocked-entry count, growth-overfill max, wall time.
+    Returns (new_pos, info): E trajectories, per-cycle final E_total,
+    residual overload at the chosen settlement, blocked count (v1 arm),
+    growth diagnostic, wall time.
     """
     import time as _time
     t0 = _time.perf_counter()
@@ -805,9 +945,25 @@ def contract_layout(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
         return h_a, h_b, v_a, v_b
 
     info = {"E": [], "cycle_E": [], "blocked": 0, "growth_overfill": 0.0,
-            "mono_swaps": 0, "steps": 0}
+            "mono_swaps": 0, "steps": 0, "residual_overload": 0.0,
+            "lam": []}
+    lam_final = lam0 * (lam_factor ** (max(cycles, 1) - 1))
+
+    def _pstate():
+        cur = {v: np.array([x[idx[v]], y[idx[v]]]) for v in nodes}
+        return PressureState(cur, src_adj, grid, kappa=kappa, floor=floor,
+                             derate=cap_derate)
+
+    def _etotal(lam: float) -> float:
+        e = _energy()
+        if pressure:
+            e += lam * pressure_energy(_pstate(), x, y)
+        return e
+
     amp = float(expand)
     for cyc in range(max(cycles, 1)):
+        lam = lam0 * (lam_factor ** cyc)
+        info["lam"].append(round(lam, 3))
         if cyc > 0:  # reshake: decaying expansion about the centroid
             cx, cy = x.mean(), y.mean()
             x = np.clip(cx + amp * (x - cx), 0.0, W - 1.0)
@@ -818,41 +974,50 @@ def contract_layout(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
             _nets()
             fx, fy = _force()
             scale = eta if deg_weight else eta / (deg + 2.0)
-            dx = np.clip(fx * scale, -1.0, 1.0)
-            dy = np.clip(fy * scale, -1.0, 1.0)
-            h_a, h_b, v_a, v_b = _intervals()
-            # sequential entry gating, rows then columns
-            rows_of = np.clip(np.round(y).astype(int), 0, H - 1)
-            cols_of = np.clip(np.round(x).astype(int), 0, W - 1)
-            row_iv: Dict[int, list] = {}
-            col_iv: Dict[int, list] = {}
-            for i in range(n):
-                if h_b[i] - h_a[i] >= 1.0:
-                    row_iv.setdefault(rows_of[i], []).append(
-                        (float(h_a[i]), float(h_b[i])))
-                if v_b[i] - v_a[i] >= 1.0:
-                    col_iv.setdefault(cols_of[i], []).append(
-                        (float(v_a[i]), float(v_b[i])))
+            dx = fx * scale
+            dy = fy * scale
+            if pressure:
+                st = _pstate()
+                pfx, pfy = pressure_forces(st, x, y)
+                dx = dx + eta * lam * pfx
+                dy = dy + eta * lam * pfy
+            dx = np.clip(dx, -1.0, 1.0)
+            dy = np.clip(dy, -1.0, 1.0)
             nx_, ny_ = x + dx, y + dy
-            for i in range(n):
-                r_new = int(np.clip(round(ny_[i]), 0, H - 1))
-                if r_new != rows_of[i] and h_b[i] - h_a[i] >= 1.0:
-                    iv = (float(h_a[i]), float(h_b[i]))
-                    if line_depth(row_iv.get(r_new, []) + [iv]) \
-                            > row_pool[r_new]:
-                        ny_[i] = rows_of[i] + 0.49 * np.sign(dy[i])
-                        info["blocked"] += 1
-                    else:
-                        row_iv.setdefault(r_new, []).append(iv)
-                c_new = int(np.clip(round(nx_[i]), 0, W - 1))
-                if c_new != cols_of[i] and v_b[i] - v_a[i] >= 1.0:
-                    iv = (float(v_a[i]), float(v_b[i]))
-                    if line_depth(col_iv.get(c_new, []) + [iv]) \
-                            > col_pool[c_new]:
-                        nx_[i] = cols_of[i] + 0.49 * np.sign(dx[i])
-                        info["blocked"] += 1
-                    else:
-                        col_iv.setdefault(c_new, []).append(iv)
+            if not pressure:
+                # Stage-1 leaky wall (control arm, s3.41): sequential
+                # entry gating on line depth
+                h_a, h_b, v_a, v_b = _intervals()
+                rows_of = np.clip(np.round(y).astype(int), 0, H - 1)
+                cols_of = np.clip(np.round(x).astype(int), 0, W - 1)
+                row_iv: Dict[int, list] = {}
+                col_iv: Dict[int, list] = {}
+                for i in range(n):
+                    if h_b[i] - h_a[i] >= 1.0:
+                        row_iv.setdefault(rows_of[i], []).append(
+                            (float(h_a[i]), float(h_b[i])))
+                    if v_b[i] - v_a[i] >= 1.0:
+                        col_iv.setdefault(cols_of[i], []).append(
+                            (float(v_a[i]), float(v_b[i])))
+                for i in range(n):
+                    r_new = int(np.clip(round(ny_[i]), 0, H - 1))
+                    if r_new != rows_of[i] and h_b[i] - h_a[i] >= 1.0:
+                        iv = (float(h_a[i]), float(h_b[i]))
+                        if line_depth(row_iv.get(r_new, []) + [iv]) \
+                                > row_pool[r_new]:
+                            ny_[i] = rows_of[i] + 0.49 * np.sign(dy[i])
+                            info["blocked"] += 1
+                        else:
+                            row_iv.setdefault(r_new, []).append(iv)
+                    c_new = int(np.clip(round(nx_[i]), 0, W - 1))
+                    if c_new != cols_of[i] and v_b[i] - v_a[i] >= 1.0:
+                        iv = (float(v_a[i]), float(v_b[i]))
+                        if line_depth(col_iv.get(c_new, []) + [iv]) \
+                                > col_pool[c_new]:
+                            nx_[i] = cols_of[i] + 0.49 * np.sign(dx[i])
+                            info["blocked"] += 1
+                        else:
+                            col_iv.setdefault(c_new, []).append(iv)
             moved = float(np.abs(nx_ - x).sum() + np.abs(ny_ - y).sum())
             x = np.clip(nx_, 0.0, W - 1.0)
             y = np.clip(ny_, 0.0, H - 1.0)
@@ -861,37 +1026,63 @@ def contract_layout(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
             if it % 10 == 0:
                 info["E"].append(round(_energy(), 1))
             if mono_every and (it + 1) % mono_every == 0:
+                snap_xy = (x.copy(), y.copy())
+                e_pre = _etotal(lam)
                 cur = {v: np.array([x[idx[v]], y[idx[v]]]) for v in nodes}
                 cur, mi = edge_monotonize(cur, src_adj)
-                info["mono_swaps"] += mi["swaps"]
                 x = np.array([float(cur[v][0]) for v in nodes])
                 y = np.array([float(cur[v][1]) for v in nodes])
                 last_order = None
+                # composite E_total gate (mono is internally E_wire-gated;
+                # the pressure term must also consent)
+                if pressure and _etotal(lam) > e_pre + 1e-9:
+                    x, y = snap_xy
+                    last_order = None
+                else:
+                    info["mono_swaps"] += mi["swaps"]
             if moved < 1e-3:
                 break
-        # growth-overfill diagnostic at settlement
+        # settlement diagnostics + best-cycle selection at the FINAL lambda
         _nets()
-        h_a, h_b, v_a, v_b = _intervals()
-        over = 0.0
-        rows_of = np.clip(np.round(y).astype(int), 0, H - 1)
-        by_row: Dict[int, list] = {}
-        for i in range(n):
-            if h_b[i] - h_a[i] >= 1.0:
-                by_row.setdefault(rows_of[i], []).append(
-                    (float(h_a[i]), float(h_b[i])))
-        for r, ivs in by_row.items():
-            over = max(over, line_depth(ivs) - row_pool[r])
-        info["growth_overfill"] = max(info["growth_overfill"],
-                                      round(float(over), 2))
-        e_cyc = _energy()
+        if pressure:
+            st = _pstate()
+            p_now = pressure_energy(st, x, y)
+            a_h = x[st.Hm].min(1) - st.pad
+            b_h = x[st.Hm].max(1) + st.pad
+            a_v = y[st.Vm].min(1) - st.pad
+            b_v = y[st.Vm].max(1) + st.pad
+            Lr, _, _, _ = _axis_loads(a_h, b_h, y, st.row_cap, st.H, st.W)
+            Lc, _, _, _ = _axis_loads(a_v, b_v, x, st.col_cap, st.W, st.H)
+            over = max(float(np.maximum(0.0, Lr - st.row_cap[:, None]).max()),
+                       float(np.maximum(0.0, Lc - st.col_cap[:, None]).max()))
+            info["residual_overload"] = round(over, 2)
+            info["row_load"] = Lr
+            e_cyc = _energy() + lam_final * p_now
+        else:
+            h_a, h_b, v_a, v_b = _intervals()
+            over = 0.0
+            rows_of = np.clip(np.round(y).astype(int), 0, H - 1)
+            by_row: Dict[int, list] = {}
+            for i in range(n):
+                if h_b[i] - h_a[i] >= 1.0:
+                    by_row.setdefault(rows_of[i], []).append(
+                        (float(h_a[i]), float(h_b[i])))
+            for r, ivs in by_row.items():
+                over = max(over, line_depth(ivs) - row_pool[r])
+            info["growth_overfill"] = max(info["growth_overfill"],
+                                          round(float(over), 2))
+            e_cyc = _energy()
         info["cycle_E"].append(round(e_cyc, 1))
-        # keep the best settlement across cycles: a reshake may settle
-        # worse, and the handoff wants the best layout found, not the last
+        # keep the best settlement across cycles (scored at final lambda so
+        # feasible settlements win): a reshake may settle worse
         if cyc == 0 or e_cyc < info["final_E"]:
             info["final_E"] = round(e_cyc, 1)
             info["best_cycle"] = cyc
             best_xy = (x.copy(), y.copy())
+            best_over = info["residual_overload"] if pressure else None
     x, y = best_xy
+    if pressure and best_over is not None:
+        info["residual_overload"] = best_over
     info["time"] = round(_time.perf_counter() - t0, 3)
     out = {v: np.array([x[idx[v]], y[idx[v]]]) for v in nodes}
     return out, info

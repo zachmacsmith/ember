@@ -702,6 +702,124 @@ class TestZephyrGrid:
         assert 10.0 < kp < 14.0
 
 
+from ember_qc.algorithms.factored.field import (
+    PressureState, pressure_energy, pressure_forces,
+)
+
+
+class TestPressure:
+    """Tests derived from the notes s3.42(a) derivation, not from the
+    implementation."""
+
+    def _grid(self, B=12, cap=0.3):
+        g = nx.convert_node_labels_to_integers(nx.grid_2d_graph(B, B))
+        grid = TileGrid(g, nx.spectral_layout(g), fallback_bins=B)
+        grid.cap[:, :, :] = cap  # tiny caps -> smooth overloaded regime
+        return grid
+
+    def _cfg(self, seed=5, n=10, B=12):
+        rng = np.random.default_rng(seed)
+        pos = {v: np.array([0.71 + (B - 2.4) * rng.random(),
+                            0.73 + (B - 2.4) * rng.random()])
+               for v in range(n)}
+        g = nx.gnp_random_graph(n, 0.6, seed=3)
+        adj = {v: sorted(g.neighbors(v)) for v in g}
+        grid = self._grid(B)
+        state = PressureState(pos, adj, grid, kappa=3.0, floor=False)
+        x = np.array([float(pos[v][0]) for v in sorted(pos)])
+        y = np.array([float(pos[v][1]) for v in sorted(pos)])
+        return state, x, y
+
+    def test_finite_difference_gradient(self):
+        # THE decisive check: implemented forces == -grad(P) numerically,
+        # coordinate by coordinate (central differences, h away from the
+        # measure-zero kinks; random offsets keep us off them)
+        for seed in (5, 11, 23):
+            state, x, y = self._cfg(seed=seed)
+            fx, fy = pressure_forces(state, x, y)
+            h = 1e-5
+            for i in range(len(x)):
+                for arr, f in ((x, fx), (y, fy)):
+                    a = arr.copy(); a[i] += h
+                    b = arr.copy(); b[i] -= h
+                    if arr is x:
+                        ep = pressure_energy(state, a, y)
+                        em = pressure_energy(state, b, y)
+                    else:
+                        ep = pressure_energy(state, x, a)
+                        em = pressure_energy(state, x, b)
+                    grad = (ep - em) / (2 * h)
+                    assert f[i] == pytest.approx(-grad, rel=1e-3, abs=1e-3), \
+                        (seed, i, "x" if arr is x else "y")
+
+    def test_third_party_push(self):
+        # Isolate ROW physics (column pools huge): span-extreme contacts
+        # are billed axially with the derivation's signs — the max holder
+        # is pulled LEFT (shrink into the bar), a min holder pulled RIGHT.
+        grid = self._grid()
+        grid.cap[:, :, 0] = 50.0   # v-pools huge -> no column overload
+        grid.cap[:, :, 1] = 0.3    # h-pools tiny -> rows overloaded
+        pos = {0: np.array([2.0, 5.2]),   # w (lowest y -> h-arm owner)
+               1: np.array([8.3, 6.2]),   # u: span max of 0's and 1's bars
+               2: np.array([5.1, 6.7])}   # m: interior of 0's bar; min of 1's
+        adj = {0: [1, 2], 1: [0, 2], 2: [0, 1]}
+        state = PressureState(pos, adj, grid, kappa=13.0, floor=False)
+        x = np.array([2.0, 8.3, 5.1])
+        y = np.array([5.2, 6.2, 6.7])
+        fx, fy = pressure_forces(state, x, y)
+        assert fx[1] < 0.0   # max holder billed leftward (shrink)
+        assert fx[2] > 0.0   # min holder of 1's bar billed rightward
+
+    def test_perpendicular_slide_toward_slack_row(self):
+        # a bar straddling rows r (overloaded) and r+1 (slack) must feel
+        # fy toward the slack row
+        grid = self._grid(cap=0.3)
+        grid.cap[6, :, :] = 10.0   # row 6 slack, row 5 tiny cap
+        # crowd row 5 with an unrelated long bar
+        pos = {0: np.array([1.0, 5.0]), 1: np.array([9.0, 5.4]),
+               2: np.array([2.0, 5.45]), 3: np.array([8.0, 6.3])}
+        adj = {0: [1], 1: [0], 2: [3], 3: [2]}
+        state = PressureState(pos, adj, grid, kappa=13.0, floor=False)
+        x = np.array([1.0, 9.0, 2.0, 8.0])
+        y = np.array([5.0, 5.4, 5.45, 6.3])
+        fx, fy = pressure_forces(state, x, y)
+        assert fy[2] > 0.0  # variable 2's bar slides up toward slack row 6
+
+    def test_gas_inertness(self):
+        # sub-tile sparse config under REALISTIC caps (tiles hold 4-12
+        # wires; the untyped fallback's 0.5/pool is not a real fabric)
+        g = nx.convert_node_labels_to_integers(nx.grid_2d_graph(12, 12))
+        grid = TileGrid(g, nx.spectral_layout(g), fallback_bins=12)
+        grid.cap[:, :, :] = 4.0
+        pos = {v: np.array([2.0 + 0.4 * v, 7.0]) for v in range(5)}
+        adj = {v: [u for u in (v - 1, v + 1) if 0 <= u < 5]
+               for v in range(5)}
+        state = PressureState(pos, adj, grid, kappa=13.0)
+        x = np.array([float(pos[v][0]) for v in range(5)])
+        y = np.array([float(pos[v][1]) for v in range(5)])
+        assert pressure_energy(state, x, y) == 0.0
+        fx, fy = pressure_forces(state, x, y)
+        assert np.allclose(fx, 0) and np.allclose(fy, 0)
+
+    def test_contract_v2_settles_feasible(self):
+        # the leak-fix check: dense synthetic contracts to residual
+        # overload ~0 under the lambda ramp (v1 measured 60-140 on dense)
+        g = nx.convert_node_labels_to_integers(nx.grid_2d_graph(20, 20))
+        grid = TileGrid(g, nx.spectral_layout(g), fallback_bins=20)
+        grid.cap[:, :, :] = 2.0
+        rng = np.random.default_rng(7)
+        n = 16
+        pos = {v: np.array([1.0 + 17.0 * rng.random(),
+                            1.0 + 17.0 * rng.random()]) for v in range(n)}
+        adj = {v: [u for u in range(n) if u != v] for v in range(n)}
+        new, info = contract_layout(pos, adj, grid, steps=150, cycles=3,
+                                    kappa=3.0, pressure=True)
+        assert info["residual_overload"] <= 1.5
+        again, _ = contract_layout(pos, adj, grid, steps=150, cycles=3,
+                                   kappa=3.0, pressure=True)
+        assert all(np.allclose(new[v], again[v]) for v in pos)
+
+
 class TestContractLayout:
     def _grid(self, B=20, cap=2.0):
         g = nx.convert_node_labels_to_integers(nx.grid_2d_graph(B, B))
@@ -729,7 +847,8 @@ class TestContractLayout:
     def test_entry_gating_blocks_full_line(self):
         grid = self._grid(cap=1.0)  # depth 1 per line: brutal wall
         pos, adj = self._spread_k(12)
-        new, info = contract_layout(pos, adj, grid, steps=150, kappa=3.0)
+        new, info = contract_layout(pos, adj, grid, steps=150, kappa=3.0,
+                                    pressure=False)  # the v1 wall arm
         assert info["blocked"] > 0  # the wall was hit
         # entry-invariant: rows occupied by >=1-tile h-arms respect depth
         bars = derive_bars_stair(new, adj, kappa=3.0,
@@ -780,7 +899,7 @@ class TestContractLayout:
         grid = self._grid()
         pos, adj = self._spread_k(16, seed=11)
         new, info = contract_layout(pos, adj, grid, steps=80, cycles=3,
-                                    kappa=3.0)
+                                    kappa=3.0, pressure=False)
         assert len(info["cycle_E"]) == 3
         # best-settlement return: the handoff layout is the best cycle's
         assert info["final_E"] == min(info["cycle_E"])
