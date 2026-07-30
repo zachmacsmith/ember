@@ -2218,6 +2218,46 @@ physics change and awaits Max. Everything else stands: derivation, FD
 tests, the integrator, the cycles mechanism, and the phase-picture frame
 whose liquid corner is exactly what's blocked on this one term.
 
+### 3.44 The Poisson round (2026-07-30)
+
+#### (a) Derivation — committed before code, per the standing discipline
+
+Replaces s3.42(a)'s pointwise hinge² with the electrostatic energy of the
+overload source; everything else in that derivation (bar readout, bilinear
+membership, axial/perpendicular chain rule, frozen-within-step semantics)
+carries over verbatim.
+
+Per axis grid (rows H×W; columns W×H):
+
+- **Source**: s(cell) = relu(L(cell) − cap_line·derate) / cap_scale,
+  cap_scale = mean line cap. One-sided: slack fabric is silent.
+- **Potential**: ψ = G·(s − mean s), G = pseudoinverse of the grid
+  Laplacian (Neumann; the pre-consolidation PoissonField construction,
+  archive 612ced3e), computed once per grid shape and cached.
+- **Energy**: P = ½ Σ_cells s·ψ per axis, summed over axes. Since G is
+  symmetric and the mean-subtraction is idempotent against G's kernel,
+  ∂P/∂s = ψ, hence **∂P/∂L(cell) = ψ(cell)·1[L(cell) > cap]/cap_scale.**
+
+Consequently the position-gradient is s3.42(a) with the substitution
+2·o(cell) → ψ(cell)·1[over(cell)]/cap_scale everywhere:
+
+1. Axial: ∂P/∂a'_v = −Σ_r ω_v(r)·ψ(r, t_a)·1[over]/cap_scale (and the
+   +ψ analogue at b'_v), billed to the (value, id)-tie-broken span
+   extremes — third-party billing unchanged in structure.
+2. Perpendicular: ∂P/∂y_v = Σ_t χ_v(t)·[ψ(r1,t)·1[over] −
+   ψ(r0,t)·1[over]]/cap_scale.
+
+Why this breaks the plateau: inside a uniformly overloaded blob,
+1[over] ≡ 1 and ψ is the solved potential of the whole excess
+distribution — its interior gradient is proportional to enclosed excess
+(Gauss), nonzero everywhere except the exact center. The rim-only
+blindness of the local form is gone by construction, while slack end
+cells still contribute nothing (one-sidedness preserved). Kinks: at
+capacity crossings 1[over] jumps (P is C⁰ there) — measure-zero, same FD
+sampling discipline; ψ itself is smooth in s.
+
+*(Build + probe verdict to follow as (b).)*
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).
