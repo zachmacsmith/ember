@@ -2146,7 +2146,40 @@ Frozen-within-step quantities (contacts, pads, and the argmin/argmax
 attribution) are refreshed every step; the FD test freezes identically so
 it checks the implemented function, not the refresh policy.
 
-*(Build, probe, and verdict to follow as §3.42(b).)*
+#### (b) Build + Phase A verdict (2026-07-30)
+
+Built exactly per (a): `PressureState` / `pressure_energy` /
+`pressure_forces` / `contract_layout` v2 (v1 leaky wall kept as the
+control arm). **The finite-difference gradient test passed on the first
+run of the real implementation** — the physics is as derived (plus
+sign-specific third-party billing, perpendicular slide, gas inertness;
+516 tests). Smoke: residual overload 0.0 on P4/Z4 K20, deterministic.
+
+**Phase A (`pressure_probe.py`): the LEAK-CLOSED bar FAILED at probe
+scale.** Residual overloads at settlement on dense cells: 24–160 (bar:
+≤ ~1). The diagnosis is clean and is NOT the physics: at deep overload
+(o ~ 50–150), the pressure force λ·2·o·η exceeds the 1-tile trust clip by
+orders of magnitude → every step is a full-tile bang-bang in the sign
+direction, no equilibrium, settlement (Σ|Δ| < 1e-3) never fires, the
+step cap ends mid-thrash. Symptom fingerprint in the data: best_cycle=0
+(the SOFT-λ settlement wins the final-λ scoring — the hard cycles thrash
+to worse states than the soft ones), and wall-time 10–22 s (bar ~12 s).
+**A stiff barrier defeats fixed-step subgradient descent — the integrator
+is the failure, the FD-verified forces are not.** Where the barrier is
+NOT stiff, everything works: P16 regular resid 0.1, wsc c3 0.22, ws 3.2.
+
+First blob-area-law data (liquid/sparse cells, P16): occupied ~1.5–2× the
+predicted mass/density area (regular 90 vs 54, ws 202 vs 110) — right
+order, outside the 25% band; not scoreable until settlements are real.
+First shape data recorded (bar lengths mean 2.6–12.7 by cell). Phase B
+skipped (routing leaky layouts was already measured in s3.41).
+
+Named integrator candidates for the next decision (NOT built): (i)
+per-step E_total acceptance with deterministic step-halving (Armijo-style
+— guarantees descent, kills bang-bang); (ii) per-variable force
+normalization (direction-only steps with a decaying schedule); (iii)
+within-cycle λ continuation instead of per-cycle jumps. All three are
+integrator-only; the derivation and tests stand as-is.
 
 ## 4. References
 

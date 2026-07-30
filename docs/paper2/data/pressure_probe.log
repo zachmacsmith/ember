@@ -1,0 +1,61 @@
+/data/max/ember/docs/paper2/data/pressure_probe.py:20: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+
+===== Z12 (kappa 17.1)
+[Z12] K100: pipeline handoff E=2652.6 (30.5s)
+  v2: E_wire=435.8 (ctrl 2652.6) resid=93.16 best_cyc=3 t=10.141s area=66/pred=90.4 barlen(mean/max)=5.94/18.95
+  v1: E_wire=893.9 (ctrl 2652.6) grow=18.16 best_cyc=3 t=3.742s
+[Z12] K140: pipeline handoff E=nan (34.0s)
+  v2: E_wire=1109.4 (ctrl nan) resid=114.34 best_cyc=0 t=22.151s area=61/pred=183.0 barlen(mean/max)=9.04/16.69
+  v1: E_wire=252.9 (ctrl nan) grow=68.16 best_cyc=3 t=7.51s
+[Z12] ER100_d10: pipeline handoff E=861.3 (5.1s)
+  v2: E_wire=419.3 (ctrl 861.3) resid=42.2 best_cyc=0 t=4.187s area=63/pred=67.6 barlen(mean/max)=4.19/16.5
+  v1: E_wire=7.5 (ctrl 861.3) grow=0.0 best_cyc=2 t=1.625s
+[Z12] turan_n162: pipeline handoff E=2570.1 (31.5s)
+  v2: E_wire=426.2 (ctrl 2570.1) resid=139.2 best_cyc=0 t=19.818s area=32/pred=104.2 barlen(mean/max)=3.94/11.79
+  v1: E_wire=447.2 (ctrl 2570.1) grow=80.16 best_cyc=3 t=8.728s
+[Z12] spin_glass_n163: pipeline handoff E=nan (34.4s)
+  v2: E_wire=608.6 (ctrl nan) resid=113.16 best_cyc=0 t=11.071s area=23/pred=102.3 barlen(mean/max)=3.82/12.16
+  v1: E_wire=73.1 (ctrl nan) grow=59.16 best_cyc=3 t=6.001s
+[Z12] wsc_c3_sz32_n96: pipeline handoff E=120.4 (7.3s)
+  v2: E_wire=424.0 (ctrl 120.4) resid=17.85 best_cyc=1 t=5.366s area=119/pred=68.2 barlen(mean/max)=4.45/17.91
+  v1: E_wire=61.4 (ctrl 120.4) grow=0.0 best_cyc=3 t=2.283s
+[Z12] wsc_c3_sz64_n192: pipeline handoff E=3121.7 (31.0s)
+  v2: E_wire=1568.2 (ctrl 3121.7) resid=58.97 best_cyc=1 t=19.022s area=151/pred=234.1 barlen(mean/max)=8.37/21.69
+  v1: E_wire=75.4 (ctrl 3121.7) grow=60.16 best_cyc=3 t=13.02s
+[Z12] regular_n316: pipeline handoff E=2930.1 (8.6s)
+  v2: E_wire=2519.6 (ctrl 2930.1) resid=4.87 best_cyc=0 t=13.803s area=501/pred=369.2 barlen(mean/max)=7.97/24.17
+  v1: E_wire=26.6 (ctrl 2930.1) grow=27.16 best_cyc=3 t=5.904s
+[Z12] ws_n486: pipeline handoff E=1602.8 (8.4s)
+  v2: E_wire=2954.3 (ctrl 1602.8) resid=8.51 best_cyc=0 t=22.381s area=527/pred=448.0 barlen(mean/max)=6.08/25.72
+  v1: E_wire=39.0 (ctrl 1602.8) grow=1.16 best_cyc=3 t=9.37s
+
+===== P16 (kappa 12.4)
+[P16] K100: pipeline handoff E=1015.0 (31.3s)
+  v2: E_wire=1267.8 (ctrl 1015.0) resid=24.11 best_cyc=2 t=9.852s area=83/pred=62.1 barlen(mean/max)=12.69/15.91
+  v1: E_wire=139.4 (ctrl 1015.0) grow=21.75 best_cyc=3 t=3.827s
+[P16] K140: pipeline handoff E=1999.0 (30.2s)
+  v2: E_wire=696.7 (ctrl 1999.0) resid=72.12 best_cyc=2 t=18.978s area=35/pred=59.7 barlen(mean/max)=8.39/8.76
+  v1: E_wire=60.8 (ctrl 1999.0) grow=114.75 best_cyc=3 t=11.736s
+[P16] ER100_d10: pipeline handoff E=179.3 (4.4s)
+  v2: E_wire=403.5 (ctrl 179.3) resid=46.15 best_cyc=0 t=3.833s area=59/pred=22.9 barlen(mean/max)=4.04/12.41
+  v1: E_wire=8.3 (ctrl 179.3) grow=0.0 best_cyc=2 t=1.643s
+[P16] turan_n162: pipeline handoff E=1886.0 (32.1s)
+  v2: E_wire=978.0 (ctrl 1886.0) resid=62.12 best_cyc=0 t=17.392s area=80/pred=59.6 barlen(mean/max)=7.11/12.47
+  v1: E_wire=33.4 (ctrl 1886.0) grow=139.75 best_cyc=3 t=14.681s
+[P16] spin_glass_n163: pipeline handoff E=2265.0 (31.1s)
+  v2: E_wire=269.7 (ctrl 2265.0) resid=159.63 best_cyc=0 t=9.25s area=13/pred=26.6 barlen(mean/max)=2.6/6.33
+  v1: E_wire=32.4 (ctrl 2265.0) grow=127.75 best_cyc=3 t=6.793s
+[P16] wsc_c3_sz32_n96: pipeline handoff E=84.9 (5.1s)
+  v2: E_wire=152.1 (ctrl 84.9) resid=0.22 best_cyc=0 t=4.756s area=53/pred=13.6 barlen(mean/max)=2.12/10.62
+  v1: E_wire=44.5 (ctrl 84.9) grow=0.0 best_cyc=3 t=2.197s
+[P16] wsc_c3_sz64_n192: pipeline handoff E=917.0 (27.9s)
+  v2: E_wire=1341.9 (ctrl 917.0) resid=58.94 best_cyc=0 t=16.357s area=142/pred=73.9 barlen(mean/max)=7.48/19.39
+  v1: E_wire=61.5 (ctrl 917.0) grow=62.12 best_cyc=3 t=12.831s
+[P16] regular_n316: pipeline handoff E=1066.5 (8.0s)
+  v2: E_wire=871.6 (ctrl 1066.5) resid=0.1 best_cyc=1 t=12.589s area=90/pred=53.9 barlen(mean/max)=2.76/10.26
+  v1: E_wire=24.9 (ctrl 1066.5) grow=0.0 best_cyc=2 t=5.074s
+[P16] ws_n486: pipeline handoff E=449.6 (9.7s)
+  v2: E_wire=1926.5 (ctrl 449.6) resid=3.2 best_cyc=1 t=21.126s area=202/pred=109.5 barlen(mean/max)=3.96/18.64
+  v1: E_wire=41.3 (ctrl 449.6) grow=0.0 best_cyc=2 t=9.417s
+done-pressure-A

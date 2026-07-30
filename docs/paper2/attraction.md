@@ -96,6 +96,24 @@ Magic numbers, none swept: η=0.5, λ₀=3.0, round_frac=0.4, max_rounds=10, bin
 
 ## C. Idea ledger
 
+### The pressure round — physics verified, integrator failed (2026-07-30; notes s3.42)
+
+The phase-picture synthesis (gas/crystal/liquid as ground states of
+E = wirelength + line-overload barrier): derivation committed BEFORE code
+(s3.42(a)); forces verified by finite-difference gradient tests on first
+run. Smoke feasible (resid 0.0). Phase A at probe scale: **leak-closed
+bar FAILED** — residual overload 24–160 on dense cells, diagnosed to the
+INTEGRATOR: a stiff barrier (o ~ 100 → force ≫ the 1-tile clip) turns
+fixed-step descent into full-tile bang-bang; soft-λ cycles beat hard-λ
+cycles (best_cycle=0 fingerprint). Where the barrier is soft, it works
+(P16 regular 0.1, wsc c3 0.22). Blob-area law: first data, occupied
+~1.5–2× predicted (right order, outside the 25% band; unscoreable until
+settlements are real). Integrator candidates on record, unbuilt:
+per-step E_total acceptance with step-halving; force normalization with
+decaying schedule; within-cycle λ continuation. The derivation, FD
+tests, and pressure machinery stand; contract v2 stays probe-callable;
+no default changes.
+
 ### Contraction Stage 1 — the leaky wall (built + probed 2026-07-29; notes s3.41)
 
 Max's "capacity should never veto an energy-lowering move; approach
