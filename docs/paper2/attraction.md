@@ -96,6 +96,26 @@ Magic numbers, none swept: η=0.5, λ₀=3.0, round_frac=0.4, max_rounds=10, bin
 
 ## C. Idea ledger
 
+### Contraction Stage 1 — the leaky wall (built + probed 2026-07-29; notes s3.41)
+
+Max's "capacity should never veto an energy-lowering move; approach
+capacity from below" + two amendments (settle-and-reshake cycles; Zephyr
+frontier). Built: `contract_layout` (spread-start, entry-gated excluded
+volume, cycles), typed Zephyr TileGrid adapter, derived κ (target mean
+degree − 2; kappa=None default — the 13 stops being magic). Verdict:
+screen passed on the letter but **the wall leaks through arm growth**
+(entry gating stops bodies; arms lengthen in place; dense settlements
+60–140 over depth — their E is fictional) and the routed bars failed
+along exactly that line (Z12 spin_glass 0/3; sparse E gains bought no
+routing). CONFIRMED: cycles (reshake rescues jams 10–100× — keep),
+multi-patch payoff where the wall holds (P16 wsc c3×K32 5.32, gap 0.64 ≤
+0.7 target — the round's one routed win), Z12 ER win. REFUTED:
+magnets-rate (unnormalized hub-rush thrashes; normalized + cycles wins).
+RECORDED: first per-cell Z12 baselines — mm markedly stronger on Zephyr
+(margins thinner everywhere). Stage 2 precondition, if pursued: a
+growth-tight wall (excluded volume must bind BARS, not just bodies).
+No default changes; `contract_layout` stays probe-callable.
+
 ### Local interpolation refinements (built + probed 2026-07-29; notes s3.40)
 
 Max's design ask: one simple rule interpolating between perfect clique

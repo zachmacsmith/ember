@@ -2038,6 +2038,65 @@ recorded misses, and the design is the one Max asked for — no rule mentions
 a cluster, a diagonal, or a degree threshold; κ is physics only. Both
 misses stay open on the ledger.
 
+### 3.41 Contraction Stage 1: the wall leaks through arm growth; cycles vindicated, magnets-rate refuted; routed bars failed except the multi-patch payoff; Zephyr adapter + derived κ shipped (2026-07-29)
+
+Design round from Max's capacity insight ("an energy-lowering swap should
+never be vetoed by capacity — a veto means the layout was wrong") plus two
+amendments (repetition/cycles; switch the frontier to Zephyr). Built
+(`contract_layout`, `_target_kappa`, typed Zephyr TileGrid adapter; 511
+tests): spread-start contraction, capacity as excluded volume approached
+from below (sequential entry gating = invariant-by-entrants, no forced
+projection), optional unnormalized degree-weighted steps (magnets-rate),
+interleaved edge_monotonize, settle-and-reshake cycles with decaying
+amplitude returning the best settlement. Probe: `contract_probe.py`
+(Phase A screen, Z12 + P16) and `contract_probe_routed.py` (Phase B).
+Bars pre-registered in the plan.
+
+**Phase A:** screen gate passed on the letter — E far below the pipeline
+handoff on every dense cell, zero entry violations — but the
+growth-overfill diagnostic (deliberately measured-not-blocked) exposed
+the load-bearing finding: **the wall leaks through arm growth.** Entry
+gating stops bodies; residents' arms lengthen in place as neighbours
+converge, and dense settlements sit 60–140 deep past line capacity — the
+spectacular E (K140 61, turán 33, spin_glass 32) is partly fictional.
+Clean cells (grow ≈ 0): sparse guards E 26–43 vs pipeline handoffs
+1600–2900; wsc patches band_overlap 0.0 (coalesce in place). **CYCLES bar
+passed emphatically** (reshake rescues jams 10–100×: 3005→26, 4316→43,
+1573→8.8 — Max's repetition amendment is the strongest mechanism in the
+data). **Magnets-rate refuted**: dw=1 loses to normalized steps nearly
+everywhere once cycles exist (hubs overshoot; 10–30× blocked). Wall-time
+bar missed on the heaviest cells (up to ~15 s at c4).
+
+**Phase B (routed; finalist spec/dw=0/c4):** the routed bars FAILED
+broadly, exactly along the leak line. Z12 (fresh mm/mm2 baselines, first
+ever): contract loses on K100 (11.54 vs 10.28), K140 (21.43 at 1/3 vs mm
+18.27 — feasibility deficit ✗), turán (13.66 vs 12.01), spin_glass
+(0/3 ✗✗ vs mm 3/3), wsc cells; small wins ER (4.74 vs 4.97) and parity
+ws. P16 continuity: worse than the pipeline on K100/K140/spin_glass/
+regular/ws — the sparse-guard E gains did NOT translate to routing
+(regular E 26 → routed 4.30 vs pipeline 3.44: low model-E under a leaky
+wall, and over-deep bars that the coloring cannot seed, buy nothing).
+**Salvages:** (1) **P16 wsc c3×K32 PAYOFF BAR MET** — 5.32 vs pipeline
+5.84, gap to mm 0.64 ≤ the 0.7 target; the clean-contraction multi-patch
+case delivered exactly where grow ≈ 0. (2) Z12 ER win. (3) Permanent
+infrastructure: the typed Zephyr adapter (junctions measured
+near-complete vs Pegasus 0.56) and derived κ (mean target degree − 2;
+kappa=None default) are in the default pipeline. (4) First Z12 per-cell
+baselines: mm is markedly stronger on Zephyr (K100 10.28; spin_glass
+17.87 3/3 vs P16's 24 with failures) — paper3's "Zephyr legalizes
+easily" confirmed at cell level; margins there will be thinner
+everywhere.
+
+**Verdict:** Stage 1 as built is not a pipeline candidate; the
+pre-registered jamming rule fires in a sharper form — it is not that the
+projection earns its keep (the screen passed), but that **E under a leaky
+wall is not the objective**. Stage 2, if pursued, has one mandatory
+change (growth-tight wall: arms may not lengthen into full lines — the
+excluded volume must bind bars, not just bodies) and one proven component
+to keep (cycles). The wsc payoff and ER results say the thesis lives
+where the wall holds. No default changes; contract_layout stays a
+probe-callable mechanism. Discussion with Max next.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).
