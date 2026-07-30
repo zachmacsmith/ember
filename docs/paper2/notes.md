@@ -2097,6 +2097,57 @@ to keep (cycles). The wsc payoff and ER results say the thesis lives
 where the wall holds. No default changes; contract_layout stays a
 probe-callable mechanism. Discussion with Max next.
 
+### 3.42 The pressure round (2026-07-30)
+
+#### (a) Derivation — written before any code, per the round's discipline
+
+**State.** Positions (x_v, y_v). Within a step, stair contacts are frozen
+(computed from the y-order at step start, standard subgradient semantics),
+and so is each variable's floor pad c_v (see below). M_v = {v} ∪
+h-contacts(v); M'_v = {v} ∪ v-contacts(v).
+
+**Bars.** v's h-bar: x-interval [a'_v, b'_v] with a_v = min_{u∈M_v} x_u,
+b_v = max, widened by the frozen pad c_v = max(0, need_v − (w_v+h_v))/4
+per side (need_v = deg_v/κ − 1; matching derive_bars_stair). Row
+membership is BILINEAR: weight ω_v(r) = 1 − f on r = ⌊y_v⌋ and f on r+1,
+f = y_v − ⌊y_v⌋ — this is what makes cross-line motion differentiable.
+v-bars symmetric (y-interval over M'_v, column membership from x_v).
+
+**Load and pressure.** Cell coverage χ_v(t) = |[a'_v, b'_v] ∩ [t, t+1)|
+∈ [0,1] (piecewise linear in the ends). Row load L(r,t) = Σ_v ω_v(r)
+χ_v(t). Overload o(r,t) = relu(L(r,t) − cap_r·derate), cap_r = the row's
+mean h-pool. P = Σ_{r,t} o(r,t)² + (column term). E_total = E_wire +
+λ_P·P; λ_P ramps with the cycle index.
+
+**Gradients (the load-bearing part).**
+
+1. *Axial, through the ends.* ∂χ_v(t)/∂a'_v = −1 exactly in the cell
+   t_a = ⌊a'_v⌋ (extending left adds coverage there), 0 elsewhere;
+   symmetric +1 at t_b = ⌊b'_v⌋ for b'_v. Hence
+   ∂P/∂a'_v = −Σ_r ω_v(r)·2o(r, t_a),  ∂P/∂b'_v = +Σ_r ω_v(r)·2o(r, t_b).
+   Chain to positions through the min/max: a_v = x_{u_min} where u_min is
+   the (x, id)-tie-broken argmin over M_v, so
+   **∂P/∂x_u = Σ_{v : u = u_min(M_v)} ∂P/∂a'_v + Σ_{v : u = u_max(M_v)}
+   ∂P/∂b'_v** (+ the analogous v-bar terms landing on y_u). This is the
+   third-party push: u is billed for every neighbour's bar whose end u
+   defines. A non-extreme member of M_v gets nothing from v's bar — the
+   test suite asserts both directions.
+2. *Perpendicular, through the membership.* ∂ω_v(⌊y_v⌋)/∂y_v = −1,
+   ∂ω_v(⌊y_v⌋+1)/∂y_v = +1, so
+   **∂P/∂y_v (row term) = Σ_t χ_v(t)·2[o(r+1, t) − o(r, t)]** — the bar
+   slides toward the less-overloaded row. Symmetric column term lands on
+   x_v.
+3. Forces = −λ_P·∇P added to the attraction subgradient; trust-region
+   clip at 1 tile unchanged. Kinks (cell boundaries, argmin ties,
+   L = cap) are measure-zero; the finite-difference test samples away
+   from them.
+
+Frozen-within-step quantities (contacts, pads, and the argmin/argmax
+attribution) are refreshed every step; the FD test freezes identically so
+it checks the implemented function, not the refresh policy.
+
+*(Build, probe, and verdict to follow as §3.42(b).)*
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).
