@@ -2365,7 +2365,53 @@ Qubits host wires; **couplers host edges** — so place the edges.
   s3.28 measured disconnected seeds repairable). Routing protocol
   unchanged (patience-0 legalize + spur_prune + warm polish).
 
-*(Build + probe verdict to follow as (b).)*
+#### (b) Build + probe verdict (2026-07-30)
+
+Built per (a): `contact.py` (junction_caps, ContactState, energy/forces,
+contact_place = the Armijo+cycles+hardening shell, contact_seeds with
+qubit-level seat exclusivity). **FD gradient gate passed on the first run
+of the real implementation — third consecutive round**; K6 triangle
+miniature feasible; 525 tests.
+
+**Probe (Z12, 4 cells, 3 routing seeds vs recorded mm/mm2):**
+
+| cell | contact | mm / mm2 | placement resid | verdict |
+|---|---|---|---|---|
+| ER100_d10 | **4.65 (3/3)** | 4.97 / 4.86 | 0.0 | **WIN — best ever on the cell; signal-of-life bar MET** |
+| spin_glass_n163 | 0/3 routed | 17.87 / 18.36 | **0.26** | placement SOLVED (node model: pinned at 57); readout fails |
+| K100 | 17.24 (3/3) | 10.28 / 11.33 | 0.1 | feasible placement; crude readout costs ~7 ACL |
+| turan_n162 | 0/3 | 12.01 / 10.99 | **965** | placement itself failed — see below |
+
+Readings, in order of importance:
+
+1. **The edge-placement thesis scored its first real win on its home
+   cell**: ER100 4.65 beats both mm arms with EXACT seating feasibility —
+   every edge got a coupler, first probe, crude readout. "Each edge needs
+   a seat" is now a measured mechanism, not a metaphor.
+2. **The pinned-density problem is solved in contact variables**:
+   spin_glass settles at residual 0.26 where the node model was pinned at
+   57 through three rounds of fixes. The failure MOVED — from placement
+   (fundamental) to readout (engineering): Stage-1's disconnected
+   contact-union seeds are unroutable at n≈163 within budget. Named next
+   step: Stage-2 readout — connect each net's seats (SPH tree over its
+   contact qubits; trees.py machinery exists).
+3. **K100 same shape**: feasible triangle-ish placement (hpwl 1095,
+   resid 0.1), big routed gap from seed disconnection. Crystal-corner
+   competitiveness awaits the same Stage-2 readout.
+4. **turán reproduced the s3.44 conditioning diagnosis, undiluted**:
+   all cross-block contacts init into one central pile (~8.7k contacts
+   between three blocks), and global-α Armijo cannot spread a
+   1000-deep pile (dmax throttling: interior motion ~1/dmax per step) —
+   suspect #2 from the s3.44 list, now isolated in a clean setting.
+   Named next step: per-contact (diagonal) preconditioning, doubly
+   motivated by step-0's optimizer-stuck conviction.
+5. Wall-time 7–23 s at |E| up to 8.7k — inside the bar, unoptimized.
+
+**Verdict: the round Max asked for — promising, with the next two moves
+named by the data**: (i) Stage-2 readout (net routing over seats),
+(ii) diagonal preconditioning for pile spreading. No default changes;
+the contact model is the first line in this program to beat minorminer
+on a liquid-family cell.
 
 ## 4. References
 

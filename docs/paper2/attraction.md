@@ -96,6 +96,22 @@ Magic numbers, none swept: η=0.5, λ₀=3.0, round_frac=0.4, max_rounds=10, bin
 
 ## C. Idea ledger
 
+### The contact round — Option B unshelved; first liquid-family WIN (2026-07-30; notes s3.45)
+
+Max's edge-placement reframing = the 2026-07-19 Option B, its hour
+arrived. Step-0 diagnosis first: s3.44 was OPTIMIZER-STUCK (hand layout
+at half the settled E_total) and even hand layouts keep overload 9 —
+contact-pinning convicted. Built `contact.py` (contacts as state, nets as
+variables, junction density as native point pressure; FD gate first-run
+green, third consecutive). Probe (Z12): **ER100_d10 4.65 vs mm 4.97/4.86
+— the program's first family win over minorminer, with exact seating
+(resid 0.0)**; spin_glass placement SOLVED (resid 0.26 vs the node
+model's pinned 57) but Stage-1's disconnected seeds fail routing; K100
+feasible but readout costs ~7 ACL; turán's central contact pile (resid
+965) reproduces the hot-spot-α conditioning diagnosis undiluted. Next
+moves named by the data: Stage-2 readout (SPH net routing over seats),
+diagonal preconditioning. No default changes.
+
 ### The Poisson round — term verified, cells unmoved; diagnosis needed (2026-07-30; notes s3.44)
 
 Two-term pressure (hinge feasibility + Poisson interior gradient; the
