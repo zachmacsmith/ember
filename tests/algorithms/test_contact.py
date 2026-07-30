@@ -126,16 +126,36 @@ class TestContactPlace:
         again, _ = contact_place(src, grid, steps=150, cycles=3)
         assert np.allclose(contacts, again)
 
-    def test_seeds_seat_exclusive_and_cover(self):
+    def test_seeds_connected_disjoint_covering(self):
+        # the Stage-2 readout contract: chains connected, pairwise
+        # disjoint, deterministic; every edge whose two seats survived is
+        # covered by real adjacency
         src = nx.complete_graph(6)
         g = dnx.zephyr_graph(3, 4)
         grid = TileGrid(g, target_layout(g))
         J, couplers = junction_caps(grid)
         contacts, _ = contact_place(src, grid, steps=100, cycles=2)
-        seeds = contact_seeds(src, grid, contacts, couplers)
+        seeds, rinfo = contact_seeds(src, grid, contacts, couplers)
         allq = [q for c in seeds.values() for q in c]
-        assert len(allq) == len(set(allq))     # seat exclusivity
+        assert len(allq) == len(set(allq))     # disjoint
         assert set(seeds) == set(src.nodes())  # everyone seeded
-        # every variable with edges holds at least one qubit per ~2 edges
-        for v in src.nodes():
-            assert len(seeds[v]) >= 1
+        for v, c in seeds.items():
+            assert nx.is_connected(g.subgraph(c))  # CONNECTED chains
+        covered = sum(
+            1 for (u, v) in src.edges()
+            if any(g.has_edge(a, b) for a in seeds[u] for b in seeds[v]))
+        # K6 on Z3 places cleanly: nearly all edges seat-covered
+        assert covered >= src.number_of_edges() - rinfo["dropped_seats"]
+        again, _ = contact_seeds(src, grid, contacts, couplers)
+        assert again == seeds  # deterministic
+
+    def test_bipartite_pile_settles(self):
+        # the turan failure in miniature: K6,6's cross-block contacts all
+        # initialize at the midline (one pile). The s3.46 per-contact
+        # preconditioning must spread it to a feasible seating (the
+        # global-alpha build pinned on exactly this shape at scale).
+        src = nx.complete_bipartite_graph(6, 6)
+        g = dnx.zephyr_graph(3, 4)
+        grid = TileGrid(g, target_layout(g))
+        contacts, info = contact_place(src, grid, steps=200, cycles=3)
+        assert info["residual_overload"] <= 0.5

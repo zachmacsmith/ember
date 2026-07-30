@@ -189,10 +189,15 @@ def contact_place(src: nx.Graph, grid: TileGrid, *, steps: int = 300,
         hits = 0
         for _it in range(max(steps, 1)):
             fx, fy = contact_forces(state, X, Y, lam)
-            dmax = max(float(np.abs(fx).max()), float(np.abs(fy).max()),
-                       1e-12)
+            # diagonal preconditioning (s3.46): clip the force PER CONTACT
+            # to 1 tile — every contact keeps its mobility regardless of
+            # the hottest cell (global 1/max|f| scaling let one deep pile
+            # throttle everyone: turan's residual-965 failure). Descent is
+            # still guaranteed by the Armijo gate.
+            fx = np.clip(fx, -1.0, 1.0)
+            fy = np.clip(fy, -1.0, 1.0)
             e_cur = contact_energy(state, X, Y, lam)
-            alpha = 1.0 / dmax
+            alpha = 1.0
             accepted = False
             for _k in range(7):
                 tX = np.clip(X + alpha * fx, 0.0, grid.W - 1.0)
@@ -231,10 +236,10 @@ def contact_place(src: nx.Graph, grid: TileGrid, *, steps: int = 300,
         hits = 0
         for _it in range(50):
             fx, fy = contact_forces(state, X, Y, lam_h)
-            dmax = max(float(np.abs(fx).max()), float(np.abs(fy).max()),
-                       1e-12)
+            fx = np.clip(fx, -1.0, 1.0)   # per-contact mobility (s3.46)
+            fy = np.clip(fy, -1.0, 1.0)
             e_cur = contact_energy(state, X, Y, lam_h)
-            alpha = 1.0 / dmax
+            alpha = 1.0
             e_try = e_cur
             for _k in range(7):
                 tX = np.clip(X + alpha * fx, 0.0, grid.W - 1.0)
@@ -319,15 +324,69 @@ def contact_seeds(src: nx.Graph, grid: TileGrid, contacts: np.ndarray,
         vw = v if hw == u else u
         seeds[hw].add(qh)
         seeds[vw].add(qv)
+    # ---- Stage-2 connected readout (s3.46): join each variable's seats
+    # into ONE chain by iterative nearest-seat BFS joining through free
+    # fabric (uniform prices -> plain BFS with early exit, the
+    # mm-internals lesson; connectors claimed as we go). Unreachable
+    # seats are DROPPED and released (best-effort doctrine: their edge
+    # falls back to router repair).
+    import collections
+    from ember_qc.embedding_backend import build_adjacency
+    adj = build_adjacency(grid.graph)
     out = {}
+    info = {"dropped_seats": 0, "connector_qubits": 0}
+    order = sorted(src.nodes(), key=lambda v: (-len(seeds[v]), v))
+    for v in order:
+        seats = sorted(seeds[v])
+        if not seats:
+            continue
+        chain = {seats[0]}
+        remaining = set(seats[1:])
+        while remaining:
+            # BFS from the current chain through free fabric; targets =
+            # v's remaining seats; early exit at the first (nearest) one
+            parent = {q: None for q in chain}
+            dq = collections.deque(chain)
+            hit = None
+            while dq:
+                q = dq.popleft()
+                for w in adj[q]:
+                    if w in parent:
+                        continue
+                    if w in remaining:
+                        parent[w] = q
+                        hit = w
+                        dq.clear()
+                        break
+                    if w in taken:
+                        continue  # someone else's seat or connector
+                    parent[w] = q
+                    dq.append(w)
+            if hit is None:
+                # nothing reachable: drop and release every remaining seat
+                info["dropped_seats"] += len(remaining)
+                for s in remaining:
+                    taken.discard(s)
+                remaining = set()
+                break
+            path = []
+            q = hit
+            while q is not None and q not in chain:
+                path.append(q)
+                q = parent[q]
+            for q in path:
+                chain.add(q)
+                if q not in seats:
+                    taken.add(q)  # connector claimed
+                    info["connector_qubits"] += 1
+            remaining.discard(hit)
+        out[v] = sorted(chain)
     used = set(taken)
     for v in sorted(src.nodes()):
-        if seeds[v]:
-            out[v] = sorted(seeds[v])
-        else:  # isolated or unseated: nearest unclaimed qubit
-            for q in grid.qubits:
+        if v not in out or not out[v]:
+            for q in grid.qubits:  # isolated or fully unseated
                 if q not in used:
                     used.add(q)
                     out[v] = [q]
                     break
-    return out
+    return out, info

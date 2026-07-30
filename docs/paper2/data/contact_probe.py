@@ -52,7 +52,7 @@ def _run(job):
     t0 = time.perf_counter()
     contacts, info = contact_place(src, grid, steps=300, cycles=4)
     J, couplers = junction_caps(grid)
-    seeds_c = contact_seeds(src, grid, contacts, couplers)
+    seeds_c, rinfo = contact_seeds(src, grid, contacts, couplers)
     place_t = round(time.perf_counter() - t0, 1)
     src_adj = {v: sorted(src.neighbors(v)) for v in sorted(src)}
     adj = build_adjacency(target)
@@ -69,7 +69,9 @@ def _run(job):
     acl = (round(sum(len(c) for c in emb.values()) / len(emb), 3)
            if emb else None)
     return dict(cell=cell, seed=seed, final_acl=acl, place_t=place_t,
-                resid=info["residual_overload"], hpwl=info["final_hpwl"])
+                resid=info["residual_overload"], hpwl=info["final_hpwl"],
+                dropped=rinfo["dropped_seats"],
+                connectors=rinfo["connector_qubits"])
 
 
 def main():
@@ -79,7 +81,8 @@ def main():
         for row in ex.map(_run, jobs):
             print(f"{row['cell']} seed {row['seed']}: {row['final_acl']} "
                   f"(place {row['place_t']}s resid {row['resid']} "
-                  f"hpwl {row['hpwl']})", flush=True)
+                  f"hpwl {row['hpwl']} dropped {row['dropped']} "
+                  f"conn {row['connectors']})", flush=True)
             rows.append(row)
 
     base = {}
