@@ -96,6 +96,22 @@ Magic numbers, none swept: η=0.5, λ₀=3.0, round_frac=0.4, max_rounds=10, bin
 
 ## C. Idea ledger
 
+### Contact Stage 2 — one bar of four; gridlock + the stubborn pile (2026-07-30; notes s3.46)
+
+Connected BFS readout + per-contact preconditioning, probed. ER win
+holds (4.72; twice-reproduced vs mm 4.97/mm2 4.86). K100 improves
+17.24→15.50 (bar ≤13 missed). turán ROUTES for the first time (2/3,
+15.5) off a still-terrible placement — the readout direction is right —
+but the pile survives the preconditioner (resid 928; the K6,6 miniature
+passed, K81,81 didn't: NOT step-size throttling; hypothesis =
+attraction-dominated equilibrium, needs a per-term force-decomposition
+diagnosis, not a third integrator patch). spin_glass REGRESSED (seating
+0.26→4.63; routed 0/3): the exclusive connector claiming gridlocks —
+dropped seats 49–92% per cell. Named fix candidate: connect WITHOUT
+claiming (overlapping connectors; MM's overlap pricing resolves — our
+exclusivity was more rigid than the router's own design premise).
+1/4 bars; report + discuss. No default changes.
+
 ### The contact round — Option B unshelved; first liquid-family WIN (2026-07-30; notes s3.45)
 
 Max's edge-placement reframing = the 2026-07-19 Option B, its hour

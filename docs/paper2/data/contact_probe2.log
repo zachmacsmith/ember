@@ -1,0 +1,31 @@
+/data/max/ember/docs/paper2/data/contact_probe.py:40: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/contact_probe.py:40: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/contact_probe.py:40: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/contact_probe.py:40: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/contact_probe.py:40: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/contact_probe.py:40: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+K100 seed 0: 17.15 (place 20.8s resid 0.7 hpwl 1357.3 dropped 2410 conn 1820)
+K100 seed 1: 15.1 (place 21.8s resid 0.7 hpwl 1357.3 dropped 2410 conn 1820)
+K100 seed 2: 14.24 (place 20.1s resid 0.7 hpwl 1357.3 dropped 2410 conn 1820)
+ER100_d10 seed 0: 4.86 (place 14.0s resid 0.0 hpwl 413.1 dropped 466 conn 901)
+ER100_d10 seed 1: 4.57 (place 13.8s resid 0.0 hpwl 413.1 dropped 466 conn 901)
+ER100_d10 seed 2: 4.72 (place 14.8s resid 0.0 hpwl 413.1 dropped 466 conn 901)
+turan_n162 seed 0: 15.414 (place 11.4s resid 928.18 hpwl 4096.5 dropped 2770 conn 1661)
+turan_n162 seed 1: None (place 11.7s resid 928.18 hpwl 4096.5 dropped 2770 conn 1661)
+turan_n162 seed 2: 15.648 (place 12.2s resid 928.18 hpwl 4096.5 dropped 2770 conn 1661)
+spin_glass_n163 seed 0: None (place 6.7s resid 4.63 hpwl 2799.6 dropped 2823 conn 2391)
+spin_glass_n163 seed 1: None (place 6.7s resid 4.63 hpwl 2799.6 dropped 2823 conn 2391)
+spin_glass_n163 seed 2: None (place 9.5s resid 4.63 hpwl 2799.6 dropped 2823 conn 2391)
+
+summary (mean over legal seeds; baselines from contract_probe_routed.csv):
+K100              contact=15.50(3)  mm=10.28(3)  mm2=11.33(3)
+ER100_d10         contact=4.72(3)  mm=4.97(3)  mm2=4.86(3)
+turan_n162        contact=15.53(2)  mm=12.01(3)  mm2=10.99(3)
+spin_glass_n163   contact=FAIL(0)  mm=17.87(3)  mm2=18.36(2)
+done-contact

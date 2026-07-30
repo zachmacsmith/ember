@@ -2413,6 +2413,55 @@ named by the data**: (i) Stage-2 readout (net routing over seats),
 the contact model is the first line in this program to beat minorminer
 on a liquid-family cell.
 
+### 3.46 Contact Stage 2: connected readout + preconditioning — one bar of four; the gridlock and the stubborn pile (2026-07-30)
+
+Built per plan: (A) connected readout — seats joined per variable by
+early-exit BFS through free fabric, connectors claimed, unreachable
+seats dropped AND released; (B) per-contact force clipping replacing the
+global 1/max|f| step scale, both loops. 526 tests (readout contract:
+connected/disjoint/deterministic/edge-covering; K6,6 pile miniature
+settles ≤0.5 — honesty note: added post-patch, red-first check skipped).
+
+**Probe (same protocol/baselines as s3.45):**
+
+| cell | Stage 2 | Stage 1 | mm/mm2 | bar | verdict |
+|---|---|---|---|---|---|
+| ER100_d10 | 4.72 (3/3) | 4.65 | 4.97/4.86 | ≤4.9 | **✓ win holds** |
+| K100 | 15.50 (3/3) | 17.24 | 10.28/11.33 | ≤13 | ✗ (improved 1.7) |
+| turan | 15.53 (2/3!) | 0/3 | 12.01/10.99 | resid ≤1 | ✗ resid 928 — but ROUTES now |
+| spin_glass | 0/3, resid 4.63 | 0/3, resid 0.26 | 17.87 | 3/3 | ✗✗ placement DEGRADED |
+
+Two sharp findings:
+
+1. **Readout gridlock**: the exclusive connector claiming starves later
+   variables — dropped seats: K100 2410/4950 (49%), spin_glass
+   2823/~3900 (72%), ER 466/505 (92%!). ER still wins because near-
+   singleton seeds + MM ≈ Stage 1 there, but on dense cells the
+   sequential greedy readout destroys the seating it was built to
+   transmit. Named fix candidate (NOT built): **connect without
+   claiming** — connectors overlap freely and MM's overlap pricing
+   resolves them (overlap is priced, not forbidden — minorminer's own
+   design premise; our exclusive claiming was more rigid than the
+   router we hand off to). Note the irony: a negotiated readout is
+   minorminer's legalization re-invented — the right division may be
+   connected-overlapping seeds (cheap) + MM negotiation (theirs).
+2. **The turán pile survives the preconditioner** (resid 965 → 928; the
+   K6,6 miniature passed, the K81,81 original didn't) — so the pile is
+   NOT merely step-size throttling at scale. Standing hypothesis: an
+   attraction-dominated equilibrium (all 162 nets pull their ~81
+   contacts toward the shared midline; the net pulls are the pile's
+   glue, and hardening λ fights n·deg worth of them). Needs a genuine
+   diagnosis round (per-term force decomposition at the pinned state),
+   not another integrator patch — two integrator patches have now
+   under-delivered on this cell.
+   Meanwhile the connected readout salvages turán to 15.5 (2/3) from a
+   TERRIBLE placement — evidence the readout direction is right even
+   where the placement is wrong.
+
+Score: 1 of 4 bars. Per the failure protocol: report + discuss.
+Positive core intact: ER win reproduced twice (4.65/4.72 vs mm
+4.97/mm2 4.86); the model's home cell is stable. No default changes.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).
