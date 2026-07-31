@@ -108,3 +108,14 @@ it higher). Fix: gate on a per-target threshold derived from the E0 map — e.g.
 density >= c · (fabric degree / K_max-normalized) or simply a per-family-of-target
 constant {C16: 0.35, P16: 0.15, Z12: 0.15} — the busgraph cache already identifies
 the target family. Zero effect on P16/Z12 behavior.
+
+## 12. Native fast path for hardware-native sources  [BUILD, small]
+
+Evidence: hardware_native trips a different arm on each architecture (§4.11: ate
+P16 +0.13 mean ACL / 4.9 pt succ; mmpolish Z12 +5.9%): these sources are (near-)
+subgraphs of the target, MM finds near-identity embeddings, and any arm overhead
+or per-arm seed perturbation flips marginal cases. Fix: a cheap pre-stage in every
+p3 arm — attempt a direct subgraph placement (greedy label-preserving match or
+minorminer.subgraph if available; budget ~100 ms); on success return chains of
+length 1 (ACL exactly 1.0, unbeatable). Makes all arms strictly >= MM on native
+sources and removes the recurring flag.

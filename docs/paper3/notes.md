@@ -814,3 +814,21 @@ architecture-dependent**: 8 mid-family mean-ACL trips (+0.11..+0.28) because the
 architecture-aware gate scaled by target K_max/degree (improvement-notes #11); no
 further re-run (the single pre-registered guarded re-run was spent at P16, and the
 product arm covers the regime). Per-category table archived with the batch.
+
+§4.11 RESULTS — P16 guarded re-run, merged verdict (2026-07-31; rerun = 3 guarded
+arms @ v1.1/v1.1.1 x 30,768 rows, paired against the original batch's minorminer/
+p3-template rows at identical derived seeds): **violations 42 -> 19; the guards
+reproduce their Z12 behavior on Pegasus.** Category verdicts: p3-mmpolish
+**18W/17t/0L — zero category losses on Pegasus** (several residual bar trips have
+NEGATIVE mean dACL: better chains, 1-3 marginal success flips); p3-ate 9W/22t/4L
+(johnson now a -0.712 mean WIN); p3-clmm 7W/24t/4L. Residual violations decompose
+as before: single-graph success flips in small families (binary_tree 9.1 pt = one
+graph of 11; frustrated/triangular/shastry correlated across arms — the marginal-
+instance signature inside the §4.11-Z12 noise null) + clmm hypercube (+0.34, 11
+graphs, seed luck). **hardware_native is now a recurring cross-architecture
+oddity** (ate P16 +0.13 mean/4.9 pt; mmpolish Z12 +5.9%): near-native sources are
+perturbed by any arm overhead/seed change — improvement-notes #12 (native fast
+path: detect subgraph-embeddable sources and return the identity-style embedding
+before any machinery; would make every arm strictly >= MM there). mmpolish rerun
+wall discipline: worst 164 s = MM-stage cooperative overshoot (same class as stock
+MM's own rows; the §4.12.8 runaway class is gone).
