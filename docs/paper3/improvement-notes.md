@@ -98,3 +98,13 @@ seed-noise floor (sd 1.57 pt success per family; single-trial, per-arm seeds).
 Future full-library bars should be stated against a measured null (the passthrough
 trick generalizes: any guarded arm provides MM-at-another-seed replicates for free)
 or use ≥3 trials on small families.
+
+## 11. Architecture-aware clmm gate  [BUILD, small]
+
+Evidence: §4.11-C16 — the density-0.15 seeding gate (calibrated on P16/Z12) trips 8
+mid-family ACL bars on Chimera because the crossover is architecture-dependent
+(E0's p*(n) differs per topology; C16's shrunken K_max=64 and degree-6 fabric push
+it higher). Fix: gate on a per-target threshold derived from the E0 map — e.g.
+density >= c · (fabric degree / K_max-normalized) or simply a per-family-of-target
+constant {C16: 0.35, P16: 0.15, Z12: 0.15} — the busgraph cache already identifies
+the target family. Zero effect on P16/Z12 behavior.

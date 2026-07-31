@@ -797,3 +797,20 @@ the noise-aware reading PASSES with one documented regime boundary.**
    DISCARDED and re-run entirely under v1.1.1. The §4.4 K60 fixpoint number is
    unaffected (P16 template, small |U|); the §4.3 probe ran per-move deadlines on
    P16 (worst pair wall 3.04 s recorded — bounded).
+
+§4.11 RESULTS — C16 main batch (2026-07-31; 23,994 graphs x 5 arms after manifest
+eligibility; v1.1.1 wall discipline verified: 0 rows > 65 s, worst 63 s):
+**bar-as-written FAILS (22 violations); the committed C16 prediction is CONFIRMED
+in substance.** (i) p3-ate degrades gracefully as predicted — 6W/26t/3L with dense-
+structured wins intact (kneser -8.5%, turan -7.2% n=386, complete -6.9%,
+spin_glass -4.7% n=282); its success violations are 1-2-graph flips in tiny
+families (binary_tree "10 pt" = ONE graph, dropped identically by all three arms —
+the correlated marginal-instance signature inside the §4.11-Z12 noise null).
+(ii) p3-mmpolish: 15W/18t/2L on its third architecture (watts_strogatz -2.6% over
+5,309 pairs) — the consistency claim generalizes. (iii) **p3-clmm's density gate is
+architecture-dependent**: 8 mid-family mean-ACL trips (+0.11..+0.28) because the
+0.15 threshold, calibrated on P16/Z12, sits below Chimera's higher crossover
+(consistent with E0's per-topology p* map). Documented boundary; v1.2 candidate =
+architecture-aware gate scaled by target K_max/degree (improvement-notes #11); no
+further re-run (the single pre-registered guarded re-run was spent at P16, and the
+product arm covers the regime). Per-category table archived with the batch.
