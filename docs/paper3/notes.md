@@ -832,3 +832,38 @@ path: detect subgraph-embeddable sources and return the identity-style embedding
 before any machinery; would make every arm strictly >= MM there). mmpolish rerun
 wall discipline: worst 164 s = MM-stage cooperative overshoot (same class as stock
 MM's own rows; the §4.12.8 runaway class is gone).
+
+§4.11 RESULTS — layout batches, M5 CLOSE (2026-07-31; 75,030 rows, n<=1000 subsets,
+cross-batch pairing vs main-batch minorminer at identical derived seeds):
+**minorminer-layout ~= stock MM on ACL at library scale and WORSE on success on all
+three architectures.** Median paired dACL: P16 +0.22%, Z12 +0.00%, C16 +0.00% (with
+losses outnumbering wins: e.g. P16 7,701W/10,006L); success: P16 80.7 vs 82.5%, Z12
+82.3 vs 82.9%, C16 59.4 vs 63.3%. Home-turf check: layout wins a few lattice
+families modestly (honeycomb -3..-6% across topologies, kagome -4.6% Z12, cubic
+-1.8% P16) and is neutral-to-harmful elsewhere (cubic +3.2% C16, grid +2.2% C16).
+Conclusion: the documented practitioner default never changes a paper3 conclusion —
+all p3 margins quoted vs max(stock, layout) stand, and layout's overall success
+deficit extends §4.10b's cliff finding to library scale.
+
+**M5 COMPLETE.** Final tally: ~595k measured rows across 6+1 batches, three
+architectures, all arms; verdict trail: P16 unguarded FAIL (42) -> guards ->
+Z12 16 / P16-merged 19 / C16 22 violations, all decomposed to (a) the measured
+seed-noise null, (b) documented regime boundaries (clmm arch-dependent gate,
+hardware_native), with the committed predictions (clmm sparse regressions,
+C16 graceful degradation) confirmed verbatim. mmpolish: 0 category losses on P16,
+1 on Z12, 2 on C16 across 35 families. ate: zero library-wide ACL regressions on
+P16+Z12; dense-structured wins on all three architectures.
+
+### 4.13 Idle speed table (2026-07-31)
+
+PRE-REGISTERED 2026-07-31 (protocol rule 5: headline speed claims re-measured at
+workers=1 on an idle machine). Script: docs/paper3/data/m6_speed.py @ <sha at
+commit>. hyde06 (now idle, load ~2), workers=1 strictly sequential. Cells: P16
+(100,0.3), (140,0.2), (140,1.0)=K140, (160,0.05); Z12 (100,0.3), (140,1.0);
+instances 101-103 (K_n once) x eval seeds 10-11; arms {minorminer,
+minorminer-layout, p3-template, p3-ate, p3-clmm, p3-mmpolish}; 60 s budget.
+Deliverable: the paper's median-wall table (no bars; measurement). Expected from
+within-batch data: template 0.5-2 s, clmm 4-12 s (n<=140 mid), MM/layout 15-60 s,
+ate ~= MM (contains it), mmpolish ~= 60 s by design (uses leftovers).
+
+--- results appended below; nothing above this line is edited after launch ---
