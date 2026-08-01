@@ -857,8 +857,7 @@ P16+Z12; dense-structured wins on all three architectures.
 ### 4.13 Idle speed table (2026-07-31)
 
 PRE-REGISTERED 2026-07-31 (protocol rule 5: headline speed claims re-measured at
-workers=1 on an idle machine). Script: docs/paper3/data/m6_speed.py @ <sha at
-commit>. hyde06 (now idle, load ~2), workers=1 strictly sequential. Cells: P16
+workers=1 on an idle machine). Script: docs/paper3/data/m6_speed.py @ deb88153. hyde06 (now idle, load ~2), workers=1 strictly sequential. Cells: P16
 (100,0.3), (140,0.2), (140,1.0)=K140, (160,0.05); Z12 (100,0.3), (140,1.0);
 instances 101-103 (K_n once) x eval seeds 10-11; arms {minorminer,
 minorminer-layout, p3-template, p3-ate, p3-clmm, p3-mmpolish}; 60 s budget.
