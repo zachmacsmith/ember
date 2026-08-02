@@ -866,3 +866,13 @@ within-batch data: template 0.5-2 s, clmm 4-12 s (n<=140 mid), MM/layout 15-60 s
 ate ~= MM (contains it), mmpolish ~= 60 s by design (uses leftovers).
 
 --- results appended below; nothing above this line is edited after launch ---
+
+§4.13 RESULTS (2026-08-01, hyde06 idle load ~2, workers=1 strictly sequential,
+144 runs): the paper's speed table (m6_speed_summary.txt / .csv). Headlines:
+**p3-template 0.2-1.3 s at every cell — 20-150x faster than minorminer while
+15-33% better on the dense cells**; p3-clmm 5.7-9.2 s on the mid-band (3-5x
+faster than MM's 16.5-28.9 s) and full-budget-class at K140; p3-ate = MM + a
+visible 0.3-0.5 s insurance premium (29.1 vs 28.5 s etc. — the improvement-notes
+#2/#3 tax, now precisely measured); p3-mmpolish ~= 60 s by design (spends
+leftovers); minorminer-layout 1.1x SLOWER than stock at the K140 cells (69 vs
+61 s) and mixed on mid cells. All within-batch M4/M5 wall ratios reproduce idle.
