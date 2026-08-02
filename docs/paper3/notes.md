@@ -876,3 +876,10 @@ visible 0.3-0.5 s insurance premium (29.1 vs 28.5 s etc. — the improvement-not
 #2/#3 tax, now precisely measured); p3-mmpolish ~= 60 s by design (spends
 leftovers); minorminer-layout 1.1x SLOWER than stock at the K140 cells (69 vs
 61 s) and mixed on mid cells. All within-batch M4/M5 wall ratios reproduce idle.
+
+9. **(2026-08-01) §4.11-P16 phrasing correction:** "ACL never regressed on ANY of
+   the 31,140 graphs" overstated the analyzer's granularity — the measurement is
+   FAMILY-MEAN bars (no ate family ACL violation in the unguarded P16 run; the
+   merged re-verdict records one, hardware_native +0.13 mean). The defensible
+   claim, used by the manuscript, is family-level: no family ACL regression beyond
+   the documented near-native boundary. Per-graph tallies were never computed.
