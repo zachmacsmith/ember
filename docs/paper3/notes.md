@@ -889,7 +889,7 @@ leftovers); minorminer-layout 1.1x SLOWER than stock at the K140 cells (69 vs
 PRE-REGISTERED 2026-08-01. The manuscript's remaining structural weakness: the
 K140 headline margins rest on 5 pairs (Wilcoxon floor 0.0625) and the K180/K179
 frontier on 5 attempts/arm. K_n cells are instance-invariant, so fresh algorithm
-seeds extend them directly. Script: docs/paper3/data/m6_k140.py @ <sha at commit>.
+seeds extend them directly. Script: docs/paper3/data/m6_k140.py @ 65819fc6.
 Cells: P16 (140,1.0), (180,1.0); Z12 (140,1.0), (179,1.0). Arms {minorminer,
 p3-ate, p3-clmm, p3-mmpolish}; eval algo seeds 15-29 (15 fresh; disjoint from
 M4's 10-14, pooled to n=20 for the paper's K_n rows). 60 s; hyde06 idle,
