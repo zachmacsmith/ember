@@ -42,7 +42,7 @@ trimmability-aware slot assignment + evaluate-both selection against a search
 arm. On 14 frozen evaluation cells with instance seeds never touched before the
 tuning freeze (K=15), ATE wins every above-crossover cell — median paired ΔACL
 −6.5% to −18.4% on ER (Holm-corrected p = 6.3e-13, rank-biserial 0.99–1.00) and
-−19.5%/−32.9% on K140 (n=5 seed-pairs, unanimous; map-corroborated §4.1) — and
+−19.4%/−32.2% on K140 (n=20 pooled seed-pairs, 20/0 and 18/0 sweeps, Wilcoxon p<2e-5; §4.14) — and
 is never worse than minorminer on ACL beyond seed noise anywhere measured, at a
 measured sub-second wall premium (§4.13): exact ties where it defers (75/75
 pairs at Δ = 0.000 on each sparse control) and exactly zero cross-seed variance
@@ -161,7 +161,7 @@ actively harmful at the feasibility cliff (§4.1 e0_ceiling).
 2. **ATE, a never-worse adaptive embedder** (Sections 5.1, 6). Template +
    trimmability-aware assignment + evaluate-both selection. Wins every
    above-crossover evaluation cell (−6.5..−18.4% ER at Holm p = 6.3e-13, K=15;
-   −19.5/−32.9% K140 at n=5, unanimous and map-corroborated §4.1), ties
+   −19.4/−32.2% K140 at n=20 pooled pairs, 20/0 and 18/0, p<2e-5 §4.14), ties
    minorminer exactly on sparse controls, zero cross-seed variance where the
    template wins, 5/5 vs 0/5 past minorminer's cliff (§4.10). The precise
    never-worse claim: never worse on ACL beyond seed noise anywhere measured —
@@ -906,14 +906,16 @@ pairs; Holm across cells; §4.10 Table 1).**
 | Z12 K179 | 0 | n/a — MM never succeeds | | | | | 5/5 | 0/5 |
 | Z12 (160, 0.05) | 75 | +0.000 | +0.0% | 0/0/75 | 1.000 (all-tie) | 0.00 | 75/75 | 75/75 |
 
-† K_n cells are instance-invariant and carry n=5 pairs; the Wilcoxon floor at
-n=5 is 0.062, so unanimity (5/0/0) cannot reach conventional significance
+† K_n cells are instance-invariant; the frozen-eval table carries the original
+n=5 pairs, and §4.14's seed-deepening (15 fresh eval seeds, pooled n=20) settles
+significance: ate P16 K140 −19.4% at 20/0 (p=1.9e-6), Z12 K140 −32.2% at 18/0
+(p=7.6e-6). At n=5 alone, unanimity could not reach conventional significance
 there — and the margin itself is baseline-seed-sensitive (P16 K140 swung
 −33.5% dev → −19.5% eval; minorminer's cliff-seed std is 3.09 ACL, Table 6;
 §4.12.3). Independent corroboration comes from the map's own K140 headroom
 (−33.4% at P16, §4.1) and the 15/15 sweeps at the adjacent dense-ER cells
 ((140, 0.7): −28.7% P16 / −30.7% Z12; (140, 0.9): −31.8% Z12, §4.1). The K140
-rows are reported as unanimous n=5 margins, not dressed with a p-value.
+rows below keep the frozen-eval n=5 values; the pooled n=20 statistics (§4.14) are the citable ones.
 
 Reading: every above-crossover ER cell is Holm-significant at 6.3e-13 with
 rank-biserial 0.99–1.00 and win counts of 72–75 out of 75; both sparse
@@ -934,13 +936,13 @@ the naive template's crossover and above the shipped one's (Section 5.1.3).
 | P16 (100, 0.3) | −1.5† | −15.3† | −12.2† | −12.2† | −0.7† | −10.7† | +2.8† |
 | P16 (140, 0.12) | −0.9 | −6.8† | −1.6 | +3.7† | −0.9† | +6.0† | −1.9 |
 | P16 (140, 0.2) | −2.4† | −18.4† | −12.0† | −14.8† | −0.5 | −13.2† | +5.5† |
-| P16 K140 (n=5) | +3.1 | −19.5 | −15.9 | −19.5 | −0.3 | −18.6 | fail 0/5 |
+| P16 K140 (n=5; §4.14 n=20: −19.4%, 20/0, p=1.9e-6) | +3.1 | −19.5 | −15.9 | −19.5 | −0.3 | −18.6 | fail 0/5 |
 | P16 (160, 0.05) | +0.9 | +35.6† | +16.2† | +22.4† | −1.4† | +85.9† | −5.7† |
 | Z12 (100, 0.2) | −1.5 | −6.5† | +1.1 | +0.3 | −0.8† | +1.1 | −1.8 |
 | Z12 (100, 0.3) | −2.2† | −13.8† | −10.0† | −10.3† | −0.8† | −10.1† | +1.0 |
 | Z12 (140, 0.12) | −0.4 | −2.4† | +5.2† | +7.1† | −1.0† | +8.1† | −1.0 |
 | Z12 (140, 0.2) | −1.4 | −17.1† | −11.9† | −13.8† | −0.6† | −13.5† | +1.8 |
-| Z12 K140 (n=5) | −7.0 | −32.9 | −31.9 | −33.0 | +4.5 | −32.9 | fail 0/5 |
+| Z12 K140 (n=5; §4.14 n=20: −32.2%, 18/0, p=7.6e-6) | −7.0 | −32.9 | −31.9 | −33.0 | +4.5 | −32.9 | fail 0/5 |
 | Z12 (160, 0.05) | +0.4 | +39.4† | +13.1† | +18.2† | −1.4† | +83.0† | −4.1† |
 
 (The two past-cliff K_n cells have no pairs and are carried by Table 7.
@@ -1488,8 +1490,9 @@ leftovers below it (Section 5.4).
    map. Dev and eval instances also come from one generator implementation and
    two disjoint seed registries — disjoint seeds, same family.
 4. **K_n cells are thin by construction.** Instance-invariance means K140 and
-   the frontier cells carry 5 pairs (algorithm seeds only); their unanimous
-   margins clear no Wilcoxon bar at n=5 (floor 0.062) and the margins
+   the frontier success claim now rests on 20 attempts per arm per architecture
+   (§4.14): ate/clmm 20/20 at P16 K180 and Z12 K179 where minorminer is 0/20; the
+   K140 margins clear Wilcoxon at p<2e-5 with n=20 pooled pairs, and the margins
    themselves are baseline-seed-sensitive — P16 K140 swung −33.5% (dev) →
    −19.5% (eval) because minorminer's cliff-seed spread (std 3.09 ACL) exceeds
    its own median margin to the template (§4.12.3, Table 11). Corroboration
@@ -1497,7 +1500,7 @@ leftovers below it (Section 5.4).
    K140 headroom (−33.4% P16, §4.1), the 15/15 sweeps at the adjacent
    dense-ER cells (−28.7..−31.8% at (140, 0.7–0.9), §4.1), and the
    deterministic template's fixed value (13.171 at both stages, §4.5/§4.10).
-   K140 numbers are quoted with the n=5 caveat wherever they appear. The
+   K140 numbers are quoted with their pooled n=20 statistics wherever they appear. The
    deterministic-template pairing itself yields anti-conservative p-values
    (flagged *det throughout; the ATE column is the load-bearing one) (§4.10).
 5. **Chimera.** C16's clique bound (~64) shrinks the template regime;

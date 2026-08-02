@@ -898,3 +898,16 @@ deepening; the M4 K_n rows and Table 3 frontier counts are restated at n=20 with
 Wilcoxon recomputed).
 
 --- results appended below; nothing above this line is edited after launch ---
+
+§4.14 RESULTS (2026-08-01, 240 runs, hyde06 idle; pooled with M4 eval seeds 10-14
+-> n=20 per K_n cell): **the K_n evidence is no longer thin.**
+- P16 K140: ate median -3.168 (-19.4%), 20/0, Wilcoxon p=1.9e-6; clmm -15.8%,
+  19/1, p=3.8e-6. Z12 K140: ate -4.968 (-32.2%), 18/0, p=7.6e-6 (MM 18/20 —
+  the cliff-edge flakiness reproduces at n=20); clmm -31.4%, 18/0.
+- Frontier at 20 attempts/arm: ate and clmm 20/20 at P16 K180 AND Z12 K179 where
+  minorminer is 0/20 — the feasibility-ceiling claim now rests on 20-for-20 vs
+  0-for-20 per architecture.
+- mmpolish at K_n: median exactly 0.000 (P16) / 0/7 small losses (Z12, p=0.018)
+  — the documented cliff exclusion, unchanged.
+Data: m6_k140.csv. The manuscript's K_n rows, Table 3 frontier counts, and the
+n=5 caveats are restated at n=20.
