@@ -883,3 +883,18 @@ leftovers); minorminer-layout 1.1x SLOWER than stock at the K140 cells (69 vs
    merged re-verdict records one, hardware_native +0.13 mean). The defensible
    claim, used by the manuscript, is family-level: no family ACL regression beyond
    the documented near-native boundary. Per-graph tallies were never computed.
+
+### 4.14 K_n seed deepening — n=5 -> n=20 pairs (2026-08-01)
+
+PRE-REGISTERED 2026-08-01. The manuscript's remaining structural weakness: the
+K140 headline margins rest on 5 pairs (Wilcoxon floor 0.0625) and the K180/K179
+frontier on 5 attempts/arm. K_n cells are instance-invariant, so fresh algorithm
+seeds extend them directly. Script: docs/paper3/data/m6_k140.py @ <sha at commit>.
+Cells: P16 (140,1.0), (180,1.0); Z12 (140,1.0), (179,1.0). Arms {minorminer,
+p3-ate, p3-clmm, p3-mmpolish}; eval algo seeds 15-29 (15 fresh; disjoint from
+M4's 10-14, pooled to n=20 for the paper's K_n rows). 60 s; hyde06 idle,
+8 workers (ACL/success only — walls not table-bearing). Bars: none (evidence
+deepening; the M4 K_n rows and Table 3 frontier counts are restated at n=20 with
+Wilcoxon recomputed).
+
+--- results appended below; nothing above this line is edited after launch ---
