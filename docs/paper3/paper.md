@@ -1,13 +1,13 @@
 # Minor Embedding Has Two Regimes: A Density-Resolved Map and a Never-Worse Adaptive Embedder
 
 <!--
-  DRAFT v0.1 (2026-07-27) — paper3 manuscript, branch `paper3`.
+  DRAFT v1.0 (2026-08-01) — paper3 manuscript, branch `paper3`.
   Provenance convention: every quantitative claim carries a parenthetical anchor into the
   laboratory record — (§4.x) points into docs/paper3/notes.md, (§3.x) into
   docs/paper2/notes.md. Data files live in docs/paper3/data/; the measurement
-  constitution is docs/paper3/protocol.md. Placeholders for the running full-library
-  sweep are marked [PENDING-M5]; the layout-baseline supplement is marked
-  [PENDING: §4.10b]. Structure is Markdown-for-LaTeX: one # title, ## sections,
+  constitution is docs/paper3/protocol.md. All [PENDING-M5] and [PENDING: §4.10b]
+  slots are now filled from §4.10b–§4.13 (layout supplement, full-library sweep,
+  errata, idle speed table). Structure is Markdown-for-LaTeX: one # title, ## sections,
   ### subsections, numbered tables and figures, bracketed citation keys.
 -->
 
@@ -31,7 +31,7 @@ The evidence is the first density-resolved crossover map: 109 Erdős–Rényi an
 complete-graph cells on Pegasus P16 and Zephyr Z12, seven embedding strategies,
 8,559 paired runs at a fixed 60 s budget (§4.1, §4.1b). The crossover p\*(n) falls
 from 0.7 at n=40 to 0.12 at n=160 on P16 (0.9 to 0.12 on Z12); above it a
-right-sized, source-trimmed clique template built in under a second beats 60
+right-sized, source-trimmed clique template built in 0.2–1.3 s (§4.13) beats 60
 seconds of minorminer search by 5–33%, with the margin a ridge along minorminer's
 feasibility cliff — which is density-flat at n=140 across p=0.2–1.0 on both
 fabrics at this budget (§4.1), and moves with budget (0/25 to 23/25 successes at
@@ -40,11 +40,14 @@ fabrics at this budget (§4.1), and moves with budget (0/25 to 23/25 successes a
 The map's product is ATE, an adaptive template embedder: busclique template +
 trimmability-aware slot assignment + evaluate-both selection against a search
 arm. On 14 frozen evaluation cells with instance seeds never touched before the
-tuning freeze (K=15), ATE is never worse than minorminer anywhere and wins every
-above-crossover cell — median paired ΔACL −6.5% to −18.4% on ER (Holm-corrected
-p = 6.3e-13, rank-biserial 0.99–1.00) and −19.5%/−32.9% on K140 — with exactly
-zero cross-seed variance where the template wins and exact ties where it defers
-(§4.10). It embeds K180 on P16 and K179 on Z12 5/5 where minorminer is 0/5, and
+tuning freeze (K=15), ATE wins every above-crossover cell — median paired ΔACL
+−6.5% to −18.4% on ER (Holm-corrected p = 6.3e-13, rank-biserial 0.99–1.00) and
+−19.5%/−32.9% on K140 (n=5 seed-pairs, unanimous; map-corroborated §4.1) — and
+is never worse than minorminer on ACL beyond seed noise anywhere measured, at a
+measured sub-second wall premium (§4.13): exact ties where it defers (75/75
+pairs at Δ = 0.000 on each sparse control) and exactly zero cross-seed variance
+where the template wins (§4.10). It embeds K180 on P16 and K179 on Z12 5/5 where
+minorminer is 0/5, and
 reaches the busclique bound (K184) on Z12 at better ACL than minorminer achieves
 on K140, 44 vertices smaller (§4.1). The assignment stage is not decoration: it
 beats a 32-random-assignment oracle and moves the crossover itself one grid step
@@ -66,9 +69,21 @@ are load-bearing, it leaves budget on the table by converging before its
 deadline, and — unexpectedly — the 2014 paper's own finite-β pricing, which the
 shipped program abandoned, beats the shipped default by 2.6–5.0% on sparse
 graphs, a regime split inside the incumbent's own cost function (§4.7, §4.8,
-§4.8b). A pre-registered full-library sweep (~520k runs over three
-architectures) tests the no-regression claim at ecosystem scale [PENDING-M5]
-(§4.11).
+§4.8b). The no-regression claim closes at ecosystem scale: a pre-registered
+sweep of the complete Ember benchmark library on three architectures (≈595k
+runs, bars committed before launch, §4.11). The unguarded first batch tripped
+the bar; the pre-registered remedy (regime guards + one re-run) answered; and
+every residual violation decomposed into a directly measured seed-noise null
+(sd 1.57 pt per family, obtained for free from the guards' passthrough mode) or
+a documented regime boundary. Final category verdicts over 35 families: the
+polish arm 18W/17t/0L on P16 (17/17/1 on Z12, 15/18/2 on C16); ATE wins
+dense-structured families on all three fabrics with no family-level ACL
+regression on P16+Z12 beyond one near-native oddity (§4.11). The practitioner
+default (minorminer.layout) is settled at both scales — ≈ stock on ACL, worse
+on success on all three architectures, 0/5 at the dense cliff where stock is
+5/5 (§4.10b, §4.11) — and an idle-machine speed table prices the products:
+template 0.2–1.3 s (20–150× stock), clmm 3–5× on the mid-band, ATE = minorminer
+plus a sub-second premium (§4.13).
 
 ---
 
@@ -145,11 +160,15 @@ actively harmful at the feasibility cliff (§4.1 e0_ceiling).
    §4.1b).
 2. **ATE, a never-worse adaptive embedder** (Sections 5.1, 6). Template +
    trimmability-aware assignment + evaluate-both selection. Wins every
-   above-crossover evaluation cell (−6.5..−18.4% ER, −19.5/−32.9% K140, Holm
-   p = 6.3e-13 at K=15), ties minorminer exactly on sparse controls, zero
-   cross-seed variance where the template wins, 5/5 vs 0/5 past minorminer's
-   cliff (§4.10). The assignment stage beats a random-assignment oracle and
-   moves the crossover itself (§4.9, §4.5).
+   above-crossover evaluation cell (−6.5..−18.4% ER at Holm p = 6.3e-13, K=15;
+   −19.5/−32.9% K140 at n=5, unanimous and map-corroborated §4.1), ties
+   minorminer exactly on sparse controls, zero cross-seed variance where the
+   template wins, 5/5 vs 0/5 past minorminer's cliff (§4.10). The precise
+   never-worse claim: never worse on ACL beyond seed noise anywhere measured —
+   exact ties at K=15, no family-level ACL regression on P16+Z12 at library
+   scale beyond one documented near-native family — for a measured sub-second
+   wall premium (§4.11, §4.13). The assignment stage beats a random-assignment
+   oracle and moves the crossover itself (§4.9, §4.5).
 3. **An honest-measurement protocol with a deflator result** (Section 3): the
    best-of-K-at-equal-wall-clock freebie is ≈ 0 on real cells (−0.3..−0.4 ACL
    only on sparse; +0.3..+4.1 — i.e. harmful — at the cliff), deflating a
@@ -158,10 +177,10 @@ actively harmful at the feasibility cliff (§4.1 e0_ceiling).
 4. **The first ACL-resolved evaluation of clique-seeded search (CLMM)**
    (Section 5.2): the literature's success-count result [ZBED20] reproduced on
    modern hardware graphs and extended with the quality axis it never measured
-   — 43/67 minorminer-feasible cells won, up to −30.5%, 2–4× faster at n ≤ 100,
-   plus a degeneracy-core variant that is stronger dense and must be
-   regime-gated, and a Pegasus/Zephyr asymmetry in the mid-band (§4.1, §4.5,
-   §4.10).
+   — 43/67 minorminer-feasible cells won, up to −30.5%, 3–5× faster on the
+   mid-band at one idle worker (§4.13), plus a degeneracy-core variant that is
+   stronger dense and must be regime-gated, and a Pegasus/Zephyr asymmetry in
+   the mid-band (§4.1, §4.5, §4.10).
 5. **The missing move class, exhibited** (Section 5.3): exact bounded-region
    joint pair repair improves the K60 template at 58 source-adjacent pairs
    whose endpoints are both provably single-move stuck — the constructive
@@ -183,13 +202,24 @@ actively harmful at the feasibility cliff (§4.1 e0_ceiling).
    2014 paper's own finite-β pricing beats the shipped program by 2.6–5.0% on
    sparse graphs at a feasibility cost — a regime split inside the incumbent's
    own cost function (§4.7, §4.8, §4.8b).
-8. **A pre-registered ecosystem-scale no-regression sweep** [PENDING-M5]: the
-   complete Ember benchmark library on Chimera-16, Pegasus-16 and Zephyr-12
-   (~520k runs), with bars committed before launch (§4.11).
+8. **An ecosystem-scale no-regression sweep, executed** (Section 6.8): the
+   complete Ember benchmark library on Chimera-16, Pegasus-16 and Zephyr-12 —
+   ≈595k runs under bars committed before launch (§4.11). The unguarded first
+   batch tripped the bar (42 family × arm violations); the pre-registered
+   remedy — regime guards + one re-run — resolved the trail to 19/16/22
+   residual trips on P16/Z12/C16, every one decomposed into a *measured*
+   seed-noise null (the guards' passthrough mode yields minorminer-at-another-
+   seed replicates for free: sd 1.57 pt per family — a methodological
+   contribution in its own right) or one of three documented regime boundaries.
+   Category verdicts over 35 families: mmpolish 18W/17t/0L (P16), 17/17/1
+   (Z12), 15/18/2 (C16); ATE wins dense-structured families on all three
+   fabrics with no family-level ACL regression on P16+Z12 beyond one
+   near-native family; the committed predictions (clmm's sparse regressions,
+   C16 graceful degradation) confirmed verbatim (§4.11).
 
 Throughout, parenthetical anchors (§4.x, §3.x) point into the archived,
 append-only laboratory record shipped with the artifact; every table names its
-generating script, commit, and CSV (Section 9).
+generating script, commit, and CSV (Section 10).
 
 ---
 
@@ -213,7 +243,9 @@ paper-vs-program deltas directly (Section 7).
 **Layout-aware and clique-based construction.** minorminer.layout — the
 documented practitioner default for geometric sources — computes layouts of
 source and target, places by p-norm proximity, and seeds chains accordingly; it
-is a baseline arm here ([PENDING: §4.10b supplement]), not a target.
+is a baseline arm here, measured at both the frozen-cell and library scales
+(Section 6.9: ≈ stock on ACL, strictly worse on success on all three
+architectures, isolated lattice-family wins only), not a target.
 minorminer.busclique constructs clique and biclique embeddings on
 Chimera/Pegasus/Zephyr in polynomial time via a cached decomposition; it
 minimizes *maximum* chain length (mean-optimality is open — the (n−1)/14 degree
@@ -316,13 +348,19 @@ does — e.g. the racer's honest margin excludes its strongest cells, Section
    reported against outcomes — including the ones that were wrong (Sections
    7.2, 7.5).
 
-Two consequences of rule 6 deserve mention because they occurred. First, one
+Three consequences of rule 6 deserve mention because they occurred. First, one
 kill-gate rule was amended *before launch* when a build smoke revealed the
 drafted rule mis-specified the oracle direction (§4.9; Section 5.1.2); the
 amendment is dated, justified, and the original preserved. Second, one switch
 technically cleared its survival bar in a 4-pair cell and the claim was
 declined as below any evidential floor (§4.7; Section 7.2) — the recorded
-lesson being that pre-registered bars need minimum-pairs floors.
+lesson being that pre-registered bars need minimum-pairs floors. Third, at
+library scale the pre-registered ±1 pt success bar turned out to be finer than
+the measured single-trial seed-noise floor (sd 1.57 pt per family, §4.11;
+Section 6.8.2); the pre-registered remedy path still functioned, nothing was
+tightened against the measured noise (that would be tuning on test), and the
+recorded lesson is the mirror image of the second: library-scale bars must be
+stated against a measured null or buy ≥ 3 trials on small families.
 
 ### 3.3 The restart deflator: best-of-K at equal wall-clock is worth ≈ nothing
 
@@ -371,7 +409,8 @@ matters when reading wall-clock tails (observed cooperative overruns to 89 s
 on failures, §4.1; disclosed wherever they occur). Targets: `pegasus_16` (P16,
 5,640 qubits, native clique bound K180) and `zephyr_12` (Z12, degree-20
 fabric, clique bound K184 — larger than P16's despite fewer qubits) (§4.0.5);
-the [PENDING-M5] sweep adds `chimera_16x16x4` (C16, 2,048 qubits, degree 6).
+the M5 library sweep (Section 6.8) adds `chimera_16x16x4` (C16, 2,048 qubits,
+degree 6).
 
 **Metrics.** ACL = mean chain length over source vertices (the paper's primary
 quality metric; its limits as a proxy are treated in Section 8). Success = a
@@ -522,8 +561,9 @@ delivers strictly inside its own feasible region.
 - **clmm** (full verdict in Section 5.2): beats stock minorminer in 43/67
   minorminer-feasible paired cells — every paired cell with n ≥ 80, p ≥ 0.3,
   plus the mid-band down to p=0.08 — up to −30.5% (P16 K140), 36/43 at
-  14–15/15 sweeps, and 2–4× faster than minorminer at n ≤ 100; it loses only
-  sparse (21 cells, worst +1.11 ACL) (§4.1 output 3).
+  14–15/15 sweeps, and 2–4× faster than minorminer at n ≤ 100 (within-batch;
+  the rule-5 idle re-measure reads 3–5× on the mid-band, Table 10, §4.13); it
+  loses only sparse (21 cells, worst +1.11 ACL) (§4.1 output 3).
 - **Convergence note that shapes the product:** above p\* at n ≈ 100–140,
   clmm and the raw template converge to the same medians (P16 100@0.9: both
   −2.24) — 60 s of seeded search adds nothing the template lacks (§4.1). The
@@ -541,7 +581,8 @@ delivers strictly inside its own feasible region.
   60 s cooperatively (max 89.0 s); 30/109 cells all-arms-fail; 103 rows are
   template-infeasible by construction (n > clique bound); the cuthill control
   arm fails in < 30 ms on exactly the 3 disconnected sparse instances that
-  stock minorminer embeds (a wrapper artifact on a context arm, disclosed)
+  stock minorminer embeds (a wrapper artifact on a context arm, disclosed;
+  fixed with regression tests before M3, no frozen cell affected, §4.12.4)
   (§4.1).
 
 ---
@@ -575,10 +616,11 @@ return the lower-ACL valid embedding              # ties -> template
 ```
 
 The evaluate-both selector is the direct product of two map facts: the
-template is essentially free (0.3–1.5 s including the exact prune, Table 11)
-so it fits inside any search budget, and §3.26's demonstration that search
-polish cannot improve the construction means no interpolation between the arms
-is needed — evaluate both, keep the better (§3.26). Below K_max the template
+template is essentially free (0.2–1.3 s at one idle worker including the exact
+prune, Table 10) so it fits inside any search budget, and §3.26's
+demonstration that search polish cannot improve the construction means no
+interpolation between the arms is needed — evaluate both, keep the better
+(§3.26). Below K_max the template
 arm is deterministic and succeeds by construction (K_n embeds every subgraph);
 `p3-ate`'s success set is the union of both arms'.
 
@@ -587,8 +629,18 @@ returns the search arm's embedding, whose internal minorminer stage reproduces
 stock minorminer under the same seed whenever it completes within the reduced
 budget — verified live: on both sparse control cells, ATE vs minorminer is an
 *exact* all-tie, 75/75 pairs at Δ = 0.000, at both the dev and eval stages
-(§4.5, §4.10). The one disclosed caveat: the internal selector compares the
-template's pruned ACL against the search arm's raw ACL, so a near-tie across
+(§4.5, §4.10). At library scale the same mechanism holds under CLI pairing
+(Section 6.8): across the 61,361 eligible P16+Z12 graphs, p3-ate tripped no
+family-level ACL bar outside the one documented near-native family — its
+unguarded-P16 bar violations were success-only, traced to the n > K_max
+core-periphery path's 50/50 budget split and closed by the pre-registered
+guard (§4.11) — and the cost of the always-on insurance is measured, not
+asserted: +0.0..+0.6 s wall per cell at one idle worker (Table 10, §4.13) and
+~+0.6..+1.7% nominal, noise-level deltas on a few small lattice families (the
+template-attempt tax, §4.11). The precise product claim is therefore: **never
+worse on ACL beyond seed noise, for a sub-second wall premium.** The one
+disclosed caveat: the internal selector compares the template's pruned ACL
+against the search arm's raw ACL, so a near-tie across
 polish columns could in principle mis-pick; experiment tables always re-apply
 one polish column to all arms (rule 3), and the effect was never observed to
 flip a verdict (as-built notes, proposals/ate.md).
@@ -683,13 +735,17 @@ substructure, leave the periphery to the phase minorminer is good at.
 Findings across E0, the dev gates, and the frozen eval:
 
 - **The ACL axis the literature never measured** (§4.1 output 3): 43/67
-  minorminer-feasible paired cells won, up to −30.5% (P16 K140), 2–4× faster
-  at n ≤ 100 (within-batch walls, Table 11); loses only sparse — regime-gated
-  in any product use (eval sparse losses +13..+16%, Holm-significant, §4.10).
+  minorminer-feasible paired cells won, up to −30.5% (P16 K140), 3–5× faster
+  on the mid-band at one idle worker (Table 10, §4.13); loses only sparse —
+  regime-gated in any product use (eval sparse losses +13..+16%,
+  Holm-significant, §4.10). The shipped v1.1 arm carries that gate: below
+  density 0.15 it passes through to full-budget stock minorminer, with a
+  guard=False kwarg preserving the faithful [ZBED20] control (§4.11;
+  Section 6.8.1).
 - **Convergence with the template** above p\* at n ≈ 100–140 (§4.1): the seeds
   do the work; the search adds nothing there. clmm's marginal value is speed,
-  a hair at the frontier (Z12 K179: clmm 12.966 vs template 12.972, §4.10
-  Table 9), and the overflow band n=200–220 beyond the clique bound (§4.1).
+  a hair at the frontier (Z12 K179: clmm 12.966 vs template 12.972, Table 7),
+  and the overflow band n=200–220 beyond the clique bound (§4.1).
 - **The core variant is a dense-side tool** (§4.5 B2): stronger than faithful
   clmm at (140, 0.2) on both fabrics (eval −14.8% vs −12.0% on P16, §4.10)
   and ties-or-beats at K_n, but *backfires* on the mid-band straddle
@@ -702,8 +758,17 @@ Findings across E0, the dev gates, and the frozen eval:
   clique seeds to pre-solve in the mid-band; the dense-side wins are
   fabric-independent.
 - **Near-determinization**: core seeding collapses cross-seed variance to a
-  0.06× median ratio vs minorminer (clmm 0.60×) (§4.10 Table 8) — seeded
+  0.06× median ratio vs minorminer (clmm 0.60×) (Table 6) — seeded
   search inherits much of the construction's reproducibility.
+- **Library-scale boundaries, documented as such** (§4.11; Section 6.8.3):
+  category record 7W/24t/4L (P16 merged), 6W/27t/2L (Z12), with
+  dense-structured wins (Z12 bipartite −12.0%, complete −5.1%, turan −4.5%,
+  kneser −2.5%) and two real boundaries — johnson (+0.228 mean ACL over 74
+  graphs at density 0.172: genuinely seeded, and the seeds mislead the search
+  exactly where the raw construction succeeds; p3-ate wins the same family
+  −0.63) and the C16 gate (8 mid-family trips of +0.11..+0.28 because the
+  0.15 threshold, calibrated on P16/Z12, sits below Chimera's higher
+  crossover — the map's per-topology p\* made operational).
 
 ### 5.3 mmpolish — exact joint repair as a polish (`p3-mmpolish`)
 
@@ -716,9 +781,11 @@ the other side what the missing moves are (§4.3; the swap-gadget unit test
 reproduces the scenario in miniature, proposals/polish.md).
 
 `p3-mmpolish` productizes the operator: stock minorminer for 70% of the
-budget, then an anytime polish (spur-prune, free-space shorten, exact
-single-vertex repair, exact joint-pair repair; longest-first with dirty-set
-scheduling; monotone and valid by construction). The exact engine is a
+budget (the v1.0 split; shipped v1.1 gives minorminer the *full* budget and
+polishes on the leftover wall — the M5 redesign, below), then an anytime
+polish (spur-prune, free-space shorten, exact single-vertex repair, exact
+joint-pair repair; longest-first with dirty-set scheduling; monotone and valid
+by construction). The exact engine is a
 deterministic branch-and-bound over connected subgraphs of a radius-2 region
 with admissible bounds — no IP solver; every move either proves optimality
 within its region or reports itself unproven (§4.3 as-built).
@@ -730,6 +797,21 @@ Holm-significant at 10/12 feasible cells at eval (−0.5..−1.4%, sweeps of
 75/0/0 typical). It does *not* help at the cliff (Z12 K140 +4.5%: the 30%
 budget reservation costs more than repair returns; K179/K180 fail with their
 base) — a mid/sparse-band add-on, shipped as such (§4.5, §4.10).
+
+The M5 sweep both generalized and repaired the arm (Section 6.8). The v1.0
+70/30 budget split cost success on legalization-hard families (binary_tree
+9.1 pt, frustrated_square 6.9, weak_strong 4.1 on unguarded P16) — the one
+committed M5 prediction that failed — and the pre-registered remedy became the
+better design: v1.1 gives minorminer the full budget and spends only the
+*leftover* wall (real on most instances, because stock patience expires early,
+Section 7.3), making success ≡ stock by construction while preserving the
+gains (§4.11). Category record across the library: **18W/17t/0L on P16,
+17W/17t/1L on Z12, 15W/18t/2L on C16** — 50 wins, 52 ties, 3 losses over 105
+architecture × family verdicts, with wins like watts_strogatz −3.2% over
+Z12's 11,988-graph family and −2.6% over 5,309 C16 pairs (§4.11). One scope
+note applies to all of this arm's margins: sub-2% ACL deltas are statistically
+robust here but not established as practically significant downstream
+(Section 8, item 2).
 
 ### 5.4 The racer (`p3-race8`) — selection under strict fairness
 
@@ -761,7 +843,7 @@ best-ever valid embedding wins. The control, `race_baseline_bestofk`, lives in
 the same module so its accounting cannot drift.
 
 **Why it wins where it wins (§4.6, §4.7).** On sparse cells, parallel
-best-of-8 minorminer finishes in 6.4–8.0 s median (§4.10 Table 10b): stock
+best-of-8 minorminer finishes in 6.4–8.0 s median (§4.10 Table 4b): stock
 patience expires and minorminer *leaves the rest of the wall-clock on the
 table* (Section 7.3). The racer converts that abandoned budget into ACL by
 warm-restart grinding of the best basins; sequentially, it additionally beats
@@ -770,7 +852,7 @@ than a single 60 s run on 3/4 smoke pairs — the e0_ceiling result again,
 §4.6, proposals/portfolio.md).
 
 **The honest read.** On mid cells the race winner is the template 72–75/75
-(§4.10 Table 10b) — those wins are the ATE story wearing a racer hat, and the
+(§4.10 Table 4b) — those wins are the ATE story wearing a racer hat, and the
 pre-registration *excludes them from the selection claim* (§4.6). The
 selection claim rests on the template-free sparse cells, both fairness
 readings, and holds at dev (P16 (160, 0.05): seq −2.31%/84%, par −5.57%/96%;
@@ -799,7 +881,7 @@ pairs are not independent and its p-values are anti-conservative (flagged
 
 **Headline: every development verdict confirmed on fresh instances with no
 tuning inflation** — margins within ~1–2 pp of dev on the ER cells (see Table
-12 for the two exceptions and their explanation) (§4.10).
+11 for the two K_n exceptions and their explanation) (§4.10).
 
 ### 6.2 ATE vs minorminer (Table 4)
 
@@ -826,8 +908,12 @@ pairs; Holm across cells; §4.10 Table 1).**
 
 † K_n cells are instance-invariant and carry n=5 pairs; the Wilcoxon floor at
 n=5 is 0.062, so unanimity (5/0/0) cannot reach conventional significance
-there. The K140 margins are unanimous and consistent with the map's 15/15
-sweeps (§4.1); they are reported as such rather than dressed with a p-value.
+there — and the margin itself is baseline-seed-sensitive (P16 K140 swung
+−33.5% dev → −19.5% eval; minorminer's cliff-seed std is 3.09 ACL, Table 6;
+§4.12.3). Independent corroboration comes from the map's own K140 headroom
+(−33.4% at P16, §4.1) and the 15/15 sweeps at the adjacent dense-ER cells
+((140, 0.7): −28.7% P16 / −30.7% Z12; (140, 0.9): −31.8% Z12, §4.1). The K140
+rows are reported as unanimous n=5 margins, not dressed with a p-value.
 
 Reading: every above-crossover ER cell is Holm-significant at 6.3e-13 with
 rank-biserial 0.99–1.00 and win counts of 72–75 out of 75; both sparse
@@ -857,8 +943,11 @@ the naive template's crossover and above the shipped one's (Section 5.1.3).
 | Z12 K140 (n=5) | −7.0 | −32.9 | −31.9 | −33.0 | +4.5 | −32.9 | fail 0/5 |
 | Z12 (160, 0.05) | +0.4 | +39.4† | +13.1† | +18.2† | −1.4† | +83.0† | −4.1† |
 
-(The two past-cliff K_n cells have no pairs and are carried by Table 9.
-p3-template rows carry the *det caveat of Section 6.1.)
+(The two past-cliff K_n cells have no pairs and are carried by Table 7.
+p3-template rows carry the *det caveat of Section 6.1. One product note: the
+shipped v1.1 clmm passes through to stock minorminer at (140, 0.12) — the one
+frozen cell below its M5 density gate; this table measures the v1.0 arm,
+§4.11.)
 
 The regime structure is legible in every column: the constructive family and
 its seeded relatives win everything above the crossover and lose the sparse
@@ -932,7 +1021,7 @@ best-of-8-parallel minorminer finishes the sparse cells in 6.4–8.0 s median
 against the racer's 60 s — the margin is real time reclaimed from stock
 patience (Section 7.3), allocated by a gate that works (§4.2).
 
-### 6.6 Cost (Table 9)
+### 6.6 Cost (Tables 9 and 10)
 
 **Table 9 — median wall seconds per arm (P16 rows; within-batch only, rule 5;
 §4.10 Table 5).**
@@ -956,14 +1045,36 @@ by-design conservatism; an early-exit heuristic is deliberately absent so the
 never-worse property stays unconditional). mmpolish pins its full budget by
 construction. Cooperative overruns past 60 s (K_n columns; attraction to 81 s)
 are the disclosed timeout coarseness of Section 3.4. Cross-batch and
-cross-host comparisons of this table are invalid (rule 5); the headline speed
-statement — template ~0.5 s vs minorminer 6–43 s on ER cells — is a
-within-batch read [pending the rule-5 workers=1 idle re-measure for any
-standalone speed claim].
+cross-host comparisons of Table 9 are invalid (rule 5); every standalone speed
+claim in this paper therefore comes from the rule-5 re-measure — one worker,
+strictly sequential, idle host, 144 runs (§4.13):
 
-### 6.7 Dev-to-eval stability (Table 10)
+**Table 10 — median wall seconds at one idle worker (workers=1, idle host;
+§4.13).**
+<!-- source: docs/paper3/data/m6_speed_summary.txt / m6_speed.csv @ deb88153 -->
 
-**Table 10 — ATE margins, dev (seeds 101–105 × 0–4) vs eval (901–915 ×
+| cell | minorminer | mm-layout | template | ate | clmm | mmpolish |
+|---|---|---|---|---|---|---|
+| P16 (100, 0.3) | 28.5 | 23.4 | 0.4 | 29.1 | 5.7 | 60.1 |
+| P16 (140, 0.2) | 28.9 | 30.6 | 0.3 | 28.9 | 9.2 | 60.2 |
+| P16 K140 | 60.9 | 69.2 | 1.2 | 61.0 | 51.9 | 61.6 |
+| P16 (160, 0.05) | 5.1 | 5.6 | 0.2 | 5.4 | 5.1 | 60.0 |
+| Z12 (100, 0.3) | 16.5 | 18.9 | 0.4 | 16.8 | 6.3 | 60.2 |
+| Z12 K140 | 60.8 | 68.9 | 1.3 | 60.9 | 63.3 | 60.5 |
+
+Every within-batch M4/M5 wall ratio reproduces idle (§4.13), and the idle
+reads are the citable ones: the template runs 0.2–1.3 s at every cell —
+20–150× under stock minorminer while 15–33% better on the dense cells; clmm's
+mid-band is 5.7–9.2 s against minorminer's 16.5–28.9 s (3–5×) and joins the
+full-budget class at K140; ATE costs minorminer plus a sub-second insurance
+premium (+0.0..+0.6 s per cell — the always-run template attempt; Section 9);
+mmpolish pins ≈ 60 s by design (it spends the leftovers); and
+minorminer-layout is 1.1× *slower* than stock at the K140 cells (69 vs 61 s)
+while failing them 0/5 (Section 6.9).
+
+### 6.7 Dev-to-eval stability (Table 11)
+
+**Table 11 — ATE margins, dev (seeds 101–105 × 0–4) vs eval (901–915 ×
 10–14).** <!-- dev: dev_suite_summary.txt (§4.5); eval: m4_headline.md (§4.10) -->
 
 | cell | dev Δ% | eval Δ% |
@@ -986,42 +1097,227 @@ minorminer's K140 output swings by seeds (median std 3.09 ACL, Table 6) — at
 the cliff, which five seeds stock minorminer gets determines whether it loses
 by a fifth or a third.
 
-### 6.8 Full-library no-regression sweep
+### 6.8 The full-library sweep: no-regression at ecosystem scale (§4.11)
 
-**[PENDING-M5]** — pre-registered (§4.11 and two dated pre-launch amendments)
-and running at draft time: the *complete* Ember benchmark library on all three
-flagship architectures — every library graph that passes the per-topology
-pigeonhole (n ≤ qubit count): 27,628 graphs on C16, 31,140 on P16, 30,221 on
-Z12 (more inclusive than the benchmark's own embeddability sets; "attempted
-and failed" is data). Arms: {minorminer, p3-template, p3-ate, p3-clmm,
-p3-mmpolish} on the full eligible sets; minorminer-layout on the n ≤ 1000
-subsets (25,010 per topology). ≈ 520k rows; "(instance, trial) pairing [CLI]"
-labels mandatory; raw-ACL column (the CLI logs no spur; stated on every
-table); wall-time within-batch only. The racer is excluded by design (it burns
-the full budget on every row; its claims are settled on the selection cells,
-§4.6/§4.10).
+The final experiment is the pre-registered sweep of the *complete* Ember
+benchmark library on all three flagship architectures — every library graph
+that passes the per-topology pigeonhole (n ≤ qubit count): 31,140 graphs on
+P16, 30,221 on Z12, 27,628 on C16 by pigeonhole (23,994 after
+benchmark-manifest eligibility at run time) — more inclusive than the
+benchmark's own embeddability sets; "attempted and failed" is data (§4.11 and
+two dated pre-launch amendments). Arms: {minorminer, p3-template, p3-ate,
+p3-clmm, p3-mmpolish} on the full eligible sets; minorminer-layout on the
+n ≤ 1000 subsets (25,010 per topology; Section 6.9). ≈ 595k measured rows over
+seven batches (three main + the P16 guarded re-run + three layout);
+"(instance, trial) pairing [CLI]" labels mandatory; raw-ACL column (the CLI
+logs no spur; stated on every table); wall-time within-batch only. The racer
+is excluded by design (it burns the full budget on every row; its claims are
+settled on the selection cells, §4.6/§4.10).
 
 Pre-registered bar (verbatim, applied per topology × family): **no family mean
 ΔACL worse than +0.10, and no success-rate drop over 1 point, for any p3 arm
 vs minorminer** — otherwise the failing arm ships behind a density/regime
-guard and the sweep re-runs once with the guard (§4.11). Committed
-predictions: p3-ate ties minorminer on sparse/structured families (auto-select
-falls back) and wins dense-structured (complete/Turán/dense-bipartite);
-p3-clmm regresses on sparse families and is expected to need its density
-gate; p3-mmpolish never regresses; and on C16 — whose clique bound (~64)
-shrinks the template regime — p3-ate must degrade to minorminer *gracefully*:
-that graceful degradation is the C16 claim (§4.11).
+guard and the sweep re-runs once with the guard (§4.11). That remedy clause is
+load-bearing below. Committed predictions: p3-ate ties minorminer on
+sparse/structured families (auto-select falls back) and wins dense-structured
+(complete/Turán/dense-bipartite); p3-clmm regresses on sparse families "and is
+expected to need the density gate"; p3-mmpolish never regresses; and on C16 —
+whose clique bound (~64) shrinks the template regime — p3-ate must degrade to
+minorminer *gracefully*: that graceful degradation is the C16 claim (§4.11).
 
-Results, family × size-band tables, and the bar verdicts land here.
-[PENDING-M5]
+#### 6.8.1 The bar fires; the pre-registered remedy answers
 
-**[PENDING: §4.10b]** — the minorminer-layout supplement on the 14 frozen
-cells (p-norm layout, the documented practitioner default) is queued; its
-pre-registered read is whether layout changes *any* Section 6 conclusion.
-Expectation: ≈ stock on dense ER (no geometry to exploit); the p3 margins
-must stand against max(stock, layout) per cell to be quoted as "beats the
-practitioner default" (§4.10b). Until it lands, all Section 6 claims are
-against stock minorminer only.
+The unguarded P16 batch (155,700 rows, arms v1.0) tripped the bar 42 times
+(family × arm), and the violations decompose into exactly three mechanisms
+(§4.11):
+
+1. **p3-clmm ACL losses on sparse/structured families** (star +1.28, wheel
+   +1.48, kagome +0.39, planted +0.36, grid +0.27 mean ΔACL) — the committed
+   prediction, verbatim. Guard: below density 0.15 the arm passes through to
+   full-budget stock minorminer (recorded in run metadata as passthrough; a
+   guard=False kwarg preserves the faithful [ZBED20] control for script-route
+   science).
+2. **p3-ate success drops concentrated on large sparse lattices** (bcc 4.2 pt,
+   triangular 3.6, grid 1.3) — all from the n > K_max core-periphery path's
+   50/50 budget split halving minorminer's effective budget on time-marginal
+   instances. On ACL the arm tripped nothing in the batch: its violations were
+   success-only (§4.11). Guard: attempt core-periphery only at density ≥ 0.15
+   (the overflow regime where it ever wins); sparse overflow leaves minorminer
+   the full budget.
+3. **p3-mmpolish success drops on legalization-hard families** (binary_tree
+   9.1 pt, frustrated_square 6.9, weak_strong 4.1) — the fixed 70/30 budget
+   split flipped instances that need > 70% of the budget to legalize. This is
+   the one committed prediction that *failed* ("p3-mmpolish never regresses"
+   held on ACL, not on success), and the remedy became the better design:
+   v1.1 gives minorminer the full budget and the polish spends only the
+   leftover wall — real on most instances because stock patience expires early
+   (Section 7.3) — making success ≡ stock by construction.
+
+The guards are regime gates at thresholds read off the E0 map (0.15 sits
+between the measured p\* ladders), not fits to the sweep: they alter only
+off-regime behavior; the single pre-registered re-run allowance was spent
+exactly once (P16: the three guarded arms × 30,768 rows each, paired against
+the original batch's minorminer/p3-template rows at identical derived seeds);
+and the sole frozen-suite cell any guard touches is (140, 0.12), below clmm's
+gate (Tables 4–5 measure v1.0; §4.11). This is the pre-registration doing its
+job in the failure direction: the bar fired, the remedy was already written
+down, and no post-hoc tuning entered the arms.
+
+#### 6.8.2 The passthrough null: seed noise, measured for free
+
+The guards produced a methodological instrument this paper did not plan.
+**Below its gate, guarded p3-clmm *is* stock minorminer at a different derived
+seed**, so on the 26 Z12 families under the gate the arm-vs-minorminer success
+differences measure the CLI (instance, trial) pairing noise floor directly:
+mean −0.00 pt, sd 1.57 pt, max |4.55| pt per family, symmetric (§4.11). Any
+guarded arm provides minorminer-at-another-seed replicates for free — a
+full-library comparison can carry its own measured null without spending one
+extra run. Read against that null, every residual Z12 success violation
+(1.4–4.5 pt: bcc, cubic, frustrated_square, king, cycle, wheel — correlated
+across all three arms, which are minorminer-equivalent there post-guard) lies
+*inside* it: seed noise, quantified, not regression. The same signature
+recurs on P16 and C16 as single-graph flips in 11–72-graph families
+(binary_tree's "9.1 pt" and "10 pt" trips are one graph each, dropped
+identically by all three arms) (§4.11). The recorded lesson (Section 3.2): the
+±1 pt bar sits below the single-trial noise floor at small-family granularity;
+future library bars should be stated against a measured null or buy ≥ 3
+trials. Nothing was tightened against the measured noise — that would be
+tuning on test.
+
+#### 6.8.3 Verdicts: three architectures, three documented boundaries
+
+**Table 12 — M5 scoreboard: category verdicts over 35 families ((instance,
+trial) pairing [CLI]; raw ACL; category win = median paired ΔACL < −0.5% at
+≥ 55% win rate, loss symmetric, tie otherwise; §4.11).**
+<!-- sources: m5_z12_results.md / m5_z12_percategory.txt (Z12, in-repo); P16/C16 per-category tables archived with their batches; verdict trail in notes.md §4.11 -->
+
+| batch | eligible graphs | bar trips | p3-ate W/t/L | p3-mmpolish W/t/L | p3-clmm W/t/L |
+|---|---|---|---|---|---|
+| P16 unguarded (v1.0) | 31,140 | 42 | success-only trips (50/50 split) | success-only trips (70/30 split) | sparse ACL losses (predicted) |
+| P16 merged (guarded) | 31,140 | 19 | 9/22/4 | **18/17/0** | 7/24/4 |
+| Z12 (guarded) | 30,221 | 16 | 7/22/6 | 17/17/1 | 6/27/2 |
+| C16 (guarded, v1.1.1) | 23,994 | 22 | 6/26/3 | 15/18/2 | —† |
+
+† clmm's C16 per-category tally archives with the batch; its 8 ACL trips
+(+0.11..+0.28) *are* the gate boundary, below. The full Z12 per-category table
+is Appendix C (Table C1).
+
+Readings, one arm at a time (§4.11):
+
+- **p3-mmpolish is the consistency arm**: 50 wins, 52 ties, 3 losses over 105
+  architecture × family verdicts — zero category losses on Pegasus (several
+  residual bar trips there have *negative* mean ΔACL: better chains, 1–3
+  marginal success flips). Wins are broad and small-to-moderate:
+  watts_strogatz −3.2% over Z12's 11,988-graph family, −2.6% over 5,309 C16
+  pairs, weak_strong_cluster −4.3% at 83% win rate (Z12).
+- **p3-ate is the margin arm**: dense-structured category wins on all three
+  fabrics — Z12 hardware_native −14.2%, bipartite −12.3%, complete −9.6%,
+  kneser −9.5%, johnson −6.4%, turan −5.6%, spin_glass −3.5%; C16 kneser
+  −8.5%, turan −7.2% (n=386), complete −6.9%, spin_glass −4.7% (n=282); P16
+  merged 9 category wins including johnson −0.712 mean. On ACL it tripped no
+  family bar on Z12 (johnson is a win) and none on P16 except the
+  hardware_native oddity below; its Z12 nominal category losses are
+  +0.6..+1.7% small-lattice deltas at noise level — the measured
+  template-attempt tax (sub-second, Table 10). Ties are literal: below the
+  crossover the arm returns its minorminer stage's embedding.
+- **p3-clmm's boundaries are documented, not hidden** (Section 5.2): johnson
+  (+0.228 mean, 74 graphs — dense-structured sources where seeds mislead the
+  search and the raw construction wins) and the architecture-dependent gate
+  (8 C16 mid-family trips: the 0.15 threshold, calibrated on P16/Z12, sits
+  below Chimera's higher crossover — consistent with the map's per-topology
+  p\*). The product arm covers both: ate wins johnson on both fabrics where
+  the boundary appears (Z12 −6.4%, P16 −0.712 mean), and no further re-run
+  was taken (the one allowance was spent; a v2 architecture-aware gate is
+  future work, Section 9).
+- **The third boundary is hardware_native**: a different arm trips this
+  near-native family on each architecture (ate P16 +0.13 mean / 4.9 pt;
+  mmpolish Z12 +5.9% — its single Z12 category loss) — sources that are
+  (near-)subgraphs of the target are perturbed by any arm overhead or seed
+  change. A native fast path (detect subgraph-embeddability, return length-1
+  chains) would retire the oddity for every arm (Section 9).
+- **The C16 prediction confirmed in substance**: graceful degradation is what
+  happened — 6W/26t/3L with the dense-structured wins intact, and every ate
+  success "violation" a 1–2-graph flip in a tiny family inside the correlated
+  marginal-instance signature (§4.11). C16 wall discipline under v1.1.1:
+  0 rows over 65 s, worst 63 s.
+
+The bar-as-written verdict is FAIL on all three architectures (16–22 residual
+trips); the decomposed verdict is that every residual trip is (a) inside the
+measured seed-noise null or (b) one of the three boundaries above. Of the four
+committed prediction clauses, three confirmed — clmm's sparse regressions and
+its need for the gate verbatim, ate's sparse ties + dense-structured wins,
+C16's graceful degradation in substance — and the fourth (mmpolish never
+regresses) failed on its success half and was caught and repaired by the
+pre-registered path (§4.11). Both verdicts are reported; the paper claims the
+decomposed one and shows its work.
+
+#### 6.8.4 What the sweep caught: two harness bugs and a bar
+
+The sweep functioned as a test harness for the programme's own machinery, and
+the errata it generated are part of the result (§4.12.7–8):
+
+- **The YAML workers bug.** At M5 bring-up, the runner was found to silently
+  ignore YAML worker counts (`workers:` never mapped to the internal
+  `n_workers`; `trials`/`warmup` had the same mismatch masked by coinciding
+  defaults) — every YAML-driven `ember run` in this repository's history had
+  been single-worker (the paper-2 23k sweep used the CLI flag, which always
+  worked; no §4.1–4.10 result is affected — all script-route or CLI-flag
+  runs). Fixed with alias translation plus a unit check at 48aab69b, together
+  with lazy worker-side instance materialization replacing an eager loader
+  (serial hours, 27 GB parent, per-task target pickling) at 1e754132, A/B
+  verified row-identical; both upstreamed to Ember as PR #1 (§4.12.7).
+- **The `_find_split` runaway — found *by* the multi-architecture sweep.** The
+  exact pair-split check in the repair engine iterated 2^|U| subsets with no
+  deadline ticks. Invisible on P16/Z12, where |U| ≤ ~14 (16k subsets) — and on
+  every dev/eval cell of Sections 4–6 — but Chimera's degree-6 fabric grows
+  long chains with |U| = 25–40, turning "3 s" moves into 2^30–2^40-subset
+  stalls (worst observed: 19.5 h on one row). Fixed at v1.1.1 (|U| > 22 →
+  unproven skip; shared node/deadline accounting every 4,096 subsets; a
+  regression test pins the bound). The contamination audit is disclosed in
+  full: 21 successful mmpolish rows on P16/Z12 exceeded 65 s (worst 158 s) and
+  are excluded from final tables (immaterial to every reported median); the
+  partial C16 batch (29k rows, 21 h) was discarded and re-run entirely under
+  v1.1.1; the §4.3/§4.4 exact-repair results are unaffected (per-move
+  deadlines, small |U|) (§4.12.8).
+- **The bar-calibration lesson** (Section 6.8.2): the ±1 pt success bar is
+  finer than single-trial library noise. Kept as-written for this sweep;
+  recorded for the next.
+
+The general point is the reason M5 exists: a bug class invisible on two
+architectures and on every hand-picked cell surfaced only under full-library,
+multi-architecture load. Evaluations that sample a few families on one fabric
+do not just under-measure generality — they structurally cannot catch this
+class of failure.
+
+### 6.9 The practitioner default, settled (§4.10b, §4.11)
+
+minorminer.layout — p-norm placement, the documented practitioner default —
+completes the baseline set at both scales.
+
+On the 14 frozen cells (770 rows appended to the eval CSV at the same seeds
+and budget, §4.10b): statistically indistinguishable from stock on every ER
+eval cell (medians −0.06..+0.28, win rates 27–40 of 75 each way) — and
+**strictly worse at the dense cliff: 0/5 on all four K_n cells**, where stock
+is 5/5 (P16 K140) and 4/5 (Z12 K140). The p-norm initial chains actively fight
+the extended-bar structure the cliff needs (the §3.10 anti-placement effect,
+now measured in the shipped practitioner tool): the documented layout wrapper
+*lowers* minorminer's feasibility ceiling on complete graphs at 60 s.
+p3-ate beats max(stock, layout) on every above-crossover cell (vs layout
+−0.31..−2.89 ACL at 69–75/75) and is exact-tie-grade on the sparse controls
+(|median| ≤ 0.07) — every Section 6 margin stands against the practitioner
+default, cell by cell (§4.10b).
+
+At library scale (75,030 rows, n ≤ 1000 subsets, cross-batch pairing against
+the main batches' minorminer rows at identical derived seeds, §4.11): median
+paired ΔACL vs stock is +0.22% (P16), +0.00% (Z12), +0.00% (C16) — with losses
+outnumbering wins (P16: 7,701W/10,006L) — and **success is lower on all three
+architectures**: 80.7 vs 82.5% (P16), 82.3 vs 82.9% (Z12), 59.4 vs 63.3%
+(C16). The home turf survives only as isolated lattice-family wins (honeycomb
+−3..−6% on all three topologies, kagome −4.6% Z12, cubic −1.8% P16) against
+symmetric harms elsewhere (cubic +3.2% C16, grid +2.2% C16); at the cliff it
+is also 1.1× slower (Table 10, §4.13). No conclusion in this paper changes
+against layout, and its library-wide success deficit extends the frozen-cell
+cliff finding to ecosystem scale (§4.11).
 
 ---
 
@@ -1149,64 +1445,124 @@ leftovers below it (Section 5.4).
 
 ## 8 Threats to validity and limitations
 
-1. **Everything is at 60 s.** The budget is the field's conventional
-   working point, and budget parity is enforced throughout — but the cliff
-   moves with budget (§4.7), so p\*(n)'s *feasibility-adjacent* features are
-   budget-indexed. The quality crossover itself is expected to be
-   budget-stable in the template's favor (search plateaus by patience,
-   §4.2/§4.7, while the construction is constant-time), but that
-   extrapolation is argued, not measured, beyond the 5–180 s sweep of §4.7.
-2. **ACL is a proxy.** The downstream quantity is solution quality on
-   hardware. The programme's simulator study found the within-problem
-   (fixed-effects) correlation of ACL to ground-state probability to be
-   ρ = −0.11 (p = 3e-8; slope −0.28 P(GS) per ACL unit) — real, negative,
-   and *weak* within a problem (the pooled ρ = −0.63 headline is confounded
-   by problem difficulty). ACL differences of the size reported above p\*
-   (−6..−33%) plausibly matter; the −0.5..−1.4% polish margins may not.
-   Re-running the map's key cells against annealer (or high-fidelity
-   simulator) quality metrics is the top-priority follow-up. Relatedly,
-   busclique optimizes *maximum* chain length while this paper reports the
-   mean; max-chain results co-move here (template wins both) but were not
-   separately pre-registered.
+1. **Everything is at 60 s, and the map is budget-indexed.** The budget is
+   the field's conventional working point, and budget parity is enforced
+   throughout — but §4.7 measured the cliff *moving* with budget ((180, 0.3):
+   0/25 → 4 → 14 → 23/25 successes across 5 → 15 → 60 → 180 s), so every
+   p\*(n), headroom, and frontier statement in this paper — including the
+   title claims — is a 60 s statement. For the quality crossover itself there
+   is an argument for budget-stability in the template's favor (search
+   plateaus by patience, §4.2/§4.7, while the construction is constant-time)
+   plus the 5–180 s window of §4.7 — an argument and a window, not a
+   measurement at other working points. A budget-resolved p\*(n, t) map is
+   future work; until then the crossover should be quoted with its budget
+   attached.
+2. **ACL is a proxy, and the small margins must be scoped by it.** The
+   downstream quantity is solution quality on hardware. The programme's
+   simulator study found the within-problem (fixed-effects) correlation of
+   ACL to ground-state probability to be ρ = −0.11 (p = 3e-8; slope −0.28
+   P(GS) per ACL unit) — real, negative, and *weak* within a problem (the
+   pooled ρ = −0.63 headline is confounded by problem difficulty). The
+   consequence is a two-tier reading of this paper's margins. The regime
+   margins (−6..−33% above p\*, plus the feasibility and variance results,
+   which need no proxy) plausibly matter downstream. The sub-2% margins —
+   mmpolish's −0.5..−1.4%, cuthill's −1.5..−2.5%, ATE's −2.4% at the Z12
+   straddle edge, the racer's smallest reads — are statistically robust under
+   this protocol (Holm-corrected, sweeps of 72–75/75) but are *not established
+   as practically significant*: at ρ = −0.11 within-problem, sub-2% ACL is
+   presumptively within the noise of what an annealer feels. They are claimed
+   as measured ACL improvements, nothing more. Re-running the map's key cells
+   against annealer (or high-fidelity simulator) quality metrics is the
+   top-priority follow-up. Relatedly, busclique optimizes *maximum* chain
+   length while this paper reports the mean; max-chain results co-move here
+   (template wins both) but were not separately pre-registered.
 3. **Instance families.** The map is Erdős–Rényi plus K_n. ER is the right
    first family (it is what "structureless fallback" means operationally, and
    the benchmark minorminer wins, [EMB26]) but real workloads are structured;
-   the [PENDING-M5] sweep is the direct test, with its no-regression bar and
-   its C16 graceful-degradation clause. Dev and eval instances also come from
-   one generator implementation and two disjoint seed registries — disjoint
-   seeds, same family.
+   the M5 sweep was the direct test (Section 6.8), and its verdict is the
+   scoped one: category-level ties-or-wins nearly everywhere, dense-structured
+   wins on all three fabrics, three documented boundaries — under CLI pairing,
+   raw ACL, and a bar finer than the measured noise floor. The library's
+   category means are regime mixtures: the dense-random headline lives in a
+   thin slice of its ER graphs, so M5 complements rather than restates the
+   map. Dev and eval instances also come from one generator implementation and
+   two disjoint seed registries — disjoint seeds, same family.
 4. **K_n cells are thin by construction.** Instance-invariance means K140 and
    the frontier cells carry 5 pairs (algorithm seeds only); their unanimous
-   margins clear no Wilcoxon bar at n=5 (floor 0.062) and are corroborated
-   instead by the map's independent 15/15 sweeps (§4.1) and the deterministic
-   arm's fixed values. The deterministic-template pairing itself yields
-   anti-conservative p-values (flagged *det throughout; the ATE column is the
-   load-bearing one) (§4.10).
+   margins clear no Wilcoxon bar at n=5 (floor 0.062) and the margins
+   themselves are baseline-seed-sensitive — P16 K140 swung −33.5% (dev) →
+   −19.5% (eval) because minorminer's cliff-seed spread (std 3.09 ACL) exceeds
+   its own median margin to the template (§4.12.3, Table 11). Corroboration
+   is therefore triangulated rather than statistical: the map's independent
+   K140 headroom (−33.4% P16, §4.1), the 15/15 sweeps at the adjacent
+   dense-ER cells (−28.7..−31.8% at (140, 0.7–0.9), §4.1), and the
+   deterministic template's fixed value (13.171 at both stages, §4.5/§4.10).
+   K140 numbers are quoted with the n=5 caveat wherever they appear. The
+   deterministic-template pairing itself yields anti-conservative p-values
+   (flagged *det throughout; the ATE column is the load-bearing one) (§4.10).
 5. **Chimera.** C16's clique bound (~64) shrinks the template regime;
-   ATE's claim there is graceful degradation to minorminer, not victory —
-   pre-registered as such (§4.11). A fabric with no useful clique
-   construction would reduce ATE to its search arm everywhere;
-   the two-regime *map* would still stand (it is a property of
-   source-density vs fabric cut capacity), but the product's dense
-   prize is fabric-conditional. [PENDING-M5]
+   ATE's claim there was pre-registered as graceful degradation to
+   minorminer, not victory — and that is what M5 measured: 6W/26t/3L with
+   dense-structured wins intact (§4.11, Section 6.8.3). A fabric with no
+   useful clique construction would reduce ATE to its search arm everywhere;
+   the two-regime *map* would still stand (it is a property of source-density
+   vs fabric cut capacity), but the product's dense prize is
+   fabric-conditional — and clmm's C16 gate boundary shows the *thresholds*
+   are fabric-conditional too (Section 6.8.3).
 6. **Pairing routes differ across scales.** Headline tables are literal
    (instance, seed) pairs (script route); the M5 breadth sweep pairs
    (instance, trial) with per-algorithm seed salting and no spur column [CLI]
    — labelled on every table, never pooled (rule 1). The two routes have
-   never disagreed on a direction in this programme, but M5's verdicts will
-   be CLI-labelled by construction.
+   never disagreed on a direction in this programme, M5's verdicts are
+   CLI-labelled by construction, and the passthrough null (Section 6.8.2) now
+   quantifies the CLI route's resolution: sd 1.57 pt on family success rates
+   at single-trial granularity.
 7. **Known measurement debts**, disclosed rather than hidden: cooperative
    timeout overruns (worst 89 s on failing attraction rows; ~2.2×
    per-5 s-slice overshoot at the cliff, which is why the equal-time
    best-of-K control is "not even achievable" there, §4.1); the cuthill
-   control's disconnected-instance wrapper failure (3 instances, §4.1); the
-   template-vs-search cross-column selector caveat (Section 5.1); wall-clock
-   tables within-batch only, with the rule-5 workers=1 idle re-measure
-   outstanding for standalone speed claims (Section 6.6).
+   control's disconnected-instance wrapper failure (3 instances, fixed at
+   §4.12.4 with regression tests, no frozen cell affected); the
+   template-vs-search cross-column selector caveat (Section 5.1); the
+   §4.12.8 runaway's contamination footprint (21 successful mmpolish rows
+   excluded, one partial batch discarded and re-run, Section 6.8.4). The
+   formerly outstanding rule-5 debt — idle re-measure for standalone speed
+   claims — is retired by Table 10 (§4.13), which reproduced every
+   within-batch ratio.
 
 ---
 
-## 9 Reproducibility
+## 9 Future work
+
+Every item below is grounded in a measurement already reported and recorded,
+with its evidence, in the artifact's improvement ledger (twelve entries;
+improvement-notes.md). The roadmap in brief: **stack the two winners** — run
+ATE, then spend the leftover wall on the exact polish, composing the margin
+arm with the consistency arm in one strictly-dominating pass (both components
+are validity- and monotonicity-preserving; ledger #1); **productize the
+confirmed β = D̂ sparse pricing** (§4.8b) as a density-gated arm or, zero-risk,
+a racer roster slot — at −2.6..−5.0% it is the largest measured unclaimed
+margin in the sparse regime (#4, #5); **architecture-aware gates** — re-derive
+clmm's 0.15 density gate per target from the E0 map, since C16's crossover
+sits higher (#11), and probe *why* Zephyr's degree-20 fabric neutralizes
+mid-band seeding while template-friendly structured-dense families (johnson)
+prefer the raw construction over seeded search (#6); **a native fast path** —
+detect (near-)subgraph-embeddable sources and return length-1 chains before
+any machinery runs, retiring the recurring hardware_native oddity and making
+every arm ≥ minorminer there by construction (#12); **erase ATE's sub-second
+insurance premium** by gating or cheapening the template attempt below
+density ≈ 0.08 — every measured template win sits at ≥ 0.12 (#2, #3); **a
+feasibility mode** optimizing time-to-first-legal (raised patience, seeding,
+no shortening phase) to push the budget-dependent cliff (§4.7) at fixed cost
+(#8); **deeper exact repair** via predicted-gain move scheduling toward the
+§4.4 ceiling, with x3 moves bounded before built (#9); and **bar calibration
+for library-scale sweeps** — state bars against the free passthrough null or
+buy ≥ 3 trials on small families (#10). None of these were built after the
+tuning freeze; all inherit the constitution.
+
+---
+
+## 10 Reproducibility
 
 The unit of reproducibility is the pre-registered experiment: a numbered
 lab-record entry (question, bars, decision tree) committed before launch, a
@@ -1216,8 +1572,8 @@ place — the one pre-launch bar amendment (§4.9), the declined technical win
 (§4.7), the predictions that were wrong (§4.7's fixed-wall-clock bet) —
 because a record that cannot show its corrections cannot support its claims.
 
-**Table 11 — claim-to-artifact index.**
-<!-- shas as recorded in notes.md pre-registration blocks; the run ledger (QUEUE.md) records launch-time shas where later -->
+**Table 13 — claim-to-artifact index.**
+<!-- shas as recorded in notes.md pre-registration blocks; QUEUE.md launch shas aligned to notes per the §4.12.5 convention note -->
 
 | result | record | script @ sha | data |
 |---|---|---|---|
@@ -1234,8 +1590,10 @@ because a record that cannot show its corrections cannot support its claims.
 | 15-seed anatomy confirm | §4.8b | p6_probes.py --confirm @ 9bec9817 | p6_probes_confirm.csv |
 | assignment honesty gate | §4.9 | p1_kg2.py @ 94d5e046 | p1_kg2.csv |
 | frozen eval (headline + racer) | §4.10 | m4_eval.py / m4_analysis.py @ e917c918 (tuning freeze) | m4_eval.csv, m4_race.csv, m4_headline.md |
-| layout supplement | §4.10b | m4_eval.py --arms minorminer-layout @ 3ea487e4 | [PENDING: §4.10b] |
-| full-library sweep | §4.11 (+2 amendments) | gen_m5_full.py → m5full_{c16,p16,z12}[_layout].yaml | [PENDING-M5] |
+| layout supplement (frozen cells) | §4.10b | m4_eval.py --stage main --arms minorminer-layout @ 3ea487e4 | m4_eval.csv (770 rows appended) |
+| full-library sweep: 3 main + 3 layout batches + P16 guarded re-run | §4.11 (+2 amendments, per-batch result entries) | gen_m5_full.py → m5full_{c16,p16,z12}[_layout,_rerun].yaml @ 51f4ad99 (launch, QUEUE.md); analyzer m5_analyze.py @ e917c918; arms v1.1 (guards) / v1.1.1 (repair bound) | m5_z12_results.md + m5_z12_percategory.txt (in-repo); per-batch DBs + P16/C16 per-category tables archived on the run host (~700 MB, not in git) |
+| M5 harness/engine errata + fixes | §4.12.7–8, §4.12.4 | worker-alias fix @ 48aab69b; lazy materialization @ 1e754132; `_find_split` bound @ v1.1.1; cuthill wrapper fix @ dd15edb3 — each with a unit/regression test | contamination audit in §4.12.8 (21 rows excluded; C16 partial discarded) |
+| idle speed table | §4.13 | m6_speed.py @ deb88153 | m6_speed.csv, m6_speed_summary.txt |
 
 Figures 1–3 regenerate deterministically from e0_crossover.csv via one script
 (fig_crossover.py; figures/README.md documents the conventions). The frozen
@@ -1251,28 +1609,41 @@ above are repository-relative under docs/paper3/.
 
 ---
 
-## 10 Conclusion
+## 11 Conclusion
 
 Minor embedding's incumbent has been asked, for a decade, to be one algorithm
 for what turns out to be two problems. The density-resolved map locates the
 boundary — p\*(n) falling from 0.7 to 0.12 as n grows to 160, on two modern
 fabrics, with a headroom ridge reaching −33% along a feasibility cliff that is
-density-flat at fixed budget — and the regime above it belongs to
-construction: a sub-second template that 60 seconds of search cannot match,
-cannot improve, and (past the cliff) cannot even reach. The regime below it
-belongs to search, where the map is equally clear that only constants are on
-offer — and the paper harvests them anyway (selection −3.8..−6.8% under strict
-fairness, exact repair −0.5..−1.4%, ordering −1.5..−2.5%, and a
-paper-vs-program pricing lever worth 2.6–5%). ATE packages the boundary as a
-product: never worse than minorminer anywhere measured, −6..−33% above the
-crossover, zero seed variance where it wins, and perfect success where the
-incumbent fails. The measurement constitution — paired seeds, budget parity,
-polish parity, restart controls, pre-registration — is offered as a
-contribution in its own right; its deflator result (best-of-K at equal
-wall-clock is worth approximately nothing) retires an assumption the field
-mostly never wrote down. What remains before the claim is ecosystem-shaped is
-the full-library no-regression sweep [PENDING-M5]; its bars are committed,
-and either outcome is reportable.
+density-flat at this budget (a 60 s statement throughout, Section 8) — and the
+regime above it belongs to construction: a 0.2–1.3 s template (§4.13) that 60
+seconds of search cannot match, cannot improve, and (past the cliff) cannot
+even reach. The regime below it belongs to search, where the map is equally
+clear that only constants are on offer — and the paper harvests them anyway
+(selection −3.8..−6.8% under strict fairness, exact repair −0.5..−1.4%,
+ordering −1.5..−2.5%, and a paper-vs-program pricing lever worth 2.6–5%; the
+sub-2% entries scoped by the ACL proxy, Section 8). ATE packages the boundary
+as a product: never worse than minorminer on ACL beyond seed noise anywhere
+measured, at a measured sub-second wall premium; −6..−33% above the crossover
+(the −33% end from unanimous n=5 K_n cells, map-corroborated); zero seed
+variance where it wins; perfect success where the incumbent fails. The
+measurement constitution — paired seeds, budget parity, polish parity, restart
+controls, pre-registration — is offered as a contribution in its own right;
+its deflator result (best-of-K at equal wall-clock is worth approximately
+nothing) retires an assumption the field mostly never wrote down. And the
+claim is now ecosystem-shaped: ≈595k runs over the complete benchmark library
+on three architectures, under bars committed before launch. The first batch
+tripped the bar; the pre-registered remedy answered; every residual violation
+decomposed into a measured seed-noise null — obtained for free from the
+guards' passthrough mode — or a documented regime boundary. The polish arm
+closed at 50 wins, 52 ties, 3 losses over 105 architecture × family verdicts;
+the adaptive embedder won dense-structured families on all three fabrics with
+no family-level ACL regression on P16+Z12 beyond one near-native oddity; the
+practitioner default settled at ≈ stock on ACL and worse on success
+everywhere; three of the four committed prediction clauses confirmed, and
+the one that failed was caught by the bar and repaired by the path written
+down before launch (§4.11). The map, the embedder, and the constitution that
+measured them are, as of this sweep, ecosystem-tested.
 
 ---
 
@@ -1285,7 +1656,9 @@ and either outcome is reportable.
 - [ZBED20] S. Zbinden, A. Bärtschi, H. Djidjev, S. Eidenbenz. *Embedding
   algorithms for quantum annealers with Chimera and Pegasus connection
   topologies.* ISC High Performance 2020, LNCS 12151.
-- [EMB26] [Ember benchmark paper.] arXiv:2604.25433 (2026).
+- [EMB26] Z. Macaskill-Smith, U. Sharma, M. Warner, K. Varga, D. A. B. Hyde.
+  *Ember: An Extensible Benchmark Suite for Quantum Annealing Embedding
+  Algorithms.* arXiv:2604.25433 (2026).
 - [PSSA20] Y. Sugie et al. *Simulated-annealing-based embedding for quantum
   annealers (PSSA line).* arXiv:2012.02372 and predecessors.
 - [ATOM23] *ATOM: adaptive topology embedding.* arXiv:2307.01843.
@@ -1295,8 +1668,9 @@ and either outcome is reportable.
 - [SOTA26] *State-of-the-art evaluation of minor-embedding heuristics.*
   arXiv:2504.13376; FGCS (2026).
 - [BIP25] *Bipartite template embedding framework.* arXiv:2504.21112.
-- [OCT] T. Goodrich et al. *Optimizing adiabatic quantum program compilation
-  using a graph-theoretic framework (OCT-based embedding).*
+- [OCT] T. D. Goodrich, B. D. Sullivan, T. S. Humble. *Optimizing adiabatic
+  quantum program compilation using a graph-theoretic framework.* Quantum
+  Information Processing 17, 118 (2018).
 - [BERNAL20] D. Bernal et al. *Integer-programming approaches to minor
   embedding.* CPAIOR 2020.
 - [PRA24] *Four-clique network minor embedding.* Phys. Rev. Applied 21,
@@ -1339,3 +1713,62 @@ Dev instances: seeds 101–105 (E0 baselines 101–103); eval instances
 - §3.15/§3.17 (economics): legalization ≈ 5–15% of wall-clock; the
   shortening phase is 85–95% and earns ~30–38% ACL; its cost concentrates in
   the exhaustive audition, peaking exactly when no improvement exists.
+
+## Appendix C — M5 per-category table, Zephyr Z12
+
+**Table C1 — Z12 full-library per-category results (30,221 eligible graphs ×
+5 arms, 60 s, arms v1.1; (instance, trial) pairing [CLI]; raw ACL; cells =
+median paired ΔACL% vs minorminer on both-succeed pairs (win rate) · success%;
+bold = category win: median < −0.5% at ≥ 55% win rate; §4.11;
+data/m5_z12_results.md).** Ten mmpolish rows affected by the §4.12.8 runaway
+(worst 143 s) are excluded; immaterial to every median shown. The measured
+seed-noise floor on family success rates is sd 1.57 pt / max 4.55 pt
+(Section 6.8.2). P16 and C16 per-category tables archive with their batches
+(Table 13).
+
+| category | n | MM succ% | p3-ate | p3-mmpolish | p3-clmm | p3-template |
+|---|---|---|---|---|---|---|
+| watts_strogatz | 11988 | 66.5 | +0.0% (47%W) · 67%s | **−3.2% (65%W)** · 67%s | +0.0% (43%W) · 67%s | +25.0% (17%W) · 67%s |
+| barabasi_albert | 3416 | 66.3 | +0.0% (45%W) · 67%s | **−1.6% (56%W)** · 66%s | +0.0% (37%W) · 67%s | +12.0% (25%W) · 67%s |
+| regular | 3375 | 57.8 | −1.0% (53%W) · 58%s | **−2.9% (64%W)** · 58%s | +0.0% (48%W) · 58%s | +16.0% (29%W) · 59%s |
+| random_er | 3024 | 72.1 | +0.0% (43%W) · 74%s | +0.0% (46%W) · 72%s | +0.0% (39%W) · 74%s | +3.6% (28%W) · 74%s |
+| planted_solution | 2616 | 91.2 | +0.0% (44%W) · 91%s | −0.2% (50%W) · 91%s | +0.0% (44%W) · 91%s | +33.9% (13%W) · 92%s |
+| sbm | 1125 | 76.9 | +0.0% (48%W) · 77%s | **−2.1% (57%W)** · 77%s | +0.0% (41%W) · 77%s | +26.9% (19%W) · 78%s |
+| generalized_petersen | 755 | 91.7 | +0.0% (43%W) · 91%s | +0.0% (47%W) · 92%s | +0.0% (45%W) · 92%s | +22.4% (13%W) · 92%s |
+| turan | 607 | 83.2 | **−5.6% (60%W)** · 88%s | **−2.4% (57%W)** · 83%s | **−4.5% (59%W)** · 87%s | +0.0% (49%W) · 88%s |
+| spin_glass | 598 | 69.2 | **−3.5% (62%W)** · 74%s | **−2.6% (61%W)** · 69%s | +0.0% (49%W) · 74%s | +6.6% (43%W) · 74%s |
+| weak_strong_cluster | 444 | 54.5 | +0.0% (50%W) · 56%s | **−4.3% (83%W)** · 55%s | +0.0% (45%W) · 57%s | +15.3% (13%W) · 60%s |
+| circulant | 337 | 86.9 | +0.0% (43%W) · 88%s | −0.7% (53%W) · 88%s | +0.0% (46%W) · 87%s | +25.0% (11%W) · 87%s |
+| random_planar | 216 | 88.9 | +0.0% (42%W) · 89%s | **−2.1% (58%W)** · 89%s | +1.8% (35%W) · 89%s | +43.0% (2%W) · 89%s |
+| bipartite | 208 | 81.2 | **−12.3% (66%W)** · 83%s | +0.0% (38%W) · 80%s | **−12.0% (64%W)** · 82%s | **−12.3% (62%W)** · 85%s |
+| triangular_lattice | 182 | 90.1 | +0.0% (42%W) · 90%s | **−2.4% (59%W)** · 90%s | +0.0% (46%W) · 90%s | +28.2% (9%W) · 88%s |
+| honeycomb | 151 | 72.8 | +0.7% (40%W) · 74%s | +0.0% (43%W) · 73%s | +0.0% (47%W) · 74%s | +10.1% (20%W) · 72%s |
+| grid | 143 | 82.5 | +0.0% (38%W) · 84%s | +0.0% (48%W) · 84%s | +0.0% (46%W) · 83%s | +17.2% (6%W) · 85%s |
+| kagome | 130 | 71.5 | +1.1% (45%W) · 74%s | **−1.5% (55%W)** · 72%s | +0.0% (49%W) · 73%s | +17.3% (18%W) · 71%s |
+| johnson | 74 | 43.2 | **−6.4% (81%W)** · 43%s | **−4.1% (84%W)** · 43%s | +4.5% (31%W) · 43%s | **−3.6% (62%W)** · 43%s |
+| cubic_lattice | 74 | 56.8 | +0.0% (40%W) · 55%s | +0.0% (45%W) · 55%s | +0.4% (34%W) · 55%s | +9.0% (20%W) · 57%s |
+| king_graph | 70 | 72.9 | +0.8% (37%W) · 71%s | **−5.2% (65%W)** · 73%s | −1.0% (52%W) · 71%s | +30.0% (10%W) · 73%s |
+| frustrated_square | 70 | 74.3 | +0.6% (40%W) · 71%s | **−5.7% (70%W)** · 73%s | +0.2% (45%W) · 70%s | +29.9% (14%W) · 73%s |
+| shastry_sutherland | 66 | 100.0 | +1.1% (36%W) · 100%s | **−2.8% (62%W)** · 100%s | +0.0% (45%W) · 100%s | +14.9% (17%W) · 100%s |
+| cycle | 63 | 96.8 | +0.0% (22%W) · 95%s | +0.0% (21%W) · 97%s | +0.0% (25%W) · 97%s | +0.1% (10%W) · 94%s |
+| star | 63 | 71.4 | +0.0% (38%W) · 73%s | +0.0% (29%W) · 73%s | +0.0% (24%W) · 73%s | +0.0% (40%W) · 95%s |
+| path | 63 | 95.2 | +0.0% (0%W) · 95%s | +0.0% (0%W) · 97%s | +0.0% (0%W) · 95%s | +0.2% (0%W) · 95%s |
+| wheel | 62 | 93.5 | +0.0% (40%W) · 94%s | +0.0% (45%W) · 92%s | +0.0% (36%W) · 95%s | +35.0% (7%W) · 92%s |
+| lfr_benchmark | 61 | 68.9 | −0.1% (50%W) · 69%s | **−5.0% (71%W)** · 69%s | **−2.8% (60%W)** · 69%s | +4.9% (36%W) · 69%s |
+| complete | 56 | 78.6 | **−9.6% (66%W)** · 86%s | −0.8% (52%W) · 79%s | **−5.1% (61%W)** · 86%s | **−8.1% (59%W)** · 86%s |
+| kneser | 41 | 56.1 | **−9.5% (87%W)** · 66%s | **−1.4% (65%W)** · 61%s | **−2.5% (65%W)** · 66%s | **−8.9% (61%W)** · 66%s |
+| hardware_native | 41 | 48.8 | **−14.2% (74%W)** · 51%s | +5.9% (42%W) · 49%s | **−3.0% (63%W)** · 51%s | +34.1% (25%W) · 51%s |
+| tree | 26 | 92.3 | +0.0% (21%W) · 92%s | +0.0% (33%W) · 92%s | +0.0% (29%W) · 92%s | +6.5% (21%W) · 92%s |
+| bcc_lattice | 22 | 63.6 | +1.7% (38%W) · 59%s | **−2.1% (57%W)** · 64%s | +6.2% (46%W) · 59%s | +20.9% (15%W) · 59%s |
+| named_special | 12 | 100.0 | +0.0% (8%W) · 100%s | +0.0% (0%W) · 100%s | +0.0% (8%W) · 100%s | +27.1% (0%W) · 100%s |
+| hypercube | 11 | 63.6 | +3.7% (0%W) · 64%s | +0.0% (14%W) · 64%s | +0.0% (14%W) · 64%s | +50.0% (0%W) · 64%s |
+| binary_tree | 11 | 81.8 | +0.0% (11%W) · 91%s | +0.0% (11%W) · 82%s | +0.0% (11%W) · 82%s | +6.7% (11%W) · 91%s |
+
+Reading notes (§4.11): p3-mmpolish wins or ties 34/35 categories (sole loss
+hardware_native, 41 graphs); p3-ate's ties are literal minorminer-at-another-
+seed and its +0.6..+1.7% nominal small-lattice entries are the template-attempt
+tax at noise level; p3-clmm's johnson/random_planar entries are its documented
+boundaries (ate covers both); p3-template standalone loses everywhere sparse by
+design — it ships inside p3-ate. Library category means are regime mixtures:
+the dense-random headline lives at the (n ≥ 80, p ≥ 0.2) cells of the
+crossover map, a thin slice of the library's ER graphs.
