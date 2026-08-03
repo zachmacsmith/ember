@@ -7,7 +7,9 @@ set -e
 cd /data/dabh/ember && . ./env.sh
 echo "=== launch context ==="
 uptime
-git rev-parse --short HEAD
+# rsync deploy — no .git on the run host; the deployed sha is stamped in
+# QUEUE.md row 11 and printed by the sync step on the coordinator side.
+git rev-parse --short HEAD 2>/dev/null || echo "(rsync deploy; sha in QUEUE.md row 11)"
 date
 # Fork rebuild per machine — the parity self-test must pass (set -e aborts
 # the chain otherwise; §4.15 T1c/T1d and p3-mm-beta[-fb] need the .so).
