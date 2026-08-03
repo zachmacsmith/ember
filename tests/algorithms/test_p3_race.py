@@ -23,6 +23,8 @@ from ember_qc.registry import ALGORITHM_REGISTRY
 from ember_qc.embedding_backend import is_valid_embedding
 from ember_qc.algorithms.paper3.race import (
     RACE8_SPEC,
+    RACE9_SPEC,
+    _arm_seed,
     race,
     race_baseline_bestofk,
 )
@@ -168,3 +170,177 @@ def test_race8_full_race_mode():
     assert is_valid_embedding(r["embedding"], src, C4)
     assert r["metadata"]["winner"] is not None
     assert "rounds" in r["metadata"] and "trajectories" in r["metadata"]
+
+
+# ── race9 (v1.2): roster append, mm-beta preflight, terminal polish ──────────
+
+def _pin_fork_absent(monkeypatch):
+    """Pin the mm fork .so ABSENT so fork-dependent arms (cuthill, mm-beta)
+    are deterministically skipped regardless of the running environment."""
+    import ember_qc.algorithms.minorminer_forked as mf
+    monkeypatch.setattr(mf, "_find_so", lambda: None)
+
+
+def test_race9_spec_preserves_race8_seed_derivations():
+    """Arms 0-7 of RACE9_SPEC are byte-identical to RACE8_SPEC — same kinds,
+    same params, same _arm_seed derivations at any master seed — so race9 vs
+    race8 at one master seed is a clean paired A/B (notes §4.15 T1d)."""
+    assert tuple(RACE9_SPEC[:8]) == tuple(RACE8_SPEC)
+    assert len(RACE9_SPEC) == 9
+    assert RACE9_SPEC[8] == ("mm-beta", {})
+    for master in (0, 1, 7, 42, 12345):
+        a8 = [(kind, dict(params), _arm_seed(master, i))
+              for i, (kind, params) in enumerate(RACE8_SPEC)]
+        a9 = [(kind, dict(params), _arm_seed(master, i))
+              for i, (kind, params) in enumerate(RACE9_SPEC)]
+        assert a9[:8] == a8
+
+
+def test_race9_mm_beta_skipped_without_fork(monkeypatch):
+    """Without the fork .so, the mm-beta arm is marked skipped, spends no
+    budget (empty trajectory), and the rest of the roster still races."""
+    _pin_fork_absent(monkeypatch)
+    r = race(K6, C4, 4.0, seed=0, arms_spec=RACE9_SPEC, n_workers=1)
+    beta = [a for a in r["arms"] if a["kind"] == "mm-beta"]
+    assert len(beta) == 1
+    assert beta[0]["index"] == 8
+    assert beta[0]["status"] == "skipped:fork-unavailable"
+    assert beta[0]["trajectory"] == []
+    cut = [a for a in r["arms"] if a["kind"] == "cuthill"]
+    assert cut[0]["status"] == "skipped:fork-unavailable"
+    assert r["success"]
+    assert is_valid_embedding(r["embedding"], K6, C4)
+
+
+def test_terminal_polish_monotone():
+    """Converged-early scenario (K6/C4: every polish quantum trips patience,
+    the race ends ~2 s into a 12 s budget => real leftover wall): the
+    terminal polish ENGAGES (nonzero accounting), and never worsens the
+    winner — result ACL <= the best pre-polish arm ACL."""
+    r = race(K6, C4, 12.0, seed=3, arms_spec=RACE9_SPEC, n_workers=1,
+             terminal_polish=True)
+    assert r["success"]
+    assert is_valid_embedding(r["embedding"], K6, C4)
+    assert r["budget"]["terminal_polish_s"] > 0.0   # it actually ran
+    acl_before = min(a["acl_best"] for a in r["arms"]
+                     if a["acl_best"] is not None)
+    assert r["acl"] <= acl_before + 1e-9
+
+
+def test_terminal_polish_budget_exhausted_honest():
+    """When the race consumes its whole budget (ER(20,0.3)/C4 never trips
+    patience at this scale) the polish spends only what is left — total wall
+    stays budget-honest and the result is still monotone vs the arms."""
+    src = _er(20, 0.3, 101)
+    r = race(src, C4, 10.0, seed=1, arms_spec=RACE9_SPEC, n_workers=1,
+             terminal_polish=True)
+    assert r["success"]
+    assert is_valid_embedding(r["embedding"], src, C4)
+    assert "terminal_polish_s" in r["budget"]
+    assert r["budget"]["terminal_polish_s"] >= 0.0
+    acl_before = min(a["acl_best"] for a in r["arms"]
+                     if a["acl_best"] is not None)
+    assert r["acl"] <= acl_before + 1e-9
+    assert r["elapsed_s"] <= 13.0
+
+
+def test_terminal_polish_validate_false_lazy_adj():
+    """validate=False leaves adj unbuilt during the race; the terminal-polish
+    block builds it lazily (converged-early case so the block really runs)
+    and the returned embedding is still valid."""
+    r = race(K6, C4, 12.0, seed=2, arms_spec=RACE8_SPEC, n_workers=1,
+             validate=False, terminal_polish=True)
+    assert r["success"]
+    assert r["budget"]["terminal_polish_s"] > 0.0   # lazy-adj path exercised
+    assert is_valid_embedding(r["embedding"], K6, C4)
+
+
+# race8 freeze: recorded on 2026-08-03 at paper3 2161c9dc (PRE-race9 code)
+# by scratchpad/record_race8.py — race(K6, C4, 60.0, seed=3, RACE8_SPEC,
+# n_workers=1) with the fork pinned absent. Every stage ends on its own
+# stopping rule at this scale (module docstring), so the projection below is
+# machine-independent. p3-race9's roster/polish must not move ANY of it.
+_RACE8_FROZEN = {
+    "acl": 2.3333,
+    "winner": {"index": 0, "kind": "template", "stage": "template"},
+    "final_survivor": 1,
+    "template_acl": 2.3333,
+    "embedding": {0: [0, 32], 1: [33, 38], 2: [34, 39], 3: [7, 3, 35],
+                  4: [36, 44], 5: [37, 45, 41]},
+    "arms": [
+        {"index": 0, "kind": "template", "status": "floor",
+         "acl_best": 2.3333, "converged": False},
+        {"index": 1, "kind": "mm", "status": "final",
+         "acl_best": 2.3333, "converged": True},
+        {"index": 2, "kind": "mm", "status": "survivor",
+         "acl_best": 2.3333, "converged": True},
+        {"index": 3, "kind": "mm", "status": "survivor",
+         "acl_best": 2.3333, "converged": True},
+        {"index": 4, "kind": "mm", "status": "dropped:r1",
+         "acl_best": 2.3333, "converged": True},
+        {"index": 5, "kind": "cuthill", "status": "skipped:fork-unavailable",
+         "acl_best": None, "converged": False},
+        {"index": 6, "kind": "clmm", "status": "dropped:r1",
+         "acl_best": 2.3333, "converged": True},
+        {"index": 7, "kind": "clmm-core", "status": "dropped:r1",
+         "acl_best": 2.3333, "converged": True},
+    ],
+    "rounds": [
+        {"round": 1, "survivors_in": [6, 7, 1, 2, 3, 4],
+         "dropped": [4, 6, 7], "survivors_out": [1, 2, 3],
+         "acl_best": {1: 2.3333, 2: 2.3333, 3: 2.3333}},
+    ],
+    "budget_keys": ["elapsed_s", "final_s", "legalize_s", "rounds_s",
+                    "template_s", "total_s"],
+}
+
+
+def test_race8_result_frozen_pre_post_race9(monkeypatch):
+    """M4-freeze regression: race() with RACE8_SPEC (terminal_polish left at
+    its default) reproduces the recorded PRE-race9 result exactly — the
+    embedding, winner, survivor structure, and (crucially) the budget
+    accounting keys, which must NOT gain terminal_polish_s."""
+    _pin_fork_absent(monkeypatch)
+    r = race(K6, C4, 60.0, seed=3, arms_spec=RACE8_SPEC, n_workers=1)
+    assert r["acl"] == _RACE8_FROZEN["acl"]
+    assert r["winner"] == _RACE8_FROZEN["winner"]
+    assert r["final_survivor"] == _RACE8_FROZEN["final_survivor"]
+    assert r["template"]["acl"] == _RACE8_FROZEN["template_acl"]
+    assert {int(k): list(v) for k, v in r["embedding"].items()} == \
+        _RACE8_FROZEN["embedding"]
+    got_arms = [{"index": a["index"], "kind": a["kind"],
+                 "status": a["status"], "acl_best": a["acl_best"],
+                 "converged": a["converged"]} for a in r["arms"]]
+    assert got_arms == _RACE8_FROZEN["arms"]
+    got_rounds = [{"round": x["round"], "survivors_in": x["survivors_in"],
+                   "dropped": x["dropped"],
+                   "survivors_out": x["survivors_out"],
+                   "acl_best": x["acl_best"]} for x in r["rounds"]]
+    assert got_rounds == _RACE8_FROZEN["rounds"]
+    assert sorted(r["budget"].keys()) == _RACE8_FROZEN["budget_keys"]
+
+
+def test_race9_tiny_timeout_safe():
+    algo = ALGORITHM_REGISTRY["p3-race9"]
+    t0 = time.perf_counter()
+    r = algo.embed(K6, C4, timeout=1.0, seed=0)
+    wall = time.perf_counter() - t0
+    assert wall < 5.0
+    assert r["metadata"]["mode"] == "tiny"
+    assert is_valid_embedding(r["embedding"], K6, C4)
+
+
+def test_race9_full_race_mode():
+    algo = ALGORITHM_REGISTRY["p3-race9"]
+    src = _er(20, 0.3, 101)
+    t0 = time.perf_counter()
+    r = algo.embed(src, C4, timeout=8.0, seed=1)
+    wall = time.perf_counter() - t0
+    assert wall <= 11.0
+    assert r["metadata"]["mode"] == "race"
+    assert is_valid_embedding(r["embedding"], src, C4)
+    assert r["metadata"]["winner"] is not None
+    assert "terminal_polish_s" in r["metadata"]["budget"]
+    arms = r["metadata"]["arms"]
+    assert len(arms) == 9
+    assert arms[8]["kind"] == "mm-beta"

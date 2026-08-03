@@ -45,6 +45,15 @@ Two public entry points plus one registered arm:
     plain int chains, no stdout, deterministic per seed at contract scale,
     and with ``timeout ≤ 2 s`` it degrades to template + one stock-MM shot.
 
+``p3-race9`` (registered arm, v1.2 — improvement-notes #4b/#5)
+    race8's configuration plus exactly two flips, both reachable only through
+    race9's spec/args (race8 stays M4-frozen): (i) an ``"mm-beta"`` arm
+    APPENDED at roster index 8, so arms 0–7 keep race8's byte-identical
+    per-arm seed derivations (clean paired A/B); (ii)
+    ``terminal_polish=True`` — one terminal ``anytime_polish`` pass on the
+    winning embedding inside the leftover budget (monotone in total qubits,
+    validity-checked, never worsens). Tiny-timeout degradation unchanged.
+
 Determinism. Per-arm seeds are ``seed*1000 + arm_index`` (mod 2^31-1);
 polish-quantum seeds are derived from those, so the whole schedule is a pure
 function of ``(seed, arms_spec)``. Stage RESULTS are bit-deterministic
@@ -78,6 +87,15 @@ Arm kinds (``arms_spec`` = list of ``(kind, params)``):
   ``{"tries": int}``.
 * ``"clmm"`` / ``"clmm-core"`` — the P2 arms (``clmm._clmm_embed``): template
   seeding + single-shot MM legalization as construction, then shared polish.
+* ``"mm-beta"`` — the §4.8b beta-dhat construction: the mm fork with finite
+  ``max_beta = dhat`` (the source-diameter estimate; the 2014 paper's own
+  diameter-scaled pricing), ``fallback=False`` so the arm stays pure — the
+  racer's selection machinery absorbs its feasibility risk
+  (improvement-notes #4b). SKIPPED silently when the fork .so is not built
+  (same preflight as ``"cuthill"``, no budget spent). The race parent
+  computes dhat ONCE and threads it through ``params["dhat"]`` (a picklable
+  float, fork-pool safe); polish quanta use the shared stock-MM warm
+  restart — the fork's contribution is the construction pricing only.
 """
 
 from __future__ import annotations
@@ -116,7 +134,13 @@ RACE8_SPEC: ArmsSpec = (
     ("clmm-core", {}),
 )
 
+#: p3-race9's roster = race8's + the §4.8b beta-dhat arm, APPENDED at index 8
+#: so arms 0–7 keep byte-identical ``_arm_seed`` derivations vs race8
+#: (clean paired A/B; improvement-notes #4b path (b)).
+RACE9_SPEC: ArmsSpec = tuple(RACE8_SPEC) + (("mm-beta", {}),)
+
 _VERSION = "1.0.0"
+_VERSION9 = "1.2.0"
 
 
 def _arm_seed(seed: int, index: int) -> int:
@@ -135,6 +159,33 @@ def _acl(embedding: Embedding) -> float:
 
 def _normalize(raw: Dict) -> Embedding:
     return {v: [int(q) for q in c] for v, c in raw.items()}
+
+
+_DHAT_EXACT_CAP = 2000   # above this, double-BFS estimate (never at n<=180)
+
+
+# TODO(merge): switch to paper3.beta.dhat_of (the beta module is being built
+# in a parallel worktree; interface frozen in notes.md §5). Until then this is
+# a verbatim local copy of docs/paper3/data/p6_probes.py::dhat_of — the D-hat
+# source-diameter estimate documented there (exact diameter of the largest
+# component, double-BFS lower bound above the size cap, floored at 2.0).
+def _dhat(src: nx.Graph) -> float:
+    if src.number_of_nodes() == 0:
+        return 2.0
+    comp = max(nx.connected_components(src), key=len)
+    sub = src.subgraph(comp)
+    if sub.number_of_nodes() <= 2:
+        d = 1
+    elif sub.number_of_nodes() > _DHAT_EXACT_CAP:
+        # double-BFS eccentricity lower bound (cost cap; never at n<=180)
+        v0 = min(sub.nodes())
+        d1 = nx.single_source_shortest_path_length(sub, v0)
+        far = max(d1, key=lambda v: (d1[v], v))
+        d2 = nx.single_source_shortest_path_length(sub, far)
+        d = max(d2.values())
+    else:
+        d = nx.diameter(sub)
+    return float(max(2.0, d))
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -199,6 +250,31 @@ def _stage_cuthill(args: Dict) -> Dict:
                 "err": f"cuthill: {type(e).__name__}: {e}"}
 
 
+def _stage_mm_beta(args: Dict) -> Dict:
+    """§4.8b beta-dhat construction: the fork with finite ``max_beta = dhat``
+    pricing, pure (``fallback=False``) — the race absorbs its feasibility
+    risk. ``args["dhat"]`` is the parent-precomputed float."""
+    t0 = time.perf_counter()
+    try:
+        from ember_qc.algorithms.minorminer_forked import forked_find_embedding
+        r = forked_find_embedding(
+            _SHARED["source"], _SHARED["target"],
+            max_beta=float(args["dhat"]),
+            fallback=False,
+            seed=int(args["seed"]),
+            timeout=float(args["slice_s"]),
+        )
+        used = time.perf_counter() - t0
+        emb = r.get("embedding") or {}
+        if not emb:
+            return {"embedding": {}, "used": used,
+                    "err": r.get("error", "mm-beta construction empty")}
+        return {"embedding": _normalize(emb), "used": used, "err": ""}
+    except Exception as e:  # pragma: no cover — defensive
+        return {"embedding": {}, "used": time.perf_counter() - t0,
+                "err": f"mm-beta: {type(e).__name__}: {e}"}
+
+
 def _stage_clmm(args: Dict) -> Dict:
     t0 = time.perf_counter()
     try:
@@ -244,6 +320,7 @@ def _stage_polish(args: Dict) -> Dict:
 _STAGE_FNS = {
     "mm": _stage_mm_legalize,
     "cuthill": _stage_cuthill,
+    "mm-beta": _stage_mm_beta,
     "clmm": _stage_clmm,
     "clmm-core": _stage_clmm,
 }
@@ -338,10 +415,18 @@ def race(source_graph: nx.Graph, target_graph: nx.Graph,
          n_workers: int = 1, quantum_frac: float = DEFAULT_QUANTUM_FRAC,
          *, polish_patience: int = POLISH_PATIENCE,
          validate: bool = True,
+         terminal_polish: bool = False,
          on_event: Optional[Callable[[str], None]] = None) -> Dict:
     """Race ``arms_spec`` under one wall-clock budget; return the best-ever
     valid embedding plus rich metadata. See the module docstring for the
     mechanism, budget semantics, and determinism contract.
+
+    ``terminal_polish=True`` (p3-race9; improvement-notes #5) spends any
+    leftover budget on ONE ``anytime_polish`` pass over the winning
+    embedding — monotone in total qubits, validity-checked before adoption,
+    never raises — and adds ``terminal_polish_s`` to the budget accounting.
+    The default ``False`` skips the block entirely (no extra accounting
+    key), keeping p3-race8's results bit-identical.
 
     Returns a dict with keys: ``embedding`` (possibly ``{}``), ``success``,
     ``acl``, ``winner`` (``{"index", "kind", "stage"}`` or None),
@@ -425,12 +510,14 @@ def race(source_graph: nx.Graph, target_graph: nx.Graph,
 
     racing = [a for a in arms if a.kind != "template"]
 
-    # cuthill preflight: skip silently (no budget spent) when the fork is absent
+    # fork preflight: cuthill AND mm-beta arms need the built .so — skip them
+    # silently (no budget spent) when it is absent
     try:
         from ember_qc.algorithms.minorminer_forked import _find_so
         fork_available = _find_so() is not None
     except Exception:
         fork_available = False
+    beta_available = fork_available   # mm-beta needs only the .so, no order
     cuthill_order: Optional[List] = None
     if any(a.kind == "cuthill" for a in racing) and fork_available:
         try:
@@ -442,6 +529,22 @@ def race(source_graph: nx.Graph, target_graph: nx.Graph,
     for arm in racing:
         if arm.kind == "cuthill" and not fork_available:
             arm.status = "skipped:fork-unavailable"
+        elif arm.kind == "mm-beta" and not beta_available:
+            arm.status = "skipped:fork-unavailable"
+    # mm-beta pricing: the parent computes dhat ONCE and threads it through
+    # arm params (a picklable float — safe across the fork pool). Only paid
+    # when a live mm-beta arm exists, so non-beta rosters (race8) never
+    # spend budget here. A caller-supplied params["dhat"] wins (setdefault).
+    beta_live = [a for a in racing if a.kind == "mm-beta"
+                 and not a.status.startswith("skipped")]
+    if beta_live and any("dhat" not in a.params for a in beta_live):
+        try:
+            dh = _dhat(source_graph)
+        except Exception as e:  # pragma: no cover — defensive
+            logger.debug("dhat failed: %s", e)
+            dh = 2.0
+        for a in beta_live:
+            a.params.setdefault("dhat", dh)
     live = [a for a in racing if not a.status.startswith("skipped")]
 
     # worker pool (created after the template phase so fork children inherit
@@ -541,6 +644,39 @@ def race(source_graph: nx.Graph, target_graph: nx.Graph,
         if pool is not None:
             pool.shutdown(wait=True, cancel_futures=True)
 
+    # ── terminal polish (opt-in; p3-race9 — improvement-notes #5) ───────────
+    # One anytime_polish pass on the winning embedding inside the leftover
+    # budget: monotone in total qubits, validity-checked before adoption,
+    # never raises. OFF by default — with terminal_polish=False this block
+    # (including its accounting key) is skipped entirely, so p3-race8's
+    # results stay bit-identical.
+    if terminal_polish:
+        t_phase = time.perf_counter()
+        if best["emb"] and remaining() > _MIN_SLICE_S:
+            try:
+                if adj is None:            # validate=False ran without one
+                    adj = build_adjacency(target_graph)
+            except Exception:
+                adj = None
+            try:
+                from ember_qc.algorithms.paper3.joint_repair import \
+                    anytime_polish
+                before = sum(len(c) for c in best["emb"].values())
+                polished = anytime_polish(best["emb"], source_graph,
+                                          target_graph, deadline, adj=adj)
+                if (polished
+                        and sum(len(c) for c in polished.values()) <= before
+                        and is_valid_embedding(polished, source_graph,
+                                               target_graph, adj=adj)):
+                    best["emb"] = polished
+                    best["acl"] = _acl(polished)
+            except Exception as e:  # pragma: no cover — defensive
+                logger.debug("terminal polish failed: %s", e)
+        acct["terminal_polish_s"] = time.perf_counter() - t_phase
+        say(f"terminal polish: acl="
+            f"{round(best['acl'], 4) if best['emb'] else None} "
+            f"({acct['terminal_polish_s']:.2f}s)")
+
     elapsed = now()
     success = best["emb"] is not None
     result = {
@@ -574,6 +710,8 @@ def _legalize_args(arm: _Arm, slice_s: float,
         args["order"] = cuthill_order
         if "tries" in arm.params:
             args["tries"] = arm.params["tries"]
+    elif arm.kind == "mm-beta":
+        args["dhat"] = float(arm.params.get("dhat", 2.0))
     elif arm.kind in ("clmm", "clmm-core"):
         args["core"] = (arm.kind == "clmm-core")
     elif arm.kind == "mm":
@@ -846,6 +984,74 @@ class P3Race8(EmbeddingAlgorithm):
                     "metadata": meta}
         except Exception as e:  # contract: never raise
             logger.error("p3-race8 error: %s", e)
+            return {"embedding": {}, "time": time.perf_counter() - t0,
+                    "success": False, "status": "FAILURE",
+                    "error": f"race: {type(e).__name__}: {e}"}
+
+
+@register_algorithm("p3-race9")
+class P3Race9(EmbeddingAlgorithm):
+    """P3 racer v1.2 (improvement-notes #4b/#5): p3-race8's sequential
+    successive-halving configuration with exactly two flips — (i) the §4.8b
+    beta-dhat arm appended at roster index 8 (arms 0–7 keep race8's exact
+    per-arm seed derivations, so race9 vs race8 at one master seed is a
+    clean paired A/B) and (ii) one terminal ``anytime_polish`` pass on the
+    winner inside the leftover budget (monotone; never worsens).
+    Tiny-timeout degradation is identical to p3-race8. Protocol rule 2
+    unchanged: measured against best-of-K-parallel stock MM and paired
+    against p3-race8 — never against single-shot MM."""
+
+    supported_counters: List[str] = []
+    _uses_subprocess = False
+
+    @property
+    def version(self) -> str:
+        return _VERSION9
+
+    def embed(self, source_graph, target_graph, timeout=60.0, **kwargs):
+        t0 = time.perf_counter()
+        try:
+            timeout = max(0.01, float(timeout))
+            seed = kwargs.get("seed", 42)
+            seed = 42 if seed is None else int(seed)
+
+            if timeout <= _TINY_TIMEOUT_S:
+                r = _tiny_embed(source_graph, target_graph, timeout, seed)
+                meta = {k: r[k] for k in ("mode", "winner", "acl_template",
+                                          "acl_mm", "elapsed_s")}
+            else:
+                r = race(source_graph, target_graph, timeout, seed,
+                         RACE9_SPEC, n_workers=1,
+                         quantum_frac=DEFAULT_QUANTUM_FRAC,
+                         terminal_polish=True)
+                meta = {
+                    "mode": "race",
+                    "winner": r["winner"],
+                    "final_survivor": r["final_survivor"],
+                    "acl": r["acl"],
+                    "quantum_s": r["quantum_s"],
+                    "budget": r["budget"],
+                    "rounds": r["rounds"],
+                    "template": r["template"],
+                    "arms": [{k: v.get(k) for k in
+                              ("index", "kind", "status", "acl_best",
+                               "converged")}
+                             for v in r["arms"]],
+                    "trajectories": {str(v["index"]): v["trajectory"]
+                                     for v in r["arms"]},
+                }
+            if not r["success"]:
+                status = ("TIMEOUT" if time.perf_counter() - t0 >= timeout - 0.05
+                          else "FAILURE")
+                return {"embedding": {}, "time": time.perf_counter() - t0,
+                        "success": False, "status": status,
+                        "error": "race: no arm produced a valid embedding",
+                        "metadata": meta}
+            return {"embedding": r["embedding"],
+                    "time": time.perf_counter() - t0,
+                    "metadata": meta}
+        except Exception as e:  # contract: never raise
+            logger.error("p3-race9 error: %s", e)
             return {"embedding": {}, "time": time.perf_counter() - t0,
                     "success": False, "status": "FAILURE",
                     "error": f"race: {type(e).__name__}: {e}"}
