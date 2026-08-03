@@ -2,10 +2,11 @@
 tests/algorithms/test_field.py
 ================================
 Tests for the coarse layer (ember_qc.algorithms.factored.field),
-post-consolidation: typed tile capacities, the stair (single-coverage)
-readout and its subgradient dynamics, the alternating 1-D arrangement with
-insertion order-search, wire-coherent seed derivation (greedy coloring and
-per-line matching), and the parked ``bar_domains`` handoff.
+post-consolidation-2 (2026-08-03, one code path): typed tile capacities, the
+stair (single-coverage) readout and its subgradient dynamics, the alternating
+1-D arrangement with insertion order-search and feasibility-priced gates,
+wire-coherent seed derivation (snap-aimed greedy coloring), the exactness
+completion, and the parked ``bar_domains`` handoff.
 """
 import networkx as nx
 import numpy as np
@@ -15,17 +16,13 @@ import dwave_networkx as dnx
 from ember_qc.algorithms.factored.field import (
     TileGrid,
     _color_claim_bars,
-    _couples,
-    _line_tracks,
     claim_overload,
     complete_seeds,
-    order_shake,
     _stair_contacts,
     _target_kappa,
     alternate_arrange,
     bar_domains,
     bar_widths,
-    contract_layout,
     derive_bars_stair,
     edge_monotonize,
     insertion_sweeps,
@@ -33,13 +30,30 @@ from ember_qc.algorithms.factored.field import (
     stair_energy,
     stair_step,
     wire_seeds_iv,
-    wire_seeds_matched,
 )
 from ember_qc.algorithms.factored.placement import target_layout
 
 
 def make_grid(target):
     return TileGrid(target, target_layout(target))
+
+
+def couples(grid, r, s_h, c, s_v):
+    """Test-local coupler check: does the h-wire (row r, sub s_h) share a
+    physical coupler with the v-wire (col c, sub s_v) at their crossing?
+    Re-states the parity rule that ``complete_seeds`` implements inline
+    (a course-j bar crossing line c sits at p = c if parities match, else
+    c - 1), so the fabric facts it verified stay verified after the
+    wire-matching machinery was deleted at consolidation 2."""
+    if grid.stride == 2:
+        ph = c if c % 2 == s_h % 2 else c - 1
+        pv = r if r % 2 == s_v % 2 else r - 1
+        qh = grid.wire_map.get((1, r, s_h), {}).get(ph)
+        qv = grid.wire_map.get((0, c, s_v), {}).get(pv)
+    else:
+        qh = grid.wire_map.get((1, r, s_h), {}).get(c)
+        qv = grid.wire_map.get((0, c, s_v), {}).get(r)
+    return qh is not None and qv is not None and grid.graph.has_edge(qh, qv)
 
 
 class TestTileGrid:
@@ -516,60 +530,6 @@ class TestSnapClaims:
         assert c == d
 
 
-class TestOrderShake:
-    """s3.53 coarse-to-fine order moves: segment reversals + block
-    relocations at decaying scale, sharing insertion's rank-space proxy."""
-
-    def test_permutation_valid_and_deterministic(self):
-        g = nx.random_regular_graph(4, 16, seed=11)
-        adj = {v: sorted(g.neighbors(v)) for v in g}
-        order = sorted(g.nodes(), key=lambda v: (v * 7919) % 16)
-        a, ta = order_shake(order, adj, passes=2)
-        b, tb = order_shake(order, adj, passes=2)
-        assert sorted(a) == sorted(order)  # a permutation
-        assert a == b and ta == tb         # deterministic
-        assert all(y <= x + 1e-9 for x, y in zip(ta, ta[1:]))
-
-    def test_clique_is_noop(self):
-        n = 8
-        adj = {v: [u for u in range(n) if u != v] for v in range(n)}
-        order = list(range(n))
-        new_order, traj = order_shake(order, adj, passes=2)
-        assert new_order == order  # permutation-symmetric: no move
-
-    def test_coarse_reversal_beats_insertion_stall(self):
-        # two K4 blocks whose order is globally MIRRORED relative to their
-        # anchors: a single coarse reversal fixes it; per-variable
-        # insertion also can — the point here is order_shake reaches a
-        # separated state and never worsens the proxy
-        a = list(range(4)); b = list(range(4, 8))
-        adj = {v: ([u for u in a if u != v] if v in a
-                   else [u for u in b if u != v]) for v in range(8)}
-        interleaved = [0, 4, 1, 5, 2, 6, 3, 7]
-        new_order, traj = order_shake(interleaved, adj, passes=2)
-        first = set(new_order[:4])
-        assert first == set(a) or first == set(b)
-        assert traj[-1] < traj[0]
-
-    def test_arrange_order_shake_gate_and_defaults(self):
-        g = nx.convert_node_labels_to_integers(nx.grid_2d_graph(20, 20))
-        grid = TileGrid(g, nx.spectral_layout(g), fallback_bins=20)
-        grid.cap[:, :, :] = 1.0
-        n = 16
-        pos = {v: np.array([10.0 + 0.01 * v, 10.0 + 0.01 * v])
-               for v in range(n)}
-        adj = {v: [u for u in range(n) if u != v] for v in range(n)}
-        base, ib = alternate_arrange(pos, adj, grid, iters=8, kappa=3.0)
-        # order_shake alone (insert_sweeps=0) must run and hold the E-gate
-        osr, io = alternate_arrange(pos, adj, grid, iters=8, kappa=3.0,
-                                    insert_sweeps=0, order_shake=1)
-        assert io["E"][-1] <= ib["E"][-1] + 1e-6
-        assert io["insert_reverts"] in (0, 1)
-        # default order_shake=0 byte-identical to base
-        again, ia = alternate_arrange(pos, adj, grid, iters=8, kappa=3.0)
-        assert all(np.array_equal(base[v], again[v]) for v in base)
-
-
 class TestInsertionSweeps:
     def test_bipartite_blocks_emerge_from_interleaved(self):
         # K5,5 with blocks maximally interleaved in the initial order:
@@ -704,129 +664,6 @@ class TestWireSeeds:
         assert len(seeds[0]) >= 4  # center + ~1 qubit per interval tile
 
 
-class TestCouplers:
-    def test_couples_chimera_all_pairs(self):
-        g = dnx.chimera_graph(4, 4, 4)
-        grid = TileGrid(g, target_layout(g))
-        for s in range(4):
-            for s2 in range(4):
-                assert _couples(grid, 1, s, 2, s2)
-
-    def test_couples_pegasus_partial(self):
-        g = dnx.pegasus_graph(4)
-        grid = TileGrid(g, target_layout(g))
-        hsubs = sorted({s for (u, ln, s) in grid.wire_map
-                        if u == 1 and ln == 1})
-        vsubs = sorted({s for (u, ln, s) in grid.wire_map
-                        if u == 0 and ln == 1})
-        vals = [_couples(grid, 1, s, 1, s2) for s in hsubs for s2 in vsubs]
-        assert any(vals) and not all(vals)  # the ~56% structure is real
-
-    def test_couples_missing_wire_false(self):
-        g = dnx.chimera_graph(4, 4, 4)
-        grid = TileGrid(g, target_layout(g))
-        assert not _couples(grid, 1, 99, 2, 0)
-
-
-class TestWireSeedsMatched:
-    def test_line_tracks_depth(self):
-        items = [(0.0, 4.0, 1), (1.0, 3.0, 2), (2.0, 5.0, 3), (4.5, 6.0, 4)]
-        tr = _line_tracks(items)
-        assert len(tr) == 3  # depth at x=2.5 is 3
-        # disjoint arms share: (0,4) and (4.5,6) in one track
-        assert any(len(t) == 2 for t in tr)
-
-    def _stair_state(self, n=20, P=4):
-        g = dnx.pegasus_graph(P)
-        grid = TileGrid(g, target_layout(g))
-        adj = {v: [u for u in range(n) if u != v] for v in range(n)}
-        pos = {v: np.array([1.5 + 0.05 * v, 1.5 + 0.05 * v])
-               for v in range(n)}
-        pos = stair_step(pos, adj, eta=0.3)
-        # kappa=3: floor-forced extension so the arm-length gate engages on
-        # this compact synthetic init (the physical kappa needs real spread)
-        pos, _ = alternate_arrange(pos, adj, grid, iters=8, kappa=3.0)
-        bars = derive_bars_stair(pos, adj, bounds=(grid.W, grid.H))
-        return g, grid, adj, pos, bars
-
-    def test_matching_beats_or_equals_greedy(self):
-        g, grid, adj, pos, bars = self._stair_state()
-        _, sat0, tot0 = wire_seeds_matched(grid, pos, bars, adj, sweeps=0)
-        chains, sat, tot = wire_seeds_matched(grid, pos, bars, adj, sweeps=4)
-        assert tot == tot0 and tot > 0
-        assert sat >= sat0
-        allq = [q for c in chains.values() for q in c]
-        assert len(allq) == len(set(allq))  # disjoint
-        again, sat2, _ = wire_seeds_matched(grid, pos, bars, adj, sweeps=4)
-        assert chains == again and sat2 == sat  # deterministic
-
-    def test_matching_finds_couplable_pair_greedy_misses(self):
-        # force the designated arms onto tracks (i, j) whose greedy subs do
-        # NOT couple, while hs[i] has SOME couplable v-partner: greedy init
-        # scores 0, the matching must score 1
-        g = dnx.pegasus_graph(4)
-        grid = TileGrid(g, target_layout(g))
-        found = None
-        for r in range(1, grid.H - 1):
-            for c in range(1, grid.W - 1):
-                hs = sorted({s for (u, ln, s) in grid.wire_map
-                             if u == 1 and ln == r})
-                vs = sorted({s for (u, ln, s) in grid.wire_map
-                             if u == 0 and ln == c})
-                if len(hs) < 3 or len(vs) < 3:
-                    continue
-                for i in range(len(hs)):
-                    for j in range(len(vs)):
-                        if (not _couples(grid, r, hs[i], c, vs[j])
-                                and any(_couples(grid, r, hs[i], c, s2)
-                                        for s2 in vs)):
-                            found = (r, c, i, j)
-                            break
-                    if found:
-                        break
-                if found:
-                    break
-            if found:
-                break
-        assert found is not None, "no greedy-miss configuration on P4?"
-        r, c, i, j = found
-        pos, bars, adj = {}, {}, {}
-        vid = 0
-        for k in range(i):   # h-fillers occupying tracks 0..i-1 on row r
-            pos[vid] = np.array([c - 1.0, float(r)])
-            bars[vid] = (np.array([c - 1.0 - 0.01 * (k + 1), c + 1.0]),
-                         np.array([float(r)] * 2))
-            adj[vid] = []
-            vid += 1
-        for k in range(j):   # v-fillers occupying tracks 0..j-1 on col c
-            pos[vid] = np.array([float(c), r + 1.0])
-            bars[vid] = (np.array([float(c)] * 2),
-                         np.array([r - 1.0 - 0.01 * (k + 1), r + 1.0]))
-            adj[vid] = []
-            vid += 1
-        vh, uv = vid, vid + 1  # designated pair: vh's h-arm x uv's v-arm
-        pos[vh] = np.array([c - 1.0, float(r)])
-        bars[vh] = (np.array([c - 1.0, c + 1.0]), np.array([float(r)] * 2))
-        pos[uv] = np.array([float(c), r + 1.0])
-        bars[uv] = (np.array([float(c)] * 2), np.array([r - 1.0, r + 1.0]))
-        adj[vh] = [uv]
-        adj[uv] = [vh]
-        _, sat0, tot = wire_seeds_matched(grid, pos, bars, adj, sweeps=0)
-        _, sat, _ = wire_seeds_matched(grid, pos, bars, adj, sweeps=4)
-        assert tot == 1
-        assert sat0 == 0   # greedy tracks (i, j) miss by construction
-        assert sat == 1    # the matching recovers it
-
-    def test_untyped_fallback(self):
-        gu = nx.convert_node_labels_to_integers(nx.grid_2d_graph(10, 10))
-        gridu = TileGrid(gu, nx.spectral_layout(gu), fallback_bins=10)
-        ch, s, t = wire_seeds_matched(gridu, {0: np.array([2.0, 5.0])},
-                                      {0: (np.array([2.0, 6.0]),
-                                           np.array([5.0, 5.0]))},
-                                      {0: []})
-        assert ch and s == 0 and t == 0  # graceful untyped fallback
-
-
 class TestZephyrGrid:
     def _grid(self, m=3, t=4):
         g = dnx.zephyr_graph(m, t)
@@ -877,7 +714,7 @@ class TestZephyrGrid:
                             if qv is None:
                                 continue
                             tot += 1
-                            hits += _couples(gr, r, sh, c, sv)
+                            hits += couples(gr, r, sh, c, sv)
             return hits / max(tot, 1)
 
         dz, dp = density(grid), density(pgrid)
@@ -967,15 +804,15 @@ class TestZephyrCourses:
         r = c = 3
         for sh in range(8):
             for sv in range(8):
-                assert _couples(course, r, sh, c, sv), (sh, sv)
+                assert couples(course, r, sh, c, sv), (sh, sv)
 
     def test_course_couples_boundary_no_raise(self):
         g, folded, course = self._grids(m=3)
         edge = 6  # line 2m: even-parity bars would sit at p = 2m (absent)
         for sh in range(8):
-            res = _couples(course, 3, sh, edge, 0)
+            res = couples(course, 3, sh, edge, 0)
             assert res in (True, False)
-        assert _couples(course, 3, 0, edge, 0) is False  # j=0 parity miss
+        assert couples(course, 3, 0, edge, 0) is False  # j=0 parity miss
 
     def test_course_kappa(self):
         g, folded, course = self._grids()
@@ -1001,34 +838,6 @@ class TestZephyrCourses:
         assert out["folded"] == 4
         assert out["course"] == 8
 
-    def test_masked_pool_arithmetic_and_gate(self):
-        # s3.51 item 4: raw line mean is dragged to cap*stride*(2m/(2m+1))
-        # by the structural zero boundary tile; masked-nonzero mean restores
-        # the physical sub-lane count (8 on course Zephyr lines).
-        g, folded, course = self._grids()
-        caps = course.cap[:, :, 1]
-        raw = caps.mean(axis=1) * course.stride
-        nz = (caps > 0).sum(axis=1)
-        masked = np.where(nz > 0, caps.sum(axis=1) / np.maximum(nz, 1),
-                          0.0) * course.stride
-        interior = slice(1, course.H - 1)
-        assert np.allclose(masked[interior], 8.0)
-        assert np.all(raw[interior] < 8.0)
-        # arrange accepts the flag; on stride-1 grids it is a no-op branch
-        n = 10
-        adj = {v: [u for u in range(n) if u != v] for v in range(n)}
-        pos = {v: np.array([2.0 + 0.2 * v, 2.0 + 0.2 * v]) for v in range(n)}
-        a0, _ = alternate_arrange(dict(pos), adj, folded, iters=4,
-                                  kappa=3.0, masked_pool=False)
-        a1, _ = alternate_arrange(dict(pos), adj, folded, iters=4,
-                                  kappa=3.0, masked_pool=True)
-        assert all(np.array_equal(a0[v], a1[v]) for v in a0)
-        # on the course grid the flag runs (not asserting which E wins —
-        # that is the probe's question, s3.52)
-        c1, _ = alternate_arrange(dict(pos), adj, course, iters=4,
-                                  kappa=3.0, masked_pool=True)
-        assert set(c1) == set(pos)
-
     def test_course_wire_seeds_valid_connected(self):
         g, folded, course = self._grids()
         n = 12
@@ -1048,267 +857,6 @@ class TestZephyrCourses:
                 break
         else:
             assert False, "no connected multi-qubit course run found"
-
-
-from ember_qc.algorithms.factored.field import (
-    PressureState, pressure_energy, pressure_forces,
-)
-
-
-class TestPressure:
-    """Tests derived from the notes s3.42(a) derivation, not from the
-    implementation."""
-
-    def _grid(self, B=12, cap=0.3):
-        g = nx.convert_node_labels_to_integers(nx.grid_2d_graph(B, B))
-        grid = TileGrid(g, nx.spectral_layout(g), fallback_bins=B)
-        grid.cap[:, :, :] = cap  # tiny caps -> smooth overloaded regime
-        return grid
-
-    def _cfg(self, seed=5, n=10, B=12):
-        rng = np.random.default_rng(seed)
-        pos = {v: np.array([0.71 + (B - 2.4) * rng.random(),
-                            0.73 + (B - 2.4) * rng.random()])
-               for v in range(n)}
-        g = nx.gnp_random_graph(n, 0.6, seed=3)
-        adj = {v: sorted(g.neighbors(v)) for v in g}
-        grid = self._grid(B)
-        state = PressureState(pos, adj, grid, kappa=3.0, floor=False)
-        x = np.array([float(pos[v][0]) for v in sorted(pos)])
-        y = np.array([float(pos[v][1]) for v in sorted(pos)])
-        return state, x, y
-
-    def test_finite_difference_gradient(self):
-        # THE decisive check: implemented forces == -grad(P) numerically,
-        # coordinate by coordinate (central differences, h away from the
-        # measure-zero kinks; random offsets keep us off them)
-        for seed in (5, 11, 23):
-            state, x, y = self._cfg(seed=seed)
-            fx, fy = pressure_forces(state, x, y)
-            h = 1e-5
-            for i in range(len(x)):
-                for arr, f in ((x, fx), (y, fy)):
-                    a = arr.copy(); a[i] += h
-                    b = arr.copy(); b[i] -= h
-                    if arr is x:
-                        ep = pressure_energy(state, a, y)
-                        em = pressure_energy(state, b, y)
-                    else:
-                        ep = pressure_energy(state, x, a)
-                        em = pressure_energy(state, x, b)
-                    grad = (ep - em) / (2 * h)
-                    assert f[i] == pytest.approx(-grad, rel=1e-3, abs=1e-3), \
-                        (seed, i, "x" if arr is x else "y")
-
-    def test_third_party_push(self):
-        # Isolate ROW physics (column pools huge): span-extreme contacts
-        # are billed axially with the derivation's signs — the max holder
-        # is pulled LEFT (shrink into the bar), a min holder pulled RIGHT.
-        grid = self._grid()
-        grid.cap[:, :, 0] = 50.0   # v-pools huge -> no column overload
-        grid.cap[:, :, 1] = 0.3    # h-pools tiny -> rows overloaded
-        pos = {0: np.array([2.0, 5.2]),   # w (lowest y -> h-arm owner)
-               1: np.array([8.3, 6.2]),   # u: span max of 0's and 1's bars
-               2: np.array([5.1, 6.7])}   # m: interior of 0's bar; min of 1's
-        adj = {0: [1, 2], 1: [0, 2], 2: [0, 1]}
-        state = PressureState(pos, adj, grid, kappa=13.0, floor=False)
-        x = np.array([2.0, 8.3, 5.1])
-        y = np.array([5.2, 6.2, 6.7])
-        fx, fy = pressure_forces(state, x, y)
-        assert fx[1] < 0.0   # max holder billed leftward (shrink)
-        assert fx[2] > 0.0   # min holder of 1's bar billed rightward
-
-    def test_perpendicular_slide_toward_slack_row(self):
-        # a bar straddling rows r (overloaded) and r+1 (slack) must feel
-        # fy toward the slack row
-        grid = self._grid(cap=0.3)
-        grid.cap[6, :, :] = 10.0   # row 6 slack, row 5 tiny cap
-        # crowd row 5 with an unrelated long bar
-        pos = {0: np.array([1.0, 5.0]), 1: np.array([9.0, 5.4]),
-               2: np.array([2.0, 5.45]), 3: np.array([8.0, 6.3])}
-        adj = {0: [1], 1: [0], 2: [3], 3: [2]}
-        state = PressureState(pos, adj, grid, kappa=13.0, floor=False)
-        x = np.array([1.0, 9.0, 2.0, 8.0])
-        y = np.array([5.0, 5.4, 5.45, 6.3])
-        fx, fy = pressure_forces(state, x, y)
-        assert fy[2] > 0.0  # variable 2's bar slides up toward slack row 6
-
-    def test_gas_inertness(self):
-        # sub-tile sparse config under REALISTIC caps (tiles hold 4-12
-        # wires; the untyped fallback's 0.5/pool is not a real fabric)
-        g = nx.convert_node_labels_to_integers(nx.grid_2d_graph(12, 12))
-        grid = TileGrid(g, nx.spectral_layout(g), fallback_bins=12)
-        grid.cap[:, :, :] = 4.0
-        pos = {v: np.array([2.0 + 0.4 * v, 7.0]) for v in range(5)}
-        adj = {v: [u for u in (v - 1, v + 1) if 0 <= u < 5]
-               for v in range(5)}
-        state = PressureState(pos, adj, grid, kappa=13.0)
-        x = np.array([float(pos[v][0]) for v in range(5)])
-        y = np.array([float(pos[v][1]) for v in range(5)])
-        assert pressure_energy(state, x, y) == 0.0
-        fx, fy = pressure_forces(state, x, y)
-        assert np.allclose(fx, 0) and np.allclose(fy, 0)
-
-    def test_contract_v2_settles_feasible(self):
-        # the leak-fix check: dense synthetic contracts to residual
-        # overload ~0 under the lambda ramp (v1 measured 60-140 on dense);
-        # v2.1 Armijo tightens the bar to 0.5
-        g = nx.convert_node_labels_to_integers(nx.grid_2d_graph(20, 20))
-        grid = TileGrid(g, nx.spectral_layout(g), fallback_bins=20)
-        grid.cap[:, :, :] = 2.0
-        rng = np.random.default_rng(7)
-        n = 16
-        pos = {v: np.array([1.0 + 17.0 * rng.random(),
-                            1.0 + 17.0 * rng.random()]) for v in range(n)}
-        adj = {v: [u for u in range(n) if u != v] for v in range(n)}
-        new, info = contract_layout(pos, adj, grid, steps=150, cycles=3,
-                                    kappa=3.0, pressure=True)
-        # s3.43: the local-pressure PLATEAU pins interior overload —
-        # rim-peeling reaches ~1.5 here, not ~0. The <=0.5 bar belongs to
-        # the Poisson-source fallback round (pre-registered s3.42 rule).
-        assert info["residual_overload"] <= 2.0
-        again, _ = contract_layout(pos, adj, grid, steps=150, cycles=3,
-                                   kappa=3.0, pressure=True)
-        assert all(np.allclose(new[v], again[v]) for v in pos)
-
-    def test_stiff_barrier_settles(self):
-        # the s3.42 failure mode reproduced in miniature: dense K16 on
-        # tiny caps -> deep overload -> v2.0 thrashed (bang-bang at the
-        # clip). v2.1's Armijo must settle feasible-ish with few stalls.
-        g = nx.convert_node_labels_to_integers(nx.grid_2d_graph(20, 20))
-        grid = TileGrid(g, nx.spectral_layout(g), fallback_bins=20)
-        grid.cap[:, :, :] = 1.0  # brutal
-        rng = np.random.default_rng(3)
-        n = 16
-        pos = {v: np.array([1.0 + 17.0 * rng.random(),
-                            1.0 + 17.0 * rng.random()]) for v in range(n)}
-        adj = {v: [u for u in range(n) if u != v] for v in range(n)}
-        new, info = contract_layout(pos, adj, grid, steps=200, cycles=4,
-                                    kappa=3.0, pressure=True)
-        # bang-bang is dead (few stalls, monotone descent); the residual
-        # floor is the s3.43 plateau, not thrash — see the note above.
-        assert info["residual_overload"] <= 2.0
-        assert info["stalled_steps"] <= info["steps"] * 0.5
-
-    def test_energy_monotone_within_settlement(self):
-        # the integrator's contract: cycle-final E_total never exceeds the
-        # spread init's, and the sampled trajectory ends at its minimum
-        # region (weak monotonicity across net refreshes)
-        g = nx.convert_node_labels_to_integers(nx.grid_2d_graph(20, 20))
-        grid = TileGrid(g, nx.spectral_layout(g), fallback_bins=20)
-        grid.cap[:, :, :] = 2.0
-        rng = np.random.default_rng(9)
-        n = 14
-        pos = {v: np.array([1.0 + 17.0 * rng.random(),
-                            1.0 + 17.0 * rng.random()]) for v in range(n)}
-        adj = {v: [u for u in range(n) if u != v] for v in range(n)}
-        new, info = contract_layout(pos, adj, grid, steps=150, cycles=1,
-                                    kappa=3.0, pressure=True,
-                                    mono_every=0)
-        traj = info["E"]
-        assert traj[-1] <= traj[0] + 1e-6
-        assert min(traj[-3:]) <= min(traj[:3]) + 1e-6
-
-
-class TestContractLayout:
-    def _grid(self, B=20, cap=2.0):
-        g = nx.convert_node_labels_to_integers(nx.grid_2d_graph(B, B))
-        grid = TileGrid(g, nx.spectral_layout(g), fallback_bins=B)
-        grid.cap[:, :, :] = cap
-        return grid
-
-    def _spread_k(self, n, B=20, seed=7):
-        rng = np.random.default_rng(seed)
-        pos = {v: np.array([1.0 + (B - 3.0) * rng.random(),
-                            1.0 + (B - 3.0) * rng.random()])
-               for v in range(n)}
-        adj = {v: [u for u in range(n) if u != v] for v in range(n)}
-        return pos, adj
-
-    def test_energy_decreases_and_deterministic(self):
-        grid = self._grid()
-        pos, adj = self._spread_k(16)
-        e0 = stair_energy(pos, adj)
-        new, info = contract_layout(pos, adj, grid, steps=120, kappa=3.0)
-        assert info["final_E"] < e0
-        again, _ = contract_layout(pos, adj, grid, steps=120, kappa=3.0)
-        assert all(np.allclose(new[v], again[v]) for v in pos)
-
-    def test_entry_gating_blocks_full_line(self):
-        grid = self._grid(cap=1.0)  # depth 1 per line: brutal wall
-        pos, adj = self._spread_k(12)
-        new, info = contract_layout(pos, adj, grid, steps=150, kappa=3.0,
-                                    pressure=False)  # the v1 wall arm
-        assert info["blocked"] > 0  # the wall was hit
-        # entry-invariant: rows occupied by >=1-tile h-arms respect depth
-        bars = derive_bars_stair(new, adj, kappa=3.0,
-                                 bounds=(grid.W, grid.H))
-        by_row = {}
-        for v, (h_iv, _v_iv) in bars.items():
-            if h_iv[1] - h_iv[0] >= 1.0:
-                by_row.setdefault(int(round(float(new[v][1]))), []).append(
-                    (float(h_iv[0]), float(h_iv[1])))
-        worst = max((line_depth(iv) for iv in by_row.values()), default=0)
-        # growth overfill is measured, not forbidden; it must be bounded
-        assert worst <= 1 + info["growth_overfill"] + 1e-9
-
-    def test_deg_weight_moves_hub_faster(self):
-        grid = self._grid()
-        # star: hub 0 with 8 leaves, all spread
-        pos = {0: np.array([15.0, 15.0])}
-        pos.update({v: np.array([2.0 + v, 2.0]) for v in range(1, 9)})
-        adj = {0: list(range(1, 9))}
-        adj.update({v: [0] for v in range(1, 9)})
-        # deg_weight only exists in the v1 (pressure=False) branch since
-        # v2.1: the Armijo integrator uses the raw gradient direction
-        w, _ = contract_layout(pos, adj, grid, steps=1, kappa=13.0,
-                               deg_weight=True, mono_every=0,
-                               pressure=False)
-        u, _ = contract_layout(pos, adj, grid, steps=1, kappa=13.0,
-                               deg_weight=False, mono_every=0,
-                               pressure=False)
-        hub_w = np.linalg.norm(w[0] - pos[0])
-        hub_u = np.linalg.norm(u[0] - pos[0])
-        assert hub_w > hub_u  # unnormalized: the popular magnet rushes
-
-    def test_patches_coalesce_separately(self):
-        grid = self._grid(B=24)
-        a, b = list(range(12)), list(range(12, 24))
-        rng = np.random.default_rng(3)
-        pos = {}
-        for v in a:
-            pos[v] = np.array([2.0 + 6.0 * rng.random(),
-                               4.0 + 14.0 * rng.random()])
-        for v in b:
-            pos[v] = np.array([16.0 + 6.0 * rng.random(),
-                               4.0 + 14.0 * rng.random()])
-        adj = {v: [u for u in (a if v in a else b) if u != v]
-               for v in range(24)}
-        new, _ = contract_layout(pos, adj, grid, steps=200, kappa=3.0)
-        xa = [float(new[v][0]) for v in a]
-        xb = [float(new[v][0]) for v in b]
-        assert max(xa) < min(xb)  # coalesced in place, never interleaved
-
-    def test_cycles_reshake_runs_and_records(self):
-        grid = self._grid()
-        pos, adj = self._spread_k(16, seed=11)
-        new, info = contract_layout(pos, adj, grid, steps=80, cycles=3,
-                                    kappa=3.0, pressure=False)
-        assert len(info["cycle_E"]) == 3
-        # best-settlement return: the handoff layout is the best cycle's
-        assert info["final_E"] == min(info["cycle_E"])
-        assert stair_energy(new, adj) == pytest.approx(info["final_E"],
-                                                       abs=0.1)
-
-    def test_sparse_subtile_graph_barely_moves_lines(self):
-        grid = self._grid()
-        pos = {v: np.array([5.0 + 0.4 * v, 9.0]) for v in range(6)}
-        adj = {v: [u for u in (v - 1, v + 1) if 0 <= u < 6]
-               for v in range(6)}
-        new, info = contract_layout(pos, adj, grid, steps=50, mono_every=0)
-        assert info["blocked"] == 0  # nothing owes a wire; wall untouched
-        for v in pos:  # contraction is gentle at sub-tile scale
-            assert np.linalg.norm(new[v] - pos[v]) < 2.0
 
 
 class TestBarDomains:

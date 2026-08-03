@@ -67,16 +67,19 @@ class Factored(EmbeddingAlgorithm):
 @register_algorithm("attraction")
 class Attraction(EmbeddingAlgorithm):
     """Placement-first embedder (paper 2 attraction family, notes §3.18+;
-    consolidated to one pipeline 2026-07-29): spectral init, stair-energy
-    subgradient attraction + alternating 1-D interval arrangement of the
-    capacity-forced variables (with insertion order-search), wire-coherent
-    seeds, then stock minorminer seeded cheap legalization per round and an
-    unconstrained warm-started grind. Capacity gating makes the dense
-    machinery inert on sparse sources. See ``factored.AttractConfig``."""
+    one pipeline since 2026-07-29, one code path since consolidation 2,
+    2026-08-03 — the former ``attraction-stack`` preset IS the default now):
+    spectral init, contraction on the stair energy, alternating 1-D interval
+    arrangement of the capacity-forced variables (insertion order-search,
+    feasibility priced into the gates), snap-aimed wire-coherent seeds, and
+    on stride>1 fabrics the exactness completion — valid seeds skip
+    minorminer legalization entirely. Finish is the unconstrained
+    warm-started grind. Capacity gating makes the dense machinery inert on
+    sparse sources. See ``factored.AttractConfig``."""
 
     @property
     def version(self) -> str:
-        return "0.1.0"
+        return "0.2.0"
 
     def embed(self, source_graph, target_graph, timeout: float = 60.0, **kwargs) -> dict:
         seed = kwargs.pop("seed", 0)
@@ -85,33 +88,4 @@ class Attraction(EmbeddingAlgorithm):
         return attract_embed(
             source_graph, target_graph,
             timeout=timeout, seed=int(seed), **kwargs,
-        )
-
-
-@register_algorithm("attraction-stack")
-class AttractionStack(EmbeddingAlgorithm):
-    """The s3.49-s3.57 switch stack as an explicit named preset (NOT a
-    default flip — ``attraction`` keeps the registered stock defaults):
-    Zephyr course-resolved wires, cycle-0 contraction, discrete order
-    shake, exactness completion with snap-aimed claims, and feasibility
-    priced into the gate energy at lam=1. On non-Zephyr targets the
-    Zephyr-only switches are structural no-ops (courses/snap/exact gate
-    on stride). Registered for the full-Z12 sweep (notes s3.58)."""
-
-    STACK = dict(courses=True, shake_cycles=1, order_shake=1,
-                 exact_seeds=True, snap_claims=True, overload_lam=1.0)
-
-    @property
-    def version(self) -> str:
-        return "0.1.0"
-
-    def embed(self, source_graph, target_graph, timeout: float = 60.0, **kwargs) -> dict:
-        seed = kwargs.pop("seed", 0)
-        if seed is None:
-            seed = 0
-        kw = dict(self.STACK)
-        kw.update(kwargs)
-        return attract_embed(
-            source_graph, target_graph,
-            timeout=timeout, seed=int(seed), **kw,
         )
