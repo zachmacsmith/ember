@@ -3,7 +3,7 @@
 # T1a dev gates -> T1b native CLI -> T1c beta (switches + arms) -> T1d racer.
 # Launch (detached, from /data/dabh/ember):
 #   nohup bash docs/paper3/data/run_t1_hyde06.sh > run_t1.log 2>&1 < /dev/null &
-set -e
+set -eo pipefail   # pipefail: `cmd | tail` must not mask cmd's failure
 cd /data/dabh/ember && . ./env.sh
 echo "=== launch context ==="
 uptime

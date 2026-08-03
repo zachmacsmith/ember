@@ -32,13 +32,15 @@ fi
 
 cd "$FORK"
 
-# Apply the patch if the working tree doesn't already contain it.
-if git apply --check --reverse "$REPO/scripts/mm_fork.patch" 2>/dev/null; then
-  echo ">> patch already applied"
-else
-  echo ">> applying scripts/mm_fork.patch ..."
-  git apply "$REPO/scripts/mm_fork.patch"
-fi
+# Always patch from the PRISTINE tag. A leftover tree with an OLDER patch
+# applied makes `git apply` fail ("patch does not apply") — that is exactly
+# how the 2026-08-03 T1c ramp rows died on hyde06 (stale .so without the
+# beta_ramp switch; §4.15 amendment 5). reset --hard restores the tag
+# checkout; clean -fdx drops build artifacts and the old .so.
+git reset --hard --quiet
+git clean -fdxq
+echo ">> applying scripts/mm_fork.patch (pristine $TAG tree) ..."
+git apply "$REPO/scripts/mm_fork.patch"
 
 cp "$REPO/scripts/setup_mmfork.py" "$FORK/setup_mmfork.py"
 

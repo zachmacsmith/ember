@@ -1050,7 +1050,27 @@ AMENDMENTS (2026-08-03, pre-launch — dated before any T1 run; nothing launched
 
 --- results appended below; nothing above this line is edited after launch ---
 
-### 4.16 v1.2 T2 — Z12 library re-verify (2026-08-02)
+INSTRUMENTATION FAILURE + REMEDY (2026-08-03, during the T1 chain @ ac38cd89):
+the 450 T1c ramp2/ramp2h rows are INVALID — every one an instant FAILURE
+(wall 0.0 s, empty err). Root cause (two layers, both reproduced): (1) the
+run host's external/minorminer-fork tree still carried the OLD 673-line
+patch, so build_mm_fork.sh's `git apply` of the new patch failed ("patch
+does not apply") and the pre-existing M3-era .so (no beta_ramp switch)
+stayed in place — the old binary rejects the kwarg instantly; (2) the chain
+invoked the build as `build_mm_fork.sh | tail -4` under plain `set -e`, so
+the pipeline's exit status (tail's 0) MASKED the failure and the chain
+printed FORK_OK regardless. Blast radius audit: T1a/T1b touch no fork;
+T1c stock + beta-dhat + both registered arms use only max_beta, present and
+parity-proven in the old binary — those 600 rows and their verdicts STAND
+(binary provenance noted); T1d uses max_beta + var_order only — unaffected.
+ONLY the ramp rows are lost. Fixes (committed): build_mm_fork.sh now resets
+the clone to the pristine tag (reset --hard + clean -fdx) before patching;
+chain scripts use `set -eo pipefail`; the re-run script asserts the ramp
+switch live via a probe embed BEFORE burning rows. Remedy (pre-registered
+here before its launch): run_t1c_ramp_rerun.sh — drop the 450 invalid rows,
+p6_probes --topo Z12 --confirm-beta --resume re-runs exactly those keys on
+the rebuilt fork, after T1D_DONE (one batch at a time; QUEUE row 13). The
+§4.15 ramp bars are then read from the re-run rows; no other row is touched.
 
 PRE-REGISTERED 2026-08-02. Launch gated on 4.15 verdicts. One CLI batch: arms
 {p3-ember, p3-mm-beta-fb} ONLY (race9 excluded per the racer-in-sweeps precedent;
