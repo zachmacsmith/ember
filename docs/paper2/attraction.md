@@ -110,9 +110,24 @@ inside, so heavy-edge matching interleaves blocks (the s3.38
 compact-init trap). Twin coarsening makes the templates fixed points:
 K_n collapses to one node (diagonal = readout), turan to the block
 quotient (separation decided in one coarse step) — the s3.48 "learn"
-road. If it works it SUBSUMES spectral init (real init-independence,
-the s3.36 standard), much of insertion's global role, and possibly the
-contraction schedule — a deletion-positive mechanism. Build cost:
+road. **The unified merge score (derived 2026-08-03, Max's "single
+formula" question): closed-neighborhood Jaccard, S(u,v) =
+|N[u] cap N[v]| / |N[u] cup N[v]|.** Not a heuristic: the numerator is
+exactly the number of stair nets strained by separating u,v (common
+neighbors + the direct edge via the closed neighborhoods) = dE/dd, the
+attractive force in arm-tiles per tile; the score is the fraction of
+the pair's total pull that is agreement. Limits check out: clique
+S=1, turan block deg/(deg+2), chain edge 1/2 (heavy-edge recovered as
+the sparse limit), star leaves 1/3 vs leaf-hub ~0, ER ~1/d flat (null
+class degenerates to edge matching, correctly). Threshold on S = the
+coarsening stopping rule — depth self-selects, no density gate.
+Deeper levels: weighted Jaccard (sum-min / sum-max on weighted closed
+adjacency vectors, self-entry = node weight); candidates only at
+distance <= 2, exact-twin hashing first collapses the hub-quadratic
+pair sets. If it works it SUBSUMES spectral init (real
+init-independence, the s3.36 standard), much of insertion's global
+role, and possibly the contraction schedule — a deletion-positive
+mechanism. Build cost:
 weighted stair-E + interval multiplicities in line_depth/arrange.
 Primary pre-registerable bar: random-init turan <= 8.5 (erase the s3.40
 miss) with dense board + off-template guards held; ER within noise
