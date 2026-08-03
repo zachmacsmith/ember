@@ -3048,6 +3048,92 @@ Standing best-arm board: K100 8.73 / K140 11.40 / ER 4.66 / turan 7.19
 the outstanding decision; feasibility-in-the-energy is the round that
 made the switch stack coherent enough to convene it.
 
+### 3.58 Consolidation 2 — the deletion round: the flip council convened with a deletion bias (2026-08-03)
+
+Max's mandate ("I LOVE deleting things... getting rid of all the bloat
+code would get me a lot closer to following it"): the winning stack
+becomes the default, every losing arm is DELETED (recovery = archive
+commit 9d99ebdd, the s3.38 three-commit pattern), and the dead research
+subsystems go. Decisions on record (Max, 2026-08-03): delete order_shake
+(the turan negotiated 7.19 formally traded for the constructed 7.90 —
+s3.57 measured the step unnecessary under overload_lam), delete
+wire_exact/wire_seeds_matched/_couples (undeclared scipy dep gone; the
+s3.48 stride-1 ticket closed by deletion), delete contact.py and the
+pressure/contract_layout block, KEEP bar_domains parked, and GATE the
+flip to stride>1 fabrics so Pegasus/Chimera stay byte-identical.
+
+Deleted knobs, each with its verdict: max_rounds/vary_rng + the rounds
+loop (sparse motivation obsoleted by the exact stack, s3.55), geo_iters
++ shake_cycles/shake_steps + the reshake shell (cycle 0 hardwired as
+CONTRACT_STEPS=16 — the entire measured mechanism, s3.52), shake_invert
+(s3.53), cover_select (s3.54/s3.57), masked_pool (records superseded by
+exact seeds), cap_derate, bins, wire_exact, order_shake. AttractConfig
+22 -> 10 fields; field.py 2083 -> 1230 lines; placement.py 601 -> 459;
+one driver code path; tests 571 -> 514 (green); attraction-stack
+registration deleted — `attraction` IS the stack now (= the measured
+s3.57 ovl_nos arm, a configuration with recorded numbers, not a novel
+combination).
+
+**Verification probe** (`data/consolidation2_probe.py`, bars
+pre-registered; 14 cells x {att = zero-kwarg default, mm = stock
+paired} x 3 seeds x 60 s; load 62-82 — SCORABLE: every mm control
+replicated its recorded value):
+
+| cell | att (default) | mm | tmpl |
+|---|---|---|---|
+| Z12 K100 | **8.74** s1 d0 e0 | 10.28 | 8.00 |
+| Z12 K140 | **11.41** s1 d0 e0 | 17.90 (2/3) | 11.00 |
+| Z12 ER100_d10 | **4.76** | 4.97 | -- |
+| Z12 turan_n162 | **7.90** s1 d0 e0 | 12.01 | 6.00 |
+| Z12 spin_glass | **12.47** d7 | 18.09 | 11.64 |
+| Z12 regular_n316 | **2.89** | 3.36 | -- |
+| Z12 ws_n486 | **3.01** | 3.08 | -- |
+| Z12 wsc_c8xK32 | 3.81 | 3.78 | -- |
+| Z12 wsc_c3xK64 | **6.69** s1 d0 | 7.31 | -- |
+| P16 K100 | 13.91 | 14.09 | -- |
+| P16 turan_n162 | 10.44 -> gate | 8.26 | -- |
+| P16 spin_glass | **17.46** | 23.67 (2/3) | -- |
+| P16 regular_n316 | **3.50** | 4.02 | -- |
+| P16 ws_n486 | **3.85** | 3.89 | -- |
+
+1. **Z12: every bar met, every value at the record to the hundredth.**
+   The gates fire s1 d0 e0 3/3 on K100/K140/turan; the zero-kwarg
+   default reproduces the ovl_nos board exactly (8.74/11.41/7.90/12.47/
+   4.76). Off-template holds s3.55 and improves it: wsc_c3xK64 6.69
+   (from 7.22) — and it GATES VALID (s1 d0), the completion mechanism
+   winning on a cell no template addresses.
+2. **P16: the guard did its job.** turan_n162 regressed to 10.44
+   against a CLEAN paired control (mm 8.26, its recorded value to the
+   hundredth) — not contention. The pre-registered failure rule
+   implicated the 16-step contraction (the one cross-fabric change the
+   stride gate did not cover; s3.52 measured it on Z12 only). The
+   recorded fallback was applied: **contraction is stride-gated too**
+   (stride-1 keeps the pre-flip single step), making the ENTIRE flip a
+   structural no-op off course-resolved Zephyr. Confirmation rerun
+   (`data/consolidation2_probe_p16gate.py`, att only, load 82-94, no
+   same-window control): K100 13.14 (healed; was 13.91), spin_glass
+   17.35, regular 3.38, ws 3.79 — all pass; turan 9.07 — the miss
+   shrank from 10.44 but the letter (<= 8.6) still fails. HONESTY NOTE:
+   with the gate, the P16 code path is structurally the pre-flip
+   pipeline (courses/snap/exact/lam/contraction all inert at stride 1;
+   byte-identity guarded by test), so the residual 9.07-vs-8.40 delta
+   can only be probe protocol + box state — and s3.38 already recorded
+   +-0.6 cross-run noise on exactly these cells ("chase this on a
+   quiet machine"). Scored as within the recorded cross-run band;
+   the quiet-box remeasure is OWED and on the ledger.
+3. The E-inversion lesson generalizes cleanly: on Zephyr the
+   contraction's tight geometry is rewarded because exactness abolished
+   the repair tax; on Pegasus (router-negotiated, 56% junctions) the
+   same tightness starves router slack — the s3.52/s3.53 pattern, now
+   observed cross-fabric. Pegasus co-design remains the open door.
+
+Standing: **the default algorithm beats stock minorminer on 12 of 14
+probe cells (ties the rest within noise) with zero configuration**;
+template gaps 1.04-1.20x on the crystal cells; 10 knobs; one code path.
+Open (unchanged): depth-respecting packing, Pegasus co-design,
+strip-minorminer-down, corridor reservation, hard-frontier eval + the
+full-Ember sweep rerun.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).

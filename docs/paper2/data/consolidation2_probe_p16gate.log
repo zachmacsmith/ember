@@ -1,0 +1,49 @@
+load at start: (65.41162109375, 71.81689453125, 67.67041015625)
+/data/max/ember/docs/paper2/data/consolidation2_probe_p16gate.py:49: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/consolidation2_probe_p16gate.py:49: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/consolidation2_probe_p16gate.py:49: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/consolidation2_probe_p16gate.py:49: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/consolidation2_probe_p16gate.py:49: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/consolidation2_probe_p16gate.py:49: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/consolidation2_probe_p16gate.py:49: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/consolidation2_probe_p16gate.py:49: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/consolidation2_probe_p16gate.py:49: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/consolidation2_probe_p16gate.py:49: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/consolidation2_probe_p16gate.py:49: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/consolidation2_probe_p16gate.py:49: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+P16 K100 att seed 0: 12.62 (39.5s)
+P16 K100 att seed 1: 13.22 (37.8s)
+P16 K100 att seed 2: 13.58 (61.4s)
+P16 turan_n162 att seed 0: 8.827 (63.2s)
+P16 turan_n162 att seed 1: 9.13 (63.6s)
+P16 turan_n162 att seed 2: 9.241 (63.5s)
+P16 spin_glass_n163 att seed 0: 17.644 (55.7s)
+P16 spin_glass_n163 att seed 1: 17.166 (60.2s)
+P16 spin_glass_n163 att seed 2: 17.227 (60.0s)
+P16 regular_n316 att seed 0: 3.231 (12.3s)
+P16 regular_n316 att seed 1: 3.358 (11.8s)
+P16 regular_n316 att seed 2: 3.554 (15.2s)
+P16 ws_n486 att seed 0: 4.115 (20.5s)
+P16 ws_n486 att seed 1: 3.539 (24.6s)
+P16 ws_n486 att seed 2: 3.708 (20.7s)
+
+summary (ACL mean over legal seeds (n) vs bar):
+  P16 K100             att=13.14(3)  bar<=13.9
+  P16 turan_n162       att=9.07(3)  bar<=8.6
+  P16 spin_glass_n163  att=17.35(3)  bar<=18.0
+  P16 regular_n316     att=3.38(3)  bar<=3.7
+  P16 ws_n486          att=3.79(3)  bar<=3.9
+load at end: (94.72216796875, 82.38671875, 71.81298828125)
+done-consolidation2-p16gate

@@ -339,8 +339,15 @@ def attract_embed(
         rounds_deadline = (start + cfg.round_frac * timeout) if timeout else None
 
         # Geometry: contract, then pack. One pass (the 1-shot protocol).
+        # Contraction is stride-gated like the rest of the consolidation-2
+        # flip: the consolidation2 probe measured it on P16 turan at +2.0
+        # ACL against a clean paired control (the s3.52 mechanism was
+        # measured on Z12 only). Stride-1 fabrics keep the pre-flip
+        # single-step geometry — the whole flip is now byte-identical off
+        # course-resolved Zephyr.
+        contract_steps = CONTRACT_STEPS if grid.stride > 1 else 1
         tpts = {v: grid.to_tile(p) for v, p in cent.items()}
-        for _s in range(CONTRACT_STEPS):
+        for _s in range(contract_steps):
             tpts = stair_step(tpts, src_adj, eta=cfg.eta)
         tpts, last_info = alternate_arrange(
             tpts, src_adj, grid, iters=cfg.arrange_iters,

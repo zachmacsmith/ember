@@ -96,6 +96,30 @@ Magic numbers, none swept: η=0.5, λ₀=3.0, round_frac=0.4, max_rounds=10, bin
 
 ## C. Idea ledger
 
+### CONSOLIDATION 2 — verdict: the board reproduced with zero kwargs; P16 healed by gating contraction (2026-08-03; notes s3.58)
+
+The flip landed as designed. The zero-configuration default (= the
+measured s3.57 ovl_nos arm) reproduced every Z12 record to the hundredth
+under a scorable shared-box probe (all mm controls replicated): 8.74 /
+11.41 / 7.90 / 12.47 / 4.76, gates s1 d0 e0 3/3 on the crystal cells;
+off-template improved (wsc_c3xK64 7.22 -> 6.69, gating VALID on a cell no
+template addresses). The P16 guard caught the one un-gated cross-fabric
+change — the 16-step contraction cost turan +2.0 ACL against a clean
+control — and the pre-registered fallback was applied: contraction is
+stride-gated with the rest of the flip, so consolidation 2 is a
+structural no-op on stride-1 fabrics (byte-identity guarded by a test).
+Gate rerun: K100 healed (13.14), turan's miss shrank to 9.07 vs the 8.6
+bar at load 94 with no same-window control — structurally the pre-flip
+pipeline, so the residual is probe protocol + box state, inside s3.38's
+recorded +-0.6 cross-run band; the quiet-box P16 remeasure is OWED.
+Deleted: 12 knobs (AttractConfig 22 -> 10), the rounds machinery, the
+reshake shell, order_shake, the wire-matching family (+ its undeclared
+scipy dep), contact.py, the pressure/contract_layout subsystem —
+~2,400 lines net, one driver code path, tests 571 -> 514 green.
+Accepted trades on record: turan negotiated 7.19 -> constructed 7.90;
+ER pool-arm 4.66 -> 4.76. attraction-stack registration deleted; the
+name `attraction` now IS the stack. Recovery: 9d99ebdd.
+
 ### CONSOLIDATION 2 — the deletion round: archive marker (2026-08-03)
 
 This commit is the recovery point for the second consolidation (the flip
