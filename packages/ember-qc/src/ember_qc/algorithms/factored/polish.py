@@ -56,8 +56,19 @@ def spur_prune(chains: Embedding, src_adj: SrcAdj, adj: Adjacency,
     it, hub-and-spoke sources (star/wheel) with chains of hundreds of qubits
     made the quadratic inner loop blow through the caller's whole time budget
     (measured up to ~1000 s in the first full-Ember sweep).
+
+    Clean-chain skip (v1.2, output-identical): a visit's decisions depend only
+    on ``work[v]``, its source-neighbour chains and the static ``adj``, so a
+    chain whose own chain AND all source-neighbour chains are unchanged since
+    the START of its previous visit would replay that visit exactly — and that
+    visit accepted nothing (any acceptance bumps ``ver[v]``). Skipping it
+    cannot change the final embedding; per-chain version stamps prove it.
+    (Deadline-truncated runs may stop at a different — strictly further
+    along — safe prefix; the fixpoint output is byte-identical.)
     """
     work: Embedding = {int(v): [int(q) for q in c] for v, c in chains.items()}
+    ver: Dict[int, int] = {v: 0 for v in work}     # bumped per removed qubit
+    seen: Dict[int, tuple] = {}                    # v -> stamp at last visit
 
     changed = True
     while changed:
@@ -70,6 +81,11 @@ def spur_prune(chains: Embedding, src_adj: SrcAdj, adj: Adjacency,
             chain = work[v]
             if len(chain) <= 1:
                 continue
+            stamp = (ver[v],) + tuple(
+                ver[u] for u in src_adj.get(v, []) if u in ver)
+            if seen.get(v) == stamp:
+                continue                            # provably no prune possible
+            seen[v] = stamp
             nbr_sets = {
                 u: set(work[u]) for u in src_adj.get(v, []) if work.get(u)
             }
@@ -91,6 +107,7 @@ def spur_prune(chains: Embedding, src_adj: SrcAdj, adj: Adjacency,
                         break
                 if covered:
                     chain.remove(q)
+                    ver[v] += 1
                     changed = True
     return work
 
