@@ -96,6 +96,29 @@ Magic numbers, none swept: η=0.5, λ₀=3.0, round_frac=0.4, max_rounds=10, bin
 
 ## C. Idea ledger
 
+### CONSOLIDATION 2 — the deletion round: archive marker (2026-08-03)
+
+This commit is the recovery point for the second consolidation (the flip
+council, convened with a deletion bias — Max: "I LOVE deleting things").
+Everything removed after this commit is recoverable here, exactly as
+`612ced3e` serves the 2026-07-29 consolidation. Deleted in the following
+commit, each with its recorded verdict: the multi-round machinery
+(`max_rounds`/`vary_rng`; sparse motivation obsoleted by s3.55's exact-stack
+ws win), the settle-and-reshake shell (`shake_cycles`/`shake_steps`; cycle-0
+contraction was the entire mechanism, s3.52 — it becomes a hardwired step),
+`shake_invert` (null-to-harmful, s3.53), `cover_select` (superseded by
+overload_lam, s3.54/s3.57), `masked_pool` (records superseded by exact
+seeds, s3.54), `order_shake` (unnecessary under overload_lam, s3.57 — the
+turan negotiated 7.19 is traded for the constructed 7.90), `wire_exact` /
+`wire_seeds_matched` / `_couples` (superseded on Zephyr by exactness;
+stride-1 arm carried the open s3.48 bug; undeclared scipy dep),
+`cap_derate`, `geo_iters`, `bins`, `contact.py` (retired with honors,
+s3.47), and the pressure/`contract_layout` subsystem (s3.41-s3.44, probe-
+only). KEPT parked: `bar_domains` (the strip-minorminer-down interface).
+Defaults flip to the measured s3.57 `ovl_nos` arm, stride-gated so
+Pegasus/Chimera seeding behavior is unchanged. Verification: the
+consolidation2 probe (Z12 board + off-template + P16 regression guard).
+
 ### Feasibility in the energy -- Max's design lands; turan exact 7.90, guards untouched (2026-08-02; notes s3.57)
 
 The violation-blind-gates defect (s3.56) resolved the way Max specified:
