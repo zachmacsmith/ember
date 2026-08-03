@@ -1,0 +1,11 @@
+T1c arm rows (Z12 deg-10 ladder) — §4.15 beta-arm bars
+
+n=100: p3-mm-beta      success 25/25 (stock 25/25)  med dACL_spur  -0.100 (pairs 25)
+n=100: p3-mm-beta-fb   success 25/25 (stock 25/25)  med dACL_spur  -0.100 (pairs 25)
+        bar[-fb success == stock at shared seeds]: 25 vs 25 -> PASS
+n=140: p3-mm-beta      success 25/25 (stock 25/25)  med dACL_spur  -0.286 (pairs 25)
+n=140: p3-mm-beta-fb   success 25/25 (stock 25/25)  med dACL_spur  -0.286 (pairs 25)
+        bar[-fb success == stock at shared seeds]: 25 vs 25 -> PASS
+n=180: p3-mm-beta      success 25/25 (stock 25/25)  med dACL_spur  -0.411 (pairs 25)
+n=180: p3-mm-beta-fb   success 25/25 (stock 25/25)  med dACL_spur  -0.411 (pairs 25)
+        bar[-fb success == stock at shared seeds]: 25 vs 25 -> PASS

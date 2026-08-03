@@ -1,0 +1,30 @@
+====================================================================================================
+T1d racer v1.2 summary — race9 vs race8, PAIRED at the same master seeds; column: acl_spur (rule 3);
+pairs on (inst_seed, base_seed), both-succeed only. Reads: [seq] race9-seq vs race8-seq, [par] race9-par vs race8-par.
+PRE-REGISTERED BAR (notes.md 4.15): median < -0.5% AND >=60%W on (160,0.05) in >=1 read, other read non-regressing (median <= 0).
+DIAGNOSTIC: race9 worse on >40% of pairs in ANY read -> roster-interference investigation before shipping.
+====================================================================================================
+
+-- Z12  n=160  p=0.05
+  race8-seq  success 25/25  acl_spur med   4.650  wall med   60.0s  winners {'mm': 25}
+  race9-seq  success 25/25  acl_spur med   4.625  wall med   60.0s  tpol med  0.0s  winners {'mm-beta': 15, 'mm': 9, 'cuthill': 1}
+  race8-par  success 25/25  acl_spur med   4.562  wall med   60.1s  winners {'mm': 23, 'cuthill': 2}
+  race9-par  success 25/25  acl_spur med   4.500  wall med   60.1s  tpol med  0.0s  winners {'mm-beta': 13, 'mm': 10, 'cuthill': 2}
+  [seq] race9-seq vs race8-seq: n=25  med d  +0.000 ( +0.00%)  W/L/T 11/12/2  win  44.0%
+  [par] race9-par vs race8-par: n=25  med d  +0.000 ( +0.00%)  W/L/T 10/7/8  win  40.0%
+
+-- Z12  n=100  p=0.2
+  race8-seq  success 25/25  acl_spur med   6.900  wall med   60.2s  winners {'template': 23, 'clmm': 1, 'clmm-core': 1}
+  race9-seq  success 25/25  acl_spur med   6.900  wall med   60.1s  tpol med  0.0s  winners {'template': 23, 'clmm': 1, 'clmm-core': 1}
+  race8-par  success 25/25  acl_spur med   6.860  wall med   60.1s  winners {'template': 21, 'clmm-core': 2, 'clmm': 1, 'cuthill': 1}
+  race9-par  success 25/25  acl_spur med   6.860  wall med   60.2s  tpol med  0.0s  winners {'template': 22, 'clmm-core': 2, 'clmm': 1}
+  [seq] race9-seq vs race8-seq: n=25  med d  +0.000 ( +0.00%)  W/L/T 0/1/24  win   0.0%
+  [par] race9-par vs race8-par: n=25  med d  +0.000 ( +0.00%)  W/L/T 1/1/23  win   4.0%
+
+VERDICTS (notes.md 4.15, race9-vs-race8 bar):
+  (160, 0.05) [seq]: med +0.00% win 44%  -> no win-bar
+  (160, 0.05) [par]: med +0.00% win 40%  -> no win-bar
+  BAR: FAIL — needs >=1 read with median < -0.5% AND >=60%W, other read median <= 0.
+  DIAGNOSTIC TRIPPED: (160, 0.05) [seq] race9 worse on 48% of pairs (> 40%) -> roster-interference investigation before shipping.
+
+rows: 200   csv: /data/dabh/ember/docs/paper3/data/t1d_race9.csv

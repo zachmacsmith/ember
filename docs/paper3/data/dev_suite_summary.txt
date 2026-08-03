@@ -4,158 +4,53 @@ Two reference arms: vsMM = minorminer (paired per (inst, algo_seed)); vsTP = p3-
 one value per instance — every seeded row of an arm pairs against its instance's template value).
 ====================================================================================================
 
--- P16  n=140  p=1
-  minorminer     success 5/5  med t   61.63s  acl_spur med  19.821  vsTP: n=  5 med  +6.650 ( +50.5%) W/L/T 0/5/0
-  mmfork-cuthill success 5/5  med t   61.66s  acl_spur med  18.314  vsMM: n=  5 med  -1.221 (  -6.2%) W/L/T 4/1/0   vsTP: n=  5 med  +5.143 ( +39.0%) W/L/T 0/5/0
-  p3-template    success 1/1  med t    1.57s  acl_spur med  13.171  vsMM: n=  5 med  -6.650 ( -33.5%) W/L/T 5/0/0
-  p3-ate         success 5/5  med t   61.67s  acl_spur med  13.171  vsMM: n=  5 med  -6.650 ( -33.5%) W/L/T 5/0/0   vsTP: n=  5 med  +0.000 (  +0.0%) W/L/T 0/0/5
-  p3-clmm        success 5/5  med t   62.86s  acl_spur med  13.743  vsMM: n=  5 med  -6.071 ( -30.6%) W/L/T 5/0/0   vsTP: n=  5 med  +0.572 (  +4.3%) W/L/T 0/5/0
-  p3-clmm-core   success 5/5  med t   62.61s  acl_spur med  13.171  vsMM: n=  5 med  -6.650 ( -33.5%) W/L/T 5/0/0   vsTP: n=  5 med  +0.000 (  +0.0%) W/L/T 1/0/4
-  p3-mmpolish    success 5/5  med t   60.46s  acl_spur med  20.486  vsMM: n=  5 med  +0.593 (  +3.0%) W/L/T 1/4/0   vsTP: n=  5 med  +7.314 ( +55.5%) W/L/T 0/5/0
-  pssa           success 5/5  med t    0.70s  acl_spur med  13.314  vsMM: n=  5 med  -6.507 ( -32.8%) W/L/T 5/0/0   vsTP: n=  5 med  +0.143 (  +1.1%) W/L/T 0/5/0
-  attraction     success 0/5  med t   74.05s  acl_spur med     n/a  vsMM: no pairs   vsTP: no pairs
-
--- P16  n=180  p=1  [minorminer 0 successes]
-  minorminer     success 0/5  med t   69.18s  acl_spur med     n/a  vsTP: no pairs
-  mmfork-cuthill success 0/5  med t   72.01s  acl_spur med     n/a  vsMM: no pairs   vsTP: no pairs
-  p3-template    success 1/1  med t    1.38s  acl_spur med  16.639  vsMM: no pairs
-  p3-ate         success 5/5  med t   68.88s  acl_spur med  16.639  vsMM: no pairs   vsTP: n=  5 med  +0.000 (  +0.0%) W/L/T 0/0/5
-  p3-clmm        success 5/5  med t   63.97s  acl_spur med  16.644  vsMM: no pairs   vsTP: n=  5 med  +0.006 (  +0.0%) W/L/T 0/5/0
-  p3-clmm-core   success 5/5  med t   67.85s  acl_spur med  16.644  vsMM: no pairs   vsTP: n=  5 med  +0.006 (  +0.0%) W/L/T 0/5/0
-  p3-mmpolish    success 0/5  med t   51.41s  acl_spur med     n/a  vsMM: no pairs   vsTP: no pairs
-  pssa           success 5/5  med t    0.60s  acl_spur med  16.644  vsMM: no pairs   vsTP: n=  5 med  +0.006 (  +0.0%) W/L/T 0/5/0
-  attraction     success 0/5  med t   80.67s  acl_spur med     n/a  vsMM: no pairs   vsTP: no pairs
-
--- P16  n=100  p=0.3
-  minorminer     success 25/25  med t   24.44s  acl_spur med  10.930  vsTP: n= 25 med  +1.840 ( +20.2%) W/L/T 0/25/0
-  mmfork-cuthill success 25/25  med t   27.29s  acl_spur med  10.460  vsMM: n= 25 med  -0.380 (  -3.5%) W/L/T 21/4/0   vsTP: n= 25 med  +1.350 ( +14.8%) W/L/T 0/25/0
-  p3-template    success 5/5  med t    0.61s  acl_spur med   9.110  vsMM: n= 25 med  -1.840 ( -16.8%) W/L/T 25/0/0
-  p3-ate         success 25/25  med t   24.86s  acl_spur med   9.110  vsMM: n= 25 med  -1.840 ( -16.8%) W/L/T 25/0/0   vsTP: n= 25 med  +0.000 (  +0.0%) W/L/T 0/0/25
-  p3-clmm        success 25/25  med t    6.23s  acl_spur med   9.460  vsMM: n= 25 med  -1.500 ( -13.7%) W/L/T 25/0/0   vsTP: n= 25 med  +0.350 (  +3.8%) W/L/T 0/25/0
-  p3-clmm-core   success 25/25  med t    6.17s  acl_spur med   9.440  vsMM: n= 25 med  -1.500 ( -13.7%) W/L/T 25/0/0   vsTP: n= 25 med  +0.310 (  +3.4%) W/L/T 0/25/0
-  p3-mmpolish    success 25/25  med t   60.19s  acl_spur med  10.840  vsMM: n= 25 med  -0.050 (  -0.5%) W/L/T 23/0/2   vsTP: n= 25 med  +1.720 ( +18.9%) W/L/T 0/25/0
-  pssa           success 25/25  med t    0.50s  acl_spur med   9.640  vsMM: n= 25 med  -1.330 ( -12.2%) W/L/T 25/0/0   vsTP: n= 25 med  +0.520 (  +5.7%) W/L/T 0/25/0
-  attraction     success 25/25  med t   49.77s  acl_spur med  10.940  vsMM: n= 25 med  +0.010 (  +0.1%) W/L/T 11/14/0   vsTP: n= 25 med  +1.800 ( +19.8%) W/L/T 0/25/0
-
--- P16  n=100  p=0.2
-  minorminer     success 25/25  med t   15.51s  acl_spur med   9.200  vsTP: n= 25 med  +0.750 (  +8.9%) W/L/T 0/25/0
-  mmfork-cuthill success 25/25  med t   14.84s  acl_spur med   9.130  vsMM: n= 25 med  -0.080 (  -0.9%) W/L/T 17/8/0   vsTP: n= 25 med  +0.720 (  +8.5%) W/L/T 0/25/0
-  p3-template    success 5/5  med t    0.48s  acl_spur med   8.450  vsMM: n= 25 med  -0.750 (  -8.2%) W/L/T 25/0/0
-  p3-ate         success 25/25  med t   15.73s  acl_spur med   8.450  vsMM: n= 25 med  -0.750 (  -8.2%) W/L/T 25/0/0   vsTP: n= 25 med  +0.000 (  +0.0%) W/L/T 0/0/25
-  p3-clmm        success 25/25  med t    4.42s  acl_spur med   8.740  vsMM: n= 25 med  -0.430 (  -4.7%) W/L/T 20/5/0   vsTP: n= 25 med  +0.320 (  +3.8%) W/L/T 0/25/0
-  p3-clmm-core   success 25/25  med t    3.95s  acl_spur med   8.840  vsMM: n= 25 med  -0.410 (  -4.5%) W/L/T 19/5/1   vsTP: n= 25 med  +0.380 (  +4.5%) W/L/T 0/25/0
-  p3-mmpolish    success 25/25  med t   60.07s  acl_spur med   9.150  vsMM: n= 25 med  -0.070 (  -0.8%) W/L/T 25/0/0   vsTP: n= 25 med  +0.710 (  +8.4%) W/L/T 0/25/0
-  pssa           success 25/25  med t    0.50s  acl_spur med   9.350  vsMM: n= 25 med  +0.150 (  +1.6%) W/L/T 10/15/0   vsTP: n= 25 med  +0.880 ( +10.4%) W/L/T 0/25/0
-  attraction     success 25/25  med t   31.31s  acl_spur med   9.250  vsMM: n= 25 med  +0.110 (  +1.2%) W/L/T 11/13/1   vsTP: n= 25 med  +0.820 (  +9.7%) W/L/T 0/25/0
-
--- P16  n=140  p=0.2
-  minorminer     success 25/25  med t   42.90s  acl_spur med  14.643  vsTP: n= 25 med  +2.821 ( +23.7%) W/L/T 0/25/0
-  mmfork-cuthill success 25/25  med t   43.79s  acl_spur med  14.300  vsMM: n= 25 med  -0.536 (  -3.7%) W/L/T 18/7/0   vsTP: n= 25 med  +2.364 ( +19.9%) W/L/T 0/25/0
-  p3-template    success 5/5  med t    0.53s  acl_spur med  11.886  vsMM: n= 25 med  -2.821 ( -19.3%) W/L/T 25/0/0
-  p3-ate         success 25/25  med t   42.73s  acl_spur med  11.886  vsMM: n= 25 med  -2.821 ( -19.3%) W/L/T 25/0/0   vsTP: n= 25 med  +0.000 (  +0.0%) W/L/T 0/0/25
-  p3-clmm        success 25/25  med t   11.25s  acl_spur med  12.907  vsMM: n= 25 med  -1.886 ( -12.9%) W/L/T 25/0/0   vsTP: n= 25 med  +1.021 (  +8.6%) W/L/T 0/25/0
-  p3-clmm-core   success 25/25  med t    8.90s  acl_spur med  12.514  vsMM: n= 25 med  -2.200 ( -15.0%) W/L/T 25/0/0   vsTP: n= 25 med  +0.607 (  +5.1%) W/L/T 0/25/0
-  p3-mmpolish    success 25/25  med t   60.11s  acl_spur med  14.836  vsMM: n= 25 med  -0.064 (  -0.4%) W/L/T 18/7/0   vsTP: n= 25 med  +2.914 ( +24.5%) W/L/T 0/25/0
-  pssa           success 25/25  med t    0.56s  acl_spur med  12.721  vsMM: n= 25 med  -1.929 ( -13.2%) W/L/T 25/0/0   vsTP: n= 25 med  +0.836 (  +7.0%) W/L/T 0/25/0
-  attraction     success 25/25  med t   60.48s  acl_spur med  15.564  vsMM: n= 25 med  +0.793 (  +5.4%) W/L/T 2/23/0   vsTP: n= 25 med  +3.700 ( +31.1%) W/L/T 0/25/0
-
--- P16  n=140  p=0.12
-  minorminer     success 25/25  med t   23.20s  acl_spur med  11.321  vsTP: n= 25 med  +0.529 (  +4.9%) W/L/T 1/23/1
-  mmfork-cuthill success 25/25  med t   22.91s  acl_spur med  11.236  vsMM: n= 25 med  -0.200 (  -1.8%) W/L/T 15/10/0   vsTP: n= 25 med  +0.443 (  +4.1%) W/L/T 6/19/0
-  p3-template    success 5/5  med t    0.46s  acl_spur med  10.814  vsMM: n= 25 med  -0.529 (  -4.7%) W/L/T 23/1/1
-  p3-ate         success 25/25  med t   23.52s  acl_spur med  10.814  vsMM: n= 25 med  -0.529 (  -4.7%) W/L/T 23/1/1   vsTP: n= 25 med  +0.000 (  +0.0%) W/L/T 0/0/25
-  p3-clmm        success 25/25  med t    9.62s  acl_spur med  11.214  vsMM: n= 25 med  -0.329 (  -2.9%) W/L/T 16/9/0   vsTP: n= 25 med  +0.400 (  +3.7%) W/L/T 2/22/1
-  p3-clmm-core   success 25/25  med t    4.69s  acl_spur med  11.929  vsMM: n= 25 med  +0.564 (  +5.0%) W/L/T 3/22/0   vsTP: n= 25 med  +1.093 ( +10.1%) W/L/T 0/25/0
-  p3-mmpolish    success 25/25  med t   60.10s  acl_spur med  11.307  vsMM: n= 25 med  -0.114 (  -1.0%) W/L/T 25/0/0   vsTP: n= 25 med  +0.464 (  +4.3%) W/L/T 4/21/0
-  pssa           success 25/25  med t    0.63s  acl_spur med  12.200  vsMM: n= 25 med  +0.871 (  +7.7%) W/L/T 3/22/0   vsTP: n= 25 med  +1.407 ( +13.0%) W/L/T 0/25/0
-  attraction     success 25/25  med t   41.47s  acl_spur med  11.250  vsMM: n= 25 med  -0.150 (  -1.3%) W/L/T 16/9/0   vsTP: n= 25 med  +0.443 (  +4.1%) W/L/T 4/21/0
-
--- P16  n=160  p=0.05
-  minorminer     success 25/25  med t    6.82s  acl_spur med   6.250  vsTP: n= 25 med  -2.262 ( -26.6%) W/L/T 25/0/0
-  mmfork-cuthill success 25/25  med t    8.19s  acl_spur med   6.406  vsMM: n= 25 med  +0.075 (  +1.2%) W/L/T 10/15/0   vsTP: n= 25 med  -2.225 ( -26.1%) W/L/T 25/0/0
-  p3-template    success 5/5  med t    0.41s  acl_spur med   8.512  vsMM: n= 25 med  +2.262 ( +36.2%) W/L/T 0/25/0
-  p3-ate         success 25/25  med t    7.22s  acl_spur med   6.250  vsMM: n= 25 med  +0.000 (  +0.0%) W/L/T 0/0/25   vsTP: n= 25 med  -2.262 ( -26.6%) W/L/T 25/0/0
-  p3-clmm        success 25/25  med t    5.72s  acl_spur med   7.338  vsMM: n= 25 med  +0.919 ( +14.7%) W/L/T 0/25/0   vsTP: n= 25 med  -1.300 ( -15.3%) W/L/T 25/0/0
-  p3-clmm-core   success 25/25  med t    4.43s  acl_spur med   7.487  vsMM: n= 25 med  +1.319 ( +21.1%) W/L/T 1/24/0   vsTP: n= 25 med  -1.106 ( -13.0%) W/L/T 18/7/0
-  p3-mmpolish    success 25/25  med t   60.02s  acl_spur med   6.181  vsMM: n= 25 med  -0.056 (  -0.9%) W/L/T 25/0/0   vsTP: n= 25 med  -2.338 ( -27.5%) W/L/T 25/0/0
-  pssa           success 25/25  med t    0.81s  acl_spur med  11.794  vsMM: n= 25 med  +5.350 ( +85.6%) W/L/T 0/25/0   vsTP: n= 25 med  +3.169 ( +37.2%) W/L/T 0/25/0
-  attraction     success 25/25  med t   12.99s  acl_spur med   6.175  vsMM: n= 25 med  -0.175 (  -2.8%) W/L/T 17/8/0   vsTP: n= 25 med  -2.475 ( -29.1%) W/L/T 25/0/0
-
 -- Z12  n=140  p=1
-  minorminer     success 4/5  med t   62.36s  acl_spur med  15.086  vsTP: n=  4 med  +4.614 ( +44.1%) W/L/T 0/4/0
-  mmfork-cuthill success 5/5  med t   62.26s  acl_spur med  15.586  vsMM: n=  4 med  +0.636 (  +4.2%) W/L/T 1/3/0   vsTP: n=  5 med  +5.114 ( +48.8%) W/L/T 0/5/0
-  p3-template    success 1/1  med t    1.52s  acl_spur med  10.471  vsMM: n=  4 med  -4.614 ( -30.6%) W/L/T 4/0/0
-  p3-ate         success 5/5  med t   61.50s  acl_spur med  10.471  vsMM: n=  4 med  -4.614 ( -30.6%) W/L/T 4/0/0   vsTP: n=  5 med  +0.000 (  +0.0%) W/L/T 0/0/5
-  p3-clmm        success 5/5  med t   63.57s  acl_spur med  10.471  vsMM: n=  4 med  -4.468 ( -29.6%) W/L/T 4/0/0   vsTP: n=  5 med  +0.000 (  +0.0%) W/L/T 1/1/3
-  p3-clmm-core   success 5/5  med t   64.97s  acl_spur med  10.471  vsMM: n=  4 med  -4.622 ( -30.6%) W/L/T 4/0/0   vsTP: n=  5 med  +0.000 (  +0.0%) W/L/T 1/0/4
-  p3-mmpolish    success 4/5  med t   60.11s  acl_spur med  15.186  vsMM: n=  4 med  -0.032 (  -0.2%) W/L/T 2/2/0   vsTP: n=  4 med  +4.714 ( +45.0%) W/L/T 0/4/0
-  pssa           success 5/5  med t    0.56s  acl_spur med  10.471  vsMM: n=  4 med  -4.614 ( -30.6%) W/L/T 4/0/0   vsTP: n=  5 med  +0.000 (  +0.0%) W/L/T 0/0/5
-  attraction     success 0/5  med t   70.54s  acl_spur med     n/a  vsMM: no pairs   vsTP: no pairs
+  minorminer     success 4/5  med t   60.24s  acl_spur med  15.086  vsTP: n=  4 med  +4.614 ( +44.1%) W/L/T 0/4/0
+  p3-template    success 1/1  med t    1.23s  acl_spur med  10.471  vsMM: n=  4 med  -4.614 ( -30.6%) W/L/T 4/0/0
+  p3-ate         success 5/5  med t   61.57s  acl_spur med  10.471  vsMM: n=  4 med  -4.614 ( -30.6%) W/L/T 4/0/0   vsTP: n=  5 med  +0.000 (  +0.0%) W/L/T 0/0/5
+  p3-mmpolish    success 4/5  med t   61.79s  acl_spur med  15.086  vsMM: n=  4 med  +0.000 (  +0.0%) W/L/T 1/0/3   vsTP: n=  4 med  +4.614 ( +44.1%) W/L/T 0/4/0
+  p3-ember       success 5/5  med t   61.59s  acl_spur med  10.471  vsMM: n=  4 med  -4.614 ( -30.6%) W/L/T 4/0/0   vsTP: n=  5 med  +0.000 (  +0.0%) W/L/T 0/0/5
 
 -- Z12  n=179  p=1  [minorminer 0 successes]
-  minorminer     success 0/5  med t   67.68s  acl_spur med     n/a  vsTP: no pairs
-  mmfork-cuthill success 0/5  med t   67.04s  acl_spur med     n/a  vsMM: no pairs   vsTP: no pairs
-  p3-template    success 1/1  med t    1.39s  acl_spur med  12.972  vsMM: no pairs
-  p3-ate         success 5/5  med t   65.91s  acl_spur med  12.972  vsMM: no pairs   vsTP: n=  5 med  +0.000 (  +0.0%) W/L/T 0/0/5
-  p3-clmm        success 5/5  med t   64.20s  acl_spur med  12.961  vsMM: no pairs   vsTP: n=  5 med  -0.011 (  -0.1%) W/L/T 4/0/1
-  p3-clmm-core   success 5/5  med t   65.30s  acl_spur med  12.972  vsMM: no pairs   vsTP: n=  5 med  +0.000 (  +0.0%) W/L/T 2/0/3
-  p3-mmpolish    success 0/5  med t   51.32s  acl_spur med     n/a  vsMM: no pairs   vsTP: no pairs
-  pssa           success 5/5  med t    0.57s  acl_spur med  12.978  vsMM: no pairs   vsTP: n=  5 med  +0.006 (  +0.0%) W/L/T 0/5/0
-  attraction     success 0/5  med t   73.95s  acl_spur med     n/a  vsMM: no pairs   vsTP: no pairs
+  minorminer     success 0/5  med t   67.13s  acl_spur med     n/a  vsTP: no pairs
+  p3-template    success 1/1  med t    1.20s  acl_spur med  12.972  vsMM: no pairs
+  p3-ate         success 5/5  med t   68.61s  acl_spur med  12.972  vsMM: no pairs   vsTP: n=  5 med  +0.000 (  +0.0%) W/L/T 0/0/5
+  p3-mmpolish    success 0/5  med t   67.87s  acl_spur med     n/a  vsMM: no pairs   vsTP: no pairs
+  p3-ember       success 5/5  med t   69.38s  acl_spur med  12.972  vsMM: no pairs   vsTP: n=  5 med  +0.000 (  +0.0%) W/L/T 0/0/5
 
 -- Z12  n=100  p=0.3
-  minorminer     success 25/25  med t   17.67s  acl_spur med   8.700  vsTP: n= 25 med  +1.320 ( +17.8%) W/L/T 0/25/0
-  mmfork-cuthill success 25/25  med t   20.27s  acl_spur med   8.450  vsMM: n= 25 med  -0.290 (  -3.3%) W/L/T 21/4/0   vsTP: n= 25 med  +1.050 ( +14.2%) W/L/T 0/25/0
-  p3-template    success 5/5  med t    0.60s  acl_spur med   7.400  vsMM: n= 25 med  -1.320 ( -15.2%) W/L/T 25/0/0
-  p3-ate         success 25/25  med t   18.34s  acl_spur med   7.400  vsMM: n= 25 med  -1.320 ( -15.2%) W/L/T 25/0/0   vsTP: n= 25 med  +0.000 (  +0.0%) W/L/T 0/0/25
-  p3-clmm        success 25/25  med t    8.13s  acl_spur med   7.750  vsMM: n= 25 med  -0.990 ( -11.4%) W/L/T 25/0/0   vsTP: n= 25 med  +0.340 (  +4.6%) W/L/T 0/25/0
-  p3-clmm-core   success 25/25  med t    7.93s  acl_spur med   7.700  vsMM: n= 25 med  -1.070 ( -12.3%) W/L/T 25/0/0   vsTP: n= 25 med  +0.300 (  +4.1%) W/L/T 0/25/0
-  p3-mmpolish    success 25/25  med t   60.13s  acl_spur med   8.660  vsMM: n= 25 med  -0.090 (  -1.0%) W/L/T 25/0/0   vsTP: n= 25 med  +1.260 ( +17.0%) W/L/T 0/25/0
-  pssa           success 25/25  med t    0.38s  acl_spur med   7.720  vsMM: n= 25 med  -1.040 ( -12.0%) W/L/T 25/0/0   vsTP: n= 25 med  +0.320 (  +4.3%) W/L/T 0/25/0
-  attraction     success 25/25  med t   40.43s  acl_spur med   8.600  vsMM: n= 25 med  -0.180 (  -2.1%) W/L/T 17/8/0   vsTP: n= 25 med  +1.200 ( +16.2%) W/L/T 0/25/0
+  minorminer     success 25/25  med t   18.65s  acl_spur med   8.700  vsTP: n= 25 med  +1.320 ( +17.8%) W/L/T 0/25/0
+  p3-template    success 5/5  med t    0.55s  acl_spur med   7.400  vsMM: n= 25 med  -1.320 ( -15.2%) W/L/T 25/0/0
+  p3-ate         success 25/25  med t   19.18s  acl_spur med   7.400  vsMM: n= 25 med  -1.320 ( -15.2%) W/L/T 25/0/0   vsTP: n= 25 med  +0.000 (  +0.0%) W/L/T 0/0/25
+  p3-mmpolish    success 25/25  med t   60.11s  acl_spur med   8.660  vsMM: n= 25 med  -0.090 (  -1.0%) W/L/T 25/0/0   vsTP: n= 25 med  +1.260 ( +17.0%) W/L/T 0/25/0
+  p3-ember       success 25/25  med t   60.12s  acl_spur med   7.330  vsMM: n= 25 med  -1.410 ( -16.2%) W/L/T 25/0/0   vsTP: n= 25 med  -0.060 (  -0.8%) W/L/T 25/0/0
 
 -- Z12  n=100  p=0.2
-  minorminer     success 25/25  med t   14.06s  acl_spur med   7.270  vsTP: n= 25 med  +0.320 (  +4.6%) W/L/T 0/25/0
-  mmfork-cuthill success 25/25  med t   13.13s  acl_spur med   7.240  vsMM: n= 25 med  -0.050 (  -0.7%) W/L/T 16/9/0   vsTP: n= 25 med  +0.240 (  +3.5%) W/L/T 1/24/0
-  p3-template    success 5/5  med t    0.43s  acl_spur med   6.900  vsMM: n= 25 med  -0.320 (  -4.4%) W/L/T 25/0/0
-  p3-ate         success 25/25  med t   14.69s  acl_spur med   6.900  vsMM: n= 25 med  -0.320 (  -4.4%) W/L/T 25/0/0   vsTP: n= 25 med  +0.000 (  +0.0%) W/L/T 0/0/25
-  p3-clmm        success 25/25  med t    4.49s  acl_spur med   7.510  vsMM: n= 25 med  +0.200 (  +2.8%) W/L/T 7/18/0   vsTP: n= 25 med  +0.630 (  +9.1%) W/L/T 0/25/0
-  p3-clmm-core   success 25/25  med t    4.45s  acl_spur med   7.440  vsMM: n= 25 med  +0.130 (  +1.8%) W/L/T 9/16/0   vsTP: n= 25 med  +0.540 (  +7.8%) W/L/T 1/24/0
-  p3-mmpolish    success 25/25  med t   60.07s  acl_spur med   7.230  vsMM: n= 25 med  -0.050 (  -0.7%) W/L/T 25/0/0   vsTP: n= 25 med  +0.280 (  +4.1%) W/L/T 0/25/0
-  pssa           success 25/25  med t    0.37s  acl_spur med   7.470  vsMM: n= 25 med  +0.190 (  +2.6%) W/L/T 7/18/0   vsTP: n= 25 med  +0.580 (  +8.4%) W/L/T 0/25/0
-  attraction     success 25/25  med t   23.23s  acl_spur med   7.350  vsMM: n= 25 med  -0.010 (  -0.1%) W/L/T 13/12/0   vsTP: n= 25 med  +0.410 (  +5.9%) W/L/T 1/23/1
+  minorminer     success 25/25  med t   14.71s  acl_spur med   7.270  vsTP: n= 25 med  +0.320 (  +4.6%) W/L/T 0/25/0
+  p3-template    success 5/5  med t    0.40s  acl_spur med   6.900  vsMM: n= 25 med  -0.320 (  -4.4%) W/L/T 25/0/0
+  p3-ate         success 25/25  med t   15.11s  acl_spur med   6.900  vsMM: n= 25 med  -0.320 (  -4.4%) W/L/T 25/0/0   vsTP: n= 25 med  +0.000 (  +0.0%) W/L/T 0/0/25
+  p3-mmpolish    success 25/25  med t   60.08s  acl_spur med   7.220  vsMM: n= 25 med  -0.070 (  -1.0%) W/L/T 25/0/0   vsTP: n= 25 med  +0.270 (  +3.9%) W/L/T 0/25/0
+  p3-ember       success 25/25  med t   60.03s  acl_spur med   6.720  vsMM: n= 25 med  -0.540 (  -7.4%) W/L/T 25/0/0   vsTP: n= 25 med  -0.170 (  -2.5%) W/L/T 25/0/0
 
 -- Z12  n=140  p=0.2
-  minorminer     success 25/25  med t   34.55s  acl_spur med  11.721  vsTP: n= 25 med  +2.064 ( +21.5%) W/L/T 0/25/0
-  mmfork-cuthill success 25/25  med t   37.38s  acl_spur med  11.300  vsMM: n= 25 med  -0.314 (  -2.7%) W/L/T 20/5/0   vsTP: n= 25 med  +1.664 ( +17.3%) W/L/T 0/25/0
-  p3-template    success 5/5  med t    0.55s  acl_spur med   9.614  vsMM: n= 25 med  -2.064 ( -17.6%) W/L/T 25/0/0
-  p3-ate         success 25/25  med t   34.54s  acl_spur med   9.614  vsMM: n= 25 med  -2.064 ( -17.6%) W/L/T 25/0/0   vsTP: n= 25 med  +0.000 (  +0.0%) W/L/T 0/0/25
-  p3-clmm        success 25/25  med t   12.11s  acl_spur med  10.164  vsMM: n= 25 med  -1.450 ( -12.4%) W/L/T 25/0/0   vsTP: n= 25 med  +0.507 (  +5.3%) W/L/T 0/25/0
-  p3-clmm-core   success 25/25  med t   10.68s  acl_spur med  10.029  vsMM: n= 25 med  -1.750 ( -14.9%) W/L/T 25/0/0   vsTP: n= 25 med  +0.414 (  +4.3%) W/L/T 1/24/0
-  p3-mmpolish    success 25/25  med t   60.14s  acl_spur med  11.614  vsMM: n= 25 med  -0.100 (  -0.9%) W/L/T 22/1/2   vsTP: n= 25 med  +1.957 ( +20.4%) W/L/T 0/25/0
-  pssa           success 25/25  med t    0.46s  acl_spur med  10.029  vsMM: n= 25 med  -1.686 ( -14.4%) W/L/T 25/0/0   vsTP: n= 25 med  +0.414 (  +4.3%) W/L/T 0/25/0
-  attraction     success 25/25  med t   60.27s  acl_spur med  11.664  vsMM: n= 25 med  -0.100 (  -0.9%) W/L/T 16/9/0   vsTP: n= 25 med  +2.014 ( +21.0%) W/L/T 0/25/0
+  minorminer     success 25/25  med t   35.61s  acl_spur med  11.721  vsTP: n= 25 med  +2.064 ( +21.5%) W/L/T 0/25/0
+  p3-template    success 5/5  med t    0.49s  acl_spur med   9.614  vsMM: n= 25 med  -2.064 ( -17.6%) W/L/T 25/0/0
+  p3-ate         success 25/25  med t   36.91s  acl_spur med   9.614  vsMM: n= 25 med  -2.064 ( -17.6%) W/L/T 25/0/0   vsTP: n= 25 med  +0.000 (  +0.0%) W/L/T 0/0/25
+  p3-mmpolish    success 25/25  med t   60.11s  acl_spur med  11.614  vsMM: n= 25 med  -0.100 (  -0.9%) W/L/T 23/0/2   vsTP: n= 25 med  +1.957 ( +20.4%) W/L/T 0/25/0
+  p3-ember       success 25/25  med t   60.08s  acl_spur med   9.550  vsMM: n= 25 med  -2.157 ( -18.4%) W/L/T 25/0/0   vsTP: n= 25 med  -0.064 (  -0.7%) W/L/T 24/0/1
 
 -- Z12  n=140  p=0.12
-  minorminer     success 25/25  med t   19.43s  acl_spur med   8.950  vsTP: n= 25 med  +0.322 (  +3.7%) W/L/T 3/22/0
-  mmfork-cuthill success 25/25  med t   20.24s  acl_spur med   8.900  vsMM: n= 25 med  -0.143 (  -1.6%) W/L/T 14/11/0   vsTP: n= 25 med  +0.229 (  +2.6%) W/L/T 5/20/0
-  p3-template    success 5/5  med t    0.49s  acl_spur med   8.671  vsMM: n= 25 med  -0.322 (  -3.6%) W/L/T 22/3/0
-  p3-ate         success 25/25  med t   20.12s  acl_spur med   8.671  vsMM: n= 25 med  -0.322 (  -3.6%) W/L/T 22/3/0   vsTP: n= 25 med  +0.000 (  +0.0%) W/L/T 0/0/25
-  p3-clmm        success 25/25  med t    8.78s  acl_spur med   8.893  vsMM: n= 25 med  +0.036 (  +0.4%) W/L/T 12/13/0   vsTP: n= 25 med  +0.250 (  +2.9%) W/L/T 5/20/0
-  p3-clmm-core   success 25/25  med t    5.38s  acl_spur med   9.571  vsMM: n= 25 med  +0.500 (  +5.6%) W/L/T 4/21/0   vsTP: n= 25 med  +0.886 ( +10.2%) W/L/T 0/25/0
-  p3-mmpolish    success 25/25  med t   60.09s  acl_spur med   8.879  vsMM: n= 25 med  -0.086 (  -1.0%) W/L/T 25/0/0   vsTP: n= 25 med  +0.214 (  +2.5%) W/L/T 4/21/0
-  pssa           success 25/25  med t    0.43s  acl_spur med   9.629  vsMM: n= 25 med  +0.607 (  +6.8%) W/L/T 1/24/0   vsTP: n= 25 med  +0.900 ( +10.4%) W/L/T 0/25/0
-  attraction     success 25/25  med t   30.63s  acl_spur med   8.914  vsMM: n= 25 med  -0.043 (  -0.5%) W/L/T 15/10/0   vsTP: n= 25 med  +0.229 (  +2.6%) W/L/T 5/20/0
+  minorminer     success 25/25  med t   21.08s  acl_spur med   8.950  vsTP: n= 25 med  +0.322 (  +3.7%) W/L/T 3/22/0
+  p3-template    success 5/5  med t    0.44s  acl_spur med   8.671  vsMM: n= 25 med  -0.322 (  -3.6%) W/L/T 22/3/0
+  p3-ate         success 25/25  med t   21.05s  acl_spur med   8.671  vsMM: n= 25 med  -0.322 (  -3.6%) W/L/T 22/3/0   vsTP: n= 25 med  +0.000 (  +0.0%) W/L/T 0/0/25
+  p3-mmpolish    success 25/25  med t   60.07s  acl_spur med   8.879  vsMM: n= 25 med  -0.093 (  -1.0%) W/L/T 25/0/0   vsTP: n= 25 med  +0.214 (  +2.5%) W/L/T 4/21/0
+  p3-ember       success 25/25  med t   60.09s  acl_spur med   8.300  vsMM: n= 25 med  -0.679 (  -7.6%) W/L/T 25/0/0   vsTP: n= 25 med  -0.386 (  -4.4%) W/L/T 25/0/0
 
 -- Z12  n=160  p=0.05
-  minorminer     success 25/25  med t    5.62s  acl_spur med   5.200  vsTP: n= 25 med  -1.775 ( -25.4%) W/L/T 25/0/0
-  mmfork-cuthill success 25/25  med t    5.21s  acl_spur med   5.312  vsMM: n= 25 med  +0.056 (  +1.1%) W/L/T 9/15/1   vsTP: n= 25 med  -1.781 ( -25.5%) W/L/T 25/0/0
-  p3-template    success 5/5  med t    0.41s  acl_spur med   6.981  vsMM: n= 25 med  +1.775 ( +34.1%) W/L/T 0/25/0
-  p3-ate         success 25/25  med t    6.00s  acl_spur med   5.200  vsMM: n= 25 med  +0.000 (  +0.0%) W/L/T 0/0/25   vsTP: n= 25 med  -1.775 ( -25.4%) W/L/T 25/0/0
-  p3-clmm        success 25/25  med t    5.04s  acl_spur med   5.938  vsMM: n= 25 med  +0.694 ( +13.3%) W/L/T 0/24/1   vsTP: n= 25 med  -1.100 ( -15.8%) W/L/T 25/0/0
-  p3-clmm-core   success 25/25  med t    3.92s  acl_spur med   5.869  vsMM: n= 25 med  +0.763 ( +14.7%) W/L/T 0/25/0   vsTP: n= 25 med  -0.994 ( -14.2%) W/L/T 19/6/0
-  p3-mmpolish    success 25/25  med t   60.02s  acl_spur med   5.144  vsMM: n= 25 med  -0.062 (  -1.2%) W/L/T 25/0/0   vsTP: n= 25 med  -1.888 ( -27.0%) W/L/T 25/0/0
-  pssa           success 25/25  med t    0.57s  acl_spur med   9.244  vsMM: n= 25 med  +4.094 ( +78.7%) W/L/T 0/25/0   vsTP: n= 25 med  +2.250 ( +32.2%) W/L/T 0/25/0
-  attraction     success 25/25  med t   11.41s  acl_spur med   4.912  vsMM: n= 25 med  -0.225 (  -4.3%) W/L/T 21/3/1   vsTP: n= 25 med  -2.062 ( -29.5%) W/L/T 25/0/0
+  minorminer     success 25/25  med t    5.73s  acl_spur med   5.200  vsTP: n= 25 med  -1.775 ( -25.4%) W/L/T 25/0/0
+  p3-template    success 5/5  med t    0.38s  acl_spur med   6.981  vsMM: n= 25 med  +1.775 ( +34.1%) W/L/T 0/25/0
+  p3-ate         success 25/25  med t    6.11s  acl_spur med   5.200  vsMM: n= 25 med  +0.000 (  +0.0%) W/L/T 0/0/25   vsTP: n= 25 med  -1.775 ( -25.4%) W/L/T 25/0/0
+  p3-mmpolish    success 25/25  med t   60.03s  acl_spur med   5.125  vsMM: n= 25 med  -0.069 (  -1.3%) W/L/T 25/0/0   vsTP: n= 25 med  -1.894 ( -27.1%) W/L/T 25/0/0
+  p3-ember       success 25/25  med t   60.02s  acl_spur med   5.125  vsMM: n= 25 med  -0.069 (  -1.3%) W/L/T 25/0/0   vsTP: n= 25 med  -1.894 ( -27.1%) W/L/T 25/0/0
 
-rows: 2214   csv: /data/dabh/ember/docs/paper3/data/dev_suite.csv
+rows: 567   csv: /data/dabh/ember/docs/paper3/data/dev_suite.csv

@@ -1098,6 +1098,58 @@ R1 — full table had all five arms):
   All ember cells 100% success; zero pair losses to MM anywhere; walls
   med 60.0-68.0 s (anytime tail by design; construct_s in the R1 batch).
 
+§4.15 RESULTS (2026-08-03; T1 chain @ ac38cd89, remedies R1+R2 @ 4366a255;
+records in-repo: dev_suite.csv [R1], p6_probes_confirm_beta_z12.csv [R2],
+t1c_arms_z12.csv, t1d_race9.csv + summaries; t1b results.db archived on the
+run host per precedent):
+
+- p3-ember — ALL BARS PASS.
+  (i) dense carry: never worse than ate on any cell (worst dACL_spur vsATE
+  0.0%; better on 5/7 cells, up to -4.45% at (140,0.12)); vsMM medians
+  -7.4/-16.2/-7.6/-18.4/-30.6/-1.3% at 100%W on every readable cell.
+  (ii) sparse: (160,0.05) -1.32% 100%W; (100,0.2) -7.43% 100%W.
+  (iii) tax kill: (160,0.05) median construct_s - MM wall = -0.07 s
+  (bar <= +0.2 s) — ate's +0.3-0.5 s insurance tax is gone.
+  (iv) K179 5/5 (MM and mmpolish 0/5).
+  (v) T1b: success 109/205 vs MM 98/205 (+5.4 pt), ONE deficit graph
+  (hardware_chimera_k12, 4/5 vs 5/5 — under the 3-graph rule); 35 ACL==1.0
+  rows = 7 graphs x 5 trials; deterministic attribution: 6 glasgow_hit +
+  1 label_identity, zero hits with any chain != 1. Mean success-ACL 1.934
+  vs MM 2.098. REPLICATION: the R1 batch reproduces the clobbered first
+  run's medians exactly on all 5 stable cells (the K_n cliff cell moves
+  -29.8 -> -30.6% as MM's 4/5 seed set changes).
+- beta family — beta-dhat CONFIRMS on Z12 (2/3 cells): n=140 -3.46% 73%W,
+  n=180 -5.57% 76%W (n=100 -1.54% at 56%W misses the 60%W term). Success
+  75/75 on every cell — the P16 feasibility cost does NOT transfer to
+  Zephyr's degree-20 fabric. p3-mm-beta-fb: success == stock exactly, 3/3
+  cells (arm rows t1c_arms_z12.csv; dACL medians -0.10/-0.29/-0.41).
+  RAMP: NOT CONFIRMED — 0/3 cells (-1.10% 55%W / -0.60% 52%W / +1.50%
+  44%W), margin retention 71%/17%/negative vs the >=80% bar; success
+  75/75 everywhere (the insurance works but buys nothing on Z12, where
+  plain beta-dhat has no feasibility cost to insure). The win erodes with
+  n — ramping toward infinite beta abandons finite pricing exactly where
+  it matters. Ramp stays a kwargs-only anatomy switch; promotion declined.
+  ramp2h == ramp2 EXACTLY on all 450 rows (amendment 3's predicted tie —
+  hold-plumbing instrumentation confirmed inert in single-shot).
+- race9 vs race8 — BAR FAIL; race8 remains the shipped racer. (160,0.05):
+  median +0.00% both reads, 44%W seq / 40%W par (bar >= 60%W);
+  DIAGNOSTIC TRIPPED: race9 worse on 48% of seq pairs -> roster
+  interference. Anatomy: mm-beta individually WINS 15/25 seq and 13/25 par
+  races when present, but the 9th slot's budget dilution of arms 0-7
+  offsets its wins exactly — the roster is saturated at 8 on this cell
+  (consistent with e0_ceiling's zero-freebie finding). (100,0.2):
+  ties 23-24/25 (template dominates), non-regressing. Terminal polish:
+  tpol med 0.0 s — races consume the full budget, so the in-race terminal
+  polish is a monotone no-op (improvement-note 5's polish claim is moot
+  in-race; the racer's own polish quanta already run to the deadline).
+
+P4 DECISIONS (per the pre-registered §4.15/§4.16 tree): p3-ember and
+p3-mm-beta-fb advance to T2 (exactly the pre-registered arm set); race9 and
+the ramp die this cycle (both recorded above); beta-dhat's CONFIRM is a
+construction-anatomy result carried by p3-mm-beta[-fb]. T2 launch cleared.
+
+### 4.16 v1.2 T2 — Z12 library re-verify (2026-08-02)
+
 PRE-REGISTERED 2026-08-02. Launch gated on 4.15 verdicts. One CLI batch: arms
 {p3-ember, p3-mm-beta-fb} ONLY (race9 excluded per the racer-in-sweeps precedent;
 clmm v1.2 is Z12-identical by construction — its unit test is the evidence), the

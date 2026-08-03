@@ -1,0 +1,22 @@
+====================================================================================================
+P6 fork-anatomy probes — column: acl_spur (rule 3); dACL vs stock on both-succeed (inst_seed, algo_seed) pairs;
+success rates separate/unpaired (rule 4). Report-only anatomy: any arm beating stock by median < -1% escalates
+to a 15-seed confirm before a paper claim (anatomy.md decision tree).
+====================================================================================================
+
+-- ER(100, p=0.101)  [avg deg 10.0]   stock: success 75/75  acl_spur med   4.560
+  [beta ] beta-dhat  success 75/75  wall med    4.3s  dhat=['4.0', '5.0']   pairs 75  med d  -0.070 ( -1.54%)  W/L/T 42/33/0   [SURPRISE: beats stock — 15-seed confirm]
+  [ramp ] ramp2      success 75/75  wall med    3.4s  dhat=['4.0', '5.0']   pairs 75  med d  -0.050 ( -1.10%)  W/L/T 41/34/0   [SURPRISE: beats stock — 15-seed confirm]
+  [ramp ] ramp2h     success 75/75  wall med    3.4s  dhat=['4.0', '5.0']   pairs 75  med d  -0.050 ( -1.10%)  W/L/T 41/34/0   [SURPRISE: beats stock — 15-seed confirm]
+
+-- ER(140, p=0.07194)  [avg deg 10.0]   stock: success 75/75  acl_spur med   5.979
+  [beta ] beta-dhat  success 75/75  wall med    9.9s  dhat=['4.0']   pairs 75  med d  -0.207 ( -3.46%)  W/L/T 55/19/1   [SURPRISE: beats stock — 15-seed confirm]
+  [ramp ] ramp2      success 75/75  wall med    6.6s  dhat=['4.0']   pairs 75  med d  -0.036 ( -0.60%)  W/L/T 39/34/2
+  [ramp ] ramp2h     success 75/75  wall med    6.8s  dhat=['4.0']   pairs 75  med d  -0.036 ( -0.60%)  W/L/T 39/34/2
+
+-- ER(180, p=0.05587)  [avg deg 10.0]   stock: success 75/75  acl_spur med   7.383
+  [beta ] beta-dhat  success 75/75  wall med   17.0s  dhat=['4.0', '5.0']   pairs 75  med d  -0.411 ( -5.57%)  W/L/T 57/16/2   [SURPRISE: beats stock — 15-seed confirm]
+  [ramp ] ramp2      success 75/75  wall med   11.0s  dhat=['4.0', '5.0']   pairs 75  med d  +0.111 ( +1.50%)  W/L/T 33/42/0
+  [ramp ] ramp2h     success 75/75  wall med   11.0s  dhat=['4.0', '5.0']   pairs 75  med d  +0.111 ( +1.50%)  W/L/T 33/42/0
+
+rows: 900   csv: /data/dabh/ember/docs/paper3/data/p6_probes_confirm_beta_z12.csv
