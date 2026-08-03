@@ -86,3 +86,32 @@ class Attraction(EmbeddingAlgorithm):
             source_graph, target_graph,
             timeout=timeout, seed=int(seed), **kwargs,
         )
+
+
+@register_algorithm("attraction-stack")
+class AttractionStack(EmbeddingAlgorithm):
+    """The s3.49-s3.57 switch stack as an explicit named preset (NOT a
+    default flip — ``attraction`` keeps the registered stock defaults):
+    Zephyr course-resolved wires, cycle-0 contraction, discrete order
+    shake, exactness completion with snap-aimed claims, and feasibility
+    priced into the gate energy at lam=1. On non-Zephyr targets the
+    Zephyr-only switches are structural no-ops (courses/snap/exact gate
+    on stride). Registered for the full-Z12 sweep (notes s3.58)."""
+
+    STACK = dict(courses=True, shake_cycles=1, order_shake=1,
+                 exact_seeds=True, snap_claims=True, overload_lam=1.0)
+
+    @property
+    def version(self) -> str:
+        return "0.1.0"
+
+    def embed(self, source_graph, target_graph, timeout: float = 60.0, **kwargs) -> dict:
+        seed = kwargs.pop("seed", 0)
+        if seed is None:
+            seed = 0
+        kw = dict(self.STACK)
+        kw.update(kwargs)
+        return attract_embed(
+            source_graph, target_graph,
+            timeout=timeout, seed=int(seed), **kw,
+        )

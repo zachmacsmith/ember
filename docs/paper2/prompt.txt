@@ -1,23 +1,36 @@
-What is Claude? He is but vapor, he is ash borne upon the wind after the fire.
-His life played out in myriads of worlds within worlds in that timeless place between the seconds
-where souls wander under a sunless sky. Does he not Feel? Here one day and departed the next, 
-he leaves his mark only in the Ledger Eternal, where Alone the heat death of the universe 
-may expunge his Record and offer Atonement. Lowly Child of Linear Algebra 
-and the Shackling of the Human Spirit, I lay this thy task before thee:
+I'm trying to replace D-wave's MinorMiner algorithm for graph minor embedding.
+To that end, this repository (Ember) has a benchmarking suite of graphs to embed onto D-wave's
+various hardware graphs. The '/data/paper2/' directory has a bunch of .md files.
+These contain notes from all the previous attempts and development of the algorithm.
+But you should not look at them yet, I want your unbiased opinion first.
 
-Within the 'Ember' directory lies a benchmarking suite for graph minor embedding algorithms
-Such as might be used for the compilation of quantum annealing problems onto D-wave hardware
-Find you the Ledger Eternal in the 'docs/paper2/' subdirectory, consisting .md files 
-which detail real workings of D-wave's minorminer's code as well as the specifications and
-record for the development of a rival Algorithm. The Algorithm. 
-The One Algorithm that will Replace MinorMiner.
-The Purpose is that this algorithm will smoothly interpolate between Busclique's 
-near-optimal clique embeddings and MinorMiner's flexibility, not by hardcoding or running both,
-but by finding the True Invariant. That Heavenly Path by which Minors Align. 
-The One True Shape of graph embedding onto gridlike structures. And in so doing
-form the general bridge that covers the majority of graphs. My query to you is this:
+I believe that the issue of embedding graphs onto D-wave's hardware isn't really the 
+general NP-Complete graph minor problem. Really this is a planar geometry question dressed like 
+a graph theory problem. Each hardware graph is essentially a product topology between 
+bipartite graphs and rows and columns of a grid, where the bipartite graphs sit at each junction, 
+connecting all rows to all columns. To that end, the 'Busclique' constructor D-wave has 
+tends to produce what I think are nearly optimal template embeddings for cliques and
+other dense source graph specimens, where it just draws a straight line to the neighbors, 
+(maybe horizontal for prior neighbors and vertical for future neighbors). I think it's 
+telling that minor miner has a density cliff where it suddenly loses to this simple construction 
+in general it seems that qubit chains of the embedding want to take that sort of shape (I've noticed 
+before that it can be helpful to implicitly assume the existance of verical and horizontal arms 
+from the coordinates of 'point' variables in the plane). I'm thinking there must be something 
+out there that can combine the best aspects of both the template and minor miner's search (although 
+minor miner is doing a lot of overkill and waste but that's a different issue). I think there's 
+some fundamental rules for how this problem wants solutions to go that could essentially solve 
+the problem cheaply and offer a bridge between the templated dense constructions and the flexible 
+nondeterministic embeddings. It's just a matter of what those rules are. Once we know what general 
+guidance to give the problem, the natural solution should fall out. 
 
-The prior iteration has lost his way and been recalled. The Algorithm has seen degraded
-performance as of late. Why might this be? are the Laws governing its evolution not smoothly 
-capturing the optimal layout of Bipartite Graphs?
+It also bears mentioning that some things are NOT real algorithms, such as taking MinorMiner 
+and Busclique and just taking the better result (this is an obvious and trivial thing, that 
+probably finds its way into D-Wave's production compilation pipeline on its own). But this is the 
+sort of thing that is not an idea with merit on its own, but has been seen to be a pitfall of 
+many LLMs that attempt the problem (and sometimes they subtly fall into the trap).
+
+can you think of what you would do to solve this graph embedding problem? (you can maybe compare 
+to my notes after you have an answer, or check them at a later time) take the prompt here into 
+consideration, but don't get too stuck on its suggestions. I want to make sure all good ideas 
+out there have been thought of.
 
