@@ -96,6 +96,29 @@ Magic numbers, none swept: η=0.5, λ₀=3.0, round_frac=0.4, max_rounds=10, bin
 
 ## C. Idea ledger
 
+### CANDIDATE (undesigned, unbuilt): source-side multilevel — twin-first coarsen / solve coarse / refine down (recorded 2026-08-03)
+
+The V-cycle applied to the SOURCE (the §A framing already cites hMETIS
+for the target side; this completes the symmetry). Treats the
+four-times-diagnosed disease — local moves cannot make large joint moves
+(s3.19 plateau, s3.43 pinned residual, s3.51 clump-merge conviction,
+s3.40 random-init turan stall 9.93 vs 8.24) — by moving cluster-scale
+reorganization to a level where a clump is one node. Key design point:
+coarsening must be TWIN-FIRST (merge identical-neighborhood vertices;
+hash sorted adjacency), NOT heavy-edge — turan blocks are edgeless
+inside, so heavy-edge matching interleaves blocks (the s3.38
+compact-init trap). Twin coarsening makes the templates fixed points:
+K_n collapses to one node (diagonal = readout), turan to the block
+quotient (separation decided in one coarse step) — the s3.48 "learn"
+road. If it works it SUBSUMES spectral init (real init-independence,
+the s3.36 standard), much of insertion's global role, and possibly the
+contraction schedule — a deletion-positive mechanism. Build cost:
+weighted stair-E + interval multiplicities in line_depth/arrange.
+Primary pre-registerable bar: random-init turan <= 8.5 (erase the s3.40
+miss) with dense board + off-template guards held; ER within noise
+(s3.21 null cell). Risks: approximate twins at mid-density; coarse
+mistakes are expensive to undo. Needs its own design round.
+
 ### CONSOLIDATION 2 — verdict: the board reproduced with zero kwargs; P16 healed by gating contraction (2026-08-03; notes s3.58)
 
 The flip landed as designed. The zero-configuration default (= the
