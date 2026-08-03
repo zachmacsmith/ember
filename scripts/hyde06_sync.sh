@@ -8,6 +8,11 @@ cd "$(dirname "$0")/.."
 if ! git diff-index --quiet HEAD -- docs/paper3/data/ 2>/dev/null; then
   echo "WARNING: uncommitted changes under docs/paper3/data/ will NOT deploy." >&2
 fi
-git ls-files | rsync -az --files-from=- ./ hyde06.dabh.io:/data/dabh/ember/
-echo "synced $(git rev-parse --short HEAD) -> hyde06:/data/dabh/ember"
+# Results flow HOST -> repo only. Deploying tracked result records (.csv/.txt
+# under docs/paper3/data) overwrites host-side files that live experiments
+# just wrote — that clobbered the 2026-08-03 T1a raw CSV (see §4.15 results
+# note). Scripts and configs deploy; result records never do.
+git ls-files | grep -vE '^docs/paper3/data/[^/]+\.(csv|txt)$' \
+  | rsync -az --files-from=- ./ hyde06.dabh.io:/data/dabh/ember/
+echo "synced $(git rev-parse --short HEAD) -> hyde06:/data/dabh/ember (result records excluded)"
 echo "remote runs: ssh hyde06.dabh.io 'cd /data/dabh/ember && . ./env.sh && ...'"

@@ -1066,11 +1066,37 @@ parity-proven in the old binary — those 600 rows and their verdicts STAND
 ONLY the ramp rows are lost. Fixes (committed): build_mm_fork.sh now resets
 the clone to the pristine tag (reset --hard + clean -fdx) before patching;
 chain scripts use `set -eo pipefail`; the re-run script asserts the ramp
-switch live via a probe embed BEFORE burning rows. Remedy (pre-registered
-here before its launch): run_t1c_ramp_rerun.sh — drop the 450 invalid rows,
-p6_probes --topo Z12 --confirm-beta --resume re-runs exactly those keys on
-the rebuilt fork, after T1D_DONE (one batch at a time; QUEUE row 13). The
-§4.15 ramp bars are then read from the re-run rows; no other row is touched.
+switch live via a probe embed BEFORE burning rows.
+
+DATA-HANDLING LOSS + SECOND REMEDY (2026-08-03, same entry extended before
+any remedy launch): deploying the ramp fixes mid-chain OVERWROTE the host's
+freshly-written T1a dev_suite.csv with the repo's tracked M3 record —
+hyde06_sync deployed every tracked file, including result records. The T1a
+SUMMARY was fetched immediately after T1A_DONE and is quoted verbatim in the
+§4.15 results below (bars i/ii/iv readable); the raw rows (incl. arm_meta
+construct_s for bar iii) are lost. Fix (committed): hyde06_sync.sh now
+excludes docs/paper3/data result records from the deploy direction — results
+flow host->repo only. Remedy (pre-registered here): run_t1_remedies.sh, ONE
+chain after T1D_DONE (QUEUE row 13): R1 re-runs T1a at the identical
+registry (fresh within-batch walls; the preserved first summary doubles as a
+replication check), then R2 drops the 450 invalid ramp rows and resumes
+p6_probes --topo Z12 --confirm-beta over exactly those keys on the rebuilt
+fork. §4.15 T1a bars are read from the R1 batch; ramp bars from R2; no other
+row is touched.
+
+T1a FIRST-RUN SUMMARY (fetched 2026-08-03 immediately after T1A_DONE, before
+the clobber; verbatim per-cell lines for p3-ember, the replication anchor for
+R1 — full table had all five arms):
+  (140,1.0): ember 5/5, acl_spur med 10.471, vsMM med -4.446 (-29.8%) 4W/0L
+             [MM 4/5; ate identical; mmpolish 4/5 +0.0%]
+  (179,1.0): ember 5/5 where MM 0/5, mmpolish 0/5; acl 12.972 = template
+  (100,0.3): ember -1.410 (-16.2%) 25W/0L; ate -15.2%; ember vsTP -0.8%
+  (100,0.2): ember -0.540 (-7.4%) 25W/0L; ate -4.4%; mmpolish -1.0%
+  (140,0.2): ember -2.157 (-18.4%) 25W/0L; ate -17.6%
+  (140,0.12): ember -0.679 (-7.6%) 25W/0L; ate -3.6%; mmpolish -1.0%
+  (160,0.05): ember -0.069 (-1.3%) 25W/0L; ate +0.0%; mmpolish -1.3%
+  All ember cells 100% success; zero pair losses to MM anywhere; walls
+  med 60.0-68.0 s (anytime tail by design; construct_s in the R1 batch).
 
 PRE-REGISTERED 2026-08-02. Launch gated on 4.15 verdicts. One CLI batch: arms
 {p3-ember, p3-mm-beta-fb} ONLY (race9 excluded per the racer-in-sweeps precedent;
