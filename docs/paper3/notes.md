@@ -911,3 +911,78 @@ Wilcoxon recomputed).
   — the documented cliff exclusion, unchanged.
 Data: m6_k140.csv. The manuscript's K_n rows, Table 3 frontier counts, and the
 n=5 caveats are restated at n=20.
+
+## 5. v1.2 improvement program (2026-08-02, plan approved: all five workstreams)
+
+Basis: improvement-notes.md items 1-6, 11, 12 + the NEW beta_ramp idea. Zephyr-only
+validation; P16/C16 deferred to a user decision. Frozen-arm policy: p3-ate/
+p3-mmpolish/p3-race8/p3-template stay byte-identical; new behavior = NEW names
+(p3-ember, p3-mm-beta[-fb], p3-race9); sole in-place edit = clmm's kmax-keyed guard
+threshold (Z12/P16-identity, unit-tested). Interface freeze for the build wave:
+paper3/beta.py exports dhat_of(source)->float and _GATE_MAX_DENSITY = 0.11; the
+racer agent stubs a local copy and the coordinator swaps the import at merge.
+
+### 4.15 v1.2 T1 — Zephyr dev gates (2026-08-02)
+
+PRE-REGISTERED 2026-08-02 (before any build merge or launch). Scripts land in the
+build wave; each T1 sub-batch's sha is stamped into QUEUE.md at launch. Dev
+registries (rule 4): inst seeds 101-105, algo seeds 0-4 (15-seed confirms 0-14),
+CLI master 42, 60 s, hyde06 <=48W.
+
+- T1a (p3-ember, dev cells): dev_suite --topo Z12, arms {minorminer, p3-template,
+  p3-ate, p3-mmpolish, p3-ember}, the 7 frozen Z12 dev cells.
+- T1b (native fast path): CLI, graphs 37600-37641 (hardware_native; 41 Z12-eligible),
+  arms {minorminer, p3-ate, p3-ember}, trials 5, master seed 42.
+- T1c (beta family): p6_probes --topo Z12, deg-10 n in {100,140,180}, switches
+  {stock, beta-dhat, ramp(r=2, hold 0/1)} x 15 seeds + p3-mm-beta/-fb x 5 seeds.
+- T1d (racer A/B): race8 vs race9 paired, Z12 (160,0.05) + (100,0.2), seq+par reads,
+  5 inst x 5 base seeds.
+- MANDATORY pre-CLI smoke: find_subgraph wall < 5 s on the largest Z12-eligible
+  source (no CLI watchdog).
+
+BARS (noise-calibrated per improvement-notes #10):
+- p3-ember: (i) dense carry — within 1% of p3-ate's median margins on (100,0.3),
+  (140,0.2), K140 AND never > +0.25% median worse than ate on ANY cell (polish is
+  monotone; a violation is a bug); (ii) sparse win — (160,0.05) and (100,0.2)
+  median dACL_spur < -0.5% AND >=55%W vs MM; (iii) tax kill — median wall vs MM on
+  (160,0.05) <= +0.2 s within-batch; (iv) K179 5/5; (v) hardware_native: every
+  native_hit row ACL == 1.0; family success >= MM (deficits count only at >=3
+  graphs).
+- beta arms (Z12-transfer test of §4.8b; the degree-20 fabric may shrink the sparse
+  margin — stated up front): beta-dhat and each ramp variant CONFIRM iff median
+  < -1% AND >=60%W at 15 seeds on >=2 of the 3 deg-10 cells. Ramp additionally:
+  success >= stock-1 per cell while holding >=80% of dhat's ACL margin -> the ramp
+  becomes the below-gate engine of a future v2 (separately pre-registered).
+  p3-mm-beta-fb: success == stock exactly per cell. Decision tree: dhat fails on
+  Z12 -> beta.py arms die this cycle; the racer's mm-beta slot stays (zero-risk
+  diversity).
+- race9 vs race8 (paired at the same master seeds): median < -0.5% AND >=60%W on
+  (160,0.05) in >=1 fairness read with the other read non-regressing (median <= 0).
+  Diagnostic: race9 worse on >40% of pairs in any read -> roster-interference
+  investigation before shipping.
+- CLI family rules: success drops real only above max(2.6 pt, 3 graphs) (2.6 pt ~
+  95th pct of the measured sd-1.57 null); family ACL bars only at >=10 pairs.
+
+--- results appended below; nothing above this line is edited after launch ---
+
+### 4.16 v1.2 T2 — Z12 library re-verify (2026-08-02)
+
+PRE-REGISTERED 2026-08-02. Launch gated on 4.15 verdicts. One CLI batch: arms
+{p3-ember, p3-mm-beta-fb} ONLY (race9 excluded per the racer-in-sweeps precedent;
+clmm v1.2 is Z12-identical by construction — its unit test is the evidence), the
+same 30,201-graph Z12-eligible set, trials 1, timeout 60, master seed 4242, 60W.
+Pairing: m5_analyze --baseline-db results/m5full_z12/batch/results.db (graph_id
+pairing vs the archived minorminer rows; "(instance, trial) [CLI]" regime; the
+sd-1.57 pt/family null governs — cross-arm rows never share derived seeds, see
+errata 4.12.10).
+BARS: p3-ember — no family ACL violation (>=10-pair rule); no success drop >
+max(2.6 pt, 3 graphs); POSITIVE claims: carries ate's dense-structured category
+wins (kneser/turan/complete/spin_glass class, median < -0.5% AND >=55%W), mmpolish-
+class small wins on >=5 families by the same rule, hardware_native flag retired
+(success >= MM, mean dACL <= 0). p3-mm-beta-fb — success within the null on every
+family (the fallback guarantee); the ACL claim requires >=3 below-gate families
+each independently passing median < -0.5% AND >=55%W; above-gate families are
+exact passthrough (metadata spot-check). Remedy budget: ONE regime-guarded re-run
+of a failing arm, freshly pre-registered.
+
+--- results appended below; nothing above this line is edited after launch ---

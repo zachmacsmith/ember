@@ -11,3 +11,7 @@ Standing rule: every new user prompt in Claude sessions on this repo is appended
 > Everything on hyde06 can be saved to /data/dabh/ where there should be ample TB of space free.  Don't use the /home directory if possible, that is what is almost full.
 
 > I am not convinced that we want any best-of-K approaches - in my mind, it's unfair to compare a best-of-K approach with a single run of MM, since we could just run MM K times and take the best one as well, and we know that just doing that already produces a nice improvement.  Unless the proposed approach is SO fast that a best-of-K version is just as fast as one run of MM - that could be fair/interesting ("same time budget, two different algorithms race each other.").  Note that we should try to use all cores on hyde06.dabh.io that are available - I think it might just be 64 physical cores and 128 threads, so maybe only use up to 64 cores at once?  Just want to be sensitive about timing... if there are other processes running consuming CPU, or if we're strangling cores due to hyperthreading, that could lead to unfair performance numbers.
+
+## 2026-08-02 — v1.2 kickoff
+
+> Can you commit and push what you have for now?  Then, make a plan to run a dynamic workflow to improve the various algorithms and/or make better algorithms based on your findings so far.  Let's plan to run any new tests/benchmarks on just Zephyr for now (we can do Pegasus and Chimera later, if Zephyr works well).
