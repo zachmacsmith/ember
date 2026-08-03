@@ -986,3 +986,15 @@ exact passthrough (metadata spot-check). Remedy budget: ONE regime-guarded re-ru
 of a failing arm, freshly pre-registered.
 
 --- results appended below; nothing above this line is edited after launch ---
+
+10. **(2026-08-02) "identical derived seeds" mis-phrasing (found by the v1.2 surface
+    audit).** The §4.11 second amendment and a gen_m5_full.py comment claimed layout
+    rows pair against main-batch minorminer rows "at IDENTICAL derived seeds". Wrong:
+    _derive_seed (benchmark.py) salts the ALGORITHM NAME into the key, so cross-ARM
+    rows never share seeds — that is precisely the "(instance, trial) [CLI]" regime
+    of protocol rule 1. The true (and sufficient) property is that seed derivation is
+    BATCH-independent: any arm's rows pair against another batch's rows exactly as
+    validly as within one batch, governed by the measured sd-1.57 pt/family null.
+    (The P16 rerun's replacement property — same arm name, same derived seeds — was
+    and remains correct.) No reported table used the wrong framing; every CLI table
+    carried the correct pairing label. Comment fixed at gen_m5_full.py.

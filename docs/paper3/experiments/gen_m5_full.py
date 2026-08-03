@@ -59,9 +59,11 @@ def main():
         for name, arms, ids, note in (
             (f"m5full_{tag}", MAIN_ARMS, elig,
              f"complete Ember library, n<={cap} pigeonhole-eligible ({len(elig)} graphs)"),
-            # no duplicate minorminer arm: CLI seed derivation is batch-independent
-            # (root:algorithm:graph:topology:trial), so layout rows pair exactly
-            # against the main batch's minorminer rows at identical derived seeds.
+            # no duplicate minorminer arm: CLI seed derivation is BATCH-independent
+            # (root:algorithm:graph:topology:trial), so layout rows cross-batch pair
+            # against the main batch's minorminer rows exactly as validly as within
+            # one batch — at the usual "(instance, trial) [CLI]" regime (derived
+            # seeds are arm-salted, never shared across arms; errata 4.12.10).
             (f"m5full_{tag}_layout", ["minorminer-layout"], small,
              f"layout supplement, n<={LAYOUT_CAP} ({len(small)} graphs; layout "
              f"stage unwatchdogged on CLI — big-n excluded)"),

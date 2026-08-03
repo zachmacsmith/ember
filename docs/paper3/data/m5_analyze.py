@@ -316,16 +316,53 @@ def selftest():
 
 
 def main():
-    if len(sys.argv) == 2 and sys.argv[1] == "--selftest":
+    import argparse
+    ap = argparse.ArgumentParser(
+        description="M5 per-family no-regression analysis")
+    ap.add_argument("path", nargs="?", help="batch dir or results.db")
+    ap.add_argument("--selftest", action="store_true")
+    ap.add_argument("--baseline-db", default=None,
+                    help="second results.db whose rows (e.g. the archived "
+                         "minorminer baseline) are unioned in — enables "
+                         "cross-batch pairing (v1.2 T2; errata 4.12.10 regime)")
+    ap.add_argument("--arms", default=None,
+                    help="comma list of p3 arms to analyze (default: the "
+                         "built-in P3_ARMS)")
+    args = ap.parse_args()
+    if args.selftest:
         selftest()
         return
-    if len(sys.argv) != 2:
-        sys.exit("usage: m5_analyze.py <batch_dir | results.db> | --selftest")
-    path = sys.argv[1]
+    if not args.path:
+        sys.exit("usage: m5_analyze.py <batch_dir | results.db> "
+                 "[--baseline-db DB] [--arms a,b] | --selftest")
+    if args.arms:
+        global P3_ARMS, ARMS
+        P3_ARMS = [a.strip() for a in args.arms.split(",") if a.strip()]
+        ARMS = [BASELINE] + P3_ARMS
+    path = args.path
     db_path = os.path.join(path, "results.db") if os.path.isdir(path) else path
     if not os.path.exists(db_path):
         sys.exit(f"results.db not found: {db_path}")
     db = sqlite3.connect(db_path)
+    if args.baseline_db:
+        base = args.baseline_db
+        base = os.path.join(base, "results.db") if os.path.isdir(base) else base
+        if not os.path.exists(base):
+            sys.exit(f"baseline results.db not found: {base}")
+        # Union the baseline rows into an in-memory copy so the whole analysis
+        # sees one `runs` table (cross-batch pairing on graph_id).
+        mem = sqlite3.connect(":memory:")
+        db.backup(mem)
+        mem.execute("ATTACH DATABASE ? AS base", (base,))
+        cols = [r[1] for r in mem.execute("PRAGMA table_info(runs)")]
+        collist = ", ".join(cols)
+        # OR IGNORE: on key collision the analyzed batch's row wins and the
+        # baseline's is dropped (baseline fills gaps, never overrides).
+        mem.execute(f"INSERT OR IGNORE INTO runs ({collist}) "
+                    f"SELECT {collist} FROM base.runs")
+        mem.commit()
+        db = mem
+        db_path = f"{db_path} + baseline {base}"
     run_analysis(db, load_categories(), db_path)
 
 
