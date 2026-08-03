@@ -217,6 +217,61 @@ class TestArrangement:
         again, _ = alternate_arrange(pos, adj, grid, iters=8, kappa=3.0)
         assert all(np.allclose(new[v], again[v]) for v in pos)
 
+    def test_pack_lines_matches_brute_force(self):
+        # the s3.59 DP must be exactly optimal over non-decreasing
+        # complete assignments whenever no skip is needed
+        import itertools
+        from ember_qc.algorithms.factored.field import pack_lines
+        rng = np.random.RandomState(7)
+        for trial in range(30):
+            n = rng.randint(2, 7)
+            L = rng.randint(2, 5)
+            ivs = []
+            for _ in range(n):
+                a = rng.uniform(0, 6)
+                ivs.append((a, a + rng.uniform(0.5, 4)))
+            ys = sorted(rng.uniform(0, L - 1) for _ in range(n))
+            pools = [float(rng.randint(1, 4)) for _ in range(L)]
+            best = None
+            for comb in itertools.combinations_with_replacement(
+                    range(L), n):
+                by_line = {}
+                for k, l in enumerate(comb):
+                    by_line.setdefault(l, []).append(ivs[k])
+                if any(line_depth(v) > pools[l]
+                       for l, v in by_line.items()):
+                    continue
+                cost = sum(abs(ys[k] - comb[k]) for k in range(n))
+                if best is None or cost < best - 1e-12:
+                    best = cost
+            assign, cost = pack_lines(ivs, ys, pools)
+            if best is None:
+                assert any(a is None for a in assign)
+            else:
+                assert all(a is not None for a in assign), (trial, assign)
+                assert cost == pytest.approx(best, abs=1e-9), trial
+                # order preservation: non-decreasing lines
+                placed = [a for a in assign if a is not None]
+                assert placed == sorted(placed)
+                # capacity respected
+                by_line = {}
+                for k, l in enumerate(assign):
+                    by_line.setdefault(l, []).append(ivs[k])
+                assert all(line_depth(v) <= pools[l]
+                           for l, v in by_line.items())
+
+    def test_pack_lines_skips_only_when_infeasible(self):
+        from ember_qc.algorithms.factored.field import pack_lines
+        # 5 mutually overlapping intervals, two lines of pool 2:
+        # exactly one must be skipped
+        ivs = [(0.0, 10.0)] * 5
+        ys = [0.0, 0.2, 0.4, 0.6, 0.8]
+        assign, _ = pack_lines(ivs, ys, [2.0, 2.0])
+        assert sum(1 for a in assign if a is None) == 1
+        placed = [a for a in assign if a is not None]
+        assert placed == sorted(placed)
+        assert all(placed.count(l) <= 2 for l in set(placed))
+
     def test_arrange_leaves_short_arms_untouched(self):
         # sub-tile spans (geometric graph): no variable owes a wire run, so
         # the arrangement is structurally inert — the arm-length criterion,
@@ -837,6 +892,54 @@ class TestZephyrCourses:
             out[name] = sum(1 for c in chains.values() if c)
         assert out["folded"] == 4
         assert out["course"] == 8
+
+    def test_line_pools_census(self):
+        # s3.59 one-accounting: integer sub-lane pools from wire_map —
+        # 8 per line on course-resolved Zephyr, 4 folded; the packer and
+        # claim_overload share this census
+        from ember_qc.algorithms.factored.field import line_pools
+        g, folded, course = self._grids()
+        lpc = line_pools(course)
+        for o in (0, 1):
+            for ln in range(course.H if o == 1 else course.W):
+                assert lpc.get((o, ln), 0) == 8, (o, ln)
+        lpf = line_pools(folded)
+        assert all(v == 4 for v in lpf.values())
+
+    def test_arrange_postpack_overload_zero(self):
+        # the structural identity the DP buys: a fresh packing censuses
+        # to zero overload (the d729 class is impossible by construction)
+        g, folded, course = self._grids()
+        n = 20
+        adj = {v: [u for u in range(n) if u != v] for v in range(n)}
+        pos = {v: np.array([2.0 + 0.15 * v, 2.0 + 0.15 * v])
+               for v in range(n)}
+        for _ in range(8):
+            pos = stair_step(pos, adj, eta=0.5)
+        new, info = alternate_arrange(pos, adj, course, iters=8,
+                                      kappa=3.0, overload_lam=1.0)
+        assert claim_overload(new, adj, course, kappa=3.0) == 0.0
+
+    def test_arrange_avoid_boundary(self):
+        # avoid_boundary=True keeps packed arms off tile lines 0 and
+        # last (the s3.54 rule as packer-side data)
+        g, folded, course = self._grids()
+        n = 16
+        adj = {v: [u for u in range(n) if u != v] for v in range(n)}
+        pos = {v: np.array([1.0 + 0.2 * v, 1.0 + 0.2 * v])
+               for v in range(n)}
+        new, info = alternate_arrange(pos, adj, course, iters=4,
+                                      kappa=3.0, avoid_boundary=True)
+        packed = [v for v in new
+                  if float(new[v][1]).is_integer()
+                  or float(new[v][0]).is_integer()]
+        for v in new:
+            for axis, nl in ((1, course.H), (0, course.W)):
+                val = float(new[v][axis])
+                if val.is_integer() and val in (0.0, float(nl - 1)):
+                    # a variable may START on a boundary value; assert
+                    # only that the packer did not newly assign one
+                    assert float(pos[v][axis]) == val
 
     def test_course_wire_seeds_valid_connected(self):
         g, folded, course = self._grids()

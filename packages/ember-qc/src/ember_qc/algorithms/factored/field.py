@@ -512,6 +512,27 @@ def wire_seeds_iv(grid: TileGrid, pos: Dict[int, Point],
     return {v: c for v, c in chains.items() if c}
 
 
+def line_pools(grid: TileGrid) -> Dict[Tuple[int, int], int]:
+    """Per-(orientation, line) integer sub-lane pools from ``wire_map`` —
+    the claim layer's own capacity census (absorbs the former
+    ``_subs_count`` cache; s3.59): the number of physically claimable
+    wires on each line. Shared by the packer (``alternate_arrange._half``)
+    and ``claim_overload`` so the two keep ONE book — the s3.56 d729
+    defect class was the packer budgeting from a float cap-mean (7.68 on
+    course Zephyr lines) while the claim layer colored onto 8 integer
+    sub-lanes. Whole-dead runs are absent from wire_map by construction;
+    partially dead runs still count (their live segments are claimable).
+    Untyped grids have no wire_map -> empty dict (callers fall back to
+    the cap-mean pool). Cached on the grid; append-only usage."""
+    cache = getattr(grid, "_line_pools", None)
+    if cache is None:
+        cache = {}
+        for (u, ln, s) in grid.wire_map:
+            cache[(u, ln)] = cache.get((u, ln), 0) + 1
+        grid._line_pools = cache
+    return cache
+
+
 def claim_overload(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                    grid: TileGrid, *, kappa: float = 13.0,
                    floor: bool = True) -> float:
@@ -521,13 +542,11 @@ def claim_overload(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
     computed by exactly wire_seeds_iv._tuples' rules — so the hinge is
     the uncolorability count squared, not a proxy. Used as a gate-energy
     term (evaluation only, never descended on): E-gated moves stop being
-    blind to the violations that stranded 9 turan arms (d729, s3.56)."""
-    cache = getattr(grid, "_subs_count", None)
-    if cache is None:
-        cache = {}
-        for (u, ln, s) in grid.wire_map:
-            cache[(u, ln)] = cache.get((u, ln), 0) + 1
-        grid._subs_count = cache
+    blind to the violations that stranded 9 turan arms (d729, s3.56).
+    Since the s3.59 exact packer shares ``line_pools``, a fresh packing
+    should census to zero — this is the independent verifier of that
+    identity, not a redundant copy of the packer's constraint."""
+    cache = line_pools(grid)
     bars = derive_bars_stair(pos, src_adj, kappa=kappa, floor=floor,
                              bounds=(grid.W, grid.H))
     total = 0.0
@@ -836,6 +855,106 @@ def line_depth(intervals: List[Tuple[float, float]]) -> int:
     return best
 
 
+_MISS_COST = 1e6  # a skip must dominate any real displacement (|y-l| <= L)
+
+
+def pack_lines(intervals: List[Tuple[float, float]], values: List[float],
+               pools: List[float]):
+    """Exact order-preserving line packing (the s3.59 DP; replaces the
+    greedy nearest-line-with-room loop). Items must be pre-sorted by
+    (value, id); the assignment is NON-DECREASING in that order — the
+    order-preservation invariant holds by construction (and the greedy's
+    spill-boundary order scrambling is structurally impossible). Each
+    line receives a contiguous run of the sorted sequence; a run is
+    feasible on line l iff its interval overlap depth (``line_depth``)
+    is <= pools[l] — capacity is a hard constraint, not a price. Cost =
+    total displacement sum |value - line| (order-preserving packing =
+    minimal-total-displacement 1-D transport, the standing doctrine);
+    structurally unplaceable items are skipped at ``_MISS_COST`` each
+    (they stay put — today's ``miss`` semantics; a skip inside a line's
+    run ends that line's run, a documented mild restriction).
+
+    Returns ``(assign, cost)``: ``assign[k]`` is the line index for the
+    k-th item or ``None`` (skipped). Deterministic. Complexity: one
+    two-pointer feasibility pass per distinct pool value (windows are
+    depth-bounded) plus an O(n * L) sliding-window-minimum DP.
+    """
+    n = len(intervals)
+    L = len(pools)
+    if n == 0:
+        return [], 0.0
+    from collections import deque
+
+    # Feasible run starts: js[i] = minimal j such that the run of items
+    # j..i-1 has depth <= c. Depth is monotone in window extension, so a
+    # two-pointer sweep is exact; one pass per distinct capacity value.
+    caps = sorted({int(p) for p in pools if p >= 1.0})
+    jstar = {}
+    for c in caps:
+        arr = [0] * (n + 1)
+        j = 0
+        for i in range(1, n + 1):
+            while line_depth(intervals[j:i]) > c:
+                j += 1
+            arr[i] = j
+        jstar[c] = arr
+
+    INF = float("inf")
+    # f_prev[i] = min cost of the first i items using lines < l (before
+    # any line: skips only).
+    f_prev = [i * _MISS_COST for i in range(n + 1)]
+    parent = [[None] * (n + 1) for _ in range(L)]
+    for l in range(L):
+        Cp = [0.0] * (n + 1)  # prefix sums of |value - l|
+        for k in range(n):
+            Cp[k + 1] = Cp[k] + abs(float(values[k]) - float(l))
+        cl = int(pools[l]) if pools[l] >= 1.0 else 0
+        js = jstar.get(cl)
+        f_cur = [INF] * (n + 1)
+        f_cur[0] = 0.0
+        dq = deque()  # (g, j) with g = f_prev[j] - Cp[j], increasing
+        for i in range(1, n + 1):
+            best, par = f_prev[i], ("c",)          # carry: lines < l only
+            if js is not None:
+                jnew = i - 1
+                g = f_prev[jnew] - Cp[jnew]
+                while dq and dq[-1][0] >= g:
+                    dq.pop()
+                dq.append((g, jnew))
+                while dq and dq[0][1] < js[i]:
+                    dq.popleft()
+                if dq:
+                    cand = dq[0][0] + Cp[i]        # run dq[0][1]..i-1 on l
+                    if cand < best - 1e-12:
+                        best, par = cand, ("r", dq[0][1])
+            scand = f_cur[i - 1] + _MISS_COST      # skip item i-1
+            if scand < best - 1e-12:
+                best, par = scand, ("s",)
+            f_cur[i] = best
+            parent[l][i] = par
+        f_prev = f_cur
+
+    cost = f_prev[n]
+    assign: List[Optional[int]] = [None] * n
+    i, l = n, L - 1
+    while i > 0:
+        if l < 0:
+            i -= 1                                  # pre-line skips
+            continue
+        par = parent[l][i]
+        if par[0] == "c":
+            l -= 1
+        elif par[0] == "s":
+            i -= 1
+        else:
+            j = par[1]
+            for k in range(j, i):
+                assign[k] = l
+            i = j
+            l -= 1
+    return assign, cost
+
+
 def edge_monotonize(pos: Dict[int, Point], src_adj: Dict[int, List[int]], *,
                     max_sweeps: int = 16):
     """Per-edge diagonalization (2026-07-29 refinement; replaces the global
@@ -1042,7 +1161,8 @@ def insertion_sweeps(order: List[int], src_adj: Dict[int, List[int]], *,
 def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                       grid: TileGrid, *, iters: int = 8, kappa: float = 13.0,
                       floor: bool = True, insert_sweeps: int = 0,
-                      overload_lam: float = 0.0):
+                      overload_lam: float = 0.0,
+                      avoid_boundary: bool = False):
     """Alternating 1-D arrangement on the stair energy.
 
     Participation is **per-axis by derived arm length** (2026-07-29
@@ -1082,27 +1202,18 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
             "insert_reverts": 0, "mono_swaps": 0, "mono_time": 0.0}
     packed_last: Dict[int, set] = {1: set(), 0: set()}
 
-    def _intervals(axis: int) -> Dict[int, Tuple[float, float]]:
-        # floored stair interval per variable on the frozen axis (all
-        # variables — participation is decided from the result)
-        other = 0 if axis == 1 else 1
-        contacts = _stair_contacts(new_pos, src_adj)
-        out = {}
-        for v in sorted(new_pos):
-            nbrs = [u for u in src_adj.get(v, []) if u in new_pos]
-            ids = contacts[v][0] if axis == 1 else contacts[v][1]
-            xs = [float(new_pos[u][other]) for u in ids] \
-                + [float(new_pos[v][other])]
-            a, b = min(xs), max(xs)
-            if floor:
-                # half of the contact-capacity floor lives on each layer
-                need = (len(nbrs) / kappa - 1.0) / 2.0
-                deficit = need - (b - a)
-                if deficit > 0:
-                    a -= deficit / 2.0
-                    b += deficit / 2.0
-            out[v] = (a, b)
-        return out
+    def _axis_ivs(axis: int) -> Dict[int, Tuple[float, float]]:
+        # THE CLAIM LAYER'S OWN intervals (s3.59 one-accounting rule):
+        # the packer's feasibility test must use the same books the
+        # coloring and the overload census use, or oversubscription
+        # reappears at claim time. derive_bars_stair = whole floor split
+        # /4 per side, clipped to the grid — replaces the former
+        # per-axis half-floor `_intervals`.
+        bars = derive_bars_stair(new_pos, src_adj, kappa=kappa,
+                                 floor=floor, bounds=(grid.W, grid.H))
+        idx = 0 if axis == 1 else 1
+        return {v: (float(b[idx][0]), float(b[idx][1]))
+                for v, b in bars.items()}
 
     def _mono():
         nonlocal new_pos
@@ -1111,37 +1222,48 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
         info["mono_time"] = round(info["mono_time"] + mi["time"], 4)
 
     def _half(axis: int, force: bool) -> bool:
-        """Pack the axis's long-arm variables into lines; accept if E does
-        not increase (or unconditionally when ``force``: the feasibility
+        """Pack the axis's long-arm variables into lines via the exact
+        order-preserving DP (``pack_lines``, s3.59); accept if E does not
+        increase (or unconditionally when ``force``: the feasibility
         projection). Returns True if the state changed."""
-        # Line capacity = simultaneous overlapping arms per line = sub-lanes,
-        # which is qubits-per-tile x stride (course-resolved Zephyr packs 8
-        # interleaved arms per line, 4 bars per tile at any point; s3.49).
-        # Multiplying cap keeps dead-qubit derating intact.
-        caps = grid.cap[:, :, 1] if axis == 1 else grid.cap[:, :, 0].T
-        pool = caps.mean(axis=1) * grid.stride
         nlines = grid.H if axis == 1 else grid.W
-        ivs = _intervals(axis)
+        lp = line_pools(grid)
+        if lp:
+            # integer sub-lane pools per line — the claim layer's census
+            # (8 on course-Zephyr lines, not the cap-mean's 7.68; s3.51
+            # item 4 resolved as data)
+            pool = [float(lp.get((axis, ln), 0)) for ln in range(nlines)]
+            if avoid_boundary and nlines >= 2:
+                # s3.54 boundary-line avoidance, now packer-side data
+                # instead of a grid.cap mutation: junction lines 0/2m
+                # have half CROSSING capacity (fabrics s4.3b); until a
+                # crossing-parity census exists, arms stay off the
+                # boundary tile lines entirely (the proven-conservative
+                # rule; the refinement is on the ledger).
+                pool[0] = 0.0
+                pool[nlines - 1] = 0.0
+        else:
+            # untyped fallback: no wire_map, keep the historical
+            # cap-mean pool
+            caps = grid.cap[:, :, 1] if axis == 1 else grid.cap[:, :, 0].T
+            pool = list(caps.mean(axis=1) * grid.stride)
+        ivs = _axis_ivs(axis)
         parts = [v for v in sorted(new_pos)
                  if ivs[v][1] - ivs[v][0] >= 1.0]
         if not parts:
             info["E"].append(efn(new_pos, src_adj))
             return False
         order = sorted(parts, key=lambda v: (float(new_pos[v][axis]), v))
-        lines: Dict[int, list] = {i: [] for i in range(nlines)}
+        assign, _cost = pack_lines([ivs[v] for v in order],
+                                   [float(new_pos[v][axis]) for v in order],
+                                   pool)
         trial = {v: new_pos[v].copy() for v in new_pos}
         miss = 0
-        for v in order:
-            y0 = float(new_pos[v][axis])
-            placed = False
-            for ln in sorted(range(nlines), key=lambda i: (abs(i - y0), i)):
-                if line_depth(lines[ln] + [ivs[v]]) <= pool[ln]:
-                    lines[ln].append(ivs[v])
-                    trial[v][axis] = float(ln)
-                    placed = True
-                    break
-            if not placed:
-                miss += 1  # no feasible line; stays put
+        for v, ln in zip(order, assign):
+            if ln is None:
+                miss += 1  # structurally unplaceable; stays put
+            else:
+                trial[v][axis] = float(ln)
         e_old = efn(new_pos, src_adj)
         e_new = efn(trial, src_adj)
         if force or e_new <= e_old + 1e-9:

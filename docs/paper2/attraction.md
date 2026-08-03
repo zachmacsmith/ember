@@ -96,6 +96,26 @@ Magic numbers, none swept: η=0.5, λ₀=3.0, round_frac=0.4, max_rounds=10, bin
 
 ## C. Idea ledger
 
+### THE EXACT PACKER — mechanism lands (K100 8.12, K140 sub-template), turan trades to crossing parity; DECISION OPEN (2026-08-03; notes s3.59)
+
+pack_lines (exact order-preserving DP, hard depth constraint) + shared
+line_pools census (packer and claim_overload keep ONE book; 8 not 7.68)
++ claim-layer intervals + boundary rule as pool data. d729-class lane
+oversubscription structurally impossible (unit identity). Probe: K100
+**8.12** (1.015x template), K140 **10.91 sub-template quote**,
+wsc_c3xK64 6.37, regular 2.86 — but turan 7.90 -> 9.06 with the gate
+broken (d15): full-depth packing trades away the crossing-parity slack
+snap needs. Attribution (pool-1): turan gate returns (8.52 s1 d0), the
+other three cells regress badly — uniform slack refuted, turan's
+exactly-full bipartite rectangles are the special case. NAMED NEXT:
+crossing-parity-aware packing (the packer sees designated-crossing
+parity demand per line, not just lane depth) — expected to recover
+turan toward 7.2 while keeping the clique records. DECISION OPEN on
+the interim default (ship-as-is recommended / revert / per-cell slack
+rejected as a density gate). overload_lam now reads 0 post-pack by
+construction — deletion candidate once turan's account closes.
+
+
 ### CANDIDATE (undesigned, unbuilt): source-side multilevel — twin-first coarsen / solve coarse / refine down (recorded 2026-08-03)
 
 The V-cycle applied to the SOURCE (the §A framing already cites hMETIS

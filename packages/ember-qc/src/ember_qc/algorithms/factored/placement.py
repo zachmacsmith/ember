@@ -304,17 +304,9 @@ def attract_embed(
         # behavior is byte-identical to the first consolidation's default.
         exact = cfg.exact_seeds and grid.stride > 1
         lam = cfg.overload_lam if grid.stride > 1 else 0.0
-        if exact:
-            # Boundary-line avoidance (s3.54): lines 0 and 2m have HALF the
-            # crossing capacity (a bar at p covers lines {p, p+1}, so line 0
-            # is even-course-only) and parity-blind packing there creates
-            # structurally uncoverable crossings. Zero the boundary pools —
-            # measured E-neutral-to-positive on the dense cells.
-            grid.cap = grid.cap.copy()
-            grid.cap[0, :, 1] = 0.0
-            grid.cap[grid.H - 1, :, 1] = 0.0
-            grid.cap[:, 0, 0] = 0.0
-            grid.cap[:, grid.W - 1, 0] = 0.0
+        # Boundary-line avoidance (s3.54) moved into the packer as pool
+        # data (alternate_arrange's avoid_boundary; s3.59) — the grid.cap
+        # mutation is gone.
         bounds = (grid.W, grid.H)
         kappa = cfg.kappa if cfg.kappa is not None else _target_kappa(grid)
 
@@ -353,7 +345,7 @@ def attract_embed(
             tpts, src_adj, grid, iters=cfg.arrange_iters,
             kappa=kappa, floor=cfg.span_floor,
             insert_sweeps=cfg.insert_sweeps,
-            overload_lam=lam)
+            overload_lam=lam, avoid_boundary=exact)
         cent = {v: grid.Minv @ (tpts[v] - grid.c) for v in cent}
         # round_E stays RAW stair-E (recorded trajectory metric, comparable
         # to history) regardless of overload_lam

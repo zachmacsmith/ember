@@ -3134,6 +3134,74 @@ Open (unchanged): depth-respecting packing, Pegasus co-design,
 strip-minorminer-down, corridor reservation, hard-frontier eval + the
 full-Ember sweep rerun.
 
+### 3.59 The exact-packer round: K100 8.12 and K140 sub-template, the d729 class abolished — and turan trades the other way (2026-08-03)
+
+Built per plan (the round the s3.56/s3.57 chain pointed at): `pack_lines`
+— an exact order-preserving DP (contiguous runs per line, capacity = hard
+interval-depth constraint, cost = minimal-displacement transport, skips
+only at structural infeasibility) — replaces the greedy
+nearest-line-with-room loop in `_half`; `line_pools` (integer per-line
+sub-lane census from wire_map, absorbing `_subs_count`) is now shared by
+the packer and `claim_overload` (ONE accounting; the census reads 8 on
+course-Zephyr lines where the cap-mean read 7.68 — s3.51 item 4 resolved
+as data); the packer's feasibility intervals are the claim layer's own
+(`derive_bars_stair`, replacing the per-axis `_intervals` books); the
+boundary rule moved from a grid.cap mutation to packer-side pool data
+(`avoid_boundary`). Unit-tested: DP == brute force over non-decreasing
+complete assignments (30 randomized trials), post-pack claim_overload
+== 0 (the d729 class structurally impossible), pool census, boundary
+avoidance. 59 field tests green; arrange wall 0.4-1.6 s at benchmark n.
+
+**Probe** (`data/packer_probe.py`, bars pre-registered; Z12, 9 cells x
+{att-default, mm} x 3 seeds x 60 s; load 62-83, SCORABLE — every mm
+control replicated: 10.28 / 18.00(2/3) / 4.97 / 12.01 / 3.36 / 3.08 /
+3.78 / 7.31; spin_glass control inflated 18.89 vs 17.87):
+
+| cell | att (DP) | s3.58 (pre-DP) | tmpl |
+|---|---|---|---|
+| K100 | **8.12** s1 d0 e0 | 8.74 | 8.00 |
+| K140 | **10.91** s0 d4 | 11.41 | 11.00 |
+| ER100_d10 | 4.76 | 4.76 | -- |
+| turan_n162 | 9.06 s0 d15 | **7.90** | 6.00 |
+| spin_glass | 12.88* | 12.47 | 11.64 |
+| regular_n316 | **2.86** | 2.89 | -- |
+| ws_n486 | 3.12 | **3.01** | -- |
+| wsc_c8xK32 | 3.89* | 3.81 | -- |
+| wsc_c3xK64 | **6.37** s0 d6 | 6.69 | -- |
+
+(* = inflated-control cells, load-caveated.)
+
+1. **MECHANISM: passed.** Lane oversubscription is structurally gone
+   (unit identity; the probe's d-numbers are CROSSING deficits, not
+   lane depth). K100 8.74 -> **8.12 (1.015x template)** and K140 11.41
+   -> **10.91 — BELOW the 11.00 template quote** (busclique is not
+   proven chain-length-optimal for sub-maximal K_n; the ledger's
+   Boothby-King caveat becomes a measurement). wsc_c3xK64 6.69 -> 6.37.
+2. **MINIMUM: FAILED on turan — the trade inverted.** 7.90 -> 9.06 and
+   the gate stopped firing (d15, from d0): depth-8-full packing leaves
+   the snap/completion layer no spare lanes for parity-exact crossing
+   aim. The d729 lane defect died and a d15 CROSSING defect appeared —
+   one layer down, 50x smaller, same shape (the books that disagree now
+   are packing vs crossing-parity, not packing vs lanes).
+3. **Attribution arm** (pool-1 on stride-2, scratch, 4 cells x 3
+   seeds): turan gate RETURNS at 8.52 s1 d0 — confirming the slack
+   mechanism — but K140 11.58 d22 / c3xK64 7.41 d265 / spin_glass
+   15.00 all regress badly. Uniform slack is the wrong fix (cap_derate
+   reborn); turan's exactly-full bipartite rectangles are the special
+   case. The named fix is CROSSING-PARITY-AWARE packing: the packer
+   should see designated-crossing parity demand per line, not just
+   lane depth.
+4. Off-template: regular/c3xK64 improve, ws 3.01 -> 3.12 (slight,
+   clean control) — on the watch list.
+
+**Standing board (DP default): K100 8.12 / K140 10.91 / ER 4.76 /
+turan 9.06 / spin_glass 12.88* — template gaps 1.015x / sub-template /
+-- / 1.51x / 1.11x*.** DECISION OPEN (report + discuss): the DP is a
+net win on 7/9 cells with two records, and a real turan regression;
+options are (a) ship as-is + crossing-parity round next, (b) revert,
+(c) per-cell slack (density gate, doctrine-hostile). The round
+recommends (a); Max's call.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).
