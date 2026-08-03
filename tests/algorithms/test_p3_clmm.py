@@ -6,8 +6,14 @@ subgraph; MM's legalized output is a valid embedding), both Zbinden selection
 rules, the k < n and k >= n branches, degeneracy-core peeling, determinism,
 and the tiny-timeout contract. Small targets (chimera_graph(4),
 pegasus_graph(4)) keep every MM stage sub-second.
+
+v1.2 additions: the architecture-aware guard threshold (0.35 chimera-class /
+0.15 pegasus-zephyr-class / 0.15 non-busclique fallback, improvement-notes
+#11) and the Z12-class identity regression (§5 frozen-arm policy: the gate
+edit must leave pegasus/zephyr-class behavior byte-identical to v1.1).
 """
 
+import hashlib
 import time
 
 import networkx as nx
@@ -19,14 +25,16 @@ from ember_qc.embedding_backend import is_valid_embedding
 from ember_qc.algorithms.search_orders import degeneracy_order
 from ember_qc.algorithms.paper3.clmm import (
     _bus_entry,
+    _guard_threshold,
     _prune_seed_chains,
     _select_core,
     _select_zbinden,
     _template_chains,
 )
 
-C4 = dnx.chimera_graph(4)     # busclique max clique 16
-P4 = dnx.pegasus_graph(4)     # busclique max clique 36
+C4 = dnx.chimera_graph(4)     # busclique max clique 16 (chimera-class gate 0.35)
+P4 = dnx.pegasus_graph(4)     # busclique max clique 36 (pegasus-class gate 0.15)
+Z3 = dnx.zephyr_graph(3)      # busclique max clique 40 (zephyr-class gate 0.15)
 C4_MAXCLIQUE = 16
 
 CLMM = ALGORITHM_REGISTRY["p3-clmm"]
@@ -145,13 +153,81 @@ class TestSelectionRules:
         assert r["metadata"]["selection"] == "guard_passthrough_mm"
 
     def test_arm_reports_all_branch_when_k_ge_n(self):
+        # v1.2: C4 is chimera-class (gate 0.35), so this density-0.27 source
+        # would pass through — guard=False exercises the k >= n branch itself.
         src = nx.gnp_random_graph(12, 0.3, seed=6)   # n=12 <= k=16
         for algo in (CLMM, CORE):
-            r = algo.embed(src, C4, timeout=10.0, seed=0)
+            r = algo.embed(src, C4, timeout=10.0, seed=0, guard=False)
             _assert_valid(r, src, C4)
             assert r["metadata"]["selection"] == "all"
             assert r["metadata"]["template_k"] == 12
             assert r["metadata"]["n_seeded"] == 12
+
+
+# ── v1.2 architecture-aware gate (improvement-notes #11, §4.11-C16) ──────────
+
+class TestArchitectureAwareGate:
+    def test_threshold_by_target_architecture(self):
+        # kmax-keyed, size-invariant: chimera-class kmax/sqrt(|V|) ~ 1.41
+        # gates at 0.35; pegasus/zephyr-class (>= 1.7) keep the measured 0.15.
+        assert _guard_threshold(Z3) == 0.15
+        assert _guard_threshold(P4) == 0.15
+        assert _guard_threshold(C4) == 0.35
+
+    def test_threshold_non_busclique_target_falls_back(self):
+        # busclique raises on non-{chimera,pegasus,zephyr} targets: the gate
+        # must return the v1.1 threshold (0.15), never raise.
+        assert _guard_threshold(nx.path_graph(2)) == 0.15
+        assert _guard_threshold(nx.gnp_random_graph(40, 0.3, seed=0)) == 0.15
+
+    @pytest.mark.parametrize("algo", [CLMM, CORE], ids=["clmm", "core"])
+    def test_density_02_passthrough_on_chimera_seeded_on_zephyr(self, algo):
+        # Density exactly 0.2 sits between the two gates: passthrough on
+        # chimera-class (0.2 < 0.35), seeded on zephyr-class (0.2 >= 0.15).
+        src = nx.gnm_random_graph(20, 38, seed=1)    # 38/190 = 0.2 exactly
+        assert nx.density(src) == pytest.approx(0.2)
+
+        r = algo.embed(src, C4, timeout=10.0, seed=0)
+        _assert_valid(r, src, C4)
+        assert r["metadata"]["selection"] == "guard_passthrough_mm"
+        assert r["metadata"]["guard_threshold"] == 0.35
+
+        rz = algo.embed(src, Z3, timeout=10.0, seed=0)
+        _assert_valid(rz, src, Z3)
+        assert rz["metadata"]["selection"] == "all"   # seeded: n=20 <= kmax=40
+        assert rz["metadata"]["template_k"] == 20
+        assert rz["metadata"]["n_seeded"] == 20
+
+
+class TestZ12ClassIdentityRegression:
+    """§5 frozen-arm policy: the v1.2 kmax-keyed gate is the sole in-place
+    clmm edit and must leave pegasus/zephyr-class behavior BYTE-IDENTICAL to
+    v1.1. Hashes captured from the v1.1 code (paper3 @ 2161c9dc) on this
+    exact instance with minorminer 0.2.22. A mismatch means the gate altered
+    Zephyr-class output — a protocol breach to fix, not a hash to update."""
+
+    _V11_HASH = {
+        "p3-clmm":
+            "dff253c3b8b7777e5f7e4c82394076f2c4707d39b274ed9746728c23afaada65",
+        "p3-clmm-core":
+            "bf492a65a7d6574c0a8a3b1c9f86e4d3b7af0a88e5cd82ae07a9655bf60c6ff9",
+    }
+
+    @pytest.mark.parametrize("name", ["p3-clmm", "p3-clmm-core"])
+    def test_embedding_identical_to_v11_on_zephyr_class(self, name):
+        z4 = dnx.zephyr_graph(4)                      # kmax 56, gate 0.15
+        src = nx.gnp_random_graph(30, 0.3, seed=2)    # density 0.285 -> seeded
+        algo = ALGORITHM_REGISTRY[name]
+        r1 = algo.embed(src, z4, timeout=10.0, seed=0)
+        r2 = algo.embed(src, z4, timeout=10.0, seed=0)
+        emb = _assert_valid(r1, src, z4)
+        assert r1["embedding"] == r2["embedding"]     # same-seed determinism
+        assert r1["metadata"]["selection"] == "all"   # seeded path, not guard
+        canon = sorted((v, tuple(c)) for v, c in emb.items())
+        digest = hashlib.sha256(repr(canon).encode()).hexdigest()
+        assert digest == self._V11_HASH[name], (
+            f"{name} output on the fixed Z12-class instance differs from "
+            f"v1.1 (got {digest})")
 
 
 # ── degeneracy-core peeling ───────────────────────────────────────────────────
@@ -174,9 +250,11 @@ class TestCorePeeling:
         src = nx.complete_graph(8)
         src.add_edges_from([(0, 8), (8, 9), (9, 10), (10, 11)])
         # n=12 > forced k? No: k=min(12,16)=12 -> all. Use a bigger pendant
-        # fringe so n > 16 and the core branch is real.
+        # fringe so n > 16 and the core branch is real. v1.2: density 0.21 is
+        # below C4's chimera-class gate (0.35) — guard=False keeps the core
+        # branch under test.
         src.add_edges_from((10, x) for x in range(12, 20))   # n=20 > 16
-        r = CORE.embed(src, C4, timeout=10.0, seed=0)
+        r = CORE.embed(src, C4, timeout=10.0, seed=0, guard=False)
         _assert_valid(r, src, C4)
         assert r["metadata"]["selection"] == "core"
         assert r["metadata"]["n_seeded"] == C4_MAXCLIQUE

@@ -44,6 +44,7 @@ chain template — repeat calls never rebuild any of them.
 from __future__ import annotations
 
 import logging
+import math
 import random
 import time
 from typing import Dict, List, Optional
@@ -281,16 +282,47 @@ def _clmm_embed(source_graph: nx.Graph, target_graph: nx.Graph,
 # registered arms
 # ---------------------------------------------------------------------------
 
-_GUARD_MIN_DENSITY = 0.15   # §4.11 M5 guard: seed only in the win regime
+_GUARD_MIN_DENSITY = 0.15          # §4.11 M5 guard (P16/Z12-class win regime)
+_GUARD_MIN_DENSITY_CHIMERA = 0.35  # §4.11-C16: Chimera's crossover sits higher
+_GUARD_CHIMERA_RATIO = 1.6         # chimera-class iff kmax < 1.6 * sqrt(|target|)
+
+
+def _guard_threshold(target_graph: nx.Graph) -> float:
+    """v1.2 architecture-aware gate threshold (improvement-notes #11).
+
+    §4.11-C16 evidence: the flat 0.15 density gate, calibrated on P16/Z12,
+    sits below Chimera's higher crossover — 8 mid-family mean-ACL bar trips on
+    the C16 library sweep. The fix is keyed on the busclique max clique
+    (``_bus_entry(target)["maxclique"]``; the topology_identifier is an opaque
+    sha, so kmax is the fabric signal), normalized by target size so the class
+    is size-invariant: chimera-class fabrics have kmax/sqrt(|V|) = sqrt(2)
+    ~ 1.41 at every size (C16: 64/sqrt(2048); chimera_graph(4): 16/sqrt(128)),
+    while pegasus/zephyr-class sit >= 1.7 (P16: 180/sqrt(5640) = 2.40, Z12:
+    184/sqrt(4800) = 2.66; pegasus_graph(4): 36/sqrt(264) = 2.22,
+    zephyr_graph(3): 40/sqrt(336) = 2.18). At the flagship sizes this is the
+    C16 kmax ~ 64 vs P16 = 180 / Z12 = 184 split. Chimera-class targets gate
+    at 0.35; pegasus/zephyr-class keep the measured 0.15 (P16/Z12 behavior
+    unchanged by construction — the §5 frozen-arm requirement). Any failure
+    (non-busclique target) -> 0.15, exactly the v1.1 behavior.
+    """
+    try:
+        kmax = _bus_entry(target_graph)["maxclique"]
+        if 0 < kmax < _GUARD_CHIMERA_RATIO * math.sqrt(
+                max(1, target_graph.number_of_nodes())):
+            return _GUARD_MIN_DENSITY_CHIMERA
+    except Exception:
+        pass
+    return _GUARD_MIN_DENSITY
 
 
 def _guarded_embed(source_graph, target_graph, timeout, seed, core_seeding,
                    guard):
-    """v1.1 density gate: below the measured win regime (E0/M5: seeds hurt on
-    sparse/structured sources), pass through to plain full-budget stock MM so
-    the arm is exactly minorminer off-regime. ``guard=False`` (script-route
-    kwargs) restores the unguarded faithful behavior for science runs."""
-    if guard and nx.density(source_graph) < _GUARD_MIN_DENSITY:
+    """Density gate (v1.1; per-architecture threshold since v1.2): below the
+    measured win regime (E0/M5: seeds hurt on sparse/structured sources), pass
+    through to plain full-budget stock MM so the arm is exactly minorminer
+    off-regime. ``guard=False`` (script-route kwargs) restores the unguarded
+    faithful behavior for science runs."""
+    if guard and nx.density(source_graph) < _guard_threshold(target_graph):
         t0 = time.perf_counter()
         try:
             import minorminer
@@ -302,7 +334,8 @@ def _guarded_embed(source_graph, target_graph, timeout, seed, core_seeding,
                         "success": False, "status": "FAILURE"}
             emb = {int(w): [int(q) for q in c] for w, c in raw.items()}
             return {"embedding": emb, "time": time.perf_counter() - t0,
-                    "metadata": {"selection": "guard_passthrough_mm"}}
+                    "metadata": {"selection": "guard_passthrough_mm",
+                                 "guard_threshold": _guard_threshold(target_graph)}}
         except Exception as e:  # contract: never raise
             logger.error("p3-clmm guard passthrough error: %s", e)
             return {"embedding": {}, "time": time.perf_counter() - t0,
@@ -316,15 +349,18 @@ class ClmmAlgorithm(EmbeddingAlgorithm):
     """CLMM (Zbinden et al. 2020): right-sized busclique clique chains as
     initial_chains for single-shot stock minorminer; degree/random seed-vertex
     selection at density 0.3. v1.1: density-gated (passthrough to stock MM
-    below density 0.15 — §4.11 M5 guard); guard=False kwarg restores the
-    faithful literature-control behavior."""
+    below the gate — §4.11 M5 guard). v1.2: the gate is kmax-keyed per target
+    architecture (improvement-notes #11, §4.11-C16): chimera-class fabrics
+    (C16 kmax ~ 64) gate at 0.35, pegasus/zephyr-class (P16 = 180 / Z12 = 184)
+    keep 0.15 — P16/Z12 behavior identical to v1.1. guard=False kwarg restores
+    the faithful literature-control behavior."""
 
     _requires = ["minorminer"]
     supported_counters: List[str] = []
 
     @property
     def version(self) -> str:
-        return "1.1.0"
+        return "1.2.0"
 
     def embed(self, source_graph, target_graph, timeout=60.0, **kwargs):
         seed = kwargs.get("seed", None)
@@ -339,14 +375,16 @@ class ClmmAlgorithm(EmbeddingAlgorithm):
 class ClmmCoreAlgorithm(EmbeddingAlgorithm):
     """CLMM++: seed the degeneracy core (peel by degeneracy order to <= k
     vertices) with spur-pruned busclique chains; periphery left entirely to
-    stock minorminer's search. v1.1: density-gated like p3-clmm."""
+    stock minorminer's search. v1.1: density-gated like p3-clmm. v1.2:
+    kmax-keyed per-architecture gate (0.35 chimera-class / 0.15
+    pegasus-zephyr-class; P16/Z12-identical to v1.1)."""
 
     _requires = ["minorminer"]
     supported_counters: List[str] = []
 
     @property
     def version(self) -> str:
-        return "1.1.0"
+        return "1.2.0"
 
     def embed(self, source_graph, target_graph, timeout=60.0, **kwargs):
         seed = kwargs.get("seed", None)
