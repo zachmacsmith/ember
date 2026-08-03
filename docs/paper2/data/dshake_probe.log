@@ -1,0 +1,92 @@
+/data/max/ember/docs/paper2/data/dshake_probe.py:85: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/dshake_probe.py:85: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/dshake_probe.py:85: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/dshake_probe.py:85: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/dshake_probe.py:85: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/dshake_probe.py:85: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/dshake_probe.py:85: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/dshake_probe.py:85: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/dshake_probe.py:85: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/dshake_probe.py:85: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/dshake_probe.py:85: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/dshake_probe.py:85: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+K100 base seed 0: 10.58 E=1383.0 (24.2s)
+K100 base seed 1: 9.92 E=1383.0 (19.3s)
+K100 base seed 2: 9.55 E=1383.0 (25.4s)
+K100 invert seed 0: 10.58 E=1383.0 (23.6s)
+K100 invert seed 1: 9.92 E=1383.0 (19.5s)
+K100 invert seed 2: 9.55 E=1383.0 (25.9s)
+K100 dshake seed 0: 10.58 E=1383.0 (23.9s)
+K100 dshake seed 1: 9.92 E=1383.0 (19.7s)
+K100 dshake seed 2: 9.55 E=1383.0 (25.5s)
+K100 both seed 0: 10.58 E=1383.0 (24.3s)
+K100 both seed 1: 9.92 E=1383.0 (19.4s)
+K100 both seed 2: 9.55 E=1383.0 (26.0s)
+K140 base seed 0: 13.764 E=2788.0 (32.0s)
+K140 base seed 1: 14.743 E=2788.0 (62.3s)
+K140 base seed 2: 14.236 E=2788.0 (60.5s)
+K140 invert seed 0: 13.857 E=2755.0 (36.4s)
+K140 invert seed 1: 14.729 E=2755.0 (28.9s)
+K140 invert seed 2: 15.993 E=2755.0 (60.2s)
+K140 dshake seed 0: 13.764 E=2788.0 (34.1s)
+K140 dshake seed 1: 14.743 E=2788.0 (60.4s)
+K140 dshake seed 2: 14.014 E=2788.0 (62.6s)
+K140 both seed 0: 13.857 E=2755.0 (36.8s)
+K140 both seed 1: 14.729 E=2755.0 (26.8s)
+K140 both seed 2: 15.993 E=2755.0 (60.8s)
+ER100_d10 base seed 0: 4.62 E=66.3 (4.4s)
+ER100_d10 base seed 1: 4.71 E=66.3 (5.3s)
+ER100_d10 base seed 2: 4.76 E=66.3 (3.3s)
+ER100_d10 invert seed 0: 4.78 E=50.6 (2.9s)
+ER100_d10 invert seed 1: 5.03 E=50.6 (3.0s)
+ER100_d10 invert seed 2: 4.74 E=50.6 (3.6s)
+ER100_d10 dshake seed 0: 4.62 E=66.3 (4.4s)
+ER100_d10 dshake seed 1: 4.71 E=66.3 (5.3s)
+ER100_d10 dshake seed 2: 4.76 E=66.3 (3.4s)
+ER100_d10 both seed 0: 4.78 E=50.6 (2.9s)
+ER100_d10 both seed 1: 5.03 E=50.6 (3.1s)
+ER100_d10 both seed 2: 4.74 E=50.6 (3.6s)
+turan_n162 base seed 0: 8.481 E=2674.0 (61.1s)
+turan_n162 base seed 1: 7.907 E=2674.0 (60.4s)
+turan_n162 base seed 2: 6.704 E=2674.0 (63.2s)
+turan_n162 invert seed 0: 8.481 E=2674.0 (60.3s)
+turan_n162 invert seed 1: 7.907 E=2674.0 (60.2s)
+turan_n162 invert seed 2: 6.704 E=2674.0 (60.7s)
+turan_n162 dshake seed 0: 7.5 E=2671.0 (60.9s)
+turan_n162 dshake seed 1: 6.5 E=2671.0 (37.2s)
+turan_n162 dshake seed 2: 7.562 E=2671.0 (26.9s)
+turan_n162 both seed 0: 7.593 E=2563.0 (42.7s)
+turan_n162 both seed 1: 7.346 E=2563.0 (60.7s)
+turan_n162 both seed 2: 7.204 E=2563.0 (35.5s)
+spin_glass_n163 base seed 0: 13.558 E=3495.0 (55.9s)
+spin_glass_n163 base seed 1: 15.196 E=3495.0 (44.1s)
+spin_glass_n163 base seed 2: 13.89 E=3495.0 (60.8s)
+spin_glass_n163 invert seed 0: 13.558 E=3495.0 (55.6s)
+spin_glass_n163 invert seed 1: 15.196 E=3495.0 (44.0s)
+spin_glass_n163 invert seed 2: 13.89 E=3495.0 (60.1s)
+spin_glass_n163 dshake seed 0: 13.65 E=3504.0 (37.0s)
+spin_glass_n163 dshake seed 1: 14.411 E=3504.0 (54.9s)
+spin_glass_n163 dshake seed 2: 14.239 E=3504.0 (27.6s)
+spin_glass_n163 both seed 0: 13.65 E=3504.0 (36.6s)
+spin_glass_n163 both seed 1: 14.411 E=3504.0 (54.9s)
+spin_glass_n163 both seed 2: 14.239 E=3504.0 (27.5s)
+
+summary (ACL mean over legal seeds (n) | geometry E):
+K100              base=10.02(3) E1383  invert=10.02(3) E1383  dshake=10.02(3) E1383  both=10.02(3) E1383  tmpl=8.00
+K140              base=14.25(3) E2788  invert=14.86(3) E2755  dshake=14.17(3) E2788  both=14.86(3) E2755  tmpl=11.00
+ER100_d10         base=4.70(3) E66  invert=4.85(3) E51  dshake=4.70(3) E66  both=4.85(3) E51  tmpl=-
+turan_n162        base=7.70(3) E2674  invert=7.70(3) E2674  dshake=7.19(3) E2671  both=7.38(3) E2563  tmpl=6.00
+spin_glass_n163   base=14.21(3) E3495  invert=14.21(3) E3495  dshake=14.10(3) E3504  both=14.10(3) E3504  tmpl=11.64
+done-dshake-probe

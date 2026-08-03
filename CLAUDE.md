@@ -22,10 +22,14 @@ its paper — the shipped program has repeatedly outgrown the 2014 description (
 Organized references: `docs/paper2/mm-internals.md` (what shipped minorminer
 actually does, with file:line citations into `external/minorminer-fork`),
 `docs/paper2/anatomy.md` (the attraction embedder as-built: every component of
-the current single pipeline and why it exists), and `docs/paper2/attraction.md`
+the current single pipeline and why it exists), `docs/paper2/attraction.md`
 (the idea ledger and fossil record — every tried/refuted/superseded variant
-with its verdict; superseded code lives at archive commit `612ced3e`). Consult
-these before re-deriving minorminer behavior or re-proposing tried ideas.
+with its verdict; superseded code lives at archive commit `612ced3e`), and
+`docs/paper2/fabrics.md` (the target-graph bestiary: measured anatomy of
+Chimera/Pegasus/Zephyr — bars, junctions, coupler censuses, packing constants —
+plus the translation checklist for adapting any new fabric). Consult
+these before re-deriving minorminer behavior, re-proposing tried ideas, or
+reasoning about a target topology from memory or paper figures.
 
 The abandoned prior work (Reweave wrapper, speculative embedders, learning line) lives only
 on the `new-algorithm` branch. Do not reintroduce it.

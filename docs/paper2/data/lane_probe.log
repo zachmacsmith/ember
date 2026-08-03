@@ -1,0 +1,43 @@
+/data/max/ember/docs/paper2/data/lane_probe.py:101: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/lane_probe.py:101: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/lane_probe.py:101: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/lane_probe.py:101: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/lane_probe.py:101: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/lane_probe.py:101: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+K100 iv seed 0: 10.77 frag=3.44 vlines=15 (41.0s)
+K100 iv seed 1: 10.64 frag=2.65 vlines=16 (18.3s)
+K100 iv seed 2: 10.3 frag=3.37 vlines=15 (60.6s)
+K100 lane seed 0: 10.77 frag=3.44 vlines=15 (41.0s)
+K100 lane seed 1: 10.64 frag=2.65 vlines=16 (18.4s)
+K100 lane seed 2: 10.3 frag=3.37 vlines=15 (60.8s)
+K140 iv seed 0: 13.314 frag=2.71 vlines=22 (33.9s)
+K140 iv seed 1: 14.593 frag=4.06 vlines=21 (62.1s)
+K140 iv seed 2: 14.536 frag=4.02 vlines=22 (61.8s)
+K140 lane seed 0: 13.314 frag=2.71 vlines=22 (34.1s)
+K140 lane seed 1: 14.593 frag=4.06 vlines=21 (61.9s)
+K140 lane seed 2: 14.536 frag=4.02 vlines=22 (61.7s)
+turan_n162 iv seed 0: 10.778 frag=1.94 vlines=20 (27.1s)
+turan_n162 iv seed 1: 9.099 frag=1.23 vlines=22 (14.1s)
+turan_n162 iv seed 2: 10.475 frag=1.81 vlines=19 (23.7s)
+turan_n162 lane seed 0: 10.778 frag=1.94 vlines=20 (27.5s)
+turan_n162 lane seed 1: 9.099 frag=1.23 vlines=22 (14.3s)
+turan_n162 lane seed 2: 10.475 frag=1.81 vlines=19 (22.7s)
+spin_glass_n163 iv seed 0: 13.92 frag=3.57 vlines=21 (59.6s)
+spin_glass_n163 iv seed 1: 14.037 frag=3.77 vlines=21 (41.2s)
+spin_glass_n163 iv seed 2: 14.448 frag=3.98 vlines=21 (53.7s)
+spin_glass_n163 lane seed 0: 14.779 frag=3.94 vlines=20 (31.8s)
+spin_glass_n163 lane seed 1: 14.871 frag=3.9 vlines=21 (31.7s)
+spin_glass_n163 lane seed 2: 13.933 frag=3.61 vlines=21 (40.4s)
+
+summary (ACL mean over legal seeds (n) | wires/chain | v-line bundle width):
+K100              iv=10.57(3) f3.15 v15  lane=10.57(3) f3.15 v15
+K140              iv=14.15(3) f3.60 v22  lane=14.15(3) f3.60 v22
+turan_n162        iv=10.12(3) f1.66 v20  lane=10.12(3) f1.66 v20
+spin_glass_n163   iv=14.13(3) f3.77 v21  lane=14.53(3) f3.82 v21
+done-lane-probe

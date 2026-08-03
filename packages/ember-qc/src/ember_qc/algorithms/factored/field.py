@@ -46,7 +46,8 @@ import numpy as np
 Point = np.ndarray
 
 
-def _tile_orient(target: nx.Graph) -> Optional[Dict[int, Tuple[int, int, int]]]:
+def _tile_orient(target: nx.Graph, *, courses: bool = False
+                 ) -> Optional[Dict[int, Tuple[int, int, int]]]:
     """Map each node to (tile_x, tile_y, orientation) using the hardware's own
     coordinate system, or None if the family isn't recognised.
 
@@ -55,6 +56,12 @@ def _tile_orient(target: nx.Graph) -> Optional[Dict[int, Tuple[int, int, int]]]:
     Pegasus nice-coordinates (t, y, x, u, k) interleave three Chimera-like
     subgrids; the t shifts are merged into one (x, y) tile since they share the
     same unit-cell footprint.
+
+    ``courses`` (Zephyr only, no-op elsewhere): resolve the two j-courses of
+    each track into separate sub-lanes (sub = 2k + j), so wire runs become
+    same-course stride-2 sequences — the representation the constructive
+    templates use (notes s3.49, fabrics s4.5). Off = the folded representation
+    (sub = k, both courses on one run), the recorded stock arm.
     """
     import dwave_networkx as dnx
 
@@ -86,12 +93,17 @@ def _tile_orient(target: nx.Graph) -> Optional[Dict[int, Tuple[int, int, int]]]:
             # Typed Zephyr adapter (2026-07-29, contraction round; conventions
             # pinned against dnx.zephyr_layout): coordinates (u, w, k, j, z);
             # u=0 vertical at column w, u=1 horizontal at row w; position
-            # along the wire p = 2z + j — consecutive p on the same
-            # (u, w, k) wire are COUPLED (verified), so wire_map runs are
-            # real paths. Half-cell tile resolution: (2m+1) lines x (2m)
-            # positions; sub = k (j lives in the position, which is what
-            # makes runs contiguous). Zephyr junctions are near-complete —
-            # the Pegasus 56% coupler pathology is absent (s3.37).
+            # along the wire p = 2z + j. Half-cell tile resolution: (2m+1)
+            # lines x (2m) positions. Two representations (s3.49, fabrics
+            # s4.5):
+            #   courses=False (stock): sub = k; a run holds both j-courses at
+            #     consecutive p (COUPLED, verified — the odd-coupler zigzag).
+            #   courses=True: sub = 2k + j; a run is one course at stride-2 p
+            #     (COUPLED via external couplers, verified) — the lane the
+            #     constructive templates are built from (16 fresh contacts
+            #     per bar vs the zigzag's ~8).
+            # Zephyr junctions are complete K_{8,8} — the Pegasus 56% coupler
+            # pathology is absent (s3.37, fabrics s4.2).
             m = g.get("rows")
             t = g.get("tile")
             conv = dnx.zephyr_coordinates(m, t)
@@ -102,10 +114,11 @@ def _tile_orient(target: nx.Graph) -> Optional[Dict[int, Tuple[int, int, int]]]:
                 else:
                     u, w, k, j, z = conv.linear_to_zephyr(q)
                 p = 2 * int(z) + int(j)
+                sub = 2 * int(k) + int(j) if courses else int(k)
                 if int(u) == 0:   # vertical: column w, spans y
-                    out[q] = (int(w), p, 0, int(k))
+                    out[q] = (int(w), p, 0, sub)
                 else:             # horizontal: row w, spans x
-                    out[q] = (p, int(w), 1, int(k))
+                    out[q] = (p, int(w), 1, sub)
             return out
     except Exception:
         return None
@@ -127,11 +140,15 @@ class TileGrid:
     """
 
     def __init__(self, target: nx.Graph, pos: Dict[int, Point],
-                 fallback_bins: int = 16):
+                 fallback_bins: int = 16, courses: bool = False):
         self.graph = target  # reference only (coupler lookups)
         qubits = sorted(pos)
         coords = np.array([pos[q] for q in qubits], dtype=float)
-        tio = _tile_orient(target)
+        tio = _tile_orient(target, courses=courses)
+        # stride: tile-along step between consecutive qubits of one wire run
+        # (2 for course-resolved Zephyr sub-lanes, 1 everywhere else)
+        self.stride = 2 if (courses and tio is not None
+                            and target.graph.get("family") == "zephyr") else 1
 
         if tio is not None:
             txs = np.array([tio[q][0] for q in qubits])
@@ -345,24 +362,47 @@ def _nearest_free(grid: TileGrid, claimed: set, pt_tile: Point,
 
 def _couples(grid: TileGrid, r: int, s_h: int, c: int, s_v: int) -> bool:
     """True iff the h-wire (row r, sub s_h) and the v-wire (col c, sub s_v)
-    share a physical coupler at their crossing tile (c, r). Missing qubits
-    (dead, or wire absent at that tile) -> False. On Chimera every in-tile
-    pair couples; on Pegasus only ~56% do (s3.33) — which wires you pick
-    decides whether a crossing is real."""
-    qh = grid.wire_map.get((1, r, s_h), {}).get(c)
-    qv = grid.wire_map.get((0, c, s_v), {}).get(r)
+    share a physical coupler at their crossing. Missing qubits (dead, or wire
+    absent there) -> False. On Chimera every in-tile pair couples; on Pegasus
+    only ~56% do (s3.33) — which wires you pick decides whether a crossing is
+    real.
+
+    Course-resolved grids (stride 2, s3.49): a bar at position p spans lines
+    {p, p+1}, and a course-j run has keys only at p == j (mod 2), so the bar
+    of the h-wire crossing column line c sits at p = c if c and j share
+    parity, else c - 1 (verified 64/64 at interior junctions); symmetric for
+    the v-wire at row line r. Out-of-fabric positions (-1, 2m) are absent
+    keys -> False, physically correct. The stride-1 lookup is untouched (the
+    s3.48 folded-rep index bug remains an open ticket on that arm)."""
+    if grid.stride == 2:
+        ph = c if c % 2 == s_h % 2 else c - 1
+        pv = r if r % 2 == s_v % 2 else r - 1
+        qh = grid.wire_map.get((1, r, s_h), {}).get(ph)
+        qv = grid.wire_map.get((0, c, s_v), {}).get(pv)
+    else:
+        qh = grid.wire_map.get((1, r, s_h), {}).get(c)
+        qv = grid.wire_map.get((0, c, s_v), {}).get(r)
     return qh is not None and qv is not None and grid.graph.has_edge(qh, qv)
 
 
 def _color_claim_bars(grid: TileGrid, claimed: set,
                       chains: Dict[int, List[int]], orientation: int,
-                      bars: List[Tuple[int, float, float, int]]) -> None:
+                      bars: List[Tuple[int, float, float, int]],
+                      targets: Optional[Dict[int, tuple]] = None) -> None:
     """Color explicit interval bars onto physical wires and claim runs.
     ``bars``: (line, start, end, v) tuples of one orientation. Bars sharing
     a line with disjoint intervals may share a wire; overlapping ones may
     not — interval graph coloring, solved exactly by the greedy
     left-endpoint sweep. Oversubscribed bars are skipped (left point-seeded
-    by the caller's guarantee pass)."""
+    by the caller's guarantee pass).
+
+    ``targets`` (snap claims, s3.56): {v: (a0, b0, [crossing lines])} —
+    once the color s is known, the claim range becomes the integer hull of
+    the ORIGINAL interval and the parity-exact crossing bars
+    p* = c if c and s share parity else c-1 (aim, don't repair; s3.54's
+    extension passes become verifiers). Targets at line 0 with an odd
+    course give p* = -1 -> absent key, silently skipped (completion is
+    the net)."""
     by_line: Dict[int, list] = {}
     for line, a, b, v in bars:
         by_line.setdefault(line, []).append((a, b, v))
@@ -381,7 +421,14 @@ def _color_claim_bars(grid: TileGrid, claimed: set,
             color = free[0]
             used_colors[color] = b
             run = grid.wire_map.get((orientation, line, color), {})
-            for t in range(int(math.floor(a)), int(math.ceil(b)) + 1):
+            if targets is not None and v in targets:
+                a0, b0, cls = targets[v]
+                ps = [c if c % 2 == color % 2 else c - 1 for c in cls]
+                lo = min([int(math.floor(a0))] + ps)
+                hi = max([int(math.ceil(b0))] + ps)
+            else:
+                lo, hi = int(math.floor(a)), int(math.ceil(b))
+            for t in range(lo, hi + 1):
                 q = run.get(t)
                 if q is not None and q not in claimed:
                     claimed.add(q)
@@ -401,7 +448,9 @@ def _ensure_seeds(grid: TileGrid, claimed: set,
 
 
 def wire_seeds_iv(grid: TileGrid, pos: Dict[int, Point],
-                  bars: BarIntervals) -> Dict[int, List[int]]:
+                  bars: BarIntervals,
+                  src_adj: Optional[Dict[int, List[int]]] = None
+                  ) -> Dict[int, List[int]]:
     """Wire-coherent seed chains (the sub-tile last mile, notes s3.30): each
     bar claims the CONTIGUOUS run of its greedily-colored wire's qubits
     across its interval, so seed chains are real coupled paths instead of
@@ -409,9 +458,16 @@ def wire_seeds_iv(grid: TileGrid, pos: Dict[int, Point],
     Derived bars are one-sided in general, so claims run over the ACTUAL
     interval, anchored at the owner's row/column — never a centered
     approximation. Untyped grids fall back to nearest-qubit sampling along
-    the intervals (~1 per tile). Every variable gets at least one qubit."""
+    the intervals (~1 per tile). Every variable gets at least one qubit.
+
+    ``src_adj`` (snap claims, s3.56; stride-2 grids only, else ignored):
+    aim each arm's claim at the lines of its stair-assigned contacts plus
+    its own corner — parity-exact at color time. Measured: extension
+    passes drop to zero, corners couple 100% directly. None = legacy,
+    byte-identical."""
     claimed: set = set()
     chains: Dict[int, List[int]] = {v: [] for v in pos}
+    snap = src_adj is not None and grid.stride > 1
 
     if not grid.typed:
         for v in sorted(pos):
@@ -437,23 +493,268 @@ def wire_seeds_iv(grid: TileGrid, pos: Dict[int, Point],
                     chains[v].append(q)
         return {v: c for v, c in chains.items() if c}
 
-    def _tuples(orientation: int):
+    contacts = _stair_contacts(pos, src_adj) if snap else None
+
+    def _targets(orientation: int):
+        if not snap:
+            return None
+        out = {}
+        ax = 0 if orientation == 1 else 1
+        for v in sorted(pos):
+            us = contacts[v][0] if orientation == 1 else contacts[v][1]
+            lines = {int(round(float(pos[u][ax]))) for u in us}
+            lines.add(int(round(float(pos[v][ax]))))  # own corner line
+            out[v] = sorted(lines)
+        return out
+
+    def _tuples(orientation: int, targets):
         out = []
         for v in sorted(pos):
             h_iv, v_iv = bars[v]
             iv = h_iv if orientation == 1 else v_iv
             length = float(iv[1] - iv[0])
-            if length < 1.0:
+            if length < 1.0:  # participation on the ORIGINAL interval
                 continue
             line = int(round(float(pos[v][1] if orientation == 1
                                    else pos[v][0])))
-            out.append((line, float(iv[0]), float(iv[1]), v))
+            a, b = float(iv[0]), float(iv[1])
+            if targets is not None:
+                # parity-agnostic hull widening: covering line c may need
+                # p in {c-1, c}; guards the coloring against same-line
+                # crossing-qubit theft (measured inert on capacity)
+                cls = targets[v]
+                a = min(a, float(min(cls) - 1))
+                b = max(b, float(max(cls)))
+                targets[v] = (float(iv[0]), float(iv[1]), cls)
+            out.append((line, a, b, v))
         return out
 
-    _color_claim_bars(grid, claimed, chains, 1, _tuples(1))
-    _color_claim_bars(grid, claimed, chains, 0, _tuples(0))
+    t1, t0 = _targets(1), _targets(0)
+    _color_claim_bars(grid, claimed, chains, 1, _tuples(1, t1), t1)
+    _color_claim_bars(grid, claimed, chains, 0, _tuples(0, t0), t0)
     _ensure_seeds(grid, claimed, chains, pos)
     return {v: c for v, c in chains.items() if c}
+
+
+def claim_overload(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
+                   grid: TileGrid, *, kappa: float = 13.0,
+                   floor: bool = True) -> float:
+    """Line-capacity violation of the CLAIM LAYER'S OWN census (s3.57):
+    per orientation and line, hinge^2 of (interval depth - available
+    sub-lanes), with intervals, participation, and line assignment
+    computed by exactly wire_seeds_iv._tuples' rules — so the hinge is
+    the uncolorability count squared, not a proxy. Used as a gate-energy
+    term (evaluation only, never descended on): E-gated moves stop being
+    blind to the violations that stranded 9 turan arms (d729, s3.56)."""
+    cache = getattr(grid, "_subs_count", None)
+    if cache is None:
+        cache = {}
+        for (u, ln, s) in grid.wire_map:
+            cache[(u, ln)] = cache.get((u, ln), 0) + 1
+        grid._subs_count = cache
+    bars = derive_bars_stair(pos, src_adj, kappa=kappa, floor=floor,
+                             bounds=(grid.W, grid.H))
+    total = 0.0
+    for orientation in (1, 0):
+        by_line: Dict[int, list] = {}
+        for v in sorted(pos):
+            h_iv, v_iv = bars[v]
+            iv = h_iv if orientation == 1 else v_iv
+            if float(iv[1] - iv[0]) < 1.0:
+                continue
+            line = int(round(float(pos[v][1] if orientation == 1
+                                   else pos[v][0])))
+            by_line.setdefault(line, []).append(
+                (float(iv[0]), float(iv[1])))
+        for line, ivs in by_line.items():
+            subs = cache.get((orientation, line), 0)
+            over = line_depth(ivs) - subs
+            if over > 0:
+                total += float(over) ** 2
+    return total
+
+
+def complete_seeds(grid: TileGrid, chains: Dict[int, List[int]],
+                   src_adj: Dict[int, List[int]], adj) -> tuple:
+    """Exactness completion (notes s3.54): drive the seed chains to validity
+    by construction. On junction-complete fabrics (Zephyr) validity ==
+    coverage, so uncovered edges are closed by pure interval arithmetic:
+    extend a chain's claimed run along its own wire, through FREE bars only,
+    until a physical coupler to the other chain exists. Three passes, all
+    deterministic:
+
+    1. CORNER: connect each variable's own runs (chain connectivity).
+    2. EDGE (sorted; live re-check — extensions cover later edges
+       incidentally): for each uncovered source edge, the cheapest feasible
+       perpendicular extension among both crossings and both sides. Target
+       bar for run (1, r, s) to reach column line c: p* = c if c and s share
+       parity else c-1 (verified an exact iff over all Z12 cross-orientation
+       couplers); symmetric for v-runs.
+    3. BRIDGE: 1- then 2-free-qubit bridges for the parallel-only residue.
+
+    Residual deficit > 0 is not failure — the completed chains are a
+    strictly better warm start for the router. Returns (chains, info).
+    """
+    out = {v: list(c) for v, c in chains.items()}
+    claimed = set().union(*out.values()) if out else set()
+    rev = {}
+    for (u, ln, s), run in grid.wire_map.items():
+        for p, q in run.items():
+            rev[q] = (u, ln, s, p)
+
+    def runs_of(v):
+        by = {}
+        for q in out.get(v, []):
+            k = rev.get(q)
+            if k is not None:
+                by.setdefault(k[:3], []).append(k[3])
+        return by
+
+    def coupled(v, u):
+        cu = out.get(u, [])
+        su = set(cu)
+        for q in out.get(v, []):
+            for nb in adj[q]:
+                if nb in su:
+                    return True
+        return False
+
+    def ext_to(key, ps, p_star):
+        """Bars to claim so run ``key`` (holding sorted positions ps)
+        contains p_star; None if infeasible (missing/claimed bar)."""
+        run = grid.wire_map.get(key, {})
+        if p_star in ps:
+            return []
+        if run.get(p_star) is None:
+            return None
+        lo, hi = min(ps), max(ps)
+        step = grid.stride
+        if p_star < lo:
+            span = range(lo - step, p_star - 1, -step)
+        elif p_star > hi:
+            span = range(hi + step, p_star + 1, step)
+        else:
+            return None  # hole inside the claimed interval: not extendable
+        need = []
+        for p in span:
+            q = run.get(p)
+            if q is None or q in claimed:
+                return None
+            need.append((p, q))
+        return need
+
+    def cross_cost(kh, ph_s, kv, pv_s):
+        """Extensions for h-run kh and v-run kv to couple at their crossing;
+        None if infeasible."""
+        _, r, sh = kh
+        _, c, sv = kv
+        p_h = c if c % 2 == sh % 2 else c - 1
+        p_v = r if r % 2 == sv % 2 else r - 1
+        eh = ext_to(kh, ph_s, p_h)
+        ev = ext_to(kv, pv_s, p_v)
+        if eh is None or ev is None:
+            return None
+        return eh, ev
+
+    def commit(v_h, eh, v_v, ev):
+        for p, q in eh:
+            claimed.add(q)
+            out[v_h].append(q)
+        for p, q in ev:
+            claimed.add(q)
+            out[v_v].append(q)
+        info["extensions"] += 1
+        info["ext_qubits"] += len(eh) + len(ev)
+
+    info = {"deficit_edges": 0, "corner_deficit": 0, "extensions": 0,
+            "ext_qubits": 0, "bridges": 0}
+
+    # ---- corner pass: each variable's own runs must couple ----------------
+    for v in sorted(out):
+        by = runs_of(v)
+        hr = sorted(k for k in by if k[0] == 1)
+        vr = sorted(k for k in by if k[0] == 0)
+        if not hr or not vr:
+            continue
+        # already connected? any h-bar adjacent to any v-bar of the chain
+        hs = [q for q in out[v] if rev.get(q, (None,))[0] == 1]
+        vs_ = set(q for q in out[v] if rev.get(q, (None,))[0] == 0)
+        if any(nb in vs_ for q in hs for nb in adj[q]):
+            continue
+        best = None
+        for kh in hr:
+            for kv in vr:
+                got = cross_cost(kh, sorted(by[kh]), kv, sorted(by[kv]))
+                if got is not None:
+                    cost = len(got[0]) + len(got[1])
+                    if best is None or cost < best[0]:
+                        best = (cost, got)
+        if best is not None:
+            commit(v, best[1][0], v, best[1][1])
+        else:
+            info["corner_deficit"] += 1
+
+    # ---- edge pass --------------------------------------------------------
+    edges = sorted((min(a, b), max(a, b)) for a in src_adj
+                   for b in src_adj[a] if a < b or b < a)
+    edges = sorted(set(edges))
+    residual = []
+    for a, b in edges:
+        if a not in out or b not in out:
+            info["deficit_edges"] += 1
+            continue
+        if coupled(a, b):
+            continue
+        ra, rb = runs_of(a), runs_of(b)
+        best = None
+        for va, vb in ((a, b), (b, a)):
+            rha = [k for k in (ra if va == a else rb) if k[0] == 1]
+            rvb = [k for k in (rb if vb == b else ra) if k[0] == 0]
+            src_runs = ra if va == a else rb
+            dst_runs = rb if vb == b else ra
+            for kh in rha:
+                for kv in rvb:
+                    got = cross_cost(kh, sorted(src_runs[kh]),
+                                     kv, sorted(dst_runs[kv]))
+                    if got is not None:
+                        cost = len(got[0]) + len(got[1])
+                        if best is None or cost < best[0]:
+                            best = (cost, va, got[0], vb, got[1])
+        if best is not None:
+            commit(best[1], best[2], best[3], best[4])
+        else:
+            residual.append((a, b))
+
+    # ---- bridge pass on the residual -------------------------------------
+    for a, b in residual:
+        sa, sb = set(out[a]), set(out[b])
+        na = sorted({nb for q in sorted(sa) for nb in adj[q]
+                     if nb not in claimed})
+        nb_set = {nb for q in sb for nb in adj[q] if nb not in claimed}
+        done = False
+        for w in na:
+            if w in nb_set:  # 1-qubit bridge
+                claimed.add(w)
+                out[a].append(w)
+                info["bridges"] += 1
+                done = True
+                break
+        if not done:
+            for w1 in na:
+                w2s = sorted(x for x in adj[w1]
+                             if x in nb_set and x not in claimed and x != w1)
+                if w2s:
+                    w2 = w2s[0]
+                    claimed.add(w1)
+                    claimed.add(w2)
+                    out[a].extend([w1, w2])
+                    info["bridges"] += 1
+                    done = True
+                    break
+        if not done:
+            info["deficit_edges"] += 1
+
+    return out, info
 
 
 def _line_tracks(items: List[Tuple[float, float, int]]
@@ -698,11 +999,22 @@ def _target_kappa(grid: TileGrid) -> float:
     """Derived contact capacity: mean working-qubit degree of the target
     minus 2 (intra-chain links), floored at 2. Pegasus ~13.3 (matching the
     long-hardwired 13), Zephyr ~18, Chimera ~4 — the constant stops being
-    Pegasus-specific (2026-07-29 contraction round)."""
+    Pegasus-specific (2026-07-29 contraction round).
+
+    Course-resolved grids (stride > 1, s3.49): kappa must be the fresh-contact
+    rate PER TILE of the claimable run, not the per-qubit degree — a stride-2
+    lane's bar spans `stride` tiles, so kappa = mean cross-orientation degree
+    / stride (Z12 ~7.7). The degree formula stays for stride-1 fabrics so
+    Pegasus/Chimera are unchanged (fabrics s5 item 4)."""
     g = grid.graph
     n = g.number_of_nodes()
     if not n:
         return 2.0
+    if grid.stride > 1:
+        ori = {q: int(grid.orient[i]) for i, q in enumerate(grid.qubits)}
+        cross = sum(1 for q, u in ori.items() for nb in g[q]
+                    if ori.get(nb, u) != u)
+        return max(2.0, cross / max(1, len(ori)) / grid.stride)
     return max(2.0, 2.0 * g.number_of_edges() / n - 2.0)
 
 
@@ -765,6 +1077,9 @@ class PressureState:
         need = np.maximum(0.0, deg / kappa - 1.0)
         self.pad = (np.maximum(0.0, need - (w0 + h0)) / 4.0 if floor
                     else np.zeros(n))
+        # Course-mode stride scaling deliberately NOT applied here: the
+        # pressure/contract line is probe-only and its recorded numbers are
+        # folded-rep (s3.42-s3.44); scale when that line is next measured.
         self.row_cap = grid.cap[:, :, 1].mean(axis=1) * derate
         self.col_cap = grid.cap[:, :, 0].mean(axis=0) * derate
         self.W, self.H = grid.W, grid.H
@@ -939,6 +1254,8 @@ def contract_layout(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
     deg = np.array([len([u for u in src_adj.get(v, []) if u in idx])
                     for v in nodes], dtype=float)
     need = np.maximum(0.0, deg / kappa - 1.0)  # floor per variable (w+h)
+    # Course-mode stride scaling deliberately NOT applied (probe-only line,
+    # folded-rep recorded numbers; see the PressureState note).
     row_pool = grid.cap[:, :, 1].mean(axis=1) * cap_derate
     col_pool = grid.cap[:, :, 0].mean(axis=0) * cap_derate
     W, H = grid.W, grid.H
@@ -1350,6 +1667,131 @@ def edge_monotonize(pos: Dict[int, Point], src_adj: Dict[int, List[int]], *,
                  "time": round(_time.perf_counter() - t0, 4)}
 
 
+def _order_proxy(order: List[int], src_adj: Dict[int, List[int]],
+                 values: Optional[np.ndarray],
+                 anchors: Optional[Tuple[np.ndarray, np.ndarray]]):
+    """Shared rank-space proxy for the order-move family (insertion_sweeps,
+    order_shake): members-only adjacency matrix, lexicographic value + slot
+    pricing (the s3.40 tie-plateau fix), anchor bounds, and the O(n^2)
+    vectorized span energy valid for ANY slot permutation p."""
+    members = list(order)
+    n = len(members)
+    if n <= 2:
+        return members, n, None, None, None, None, None, None
+    idx = {v: i for i, v in enumerate(members)}
+    A = np.zeros((n, n), dtype=bool)
+    for v in members:
+        for u in src_adj.get(v, []):
+            j = idx.get(u)
+            if j is not None and j != idx[v]:
+                A[idx[v], j] = True
+    if values is not None:
+        # Lexicographic pricing (the refine-probe turan bisection,
+        # 2026-07-29): these moves run after packing has quantized y onto
+        # integer lines, so the raw value multiset is full of TIES and the
+        # value-priced landscape becomes flat plateaus — no strict descent
+        # within a tie class (E 3335 vs rank's 2098 on random-init turan;
+        # rank pricing was accidentally a plateau-smoothing tie-break).
+        # Price at value first, rank second: the epsilon (1e-4/slot, max
+        # ~0.05 tiles at fabric scale) is far below the 1-tile line
+        # quantum, so real gaps still dominate — truthful on cluster gaps,
+        # strict on plateaus.
+        val = np.asarray(values, dtype=float) + 1e-4 * np.arange(n)
+    else:
+        val = np.arange(n, dtype=float)
+    if anchors is not None:
+        lo_fix = np.asarray(anchors[0], dtype=float)
+        hi_fix = np.asarray(anchors[1], dtype=float)
+    else:
+        lo_fix = np.full(n, np.inf)
+        hi_fix = np.full(n, -np.inf)
+    has = A.any(axis=1) | (hi_fix > -np.inf) | (lo_fix < np.inf)
+
+    def energy(p):
+        pv = val[p.astype(int)]
+        P = np.where(A, pv[None, :], -np.inf)
+        M = np.maximum(P.max(axis=1), hi_fix)
+        Pm = np.where(A, pv[None, :], np.inf)
+        m = np.minimum(Pm.min(axis=1), lo_fix)
+        e = np.where(has,
+                     np.maximum(M - pv, 0.0) + np.maximum(pv - m, 0.0), 0.0)
+        return float(e.sum())
+
+    return members, n, A, val, lo_fix, hi_fix, has, energy
+
+
+def order_shake(order: List[int], src_adj: Dict[int, List[int]], *,
+                passes: int = 1,
+                values: Optional[np.ndarray] = None,
+                anchors: Optional[Tuple[np.ndarray, np.ndarray]] = None):
+    """Coarse-to-fine discrete shake of the 1-D order (notes s3.53): segment
+    REVERSALS and block RELOCATIONS at decaying scale L = n/2, n/4, ..., 2,
+    swept best-improvement on the shared rank-space proxy. Large blocks
+    early = global reorganization (the moves single insertion cannot
+    reach, s3.40's recorded miss); small late = polish. Reversal is the
+    discrete analogue of radial inversion, one axis at a time.
+
+    Deterministic (L descending, window starts ascending by max(1, L//2),
+    candidates sorted, strict 1e-9 improvement, best-per-window committed
+    immediately). Cost: <= ~5 proxy evals per window, ~1.5k evals per pass
+    at n~160 (~0.1 s). Returns (new_order, energy_trajectory)."""
+    members, n, A, val, lo_fix, hi_fix, has, energy = _order_proxy(
+        order, src_adj, values, anchors)
+    if n <= 2:
+        return list(members), [0.0]
+
+    p = np.arange(n, dtype=float)
+    e_cur = energy(p)
+    traj = [e_cur]
+    for _pass in range(max(passes, 1)):
+        improved_pass = False
+        L = n // 2
+        while L >= 2:
+            for s in range(0, n - L + 1, max(1, L // 2)):
+                win = (p >= s) & (p < s + L)
+                cands = []
+                # reversal (involution: p2[m] = 2s+L-1-p[m] inside window)
+                p_rev = p.copy()
+                p_rev[win] = 2 * s + L - 1 - p[win]
+                cands.append(p_rev)
+                # block relocations: j = final START slot, domain [0, n-L]
+                ext = A[win].any(axis=0) & ~win
+                dests = {s - L, s + L}
+                if ext.any():
+                    ev = val[p[ext].astype(int)]
+                    dests.add(int(np.searchsorted(val, ev.min())))
+                    dests.add(int(np.searchsorted(val, ev.max())) - L + 1)
+                dests = {min(max(j, 0), n - L) for j in dests} - {s}
+                for j in sorted(dests):
+                    p2 = p.copy()
+                    if j > s:
+                        m2 = (p >= s + L) & (p < j + L)
+                        p2[m2] -= float(L)
+                    else:
+                        m2 = (p >= j) & (p < s)
+                        p2[m2] += float(L)
+                    p2[win] = p[win] + float(j - s)
+                    cands.append(p2)
+                best_e, best_p = e_cur - 1e-9, None
+                for p2 in cands:
+                    e2 = energy(p2)
+                    if e2 < best_e:
+                        best_e, best_p = e2, p2
+                if best_p is not None:
+                    p, e_cur = best_p, best_e
+                    improved_pass = True
+            L //= 2
+        traj.append(e_cur)
+        if not improved_pass:
+            break
+    new_order = [members[i] for i in
+                 sorted(range(n), key=lambda i: (p[i], members[i]))]
+    return new_order, traj
+
+
+_order_shake_impl = order_shake  # callable alias (the kwarg shadows the name)
+
+
 def insertion_sweeps(order: List[int], src_adj: Dict[int, List[int]], *,
                      max_sweeps: int = 8,
                      values: Optional[np.ndarray] = None,
@@ -1382,48 +1824,10 @@ def insertion_sweeps(order: List[int], src_adj: Dict[int, List[int]], *,
     world GUIDE relocations instead of only vetoing them at the caller's
     composite gate; an anchor also contributes one candidate slot (the
     value's insertion point)."""
-    members = list(order)
-    n = len(members)
+    members, n, A, val, lo_fix, hi_fix, has, energy = _order_proxy(
+        order, src_adj, values, anchors)
     if n <= 2:
         return list(members), [0.0]
-    idx = {v: i for i, v in enumerate(members)}
-    A = np.zeros((n, n), dtype=bool)
-    for v in members:
-        for u in src_adj.get(v, []):
-            j = idx.get(u)
-            if j is not None and j != idx[v]:
-                A[idx[v], j] = True
-    if values is not None:
-        # Lexicographic pricing (the refine-probe turan bisection,
-        # 2026-07-29): insertion runs after packing has quantized y onto
-        # integer lines, so the raw value multiset is full of TIES and the
-        # value-priced landscape becomes flat plateaus — no strict descent
-        # within a tie class (E 3335 vs rank's 2098 on random-init turan;
-        # rank pricing was accidentally a plateau-smoothing tie-break).
-        # Price at value first, rank second: the epsilon (1e-4/slot, max
-        # ~0.05 tiles at fabric scale) is far below the 1-tile line
-        # quantum, so real gaps still dominate — truthful on cluster gaps,
-        # strict on plateaus.
-        val = np.asarray(values, dtype=float) + 1e-4 * np.arange(n)
-    else:
-        val = np.arange(n, dtype=float)
-    if anchors is not None:
-        lo_fix = np.asarray(anchors[0], dtype=float)
-        hi_fix = np.asarray(anchors[1], dtype=float)
-    else:
-        lo_fix = np.full(n, np.inf)
-        hi_fix = np.full(n, -np.inf)
-    has = A.any(axis=1) | (hi_fix > -np.inf) | (lo_fix < np.inf)
-
-    def energy(p):
-        pv = val[p.astype(int)]
-        P = np.where(A, pv[None, :], -np.inf)
-        M = np.maximum(P.max(axis=1), hi_fix)
-        Pm = np.where(A, pv[None, :], np.inf)
-        m = np.minimum(Pm.min(axis=1), lo_fix)
-        e = np.where(has,
-                     np.maximum(M - pv, 0.0) + np.maximum(pv - m, 0.0), 0.0)
-        return float(e.sum())
 
     p = np.arange(n, dtype=float)  # p[variable-index] = slot
     e_cur = energy(p)
@@ -1470,7 +1874,9 @@ def insertion_sweeps(order: List[int], src_adj: Dict[int, List[int]], *,
 
 def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                       grid: TileGrid, *, iters: int = 8, kappa: float = 13.0,
-                      floor: bool = True, insert_sweeps: int = 0):
+                      floor: bool = True, insert_sweeps: int = 0,
+                      masked_pool: bool = False, order_shake: int = 0,
+                      overload_lam: float = 0.0):
     """Alternating 1-D arrangement on the stair energy.
 
     Participation is **per-axis by derived arm length** (2026-07-29
@@ -1490,7 +1896,20 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
     Order coupling is per-edge (``edge_monotonize``), not global — patches
     diagonalize in place and side-by-side tilings are reachable.
     """
-    efn = stair_energy
+    if overload_lam > 0.0:
+        # s3.57: feasibility priced into the gate energy (Max's design —
+        # "feasibility is part of the energy"). Evaluation only, never
+        # descended on; rides every existing gate below (_half accepts,
+        # the order composite). lam trades, never ranks (lam>=4 measured
+        # to over-trade; lam=1 repairs turan's d729 for +0.2% E).
+        # NOTE: info["E"] entries are in composed units when lam > 0.
+        def efn(p, a):
+            return (stair_energy(p, a)
+                    + overload_lam * claim_overload(p, a, grid,
+                                                    kappa=kappa,
+                                                    floor=floor))
+    else:
+        efn = stair_energy
     new_pos = {v: np.asarray(p, dtype=float).copy() for v, p in pos.items()}
     info = {"E": [efn(new_pos, src_adj)], "iters": 0, "unplaced": 0,
             "assigned": 0, "assigned_rows": 0, "assigned_cols": 0,
@@ -1529,8 +1948,24 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
         """Pack the axis's long-arm variables into lines; accept if E does
         not increase (or unconditionally when ``force``: the feasibility
         projection). Returns True if the state changed."""
-        pool = (grid.cap[:, :, 1].mean(axis=1) if axis == 1
-                else grid.cap[:, :, 0].mean(axis=0))
+        # Line capacity = simultaneous overlapping arms per line = sub-lanes,
+        # which is qubits-per-tile x stride (course-resolved Zephyr packs 8
+        # interleaved arms per line, 4 bars per tile at any point; s3.49).
+        # Multiplying cap keeps dead-qubit derating and cap_derate intact.
+        caps = grid.cap[:, :, 1] if axis == 1 else grid.cap[:, :, 0].T
+        if masked_pool and grid.stride > 1:
+            # s3.51 item 4: the raw line mean is dragged below the physical
+            # sub-lane count by the one structural zero boundary tile
+            # (Zephyr course lines: 7.68 -> int depth cap 7 vs physical 8).
+            # Masked-nonzero mean restores 8. Caveat: a FULLY dead tile is
+            # now excluded from the mean, slightly raising that line's pool
+            # (partially-dead tiles still derate). Own switch, default off —
+            # pre-validation measured pack-level E moving the wrong way.
+            nz = (caps > 0).sum(axis=1)
+            pool = np.where(nz > 0, caps.sum(axis=1) / np.maximum(nz, 1),
+                            0.0) * grid.stride
+        else:
+            pool = caps.mean(axis=1) * grid.stride
         nlines = grid.H if axis == 1 else grid.W
         ivs = _intervals(axis)
         parts = [v for v in sorted(new_pos)
@@ -1576,15 +2011,18 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
         if not moved and not force:
             break
 
-    if insert_sweeps > 0:
-        # s3.36 best-insertion order search, value-priced (2026-07-29):
+    if insert_sweeps > 0 or order_shake > 0:
+        # s3.36 best-insertion order search, value-priced (2026-07-29),
+        # optionally preceded by the s3.53 coarse-to-fine order_shake:
         # members = long-arm variables (floored w + h >= 1 tile); the proxy
         # prices slots at the y-VALUES the permutation will assign (rank
         # space lies on clustered layouts), with non-member neighbours
         # folded in as fixed anchors (they guide, not just veto). Propose
         # in rank space, apply as a permutation of the existing y-values,
         # re-monotonize and repack, dispose by TRUE stair energy with full
-        # revert.
+        # revert. Coarse moves + fine repair share ONE gate: a coarse
+        # reversal typically raises raw E before insertion repairs it, so
+        # gating the stages separately would reject every coarse move.
         widths = bar_widths(derive_bars_stair(
             new_pos, src_adj, kappa=kappa, floor=floor))
         members = [v for v in sorted(new_pos)
@@ -1592,21 +2030,34 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
         for _composite in range(2):
             if len(members) < 3:
                 break
-            order0 = sorted(members,
-                            key=lambda v: (float(new_pos[v][1]), v))
             ys = np.array(sorted(float(new_pos[v][1]) for v in members))
             member_set = set(members)
-            lo_fix = np.full(len(order0), np.inf)
-            hi_fix = np.full(len(order0), -np.inf)
-            for i, v in enumerate(order0):
+            # anchors per VARIABLE (order-independent); materialized as
+            # aligned arrays per order below — passing arrays built for one
+            # order to a call receiving another mis-attaches every anchor
+            anchor_of = {}
+            for v in members:
                 ext = [float(new_pos[u][1]) for u in src_adj.get(v, [])
                        if u in new_pos and u not in member_set]
-                if ext:
-                    lo_fix[i] = min(ext)
-                    hi_fix[i] = max(ext)
-            new_order, _tr = insertion_sweeps(
-                order0, src_adj, max_sweeps=insert_sweeps,
-                values=ys, anchors=(lo_fix, hi_fix))
+                anchor_of[v] = ((min(ext), max(ext)) if ext
+                                else (np.inf, -np.inf))
+
+            def _aligned(olist):
+                lo = np.array([anchor_of[v][0] for v in olist])
+                hi = np.array([anchor_of[v][1] for v in olist])
+                return lo, hi
+
+            order0 = sorted(members,
+                            key=lambda v: (float(new_pos[v][1]), v))
+            new_order = order0
+            if order_shake > 0:
+                new_order, _tr = _order_shake_impl(
+                    new_order, src_adj, passes=order_shake,
+                    values=ys, anchors=_aligned(new_order))
+            if insert_sweeps > 0:
+                new_order, _tr = insertion_sweeps(
+                    new_order, src_adj, max_sweeps=insert_sweeps,
+                    values=ys, anchors=_aligned(new_order))
             if new_order == order0:
                 break
             e_pre = efn(new_pos, src_adj)

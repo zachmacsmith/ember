@@ -168,6 +168,135 @@ class TestAttractEmbed:
         assert validate_embedding(res["embedding"], k, chimera)
         assert "designated" in res["diag"]
 
+    def test_courses_valid_on_zephyr(self):
+        # course-resolved wires (s3.49): valid embedding, stride surfaced
+        import dwave_networkx as dnx
+        z = dnx.zephyr_graph(3, 4)
+        k = nx.complete_graph(10)
+        res = attract_embed(k, z, timeout=60, seed=0, courses=True)
+        assert res["embedding"], "courses arm failed on K10/Z3"
+        assert validate_embedding(res["embedding"], k, z)
+        assert res["diag"]["stride"] == 2
+        # default arm on the same target reports the folded representation
+        res0 = attract_embed(k, z, timeout=60, seed=0)
+        assert res0["diag"]["stride"] == 1
+
+    def test_shake_valid_and_deterministic(self):
+        # the s3.52 settle-and-reshake shell: valid embedding, deterministic,
+        # E diagnostic present (generous timeout so the deadline guard
+        # cannot fire and make geometry timing-dependent)
+        import dwave_networkx as dnx
+        z = dnx.zephyr_graph(3, 4)
+        k = nx.complete_graph(10)
+        a = attract_embed(k, z, timeout=60, seed=0, courses=True,
+                          shake_cycles=4)
+        b = attract_embed(k, z, timeout=60, seed=0, courses=True,
+                          shake_cycles=4)
+        assert a["embedding"], "shake arm failed on K10/Z3"
+        assert validate_embedding(a["embedding"], k, z)
+        assert a["embedding"] == b["embedding"]
+        assert a["round_E"], "best-cycle stair energy missing"
+
+    def test_shake_invert_valid_and_deterministic(self):
+        # s3.53 radial rank reversal: one inversion cycle under keep-best
+        import dwave_networkx as dnx
+        z = dnx.zephyr_graph(3, 4)
+        k = nx.complete_graph(10)
+        a = attract_embed(k, z, timeout=60, seed=0, courses=True,
+                          shake_cycles=2, shake_invert=True)
+        b = attract_embed(k, z, timeout=60, seed=0, courses=True,
+                          shake_cycles=2, shake_invert=True)
+        assert a["embedding"], "invert arm failed on K10/Z3"
+        assert validate_embedding(a["embedding"], k, z)
+        assert a["embedding"] == b["embedding"]
+
+    def test_order_shake_valid_on_zephyr(self):
+        import dwave_networkx as dnx
+        z = dnx.zephyr_graph(3, 4)
+        k = nx.complete_graph(10)
+        res = attract_embed(k, z, timeout=60, seed=0, courses=True,
+                            shake_cycles=1, order_shake=1)
+        assert res["embedding"], "order_shake arm failed on K10/Z3"
+        assert validate_embedding(res["embedding"], k, z)
+
+    def test_exact_seeds_valid_and_diag(self):
+        # s3.54: completion runs, deficit fields surface, result validates
+        import dwave_networkx as dnx
+        z = dnx.zephyr_graph(3, 4)
+        k = nx.complete_graph(10)
+        a = attract_embed(k, z, timeout=60, seed=0, courses=True,
+                          shake_cycles=1, exact_seeds=True)
+        b = attract_embed(k, z, timeout=60, seed=0, courses=True,
+                          shake_cycles=1, exact_seeds=True)
+        assert a["embedding"], "exact_seeds arm failed on K10/Z3"
+        assert validate_embedding(a["embedding"], k, z)
+        assert a["embedding"] == b["embedding"]
+        for key in ("mm_skips", "deficit_edges", "corner_deficit",
+                    "extensions", "ext_qubits", "bridges"):
+            assert key in a["diag"], key
+        assert a["diag"]["mm_skips"] >= 0
+
+    def test_snap_claims_valid_and_zero_extensions(self):
+        # s3.56: snap aims claims so completion has nothing to extend
+        import dwave_networkx as dnx
+        z = dnx.zephyr_graph(3, 4)
+        k = nx.complete_graph(10)
+        a = attract_embed(k, z, timeout=60, seed=0, courses=True,
+                          shake_cycles=1, exact_seeds=True,
+                          snap_claims=True)
+        b = attract_embed(k, z, timeout=60, seed=0, courses=True,
+                          shake_cycles=1, exact_seeds=True,
+                          snap_claims=True)
+        assert a["embedding"], "snap arm failed on K10/Z3"
+        assert validate_embedding(a["embedding"], k, z)
+        assert a["embedding"] == b["embedding"]
+        assert a["diag"]["extensions"] == 0  # the mechanism fingerprint
+
+    def test_overload_lam_valid_and_deterministic(self):
+        # s3.57: feasibility-priced gates; valid + deterministic
+        import dwave_networkx as dnx
+        z = dnx.zephyr_graph(3, 4)
+        k = nx.complete_graph(10)
+        a = attract_embed(k, z, timeout=60, seed=0, courses=True,
+                          shake_cycles=1, exact_seeds=True,
+                          snap_claims=True, overload_lam=1.0)
+        b = attract_embed(k, z, timeout=60, seed=0, courses=True,
+                          shake_cycles=1, exact_seeds=True,
+                          snap_claims=True, overload_lam=1.0)
+        assert a["embedding"], "overload_lam arm failed on K10/Z3"
+        assert validate_embedding(a["embedding"], k, z)
+        assert a["embedding"] == b["embedding"]
+
+    def test_cover_select_valid(self):
+        import dwave_networkx as dnx
+        z = dnx.zephyr_graph(3, 4)
+        k = nx.complete_graph(10)
+        res = attract_embed(k, z, timeout=60, seed=0, courses=True,
+                            shake_cycles=2, exact_seeds=True,
+                            cover_select=True)
+        assert res["embedding"], "cover_select arm failed on K10/Z3"
+        assert validate_embedding(res["embedding"], k, z)
+
+    def test_shake_deadline_guard(self):
+        # oversized shake budget + tiny timeout: the guard must break out of
+        # the cycle loop and still return (possibly via the fallback path)
+        import dwave_networkx as dnx
+        import time as _t
+        z = dnx.zephyr_graph(3, 4)
+        g = nx.gnp_random_graph(10, 0.4, seed=3)
+        t0 = _t.perf_counter()
+        res = attract_embed(g, z, timeout=3, seed=0, courses=True,
+                            shake_cycles=64, shake_steps=64)
+        assert isinstance(res, dict)
+        assert _t.perf_counter() - t0 < 60
+
+    def test_courses_noop_off_zephyr(self, chimera):
+        k = nx.complete_graph(8)
+        res = attract_embed(k, chimera, timeout=60, seed=0, courses=True)
+        assert res["embedding"]
+        assert validate_embedding(res["embedding"], k, chimera)
+        assert res["diag"]["stride"] == 1
+
     def test_feasibility_fallback(self, chimera, source):
         # round_frac=0 exhausts the rounds budget instantly: the rounds loop
         # never runs and the uncapped fallback must still legalize.

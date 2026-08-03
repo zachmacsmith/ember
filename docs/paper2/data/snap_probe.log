@@ -1,0 +1,77 @@
+/data/max/ember/docs/paper2/data/snap_probe.py:70: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/snap_probe.py:70: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/snap_probe.py:70: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/snap_probe.py:70: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/snap_probe.py:70: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/snap_probe.py:70: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/snap_probe.py:70: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/snap_probe.py:70: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/snap_probe.py:70: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/snap_probe.py:70: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/snap_probe.py:70: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/snap_probe.py:70: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+K100 dshake seed 0: 10.58 skips=None def=None ext=None (23.4s)
+K100 dshake seed 1: 9.92 skips=None def=None ext=None (19.3s)
+K100 dshake seed 2: 9.55 skips=None def=None ext=None (25.2s)
+K100 exact_ds seed 0: 8.75 skips=1 def=0 ext=100 (31.4s)
+K100 exact_ds seed 1: 8.73 skips=1 def=0 ext=100 (36.5s)
+K100 exact_ds seed 2: 8.71 skips=1 def=0 ext=100 (38.7s)
+K100 snap seed 0: 8.75 skips=1 def=0 ext=0 (33.4s)
+K100 snap seed 1: 8.75 skips=1 def=0 ext=0 (32.2s)
+K100 snap seed 2: 8.73 skips=1 def=0 ext=0 (38.8s)
+K140 dshake seed 0: 13.764 skips=None def=None ext=None (33.0s)
+K140 dshake seed 1: 14.743 skips=None def=None ext=None (62.8s)
+K140 dshake seed 2: 14.014 skips=None def=None ext=None (63.2s)
+K140 exact_ds seed 0: 11.4 skips=1 def=0 ext=123 (60.9s)
+K140 exact_ds seed 1: 11.436 skips=1 def=0 ext=123 (64.1s)
+K140 exact_ds seed 2: 11.379 skips=1 def=0 ext=123 (64.9s)
+K140 snap seed 0: 11.443 skips=1 def=0 ext=0 (66.2s)
+K140 snap seed 1: 11.407 skips=1 def=0 ext=0 (65.7s)
+K140 snap seed 2: 11.379 skips=1 def=0 ext=0 (63.3s)
+ER100_d10 dshake seed 0: 4.62 skips=None def=None ext=None (4.4s)
+ER100_d10 dshake seed 1: 4.71 skips=None def=None ext=None (5.3s)
+ER100_d10 dshake seed 2: 4.76 skips=None def=None ext=None (3.4s)
+ER100_d10 exact_ds seed 0: 4.51 skips=0 def=363 ext=16 (5.4s)
+ER100_d10 exact_ds seed 1: 4.58 skips=0 def=363 ext=16 (4.6s)
+ER100_d10 exact_ds seed 2: 5.19 skips=0 def=363 ext=16 (3.3s)
+ER100_d10 snap seed 0: 4.97 skips=0 def=367 ext=18 (2.7s)
+ER100_d10 snap seed 1: 4.48 skips=0 def=367 ext=18 (6.2s)
+ER100_d10 snap seed 2: 4.83 skips=0 def=367 ext=18 (3.4s)
+turan_n162 dshake seed 0: 7.5 skips=None def=None ext=None (61.1s)
+turan_n162 dshake seed 1: 6.5 skips=None def=None ext=None (37.1s)
+turan_n162 dshake seed 2: 7.562 skips=None def=None ext=None (26.5s)
+turan_n162 exact_ds seed 0: 8.006 skips=1 def=0 ext=77 (28.9s)
+turan_n162 exact_ds seed 1: 8.012 skips=1 def=0 ext=77 (29.8s)
+turan_n162 exact_ds seed 2: 8.117 skips=1 def=0 ext=77 (47.7s)
+turan_n162 snap seed 0: 8.006 skips=1 def=0 ext=0 (29.3s)
+turan_n162 snap seed 1: 8.012 skips=1 def=0 ext=0 (29.2s)
+turan_n162 snap seed 2: 8.117 skips=1 def=0 ext=0 (46.6s)
+spin_glass_n163 dshake seed 0: 13.65 skips=None def=None ext=None (36.0s)
+spin_glass_n163 dshake seed 1: 14.411 skips=None def=None ext=None (54.9s)
+spin_glass_n163 dshake seed 2: 14.239 skips=None def=None ext=None (27.2s)
+spin_glass_n163 exact_ds seed 0: 12.613 skips=0 def=4 ext=193 (19.0s)
+spin_glass_n163 exact_ds seed 1: 13.092 skips=0 def=4 ext=193 (13.8s)
+spin_glass_n163 exact_ds seed 2: 12.595 skips=0 def=4 ext=193 (17.3s)
+spin_glass_n163 snap seed 0: 12.577 skips=0 def=4 ext=42 (16.9s)
+spin_glass_n163 snap seed 1: 12.84 skips=0 def=4 ext=42 (25.5s)
+spin_glass_n163 snap seed 2: 12.558 skips=0 def=4 ext=42 (18.1s)
+
+summary (ACL mean over legal seeds (n); s=skips d=deficit e=extensions):
+K100              dshake=10.02(3)  exact_ds=8.73(3) s1 d0 e100  snap=8.74(3) s1 d0 e0  tmpl=8.00
+K140              dshake=14.17(3)  exact_ds=11.40(3) s1 d0 e123  snap=11.41(3) s1 d0 e0  tmpl=11.00
+ER100_d10         dshake=4.70(3)  exact_ds=4.76(3) s0 d363 e16  snap=4.76(3) s0 d367 e18  tmpl=-
+turan_n162        dshake=7.19(3)  exact_ds=8.04(3) s1 d0 e77  snap=8.04(3) s1 d0 e0  tmpl=6.00
+spin_glass_n163   dshake=14.10(3)  exact_ds=12.77(3) s0 d4 e193  snap=12.66(3) s0 d4 e42  tmpl=11.64
+done-snap-probe

@@ -1,0 +1,92 @@
+/data/max/ember/docs/paper2/data/offtmpl_probe.py:65: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/offtmpl_probe.py:65: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/offtmpl_probe.py:65: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/offtmpl_probe.py:65: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/offtmpl_probe.py:65: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/offtmpl_probe.py:65: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/offtmpl_probe.py:65: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/offtmpl_probe.py:65: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/offtmpl_probe.py:65: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/offtmpl_probe.py:65: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/offtmpl_probe.py:65: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/offtmpl_probe.py:65: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+ER100_d10 mm seed 0: 5.0 skips=None def=None (3.1s)
+ER100_d10 mm seed 1: 5.07 skips=None def=None (1.5s)
+ER100_d10 mm seed 2: 4.85 skips=None def=None (1.7s)
+ER100_d10 base seed 0: 4.62 skips=None def=None (5.5s)
+ER100_d10 base seed 1: 4.71 skips=None def=None (5.9s)
+ER100_d10 base seed 2: 4.76 skips=None def=None (3.5s)
+ER100_d10 dshake seed 0: 4.62 skips=None def=None (4.7s)
+ER100_d10 dshake seed 1: 4.71 skips=None def=None (6.8s)
+ER100_d10 dshake seed 2: 4.76 skips=None def=None (3.5s)
+ER100_d10 exact seed 0: 4.51 skips=0 def=363 (8.6s)
+ER100_d10 exact seed 1: 4.58 skips=0 def=363 (5.6s)
+ER100_d10 exact seed 2: 5.19 skips=0 def=363 (3.5s)
+regular_n316 mm seed 0: 3.364 skips=None def=None (2.1s)
+regular_n316 mm seed 1: 3.411 skips=None def=None (3.1s)
+regular_n316 mm seed 2: 3.291 skips=None def=None (7.1s)
+regular_n316 base seed 0: 2.886 skips=None def=None (12.9s)
+regular_n316 base seed 1: 2.665 skips=None def=None (16.0s)
+regular_n316 base seed 2: 2.737 skips=None def=None (12.2s)
+regular_n316 dshake seed 0: 2.804 skips=None def=None (12.3s)
+regular_n316 dshake seed 1: 2.665 skips=None def=None (12.6s)
+regular_n316 dshake seed 2: 2.785 skips=None def=None (11.5s)
+regular_n316 exact seed 0: 2.782 skips=0 def=137 (10.1s)
+regular_n316 exact seed 1: 2.718 skips=0 def=137 (11.7s)
+regular_n316 exact seed 2: 2.744 skips=0 def=137 (14.9s)
+ws_n486 mm seed 0: 3.233 skips=None def=None (5.5s)
+ws_n486 mm seed 1: 3.173 skips=None def=None (4.0s)
+ws_n486 mm seed 2: 2.821 skips=None def=None (4.5s)
+ws_n486 base seed 0: 3.132 skips=None def=None (8.9s)
+ws_n486 base seed 1: 3.259 skips=None def=None (8.7s)
+ws_n486 base seed 2: 3.66 skips=None def=None (12.2s)
+ws_n486 dshake seed 0: 3.132 skips=None def=None (11.3s)
+ws_n486 dshake seed 1: 3.259 skips=None def=None (14.4s)
+ws_n486 dshake seed 2: 3.66 skips=None def=None (13.0s)
+ws_n486 exact seed 0: 2.897 skips=0 def=763 (16.0s)
+ws_n486 exact seed 1: 3.068 skips=0 def=763 (17.7s)
+ws_n486 exact seed 2: 3.068 skips=0 def=763 (14.6s)
+wsc_c8xK32 mm seed 0: 3.68 skips=None def=None (13.5s)
+wsc_c8xK32 mm seed 1: 3.805 skips=None def=None (19.0s)
+wsc_c8xK32 mm seed 2: 3.859 skips=None def=None (12.3s)
+wsc_c8xK32 base seed 0: 3.84 skips=None def=None (16.5s)
+wsc_c8xK32 base seed 1: 3.836 skips=None def=None (13.8s)
+wsc_c8xK32 base seed 2: 3.66 skips=None def=None (13.9s)
+wsc_c8xK32 dshake seed 0: 3.715 skips=None def=None (13.0s)
+wsc_c8xK32 dshake seed 1: 3.777 skips=None def=None (12.2s)
+wsc_c8xK32 dshake seed 2: 3.766 skips=None def=None (12.3s)
+wsc_c8xK32 exact seed 0: 3.777 skips=0 def=288 (11.8s)
+wsc_c8xK32 exact seed 1: 3.852 skips=0 def=288 (12.0s)
+wsc_c8xK32 exact seed 2: 3.605 skips=0 def=288 (16.3s)
+wsc_c3xK64 mm seed 0: 7.026 skips=None def=None (38.9s)
+wsc_c3xK64 mm seed 1: 7.651 skips=None def=None (35.0s)
+wsc_c3xK64 mm seed 2: 7.266 skips=None def=None (18.6s)
+wsc_c3xK64 base seed 0: 7.453 skips=None def=None (31.4s)
+wsc_c3xK64 base seed 1: 7.401 skips=None def=None (32.7s)
+wsc_c3xK64 base seed 2: 7.589 skips=None def=None (30.0s)
+wsc_c3xK64 dshake seed 0: 7.74 skips=None def=None (21.6s)
+wsc_c3xK64 dshake seed 1: 7.229 skips=None def=None (37.3s)
+wsc_c3xK64 dshake seed 2: 7.297 skips=None def=None (28.9s)
+wsc_c3xK64 exact seed 0: 7.12 skips=0 def=177 (47.5s)
+wsc_c3xK64 exact seed 1: 7.094 skips=0 def=177 (33.3s)
+wsc_c3xK64 exact seed 2: 7.438 skips=0 def=177 (32.2s)
+
+summary (mean over legal seeds (n)):
+ER100_d10       mm=4.97(3)  base=4.70(3)  dshake=4.70(3)  exact=4.76(3)
+regular_n316    mm=3.36(3)  base=2.76(3)  dshake=2.75(3)  exact=2.75(3)
+ws_n486         mm=3.08(3)  base=3.35(3)  dshake=3.35(3)  exact=3.01(3)
+wsc_c8xK32      mm=3.78(3)  base=3.78(3)  dshake=3.75(3)  exact=3.74(3)
+wsc_c3xK64      mm=7.31(3)  base=7.48(3)  dshake=7.42(3)  exact=7.22(3)
+done-offtmpl-probe

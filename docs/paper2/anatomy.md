@@ -176,6 +176,16 @@ Sub-moves, in order per iteration:
   on the upstream restrict_chains hang/segfault (repro:
   `data/restrict_bug_repro.py`); unblock = fork-level patch when needed.
 
+**Zephyr has two wire representations** (`courses` knob, notes §3.49/§3.50;
+fabrics §4). Folded (default): sub = k, both j-courses on one run, a
+claimed interval is the odd-coupler zigzag (~8 fresh contacts/bar).
+Course-resolved (`courses=True`): sub = 2k+j, runs are same-course stride-2
+external-coupler lanes — the representation busclique's templates are built
+from (16 fresh contacts/bar, 8 claimable sub-lanes per line, 2-per-track
+nesting expressible). Everything downstream (κ derivation, `_couples`,
+arrange line capacity, claim loops) picks the mode up from `grid.stride`;
+the flag is a structural no-op on Pegasus/Chimera/untyped targets.
+
 ## 6. The driver loop (`placement.py::attract_embed`)
 
 - **Init**: spectral layout of the source scaled into the target's drawing
@@ -184,7 +194,10 @@ Sub-moves, in order per iteration:
 - **The round** (`max_rounds=1` by default — the 1-shot protocol; capped at
   `round_frac=0.5` of timeout so the polish — where minorminer earns ~35%
   ACL, mm-internals §6 — cannot be starved): `geo_iters=1` ×
-  (stair_step + arrange), derive bars, derive seeds, stock-MM seeded
+  (stair_step + arrange) — or, when `shake_cycles>0`, the §3.52
+  settle-and-reshake shell in its place (contract-then-pack cycle 0,
+  decaying-amplitude reshakes, keep-best (E, unplaced), deadline-guarded
+  against eating the routing budget) — derive bars, derive seeds, stock-MM seeded
   legalization (`chainlength_patience=0`), `spur_prune`. *Why 1-shot*: the
   consolidation probe's pre-registered protocol rule — 1-shot beat the
   rounds protocol on all four dense cells (turán 8.40 vs 12.73 the smoking
@@ -211,10 +224,37 @@ Sub-moves, in order per iteration:
 ## 7. Knobs (the complete list)
 
 `max_rounds=1`, `round_frac=0.5`, `geo_iters=1`, `eta=0.5`,
-`vary_rng=True`, `arrange_iters=8`, `insert_sweeps=8`, `kappa=13.0`,
-`span_floor=True`, `cap_derate=1.0`, `wire_exact=False`, `bins=None`
-(untyped-fallback resolution). Unknown kwargs — including every
-pre-consolidation knob — are silently ignored.
+`vary_rng=True`, `arrange_iters=8`, `insert_sweeps=8`, `kappa=None`
+(derived from the target: degree-based on stride-1 fabrics, fresh
+contacts per tile on course-resolved Zephyr), `span_floor=True`,
+`cap_derate=1.0`, `wire_exact=False`, `courses=False` (Zephyr
+course-resolved wires, notes §3.49/§3.50 — sub-lane = 2k+j, stride-2
+same-course runs; no-op on Pegasus/Chimera), `shake_cycles=0` /
+`shake_steps=16` (settle-and-reshake geometry cycles, §3.52: cycle 0
+contracts `shake_steps` before the first pack — the frozen-fixed-point
+remedy of §3.51 — later cycles inflate about the centroid by decaying
+amplitude 2.0/1.0/0.5… and re-settle, keeping the best (E, unplaced);
+0 = stock single-step geometry), `masked_pool=False` (line capacity
+from masked-nonzero cap mean, §3.51 item 4; own switch, stride>1 only),
+`order_shake=0` (coarse-to-fine discrete order shake, §3.53: segment
+reversals + block relocations at decaying scale, chained before insertion
+in the same true-E-gated composite), `shake_invert=False` (reshake cycles
+use radial rank reversal instead of dilation, §3.53 — the core must earn
+its place), `exact_seeds=False` (exactness completion, §3.54: corner +
+edge + bridge passes drive the coverage deficit to zero by interval
+arithmetic; on junction-complete fabrics validity is constructed and MM
+legalization is skipped; includes boundary-line avoidance on stride-2
+grids), `cover_select=False` (shake-shell keep-best keys on the
+post-claim coupler deficit before E, §3.54 — de-exploits the E-proxy),
+`snap_claims=False` (claim-time crossing alignment, §3.56: each arm's
+claim is aimed at its contacts' lines parity-exactly at color time —
+aim, don't repair; extensions drop to ~0 and completion becomes a
+verifier; stride-2 grids only), `overload_lam=0.0` (feasibility priced
+into the gate energy, §3.57: every E-gate and cycle selection scores
+stair-E + λ·hinge² of claim-layer line-capacity violations; evaluation
+only; λ trades, never ranks; round_E stays raw stair-E), `bins=None`
+(untyped-fallback resolution). Unknown kwargs — including
+every pre-consolidation knob — are silently ignored.
 
 ## 8. Open problems (the reasons remaining complexity exists)
 

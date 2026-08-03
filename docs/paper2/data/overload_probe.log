@@ -1,0 +1,77 @@
+/data/max/ember/docs/paper2/data/overload_probe.py:76: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/overload_probe.py:76: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/overload_probe.py:76: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/overload_probe.py:76: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/overload_probe.py:76: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/overload_probe.py:76: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/overload_probe.py:76: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/overload_probe.py:76: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/overload_probe.py:76: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/overload_probe.py:76: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/overload_probe.py:76: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/overload_probe.py:76: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+K100 control seed 0: 8.75 skips=1 def=0 (32.9s)
+K100 control seed 1: 8.75 skips=1 def=0 (31.1s)
+K100 control seed 2: 8.73 skips=1 def=0 (39.4s)
+K100 ovl seed 0: 8.75 skips=1 def=0 (33.1s)
+K100 ovl seed 1: 8.75 skips=1 def=0 (30.5s)
+K100 ovl seed 2: 8.73 skips=1 def=0 (39.4s)
+K100 ovl_nos seed 0: 8.75 skips=1 def=0 (32.8s)
+K100 ovl_nos seed 1: 8.75 skips=1 def=0 (31.0s)
+K100 ovl_nos seed 2: 8.73 skips=1 def=0 (39.6s)
+K140 control seed 0: 11.443 skips=1 def=0 (67.1s)
+K140 control seed 1: 11.407 skips=1 def=0 (65.7s)
+K140 control seed 2: 11.379 skips=1 def=0 (63.2s)
+K140 ovl seed 0: 11.443 skips=1 def=0 (60.2s)
+K140 ovl seed 1: 11.407 skips=1 def=0 (66.0s)
+K140 ovl seed 2: 11.379 skips=1 def=0 (64.6s)
+K140 ovl_nos seed 0: 11.443 skips=1 def=0 (67.7s)
+K140 ovl_nos seed 1: 11.407 skips=1 def=0 (64.9s)
+K140 ovl_nos seed 2: 11.379 skips=1 def=0 (66.4s)
+ER100_d10 control seed 0: 4.97 skips=0 def=367 (2.7s)
+ER100_d10 control seed 1: 4.48 skips=0 def=367 (6.1s)
+ER100_d10 control seed 2: 4.83 skips=0 def=367 (3.3s)
+ER100_d10 ovl seed 0: 4.97 skips=0 def=367 (2.7s)
+ER100_d10 ovl seed 1: 4.48 skips=0 def=367 (6.2s)
+ER100_d10 ovl seed 2: 4.83 skips=0 def=367 (3.3s)
+ER100_d10 ovl_nos seed 0: 4.97 skips=0 def=367 (2.7s)
+ER100_d10 ovl_nos seed 1: 4.48 skips=0 def=367 (6.2s)
+ER100_d10 ovl_nos seed 2: 4.83 skips=0 def=367 (3.3s)
+turan_n162 control seed 0: 8.006 skips=1 def=0 (29.4s)
+turan_n162 control seed 1: 8.012 skips=1 def=0 (29.4s)
+turan_n162 control seed 2: 8.117 skips=1 def=0 (47.9s)
+turan_n162 ovl seed 0: 8.006 skips=1 def=0 (28.4s)
+turan_n162 ovl seed 1: 8.012 skips=1 def=0 (29.3s)
+turan_n162 ovl seed 2: 8.117 skips=1 def=0 (47.2s)
+turan_n162 ovl_nos seed 0: 7.994 skips=1 def=0 (30.8s)
+turan_n162 ovl_nos seed 1: 8.049 skips=1 def=0 (30.4s)
+turan_n162 ovl_nos seed 2: 7.654 skips=1 def=0 (36.4s)
+spin_glass_n163 control seed 0: 12.577 skips=0 def=4 (16.8s)
+spin_glass_n163 control seed 1: 12.84 skips=0 def=4 (25.5s)
+spin_glass_n163 control seed 2: 12.558 skips=0 def=4 (18.5s)
+spin_glass_n163 ovl seed 0: 12.577 skips=0 def=4 (17.1s)
+spin_glass_n163 ovl seed 1: 12.84 skips=0 def=4 (25.4s)
+spin_glass_n163 ovl seed 2: 12.558 skips=0 def=4 (18.5s)
+spin_glass_n163 ovl_nos seed 0: 12.466 skips=0 def=7 (19.7s)
+spin_glass_n163 ovl_nos seed 1: 12.46 skips=0 def=7 (18.5s)
+spin_glass_n163 ovl_nos seed 2: 12.485 skips=0 def=7 (19.7s)
+
+summary (ACL mean over legal seeds (n); s=skips d=deficit):
+K100              control=8.74(3) s1 d0  ovl=8.74(3) s1 d0  ovl_nos=8.74(3) s1 d0  tmpl=8.00
+K140              control=11.41(3) s1 d0  ovl=11.41(3) s1 d0  ovl_nos=11.41(3) s1 d0  tmpl=11.00
+ER100_d10         control=4.76(3) s0 d367  ovl=4.76(3) s0 d367  ovl_nos=4.76(3) s0 d367  tmpl=-
+turan_n162        control=8.04(3) s1 d0  ovl=8.04(3) s1 d0  ovl_nos=7.90(3) s1 d0  tmpl=6.00
+spin_glass_n163   control=12.66(3) s0 d4  ovl=12.66(3) s0 d4  ovl_nos=12.47(3) s0 d7  tmpl=11.64
+done-overload-probe

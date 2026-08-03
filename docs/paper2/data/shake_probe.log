@@ -1,0 +1,95 @@
+/data/max/ember/docs/paper2/data/shake_probe.py:78: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/shake_probe.py:78: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/shake_probe.py:78: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/shake_probe.py:78: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/shake_probe.py:78: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/shake_probe.py:78: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+K100 courses seed 0: 10.77 E=1686.0 (41.9s)
+K100 courses seed 1: 10.56 E=1686.0 (20.0s)
+K100 courses seed 2: 10.39 E=1686.0 (45.0s)
+K100 shake1 seed 0: 10.58 E=1383.0 (23.1s)
+K100 shake1 seed 1: 9.92 E=1383.0 (18.9s)
+K100 shake1 seed 2: 9.55 E=1383.0 (24.6s)
+K100 shake seed 0: 10.58 E=1383.0 (23.7s)
+K100 shake seed 1: 9.92 E=1383.0 (19.3s)
+K100 shake seed 2: 9.55 E=1383.0 (25.0s)
+K100 pool seed 0: 10.18 E=1592.0 (17.9s)
+K100 pool seed 1: 10.29 E=1592.0 (18.4s)
+K100 pool seed 2: 10.63 E=1592.0 (33.5s)
+K100 shake_pool seed 0: 9.64 E=1280.0 (16.2s)
+K100 shake_pool seed 1: 9.43 E=1280.0 (56.0s)
+K100 shake_pool seed 2: 9.94 E=1280.0 (43.9s)
+K140 courses seed 0: 13.314 E=3423.0 (34.5s)
+K140 courses seed 1: 14.186 E=3423.0 (61.5s)
+K140 courses seed 2: 14.25 E=3423.0 (60.9s)
+K140 shake1 seed 0: 13.764 E=2788.0 (31.8s)
+K140 shake1 seed 1: 14.743 E=2788.0 (61.8s)
+K140 shake1 seed 2: 14.014 E=2788.0 (62.3s)
+K140 shake seed 0: 15.257 E=2660.0 (60.9s)
+K140 shake seed 1: 14.814 E=2660.0 (62.1s)
+K140 shake seed 2: 14.293 E=2660.0 (60.5s)
+K140 pool seed 0: 14.071 E=3729.0 (60.6s)
+K140 pool seed 1: 13.486 E=3729.0 (61.2s)
+K140 pool seed 2: 13.3 E=3729.0 (40.3s)
+K140 shake_pool seed 0: 12.871 E=2473.0 (60.3s)
+K140 shake_pool seed 1: 12.121 E=2473.0 (28.4s)
+K140 shake_pool seed 2: 11.493 E=2473.0 (36.3s)
+ER100_d10 courses seed 0: 5.64 E=286.5 (3.0s)
+ER100_d10 courses seed 1: 4.63 E=286.5 (5.3s)
+ER100_d10 courses seed 2: 5.01 E=286.5 (3.2s)
+ER100_d10 shake1 seed 0: 4.62 E=66.3 (4.4s)
+ER100_d10 shake1 seed 1: 4.71 E=66.3 (5.2s)
+ER100_d10 shake1 seed 2: 4.76 E=66.3 (3.3s)
+ER100_d10 shake seed 0: 4.66 E=40.9 (3.5s)
+ER100_d10 shake seed 1: 4.96 E=40.9 (3.6s)
+ER100_d10 shake seed 2: 4.82 E=40.9 (3.5s)
+ER100_d10 pool seed 0: 4.56 E=262.0 (5.9s)
+ER100_d10 pool seed 1: 4.64 E=262.0 (3.5s)
+ER100_d10 pool seed 2: 4.78 E=262.0 (4.2s)
+ER100_d10 shake_pool seed 0: 4.66 E=40.9 (3.5s)
+ER100_d10 shake_pool seed 1: 4.96 E=40.9 (3.7s)
+ER100_d10 shake_pool seed 2: 4.82 E=40.9 (3.5s)
+turan_n162 courses seed 0: 10.778 E=3088.0 (26.9s)
+turan_n162 courses seed 1: 9.253 E=3088.0 (24.8s)
+turan_n162 courses seed 2: 10.031 E=3088.0 (19.7s)
+turan_n162 shake1 seed 0: 8.481 E=2674.0 (61.0s)
+turan_n162 shake1 seed 1: 7.907 E=2674.0 (59.6s)
+turan_n162 shake1 seed 2: 6.704 E=2674.0 (60.9s)
+turan_n162 shake seed 0: 8.481 E=2674.0 (60.6s)
+turan_n162 shake seed 1: 7.907 E=2674.0 (60.7s)
+turan_n162 shake seed 2: 6.704 E=2674.0 (61.7s)
+turan_n162 pool seed 0: 9.006 E=3703.0 (50.0s)
+turan_n162 pool seed 1: 8.735 E=3703.0 (58.0s)
+turan_n162 pool seed 2: 9.827 E=3703.0 (26.0s)
+turan_n162 shake_pool seed 0: 8.741 E=3119.0 (52.1s)
+turan_n162 shake_pool seed 1: 11.265 E=3119.0 (25.7s)
+turan_n162 shake_pool seed 2: 8.352 E=3119.0 (48.7s)
+spin_glass_n163 courses seed 0: 13.92 E=3491.0 (59.8s)
+spin_glass_n163 courses seed 1: 14.037 E=3491.0 (33.0s)
+spin_glass_n163 courses seed 2: 14.08 E=3491.0 (42.0s)
+spin_glass_n163 shake1 seed 0: 13.558 E=3495.0 (54.5s)
+spin_glass_n163 shake1 seed 1: 15.196 E=3495.0 (43.5s)
+spin_glass_n163 shake1 seed 2: 13.89 E=3495.0 (60.5s)
+spin_glass_n163 shake seed 0: 13.558 E=3495.0 (55.9s)
+spin_glass_n163 shake seed 1: 15.196 E=3495.0 (44.2s)
+spin_glass_n163 shake seed 2: 13.89 E=3495.0 (60.1s)
+spin_glass_n163 pool seed 0: 13.779 E=3100.0 (52.4s)
+spin_glass_n163 pool seed 1: 14.791 E=3100.0 (38.4s)
+spin_glass_n163 pool seed 2: 14.84 E=3100.0 (44.2s)
+spin_glass_n163 shake_pool seed 0: 13.479 E=3107.0 (49.0s)
+spin_glass_n163 shake_pool seed 1: 14.037 E=3107.0 (52.1s)
+spin_glass_n163 shake_pool seed 2: 14.282 E=3107.0 (58.8s)
+
+summary (ACL mean over legal seeds (n) | geometry E of round 0):
+K100              courses=10.57(3) E1686  shake1=10.02(3) E1383  shake=10.02(3) E1383  pool=10.37(3) E1592  shake_pool=9.67(3) E1280  tmpl=8.00
+K140              courses=13.92(3) E3423  shake1=14.17(3) E2788  shake=14.79(3) E2660  pool=13.62(3) E3729  shake_pool=12.16(3) E2473  tmpl=11.00
+ER100_d10         courses=5.09(3) E286  shake1=4.70(3) E66  shake=4.81(3) E41  pool=4.66(3) E262  shake_pool=4.81(3) E41  tmpl=-
+turan_n162        courses=10.02(3) E3088  shake1=7.70(3) E2674  shake=7.70(3) E2674  pool=9.19(3) E3703  shake_pool=9.45(3) E3119  tmpl=6.00
+spin_glass_n163   courses=14.01(3) E3491  shake1=14.21(3) E3495  shake=14.21(3) E3495  pool=14.47(3) E3100  shake_pool=13.93(3) E3107  tmpl=11.64
+done-shake-probe

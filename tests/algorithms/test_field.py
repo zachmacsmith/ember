@@ -14,8 +14,12 @@ import dwave_networkx as dnx
 
 from ember_qc.algorithms.factored.field import (
     TileGrid,
+    _color_claim_bars,
     _couples,
     _line_tracks,
+    claim_overload,
+    complete_seeds,
+    order_shake,
     _stair_contacts,
     _target_kappa,
     alternate_arrange,
@@ -352,6 +356,218 @@ class TestArmLengthGating:
         assert info["assigned_cols"] == 0     # no v-arm exceeds a tile
         for v in pos:  # x untouched by row-packing
             assert float(new[v][0]) == pytest.approx(float(pos[v][0]))
+
+
+class TestCompleteSeeds:
+    """s3.54 exactness completion: coverage by interval arithmetic on
+    junction-complete fabrics."""
+
+    def _setup(self, m=3):
+        g = dnx.zephyr_graph(m, 4)
+        grid = TileGrid(g, target_layout(g), courses=True)
+        adj = {q: set(g[q]) for q in g.nodes()}
+        return g, grid, adj
+
+    def _run_qubits(self, grid, key, ps):
+        run = grid.wire_map[key]
+        return [run[p] for p in ps if p in run]
+
+    def test_edge_extension_creates_coupler(self):
+        g, grid, adj = self._setup()
+        # h-run on row 2 far from a v-run on column 5: no coupler
+        ch_a = self._run_qubits(grid, (1, 2, 0), [0, 2])
+        ch_b = self._run_qubits(grid, (0, 5, 0), [0, 2])
+        chains = {0: list(ch_a), 1: list(ch_b)}
+        sa, sb = set(ch_a), set(ch_b)
+        assert not any(nb in sb for q in ch_a for nb in adj[q])
+        out, info = complete_seeds(grid, chains, {0: [1], 1: [0]}, adj)
+        assert info["deficit_edges"] == 0
+        oa, ob = set(out[0]), set(out[1])
+        assert any(nb in ob for q in oa for nb in adj[q])  # real coupler
+        assert not (oa & ob)                               # disjoint
+        assert info["extensions"] >= 1 and info["ext_qubits"] >= 1
+
+    def test_corner_pass_connects_l_chain(self):
+        g, grid, adj = self._setup()
+        # one variable with disjoint h- and v-runs
+        ch = (self._run_qubits(grid, (1, 2, 0), [0]) +
+              self._run_qubits(grid, (0, 5, 1), [5]))
+        out, info = complete_seeds(grid, {0: ch}, {0: []}, adj)
+        assert info["corner_deficit"] == 0
+        import networkx as nx2
+        assert nx2.is_connected(g.subgraph(out[0]))
+
+    def test_bridge_pass_parallel_runs(self):
+        g, grid, adj = self._setup()
+        # two h-runs on adjacent rows: parallel-only, needs a bridge
+        ch_a = self._run_qubits(grid, (1, 3, 0), [2])
+        ch_b = self._run_qubits(grid, (1, 4, 0), [2])
+        out, info = complete_seeds(grid, {0: ch_a, 1: ch_b},
+                                   {0: [1], 1: [0]}, adj)
+        assert info["deficit_edges"] == 0
+        assert info["bridges"] >= 1
+        oa, ob = set(out[0]), set(out[1])
+        assert any(nb in ob for q in oa for nb in adj[q])
+        assert not (oa & ob)
+
+    def test_deterministic_and_input_untouched(self):
+        g, grid, adj = self._setup()
+        ch = {0: self._run_qubits(grid, (1, 2, 0), [0, 2]),
+              1: self._run_qubits(grid, (0, 5, 0), [0, 2])}
+        snapshot = {v: list(c) for v, c in ch.items()}
+        a, ia = complete_seeds(grid, ch, {0: [1], 1: [0]}, adj)
+        b, ib = complete_seeds(grid, ch, {0: [1], 1: [0]}, adj)
+        assert a == b and ia == ib
+        assert ch == snapshot  # input not mutated
+
+
+class TestClaimOverload:
+    """s3.57: the gate-energy hinge is the claim layer's own
+    uncolorability census, squared."""
+
+    def _grid(self, m=3):
+        g = dnx.zephyr_graph(m, 4)
+        return TileGrid(g, target_layout(g), courses=True)
+
+    def test_feasible_zero_overdeep_hinge(self):
+        grid = self._grid()
+        # 9 variables, all long h-arms on the SAME row line (8 sub-lanes)
+        n = 9
+        adj = {v: [] for v in range(n)}
+        pos = {v: np.array([3.0, 3.0]) for v in range(n)}
+        import ember_qc.algorithms.factored.field as F
+        bars9 = {v: (np.array([1.0, 5.0]), np.array([3.0, 3.0]))
+                 for v in range(n)}
+        orig = F.derive_bars_stair
+        F.derive_bars_stair = lambda *a, **k: bars9
+        try:
+            over = claim_overload(pos, adj, grid, kappa=3.0)
+        finally:
+            F.derive_bars_stair = orig
+        assert over == 1.0  # depth 9 vs 8 -> hinge 1^2
+        # drop one variable: feasible, hinge 0
+        pos8 = {v: pos[v] for v in range(8)}
+        bars8 = {v: bars9[v] for v in range(8)}
+        F.derive_bars_stair = lambda *a, **k: bars8
+        try:
+            assert claim_overload(pos8, adj, grid, kappa=3.0) == 0.0
+        finally:
+            F.derive_bars_stair = orig
+
+    def test_arrange_lam_zero_byte_identical(self):
+        grid = self._grid()
+        n = 12
+        adj = {v: [u for u in range(n) if u != v] for v in range(n)}
+        pos = {v: np.array([2.0 + 0.3 * v, 2.0 + 0.3 * v])
+               for v in range(n)}
+        a, _ = alternate_arrange(dict(pos), adj, grid, iters=4, kappa=3.0)
+        b, _ = alternate_arrange(dict(pos), adj, grid, iters=4, kappa=3.0,
+                                 overload_lam=0.0)
+        assert all(np.array_equal(a[v], b[v]) for v in a)
+        # lam > 0 runs and returns a full arrangement
+        c, ic = alternate_arrange(dict(pos), adj, grid, iters=4,
+                                  kappa=3.0, overload_lam=1.0)
+        assert set(c) == set(pos) and ic["E"]
+
+
+class TestSnapClaims:
+    """s3.56 claim-time crossing alignment: aim, don't repair."""
+
+    def _setup(self, m=3):
+        g = dnx.zephyr_graph(m, 4)
+        grid = TileGrid(g, target_layout(g), courses=True)
+        adj = {q: set(g[q]) for q in g.nodes()}
+        return g, grid, adj
+
+    def test_snap_covers_offset_crossing(self):
+        g, grid, adj = self._setup()
+        # 0's h-arm interval stops short of 1's column; snap must claim
+        # the parity-exact bar anyway
+        pos = {0: np.array([1.0, 2.0]), 1: np.array([4.0, 4.0])}
+        bars = {0: (np.array([0.0, 1.4]), np.array([2.0, 2.0])),
+                1: (np.array([4.0, 4.0]), np.array([1.0, 4.0]))}
+        legacy = wire_seeds_iv(grid, pos, bars)
+        snapped = wire_seeds_iv(grid, pos, bars,
+                                src_adj={0: [1], 1: [0]})
+        def touch(seeds):
+            sa, sb = set(seeds.get(0, [])), set(seeds.get(1, []))
+            return any(nb in sb for q in sa for nb in adj[q])
+        assert not touch(legacy)   # the misalignment
+        assert touch(snapped)      # aimed at claim time
+        # snapped seeds disjoint
+        allq = [q for c in snapped.values() for q in c]
+        assert len(allq) == len(set(allq))
+
+    def test_none_and_stride1_byte_identical(self):
+        g, grid, adj = self._setup()
+        n = 8
+        adjs = {v: [u for u in range(n) if u != v] for v in range(n)}
+        pos = {v: np.array([2.0 + 0.4 * v, 2.0 + 0.4 * v])
+               for v in range(n)}
+        bars = derive_bars_stair(pos, adjs, kappa=3.0,
+                                 bounds=(grid.W, grid.H))
+        a = wire_seeds_iv(grid, pos, bars)
+        b = wire_seeds_iv(grid, pos, bars, src_adj=None)
+        assert a == b
+        # stride-1 grid: src_adj ignored entirely
+        folded = TileGrid(g, target_layout(g))
+        c = wire_seeds_iv(folded, pos, bars)
+        d = wire_seeds_iv(folded, pos, bars, src_adj=adjs)
+        assert c == d
+
+
+class TestOrderShake:
+    """s3.53 coarse-to-fine order moves: segment reversals + block
+    relocations at decaying scale, sharing insertion's rank-space proxy."""
+
+    def test_permutation_valid_and_deterministic(self):
+        g = nx.random_regular_graph(4, 16, seed=11)
+        adj = {v: sorted(g.neighbors(v)) for v in g}
+        order = sorted(g.nodes(), key=lambda v: (v * 7919) % 16)
+        a, ta = order_shake(order, adj, passes=2)
+        b, tb = order_shake(order, adj, passes=2)
+        assert sorted(a) == sorted(order)  # a permutation
+        assert a == b and ta == tb         # deterministic
+        assert all(y <= x + 1e-9 for x, y in zip(ta, ta[1:]))
+
+    def test_clique_is_noop(self):
+        n = 8
+        adj = {v: [u for u in range(n) if u != v] for v in range(n)}
+        order = list(range(n))
+        new_order, traj = order_shake(order, adj, passes=2)
+        assert new_order == order  # permutation-symmetric: no move
+
+    def test_coarse_reversal_beats_insertion_stall(self):
+        # two K4 blocks whose order is globally MIRRORED relative to their
+        # anchors: a single coarse reversal fixes it; per-variable
+        # insertion also can — the point here is order_shake reaches a
+        # separated state and never worsens the proxy
+        a = list(range(4)); b = list(range(4, 8))
+        adj = {v: ([u for u in a if u != v] if v in a
+                   else [u for u in b if u != v]) for v in range(8)}
+        interleaved = [0, 4, 1, 5, 2, 6, 3, 7]
+        new_order, traj = order_shake(interleaved, adj, passes=2)
+        first = set(new_order[:4])
+        assert first == set(a) or first == set(b)
+        assert traj[-1] < traj[0]
+
+    def test_arrange_order_shake_gate_and_defaults(self):
+        g = nx.convert_node_labels_to_integers(nx.grid_2d_graph(20, 20))
+        grid = TileGrid(g, nx.spectral_layout(g), fallback_bins=20)
+        grid.cap[:, :, :] = 1.0
+        n = 16
+        pos = {v: np.array([10.0 + 0.01 * v, 10.0 + 0.01 * v])
+               for v in range(n)}
+        adj = {v: [u for u in range(n) if u != v] for v in range(n)}
+        base, ib = alternate_arrange(pos, adj, grid, iters=8, kappa=3.0)
+        # order_shake alone (insert_sweeps=0) must run and hold the E-gate
+        osr, io = alternate_arrange(pos, adj, grid, iters=8, kappa=3.0,
+                                    insert_sweeps=0, order_shake=1)
+        assert io["E"][-1] <= ib["E"][-1] + 1e-6
+        assert io["insert_reverts"] in (0, 1)
+        # default order_shake=0 byte-identical to base
+        again, ia = alternate_arrange(pos, adj, grid, iters=8, kappa=3.0)
+        assert all(np.array_equal(base[v], again[v]) for v in base)
 
 
 class TestInsertionSweeps:
@@ -700,6 +916,138 @@ class TestZephyrGrid:
         # The scale-free invariant: Zephyr denser than Pegasus.
         assert kz > kp
         assert 10.0 < kp < 14.0
+
+
+class TestZephyrCourses:
+    """Course-resolved Zephyr wires (s3.49, fabrics s4.5): sub = 2k+j,
+    stride-2 same-course runs — the representation the constructive
+    templates use. Default (courses=False) must be byte-identical to the
+    recorded folded arm; stride-1 fabrics must be unaffected either way."""
+
+    def _grids(self, m=3, t=4):
+        g = dnx.zephyr_graph(m, t)
+        pos = target_layout(g)
+        return g, TileGrid(g, pos), TileGrid(g, pos, courses=True)
+
+    def test_course_subs_stride_and_coupling(self):
+        g, folded, course = self._grids()
+        assert folded.stride == 1 and course.stride == 2
+        assert course.cap.sum() == g.number_of_nodes()
+        # geometry identical between representations
+        assert course.W == folded.W and course.H == folded.H
+        assert np.array_equal(course.cap, folded.cap)
+        lines = {}
+        for (u, ln, s), run in course.wire_map.items():
+            lines.setdefault((u, ln), set()).add(s)
+            ps = sorted(run)
+            # every run is one course: keys share the sub's j-parity...
+            assert all(p % 2 == s % 2 for p in ps), (u, ln, s)
+            # ...and consecutive bars are coupled (external couplers)
+            for p1, p2 in zip(ps, ps[1:]):
+                assert p2 == p1 + 2
+                assert g.has_edge(run[p1], run[p2]), (u, ln, s, p1)
+        # 8 sub-lanes per line (4 tracks x 2 courses)
+        assert all(s == set(range(8)) for s in lines.values())
+
+    def test_stride1_fabrics_invariant(self):
+        # the cheap P16/C16 guard: courses is a structural no-op off Zephyr
+        for g in (dnx.pegasus_graph(4), dnx.chimera_graph(4)):
+            pos = target_layout(g)
+            a, b = TileGrid(g, pos), TileGrid(g, pos, courses=True)
+            assert b.stride == 1
+            assert a.wire_map == b.wire_map
+            assert np.array_equal(a.sub, b.sub)
+            assert np.array_equal(a.cap, b.cap)
+            assert _target_kappa(a) == _target_kappa(b)
+
+    def test_course_couples_junction_complete(self):
+        # interior junction: all 8x8 (s_h, s_v) pairs couple — Zephyr's
+        # K_{8,8} completeness through the parity lookup (fabrics s4.2)
+        g, folded, course = self._grids()
+        r = c = 3
+        for sh in range(8):
+            for sv in range(8):
+                assert _couples(course, r, sh, c, sv), (sh, sv)
+
+    def test_course_couples_boundary_no_raise(self):
+        g, folded, course = self._grids(m=3)
+        edge = 6  # line 2m: even-parity bars would sit at p = 2m (absent)
+        for sh in range(8):
+            res = _couples(course, 3, sh, edge, 0)
+            assert res in (True, False)
+        assert _couples(course, 3, 0, edge, 0) is False  # j=0 parity miss
+
+    def test_course_kappa(self):
+        g, folded, course = self._grids()
+        kf, kc = _target_kappa(folded), _target_kappa(course)
+        # course kappa is fresh contacts PER TILE of the claimable run
+        # (cross-orientation degree / stride): Z3 ~6.9, Z12 ~7.7. It is
+        # EXPECTED to be far below the folded degree-derived ~14.7 — the
+        # folded value was the 2x arm under-provisioning of s3.49.
+        assert 5.0 < kc < 8.5
+        assert kc < kf
+
+    def test_course_claim_capacity_doubles(self):
+        # 8 mutually overlapping arms on one line: folded rep can claim
+        # only 4 (one per track); course rep claims all 8 (one per course)
+        g, folded, course = self._grids()
+        bars = [(3, 0.0, 3.0, v) for v in range(8)]
+        out = {}
+        for name, grid in (("folded", folded), ("course", course)):
+            claimed: set = set()
+            chains = {v: [] for v in range(8)}
+            _color_claim_bars(grid, claimed, chains, 1, bars)
+            out[name] = sum(1 for c in chains.values() if c)
+        assert out["folded"] == 4
+        assert out["course"] == 8
+
+    def test_masked_pool_arithmetic_and_gate(self):
+        # s3.51 item 4: raw line mean is dragged to cap*stride*(2m/(2m+1))
+        # by the structural zero boundary tile; masked-nonzero mean restores
+        # the physical sub-lane count (8 on course Zephyr lines).
+        g, folded, course = self._grids()
+        caps = course.cap[:, :, 1]
+        raw = caps.mean(axis=1) * course.stride
+        nz = (caps > 0).sum(axis=1)
+        masked = np.where(nz > 0, caps.sum(axis=1) / np.maximum(nz, 1),
+                          0.0) * course.stride
+        interior = slice(1, course.H - 1)
+        assert np.allclose(masked[interior], 8.0)
+        assert np.all(raw[interior] < 8.0)
+        # arrange accepts the flag; on stride-1 grids it is a no-op branch
+        n = 10
+        adj = {v: [u for u in range(n) if u != v] for v in range(n)}
+        pos = {v: np.array([2.0 + 0.2 * v, 2.0 + 0.2 * v]) for v in range(n)}
+        a0, _ = alternate_arrange(dict(pos), adj, folded, iters=4,
+                                  kappa=3.0, masked_pool=False)
+        a1, _ = alternate_arrange(dict(pos), adj, folded, iters=4,
+                                  kappa=3.0, masked_pool=True)
+        assert all(np.array_equal(a0[v], a1[v]) for v in a0)
+        # on the course grid the flag runs (not asserting which E wins —
+        # that is the probe's question, s3.52)
+        c1, _ = alternate_arrange(dict(pos), adj, course, iters=4,
+                                  kappa=3.0, masked_pool=True)
+        assert set(c1) == set(pos)
+
+    def test_course_wire_seeds_valid_connected(self):
+        g, folded, course = self._grids()
+        n = 12
+        adj = {v: [u for u in range(n) if u != v] for v in range(n)}
+        pos = {v: np.array([1.0 + 0.3 * v, 1.0 + 0.3 * v])
+               for v in range(n)}
+        pos = stair_step(pos, adj, eta=0.3)
+        pos, _ = alternate_arrange(pos, adj, course, iters=8, kappa=3.0)
+        bars = derive_bars_stair(pos, adj, bounds=(course.W, course.H))
+        seeds = wire_seeds_iv(course, pos, bars)
+        allq = [q for c in seeds.values() for q in c]
+        assert len(allq) == len(set(allq))
+        assert set(seeds) == set(range(n))
+        import networkx as nx2
+        for v, c in seeds.items():
+            if len(c) > 1 and nx2.is_connected(g.subgraph(c)):
+                break
+        else:
+            assert False, "no connected multi-qubit course run found"
 
 
 from ember_qc.algorithms.factored.field import (

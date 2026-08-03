@@ -1,0 +1,65 @@
+/data/max/ember/docs/paper2/data/course_probe.py:71: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/course_probe.py:71: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/course_probe.py:71: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/course_probe.py:71: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/course_probe.py:71: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/course_probe.py:71: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+K100 default seed 0: 11.75 (60.5s)
+K100 default seed 1: 12.67 (49.8s)
+K100 default seed 2: 11.35 (60.6s)
+K100 courses seed 0: 10.77 (41.8s)
+K100 courses seed 1: 10.56 (19.6s)
+K100 courses seed 2: 10.39 (45.1s)
+K100 courses_exact seed 0: 10.77 (43.2s)
+K100 courses_exact seed 1: 10.56 (20.2s)
+K100 courses_exact seed 2: 10.39 (45.6s)
+K140 default seed 0: None (67.5s)
+K140 default seed 1: None (68.3s)
+K140 default seed 2: None (68.4s)
+K140 courses seed 0: 13.314 (33.7s)
+K140 courses seed 1: 14.186 (60.4s)
+K140 courses seed 2: 14.614 (60.4s)
+K140 courses_exact seed 0: 14.043 (62.0s)
+K140 courses_exact seed 1: 14.657 (60.2s)
+K140 courses_exact seed 2: 14.0 (61.9s)
+ER100_d10 default seed 0: 4.86 (4.1s)
+ER100_d10 default seed 1: 4.8 (4.0s)
+ER100_d10 default seed 2: 4.76 (4.5s)
+ER100_d10 courses seed 0: 5.64 (3.0s)
+ER100_d10 courses seed 1: 4.63 (5.3s)
+ER100_d10 courses seed 2: 5.01 (3.2s)
+ER100_d10 courses_exact seed 0: 5.64 (3.1s)
+ER100_d10 courses_exact seed 1: 4.63 (5.4s)
+ER100_d10 courses_exact seed 2: 5.01 (3.1s)
+turan_n162 default seed 0: 12.395 (60.9s)
+turan_n162 default seed 1: 13.963 (61.5s)
+turan_n162 default seed 2: 13.549 (61.2s)
+turan_n162 courses seed 0: 10.778 (26.7s)
+turan_n162 courses seed 1: 9.253 (24.7s)
+turan_n162 courses seed 2: 10.031 (19.5s)
+turan_n162 courses_exact seed 0: 10.321 (18.9s)
+turan_n162 courses_exact seed 1: 9.821 (19.6s)
+turan_n162 courses_exact seed 2: 9.025 (35.5s)
+spin_glass_n163 default seed 0: 16.963 (55.8s)
+spin_glass_n163 default seed 1: None (64.0s)
+spin_glass_n163 default seed 2: 17.319 (60.3s)
+spin_glass_n163 courses seed 0: 13.92 (59.4s)
+spin_glass_n163 courses seed 1: 14.037 (32.9s)
+spin_glass_n163 courses seed 2: 14.08 (41.6s)
+spin_glass_n163 courses_exact seed 0: 14.436 (38.1s)
+spin_glass_n163 courses_exact seed 1: 13.362 (60.5s)
+spin_glass_n163 courses_exact seed 2: 14.417 (60.4s)
+
+summary (mean over legal seeds; n legal in parens):
+K100              default=11.92(3)  courses=10.57(3)  courses_exact=10.57(3)  mm=10.28(3)  mm2=11.33(3)  tmpl=8.00
+K140              default=FAIL(0)  courses=14.04(3)  courses_exact=14.23(3)  mm=18.27(2)  mm2=18.91(3)  tmpl=11.00
+ER100_d10         default=4.81(3)  courses=5.09(3)  courses_exact=5.09(3)  mm=4.97(3)  mm2=4.86(3)  tmpl=-
+turan_n162        default=13.30(3)  courses=10.02(3)  courses_exact=9.72(3)  mm=12.01(3)  mm2=10.99(3)  tmpl=6.00
+spin_glass_n163   default=17.14(2)  courses=14.01(3)  courses_exact=14.07(3)  mm=17.87(3)  mm2=18.36(2)  tmpl=11.64
+done-course-probe

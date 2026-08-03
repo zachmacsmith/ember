@@ -96,6 +96,110 @@ Magic numbers, none swept: η=0.5, λ₀=3.0, round_frac=0.4, max_rounds=10, bin
 
 ## C. Idea ledger
 
+### Feasibility in the energy -- Max's design lands; turan exact 7.90, guards untouched (2026-08-02; notes s3.57)
+
+The violation-blind-gates defect (s3.56) resolved the way Max specified:
+overload hinge^2 (the claim layer's own uncolorability census) added to
+every existing gate energy at lam=1 -- evaluation only, riding the
+iterations already there, trading never ranking. Dose-response a step:
+lam=1 repairs d729 for +0.2% E (the previously-reverted repair composite
+now accepted); lam>=4 over-trades. Probe: turan exact 8.04 -> 7.90
+(validated prediction exact), spin_glass 12.47 best-exact, all guards
+byte-identical; with the penalty, order_shake is unnecessary on turan
+(it was accidentally dodging invisible overload). Exactness price on
+turan: +2.25 (s3.54) -> +0.85 (s3.56) -> +0.71, vs the negotiated 7.19.
+Retired pressure-line machinery honored in spirit: its evaluator
+returned; its descent stayed retired.
+
+
+### Snap claims -- aim, don't repair; the d729 myth corrected (2026-08-02; notes s3.56)
+
+Claim-time crossing alignment: arms aim at their contacts' lines
+parity-exactly when the wire color is chosen. Verdict: mechanism
+CONFIRMED -- extensions 0 on every gating cell at byte-equal ACL,
+spin_glass best-exact 12.66, completion demoted to verifier. The round
+also corrected the record: turan's d729 was OVERSUBSCRIPTION (9 arms
+never colored on 4 over-deep columns), not misalignment; and the never-
+run dshake+exact arm gates turan VALID at 8.04 (exactness price on the
+cell collapses +2.25 -> +0.85, residual = packing depth + boundary
+shave). The named next target: packing that respects depth 8 -- where
+7.19 (negotiated) and 8.04 (constructed) should meet.
+
+
+### Exact seeds -- validity by construction lands; the router demoted to polish on cliques (2026-08-02; notes s3.54)
+
+Max's mandate after the E-inversion pattern ("actively harming ourselves
+to help minorminer... what can we possibly do?"): abolish repair instead
+of buying slack. `complete_seeds` (corner/edge/bridge interval
+arithmetic; junction-completeness makes coverage == validity) +
+boundary-line avoidance (new fabric fact: lines 0/2m half-capacity) +
+mm-skip gate. Verdict: **K140 11.40 = 1.036x template with minorminer
+never running legalization**; K100 8.73 (1.09x); spin_glass 12.51
+(1.07x) -- the three E-inversion cells, healed by construction. turan:
+the predicted hiccup -- exactness conflicts with the dshake-optimal
+geometry (tight packing incompletable, d729; boundary avoidance
+disturbs the lanes); 7.19 (dshake, non-exact) still holds the cell.
+Next: completion-aware packing (co-design), deficit-E tradeoff in
+selection (cover_select measured mixed: helps turan, breaks
+spin_glass). ER liquid regime unaffected by exactness (never gates).
+
+
+### The discrete shake -- order anneal confirmed (turan 7.19); inversion null-under-confound; the E-proxy leak named (2026-08-01; notes s3.53)
+
+Max's unification ("remove the distinction between shaking and the
+discrete steps") built as `order_shake`: reversals + block relocations
+at decaying scale, sharing insertion's proxy, one true-E gate over
+coarse+fine. Verdict: REAL -- turan 7.70 -> 7.19 (template 1.20x, best
+ever), no regressions, K_n exact-tie symmetry check passed. Radial
+inversion (`shake_invert`): null-to-harmful WITH the recorded confound
+(no post-inversion order repair; that follow-up flip is the honest next
+test, not a burial). Round's discovery: the E-vs-routed INVERSION is now
+a three-cell pattern -- mechanisms that push stair-E below the base
+settlement route slightly worse (suspect: router slack). Slack-aware
+selection is the named design question; dshake x masked_pool is the
+unrun combination.
+
+
+### The shake round -- cycle-0 contraction cracks the freeze; every Z12 cell now beats mm in some arm (2026-08-01; notes s3.52)
+
+Max's magnet-ball design (re-inflate so the strongly-connected reach the
+center) rebuilt as the s3.41 settle-and-reshake shell on stair-E
+(`shake_cycles`/`shake_steps`, default off) after the s3.51 diagnosis:
+stock geometry is a frozen fixed point (1 stair step on a 20-tile cloud,
+then nearest-line packing snaps back all drift). Probe verdicts:
+turan 10.02 -> **7.70** (bar <=9.0 passed; stretch 7.5 missed by 0.20;
+template 6.00), K100 10.02 (**first-ever mm beat**, 10.28). Attribution
+total: shake1 == shake on 4/5 cells -- cycle 0 (16 steps of contraction
+before the first pack) is the entire mechanism; the decaying reshakes
+never won keep-best and cost K140 +0.87 (registered-arm no-regression
+clause FAILED there). `masked_pool` (line capacity 7.68->8, own switch,
+report-only after pre-validation warned on pack-E): routing FORGAVE the
+worse E -- pool arms take ER 4.66 (< mm 4.97) and, combined with shake,
+the clique records K100 9.67 / K140 12.16 / spin_glass 13.93. Standing
+best-arm board beats minorminer on all five Z12 cells; template gaps
+1.11-1.28x. Open: K140's E-vs-routed inversion, pool-x-shake diluting
+turan, flip menu (shake1 / pool / per-regime) undecided.
+
+
+### The course round — Zephyr unfolded; dense board swept vs mm; K140 rescued (2026-08-01; notes s3.49–s3.50)
+
+The s3.48 "pure organization" gap diagnosed and mostly closed in one
+representation flip. Diagnosis (s3.49, fabrics.md): Zephyr's optimal
+lanes are same-course stride-2 external-coupler runs (16 fresh contacts
+per bar; templates use zero odd couplers), and the adapter's j-fold made
+them unclaimable (~8/bar zigzag) while degree-derived κ≈18
+under-provisioned arms 2×. Built as `courses=True` (default off):
+sub = 2k+j, stride-aware κ (~7.7), parity-correct `_couples` (the s3.48
+bug fixed in course mode only), arrange pool × stride. Probe (Z12,
+pre-registered): turán 13.30→10.02 (9.72 with wire_exact; mm 12.01),
+spin_glass 17.14(2/3)→14.01(3/3) (mm 17.87), **K140 0/3→14.04 3/3**
+(mm 18.27 2/3), K100 11.92→10.57 (mm 10.28 holds by 0.29). Template
+gaps now 1.2–1.6×. Costs on record: ER +0.28 beyond null (suspected
+κ-floor activation on sparse — deg/κ−1 turns positive; unattributed),
+turán ≤9 stretch missed by 0.72. Verdict: the Laws were fine, the
+alphabet was missing the course letter; default flip pending
+discussion + the ER interaction.
+
 ### The Zephyr triad — the terrain belongs to templates; a coordinate bug in _couples; shapes converge (2026-07-30; notes s3.48)
 
 Template truth: Z12 K_max = 184 covers every contested cell; the crude

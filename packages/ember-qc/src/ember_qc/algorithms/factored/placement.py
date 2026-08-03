@@ -193,6 +193,70 @@ class AttractConfig:
                                # blind greedy holds the K100 champion; the
                                # matching holds K140/spin_glass/turan records
                                # and is the co-design frontier.
+    courses: bool = False      # Zephyr course-resolved wires (s3.49, fabrics
+                               # s4.5): sub-lane = 2k+j, stride-2 same-course
+                               # runs, kappa = fresh contacts per tile (~7.7
+                               # on Z12 vs 18 folded). Off = the folded
+                               # representation (recorded stock arm). No-op
+                               # on Pegasus/Chimera/untyped targets.
+    shake_cycles: int = 0      # settle-and-reshake geometry cycles (the
+                               # s3.41 shell on stair-E; s3.51/s3.52): cycle
+                               # 0 = shake_steps of contraction before the
+                               # first pack (the frozen-fixed-point remedy),
+                               # later cycles inflate about the centroid by
+                               # decaying amplitude and re-settle; keep the
+                               # best (E, unplaced). 0 = stock geo_iters
+                               # path, byte-identical.
+    shake_steps: int = 16      # stair steps per shake cycle (measured
+                               # trajectory: 16 steps take the turan bundle
+                               # 19.8 -> ~12 tiles)
+    masked_pool: bool = False  # line capacity from masked-nonzero cap mean
+                               # (Zephyr course lines 7.68 -> 8.0; s3.51
+                               # item 4). Own switch: pre-validation measured
+                               # pack-level E moving the WRONG way under it.
+                               # Gated on stride > 1 inside _half.
+    order_shake: int = 0       # coarse-to-fine discrete shake of the 1-D
+                               # order (s3.53): segment reversals + block
+                               # relocations at decaying scale, chained
+                               # before insertion inside the same
+                               # true-E-gated composite. Value = passes;
+                               # 0 = off. Same cyc-0 gating as
+                               # insert_sweeps in the shake shell.
+    shake_invert: bool = False  # reshake cycles use radial RANK REVERSAL
+                               # about the centroid instead of dilation
+                               # (s3.53: dilation preserves radial order —
+                               # the core can never change hands; inversion
+                               # makes it earn its place). Only active with
+                               # shake_cycles >= 2.
+    exact_seeds: bool = False  # exactness completion (s3.54): extend claims
+                               # along their wires until every source edge
+                               # has a physical coupler (corner + edge +
+                               # bridge passes); on junction-complete
+                               # fabrics validity is constructed and MM
+                               # legalization is SKIPPED when the deficit
+                               # hits 0 (the router-slack tax abolished).
+                               # Includes boundary-line avoidance on
+                               # stride-2 grids. Residual deficit routes as
+                               # today with a better warm start.
+    cover_select: bool = False  # shake-shell keep-best key becomes
+                               # (post-claim coupler deficit, E, unplaced)
+                               # — de-exploits the E-proxy (s3.53's
+                               # E-vs-routed inversion). Only meaningful
+                               # with shake_cycles >= 2.
+    snap_claims: bool = False  # claim-time crossing alignment (s3.56):
+                               # aim each arm's claim at its contacts'
+                               # lines, parity-exact at color time — the
+                               # co-design snap. Extensions drop to ~0;
+                               # completion becomes a verifier. Stride-2
+                               # grids only; no-op elsewhere.
+    overload_lam: float = 0.0  # feasibility priced into the gate energy
+                               # (s3.57, Max's design): gates and cycle
+                               # selection score stair-E + lam * hinge^2
+                               # of claim-layer line-capacity violations.
+                               # Evaluation only; lam trades, never ranks
+                               # (lam=1 repairs turan's d729 for +0.2% E;
+                               # lam>=4 measured to over-trade). 0 = off,
+                               # byte-identical. round_E stays raw stair-E.
     bins: Optional[int] = None  # untyped-target fallback grid resolution;
                                # None = auto
 
@@ -257,8 +321,8 @@ def attract_embed(
 
         from ember_qc.algorithms.factored.field import (
             TileGrid, _target_kappa, alternate_arrange, bar_widths,
-            derive_bars_stair, stair_energy, stair_step, wire_seeds_iv,
-            wire_seeds_matched)
+            claim_overload, complete_seeds, derive_bars_stair,
+            stair_energy, stair_step, wire_seeds_iv, wire_seeds_matched)
 
         adj = build_adjacency(target_graph)
         qubits = sorted(adj)
@@ -272,9 +336,21 @@ def attract_embed(
         coords = np.array([pos[q] for q in qubits], dtype=float)
         lo, hi = coords.min(axis=0), coords.max(axis=0)
         grid = TileGrid(target_graph, pos,
-                        fallback_bins=cfg.bins or _auto_bins(len(qubits)))
+                        fallback_bins=cfg.bins or _auto_bins(len(qubits)),
+                        courses=cfg.courses)
         if cfg.cap_derate != 1.0:
             grid.cap = grid.cap * cfg.cap_derate
+        if cfg.exact_seeds and grid.stride > 1:
+            # Boundary-line avoidance (s3.54): lines 0 and 2m have HALF the
+            # crossing capacity (a bar at p covers lines {p, p+1}, so line 0
+            # is even-course-only) and parity-blind packing there creates
+            # structurally uncoverable crossings. Zero the boundary pools —
+            # measured E-neutral-to-positive on the dense cells.
+            grid.cap = grid.cap.copy()
+            grid.cap[0, :, 1] = 0.0
+            grid.cap[grid.H - 1, :, 1] = 0.0
+            grid.cap[:, 0, 0] = 0.0
+            grid.cap[:, grid.W - 1, 0] = 0.0
         bounds = (grid.W, grid.H)
         kappa = cfg.kappa if cfg.kappa is not None else _target_kappa(grid)
 
@@ -289,6 +365,8 @@ def attract_embed(
         rounds_run = 0
         last_info: dict = {"assigned": 0}
         rng_rerolls = 0  # advances RNG after failed rounds when vary_rng=False
+        mm_skips = 0     # rounds where valid seeds skipped MM legalization
+        ex_last: Optional[dict] = None  # last round's completion info
         round_acls: List[Optional[float]] = []
         round_E: List[float] = []
         seed_sat: Optional[str] = None  # wire_exact: designated-crossing metric
@@ -301,13 +379,114 @@ def attract_embed(
             if rounds_deadline is not None and now >= rounds_deadline:
                 break
             tpts = {v: grid.to_tile(p) for v, p in cent.items()}
-            for _g in range(cfg.geo_iters):
-                tpts = stair_step(tpts, src_adj, eta=cfg.eta)
-                tpts, last_info = alternate_arrange(
-                    tpts, src_adj, grid, iters=cfg.arrange_iters,
-                    kappa=kappa, floor=cfg.span_floor,
-                    insert_sweeps=cfg.insert_sweeps)
+            if cfg.shake_cycles > 0:
+                # Settle-and-reshake shell (s3.41's cycles on stair-E,
+                # s3.52): cycle 0 contracts before the first pack; later
+                # cycles inflate about the centroid by decaying amplitude
+                # (2.0, 1.0, 0.5, ... — the s3.41 schedule verbatim) and
+                # re-settle. Keep-best is load-bearing: arrange's forced
+                # iter-0 projection makes repeated calls non-monotone in E.
+                pts = tpts
+                best_pts = None
+                best_key = (math.inf, math.inf)
+                amp = 2.0
+                for cyc in range(cfg.shake_cycles):
+                    if cyc and rounds_deadline is not None \
+                            and time.perf_counter() >= rounds_deadline:
+                        break  # keep best from completed cycles
+                    if cyc and cfg.shake_invert:
+                        # radial rank reversal (s3.53): v at radius-rank i
+                        # takes the radius of rank n-1-i — core and shell
+                        # swap, and whatever re-settles into the middle has
+                        # earned it. (Dilation preserves radial order, the
+                        # measured reason s3.52's reshakes explored
+                        # nothing.) Exact-centroid points keep their spot —
+                        # a one-point radius-multiset leak, documented.
+                        vs = sorted(pts)
+                        arr = np.array([pts[v] for v in vs])
+                        c0 = arr.mean(axis=0)
+                        d = arr - c0
+                        r = np.linalg.norm(d, axis=1)
+                        rank = sorted(range(len(vs)),
+                                      key=lambda i: (r[i], vs[i]))
+                        r_new = np.empty_like(r)
+                        for i, ri in enumerate(rank):
+                            r_new[ri] = r[rank[len(vs) - 1 - i]]
+                        with np.errstate(invalid="ignore"):
+                            u = np.where(r[:, None] > 1e-9,
+                                         d / np.maximum(r, 1e-12)[:, None],
+                                         0.0)
+                        arr2 = np.clip(c0 + u * r_new[:, None],
+                                       [0.0, 0.0],
+                                       [grid.W - 1.0, grid.H - 1.0])
+                        pts = {v: arr2[i].copy()
+                               for i, v in enumerate(vs)}
+                    elif cyc:
+                        arr = np.array([pts[v] for v in sorted(pts)])
+                        c0 = arr.mean(axis=0)
+                        pts = {v: np.clip(c0 + amp * (pts[v] - c0),
+                                          [0.0, 0.0],
+                                          [grid.W - 1.0, grid.H - 1.0])
+                               for v in pts}
+                        amp *= 0.5
+                    for _s in range(cfg.shake_steps):
+                        pts = stair_step(pts, src_adj, eta=cfg.eta)
+                    pts, info_c = alternate_arrange(
+                        pts, src_adj, grid, iters=cfg.arrange_iters,
+                        kappa=kappa, floor=cfg.span_floor,
+                        insert_sweeps=(cfg.insert_sweeps if cyc == 0
+                                       else 0),
+                        masked_pool=cfg.masked_pool,
+                        order_shake=(cfg.order_shake if cyc == 0
+                                     else 0),
+                        overload_lam=cfg.overload_lam)
+
+                    def _sel_E(p):
+                        # one lam everywhere: cycle selection must be
+                        # coherent with the arrange-internal gates
+                        e = stair_energy(p, src_adj)
+                        if cfg.overload_lam > 0.0:
+                            e += cfg.overload_lam * claim_overload(
+                                p, src_adj, grid, kappa=kappa,
+                                floor=cfg.span_floor)
+                        return e
+
+                    if cfg.cover_select and cfg.shake_cycles >= 2:
+                        # s3.54: select on what actually gates routing —
+                        # the post-claim coupler deficit — before E. The
+                        # cheap interval estimate is vacuously zero
+                        # (intervals contain their crossings by
+                        # construction), so this derives real seeds
+                        # (~10-30 ms/cycle).
+                        sc = wire_seeds_iv(
+                            grid, pts, _bars(pts),
+                            src_adj=src_adj if cfg.snap_claims else None)
+                        _, dinf = complete_seeds(grid, sc, src_adj, adj)
+                        key = (dinf["deficit_edges"]
+                               + dinf["corner_deficit"],
+                               _sel_E(pts),
+                               info_c.get("unplaced", 0))
+                    else:
+                        key = (_sel_E(pts),
+                               info_c.get("unplaced", 0))
+                    if key < best_key:
+                        best_key = key
+                        best_pts = {v: p.copy() for v, p in pts.items()}
+                        last_info = info_c
+                tpts = best_pts
+            else:
+                for _g in range(cfg.geo_iters):
+                    tpts = stair_step(tpts, src_adj, eta=cfg.eta)
+                    tpts, last_info = alternate_arrange(
+                        tpts, src_adj, grid, iters=cfg.arrange_iters,
+                        kappa=kappa, floor=cfg.span_floor,
+                        insert_sweeps=cfg.insert_sweeps,
+                        masked_pool=cfg.masked_pool,
+                        order_shake=cfg.order_shake,
+                        overload_lam=cfg.overload_lam)
             cent = {v: grid.Minv @ (tpts[v] - grid.c) for v in cent}
+            # round_E stays RAW stair-E (recorded trajectory metric,
+            # comparable to history) regardless of overload_lam
             round_E.append(round(stair_energy(tpts, src_adj), 1))
 
             if cfg.wire_exact:
@@ -315,19 +494,41 @@ def attract_embed(
                     grid, tpts, _bars(tpts), src_adj)
                 seed_sat = f"{sat}/{tot}"
             else:
-                seed_chains = wire_seeds_iv(grid, tpts, _bars(tpts))
-            cap = (rounds_deadline - time.perf_counter()) if rounds_deadline \
-                else 60.0
-            if cap <= 0:
-                break
-            rng = seed * 100 + (outer if cfg.vary_rng else rng_rerolls)
-            emb = _mm_route(source_graph, target_graph, chains=seed_chains,
-                            seed=rng, timeout=cap)
-            rounds_run += 1
-            if not emb:
-                round_acls.append(None)
-                rng_rerolls += 1  # geometry unchanged on failure: must re-roll
-                continue
+                seed_chains = wire_seeds_iv(
+                    grid, tpts, _bars(tpts),
+                    src_adj=src_adj if cfg.snap_claims else None)
+            if cfg.exact_seeds:
+                # s3.54 exactness completion: close the coverage deficit by
+                # interval arithmetic; if it hits zero the seeds ARE the
+                # legal embedding — skip MM legalization (the router-slack
+                # tax abolished). Residual deficit routes with the
+                # completed chains as a strictly better warm start.
+                seed_chains, ex_info = complete_seeds(
+                    grid, seed_chains, src_adj, adj)
+                ex_last = ex_info
+            else:
+                ex_info = None
+            if (ex_info is not None
+                    and ex_info["deficit_edges"] == 0
+                    and ex_info["corner_deficit"] == 0
+                    and is_valid_embedding(seed_chains, source_graph,
+                                           target_graph, adj=adj)):
+                emb = {v: list(c) for v, c in seed_chains.items()}
+                rounds_run += 1
+                mm_skips += 1
+            else:
+                cap = (rounds_deadline - time.perf_counter()) \
+                    if rounds_deadline else 60.0
+                if cap <= 0:
+                    break
+                rng = seed * 100 + (outer if cfg.vary_rng else rng_rerolls)
+                emb = _mm_route(source_graph, target_graph,
+                                chains=seed_chains, seed=rng, timeout=cap)
+                rounds_run += 1
+                if not emb:
+                    round_acls.append(None)
+                    rng_rerolls += 1  # geometry unchanged: must re-roll
+                    continue
             emb = spur_prune(emb, src_adj, adj, deadline=deadline)
             a = sum(len(c) for c in emb.values()) / len(emb)
             round_acls.append(round(a, 3))
@@ -378,9 +579,16 @@ def attract_embed(
                 "insert_reverts": int(last_info.get("insert_reverts", 0)),
                 "mono_time": float(last_info.get("mono_time", 0.0)),
                 "extent_mean": round(float(sizes.mean()), 3),
-                "extent_max": round(float(sizes.max()), 3)}
+                "extent_max": round(float(sizes.max()), 3),
+                "stride": int(grid.stride)}
         if seed_sat is not None:
             diag["designated"] = seed_sat
+        if cfg.exact_seeds:
+            diag["mm_skips"] = mm_skips
+            if ex_last is not None:
+                for k in ("deficit_edges", "corner_deficit", "extensions",
+                          "ext_qubits", "bridges"):
+                    diag[k] = ex_last[k]
         return {"embedding": finished,
                 "time": time.perf_counter() - start,
                 "rounds": rounds_run,

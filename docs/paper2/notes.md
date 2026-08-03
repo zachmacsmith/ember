@@ -2568,6 +2568,486 @@ organization, exactly the crystal machinery's jurisdiction, now with a
 6.00 target instead of folklore); (c) both, with (a) as the floor while
 (b) is the research line. Max's call.
 
+### 3.49 The Zephyr anatomy session: template-6 explained, the j-fold convicted, the bestiary founded (2026-08-01)
+
+Diagnosis round with Max on why template turán = 6.00 and what the 2.3×
+pipeline gap actually is. All claims measured directly on Z12 (busclique +
+adjacency probes); full anatomy now in **`fabrics.md`** (new organized
+reference: the target-graph bestiary, one section per fabric, translation
+checklist for the next one). Headlines:
+
+1. **The 6 is lane arithmetic, sharp to one variable.** Zephyr junctions
+   are complete K_{8,8} (verified 64/64); a bar spans 2 junctions and
+   meets 16 distinct opposite sub-lanes (one coupler each, zero waste);
+   a straight lane of L bars meets 16L. Turán: ⌈81/16⌉ = 6, and 16·5 =
+   80 makes K_{81,81} exactly one variable over the L=5 line (measured:
+   K_{80,80} restriction 5.5, K_{81,81} 6.0 uniform).
+2. **Clique = biclique + one arm, quantitatively.** K162 template ACL
+   12.00 = exactly 2 × turán's 6.00 (the L-chain's two arms serve the
+   two blocks; bipartiteness deletes the own-block arm). §3.35's "the
+   diagonal already contains the biclique" holds on Zephyr to the digit.
+   The One Shape survives; "contain" is unnecessary if the representation
+   can spell it.
+3. **The pipeline's 14.03 is a representation ceiling, not a Laws
+   failure.** The template's lanes are same-course (j-fixed) external-
+   coupler runs, nested 2 per track (courses interleaved). The TileGrid
+   Zephyr adapter folds j into the along-position ("what makes runs
+   contiguous"), so the claimable object is the odd-coupler zigzag: ~8
+   fresh contacts per bar instead of 16, nesting unclaimable — folded
+   floor ~10–11, unnested ~20, observed 14.03; mm's 12.01 sits near the
+   same ceiling (search doesn't find stride-2 either). Odd couplers are
+   confirmed pure flexibility: 0/184 K184 chains use one; turán template
+   is pure external. κ ≈ 17 (degree-derived) is accidentally calibrated
+   to the *unfolded* rate — the floor under-provisions claimable arms
+   ~2×.
+4. **Fix direction (unbuilt, awaiting design round):** unfold the
+   adapter (sub-lane = (k, j), position = z; same-course runs stay
+   contiguous via external couplers, so the fold's motivation is met by
+   the unfold), re-derive κ from measured fresh-contact rate of the
+   claimable run, then the pre-registered bar writes itself: turán
+   descending from 14 toward 6 + router overhead, clique cells pulled
+   toward their halved arithmetic by the same change — one
+   representation fix moving both regimes, per the interpolation thesis.
+   The `_couples` line-vs-position bug (§3.48) remains a separate fix
+   ticket.
+
+### 3.50 The course round: Zephyr unfolded, the dense board swept, K140 rescued from 0/3 (2026-08-01)
+
+Built per the s3.49 fix direction, as the `courses` switch (default off =
+folded stock; house rules): Zephyr adapter emits sub = 2k+j under the
+flag (position stays p = 2z+j, geometry/caps unchanged); `grid.stride`
+(2 iff course-resolved Zephyr) is the single mode signal consumed
+downstream — `_target_kappa` becomes fresh-contacts-per-tile
+(cross-orientation degree / stride ≈ 7.7 on Z12, replacing the folded
+18 that under-provisioned arms 2×), `_couples` gains the parity lookup
+(bar crossing line c sits at p = c or c−1 by course parity; verified
+64/64 at interior junctions — the first sound coupler predicate on
+Zephyr, s3.48 bug fixed IN COURSE MODE ONLY), and arrange's line pool
+scales by stride (8 interleaved course arms per line). Claim loops
+needed zero changes (gap-tolerant `run.get`). Stride-1 fabrics are
+structurally untouched (invariance tests). 535 tests green (9 new).
+
+**Probe** (`data/course_probe.py` / `.csv`, bars pre-registered in the
+docstring before any run; Z12, 5 cells × 3 arms × 3 seeds × 60 s,
+6 niced workers, quiet box):
+
+| cell | default | courses | courses+exact | mm / mm2 | template |
+|---|---|---|---|---|---|
+| K100 | 11.92 | 10.57 | 10.57 | 10.28 / 11.33 | 8.00 |
+| K140 | **FAIL 0/3** | **14.04 (3/3)** | 14.23 | 18.27 (2/3) / 18.91 | 11.00 |
+| ER100_d10 | 4.81 | 5.09 | 5.09 | 4.97 / 4.86 | — |
+| turan_n162 | 13.30 | 10.02 | **9.72** | 12.01 / 10.99 | 6.00 |
+| spin_glass_n163 | 17.14 (2/3) | **14.01 (3/3)** | 14.07 | 17.87 / 18.36 | 11.64 |
+
+Scorecard vs the pre-registered bars:
+
+1. **MINIMUM: passed on turán decisively** (10.02 / 9.72 vs the <12.01
+   bar — beats mm AND mm2), spin_glass legality 3/3 (bar ≥2/3) — but the
+   no-regression clause FAILS on the letter at ER: 4.81 → 5.09 (+0.28,
+   beyond the ~0.11 mm null). Suspected mechanism, recorded not tested:
+   κ 18 → 7.7 flips sparse floors from inactive (deg/κ−1 < 0) to active
+   (~0.3 tiles) — a knob interaction, not lane physics; a
+   floor-threshold or per-regime κ probe would isolate it.
+2. **STRETCH: K100 ≤ 11 MET (10.57); turán ≤ 9 missed by 0.72** (best
+   seed 9.03). Template gaps close from 1.53× / — / 2.34× / 1.70× to
+   **1.32× / 1.28× / 1.62× / 1.20×** (K100/K140/turán/spin_glass).
+3. **Unregistered headline: K140.** The folded pipeline FAILS 0/3 on
+   Z12 K140; courses legalizes 3/3 at 14.04 — below mm's 18.27 (2/3)
+   by −4.2 with a feasibility win on top. The representation was a
+   feasibility ceiling too, not just a quality one.
+4. **The dense Z12 board vs minorminer after one flip: 3 wins, 1 near-tie.**
+   K140 −4.2, spin_glass −3.9 (with 3/3 vs mm's 3/3 at 17.87), turán
+   −2.3; K100 10.57 vs 10.28 (mm holds by 0.29). mm holds ER (5.09 vs
+   4.97). Course wall-clock is also ~2–3× faster to legality (turán
+   ~20–30 s vs 60; the lanes route almost without negotiation).
+5. **wire_exact in course mode** (first sound run on Zephyr): −0.30 on
+   turán (9.72, the new cell record), neutral-to-noise elsewhere
+   (K100/K140/ER byte-close to greedy). The co-design question now has
+   a working instrument on the fabric it was built for.
+
+Defaults unchanged (`courses=False`) per the no-flip decision rule; the
+flip (and the ER floor interaction) are the next discussion. Docs:
+`fabrics.md` §4.5 updated, `anatomy.md` knob roll-call + representation
+note, `attraction.md` ledger entry.
+
+### 3.51 The coloring acquitted; the compaction gap convicted (2026-08-01)
+
+Two probes from the post-s3.50 diagnosis discussion (Max: tracks/courses
+are coordinate illusion — Zephyr is "just big Chimera" with length-2
+overlapping qubits, each line admitting two disjoint end-to-end tilings;
+and "see what happens if we ignore all this silly coloring stuff").
+
+1. **Terminology correction on the record**: the "nesting" claim of the
+   s3.50 dissection was double-counting from the track vocabulary — in
+   the wire frame the turán template gives each variable exactly ONE
+   whole wire (162 chains, 162 sub-lanes). End-to-end wire sharing is
+   structurally impossible inside a bipartite rectangle (every lane must
+   span the opposite block); it is real only for clique staircases
+   (complementary arm lengths — K100's residual) and sparse locals.
+2. **The coloring is acquitted** (`data/lane_probe.py`): a ~25-line
+   whole-lane seeder (count to capacity, spill to nearest line, no
+   interval graph) produces BYTE-IDENTICAL routed results to
+   wire_seeds_iv on K100/K140/turán (10.57/14.15/10.12; spin_glass
+   within noise) on identical geometry — on Zephyr crystal terrain the
+   interval coloring already degenerates to counting. Max's "coloring is
+   polish, mostly a Pegasus artifact" — confirmed literally.
+3. **The compaction gap is convicted** (stage trace, turán): init
+   spreads B's centroids 19.8 tiles (minimal ~10); the pipeline's single
+   stair_step leaves 19.3 (8 steps: 15.9 — attraction contracts but
+   slowly, and geo_iters=1); arrange then packs arms to the NEAREST line
+   with room — no compaction force exists — freezing THREE separated
+   clumps ({2-7},{11-15},{19-23} at 7/line); every opposite arm must
+   span the smear: v-intervals mean 16.8 vs the rectangle's 11. The
+   final ~10 ACL vs template 6 is this smear, end to end. Same
+   Gauss's-law shape as s3.19/s3.43: local placement rules cannot merge
+   distant clumps.
+4. Two mechanical notes: line capacity lands at 7/line not 8 (pool =
+   grid-mean cap x stride is dragged down by the degenerate boundary
+   line; per-line sub counts would give 8); and the fragmentation
+   observed in s3.50 is the router extending under-spanned seeds across
+   sibling wires, downstream of the same smear.
+
+**Candidate fix (undesigned, awaiting discussion)**: compaction in the
+packer's line-selection policy — fill lines contiguously from the bundle
+median outward (E-gated as everything else; for complete-overlap arm
+sets contiguous center-out fill IS the template layout), plus per-line
+sub-count capacity. Predicted from the arithmetic: B on 11-12 contiguous
+lines, intervals ~11-12, turán toward ~7.
+
+### 3.52 The shake round: turan 7.70, minorminer beaten on every Z12 cell; cycle 0 is the mechanism; the E-proxy inverts on K140 (2026-08-01)
+
+Built per plan from Max's magnet-ball design: the s3.41 settle-and-reshake
+shell transplanted onto stair-E as `shake_cycles`/`shake_steps` (default
+0 = stock, byte-identical), keep-best (E, unplaced), deadline-guarded;
+`masked_pool` (7.68 -> 8 line capacity, s3.51 item 4) as its OWN
+default-off switch after design-round pre-validation measured it moving
+pack-level E the wrong way. 538 tests green. Design-round measurements
+on record: stock geometry frozen at E 3088; shell cycle 0 alone 2674;
+4-cycle shell 3.76 s.
+
+**Probe** (`data/shake_probe.py` / `.csv`, bars pre-registered; Z12,
+5 cells x 5 arms x 3 seeds x 60 s. Load caveat: an external batch
+re-entered mid-run (load 60-115); scored anyway because the paired
+control replicated s3.50's quiet-box values to the hundredth on 4/5
+cells and legality is 3/3 everywhere -- no s3.38 starvation signature):
+
+| cell | courses (ctl) | shake1 | shake | pool | shake_pool | tmpl |
+|---|---|---|---|---|---|---|
+| K100 | 10.57 | 10.02 | 10.02 | 10.37 | **9.67** | 8.00 |
+| K140 | 13.92 | 14.17 | 14.79 | 13.62 | **12.16** | 11.00 |
+| ER100_d10 | 5.09 | 4.70 | 4.81 | **4.66** | 4.81 | -- |
+| turan_n162 | 10.02 | **7.70** | **7.70** | 9.19 | 9.45 | 6.00 |
+| spin_glass | 14.01 | 14.21 | 14.21 | 14.47 | **13.93** | 11.64 |
+
+Scorecard vs the pre-registered bars:
+
+1. **MINIMUM: turan passed emphatically** (7.70 vs the <=9.0 bar and the
+   10.02 paired control; mm 12.01), spin_glass 3/3 -- but the
+   no-regression clause FAILS on K140 in the registered shake arm
+   (13.92 -> 14.79, beyond noise). **STRETCH: K100 <= 10.28 MET**
+   (10.02 -- the first K100 win over minorminer in program history);
+   turan <= 7.5 missed by 0.20.
+2. **Attribution is total: cycle 0 IS the mechanism.** shake1 = shake
+   byte-identically on 4/5 cells (identical ACL and E) -- keep-best
+   discarded every reshake everywhere except K140. "Contract before the
+   first pack" was the entire remedy; the decaying-amplitude reshakes
+   add nothing on this board (kept as cheap insurance; K140 says even
+   that is not free).
+3. **The E-proxy inverts on K140 and under pool.** K140: 4-cycle shake
+   found LOWER E (2660 vs 2788) yet routed WORSE (14.79 vs 14.17);
+   pool arms: pack-E worse (turan 3703 vs 3088) yet routed BETTER
+   (9.19 vs 10.02). Stair-E is a good but imperfect proxy for routed
+   ACL near the optimum -- selection on E alone has a measured failure
+   mode (the s3.16 legal-vs-polished lesson, one level up).
+4. **The report-only pool arms are the sleeper hit**: shake_pool takes
+   K100 9.67, K140 12.16, spin_glass 13.93 -- all program records --
+   and pool alone takes ER 4.66 (< mm 4.97). The pre-validation E
+   warning was real but routing forgave it; the capacity fix helps
+   cliques (arms genuinely need 8/line) while diluting turan's shake
+   win (9.45 vs 7.70 -- interaction unexplained, on the ledger).
+5. **Standing Z12 board, best measured arm per cell: minorminer is
+   beaten on all five cells** -- 9.67 / 12.16 / 4.66 / 7.70 / 13.93 vs
+   mm 10.28 / 18.27(2/3) / 4.97 / 12.01 / 17.87. Template gaps:
+   1.21x / 1.11x / -- / 1.28x / 1.20x (from 1.53x / -- / -- / 2.34x /
+   1.70x two days ago). The s3.50 ER regression is healed (shake/pool
+   both fix it; geometry E 286 -> 41).
+
+Defaults unchanged (all three switches off) per the no-flip rule. The
+flip discussion now has a real menu: shake1 (cheap, huge on turan/K100,
+mild K140/spin_glass cost), pool (cliques/ER), or per-regime. Open
+items: the K140 E-inversion, the pool-x-shake interaction on turan, and
+whether (E, unplaced) selection should consult capacity pressure.
+
+### 3.53 The discrete-shake round: order moves at scale work (turan 7.19), inversion is null under the confound, and the E-proxy inversion becomes a pattern (2026-08-01)
+
+Built per plan: `order_shake` (segment reversals + block relocations at
+decaying scale L = n/2..2, sharing insertion's rank-space proxy via the
+factored `_order_proxy`; chained before insertion inside the SAME
+true-E-gated composite -- coarse moves raise raw E before fine repair, so
+separate gates would reject them all) and `shake_invert` (reshake cycles
+do radial RANK REVERSAL about the centroid instead of dilation -- the
+s3.52 finding that dilation preserves radial order made the core
+uncontestable). Design-validated numerically before build (reversal
+involution proxy-exact; block-move masks generalize insertion's L=1
+bit-exactly, destination clamp [0, n-L]; anchor arrays are order-aligned
+and must be realigned per call -- a caught would-be bug). 544 tests green.
+
+**Probe** (`data/dshake_probe.py` / `.csv`, reading pre-registered; Z12,
+5 cells x 4 arms x 3 seeds x 60 s, 12 workers on a quiet box; base
+replicated the s3.52 shake1 values -- scorable):
+
+| cell | base | invert | dshake | both | tmpl |
+|---|---|---|---|---|---|
+| K100 | 10.02 E1383 | 10.02 | 10.02 | 10.02 | 8.00 |
+| K140 | 14.25 E2788 | 14.86 E2755 | 14.17 | 14.86 E2755 | 11.00 |
+| ER100_d10 | 4.70 E66 | 4.85 E51 | 4.70 | 4.85 E51 | -- |
+| turan_n162 | 7.70 E2674 | 7.70 | **7.19** E2671 | 7.38 E2563 | 6.00 |
+| spin_glass | 14.21 | 14.21 | 14.10 | 14.10 | 11.64 |
+
+1. **order_shake: the mechanism is real.** turan 7.70 -> 7.19 paired
+   (template gap 1.20x, best the program has seen), spin_glass -0.11
+   (marginal), zero regressions anywhere, and K100's exact tie is the
+   symmetry argument confirming correctness (order moves provably inert
+   on K_n). The coarse-to-fine order anneal reaches states insertion
+   alone could not -- Max's "discrete form of shaking" hypothesis
+   confirmed on exactly the cell class (block-structured) it predicted.
+2. **shake_invert: null-to-harmful, UNDER THE RECORDED CONFOUND.** It
+   never improved a cell; keep-best discarded the inversion on 3/5
+   (byte-identical to base) and kept it on K140/ER where it LOWERED E
+   yet routed worse. The pre-registered escape clause applies: the
+   post-inversion resettle had no order repair (order search gated to
+   cycle 0). "Inversion without post-inversion order search is null";
+   all-cycles order search is the next flip if inversion is pursued.
+3. **The E-vs-routed inversion is now a PATTERN, not an incident**:
+   K140 (s3.52 and again here), ER (E 66->51, ACL 4.70->4.85), and
+   both-arm turan (E 2563 -- the round's lowest -- routing 7.38 > 7.19).
+   Every mechanism that pushes geometric E below the base settlement
+   routes slightly worse. Standing suspect: router slack (s3.52 item 3)
+   -- tighter placements starve repair space. This is the round's real
+   discovery: stair-E selection is systematically exploitable near the
+   optimum, and a slack-aware selection term is the named next design
+   question.
+4. Unrun combination on the ledger: dshake x masked_pool (the s3.52
+   clique records used pool; dshake's turan record didn't). The
+   per-cell best board stands at K100 9.67 / K140 12.16 / ER 4.66 /
+   turan **7.19** / spin_glass 13.93 -- every cell beats minorminer;
+   template gaps 1.11-1.28x.
+
+Defaults unchanged (five switches, all off) per protocol. Flip menu and
+the slack-aware selection question go to discussion.
+
+### 3.54 The exact-seeds round: K140 at 1.04x template with minorminer SKIPPED; the slack tax abolished where it was worst; turan trades against it (2026-08-02)
+
+Built per plan: `complete_seeds` (corner + edge + bridge passes; parity
+extension formula verified an exact iff over all 36,864 Z12
+cross-orientation couplers), boundary-line avoidance (the NEW Zephyr
+anatomy fact of the design round, fabrics s4.3b: lines 0/2m have HALF
+crossing capacity -- parity-blind packing there created 245 structurally
+uncoverable turan crossings), the mm-skip gate (valid seeds bypass
+legalization entirely; minorminer verified from C++ source to
+verify-and-return valid initial_chains), and `cover_select` (keep-best
+on post-claim coupler deficit; the cheap interval estimate measured
+VACUOUSLY ZERO -- intervals contain their crossings by construction).
+550 tests green.
+
+**Probe** (`data/exact_probe.py` / `.csv`, bars pre-registered; Z12,
+5 cells x 6 arms x 3 seeds x 60 s, 12 workers, quiet box; s = mm_skips,
+d = residual deficit):
+
+| cell | base | dshake | exact | exact0 | exact4 | cover4 | tmpl |
+|---|---|---|---|---|---|---|---|
+| K100 | 10.02 | 10.02 | **8.73** s1 d0 | 10.19 s1 | 8.73 s1 | 8.73 s1 | 8.00 |
+| K140 | 14.17 | 14.17 | **11.40** s1 d0 | 13.15 s1 | 11.40 s1 | 11.40 s1 | 11.00 |
+| ER100 | 4.70 | 4.70 | 4.76 d363 | 5.00 d275 | 4.73 | 5.03 | -- |
+| turan | 7.70 | **7.19** | 9.44 d729 | 9.00 s1 d0 | 9.44 | 8.43 s1 d0 | 6.00 |
+| spin_glass | 14.21 | 14.10 | **12.51** d10 | 12.70 d21 | 12.51 | 15.84 s1 d0 | 11.64 |
+
+Scorecard:
+
+1. **MECHANISM BAR: passed emphatically.** The gate fires 3/3 on
+   K100 and K140 in every exact arm (deficit 0, minorminer legalization
+   SKIPPED), plus turan exact0/cover4 and spin_glass cover4. Validity by
+   construction is real and routine on the crystal cells.
+2. **Where the slack tax was worst, abolishing it pays exactly as
+   predicted: K100 9.67 -> 8.73 (1.09x template), K140 12.16 -> 11.40
+   (1.036x -- essentially template-level), spin_glass 13.93 -> 12.51
+   (1.07x; residual d10 routed off a near-complete warm start).** These
+   are the three cells of the s3.52/s3.53 E-inversion pattern; with
+   repair abolished, tight geometry stopped being punished.
+3. **MINIMUM BAR FAILED on turan -- the predicted hiccup, localized.**
+   Exactness and turan's best geometry currently conflict: the
+   dshake-tight packing is incompletable (d729; the s3.53 E-leak
+   quantified: lower E -> 3x deficit), and boundary avoidance disturbs
+   the near-perfect lane layout, so exact arms land 8.43-9.44 vs
+   dshake's 7.19. The fix direction is co-design (completion-aware
+   packing), not more completion.
+4. **cover_select: mixed, stays off.** Helps turan (8.43 vs 9.44 --
+   deficit-first selection picks completable geometry), identical on
+   cliques, HARMFUL on spin_glass (15.84: forcing deficit-0 selects a
+   bad-E settlement). Deficit and E must be traded, not ordered.
+5. **ER: no benefit, no harm** (d275-363 -- liquid cells never gate;
+   ACL within noise). Max's prediction that exactness helps liquid
+   cells: not confirmed at this seed granularity.
+
+**Standing best-arm board vs templates: 8.73/8.00, 11.40/11.00,
+7.19/6.00, 12.51/11.64 -- gaps 1.09x / 1.04x / 1.20x / 1.07x** (from
+1.53x/--/2.34x/1.70x five days ago). All cells beat minorminer by
+1.2-1.6x. Open: the turan exactness-geometry conflict (co-design),
+deficit-E tradeoff in selection, ER liquid regime untouched by
+exactness. Defaults unchanged (seven switches, all off).
+
+### 3.55 The identity audit: the off-template board swept, completion helps where no template exists (2026-08-02)
+
+Max's challenge after s3.54 ("if we collapse into worse templates we are
+nothing — make sure the policies help on graphs for which templates
+don't exist or are not near-optimal"). Probe (`data/offtmpl_probe.py` /
+`.csv`, bars pre-registered): five Z12 cells busclique cannot address —
+liquid (ER100), sparse structured (regular_n316, ws_n486), multi-patch
+(wsc c8xK32, c3xK64) — stock mm as fresh paired baseline vs the switch
+stack in increments. Load caveat: external batch active (load 44-66);
+scorable — ER base replicated its quiet-box 4.70 exactly.
+
+| cell | mm | base | dshake | exact (stack) |
+|---|---|---|---|---|
+| ER100_d10 | 4.97 | **4.70** | 4.70 | 4.76 |
+| regular_n316 | 3.36 | 2.76 | 2.75 | **2.75** |
+| ws_n486 | 3.08 | 3.35 | 3.35 | **3.01** |
+| wsc_c8xK32 | 3.78 | 3.78 | 3.75 | **3.74** |
+| wsc_c3xK64 | 7.31 | 7.48 | 7.42 | **7.22** |
+
+1. **IDENTITY BAR: PASSED 5/5** (bar was >=4/5): best-of-stack beats or
+   ties mm on every off-template cell — regular_n316 by -18% (2.75 vs
+   3.36), ER -0.27, ws -0.07, wsc_c3xK64 -0.09, wsc_c8 tie-win. The
+   dense-round tuning did NOT overfit; the algorithm's home terrain is
+   intact and improved.
+2. **EXACTNESS OFF-TEMPLATE: PASSED, and better than the bar** — exact
+   never regresses beyond noise vs dshake, and IMPROVES ws_n486
+   (3.35 -> 3.01, flipping a cell mm was winning) and wsc_c3xK64
+   (7.42 -> 7.22, likewise). Completion is measured to be what it
+   claims: graph-agnostic finishing that reduces router churn — Max's
+   "exactness helps liquid/sparse too" prediction lands on ws/wsc
+   (not ER, where it is noise-neutral).
+3. Notable: the two cells the stack was BEHIND mm on (ws, c3xK64) are
+   exactly the ones exact_seeds rescued — off-template, the router-churn
+   reduction is the differentiator, not the gate (mm_skips ~0 there).
+
+Verdict: the worse-templates collapse is measured not to be happening —
+the stack wins on terrain where no template exists, and the completion
+mechanism is part of WHY it wins there. The program's thesis (one
+general algorithm bridging busclique's crystal and minorminer's liquid)
+now has supporting measurements on both ends of the bridge.
+
+### 3.56 The snap round: aim-don't-repair confirmed (extensions -> 0), turan gates valid at 8.04, and the d729 re-attribution (2026-08-02)
+
+HONESTY ITEM FIRST — s3.54's turan attribution is corrected: the d729
+residual was NOT misalignment. Design-round simulation on the real
+geometry found 4 columns packed to interval depth 9-12 against 8
+sub-lanes: 9 arms never received a wire at all, and 9x81 = 729 (every
+residual edge incident to exactly those 9 variables). Snap cannot color
+the uncolorable; **oversubscription in the packer is the named remaining
+turan blocker** (a future packing round). The simulation also exposed
+that the s3.54 matrix never ran dshake+exact together — and predicted
+that combination completes turan to d0.
+
+Built: `snap_claims` (wire_seeds_iv takes src_adj; claims are aimed at
+the stair-assigned contacts' lines parity-exactly at color time, hull of
+the original interval and p* = c if c%2==s%2 else c-1; participation
+gate stays on the original interval; parity-agnostic hull widening kept
+as a zero-cost guard, measured inert). 553 tests green.
+
+**Probe** (`data/snap_probe.py` / `.csv`, bars pre-registered; Z12,
+5 cells x 3 arms x 3 seeds x 60 s, quiet box; all arms courses +
+shake_cycles=1 + order_shake=1; s=mm_skips d=deficit e=extensions):
+
+| cell | dshake | exact_ds | snap | tmpl |
+|---|---|---|---|---|
+| K100 | 10.02 | 8.73 s1 d0 e100 | 8.74 s1 d0 **e0** | 8.00 |
+| K140 | 14.17 | 11.40 s1 d0 e123 | 11.41 s1 d0 **e0** | 11.00 |
+| ER100_d10 | 4.70 | 4.76 d363 | 4.76 d367 | -- |
+| turan_n162 | **7.19** | 8.04 s1 d0 e77 | 8.04 s1 d0 **e0** | 6.00 |
+| spin_glass | 14.10 | 12.77 d4 e193 | **12.66** d4 e42 | 11.64 |
+
+1. **MECHANISM: passed completely.** Snap zeroes the extension passes on
+   every gating cell (e100/e123/e77 -> 0; spin_glass 193 -> 42, the
+   residue from oversubscribed arms) at byte-equal ACLs — completion is
+   now a verifier, exactly as designed. And the missing arm behaved as
+   simulated: **turan completes to d0 and GATES VALID under
+   dshake+exact** (s1 d0, all three seeds).
+2. **MINIMUM: one clause failed, honestly.** turan exact arms land 8.04
+   -- above the <=7.70 bar (though far below s3.54's 9.44/8.43: the
+   exactness price on the cell collapses from +2.25 to +0.85). All
+   other cells hold their s3.54 values (K100/K140 identical; spin_glass
+   12.66 within the cell's noise of 12.51, and snap is its best exact
+   number yet). STRETCH (<=7.19) not met.
+3. **The turan ledger is now exact**: 7.19 (non-exact dshake, router
+   negotiated) vs 8.04 (valid-by-construction, minorminer never
+   legalizes). The +0.85 gap is the oversubscription defect plus
+   boundary-avoidance's shaved lanes — both packing-side. When packing
+   respects depth 8, the two numbers should meet; that is the next
+   round's precise target.
+4. snap is ACL-neutral by design and slightly positive on spin_glass;
+   its enduring value is structural: cover_select now scores the exact
+   claim layer, and every deficit that remains is a packing fact, not a
+   claiming artifact.
+
+Standing best-arm board: K100 8.73 / K140 11.40 / ER 4.66 / turan 7.19
+/ spin_glass 12.66 — template gaps 1.09x / 1.04x / -- / 1.20x / 1.09x.
+Eight switches, all default-off. Open: the oversubscription packing
+round (turan's last conflict), the flip council.
+
+### 3.57 The overload-gate round: feasibility priced into the energy — turan's exact arm 7.90, nothing else moved (2026-08-02)
+
+Max's design, verbatim brief: "feasibility is part of the energy...
+figure out the good way to put the penalty in the energy and see if
+that fixes turan and nothing else breaks." Built as `overload_lam`:
+every existing E-gate and cycle selection scores stair-E + lam *
+hinge^2 of the CLAIM LAYER'S OWN line-capacity census (`claim_overload`
+— audited to be the uncolorability count squared, not a proxy);
+evaluation only, no descent; one lam everywhere; round_E stays raw
+stair-E; lam=0 short-circuits byte-identically. 556 tests green.
+
+Design-round dose-response (the step function, on record): lam=0 broken
+(d729 at LOWER stair-E than the repaired state — E-blindness in one
+number: 2802 vs 2808); lam=1-2 repaired (+6 tiles E = 0.2%; the
+depth-repairing composite the raw gate REVERTED is accepted — the
+revert counter flipped 1 -> 0); lam>=4 over-trades (+80 E, routed
+8.28). lam=1 chosen.
+
+**Probe** (`data/overload_probe.py` / `.csv`, bars pre-registered; Z12,
+5 cells x 3 arms x 3 seeds x 60 s, quiet box):
+
+| cell | control (os=1, lam0) | ovl (os=1, lam1) | ovl_nos (os=0, lam1) | tmpl |
+|---|---|---|---|---|
+| K100 | 8.74 s1 d0 | 8.74 | 8.74 | 8.00 |
+| K140 | 11.41 s1 d0 | 11.41 | 11.41 | 11.00 |
+| ER100_d10 | 4.76 d367 | 4.76 | 4.76 | -- |
+| turan_n162 | 8.04 s1 d0 | 8.04 | **7.90** s1 d0 | 6.00 |
+| spin_glass | 12.66 d4 | 12.66 | **12.47** d7 | 11.64 |
+
+1. **MINIMUM: PASSED exactly as validated** — turan best ovl arm 7.90
+   (bar <= 8.0; the design-round prediction to the hundredth), gates
+   firing s1 d0; guards byte-identical (K100/K140/ER) — "nothing else
+   breaks," delivered on the letter. STRETCH (<= 7.19) not met.
+2. **The penalty is inert where feasible and decisive where not** —
+   ovl == control on every already-feasible geometry (the designed
+   guard), and on the os=0 geometry it unlocks d729 -> 0 valid at
+   routed 7.90. With the penalty in place, the order_shake step is
+   UNNECESSARY on turan (its role there was accidentally dodging the
+   overload the gates could not see; the penalty sees it).
+3. **Bonus: spin_glass 12.47 (best exact yet)** — the os=0+lam1
+   geometry routes better despite d7 residue.
+4. The turan account closes at: 7.19 negotiated (non-exact) vs 7.90
+   constructed (minorminer never legalizes) — exactness price +0.71,
+   down from +2.25 at s3.54. The remaining gap between the two numbers
+   is boundary-avoidance's shaved lanes plus routing-vs-construction
+   economics; the cell's true frontier remains template 6.00.
+
+Standing best-arm board: K100 8.73 / K140 11.40 / ER 4.66 / turan 7.19
+(7.90 constructed) / spin_glass 12.47 — template gaps 1.09x / 1.04x /
+-- / 1.20x / 1.07x. Nine switches, all default-off. The flip council is
+the outstanding decision; feasibility-in-the-energy is the round that
+made the switch stack coherent enough to convene it.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).
