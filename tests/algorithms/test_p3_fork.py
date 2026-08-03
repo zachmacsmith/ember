@@ -2,8 +2,9 @@
 tests/algorithms/test_p3_fork.py
 ================================
 The paper3 fork switches — P4 shortener economics (``short_audit`` /
-``audit_budget`` / ``dirty_skip``) and P6 anatomy (``chain_tree`` /
-``root_boltzmann``, plus the surfaced stock ``max_beta``). For each switch:
+``audit_budget`` / ``dirty_skip``), P6 anatomy (``chain_tree`` /
+``root_boltzmann``, plus the surfaced stock ``max_beta``), and the W2
+beta-ramp pair (``beta_ramp`` / ``beta_ramp_hold``). For each switch:
 
 * **parity** — at its default value the fork returns embeddings byte-identical
   to stock ``minorminer`` on >= 4 (graph, seed) cases, so the control arm of
@@ -38,13 +39,15 @@ pytestmark = pytest.mark.skipif(
 
 SEEDS = range(2)
 
-# Defaults for every P4/P6 switch: passing these explicitly must be inert.
+# Defaults for every P4/P6/W2 switch: passing these explicitly must be inert.
 DEFAULTS = {
     "short_audit": 0,
     "audit_budget": 3,
     "dirty_skip": 0,
     "chain_tree": 0,
     "root_boltzmann": 0.0,
+    "beta_ramp": 0.0,
+    "beta_ramp_hold": 0,
 }
 
 
@@ -104,6 +107,15 @@ ENGAGED = [
     ("chain_tree=1", dict(chain_tree=1), True),
     ("chain_tree=2", dict(chain_tree=2), True),
     ("root_boltzmann=2.0", dict(root_boltzmann=2.0), False),
+    # W2 ramp (finite start, per-pass x2 ramp): max_beta=2.0 so the finite
+    # base visibly reprices routing on these low-fill 128-qubit cases (an 8.0
+    # start never beats a free detour here and stays stock-identical); the
+    # ramp itself is what recovers feasibility from that aggressive start.
+    # ramp2h is an expected exact tie with ramp2 in single-shot
+    # find_embedding (the chainlength phase never re-reads qubit prices);
+    # both are asserted valid/deterministic and to diverge from STOCK.
+    ("ramp2", dict(max_beta=2.0, beta_ramp=2.0), True),
+    ("ramp2h", dict(max_beta=2.0, beta_ramp=2.0, beta_ramp_hold=1), True),
 ]
 
 
@@ -124,6 +136,24 @@ class TestActivity:
                 differed |= (emb != stock)
         if must_differ:
             assert differed, f"{label} never diverged from stock — switch inert?"
+
+    def test_ramp_reaches_stock_pricing(self, instances):
+        """W2 ramp-reaches-stock unit: with a huge ramp factor, pass 1 prices
+        at the finite max_beta and every later pass at a saturated
+        (effectively infinite) base — i.e. stock lexicographic pricing from
+        pass 2 on.  The trajectory can still differ from stock through the
+        pass-1 pricing, so EXACT equality with a stock run is deliberately
+        NOT asserted; the run must embed all nodes, be valid, and be
+        deterministic."""
+        for src, tgt in instances:
+            for seed in SEEDS:
+                emb = _fork(src, tgt, seed, max_beta=2.0, beta_ramp=1e30)
+                assert len(emb) == src.number_of_nodes(), \
+                    "huge-r ramp failed to embed (should recover stock " \
+                    "feasibility from pass 2 on)"
+                assert is_valid_embedding(emb, src, tgt)
+                assert emb == _fork(src, tgt, seed, max_beta=2.0,
+                                    beta_ramp=1e30)
 
     def test_dirty_skip_fires_with_patience(self, instances):
         """dirty_skip only pays in the failing tail; with a long patience the
@@ -154,6 +184,17 @@ class TestWrapper:
         r = forked_find_embedding(src, tgt, max_beta=2.0, seed=0, timeout=30.0,
                                   fallback=False)
         assert r["embedding"], "max_beta arm failed on an easy instance"
+        assert is_valid_embedding(r["embedding"], src, tgt)
+
+    def test_beta_ramp_threads_through(self, instances):
+        """W2: beta_ramp/beta_ramp_hold must join the engaged predicate (a
+        pure fallback=False run through the wrapper, kwargs-only — there is
+        deliberately NO registered ramp arm)."""
+        src, tgt = instances[0]
+        r = forked_find_embedding(src, tgt, max_beta=8.0, beta_ramp=2.0,
+                                  beta_ramp_hold=1, seed=0, timeout=30.0,
+                                  fallback=False)
+        assert r["embedding"], "ramp arm failed on an easy instance"
         assert is_valid_embedding(r["embedding"], src, tgt)
 
     def test_no_switch_equals_mmfork_control(self, instances):

@@ -18,6 +18,12 @@ ember_qc/algorithms/minorminer_forked.py
   union-of-paths / pure SPH) and ``root_boltzmann=`` (temperature-weighted root
   choice, the 2014 paper's never-shipped proposal); ``max_beta=`` (stock knob,
   finite = the paper's beta^occ pricing) is surfaced via the wrapper.
+* paper3 W2 beta-ramp switches — ``beta_ramp=`` (per-pass geometric ramp of
+  the live ``max_beta`` while the embedding is invalid: finite-beta quality
+  pricing gliding toward stock's lexicographic feasibility pricing) and
+  ``beta_ramp_hold=`` (restore the caller's beta once embedded; source-truth
+  caveat: the chainlength phase never re-reads qubit prices, so in a plain
+  ``find_embedding`` call hold is an expected exact tie with hold=0).
   See ``forked_find_embedding`` below and docs/paper3/proposals/{shortener,anatomy}.md.
 
 With every switch unset the fork is byte-identical to stock minorminer 0.2.22
@@ -109,6 +115,7 @@ def forked_find_embedding(
     short_audit: int = 0, audit_budget: int = 3, dirty_skip: int = 0,
     chain_tree: int = 0, root_boltzmann: float = 0.0,
     max_beta: Optional[float] = None,
+    beta_ramp: float = 0.0, beta_ramp_hold: int = 0,
     seed: int = 0, timeout: float = 60.0, tries: int = 10, fallback: bool = True,
 ) -> dict:
     """Run the forked minorminer full search with any of the fork's switches.
@@ -135,6 +142,15 @@ def forked_find_embedding(
     * ``max_beta`` — stock minorminer knob, surfaced here for P6: finite values
       give the 2014 paper's beta^occ exchange-rate pricing instead of the
       shipped effectively-infinite (lexicographic-overlap) default.
+    * ``beta_ramp`` / ``beta_ramp_hold`` — paper3 W2 ramp: after every pass
+      that leaves the embedding invalid, the live ``max_beta`` is multiplied
+      by ``beta_ramp`` (finite-beta quality pricing gliding toward stock's
+      lexicographic feasibility pricing); with ``beta_ramp_hold`` the caller's
+      beta is restored once embedded (source-truth caveat: the chainlength
+      phase never re-reads qubit prices, so in a plain ``find_embedding``
+      call hold is an expected exact tie with hold=0 — T1c pins it).
+      ``beta_ramp_hold`` is passed only alongside ``beta_ramp`` (it is
+      meaningless without it).  Kwargs-only — no registered ramp arm.
 
     Drop-in safety: any engaged switch *could* fail where stock MM would
     succeed. With ``fallback`` (default), a failed modified run is retried once
@@ -165,7 +181,8 @@ def forked_find_embedding(
         order = [v for v in order if v not in _iso]
 
     engaged = (order is not None or history_alpha or short_audit or dirty_skip
-               or chain_tree or root_boltzmann or max_beta is not None)
+               or chain_tree or root_boltzmann or max_beta is not None
+               or beta_ramp)
 
     def _run(t, modified):
         params = dict(_DEF)
@@ -187,6 +204,9 @@ def forked_find_embedding(
                 params["root_boltzmann"] = float(root_boltzmann)
             if max_beta is not None:
                 params["max_beta"] = float(max_beta)
+            if beta_ramp:
+                params["beta_ramp"] = float(beta_ramp)
+                params["beta_ramp_hold"] = int(beta_ramp_hold)
         try:
             e = mod.find_embedding(S, T, random_seed=int(seed), **params)
         except Exception as exc:

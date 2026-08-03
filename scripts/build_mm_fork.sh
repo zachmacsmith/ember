@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Build the Ember fork of minorminer: stock 0.2.22 + parity-guarded switches
-# (var_order=, history_alpha=, and the paper3 P4/P6 set: short_audit=,
-# audit_budget=, dirty_skip=, chain_tree=, root_boltzmann=), each byte-identical
-# to stock at its default.
+# (var_order=, history_alpha=, the paper3 P4/P6 set: short_audit=,
+# audit_budget=, dirty_skip=, chain_tree=, root_boltzmann=, and the paper3 W2
+# beta-ramp pair: beta_ramp=, beta_ramp_hold=), each byte-identical to stock
+# at its default.
 #
 # Idempotent: clones the pinned tag if absent, applies scripts/mm_fork.patch
 # (the C++/Cython diff) if not already applied, then builds ONLY the
@@ -70,18 +71,20 @@ b = [acl(f.find_embedding(S, T, random_seed=k, **DEF)) for k in range(8)]
 assert a == b, f"PARITY FAILED: {a} != {b}"
 # every fork switch, explicitly at its default, must stay byte-inert
 OFF = dict(history_alpha=0.0, short_audit=0, audit_budget=3, dirty_skip=0,
-           chain_tree=0, root_boltzmann=0.0)
+           chain_tree=0, root_boltzmann=0.0, beta_ramp=0.0, beta_ramp_hold=0)
 c = [acl(f.find_embedding(S, T, random_seed=k, **OFF, **DEF)) for k in range(8)]
 assert a == c, f"PARITY FAILED with all switches at defaults: {a} != {c}"
 order = sorted(src.nodes(), key=lambda v: -src.degree(v))
 ON = [dict(var_order=order), dict(history_alpha=1.0), dict(short_audit=1),
       dict(short_audit=2, audit_budget=3), dict(dirty_skip=1),
-      dict(chain_tree=1), dict(chain_tree=2), dict(root_boltzmann=2.0)]
+      dict(chain_tree=1), dict(chain_tree=2), dict(root_boltzmann=2.0),
+      dict(max_beta=8.0, beta_ramp=2.0),
+      dict(max_beta=8.0, beta_ramp=2.0, beta_ramp_hold=1)]
 for kw in ON:
     e = f.find_embedding(S, T, random_seed=0, **kw, **DEF)
     assert len(e) == src.number_of_nodes(), f"engaged run {kw} did not embed all nodes"
 print("   parity OK (fork==stock with every switch unset AND at explicit defaults);")
 print("   var_order/history_alpha/short_audit/audit_budget/dirty_skip/chain_tree/")
-print("   root_boltzmann accepted and valid when engaged")
+print("   root_boltzmann/beta_ramp/beta_ramp_hold accepted and valid when engaged")
 PYEOF
 echo ">> done."
