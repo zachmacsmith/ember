@@ -109,6 +109,11 @@ import networkx as nx
 
 from ember_qc.registry import EmbeddingAlgorithm, register_algorithm
 from ember_qc.embedding_backend import build_adjacency, is_valid_embedding
+# D-hat source-diameter estimate — the single shared implementation (notes.md
+# §5 interface freeze): exact diameter of the largest component, double-BFS
+# lower bound above the size cap, floored at 2.0. Importing beta never loads
+# the fork .so (deferred to embed-time).
+from ember_qc.algorithms.paper3.beta import dhat_of as _dhat
 
 logger = logging.getLogger(__name__)
 
@@ -161,31 +166,6 @@ def _normalize(raw: Dict) -> Embedding:
     return {v: [int(q) for q in c] for v, c in raw.items()}
 
 
-_DHAT_EXACT_CAP = 2000   # above this, double-BFS estimate (never at n<=180)
-
-
-# TODO(merge): switch to paper3.beta.dhat_of (the beta module is being built
-# in a parallel worktree; interface frozen in notes.md §5). Until then this is
-# a verbatim local copy of docs/paper3/data/p6_probes.py::dhat_of — the D-hat
-# source-diameter estimate documented there (exact diameter of the largest
-# component, double-BFS lower bound above the size cap, floored at 2.0).
-def _dhat(src: nx.Graph) -> float:
-    if src.number_of_nodes() == 0:
-        return 2.0
-    comp = max(nx.connected_components(src), key=len)
-    sub = src.subgraph(comp)
-    if sub.number_of_nodes() <= 2:
-        d = 1
-    elif sub.number_of_nodes() > _DHAT_EXACT_CAP:
-        # double-BFS eccentricity lower bound (cost cap; never at n<=180)
-        v0 = min(sub.nodes())
-        d1 = nx.single_source_shortest_path_length(sub, v0)
-        far = max(d1, key=lambda v: (d1[v], v))
-        d2 = nx.single_source_shortest_path_length(sub, far)
-        d = max(d2.values())
-    else:
-        d = nx.diameter(sub)
-    return float(max(2.0, d))
 
 
 # ──────────────────────────────────────────────────────────────────────────────

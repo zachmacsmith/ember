@@ -85,6 +85,7 @@ class P3Ember(EmbeddingAlgorithm):
             meta["native_s"] = round(time.perf_counter() - nat0, 4)
             if nat is not None:
                 meta["winner"] = "native"
+                meta["construct_s"] = round(time.perf_counter() - t0, 4)
                 return {"embedding": _normalize(nat),
                         "time": time.perf_counter() - t0, "metadata": meta}
 
@@ -156,6 +157,11 @@ class P3Ember(EmbeddingAlgorithm):
                 status = ("TIMEOUT" if time.perf_counter() >= deadline - 0.01
                           else "FAILURE")
                 return _failure(t0, status, "both arms failed", meta)
+            # time-to-first-valid-embedding — the §4.15 bar (iii) quantity
+            # (2026-08-03 amendment): stock MM's wall IS its time-to-first-
+            # valid, so this is the apples-to-apples wall; the stage-4 anytime
+            # tail is budget-bound by design (the mmpolish precedent).
+            meta["construct_s"] = round(time.perf_counter() - t0, 4)
 
             # ── stage 4: leftover-wall polish (monotone, validity-guarded) ──
             if not tiny and deadline - time.perf_counter() > _MIN_POLISH_BUDGET_S:

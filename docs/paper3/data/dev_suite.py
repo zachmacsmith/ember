@@ -91,7 +91,8 @@ DEV_SUITE = {
 }
 
 ARMS = ("minorminer", "mmfork-cuthill", "minorminer-layout", "p3-template",
-        "p3-ate", "p3-clmm", "p3-clmm-core", "p3-mmpolish", "pssa", "attraction")
+        "p3-ate", "p3-clmm", "p3-clmm-core", "p3-mmpolish", "p3-ember",
+        "pssa", "attraction")
 DETERMINISTIC_ARMS = {"p3-template"}          # once per instance, algo_seed -1
 NO_WATCHDOG = {"minorminer", "mmfork-cuthill"}  # MM-family, protocol-exempt
 REFERENCE_ARMS = ("minorminer", "p3-template")

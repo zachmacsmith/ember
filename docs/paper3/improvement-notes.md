@@ -15,6 +15,8 @@ embedding won. Expected: a single arm carrying BOTH stories, strictly dominating
 parent (polish is validity- and monotonicity-preserving). Cost: ~20 lines + a dev-cell
 probe. Risk: none measurable (the polish self-terminates at its fixpoint).
 
+**STATUS (2026-08-03): BUILT** — p3-ember stage 4 (v1.2 P1/W1, §5 build record); verdict pends §4.15 T1a bars (i)/(ii) + §4.16 T2.
+
 ## 2. Kill ate's sparse "insurance tax" with a sub-K_max gate  [BUILD, small]
 
 Evidence: on Z12, ate's ties sit at 38–47% win rates and its six +0.6..+1.7% nominal
@@ -23,6 +25,8 @@ below K_max — MM inside ate gets ~58 s vs the baseline's 60. Fix: skip the tem
 attempt below density ≈ 0.08 (every measured template win is at density ≥ 0.12;
 E0's sparse control (160, 0.05) is a template loss). Alternative/complement: item 3.
 
+**STATUS (2026-08-03): BUILT** — p3-ember stage 1 gate at density >= 0.08 below K_max (§5); verdict pends §4.15 bar (iii) (construct_s reading, amendment 2).
+
 ## 3. Cheapen the template attempt itself  [BUILD]
 
 Evidence: the 0.5–2.1 s template-stage cost is spur_prune-dominated (exact fixpoint
@@ -30,6 +34,8 @@ over all chains). An incremental prune (endpoints-first, early-exit when the fir
 full sweep accepts nothing) or an index-space rewrite should cut this to ≲100 ms,
 shrinking the item-2 tax without any gate — keeping dense-random detection at every
 density for free.
+
+**STATUS (2026-08-03): PARTIAL** — W1b spur_prune clean-chain-skip landed (byte-identical corpus-proven, 1.22-1.32x template speedup; commit ac064754). Full index-space rewrite not attempted.
 
 ## 4. Productize the confirmed beta-dhat sparse win  [BUILD, biggest untapped margin]
 
@@ -44,6 +50,8 @@ with stock-MM fallback on failure; (b) zero-risk: add a beta-dhat arm to the
 p3-race8 roster (the racer's selection machinery absorbs its feasibility risk and
 its diversity is exactly what the roster wants). (b) first; costs one roster line.
 
+**STATUS (2026-08-03): BUILT, both paths** — (b) race9's mm-beta roster slot; (a) p3-mm-beta (gate < 0.11) + p3-mm-beta-fb (0.6x-budget beta then stock-MM rescue), plus the NEW beta_ramp fork switch. Verdicts pend §4.15 T1c/T1d.
+
 ## 5. Racer terminal polish + roster upgrade  [BUILD, small]
 
 Evidence: the racer returns best-ever raw (its §4.6/§4.10 wins are pre-polish);
@@ -51,6 +59,8 @@ mmpolish's universal small win applies verbatim to the survivor. Add: one termin
 polish quantum on the winner + the item-4 beta-dhat arm to the roster. Also consider
 seeding one roster slot from the previous round's best embedding on repeated calls
 (warm-start across instances is unexplored).
+
+**STATUS (2026-08-03): BUILT** — race9 terminal anytime_polish + mm-beta slot (warm-start across instances NOT built — unexplored still). Verdict pends §4.15 T1d.
 
 ## 6. clmm boundary science: johnson / random_planar / Z12 mid-band  [PAPER first]
 
@@ -64,6 +74,8 @@ template-friendly structured-dense families the right move is the template itsel
 not template-seeded search. Candidate fix if the probe supports it: structure gate —
 prefer template over seeding when the source's clique-template restriction score
 (cheap, computable from POS) is high.
+
+**VERDICT (2026-08-03): probe FAILED, hypothesis INVERTED — structure gate DEAD.** Pre-registered read (W4): AUC(low restriction score -> johnson-signature positive) = 0.366 vs the 0.8 bar over 883 all-three-succeed Z12 graphs (64 pos / 819 neg). Positives mean score 4.22 vs negatives 3.45; johnson has the HIGHEST mean restriction score (5.94; within-family AUC 0.814 for HIGH->signature) yet reproduces the signature (mean d_ate -0.41, d_clmm +0.47, 15/27 positives), while random_planar positives sit at the LOW end — bimodal across families; even the flipped classifier (0.634) misses the bar. Interpretation: seeds mislead MM precisely where the template restriction is geometrically STRESSED yet the raw template still beats MM. No POS-score gate is buildable; retained as boundary science (data: probe_structure_gate.csv).
 
 ## 7. hardware_native mmpolish loss (+5.9%)  [investigate before engineering]
 
@@ -109,6 +121,8 @@ density >= c · (fabric degree / K_max-normalized) or simply a per-family-of-tar
 constant {C16: 0.35, P16: 0.15, Z12: 0.15} — the busgraph cache already identifies
 the target family. Zero effect on P16/Z12 behavior.
 
+**STATUS (2026-08-03): BUILT/LANDED** — clmm v1.2.0 kmax-keyed threshold (kmax < 1.6*sqrt(|V|) -> 0.35, else 0.15; P16/Z12 byte-identity regression-tested). C16 re-measure deferred with the P16/C16 decision.
+
 ## 12. Native fast path for hardware-native sources  [BUILD, small]
 
 Evidence: hardware_native trips a different arm on each architecture (§4.11: ate
@@ -119,3 +133,5 @@ p3 arm — attempt a direct subgraph placement (greedy label-preserving match or
 minorminer.subgraph if available; budget ~100 ms); on success return chains of
 length 1 (ACL exactly 1.0, unbeatable). Makes all arms strictly >= MM on native
 sources and removes the recurring flag.
+
+**STATUS (2026-08-03): BUILT** — native.py three-tier fast path inside p3-ember (structural gates -> label identity -> Glasgow, eligibility-gated per §4.15 amendment 1). Verdict pends §4.15 T1b + §4.16 hardware_native retirement bar.

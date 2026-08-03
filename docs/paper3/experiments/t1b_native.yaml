@@ -1,0 +1,17 @@
+# paper3 v1.2 §4.15 T1b — native fast path on hardware_native (Z12-eligible)
+# Hand-written per the §4.15 pre-registration (2026-08-02). CLI regime:
+# "(instance, trial)" pairing — the CLI salts derived seeds with the arm name.
+name: t1b_native
+algorithms:
+  - minorminer
+  - p3-ate
+  - p3-ember
+graphs: "37600-37628, 37630-37641"
+topologies: [zephyr_12]
+trials: 5
+warmup: 0
+timeout: 60.0
+seed: 42
+workers: 40
+output_dir: results/t1b_native
+note: "hardware_native Z12-eligible (41 graphs) x 3 arms x 5 trials = 615 rows | (instance, trial) pairing [CLI] | paper3 v1.2 T1b (§4.15)"

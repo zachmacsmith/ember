@@ -922,6 +922,46 @@ threshold (Z12/P16-identity, unit-tested). Interface freeze for the build wave:
 paper3/beta.py exports dhat_of(source)->float and _GATE_MAX_DENSITY = 0.11; the
 racer agent stubs a local copy and the coordinator swaps the import at merge.
 
+BUILD RECORD (P1 wave complete 2026-08-03; four worktree agents, merged in the
+planned order A2->A3->A1->A4; all merges conflict-free; racer's local _dhat
+swapped to beta.dhat_of at merge as contracted):
+- W2/A2 (9fc2ffdd): beta.py (p3-mm-beta gate<0.11 passthrough-above; -fb = 0.6x
+  budget beta then stock-MM rescue on the actual remainder), beta_ramp/
+  beta_ramp_hold fork switches (5-site plumbing x2; saturates DBL_MAX/4; zero
+  rng draws), regenerated mm_fork.patch (760 lines) vs pristine 0.2.22,
+  build_mm_fork.sh self-test extended (OFF-parity + engaged combos), p6_probes
+  --topo Z12/--confirm-beta (900 tasks -> *_z12 files; P16 resume keys
+  protected; committed P16 summaries regenerate byte-identically). 789
+  algorithm tests green vs a from-scratch fork build. FINDING: beta_ramp_hold
+  inert in single-shot find_embedding (see §4.15 amendment 3).
+- W3/A3 (a2127e33): race.py p3-race9 (mm-beta stage kind with parent-computed
+  dhat threaded as a picklable float; RACE9_SPEC appended at index 8 so arms
+  0-7 keep race8's exact seed derivations; opt-in terminal anytime_polish,
+  monotone + validity-gated, terminal_polish_s accounted), t1d_race9.py (4
+  modes, §4.15 bars printed as verdicts, both par modes at 8 workers).
+  race8 FROZEN — replay test pins values captured at 2161c9dc.
+- W1/A1 (0a317117 + ac064754): native.py (structural gates -> label-subset
+  identity -> Glasgow, deterministic, never trusted unvalidated) + ember.py
+  (p3-ember v1.0.0: native -> template with sub-K_max density gate >= 0.08 ->
+  stock-MM remainder -> select, tie->template -> leftover anytime_polish;
+  tiny-timeout <= 2 s skips Glasgow + polish). W1b LANDED: spur_prune
+  clean-chain-skip, byte-identical on the deadline-free corpus gate,
+  1.22-1.32x template speedup (revert = git revert ac064754 alone). A1 flagged
+  the Glasgow wall smoke at 5.667 s -> resolved by §4.15 amendment 1
+  (eligibility gate; coordinator-measured tax curve).
+- W4/A4 (aea0196a): clmm v1.2.0 kmax-keyed guard threshold. DEVIATION from the
+  plan's literal "kmax < 100" cut: P4=36 / Z3=40 / Z4=56 would be misclassified
+  chimera-class, breaking the prescribed identity tests — replaced by the
+  size-normalized key kmax < 1.6*sqrt(|V_target|) (chimera-class ratio sqrt(2)
+  ~ 1.41 at every size; P/Z >= 1.7), which reproduces the intended flagship
+  split exactly (C16 64 -> 0.35; P16 180 / Z12 184 -> 0.15) and is
+  broken-qubit-robust. P16/Z12 byte-identity regression-tested (v1.1 hashes
+  captured pre-change). Probe verdict: §4.15 amendment 4 / improvement-notes
+  #6 — structure gate DEAD.
+- Coordinator (this merge): race.py dhat import swap; native.py
+  glasgow_eligible gate; ember.py construct_s; dev_suite ARMS += p3-ember;
+  §4.15 amendments 1-4.
+
 ### 4.15 v1.2 T1 — Zephyr dev gates (2026-08-02)
 
 PRE-REGISTERED 2026-08-02 (before any build merge or launch). Scripts land in the
@@ -962,6 +1002,51 @@ BARS (noise-calibrated per improvement-notes #10):
   investigation before shipping.
 - CLI family rules: success drops real only above max(2.6 pt, 3 graphs) (2.6 pt ~
   95th pct of the measured sd-1.57 null); family ACL bars only at >=10 pairs.
+
+AMENDMENTS (2026-08-03, pre-launch — dated before any T1 run; nothing launched):
+
+1. **Glasgow tier eligibility** (resolves the A1 build-smoke violation: wall
+   5.667 s >= the 5 s bar on the largest Z12-eligible source, Z8-scale n=2176).
+   Coordinator re-measured the tax curve (mac, stock 0.2.22, timeout=1, into
+   Z12): find_subgraph's supplemental preprocessing runs OUTSIDE its own timeout
+   and scales with SOURCE edges — gnp sources ~1.06 s (the 1 s int-floor solver
+   budget), Z4/5.0k edges 1.71 s, Z6/11.4k 3.25 s, Z8/20.3k 5.24 s — and the Z8
+   probe MISSES after paying 5.24 s (a 1-2 s solver budget cannot crack
+   ~2000-node subgraph isomorphism; at that scale label-identity is the only
+   realistic hit path). Remedy (native.py::glasgow_eligible): the Glasgow tier
+   runs only when source edges <= 15,000 AND modal-degree concentration
+   (fraction of nodes with degree within +-1 of the modal degree) >= 0.6.
+   Measured split: sparse-ER dev cells <= 0.43, BA 0.56 | QPU graphs with 5%
+   broken 0.80-0.93, perfect fabrics >= 0.71, grid 0.97, cycle/hypercube/
+   random-regular 1.00, random tree 0.94 — the accepted set is exactly where a
+   subgraph hit is plausible; a sparse-ER call is a measured pure-miss ~1.06 s
+   tax. Structural + label-identity tiers stay universal. The smoke bar reads:
+   find_subgraph wall < 5 s on the largest glasgow-ELIGIBLE Z12 source
+   (re-verified pre-T1b; the largest Z12-eligible FAMILY source now pays only
+   µs-ms gates). SMOKE (2026-08-03, mac, through try_native): gnp(160,0.05)
+   gated 0.002 s; Z6 eligible 3.603 s MISS (< 5 s bar PASS); Z8 gated 0.003 s;
+   Z12-with-5%-broken aligned labels -> label_identity hit 0.062 s ACL 1.0;
+   grid 12x12 and cycle-200 -> glasgow_hit ~0.37 s ACL 1.0 (the eligibility
+   set is winnable, not merely protective).
+2. **Bar (iii) wall term made precise**: "median wall vs MM" compares ember's
+   time-to-FIRST-VALID embedding (meta ``construct_s``, visible in dev_suite
+   arm_meta) against MM's wall — stock MM's wall IS its time-to-first-valid.
+   Ember's stage-4 anytime tail spends the leftover to the shared deadline by
+   design (the mmpolish precedent; §4.13 mmpolish ~= 60 s walls) and is not the
+   (iii) quantity. Total wall stays logged; every ACL comparison remains
+   equal-total-budget.
+3. **T1c expected tie** (A2 build finding, documented in-tree): beta_ramp_hold
+   is observationally inert in single-shot find_embedding — the chainlength
+   phase never re-reads qubit prices and ep.embedded never reverts — so
+   ramp2h == ramp2 byte-identically. T1c treats the exact tie as CONFIRMING
+   instrumentation (the §4.7 dirty_skip precedent), not a wasted arm.
+4. **W4 probe verdict** (pre-registered in the W4 kickoff, not a §4.15 bar;
+   recorded at improvement-notes #6): AUC 0.366 vs the 0.8 bar over 883
+   all-three-succeed Z12 graphs — FAIL with the direction INVERTED (johnson
+   positives sit at HIGH template-restriction score, within-johnson AUC 0.814
+   for high->signature; random_planar positives at the LOW end — bimodal
+   across families, no threshold separates). The v1.3 structure gate is dead;
+   the finding is retained as item-6 boundary science.
 
 --- results appended below; nothing above this line is edited after launch ---
 
