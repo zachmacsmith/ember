@@ -70,7 +70,7 @@ index cfc3d48..2a16e58 100644
          var_order_shuffle.clear();
          for (int v = num_v; v--;) var_order_shuffle.push_back(v);
 diff --git a/include/find_embedding/pathfinder.hpp b/include/find_embedding/pathfinder.hpp
-index 84c6bf2..2fef617 100644
+index 84c6bf2..d11f5b6 100644
 --- a/include/find_embedding/pathfinder.hpp
 +++ b/include/find_embedding/pathfinder.hpp
 @@ -15,6 +15,8 @@
@@ -82,7 +82,7 @@ index 84c6bf2..2fef617 100644
  #include <functional>
  #include <future>
  #include <iostream>
-@@ -89,6 +91,35 @@ class pathfinder_base : public pathfinder_public_interface {
+@@ -89,6 +91,41 @@ class pathfinder_base : public pathfinder_public_interface {
  
      vector<distance_t> qubit_weight;
  
@@ -115,10 +115,16 @@ index 84c6bf2..2fef617 100644
 +    //! selection.  Untouched when params.root_boltzmann == 0.
 +    vector<double> boltzmann_cum;
 +
++    //! Ember beta-ramp fork (paper3 W2): the live `ep.max_beta` recorded at
++    //! `heuristicEmbedding` entry (right after `reset_mood`), i.e.
++    //! max(1., params.max_beta).  `beta_ramp_hold` restores this value once
++    //! the embedding becomes valid.  Never read when params.beta_ramp == 0.
++    double beta_ramp_beta0;
++
      vector<int> tmp_stats;
      vector<int> best_stats;
  
-@@ -118,6 +149,16 @@ class pathfinder_base : public pathfinder_public_interface {
+@@ -118,6 +155,17 @@ class pathfinder_base : public pathfinder_public_interface {
                total_distance(num_qubits, 0),
                min_list(num_qubits, 0),
                qubit_weight(num_qubits, 0),
@@ -132,10 +138,11 @@ index 84c6bf2..2fef617 100644
 +              dirty_epoch(0),
 +              dirty_valid(false),
 +              boltzmann_cum(),
++              beta_ramp_beta0(1.0),
                tmp_stats(),
                best_stats(),
                visited_list(num_vars + num_fixed, vector<int>(num_qubits)),
-@@ -225,6 +266,7 @@ class pathfinder_base : public pathfinder_public_interface {
+@@ -225,6 +273,7 @@ class pathfinder_base : public pathfinder_public_interface {
      //! and otherwise finding new chains for them (each, in turn, seeking connection only with
      //! neighbors that already have chains)
      int initialization_pass(embedding_t &emb) {
@@ -143,11 +150,12 @@ index 84c6bf2..2fef617 100644
          for (auto &u : ep.var_order((params.restrict_chains.size()) ? VARORDER_DFS : VARORDER_PFS)) {
              if (emb.chainsize(u) && emb.linked(u)) {
                  ep.debug("chain for %d kept during initialization\n", u);
-@@ -233,11 +275,13 @@ class pathfinder_base : public pathfinder_public_interface {
+@@ -233,11 +282,14 @@ class pathfinder_base : public pathfinder_public_interface {
                  if (!find_chain(emb, u)) return -1;
              }
          }
 +        update_history(emb);
++        apply_beta_ramp();
          return check_stops(1);
      }
  
@@ -157,11 +165,12 @@ index 84c6bf2..2fef617 100644
          bool improved = false;
          for (auto &u : ep.var_order(VARORDER_PFS)) {
              ep.debug("finding a new chain for %d\n", u);
-@@ -246,12 +290,14 @@ class pathfinder_base : public pathfinder_public_interface {
+@@ -246,12 +298,15 @@ class pathfinder_base : public pathfinder_public_interface {
              improved |= check_improvement(emb);
              if (ep.embedded) break;
          }
 +        update_history(emb);
++        apply_beta_ramp();
          return check_stops(static_cast<int>(improved));
      }
  
@@ -172,15 +181,16 @@ index 84c6bf2..2fef617 100644
          int oldbound = ep.weight_bound;
  
          bool improved = false;
-@@ -284,6 +330,7 @@ class pathfinder_base : public pathfinder_public_interface {
+@@ -284,6 +339,8 @@ class pathfinder_base : public pathfinder_public_interface {
          }
          ep.weight_bound = oldbound;
          if (!improved) pushback += (num_vars * 2) / params.inner_rounds;
 +        update_history(emb);
++        apply_beta_ramp();
          return check_stops(improved);
      }
  
-@@ -293,12 +340,25 @@ class pathfinder_base : public pathfinder_public_interface {
+@@ -293,12 +350,26 @@ class pathfinder_base : public pathfinder_public_interface {
          bool improved = false;
          ep.shuffle(qubit_permutations[0].begin(), qubit_permutations[0].end());
          std::fill(qubit_permutations.begin() + 1, qubit_permutations.end(), qubit_permutations[0]);
@@ -203,10 +213,11 @@ index 84c6bf2..2fef617 100644
 +            }
          }
 +        update_history(emb);
++        apply_beta_ramp();
          return check_stops(improved);
      }
  
-@@ -358,18 +418,79 @@ class pathfinder_base : public pathfinder_public_interface {
+@@ -358,18 +429,79 @@ class pathfinder_base : public pathfinder_public_interface {
  
          prepare_root_distances(emb, u);
  
@@ -291,7 +302,7 @@ index 84c6bf2..2fef617 100644
      //! after `u` has been torn out, perform searches from each neighboring chain,
      //! iterating over potential roots to find a root with a smallest-possible actual chainlength
      //! whereas other variants of `find_chain` simply pick a random root candidate with minimum
-@@ -385,6 +506,15 @@ class pathfinder_base : public pathfinder_public_interface {
+@@ -385,6 +517,15 @@ class pathfinder_base : public pathfinder_public_interface {
  
          unsigned int stopcheck = static_cast<unsigned int>(max(last_size, target_chainsize));
  
@@ -307,7 +318,7 @@ index 84c6bf2..2fef617 100644
          vector<distance_queue> PQ;
          PQ.reserve(ep.var_neighbors(u).size());
          for (auto &v : ep.var_neighbors(u, shuffle_first{})) {
-@@ -409,14 +539,24 @@ class pathfinder_base : public pathfinder_public_interface {
+@@ -409,14 +550,24 @@ class pathfinder_base : public pathfinder_public_interface {
                      if (!emb.weight(q)) counts[q]++;
  
                      if (counts[q] == degree) {
@@ -339,7 +350,7 @@ index 84c6bf2..2fef617 100644
                          }
                      }
  
-@@ -434,6 +574,36 @@ class pathfinder_base : public pathfinder_public_interface {
+@@ -434,6 +585,36 @@ class pathfinder_base : public pathfinder_public_interface {
                  }
              }
          }
@@ -376,7 +387,7 @@ index 84c6bf2..2fef617 100644
          emb.thaw_back(u);
      finish:
          emb.flip_back(u, target_chainsize);
-@@ -525,7 +695,96 @@ class pathfinder_base : public pathfinder_public_interface {
+@@ -525,7 +706,128 @@ class pathfinder_base : public pathfinder_public_interface {
      //! where the weight is `2^(alpha*fill)` where `fill` is the number of
      //! chains which use that qubit
      void compute_qubit_weights(const embedding_t &emb, const int start, const int stop) {
@@ -407,6 +418,38 @@ index 84c6bf2..2fef617 100644
 +        const double alpha = params.history_alpha;
 +        if (alpha == 0.0) return;
 +        for (int q = num_qubits; q--;) hist[q] = max(0.0, hist[q] + alpha * (emb.weight(q) - 1));
++    }
++
++    //! Ember beta-ramp fork (paper3 W2): once-per-pass geometric ramp of the
++    //! live price base, called immediately after every `update_history` site
++    //! (NOT inside it -- update_history early-returns at history_alpha == 0).
++    //! While the embedding is invalid, ep.max_beta *= beta_ramp, saturated at
++    //! numeric_limits<double>::max()/4 (populate_weight_table min()s the base
++    //! against round_beta and the overflow-safe exp2(log2base), so any
++    //! huge-but-finite value already means "stock pricing").  Once
++    //! `ep.embedded`, with beta_ramp_hold the beta0 recorded at
++    //! `heuristicEmbedding` entry is restored.  Source-truth caveat
++    //! (verified): the chainlength phase never re-reads qubit prices --
++    //! find_short_chain expands at unit cost over free qubits only, and
++    //! ep.embedded never reverts -- so within one plain find_embedding call
++    //! hold is an expected exact tie with hold=0; it changes any LATER
++    //! weight-table read on this pathfinder (e.g. interactive quickPass).
++    //! populate_weight_table re-reads ep.max_beta
++    //! on every compute_qubit_weights, so a step takes effect at the next
++    //! weight computation (quickPass's ep.round_beta override is the stock
++    //! precedent for mutating a live beta field).  No-op at beta_ramp == 0
++    //! (default): no state is touched and no rng draw is added -- the stock
++    //! path stays byte-identical.
++    void apply_beta_ramp() {
++        const double r = params.beta_ramp;
++        if (r <= 0) return;
++        if (!ep.embedded) {
++            const double cap = std::numeric_limits<double>::max() / 4;
++            const double b = ep.max_beta * r;
++            ep.max_beta = (b < cap) ? b : cap;
++        } else if (params.beta_ramp_hold) {
++            ep.max_beta = beta_ramp_beta0;
++        }
 +    }
 +
 +    //! Ember shortener-economics fork (P4): 64-bit finalizer (splitmix64) used
@@ -474,7 +517,7 @@ index 84c6bf2..2fef617 100644
      }
  
    public:
-@@ -543,6 +802,7 @@ class pathfinder_base : public pathfinder_public_interface {
+@@ -543,6 +845,7 @@ class pathfinder_base : public pathfinder_public_interface {
  
      virtual void quickPass(const vector<int> &varorder, int chainlength_bound, int overlap_bound, bool local_search,
                             bool clear_first, double round_beta) override {
@@ -482,15 +525,16 @@ index 84c6bf2..2fef617 100644
          int lastsize, got;
          int old_bound = ep.weight_bound;
          ep.weight_bound = 1 + overlap_bound;
-@@ -590,6 +850,7 @@ class pathfinder_base : public pathfinder_public_interface {
+@@ -590,6 +893,8 @@ class pathfinder_base : public pathfinder_public_interface {
          auto timeout = duration_cast<clock::duration>(timeout0);
          stoptime = clock::now() + timeout;
          ep.reset_mood();
 +        dirty_valid = false;
++        beta_ramp_beta0 = ep.max_beta;  // Ember beta-ramp fork: the hold target (== max(1., params.max_beta))
          if (params.skip_initialization) {
              if (initEmbedding.linked()) {
                  currEmbedding = initEmbedding;
-@@ -685,6 +946,7 @@ class pathfinder_base : public pathfinder_public_interface {
+@@ -685,6 +990,7 @@ class pathfinder_base : public pathfinder_public_interface {
                  switch (r) {
                      case -1:
                          currEmbedding = lastEmbedding;
@@ -499,10 +543,10 @@ index 84c6bf2..2fef617 100644
                          break;
                      case -2:
 diff --git a/include/find_embedding/util.hpp b/include/find_embedding/util.hpp
-index 7697ab5..4dea4c3 100644
+index 7697ab5..ac00818 100644
 --- a/include/find_embedding/util.hpp
 +++ b/include/find_embedding/util.hpp
-@@ -145,6 +145,67 @@ class optional_parameters {
+@@ -145,6 +145,93 @@ class optional_parameters {
      map<int, vector<int>> initial_chains;
      map<int, vector<int>> restrict_chains;
  
@@ -567,10 +611,36 @@ index 7697ab5..4dea4c3 100644
 +    //! paper proposed "to avoid local optima" and never shipped.
 +    double root_boltzmann = 0.0;
 +
++    //! Ember beta-ramp fork (paper3 W2): per-pass geometric ramp of the live
++    //! price base.  When > 0 (meaningful with a finite `max_beta`), after
++    //! every pass that leaves the embedding invalid the problem's live
++    //! `ep.max_beta` is multiplied by this factor (saturated far below
++    //! overflow), so pricing starts at the caller's finite beta (the 2014
++    //! paper's quality regime) and approaches the shipped effectively-infinite
++    //! lexicographic pricing (the feasibility regime) the longer legalization
++    //! takes.  `populate_weight_table` re-reads `ep.max_beta` on every
++    //! `compute_qubit_weights`, so each ramp step takes effect at the next
++    //! weight computation (quickPass's `round_beta` override is the stock
++    //! precedent for mutating a live beta field).  0.0 (default) = stock:
++    //! `max_beta` is never touched and no rng draw is added.
++    double beta_ramp = 0.0;
++
++    //! Ember beta-ramp fork (paper3 W2): when nonzero (and `beta_ramp` > 0),
++    //! restore the original `max_beta` recorded at `heuristicEmbedding` entry
++    //! as soon as the embedding becomes valid (`ep.embedded`).  Source-truth
++    //! caveat (verified in 0.2.22): the chainlength phase never re-reads
++    //! qubit prices (`find_short_chain` expands at unit cost over free qubits
++    //! only, and `ep.embedded` never reverts), so within one plain
++    //! `find_embedding` call hold is observationally inert vs. beta_ramp
++    //! alone; it changes any LATER weight-table read on the same pathfinder
++    //! (e.g. interactive-mode `quickPass`) and is measured in T1c to pin the
++    //! expected exact tie.  0 (default) = leave the ramped value.
++    int beta_ramp_hold = 0;
++
      //! duplicate all parameters but chain hints,
      //! and seed a new rng.  this vaguely peculiar behavior is
      //! utilized to spawn parameters for component subproblems
-@@ -166,7 +227,14 @@ class optional_parameters {
+@@ -166,7 +253,16 @@ class optional_parameters {
                skip_initialization(p.skip_initialization),
                fixed_chains(fixed_chains),
                initial_chains(initial_chains),
@@ -582,26 +652,29 @@ index 7697ab5..4dea4c3 100644
 +              audit_budget(p.audit_budget),
 +              dirty_skip(p.dirty_skip),
 +              chain_tree(p.chain_tree),
-+              root_boltzmann(p.root_boltzmann) {
++              root_boltzmann(p.root_boltzmann),
++              beta_ramp(p.beta_ramp),
++              beta_ramp_hold(p.beta_ramp_hold) {
  #ifndef CPPDEBUG
          if (verbose >= 4)
              throw CorruptParametersException(
 diff --git a/minorminer/_minorminer.pyx b/minorminer/_minorminer.pyx
-index 53aad8f..b25004b 100644
+index 53aad8f..c32e995 100644
 --- a/minorminer/_minorminer.pyx
 +++ b/minorminer/_minorminer.pyx
-@@ -331,7 +331,9 @@ cdef class _input_parser:
+@@ -331,7 +331,10 @@ cdef class _input_parser:
          names = {"max_no_improvement", "random_seed", "timeout", "tries", "verbose",
                   "fixed_chains", "initial_chains", "max_fill", "chainlength_patience",
                   "return_overlap", "skip_initialization", "inner_rounds", "threads",
 -                 "restrict_chains", "suspend_chains", "max_beta", "interactive"}
 +                 "restrict_chains", "suspend_chains", "max_beta", "interactive",
 +                 "var_order", "history_alpha", "short_audit", "audit_budget",
-+                 "dirty_skip", "chain_tree", "root_boltzmann"}
++                 "dirty_skip", "chain_tree", "root_boltzmann",
++                 "beta_ramp", "beta_ramp_hold"}
  
          for name in params:
              if name not in names:
-@@ -383,6 +385,34 @@ cdef class _input_parser:
+@@ -383,6 +386,46 @@ cdef class _input_parser:
          if z is not None:
              self.opts.timeout = float(z)
  
@@ -633,10 +706,22 @@ index 53aad8f..b25004b 100644
 +        if z is not None:
 +            self.opts.root_boltzmann = float(z)
 +
++        # Ember beta-ramp fork (paper3 W2): per-pass geometric ramp of the
++        # live max_beta price base while the embedding is invalid (hold=1
++        # restores the caller's beta once embedded).  0.0/0 (defaults) leave
++        # the search byte-identical to stock minorminer.
++        z = params.get("beta_ramp")
++        if z is not None:
++            self.opts.beta_ramp = float(z)
++
++        z = params.get("beta_ramp_hold")
++        if z is not None:
++            self.opts.beta_ramp_hold = int(z)
++
          z = params.get("max_beta")
          if z is not None:
              self.opts.max_beta = float(z)
-@@ -411,6 +441,16 @@ cdef class _input_parser:
+@@ -411,6 +454,16 @@ cdef class _input_parser:
          _get_chainmap(params.get("initial_chains", ()), self.opts.initial_chains, self.SL, self.TL, "initial_chains")
          _get_chainmap(params.get("restrict_chains", ()), self.opts.restrict_chains, self.SL, self.TL, "restrict_chains")
  
@@ -654,10 +739,10 @@ index 53aad8f..b25004b 100644
          cdef int nonempty
          cdef int pinlabel
 diff --git a/minorminer/_minorminer_h.pxi b/minorminer/_minorminer_h.pxi
-index ca9c138..0410d96 100644
+index ca9c138..c9dfac4 100644
 --- a/minorminer/_minorminer_h.pxi
 +++ b/minorminer/_minorminer_h.pxi
-@@ -58,6 +58,13 @@ cdef extern from "../include/find_embedding/util.hpp" namespace "find_embedding"
+@@ -58,6 +58,15 @@ cdef extern from "../include/find_embedding/util.hpp" namespace "find_embedding"
      cppclass optional_parameters:
          optional_parameters()
          void seed(uint64_t)
@@ -668,6 +753,8 @@ index ca9c138..0410d96 100644
 +        int dirty_skip
 +        int chain_tree
 +        double root_boltzmann
++        double beta_ramp
++        int beta_ramp_hold
  
          LocalInteractionPtr localInteractionPtr
          int max_no_improvement

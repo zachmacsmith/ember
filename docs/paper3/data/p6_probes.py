@@ -40,10 +40,31 @@ Instance seeds 101-105, algo seeds 0-4, 60 s; both `acl` and `acl_spur`
 (rule 3); paired summaries per probe family vs stock on the same
 (cell, inst_seed, algo_seed).
 
+v1.2 W2 extensions (notes.md §4.15 T1c):
+
+  --topo {P16,Z12}   target switch (Z12 = zephyr_graph(12)). The cell grid and
+                     the deg-10 ladder formula p = 10/(n-1) are UNCHANGED; only
+                     the target (and the CSV 'topo' column) switch. Non-P16
+                     runs write to their own ``*_z12`` CSV/summary so P16 files
+                     and their resume keys stay byte-compatible.
+  ramp2 / ramp2h     beta_ramp fork switches: max_beta = dhat with a per-pass
+                     geometric ramp (r = 2) of the live beta while the
+                     embedding is invalid; ramp2h additionally restores dhat
+                     once embedded (beta_ramp_hold=1).  Source-truth note
+                     (verified in 0.2.22): the chainlength phase never
+                     re-reads qubit prices (find_short_chain is unit-cost
+                     over free qubits, ep.embedded never reverts), so ramp2h
+                     is an EXPECTED exact tie with ramp2 in single-shot
+                     find_embedding — T1c measures it to pin that tie.
+  --confirm-beta     T1c's engine: deg-10 n in {100,140,180} x switches
+                     {stock, beta-dhat, ramp2, ramp2h} x inst seeds 101-105 x
+                     algo seeds 0-14 x 60 s; separate CSV.
+
 Run:
   .venv/bin/python docs/paper3/data/p6_probes.py --workers 48       # hyde06
   .venv/bin/python docs/paper3/data/p6_probes.py --smoke --workers 4
-Flags: --workers N | --smoke | --resume
+  .venv/bin/python docs/paper3/data/p6_probes.py --topo Z12 --confirm-beta --workers 48
+Flags: --workers N | --topo {P16,Z12} | --smoke | --confirm | --confirm-beta | --resume
 --smoke writes to p6_probes_smoke.csv (smoke shares cells with the full grid
 at a shorter budget and must never enter the full CSV's resume keys).
 """
@@ -102,10 +123,21 @@ SWITCHES = {
     "beta-2.0":   ("beta",  {"max_beta": 2.0}),
     "beta-16.0":  ("beta",  {"max_beta": 16.0}),
     "beta-dhat":  ("beta",  {"max_beta": DHAT}),
+    # v1.2 W2 (T1c): dhat start + per-pass geometric beta ramp (r=2);
+    # ramp2h adds hold (restore dhat once embedded) — expected exact tie
+    # with ramp2 in single-shot find_embedding (see docstring), measured
+    # to pin it.
+    "ramp2":      ("ramp",  {"max_beta": DHAT, "beta_ramp": 2.0}),
+    "ramp2h":     ("ramp",  {"max_beta": DHAT, "beta_ramp": 2.0,
+                             "beta_ramp_hold": 1}),
 }
 SWITCH_ORDER = ("stock", "tree-union", "tree-sph", "boltz-0.5", "boltz-2.0",
                 "boltz-8.0", "beta-2.0", "beta-16.0", "beta-dhat")
 CLIFF_SWITCHES = ("stock", "beta-2.0", "beta-16.0", "beta-dhat")
+# --confirm-beta (v1.2 T1c) only; NOT in SWITCH_ORDER, so the main grid and
+# the §4.8b --confirm plan stay byte-identical to their registered versions.
+CONFIRM_BETA_SWITCHES = ("stock", "beta-dhat", "ramp2", "ramp2h")
+SUMMARY_ORDER = SWITCH_ORDER + ("ramp2", "ramp2h")   # display order only
 
 SMOKE_CELLS = [(60, 10.0 / 59), (100, 0.3)]
 SMOKE_SWITCHES = ("stock", "tree-union", "tree-sph", "boltz-2.0", "beta-2.0",
@@ -220,7 +252,7 @@ def summarize(csv_path):
     out("to a 15-seed confirm before a paper claim (anatomy.md decision tree).")
     out("=" * 100)
 
-    order = {a: i for i, a in enumerate(SWITCH_ORDER)}
+    order = {a: i for i, a in enumerate(SUMMARY_ORDER)}
     cells = sorted({(int(r["n"]), float(r["p"])) for r in rows})
     for n, p in cells:
         cell = [r for r in rows if int(r["n"]) == n and float(r["p"]) == p]
@@ -247,7 +279,7 @@ def summarize(csv_path):
                     f"wall med {statistics.median(walls):6.1f}s"
                     if walls else
                     f"  [{fam:5s}] {arm:10s} success {n_ok}/{len(arows)}")
-            if arm == "beta-dhat" and svals:
+            if arm in ("beta-dhat", "ramp2", "ramp2h") and svals:
                 base += f"  dhat={svals}"
             pairs = [(float(r["acl_spur"]),
                       stock_ok[(r["inst_seed"], r["algo_seed"])])
@@ -281,10 +313,18 @@ def parse_args():
     ap = argparse.ArgumentParser(
         description="P6 fork-anatomy probes (tree/root/beta; see docstring)")
     ap.add_argument("--workers", type=int, default=8)
+    ap.add_argument("--topo", choices=("P16", "Z12"), default="P16",
+                    help="target topology (default P16). Z12 = zephyr_graph"
+                         "(12); the cell grid / deg-10 ladder formula is "
+                         "unchanged; non-P16 runs get their own CSV/summary")
     ap.add_argument("--confirm", action="store_true",
                     help="§4.8b 15-seed surprise confirm: deg-10 n in {100,140,"
                          "180} x {stock,tree-sph,boltz-2.0,boltz-8.0,beta-16.0,"
                          "beta-dhat} x algo seeds 0-14; separate CSV")
+    ap.add_argument("--confirm-beta", dest="confirm_beta", action="store_true",
+                    help="v1.2 T1c beta-family engine: deg-10 n in {100,140,"
+                         "180} x {stock,beta-dhat,ramp2,ramp2h} x algo seeds "
+                         "0-14; separate CSV")
     ap.add_argument("--smoke", action="store_true",
                     help="local check: 2 cells, 6 switches, 1 inst, 1 seed, 8 s")
     ap.add_argument("--resume", action="store_true")
@@ -292,10 +332,12 @@ def parse_args():
 
 
 def main():
+    global TOPO
     args = parse_args()
     if _find_so() is None:
         sys.exit("fork .so not built (scripts/build_mm_fork.sh) — every P6 "
                  "arm needs it")
+    TOPO = args.topo   # set before the fork-context pool: workers inherit it
 
     if args.smoke:
         plan = [(n, p, SMOKE_SWITCHES) for n, p in SMOKE_CELLS]
@@ -309,11 +351,22 @@ def main():
         inst_seeds, algo_seeds, timeout = INST_SEEDS, tuple(range(15)), TIMEOUT
         csv_path = CSV_PATH.replace(".csv", "_confirm.csv")
         summary_path = SUMMARY_PATH.replace(".txt", "_confirm.txt")
+    elif args.confirm_beta:
+        plan = [(n, 10.0 / (n - 1), CONFIRM_BETA_SWITCHES)
+                for n in (100, 140, 180)]
+        inst_seeds, algo_seeds, timeout = INST_SEEDS, tuple(range(15)), TIMEOUT
+        csv_path = CSV_PATH.replace(".csv", "_confirm_beta.csv")
+        summary_path = SUMMARY_PATH.replace(".txt", "_confirm_beta.txt")
     else:
         plan = [(n, p, SWITCH_ORDER) for n, p in CELLS_MAIN]
         plan.append((CELL_CLIFF[0], CELL_CLIFF[1], CLIFF_SWITCHES))
         inst_seeds, algo_seeds, timeout = INST_SEEDS, ALGO_SEEDS, TIMEOUT
         csv_path, summary_path = CSV_PATH, SUMMARY_PATH
+
+    if TOPO != "P16":   # own files: P16 CSVs/resume keys stay byte-compatible
+        tag = f"_{TOPO.lower()}"
+        csv_path = csv_path.replace(".csv", f"{tag}.csv")
+        summary_path = summary_path.replace(".txt", f"{tag}.txt")
 
     tasks = []
     for n, p, switches in plan:
