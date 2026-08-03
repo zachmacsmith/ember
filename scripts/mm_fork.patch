@@ -1,8 +1,87 @@
+diff --git a/include/find_embedding/chain.hpp b/include/find_embedding/chain.hpp
+index e8e44d3..db1714a 100644
+--- a/include/find_embedding/chain.hpp
++++ b/include/find_embedding/chain.hpp
+@@ -338,7 +338,19 @@ class chain {
+         if (p == -1) {
+             p = q;
+         } else {
++            // ember fork fix: bound the parent walk.  A corrupt parent
++            // table (stale entries from a masked/previous search) can
++            // cycle forever or run to -1 and index qubit_weight[-1] --
++            // the recorded restrict_chains hang and segfault (notes
++            // s3.60).  The u-only domain mask removes the known cause;
++            // this guard converts any residual corruption into a clean
++            // failure instead of a hang or out-of-bounds write.
++            size_t walk = 0;
++            const size_t walk_bound = parents.size() + 1;
+             while (other.count(p) == 0) {
++                if (p < 0 || ++walk > walk_bound)
++                    throw CorruptEmbeddingException(
++                            "corrupt parent path in link_path (domain-restricted search)");
+                 if (count(p))
+                     trim_branch(q);
+                 else
+diff --git a/include/find_embedding/embedding.hpp b/include/find_embedding/embedding.hpp
+index 685e6c1..e5c8501 100644
+--- a/include/find_embedding/embedding.hpp
++++ b/include/find_embedding/embedding.hpp
+@@ -86,10 +86,23 @@ class embedding {
+ 
+         for (auto &vC : fixed_chains) fix_chain(vC.first, vC.second);
+ 
+-        for (auto &vC : initial_chains)
++        // ember fork fix (s3.60): clip initial chains to each variable's
++        // restrict_chains domain at ingest (best-effort semantics: the
++        // upstream ctor installed out-of-domain qubits verbatim).  A
++        // chain emptied by clipping is dropped and rebuilt normally.
++        // Unrestricted variables are untouched (accepts_qubit == 1).
++        map<int, vector<int>> use_chains;
++        for (auto &vC : initial_chains) {
++            vector<int> kept;
++            for (auto &q : vC.second)
++                if (ep.fixed(vC.first) || ep.accepts_qubit(vC.first, q)) kept.push_back(q);
++            if (kept.size()) use_chains.emplace(vC.first, std::move(kept));
++        }
++
++        for (auto &vC : use_chains)
+             if (!ep.fixed(vC.first)) set_chain(vC.first, vC.second);
+ 
+-        for (auto &vC : initial_chains) {
++        for (auto &vC : use_chains) {
+             int v = vC.first;
+             auto &c = var_embedding[v];
+             int root = vC.second[0];
 diff --git a/include/find_embedding/embedding_problem.hpp b/include/find_embedding/embedding_problem.hpp
-index cfc3d48..2a16e58 100644
+index cfc3d48..9c7df54 100644
 --- a/include/find_embedding/embedding_problem.hpp
 +++ b/include/find_embedding/embedding_problem.hpp
-@@ -303,6 +303,13 @@ class embedding_problem_base {
+@@ -88,13 +88,20 @@ class domain_handler_masked {
+     }
+     virtual ~domain_handler_masked() {}
+ 
+-    inline void prepare_visited(vector<int> &visited, const int u, const int v) {
++    inline void prepare_visited(vector<int> &visited, const int u, const int /*v*/) {
++        // ember fork fix: mask by u's domain ALONE.  The upstream AND of
++        // u's and v's masks left qubits outside u's domain (but inside
++        // v's) searchable, so link_path could install out-of-domain
++        // qubits into u's chain and walk stale parent entries -- the
++        // recorded restrict_chains hang/segfault (notes s3.60).  The
++        // terminals this search must reach are v's CHAIN qubits, and
++        // dijkstra_initialize_chain force-marks those visited/seeded
++        // regardless of the mask, so u-only masking cannot disconnect
++        // the search from its target.
+         vector<int> &uMask = masks[u];
+-        vector<int> &vMask = masks[v];
+         int *umask = uMask.data();
+-        int *vmask = vMask.data();
+         int *vis = visited.data();
+-        for (int *stop = vis + visited.size(); vis < stop; ++vis, ++umask, ++vmask) *vis = (*umask) & (*vmask);
++        for (int *stop = vis + visited.size(); vis < stop; ++vis, ++umask) *vis = (*umask);
+     }
+ 
+     inline void prepare_distances(vector<distance_t> &distance, const int u, const distance_t &mask_d) {
+@@ -303,6 +310,13 @@ class embedding_problem_base {
              return weight_table[c];
      }
  
@@ -16,7 +95,7 @@ index cfc3d48..2a16e58 100644
      //! a vector of neighbors for the variable `u`
      const vector<int> &var_neighbors(int u) const { return var_nbrs[u]; }
  
-@@ -361,6 +368,13 @@ class embedding_problem_base {
+@@ -361,6 +375,13 @@ class embedding_problem_base {
              minorminer_assert(var_order_space.size() > 0);
              return var_order_space;
          }
@@ -31,7 +110,7 @@ index cfc3d48..2a16e58 100644
          var_order_shuffle.clear();
          for (int v = num_v; v--;) var_order_shuffle.push_back(v);
 diff --git a/include/find_embedding/pathfinder.hpp b/include/find_embedding/pathfinder.hpp
-index 84c6bf2..8bffae7 100644
+index 84c6bf2..b83364b 100644
 --- a/include/find_embedding/pathfinder.hpp
 +++ b/include/find_embedding/pathfinder.hpp
 @@ -89,6 +89,11 @@ class pathfinder_base : public pathfinder_public_interface {
@@ -54,15 +133,25 @@ index 84c6bf2..8bffae7 100644
                tmp_stats(),
                best_stats(),
                visited_list(num_vars + num_fixed, vector<int>(num_qubits)),
-@@ -233,6 +239,7 @@ class pathfinder_base : public pathfinder_public_interface {
-                 if (!find_chain(emb, u)) return -1;
+@@ -230,9 +236,10 @@ class pathfinder_base : public pathfinder_public_interface {
+                 ep.debug("chain for %d kept during initialization\n", u);
+             } else {
+                 ep.debug("finding a new chain for %d\n", u);
+-                if (!find_chain(emb, u)) return -1;
++                if (!find_chain(emb, u)) return check_stops(-1);  // ember fork fix (s3.60): probe the clock on failure paths
              }
          }
 +        update_history(emb);
          return check_stops(1);
      }
  
-@@ -246,6 +253,7 @@ class pathfinder_base : public pathfinder_public_interface {
+@@ -241,11 +248,12 @@ class pathfinder_base : public pathfinder_public_interface {
+         bool improved = false;
+         for (auto &u : ep.var_order(VARORDER_PFS)) {
+             ep.debug("finding a new chain for %d\n", u);
+-            if (!find_chain(emb, u)) return -1;
++            if (!find_chain(emb, u)) return check_stops(-1);  // ember fork fix (s3.60): probe the clock on failure paths
+ 
              improved |= check_improvement(emb);
              if (ep.embedded) break;
          }
@@ -70,6 +159,15 @@ index 84c6bf2..8bffae7 100644
          return check_stops(static_cast<int>(improved));
      }
  
+@@ -276,7 +284,7 @@ class pathfinder_base : public pathfinder_public_interface {
+                 emb.steal_all(u);
+                 emb.tear_out(u);
+                 if (!find_chain(emb, u, 0)) {
+-                    return -1;
++                    return check_stops(-1);  // ember fork fix (s3.60)
+                 }
+             }
+             improved |= check_improvement(emb);
 @@ -284,6 +292,7 @@ class pathfinder_base : public pathfinder_public_interface {
          }
          ep.weight_bound = oldbound;
@@ -78,7 +176,12 @@ index 84c6bf2..8bffae7 100644
          return check_stops(improved);
      }
  
-@@ -299,6 +308,7 @@ class pathfinder_base : public pathfinder_public_interface {
+@@ -295,10 +304,11 @@ class pathfinder_base : public pathfinder_public_interface {
+         std::fill(qubit_permutations.begin() + 1, qubit_permutations.end(), qubit_permutations[0]);
+         for (auto &u : ep.var_order(ep.improved ? VARORDER_KEEP : VARORDER_PFS)) {
+             ep.debug("finding a new chain for %d\n", u);
+-            if (!find_chain(emb, u)) return -1;
++            if (!find_chain(emb, u)) return check_stops(-1);  // ember fork fix (s3.60): probe the clock on failure paths
  
              improved |= check_improvement(emb);
          }
@@ -86,7 +189,20 @@ index 84c6bf2..8bffae7 100644
          return check_stops(improved);
      }
  
-@@ -525,7 +535,32 @@ class pathfinder_base : public pathfinder_public_interface {
+@@ -408,7 +418,11 @@ class pathfinder_base : public pathfinder_public_interface {
+                     pq.pop();
+                     if (!emb.weight(q)) counts[q]++;
+ 
+-                    if (counts[q] == degree) {
++                    if (counts[q] == degree && ep.accepts_qubit(u, q)) {
++                        // ember fork fix (s3.60): a root outside u's domain
++                        // must not seed a chain build -- the shortening
++                        // phase never consulted the domain handler and
++                        // segfaulted at default chainlength_patience.
+                         emb.construct_chain_steiner(u, q, parents, distances, visited_list);
+                         unsigned int cs = emb.chainsize(u);
+                         if (cs < best_size) {
+@@ -525,7 +539,32 @@ class pathfinder_base : public pathfinder_public_interface {
      //! where the weight is `2^(alpha*fill)` where `fill` is the number of
      //! chains which use that qubit
      void compute_qubit_weights(const embedding_t &emb, const int start, const int stop) {

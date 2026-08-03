@@ -104,11 +104,19 @@ the s3.58 P16 probe after the contraction gate landed).
 ## 4. The arrangement (`alternate_arrange`) — where capacity is enforced
 
 The fabric viewed as two coupled 1-D wire layers. Coordinate descent on the
-stair energy: alternately pack rows (columns frozen — an exact
-interval-packing problem; capacity per line = interval overlap **depth**
-vs. the line's sub-lane pool) and columns (rows frozen). Iteration 0 is an
-unconditional feasibility projection; every later half-step is E-gated.
-Converges in ~2 iterations.
+stair energy: alternately pack rows (columns frozen) and columns (rows
+frozen). Each half-step is the **exact order-preserving DP** (`pack_lines`,
+s3.59): contiguous runs of the (value, id)-sorted participants per line,
+capacity = interval overlap depth vs. the line's integer sub-lane pool
+(`line_pools` — the claim layer's own census, shared with
+`claim_overload`; ONE accounting), cost = minimal total displacement,
+skips only at structural infeasibility. Feasibility intervals are the
+claim layer's (`derive_bars_stair`). Iteration 0 is an unconditional
+feasibility projection; every later half-step is E-gated. Converges in
+~2 iterations. Lane oversubscription (the d729 class) is impossible by
+construction; the open turán residual is CROSSING-PARITY demand (s3.59
+— depth-8-full lines leave snap no aiming slack; the parity-aware
+packer is the named next refinement).
 
 **Participation is by arm length, per axis**: a variable enters row-packing
 iff its floored h-interval spans ≥ 1 tile. Sparse sources have no
@@ -205,8 +213,10 @@ Unknown kwargs — including every deleted knob — are silently ignored.
   for the exactness principle.
 - **Strip minorminer down** (Max, 2026-07-29): with mm-skip routine on
   crystal cells, MM's remaining surface is residual-deficit legalization
-  and the polish; the path runs through `bar_domains` plus fork-level
-  surgery on the restrict_chains bug.
+  and the polish. UNBLOCKED (s3.60): the restrict_chains bug is patched
+  in the fork and the seeds+domains handoff embeds within domains (K100
+  P16 11.81 single-seed diagnostic); the strip-down probe is its own
+  future round.
 - **Corridor / routing-capacity reservation** — arrange does not price
   non-participant traversal (suspected weak_strong_cluster loss mode);
   naive reservation sabotages cliques; needs its own design round.

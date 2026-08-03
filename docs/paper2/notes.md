@@ -3202,6 +3202,55 @@ options are (a) ship as-is + crossing-parity round next, (b) revert,
 (c) per-cell slack (density gate, doctrine-hostile). The round
 recommends (a); Max's call.
 
+### 3.60 The restrict_chains round: four defects, one mask; the parked handoff unblocked (2026-08-03)
+
+The fork-level patch of the stock 0.2.22 restrict_chains bug (Max's
+standing decision at s3.38: fork only, no upstream report). Static
+diagnosis from source, confirmed at runtime with gdb: all stack samples
+of a hanging process sat in `chain::link_path`'s unbounded parent walk
+(chain.hpp:342), reached from `construct_chain_steiner` under
+`domain_handler_masked` during the initialization pass. Correction to
+the record confirmed: the hang needs non-trivial domains at scale ONLY
+(no initial_chains required); 4/5 repro configs blew past a 45 s wall
+against timeout=20; the patience-10 arm raised instead.
+
+Root cause and fix (all restricted-only code paths; unrestricted
+behavior byte-identical, parity self-test + test_mmfork_history green):
+
+1. `domain_handler_masked::prepare_visited` combined u's and v's masks
+   with bitwise AND — qubits outside u's domain but inside a neighbor's
+   stayed searchable, so link_path installed out-of-domain qubits into
+   u's chain and walked stale parent entries (cycle = the hang; walking
+   to -1 = `qubit_weight[-1]++` = the segfault). FIX: mask by u's
+   domain alone; v's chain terminals stay reachable because
+   dijkstra_initialize_chain force-marks seeds.
+2. `chain::link_path`: parent walk now bounded (n_qubits + 1) with a
+   negative guard -> CorruptEmbeddingException (clean failure, never a
+   hang/OOB). Safety net; never fires with fix 1 in place.
+3. `find_short_chain` roots now filtered by `accepts_qubit` (the
+   recorded default-patience segfault arm).
+4. The four early `return -1` failure paths now route through
+   `check_stops` — persistent failure converts to timeout instead of
+   spinning past the deadline.
+5. `initial_chains` clipped to domains at ingest (best-effort: emptied
+   chains dropped and rebuilt).
+
+Regression: `tests/algorithms/test_mmfork_restrict.py` (4 tests: the
+hang class terminates, default-patience alive, seeded+restricted embeds
+WITHIN domains, out-of-domain initial chains clipped). Patch
+regenerated as the combined `scripts/mm_fork.patch`; in-place rebuild;
+.venv minorminer stays stock pip (pipeline untouched).
+
+**The parked handoff works** (`data/restrict_smoke.py`, diagnostic,
+single seed): seeds + domains — the exact combination that hung stock —
+embeds K100/P16 legally within domains: margin 2 -> 12.72 (23.6 s),
+margin 3 -> **11.81** (14.0 s; the s3.58 P16 board read att 13.14 / mm
+14.09 — a single-seed diagnostic, not a claim, but the first live
+number for the strip-minorminer-down agenda). Unseeded restricted K100
+fails fast and clean (over-constrained without seeds — correct
+best-effort behavior, formerly the hang). bar_domains (anatomy s8) is
+UNBLOCKED; the strip-minorminer-down probe is its own future round.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).

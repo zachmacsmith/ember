@@ -1,0 +1,9 @@
+/data/max/ember/docs/paper2/data/restrict_smoke.py:22: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+n=100 m=1 seeded=False: EXC Failed during initialization.  This typi (0.0s)
+n=100 m=2 seeded=False: EXC Failed during initialization.  This typi (0.0s)
+n=100 m=3 seeded=False: EXC Failed during initialization.  This typi (0.0s)
+n=100 m=2 seeded=True: 25.0s legal=True acl=12.72 outside=0
+n=100 m=3 seeded=True: 13.9s legal=True acl=11.81 outside=0
+n=60 m=2 seeded=True: 1.6s legal=True acl=7.27 outside=0
+done-restrict-smoke

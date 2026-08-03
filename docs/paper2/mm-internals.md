@@ -156,7 +156,31 @@ latter is inert inside real MM (§3.13, the history 2×2).
 | Dijkstra as the engine | true in legalization; the dominant phase is unit-weight BFS | `pathfinder.hpp:507` vs `:433` |
 | `tries` as quality restarts (common reading) | feasibility restarts, stop at first success | `pathfinder.hpp:623` region |
 
-## 8. Fork hooks (for future switches)
+## 8. restrict_chains — what shipped does, and the fork fix (2026-08-03)
+
+Shipped 0.2.22 dispatches restricted problems through
+`domain_handler_masked` (`embedding_problem.hpp:66-118`): per-variable
+masks, applied to searches via `prepare_visited` (bitwise AND of u's and
+v's masks — the defect), to root selection via `prepare_distances`
+(u-only), and to exactly ONE mutator (`chain::steal`, `chain.hpp:296`).
+Neither chain construction (`construct_chain_steiner`), `link_path`,
+`find_short_chain`, nor the `embedding` ctor (initial_chains ingest)
+consults the domain — "chain within domain" was enforced only by the
+search frontier, which the AND leak broke. The timeout is probed only at
+the END of completed passes (`check_stops`); every early `return -1`
+bypassed it. Consequences (measured, notes s3.60): hang past timeout on
+non-trivial domains at scale (gdb: spinning in `link_path`'s unbounded
+parent walk), segfault via `qubit_weight[-1]` at default
+chainlength_patience.
+
+Fork fixes (in `scripts/mm_fork.patch` alongside the two switches; all
+restricted-only paths, unrestricted byte-identical): u-only visited
+mask; bounded link_path walk -> CorruptEmbeddingException; accepts_qubit
+filter on shortening roots; check_stops on the four failure returns;
+initial_chains clipped to domains at ingest. Verified:
+`tests/algorithms/test_mmfork_restrict.py`.
+
+## 8b. Fork hooks (for future switches)
 
 - Pricing: `compute_qubit_weights` (`pathfinder.hpp:527`) — single site; history
   `(1+h_q)` multiplies here.

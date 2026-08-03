@@ -96,6 +96,20 @@ Magic numbers, none swept: η=0.5, λ₀=3.0, round_frac=0.4, max_rounds=10, bin
 
 ## C. Idea ledger
 
+### RESTRICT_CHAINS PATCHED — the AND-mask convicted, the handoff unblocked (2026-08-03; notes s3.60)
+
+gdb-confirmed: the stock hang lived in link_path's unbounded parent walk
+under the leaky AND-domain-mask (out-of-domain qubits entered chains;
+stale parents cycled). Fork fix: u-only mask + bounded walk (clean
+exception, never hang/segfault) + domain-filtered shortening roots +
+clock probes on failure paths + initial-chain clipping at ingest.
+Unrestricted parity byte-identical (self-test + history tests). The
+parked bar_domains handoff now RUNS: seeds+domains K100/P16 legal
+within domains at 11.81 single-seed (s3.58 board: 13.14/14.09) — the
+strip-minorminer-down agenda has its first live number and its own
+future round.
+
+
 ### THE EXACT PACKER — mechanism lands (K100 8.12, K140 sub-template), turan trades to crossing parity; DECISION OPEN (2026-08-03; notes s3.59)
 
 pack_lines (exact order-preserving DP, hard depth constraint) + shared
