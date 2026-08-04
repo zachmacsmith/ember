@@ -1170,6 +1170,82 @@ of a failing arm, freshly pre-registered.
 
 --- results appended below; nothing above this line is edited after launch ---
 
+§4.16 RESULTS (2026-08-03; batch t2_z12 @ ed0f7692, 60,402 rows complete =
+30,201 graphs x 2 arms; analyzer t2_verdicts.py [the pre-registered
+calibrated bars — m5_analyze's built-in ±1 pt/±0.10 bars predate item 10 and
+its table is archived as detail at t2_z12_percategory.txt]; records:
+t2_verdicts_summary.txt, t2_honeycomb_probe.csv; results.db archived on the
+run host + local results/t2_z12/batch/):
+
+- **p3-ember PASSES §4.16 — every positive claim lands.**
+  Totals: 21,412/30,201 successes vs MM's 21,276 (net +136).
+  POSITIVE (i) dense-structured carry 4/4: complete −10.27% @ 70%W, kneser
+  −10.94% @ 78%W, spin_glass −6.19% @ 71%W, turan −8.24% @ 71%W — plus
+  success GAINS on those same families (+7.1/+12.2/+4.5/+4.9 pt).
+  (ii) mmpolish-class small wins: 23 families ≥ the 5 required (bipartite
+  −13.6%, johnson −8.6%, shastry_sutherland −5.2%, kagome −5.0%,
+  lfr_benchmark −4.8%, king_graph −4.1%, regular −4.0%, ...).
+  (iii) hardware_native RETIRED: success 21 vs 20, mean dACL −0.171 @ 19
+  pairs — the recurring M5 flag is closed.
+  ACL bars: ZERO violations across 35 families at ≥10 pairs.
+  Success bars: ONE letter-trip — honeycomb, net −5 (gross 7 vs 2 reverse)
+  vs the 3.9-graph threshold; null expectation ~1.8 tail families across 35.
+  Pre-registered probe (t2_honeycomb_probe.py, 7 flip graphs x 3 fresh
+  seeds x both arms): **NULL-TAIL — MM 13/21, ember 13/21, exact tie**; the
+  flip graphs are all n=1870–2318 pigeonhole-edge honeycombs (chains ~1.2–2
+  → ~4.6k of 4800 qubits) where cliff-seed variance dominates; ember's
+  deterministic native-stage tax there is 2.06 s (the int-floored glasgow
+  solver budget; misses at n≈2000) and does not shift success at fresh
+  seeds. Recorded as the null's tail; no remedy needed. (v1.3 ledger: those
+  MM successes at ACL 1.2–1.6 mean big honeycombs are NEAR-SUBGRAPHS of
+  Zephyr — an adaptive glasgow budget on fabric-like sources could convert
+  them to ACL-1.0 hits; and a glasgow node-cap ~1000 would delete the 2 s
+  hopeless-solver tax entirely.)
+
+- **p3-mm-beta-fb FAILS §4.16 and dies this cycle.**
+  Totals: 20,915 vs 21,276 (net −361). REAL success drops on 5 families:
+  planted_solution −104 graphs (−4.0 pt, threshold 68), honeycomb −6,
+  kagome −6, frustrated_square −4, king_graph −4. ACL violations at ≥10
+  pairs: bcc_lattice +0.167 @ 12p, spin_glass +0.116 @ 410p, complete
+  +0.108 @ 44p. The ACL claim also fails (2 families pass, 3 needed:
+  hardware_native −11.3% @ 67%W, lfr_benchmark −1.4% @ 62%W).
+  Root causes (both structural, neither guardable):
+  (a) the fixed 0.6/0.4 budget split — sparse instances that stock MM
+  legalizes in 25–60 s get a 24 s rescue after beta burns 36 s; the exact
+  v1.0-mmpolish 70/30 lesson reproduced at library scale (dev-ladder cells
+  legalize in 4–17 s and could not expose it — §4.15's stated transfer
+  risk, realized in the budget dimension);
+  (b) beta-dhat engaged below the 0.11 density gate on structured sparse
+  lattices where finite pricing HURTS (bcc +0.167): the §4.8b/T1c win is
+  deg-10-ER-specific — the transfer risk realized in the structure
+  dimension.
+  Methodological note (passthrough trick, ACL edition): `complete` is
+  provably passthrough (density 1.0 → stock MM at another derived seed),
+  so its +0.108 mean dACL @ 44 pairs MEASURES the cross-batch ACL null at
+  cliff K_n families — the +0.10 ACL bar sits below the ACL seed-noise
+  floor there. It flags bcc/spin_glass regardless (both below-gate
+  engaged, same sign as the mechanism in (b)).
+  REMEDY BUDGET NOT SPENT (decision recorded): a regime guard cannot fix a
+  budget-split design flaw, and the structured-sparse exclusion would need
+  the structure gate item 6 just killed. The correct redesign — stock-MM
+  FIRST at full budget, then a beta re-run in the leftover keeping the
+  better (the mmpolish v1.1 pattern; guarantees success == stock by
+  construction and harvests beta exactly where MM leaves budget, which on
+  the dev ladder is 43–56 s) — is a NEW arm for a future cycle, entered in
+  the ledger at item 4, requiring fresh pre-registration.
+
+**v1.2 FINAL DECISIONS (P4+P5 gates closed 2026-08-03):** the cycle ships
+ONE new library-validated arm — **p3-ember** (native fast path + gated
+template + MM + leftover polish), which passes every §4.15 dev bar and every
+§4.16 positive claim, retires the hardware_native flag, and nets +136
+successes over stock MM on the full Z12 library with zero calibrated-bar
+ACL violations — plus the clmm v1.2 architecture gate (Z12-identical), the
+W1b spur_prune speedup (byte-identical), and beta-dhat as a CONFIRMED
+Zephyr anatomy finding (T1c) carried by the paper, not by a product arm.
+p3-mm-beta-fb, p3-race9, and the beta_ramp all die with measured causes.
+Zephyr-only scope: P16/C16 extension is the user's decision (program STOP
+after P6 per the approved plan).
+
 10. **(2026-08-02) "identical derived seeds" mis-phrasing (found by the v1.2 surface
     audit).** The §4.11 second amendment and a gen_m5_full.py comment claimed layout
     rows pair against main-batch minorminer rows "at IDENTICAL derived seeds". Wrong:
