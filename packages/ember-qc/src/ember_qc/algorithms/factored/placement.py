@@ -218,6 +218,16 @@ class AttractConfig:
                                # to over-trade). Applied on stride>1 fabrics
                                # only (measured on Z12; unmeasured
                                # elsewhere). round_E stays raw stair-E.
+    vcycle: bool = False       # source-side multilevel init (s3.62, V0):
+                               # twin-first coarsening + weighted-Jaccard
+                               # matching (the ledger's closed-neighborhood
+                               # score), coarsest level on a deterministic
+                               # circle, positions inherited down — replaces
+                               # the spectral init entirely when on
+                               # (init-independence by construction, the
+                               # s3.36 standard). Fine-level machinery
+                               # unchanged. Default off pending the s3.62
+                               # probe.
 
 
 def _auto_bins(n_qubits: int) -> int:
@@ -315,7 +325,11 @@ def attract_embed(
             return derive_bars_stair(tpts, src_adj, kappa=kappa,
                                      floor=cfg.span_floor, bounds=bounds)
 
-        cent = source_positions(source_graph, lo, hi)
+        if cfg.vcycle:
+            from ember_qc.algorithms.factored.coarsen import multilevel_init
+            cent = multilevel_init(src_adj, lo, hi, seed=seed)
+        else:
+            cent = source_positions(source_graph, lo, hi)
         last_emb: Optional[Embedding] = None
         last_acl = math.inf
         rounds_run = 0

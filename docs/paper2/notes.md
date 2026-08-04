@@ -3334,6 +3334,65 @@ the s3.59 board, (c) boundary-on accepting the K140/c3xK64 regressions
 (rejected). The participation-drift fix is orthogonal and small; it
 plausibly rides along with (a).
 
+### 3.62 The V-cycle round, V0: the gate fires on EVERY dense cell — including ER; sparse pays for the circle (2026-08-03)
+
+Max's pivot ("it feels like we're doing a whole bunch of little tweaks...
+see what happens with the source graph coarsening"). Built as V0 =
+multilevel INIT only (`coarsen.py` + the `vcycle` switch, default off):
+twin-group hashing (whole blocks collapse in one level — K12 -> 1 node,
+K_{6,6} -> two weight-6 supernodes), then greedy weighted
+closed-neighborhood-Jaccard matching (the ledger's dE/dd score) over
+distance <= 2 candidates with the threshold stopping rule; coarsest
+level on a deterministic circle (spectral NEVER consulted —
+init-independence by construction); golden-angle child spread on
+expansion; fine-level machinery unchanged. Build lesson on the record:
+coarse-level weighted attraction collapsed K_{6,6}'s supernodes to a
+point — the s3.18 lesson re-measured one level up; V0 therefore does NO
+coarse relaxation (the V-cycle decides TOPOLOGY; the fine pipeline does
+all metric work). 533 tests green (10 new).
+
+**Probe** (`data/vcycle_probe.py`, bars pre-registered; Z12, 7 cells x
+{base, vc} x 3 seeds x 60 s, quiet box):
+
+| cell | base | vc | verdict |
+|---|---|---|---|
+| K100 | 8.12 s1 d0 | **7.79 s1 d0** | RECORD, gate valid |
+| K140 | 10.91 d4 | **10.52 s1 d0** | RECORD + first-ever K140 gate |
+| ER100_d10 | 4.76 d367 | **4.71 s1 d0** | a random graph VALID BY CONSTRUCTION |
+| turan_n162 | 9.06 d15 | 9.19 **s1 d0** | gate valid; number misses the bar |
+| spin_glass | 12.88 d1 | **12.78 s1 d0** | first gate on the cell |
+| regular_n316 | **2.86** | 3.46 | SPARSE GUARD FAILED (+0.60) |
+| ws_n486 | **3.12** | 3.22 | slight fail |
+
+1. **The headline nobody pre-registered: with the V-cycle init, the
+   exactness gate fires on ALL FIVE dense cells — including ER.**
+   Minorminer legalization is skipped everywhere dense; its remaining
+   role there is polish. ER 4.71 s1 d0 is the first constructive
+   (router-free-legal) embedding of a liquid-class instance in the
+   program, and it beats mm (4.97). Mechanism (suspected, unattributed):
+   supernode-compact inheritance gives shorter, better-aligned arms —
+   claims complete where spectral's smear left deficits. The d-columns
+   collapse to zero across the board.
+2. **PRIMARY BAR FAILED on its letter**: turan 9.19 > 8.5. But the
+   failure mode it was written against is GONE — v160's stranding
+   (s3.61's participation drift) does not occur from the inherited
+   init, and turan is gate-valid at 9.19 vs the negotiated 9.06. The
+   number needs the coarse level to also decide METRIC (block spans),
+   which V0 deliberately does not do — the V1 question.
+3. **SPARSE GUARD FAILED**: regular_n316 +0.60, ws +0.10. The
+   deterministic circle destroys the latent 2D geometry spectral finds
+   on sparse structured graphs (kNN/regular: coarsening finds little
+   structure, so the init is just a worse drawing). Candidate fixes for
+   V1, undesigned: spectral-of-the-COARSE-graph placement (tiny n,
+   still fine-level-spectral-free), or engage-on-compression (vcycle
+   only when the hierarchy actually compresses — a property of the
+   score distribution, not a density gate).
+4. Default unchanged (`vcycle=False`) — the sparse regression may not
+   ship. FAILURE RULE honored: report + discuss. V1 menu: (a) coarse
+   metric (weighted arrange at coarse levels — block spans decided
+   where they are single moves; the packer rounds' machinery reused),
+   (b) spectral-of-coarse placement for the sparse fix, (c) both.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).

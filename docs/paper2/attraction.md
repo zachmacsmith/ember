@@ -96,6 +96,27 @@ Magic numbers, none swept: η=0.5, λ₀=3.0, round_frac=0.4, max_rounds=10, bin
 
 ## C. Idea ledger
 
+### THE V-CYCLE, V0 — the gate fires on every dense cell (ER included); sparse pays for the circle; V1 MENU OPEN (2026-08-03; notes s3.62)
+
+The candidate's first measurement, built exactly as recorded (twin-first
++ closed-neighborhood Jaccard, V0 = init only, no coarse relaxation —
+coarse attraction collapsed supernodes, the s3.18 lesson one level up).
+Verdict: the PRIMARY bar (turan <= 8.5) failed on its letter (9.19),
+but the V-cycle init makes the exactness gate fire on ALL FIVE dense
+cells — K100 7.79 and K140 10.52 both RECORDS and gate-valid (K140's
+first gate ever), spin_glass 12.78 first gate, and **ER100 4.71 s1 d0
+— a random graph embedded valid-by-construction, beating mm**. The
+sparse guard failed (regular +0.60: the circle destroys the latent
+geometry spectral finds where coarsening finds no structure) — so
+`vcycle` stays default-off pending V1. V1 menu: coarse-level metric
+(weighted arrange per level; the s3.59-61 packer machinery reused),
+spectral-of-coarse for the sparse fix, or both. Max's hypothesis ("it
+might change which manual polishing steps matter") already has its
+first datum: under the V-cycle init the d-deficit machinery has nothing
+to repair — the completion/overload apparatus becomes a verifier
+everywhere dense.
+
+
 ### THE CLAIM-PLAN ROUND — K100 sub-template gate-valid; boundary splits the board; interim default = s3.59; DECISION OPEN (2026-08-03; notes s3.61)
 
 Diagnosis inverted the design (no parity/abutment cases; d15 = one arm
