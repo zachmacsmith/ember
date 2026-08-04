@@ -13,38 +13,24 @@ unconstrained. The placement earns its keep by improving the endpoint of an
 *unconstrained* polish (free-polish doctrine, notes §3.22); hobbling the
 polisher to protect the layout was tried and measured worse.
 
-Pipeline per call (1-shot; the rounds protocol was measured harmful on dense
-sources at the first consolidation and its sparse motivation was obsoleted
-by the exact-seeds stack, s3.55):
+Pipeline per call (1-shot):
 
-1. **init** — spectral layout of the source scaled into the target's drawing
-   box (a warm-start heuristic, not load-bearing: the s3.36
-   init-independence result); circle fallback for degenerate spectra.
-2. **geometry** — ``CONTRACT_STEPS`` stair steps of contraction (the s3.52
-   cycle-0 mechanism: stock single-step geometry was a frozen fixed point,
-   s3.51), then ``alternate_arrange`` (alternating 1-D interval packing of
-   the capacity-forced variables into integer rows/columns, monotonization,
-   insertion order-search, feasibility priced into the gates via
-   ``overload_lam``). Sparse sources have no participants and pass through
-   untouched — the capacity gate is what keeps the dense machinery from
-   taxing easy instances.
-3. **seeds** — ``derive_bars_stair`` (arms are a pure readout of positions)
-   then ``wire_seeds_iv`` with claim-time crossing alignment
-   (``snap_claims``: aim, don't repair — s3.56), then the exactness
-   completion (``complete_seeds``, s3.54): if the coverage deficit hits
-   zero the seeds ARE a legal embedding and minorminer legalization is
-   skipped. The exactness path engages only on stride>1 (course-resolved
-   Zephyr) fabrics, where junction completeness makes coverage = validity;
-   on Pegasus/Chimera seeding behavior is unchanged from the first
-   consolidation.
-4. **routing** — when the gate does not fire: stock minorminer seeded cheap
-   legalization (``initial_chains``, ``chainlength_patience=0``), capped by
-   ``round_frac`` of the timeout (the polish reserve is by construction).
-5. **feasibility fallback** — if nothing legalized: one *uncapped*
-   snap-seeded attempt with all remaining time (degradation mode =
-   spectral-seeded stock MM, the net feasibility winner of §3.23).
-6. **finish** — stock minorminer's full grind warm-started from the legal
-   embedding (``skip_initialization``), unconstrained.
+1. **init** — the V-cycle two-stage coarsening init (``coarsen.py``,
+   default since s3.66; ``vcycle=False`` = the legacy spectral init).
+2. **geometry** — contraction (``CONTRACT_STEPS`` stair steps on
+   stride-2 fabrics, the measured single step elsewhere — see the
+   effective-config block), then ``alternate_arrange`` under the policy
+   the effective config selected (DP packer + overload-priced gates on
+   course-resolved Zephyr; the measured greedy elsewhere).
+3. **seeds** — one `arm_books` bundle feeds the snap-aimed coloring and,
+   on stride-2 fabrics, the exactness completion; deficit 0 = the seeds
+   ARE legal and minorminer legalization is skipped (diagnostic:
+   ``mm_skipped``).
+4. **routing** — otherwise stock minorminer seeded legalization, capped
+   at ``round_frac`` of the timeout.
+5. **feasibility fallback** — one uncapped snap-seeded attempt.
+6. **finish** — stock minorminer's full grind warm-started,
+   unconstrained; validity-guarded.
 
 Deterministic per ``seed``.
 """
@@ -329,10 +315,17 @@ def attract_embed(
         eff_exact = cfg.exact_seeds and stride2
         eff_snap = cfg.snap_claims and stride2
         eff_dp = stride2
+        # vcycle activation is stride-gated (s3.66 guard probe): the
+        # compact coarse init needs the contraction+DP machinery to
+        # exploit it — on the P16 legacy path it regressed the dense
+        # cells (turan 8.45->9.47, K100 13.19->14.08, clean controls)
+        # while helping sparse (ws 3.79->3.60; recorded as
+        # restricted-polish-round evidence, s3.65 C).
+        eff_vcycle = cfg.vcycle and stride2
         bounds = (grid.W, grid.H)
         kappa = cfg.kappa if cfg.kappa is not None else _target_kappa(grid)
 
-        if cfg.vcycle:
+        if eff_vcycle:
             from ember_qc.algorithms.factored.coarsen import multilevel_init
             cent = multilevel_init(src_adj, lo, hi, seed=seed)
         else:

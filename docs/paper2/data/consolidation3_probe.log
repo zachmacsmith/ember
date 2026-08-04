@@ -1,0 +1,129 @@
+load at start: (6.10693359375, 4.9833984375, 3.5322265625)
+/data/max/ember/docs/paper2/data/consolidation3_probe.py:68: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/consolidation3_probe.py:68: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/consolidation3_probe.py:68: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/consolidation3_probe.py:68: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/consolidation3_probe.py:68: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/consolidation3_probe.py:68: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/consolidation3_probe.py:68: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/consolidation3_probe.py:68: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/consolidation3_probe.py:68: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/consolidation3_probe.py:68: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/consolidation3_probe.py:68: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/consolidation3_probe.py:68: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+Z12 K100 att seed 0: 7.79 mx=10 skip=True d=0 (14.7s)
+Z12 K100 att seed 1: 7.79 mx=10 skip=True d=0 (16.2s)
+Z12 K100 att seed 2: 7.79 mx=10 skip=True d=0 (17.5s)
+Z12 K100 att_legacy seed 0: 8.13 mx=9 skip=True d=0 (27.5s)
+Z12 K100 att_legacy seed 1: 8.12 mx=9 skip=True d=0 (33.2s)
+Z12 K100 att_legacy seed 2: 8.12 mx=9 skip=True d=0 (29.5s)
+Z12 K100 mm seed 0: 10.04 mx=14 skip=None d=None (39.7s)
+Z12 K100 mm seed 1: 10.71 mx=16 skip=None d=None (26.2s)
+Z12 K100 mm seed 2: 10.08 mx=14 skip=None d=None (33.6s)
+Z12 K140 att seed 0: 10.521 mx=12 skip=True d=0 (45.9s)
+Z12 K140 att seed 1: 10.521 mx=12 skip=True d=0 (46.9s)
+Z12 K140 att seed 2: 10.521 mx=12 skip=True d=0 (45.0s)
+Z12 K140 att_legacy seed 0: 10.929 mx=15 skip=False d=4 (54.2s)
+Z12 K140 att_legacy seed 1: 10.793 mx=13 skip=False d=4 (64.9s)
+Z12 K140 att_legacy seed 2: 11.014 mx=17 skip=False d=4 (41.9s)
+Z12 K140 mm seed 0: 16.893 mx=27 skip=None d=None (60.5s)
+Z12 K140 mm seed 1: 25.836 mx=52 skip=None d=None (60.8s)
+Z12 K140 mm seed 2: 16.586 mx=27 skip=None d=None (60.7s)
+Z12 ER100_d10 att seed 0: 4.88 mx=9 skip=False d=369 (4.8s)
+Z12 ER100_d10 att seed 1: 4.98 mx=9 skip=False d=369 (3.2s)
+Z12 ER100_d10 att seed 2: 4.69 mx=8 skip=False d=369 (6.5s)
+Z12 ER100_d10 att_legacy seed 0: 4.97 mx=9 skip=False d=367 (2.7s)
+Z12 ER100_d10 att_legacy seed 1: 4.48 mx=8 skip=False d=367 (6.2s)
+Z12 ER100_d10 att_legacy seed 2: 4.83 mx=9 skip=False d=367 (3.3s)
+Z12 ER100_d10 mm seed 0: 5.0 mx=9 skip=None d=None (3.1s)
+Z12 ER100_d10 mm seed 1: 5.07 mx=10 skip=None d=None (1.5s)
+Z12 ER100_d10 mm seed 2: 4.85 mx=9 skip=None d=None (1.7s)
+Z12 turan_n162 att seed 0: 7.407 mx=9 skip=True d=0 (33.7s)
+Z12 turan_n162 att seed 1: 9.463 mx=16 skip=False d=41 (61.1s)
+Z12 turan_n162 att seed 2: 7.5 mx=9 skip=True d=0 (34.0s)
+Z12 turan_n162 att_legacy seed 0: 9.13 mx=17 skip=False d=15 (15.5s)
+Z12 turan_n162 att_legacy seed 1: 9.062 mx=17 skip=False d=15 (14.8s)
+Z12 turan_n162 att_legacy seed 2: 8.988 mx=15 skip=False d=15 (60.3s)
+Z12 turan_n162 mm seed 0: 10.543 mx=16 skip=None d=None (22.1s)
+Z12 turan_n162 mm seed 1: 13.963 mx=25 skip=None d=None (32.8s)
+Z12 turan_n162 mm seed 2: 11.537 mx=21 skip=None d=None (37.6s)
+Z12 spin_glass_n163 att seed 0: 13.282 mx=23 skip=False d=9 (26.6s)
+Z12 spin_glass_n163 att seed 1: 11.712 mx=20 skip=False d=9 (15.3s)
+Z12 spin_glass_n163 att seed 2: 11.706 mx=24 skip=False d=9 (13.4s)
+Z12 spin_glass_n163 att_legacy seed 0: 11.883 mx=19 skip=False d=21 (17.9s)
+Z12 spin_glass_n163 att_legacy seed 1: 11.877 mx=21 skip=False d=21 (16.7s)
+Z12 spin_glass_n163 att_legacy seed 2: 11.853 mx=23 skip=False d=21 (15.6s)
+Z12 spin_glass_n163 mm seed 0: 17.479 mx=29 skip=None d=None (60.2s)
+Z12 spin_glass_n163 mm seed 1: 17.497 mx=29 skip=None d=None (60.4s)
+Z12 spin_glass_n163 mm seed 2: 17.129 mx=27 skip=None d=None (60.1s)
+Z12 regular_n316 att seed 0: 2.718 mx=6 skip=False d=33 (3.8s)
+Z12 regular_n316 att seed 1: 2.997 mx=7 skip=False d=33 (3.6s)
+Z12 regular_n316 att seed 2: 2.905 mx=7 skip=False d=33 (3.7s)
+Z12 regular_n316 att_legacy seed 0: 2.813 mx=6 skip=False d=19 (3.6s)
+Z12 regular_n316 att_legacy seed 1: 3.009 mx=7 skip=False d=19 (3.5s)
+Z12 regular_n316 att_legacy seed 2: 2.905 mx=7 skip=False d=19 (3.4s)
+Z12 regular_n316 mm seed 0: 3.364 mx=9 skip=None d=None (2.1s)
+Z12 regular_n316 mm seed 1: 3.411 mx=10 skip=None d=None (2.2s)
+Z12 regular_n316 mm seed 2: 3.291 mx=9 skip=None d=None (3.1s)
+Z12 ws_n486 att seed 0: 2.852 mx=10 skip=False d=428 (10.4s)
+Z12 ws_n486 att seed 1: 2.751 mx=9 skip=False d=428 (11.8s)
+Z12 ws_n486 att seed 2: 2.817 mx=11 skip=False d=428 (10.8s)
+Z12 ws_n486 att_legacy seed 0: 3.101 mx=12 skip=False d=747 (4.4s)
+Z12 ws_n486 att_legacy seed 1: 3.156 mx=12 skip=False d=747 (5.3s)
+Z12 ws_n486 att_legacy seed 2: 3.335 mx=14 skip=False d=747 (4.2s)
+Z12 ws_n486 mm seed 0: 3.233 mx=11 skip=None d=None (2.7s)
+Z12 ws_n486 mm seed 1: 3.173 mx=13 skip=None d=None (2.9s)
+Z12 ws_n486 mm seed 2: 2.821 mx=11 skip=None d=None (4.1s)
+P16 K100 att seed 0: 14.49 mx=21 skip=None d=None (42.9s)
+P16 K100 att seed 1: 14.06 mx=21 skip=None d=None (41.5s)
+P16 K100 att seed 2: 13.68 mx=22 skip=None d=None (27.0s)
+P16 K100 att_legacy seed 0: 12.68 mx=20 skip=None d=None (22.9s)
+P16 K100 att_legacy seed 1: 13.27 mx=20 skip=None d=None (60.0s)
+P16 K100 att_legacy seed 2: 13.61 mx=21 skip=None d=None (21.1s)
+P16 K100 mm seed 0: 13.2 mx=22 skip=None d=None (60.2s)
+P16 K100 mm seed 1: 13.96 mx=21 skip=None d=None (60.9s)
+P16 K100 mm seed 2: 13.69 mx=21 skip=None d=None (60.2s)
+P16 turan_n162 att seed 0: 9.599 mx=11 skip=None d=None (32.9s)
+P16 turan_n162 att seed 1: 8.58 mx=9 skip=None d=None (58.4s)
+P16 turan_n162 att seed 2: 10.241 mx=11 skip=None d=None (56.1s)
+P16 turan_n162 att_legacy seed 0: 8.0 mx=8 skip=None d=None (63.5s)
+P16 turan_n162 att_legacy seed 1: 8.765 mx=10 skip=None d=None (43.8s)
+P16 turan_n162 att_legacy seed 2: 8.593 mx=9 skip=None d=None (58.4s)
+P16 turan_n162 mm seed 0: 9.136 mx=10 skip=None d=None (24.9s)
+P16 turan_n162 mm seed 1: 7.815 mx=8 skip=None d=None (34.5s)
+P16 turan_n162 mm seed 2: 7.815 mx=8 skip=None d=None (38.2s)
+P16 ws_n486 att seed 0: 3.667 mx=17 skip=None d=None (5.1s)
+P16 ws_n486 att seed 1: 3.621 mx=15 skip=None d=None (5.0s)
+P16 ws_n486 att seed 2: 3.498 mx=15 skip=None d=None (5.9s)
+P16 ws_n486 att_legacy seed 0: 4.115 mx=18 skip=None d=None (7.8s)
+P16 ws_n486 att_legacy seed 1: 3.539 mx=15 skip=None d=None (8.3s)
+P16 ws_n486 att_legacy seed 2: 3.708 mx=15 skip=None d=None (8.5s)
+P16 ws_n486 mm seed 0: 4.455 mx=17 skip=None d=None (3.0s)
+P16 ws_n486 mm seed 1: 3.617 mx=15 skip=None d=None (3.9s)
+P16 ws_n486 mm seed 2: 3.584 mx=13 skip=None d=None (4.3s)
+
+summary (ACL mean over legal seeds (n)):
+Z12 K100              att=7.79(3) mx10 d0  att_legacy=8.12(3) mx9 d0  mm=10.28(3) mx15
+Z12 K140              att=10.52(3) mx12 d0  att_legacy=10.91(3) mx15 d4  mm=19.77(3) mx35
+Z12 ER100_d10         att=4.85(3) mx9 d369  att_legacy=4.76(3) mx9 d367  mm=4.97(3) mx9
+Z12 turan_n162        att=8.12(3) mx11 d14  att_legacy=9.06(3) mx16 d15  mm=12.01(3) mx21
+Z12 spin_glass_n163   att=12.23(3) mx22 d9  att_legacy=11.87(3) mx21 d21  mm=17.37(3) mx28
+Z12 regular_n316      att=2.87(3) mx7 d33  att_legacy=2.91(3) mx7 d19  mm=3.36(3) mx9
+Z12 ws_n486           att=2.81(3) mx10 d428  att_legacy=3.20(3) mx13 d747  mm=3.08(3) mx12
+P16 K100              att=14.08(3) mx21  att_legacy=13.19(3) mx20  mm=13.62(3) mx21
+P16 turan_n162        att=9.47(3) mx10  att_legacy=8.45(3) mx9  mm=8.26(3) mx9
+P16 ws_n486           att=3.60(3) mx16  att_legacy=3.79(3) mx16  mm=3.89(3) mx15
+load at end: (11.080078125, 9.63037109375, 5.7890625)
+done-probe

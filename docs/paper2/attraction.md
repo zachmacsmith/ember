@@ -41,6 +41,27 @@ The honest description of this algorithm family (2026-07-17 discussion):
   pure placement, zero polish. The attraction family with density-limited collapse
   interpolates between that and the sparse local-search regime.
 
+## A.2 Measurement doctrine (rewritten at consolidation 3, s3.66)
+
+The s3.65 critique found two inherited conventions actively misleading
+decisions. The rules, restated:
+
+- **Decision bars are OUTCOME-FIRST**: final post-polish ACL, max chain
+  length (the tail is what annealer physics feels), wall time, and
+  feasibility. The exactness gate (mm_skipped / deficit 0) is a
+  DIAGNOSTIC — never a bar, never a guard. Evidence: turan's negotiated
+  7.02 beat its gated 8.14; gate-guard bars blocked the vcycle flip
+  while the then-default LOST ws_n486 to minorminer.
+- **Boards quote ONE configuration.** Per-cell best-arm composites are
+  the portfolio trap as a reporting convention (Max's founding warning).
+  Cross-arm tables are for ATTRIBUTION inside a round, not standings.
+- **Probe sentinels are the invariant string "done-probe"** (name-embedded
+  sentinels broke monitors twice, s3.62/s3.64).
+- **What stays** (measured to earn its keep, repeatedly): pre-registered
+  bars written before runs; paired same-run controls under the shared-box
+  scoring rule; archive-marker-then-delete consolidations; one-flip
+  attribution ladders; per-worker state reset in probe workers (s3.61).
+
 ## B. As-built: v3 hybrid (registered as `attraction`) — HISTORICAL
 
 **Superseded by the 2026-07-29 consolidation (ledger entry at the top of
@@ -95,6 +116,19 @@ Magic numbers, none swept: η=0.5, λ₀=3.0, round_frac=0.4, max_rounds=10, bin
 γ=0 (region bias off by default; >0 is the refuted ablation arm).
 
 ## C. Idea ledger
+
+### CONSOLIDATION 3 — verdict: one accounting literal, doctrine repaired, vcycle shipped where measured; ws falls, tails answered (2026-08-04; notes s3.66)
+
+arm_books unification (gap: +1 unit on spin_glass only), effective
+config (stride decided once), coarsen at its shipped cell, rounds
+skeleton gone, outcome-first doctrine (A.2). Guard probe: Z12 all bars
+met — the SINGLE default beats mm 7/7 (ws 2.81 new best) with
+uniformly SHORTER max-chain tails (K140 12 vs mm 35 — the s3.65 tail
+risk resolves in our favor on Z12). P16 dense regressed under the
+global flip -> vcycle activation stride-gated (sparse win ws 3.60
+recorded as restricted-polish evidence). Two scripted-edit incidents on
+the record (regex dict-injection; stale print key). Deleted arms and
+skeleton recoverable at 023283a1.
 
 ### CONSOLIDATION 3 — archive marker (2026-08-04)
 

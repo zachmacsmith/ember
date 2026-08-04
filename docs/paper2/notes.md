@@ -3612,6 +3612,84 @@ and vc arms on the free box; (2) the restricted-polish round (folds in
 the gate ablation and Pegasus); (3) consolidation 3; (4) defect sweep
 before paper claims.
 
+### 3.66 Consolidation 3: one accounting made literal, the doctrine repaired, the vcycle shipped where measured — and the tail question answered (2026-08-04)
+
+Max's mandate after the s3.65 critique ("prioritize cleanup of
+everything that's amiss"). Three commits per house pattern (marker
+023283a1).
+
+**Code (5854c41d):** `arm_books` = THE books — contacts, bars, and
+hull-widened claim tuples computed once and read by the coloring, the
+DP packer's feasibility test, and the overload census (the s3.65 gap
+measured FIRST: inert on turan/K140, +1 violation-unit on spin_glass —
+the books had diverged exactly where arms are irregular-dense).
+Energies carried, not recomputed (~3x fewer O(E) passes per gate). The
+nine stride forks collapsed into one effective-config block in
+`attract_embed`; field.py never inspects the fabric. coarsen.py
+consolidated to its shipped cell (segment/mass/tiling arms deleted with
+their s3.64 numbers on the ledger; dead `_stair_step_weighted` deleted;
+the `levels==1` guard restored — a LATENT V2 bug the vcycle flip
+exposed on K8/chimera). Rounds-protocol skeleton stripped (result
+schema: `stair_E` + `legal_acl`; diag `mm_skipped` bool + NEW
+`max_chain`). kappa defaults made explicit; constants named. Tests
+535->536 (fossil assertions killed; regex-injected `dict(pos, kappa=)`
+corruption caught and repaired — the second scripted-edit incident on
+the record).
+
+**Doctrine (this commit):** decision bars are OUTCOME-FIRST (final ACL,
+max chain, wall, feasibility); gates are diagnostics, never bars;
+boards quote ONE configuration; sentinels are the invariant
+"done-probe". Kept: pre-registration, paired same-run controls,
+shared-box rule, archive-then-delete, attribution ladders.
+
+**Guard probe** (consolidation3_probe; att = consolidated default,
+att_legacy = vcycle off, mm; 3 seeds; quiet box; mm controls
+replicate):
+
+| cell | att | att_legacy | mm |
+|---|---|---|---|
+| Z12 K100 | **7.79** mx10 d0 | 8.12 mx9 | 10.28 mx15 |
+| Z12 K140 | **10.52** mx12 d0 | 10.91 mx15 | 19.77 mx35 |
+| Z12 ER100 | 4.85 mx9 | 4.76 mx9 | 4.97 mx9 |
+| Z12 turan | **8.12** mx11 | 9.06 mx16 | 12.01 mx21 |
+| Z12 spin_glass | 12.23 mx22 | 11.87 mx21 | 17.37 mx28 |
+| Z12 regular | **2.87** mx7 | 2.91 mx7 | 3.36 mx9 |
+| Z12 ws | **2.81** mx10 | 3.20 mx13 | 3.08 mx12 |
+| P16 K100 | 14.08 | **13.19** | 13.62 |
+| P16 turan | 9.47 | **8.45** | 8.26 |
+| P16 ws | **3.60** | 3.79 | 3.89 |
+
+1. **Z12: every outcome bar met; ws 2.81 is a new best** (beats mm
+   outright; the old default LOST this cell). The single-configuration
+   default now beats minorminer on all seven Z12 cells.
+2. **The tail question (s3.65 E) answers POSITIVELY on Z12**: att's
+   max chain <= mm's everywhere — K140 12 vs 35 is the headline; the
+   ACL wins are NOT bought with fatter tails. First data, now recorded
+   on every probe via diag.max_chain.
+3. **P16: the flip failed its no-regression clause on dense cells**
+   (turan 8.45->9.47, K100 13.19->14.08; clean controls) while HELPING
+   sparse (ws 3.60 — beats legacy AND mm). The compact coarse init
+   needs the contraction+DP machinery to exploit it; P16's measured
+   legacy path has neither. RESOLUTION per the failure rule: vcycle
+   activation joins the effective config (stride-2 only); stride-1
+   keeps the spectral init (structural test added). The P16-sparse win
+   is recorded as evidence for the restricted-polish round (s3.65 C —
+   Pegasus's lane).
+4. Cell note for the ledger: att_legacy spin_glass improved to 11.87
+   under the unified books (from 12.88) — spectral init + one
+   accounting suits that cell; the single-config board stands with att
+   (12.23), the delta noted as a coarse-init open question.
+5. Incident log: the first guard-probe launch crashed on a stale print
+   key (caught by the monitor's Traceback watch — the "done-probe"
+   sentinel discipline working); relaunched clean.
+
+**The single-configuration standing board (the only board henceforth):
+Z12 att 7.79 / 10.52 / 4.85 / 8.12 / 12.23 / 2.87 / 2.81 — beats mm
+7/7 with uniformly shorter tails.** NEXT (Max's stated priority): the
+restricted-polish round (s3.65 C; bar_domains arms on both fabrics,
+gate-vs-router ablation folded in), then the full-Ember sweep on this
+stabilized algorithm.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).

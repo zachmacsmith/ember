@@ -161,11 +161,13 @@ Sub-moves, in order per iteration:
   disagrees with the y-order, accepted on strict stair-E decrease. The
   sparse/dense interpolation is a property of the move — leverage scales
   with |Δx|.
-- **`insertion_sweeps`** (s3.36, on by default): best-insertion order search
-  over the long-arm variables' y-queue, priced at the y-values the
-  permutation will assign, non-member neighbours folded in as fixed
+- **`insertion_sweeps`** (s3.36, on by default; runs AFTER the iteration
+  loop as up to two gated composites, not per-iteration): best-insertion
+  order search over the long-arm members' y-queue, priced at the y-values
+  the permutation will assign, non-member neighbours folded in as fixed
   anchors. Propose in rank space, re-monotonize + repack, dispose by the
-  gate energy with full revert.
+  gate energy with full revert (plus the s3.61 hard no-new-overload veto
+  on DP-policy fabrics).
 
 **Feasibility is in the gate energy** (`overload_lam = 1.0`, s3.57): every
 E-gate scores stair-E + λ·hinge² of `claim_overload` — the claim layer's
@@ -173,6 +175,20 @@ own uncolorability census (arms that would exceed a line's sub-lane count).
 Evaluation only, never descended on; λ trades, never ranks. This is what
 made the deleted `order_shake` unnecessary: its role was accidentally
 dodging overload the gates couldn't see.
+
+## 4.5 The V-cycle init (`coarsen.py`; default since s3.66)
+
+Two-stage source coarsening: exact-twin groups collapse unconditionally
+(whole blocks at once), then one greedy weighted closed-neighborhood-
+Jaccard matching over distance-≤2 candidates at τ=0.34 (τ boxed by the
+derivation's limit values; unit-tested insensitive across the window).
+The coarse quotient is placed by spectral-of-the-COARSE-graph (circle
+fallback), children spread in golden-angle discs at COARSE_SPAN scale;
+single-supernode quotients use the V0 measured anchor geometry; graphs
+that don't coarsen get the coarse layout directly. Fabric-agnostic —
+active on every target. Measured (s3.62-64): five records, exactness
+gates firing on all dense cells; losing arms (mass shares, tangent
+closure, segments) at the consolidation-3 marker with their numbers.
 
 ## 5. Seed derivation — bars to real qubit chains
 
@@ -225,21 +241,17 @@ deleted at consolidation 2: 1-shot beat rounds on all dense cells at the
 first consolidation, and the sparse cells that motivated rounds are now won
 by the exact stack (ws_n486 3.01 vs rounds' 3.41, s3.55).
 
-## 7. Knobs (the complete list — 10)
+## 7. Knobs (the complete list — 11)
 
 `round_frac=0.5`, `eta=0.5`, `arrange_iters=8`, `insert_sweeps=8`,
 `kappa=None` (derived from the target: degree-based on stride-1 fabrics,
 fresh contacts per tile on course-resolved Zephyr), `span_floor=True`,
-`courses=True`, `exact_seeds=True`, `snap_claims=True`, `overload_lam=1.0`.
+`courses=True`, `exact_seeds=True`, `snap_claims=True`, `overload_lam=1.0`,
+`vcycle=True` (the two-stage coarsening init; default since s3.66).
 Unknown kwargs — including every deleted knob — are silently ignored.
 
 ## 8. Open problems (the reasons remaining complexity exists)
 
-- **Depth-respecting packing** — the packer can oversubscribe a line
-  (interval depth > sub-lanes; turán's d729 was this). `overload_lam`
-  makes the gates see it; an exact order-preserving assignment (DP/flow)
-  would make it impossible by construction and likely close turán's
-  7.90-constructed vs 6.00-template gap. The named next round.
 - **Pegasus co-design** — validity-by-construction needs coupler-aware
   claim aiming on incomplete junctions (the 56% fabric); until then the
   stride gate keeps Pegasus on the router path. The generalization test

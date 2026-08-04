@@ -210,6 +210,17 @@ class TestAttractEmbed:
         assert validate_embedding(res["embedding"], source, chimera)
         assert res["legal_acl"] is not None
 
+    def test_vcycle_stride_gated(self, chimera, source, monkeypatch):
+        # s3.66: the coarse init activates only where measured (stride-2);
+        # stride-1 fabrics keep the spectral init
+        import ember_qc.algorithms.factored.coarsen as C
+        called = []
+        real = C.multilevel_init
+        monkeypatch.setattr(C, "multilevel_init",
+                            lambda *a, **k: called.append(1) or real(*a, **k))
+        res = attract_embed(source, chimera, timeout=30, seed=0)
+        assert res["embedding"] and not called
+
     def test_untyped_target_fallback(self, source):
         target = nx.convert_node_labels_to_integers(nx.grid_2d_graph(12, 12))
         res = attract_embed(nx.random_regular_graph(3, 12, seed=2), target,
