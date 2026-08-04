@@ -1257,3 +1257,91 @@ after P6 per the approved plan).
     (The P16 rerun's replacement property — same arm name, same derived seeds — was
     and remains correct.) No reported table used the wrong framing; every CLI table
     carried the correct pairing label. Comment fixed at gen_m5_full.py.
+
+## 6. v1.3 program (2026-08-03, user-approved: the ledger's top two candidates, Zephyr)
+
+Scope: implement the two v1.3 items recorded at §4.16/ledger — (A) the mm-first
+beta redesign (item 4 NEXT) and (B) the ember native-tier refinements (item 12
+NEXT) — and evaluate on Z12 against the v1.2 arms (archived m5full_z12 minorminer
+rows + t2_z12 p3-ember/p3-mm-beta-fb rows; batch-independent pairing per errata
+4.12.10). Frozen-arm policy continues: every v1.2 arm stays byte-identical; new
+behavior = NEW names (p3-mm-beta-mf, p3-ember2). Zephyr-only; P16/C16 remains
+deferred.
+
+### 4.17 v1.3 — probe, builds, dev gates, library re-verify (2026-08-03)
+
+PRE-REGISTERED 2026-08-03 before any run. Registries: dev inst seeds 101-105,
+algo seeds 0-14 (15-seed convention); library master seed 4242; 60 s; hyde06
+<=48W dev / 60W library; QUEUE rows 15-17.
+
+DESIGNS.
+- W-A `p3-mm-beta-mf` (new file paper3/beta_mf.py; imports dhat_of +
+  _GATE_MAX_DENSITY from beta.py, both unchanged): density >= 0.11 -> pure
+  stock-MM passthrough (metadata, beta.py convention). Below gate: stock MM
+  FIRST at FULL budget (to the arm deadline); on MM failure return it (arm ==
+  stock by construction — the -fb budget-split failure mode is structurally
+  impossible); on MM success with leftover >= 1 s, run the fork
+  (max_beta=dhat, fallback=False) on the leftover and return whichever
+  embedding has lower raw ACL (tie -> MM's). Metadata: selection, mm_wall,
+  beta_wall, dhat.
+- W-B `p3-ember2` (new file paper3/ember2.py) — BUILD GATED ON PROBE P below:
+  ember's five stages with two native-tier changes: (i) the 2 s quick Glasgow
+  call additionally requires n <= 1000 (deletes the measured 2.06 s
+  hopeless-solver tax at n~2000); (ii) a DEEP Glasgow tier for eligible
+  sources with 1000 < n <= 2600 and remaining >= 40 s: one find_subgraph call
+  at timeout T* (set by the probe; cap 20 s). Rationale: §4.16 measured big
+  honeycombs embedding under MM at ACL 1.2-1.6 in 15-56 s — near-subgraphs a
+  longer solver run could hit at exactly 1.0. Cost of a miss: T* seconds off
+  the MM stage on pigeonhole-edge instances; the probe's hit rate must justify
+  it and T4's honeycomb success bar polices it.
+
+PROBE P (runs first; hyde06; QUEUE row 15): find_subgraph (stock pip pkg,
+parallel=False, seed 0) on the seven §4.16 honeycomb flip graphs (32426,
+32432, 32442, 32447, 32472, 32475, 32502) at solver timeouts {5, 10, 20} s,
+recording wall + hit + validity. DECISION TREE: T* = the smallest timeout with
+>= 5/7 validated hits -> build W-B with that T*. No timeout reaches 5/7 ->
+p3-ember2 is NOT BUILT this cycle (the node-cap alone cannot clear a bar);
+the probe verdict is recorded at ledger item 12 and W-B dies. Partial (5/7
+only at 20 s) -> build with T*=20 (the remaining >= 40 s guard caps the miss
+cost at a third of the budget).
+
+T3 DEV GATES (hyde06, QUEUE row 16, after builds + local tests):
+- T3a beta ladder: t3_beta_mf.py — Z12 deg-10 ladder n in {100,140,180}, inst
+  101-105, algo seeds 0-14, arms {minorminer, p3-mm-beta-fb, p3-mm-beta-mf},
+  60 s, acl_spur via the shared terminal_polish (t1c_arms convention). 675
+  rows. BARS (mf): (1) success == minorminer EXACTLY per cell at shared
+  (inst, seed) — the by-construction guarantee, now measured; (2) median
+  dACL_spur vs minorminer < -1% AND >= 60%W on >= 2 of 3 cells (beta-dhat's
+  §4.8b convention — mf keeps the better embedding, so it must not do worse
+  than beta-dhat did); (3) vs p3-mm-beta-fb at shared seeds: median <= 0 and
+  never a success deficit. Any bar fails -> mf dies this cycle (no remedy).
+- T3b ember2 parity (LOCAL, no queue slot): on all 7 Z12 dev cells x inst 101
+  x seed 0, p3-ember2's result rows must be IDENTICAL to p3-ember's (its
+  changes touch only eligible sources with n > 1000, absent from dev cells);
+  plus the full contract suite. Any diff -> bug; fix before T4.
+T4 LIBRARY RE-VERIFY (hyde06, QUEUE row 17, gated on T3 verdicts): one CLI
+batch, arms {p3-mm-beta-mf} + {p3-ember2 if built}, the same 30,201-graph
+Z12-eligible set, trials 1, timeout 60, master seed 4242, 60W. Pairing:
+t2_verdicts-style calibrated analyzer vs (a) archived m5full_z12 minorminer
+rows, (b) archived t2_z12 p3-ember rows (for ember2), (c) archived t2_z12
+p3-mm-beta-fb rows (for mf; the redesign delta). Calibrated bars throughout
+(drop real only above max(2.6 pt, 3 graphs); ACL at >= 10 pairs; sd-1.57
+null stated).
+BARS (mf): (1) success within the null on EVERY family — in particular the
+five -fb kill families (planted_solution, honeycomb, kagome,
+frustrated_square, king_graph) must show NO real drop; (2) no ACL violation
+at >= 10 pairs — in particular bcc_lattice and spin_glass must not regress
+(mf only swaps in a strictly-lower-ACL embedding, so the -fb mechanism-(b)
+harm must vanish); (3) POSITIVE claim (the one -fb failed at 2/3): >= 3
+below-gate families each median < -0.5% AND >= 55%W vs minorminer.
+BARS (ember2, if built): (1) honeycomb: family success >= ember's within the
+null AND >= 3 new ACL == 1.0 rows among the n > 1000 eligible members (the
+deep-tier conversions); (2) every other family within the null of ember;
+(3) hardware_native success >= ember's. FAIL on (1)'s success half or (2) ->
+ember2 dies (the deep tier's miss tax is real); FAIL only (1)'s conversion
+count with success held -> record as neutral, arm stays but the deep tier is
+annotated no-value.
+Decision after T4: surviving arms enter the paper as a §12 addendum update
+(v1.3, Zephyr-scoped); program returns to STOP for the P16/C16 decision.
+
+--- results appended below; nothing above this line is edited after launch ---

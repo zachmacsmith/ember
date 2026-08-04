@@ -15,3 +15,7 @@ Standing rule: every new user prompt in Claude sessions on this repo is appended
 ## 2026-08-02 — v1.2 kickoff
 
 > Can you commit and push what you have for now?  Then, make a plan to run a dynamic workflow to improve the various algorithms and/or make better algorithms based on your findings so far.  Let's plan to run any new tests/benchmarks on just Zephyr for now (we can do Pegasus and Chimera later, if Zephyr works well).
+
+## 2026-08-03 — v1.3 kickoff
+
+> Let's proceed with implementing the ledgers' top v1.3 candidates and evalaute them on Zephyr and comparing against the algorithms from this v1.2 run
