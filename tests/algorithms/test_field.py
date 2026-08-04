@@ -279,7 +279,7 @@ class TestArrangement:
         grid = self._grid()
         pos = {v: np.array([0.5 * v, 3.7]) for v in range(8)}
         adj = {v: [u for u in (v - 1, v + 1) if 0 <= u < 8] for v in range(8)}
-        new, info = alternate_arrange(pos, adj, grid)
+        new, info = alternate_arrange(pos, adj, grid, kappa=13.0)
         assert info["assigned"] == 0
         assert all(np.allclose(new[v], pos[v]) for v in pos)
 
@@ -408,7 +408,7 @@ class TestArmLengthGating:
         pos = {v: np.array([10.0 + 0.01 * v, 10.0 + 0.01 * v])
                for v in range(n)}
         adj = {v: [u for u in range(n) if u != v] for v in range(n)}
-        new, info = alternate_arrange(pos, adj, grid, iters=8)  # kappa=13
+        new, info = alternate_arrange(pos, adj, grid, iters=8, kappa=13.0)  # kappa=13
         assert info["assigned"] == 0
         assert all(np.allclose(new[v], pos[v]) for v in pos)
 
@@ -420,7 +420,7 @@ class TestArmLengthGating:
         pos = {0: np.array([2.0, 5.3]), 1: np.array([8.0, 5.3]),
                2: np.array([2.4, 5.3])}
         adj = {0: [1, 2], 1: [0], 2: [0]}
-        new, info = alternate_arrange(pos, adj, grid, iters=2)
+        new, info = alternate_arrange(pos, adj, grid, iters=2, kappa=13.0)
         assert info["assigned_rows"] >= 1     # the long h-arms packed
         assert info["assigned_cols"] == 0     # no v-arm exceeds a tile
         for v in pos:  # x untouched by row-packing
@@ -557,7 +557,7 @@ class TestSnapClaims:
                 1: (np.array([4.0, 4.0]), np.array([1.0, 4.0]))}
         legacy = wire_seeds_iv(grid, pos, bars)
         snapped = wire_seeds_iv(grid, pos, bars,
-                                src_adj={0: [1], 1: [0]})
+                                src_adj={0: [1], 1: [0]}, snap=True)
         def touch(seeds):
             sa, sb = set(seeds.get(0, [])), set(seeds.get(1, []))
             return any(nb in sb for q in sa for nb in adj[q])
@@ -581,7 +581,7 @@ class TestSnapClaims:
         # stride-1 grid: src_adj ignored entirely
         folded = TileGrid(g, target_layout(g))
         c = wire_seeds_iv(folded, pos, bars)
-        d = wire_seeds_iv(folded, pos, bars, src_adj=adjs)
+        d = wire_seeds_iv(folded, pos, bars, src_adj=adjs, snap=False)
         assert c == d
 
 

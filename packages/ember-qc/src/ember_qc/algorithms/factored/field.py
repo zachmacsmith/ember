@@ -283,10 +283,12 @@ def derive_bars_stair(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
 
 
 def stair_energy(pos: Dict[int, Point],
-                 src_adj: Dict[int, List[int]]) -> float:
+                 src_adj: Dict[int, List[int]],
+                 contacts=None) -> float:
     """Total arm length under the diagonal rule (un-floored) — the
     single-coverage chain-length objective."""
-    contacts = _stair_contacts(pos, src_adj)
+    if contacts is None:
+        contacts = _stair_contacts(pos, src_adj)
     e = 0.0
     for v in pos:
         h_us, v_us = contacts[v]
@@ -441,25 +443,23 @@ def _ensure_seeds(grid: TileGrid, claimed: set,
 
 def wire_seeds_iv(grid: TileGrid, pos: Dict[int, Point],
                   bars: BarIntervals,
-                  src_adj: Optional[Dict[int, List[int]]] = None
-                  ) -> Dict[int, List[int]]:
-    """Wire-coherent seed chains (the sub-tile last mile, notes s3.30): each
-    bar claims the CONTIGUOUS run of its greedily-colored wire's qubits
-    across its interval, so seed chains are real coupled paths instead of
-    stitched-together nearest qubits (which inflated routed ACL by ~30%).
-    Derived bars are one-sided in general, so claims run over the ACTUAL
-    interval, anchored at the owner's row/column — never a centered
-    approximation. Untyped grids fall back to nearest-qubit sampling along
-    the intervals (~1 per tile). Every variable gets at least one qubit.
+                  src_adj: Optional[Dict[int, List[int]]] = None,
+                  snap: bool = False,
+                  books=None) -> Dict[int, List[int]]:
+    """Wire-coherent seed chains (notes s3.30): each bar claims the
+    CONTIGUOUS run of its greedily-colored wire's qubits across its
+    interval. Untyped grids fall back to nearest-qubit sampling.
+    Every variable gets at least one qubit.
 
-    ``src_adj`` (snap claims, s3.56; stride-2 grids only, else ignored):
-    aim each arm's claim at the lines of its stair-assigned contacts plus
-    its own corner — parity-exact at color time. Measured: extension
-    passes drop to zero, corners couple 100% directly. None = legacy,
-    byte-identical."""
+    ``snap`` (s3.56; the CALLER decides — the driver's effective config,
+    s3.66): aim each arm's claim at the lines of its stair-assigned
+    contacts plus its own corner, parity-exact at color time. Requires
+    ``src_adj``. Claim intervals and participation come from the SHARED
+    books (`arm_books`; pass ``books`` to reuse a bundle), so the
+    coloring, the packer, and the overload census read one accounting.
+    """
     claimed: set = set()
     chains: Dict[int, List[int]] = {v: [] for v in pos}
-    snap = src_adj is not None and grid.stride > 1
 
     if not grid.typed:
         for v in sorted(pos):
@@ -485,47 +485,96 @@ def wire_seeds_iv(grid: TileGrid, pos: Dict[int, Point],
                     chains[v].append(q)
         return {v: c for v, c in chains.items() if c}
 
-    contacts = _stair_contacts(pos, src_adj) if snap else None
+    snap = snap and src_adj is not None
+    if books is None and src_adj is not None:
+        # kappa/floor only shape the bars, which the caller passed in —
+        # rebuild tuples from the given bars to stay faithful to them
+        books = None
+    if books is not None:
+        contacts, _, tuples = books
+    else:
+        contacts = (_stair_contacts(pos, src_adj)
+                    if src_adj is not None else None)
+        tuples = {}
+        for o in (1, 0):
+            ax = 0 if o == 1 else 1
+            out = []
+            for v in sorted(pos):
+                iv = bars[v][0] if o == 1 else bars[v][1]
+                if float(iv[1] - iv[0]) < 1.0:
+                    continue
+                a, b = float(iv[0]), float(iv[1])
+                if snap:
+                    us = contacts[v][0] if o == 1 else contacts[v][1]
+                    lines = {int(round(float(pos[u][ax]))) for u in us}
+                    lines.add(int(round(float(pos[v][ax]))))
+                    a = min(a, float(min(lines) - 1))
+                    b = max(b, float(max(lines)))
+                line = int(round(float(pos[v][1] if o == 1
+                                       else pos[v][0])))
+                out.append((line, a, b, v))
+            tuples[o] = out
 
     def _targets(orientation: int):
         if not snap:
             return None
         out = {}
         ax = 0 if orientation == 1 else 1
+        present = {t[3] for t in tuples[orientation]}
         for v in sorted(pos):
+            if v not in present:
+                continue
             us = contacts[v][0] if orientation == 1 else contacts[v][1]
             lines = {int(round(float(pos[u][ax]))) for u in us}
-            lines.add(int(round(float(pos[v][ax]))))  # own corner line
-            out[v] = sorted(lines)
-        return out
-
-    def _tuples(orientation: int, targets):
-        out = []
-        for v in sorted(pos):
-            h_iv, v_iv = bars[v]
-            iv = h_iv if orientation == 1 else v_iv
-            length = float(iv[1] - iv[0])
-            if length < 1.0:  # participation on the ORIGINAL interval
-                continue
-            line = int(round(float(pos[v][1] if orientation == 1
-                                   else pos[v][0])))
-            a, b = float(iv[0]), float(iv[1])
-            if targets is not None:
-                # parity-agnostic hull widening: covering line c may need
-                # p in {c-1, c}; guards the coloring against same-line
-                # crossing-qubit theft (measured inert on capacity)
-                cls = targets[v]
-                a = min(a, float(min(cls) - 1))
-                b = max(b, float(max(cls)))
-                targets[v] = (float(iv[0]), float(iv[1]), cls)
-            out.append((line, a, b, v))
+            lines.add(int(round(float(pos[v][ax]))))
+            iv = bars[v][0] if orientation == 1 else bars[v][1]
+            out[v] = (float(iv[0]), float(iv[1]), sorted(lines))
         return out
 
     t1, t0 = _targets(1), _targets(0)
-    _color_claim_bars(grid, claimed, chains, 1, _tuples(1, t1), t1)
-    _color_claim_bars(grid, claimed, chains, 0, _tuples(0, t0), t0)
+    _color_claim_bars(grid, claimed, chains, 1, tuples[1], t1)
+    _color_claim_bars(grid, claimed, chains, 0, tuples[0], t0)
     _ensure_seeds(grid, claimed, chains, pos)
     return {v: c for v, c in chains.items() if c}
+
+
+def arm_books(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
+              grid: TileGrid, *, kappa: float, floor: bool = True,
+              snap: bool = False):
+    """THE one accounting (s3.66): the claim layer's books, computed once
+    — contacts, bars, and per-orientation (line, interval, participant)
+    tuples with snap's parity-agnostic hull widening applied when
+    ``snap`` is on. Every consumer (the coloring's `_tuples`, the
+    overload census, the packer's feasibility intervals) reads THESE
+    books; the s3.65 fresh-eyes review caught the census skipping the
+    widening the claims actually use (measured: inert on turan/K140,
+    +1 violation-unit on spin_glass — the books had diverged).
+
+    Returns (contacts, bars, tuples) where tuples[o] is a list of
+    (line, a, b, v) for orientation o in (1, 0)."""
+    contacts = _stair_contacts(pos, src_adj)
+    bars = derive_bars_stair(pos, src_adj, kappa=kappa, floor=floor,
+                             bounds=(grid.W, grid.H))
+    tuples = {}
+    for o in (1, 0):
+        ax = 0 if o == 1 else 1
+        out = []
+        for v in sorted(pos):
+            iv = bars[v][0] if o == 1 else bars[v][1]
+            if float(iv[1] - iv[0]) < 1.0:  # participation: original iv
+                continue
+            a, b = float(iv[0]), float(iv[1])
+            if snap:
+                us = contacts[v][0] if o == 1 else contacts[v][1]
+                lines = {int(round(float(pos[u][ax]))) for u in us}
+                lines.add(int(round(float(pos[v][ax]))))
+                a = min(a, float(min(lines) - 1))
+                b = max(b, float(max(lines)))
+            line = int(round(float(pos[v][1] if o == 1
+                                   else pos[v][0])))
+            out.append((line, a, b, v))
+        tuples[o] = out
+    return contacts, bars, tuples
 
 
 def line_pools(grid: TileGrid) -> Dict[Tuple[int, int], int]:
@@ -550,35 +599,26 @@ def line_pools(grid: TileGrid) -> Dict[Tuple[int, int], int]:
 
 
 def claim_overload(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
-                   grid: TileGrid, *, kappa: float = 13.0,
-                   floor: bool = True) -> float:
-    """Line-capacity violation of the CLAIM LAYER'S OWN census (s3.57):
+                   grid: TileGrid, *, kappa: float,
+                   floor: bool = True, snap: bool = False,
+                   books=None) -> float:
+    """Line-capacity violation of the claim layer's own census (s3.57):
     per orientation and line, hinge^2 of (interval depth - available
-    sub-lanes), with intervals, participation, and line assignment
-    computed by exactly wire_seeds_iv._tuples' rules — so the hinge is
-    the uncolorability count squared, not a proxy. Used as a gate-energy
-    term (evaluation only, never descended on): E-gated moves stop being
-    blind to the violations that stranded 9 turan arms (d729, s3.56).
-    Since the s3.59 exact packer shares ``line_pools``, a fresh packing
-    should census to zero — this is the independent verifier of that
-    identity, not a redundant copy of the packer's constraint."""
-    cache = line_pools(grid)
-    bars = derive_bars_stair(pos, src_adj, kappa=kappa, floor=floor,
-                             bounds=(grid.W, grid.H))
+    sub-lanes), computed on the SHARED books (`arm_books`) — including
+    snap's hull widening when the claims use it (s3.66 unification).
+    Pass ``books`` to reuse an already-computed bundle."""
+    if books is None:
+        books = arm_books(pos, src_adj, grid, kappa=kappa, floor=floor,
+                          snap=snap)
+    _, _, tuples = books
+    lp = line_pools(grid)
     total = 0.0
-    for orientation in (1, 0):
+    for o in (1, 0):
         by_line: Dict[int, list] = {}
-        for v in sorted(pos):
-            h_iv, v_iv = bars[v]
-            iv = h_iv if orientation == 1 else v_iv
-            if float(iv[1] - iv[0]) < 1.0:
-                continue
-            line = int(round(float(pos[v][1] if orientation == 1
-                                   else pos[v][0])))
-            by_line.setdefault(line, []).append(
-                (float(iv[0]), float(iv[1])))
+        for line, a, b, v in tuples[o]:
+            by_line.setdefault(line, []).append((a, b))
         for line, ivs in by_line.items():
-            subs = cache.get((orientation, line), 0)
+            subs = lp.get((o, line), 0)
             over = line_depth(ivs) - subs
             if over > 0:
                 total += float(over) ** 2
@@ -1175,124 +1215,83 @@ def insertion_sweeps(order: List[int], src_adj: Dict[int, List[int]], *,
 
 
 def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
-                      grid: TileGrid, *, iters: int = 8, kappa: float = 13.0,
+                      grid: TileGrid, *, iters: int = 8, kappa: float,
                       floor: bool = True, insert_sweeps: int = 0,
-                      overload_lam: float = 0.0):
+                      overload_lam: float = 0.0,
+                      use_dp: bool = False, snap: bool = False):
     """Alternating 1-D arrangement on the stair energy.
 
-    Participation is **per-axis by derived arm length** (2026-07-29
-    refinement): a variable enters row-packing iff its floored h-interval
-    is >= 1 tile (it needs a wire run to lie on), column-packing iff its
-    v-interval is — "a chain has an extent" is detected by the chain having
-    an extent, not by degree. kappa survives only inside the floor. Short-
-    arm variables are structurally untouched at every stage. Returns
-    (new_pos, info); info = {"E": trajectory, "iters", "unplaced",
-    "assigned" (union of last-packed sets; also per-axis counts),
-    "insert_reverts", "mono_swaps", "mono_time"}.
-
-    Intervals and the accepted energy come from the single-coverage
-    diagonal rule (s3.34); the rule is keyed on the coordinate ORDER of the
-    frozen axis's counterpart, and the packing is order-preserving, so the
-    per-edge orientation assignment is invariant across a half-step.
-    Order coupling is per-edge (``edge_monotonize``), not global — patches
-    diagonalize in place and side-by-side tilings are reachable.
+    Policy is EXPLICIT (s3.66; this function never inspects the fabric):
+    ``use_dp`` selects the exact order-preserving DP packer with integer
+    line pools and boundary zeroing (the course-resolved-Zephyr policy)
+    vs the greedy nearest-line packer with cap-mean pools (the measured
+    stride-1 policy); ``snap`` makes the shared books include the claim
+    layer's hull widening; ``overload_lam`` prices claim-layer
+    uncolorability into every gate (evaluation only). All bookkeeping
+    (participation, intervals, lines) comes from ONE `arm_books` bundle
+    per evaluated state, and the accepted state's energy is carried,
+    not recomputed. Returns (new_pos, info).
     """
-    if overload_lam > 0.0:
-        # s3.57: feasibility priced into the gate energy (Max's design —
-        # "feasibility is part of the energy"). Evaluation only, never
-        # descended on; rides every existing gate below (_half accepts,
-        # the order composite). lam trades, never ranks (lam>=4 measured
-        # to over-trade; lam=1 repairs turan's d729 for +0.2% E).
-        # NOTE: info["E"] entries are in composed units when lam > 0.
-        def efn(p, a):
-            return (stair_energy(p, a)
-                    + overload_lam * claim_overload(p, a, grid,
-                                                    kappa=kappa,
-                                                    floor=floor))
-    else:
-        efn = stair_energy
+    def _eval(p):
+        books = arm_books(p, src_adj, grid, kappa=kappa, floor=floor,
+                          snap=snap)
+        e = stair_energy(p, src_adj, contacts=books[0])
+        if overload_lam > 0.0:
+            e += overload_lam * claim_overload(p, src_adj, grid,
+                                               kappa=kappa, floor=floor,
+                                               snap=snap, books=books)
+        return books, e
+
     new_pos = {v: np.asarray(p, dtype=float).copy() for v, p in pos.items()}
-    info = {"E": [efn(new_pos, src_adj)], "iters": 0, "unplaced": 0,
+    cur_books, cur_E = _eval(new_pos)
+    info = {"E": [cur_E], "iters": 0, "unplaced": 0,
             "assigned": 0, "assigned_rows": 0, "assigned_cols": 0,
             "insert_reverts": 0, "mono_swaps": 0, "mono_time": 0.0}
     packed_last: Dict[int, set] = {1: set(), 0: set()}
 
-    def _axis_ivs(axis: int) -> Dict[int, Tuple[float, float]]:
-        # THE CLAIM LAYER'S OWN intervals (s3.59 one-accounting rule):
-        # the packer's feasibility test must use the same books the
-        # coloring and the overload census use, or oversubscription
-        # reappears at claim time. derive_bars_stair = whole floor split
-        # /4 per side, clipped to the grid — replaces the former
-        # per-axis half-floor `_intervals`.
-        bars = derive_bars_stair(new_pos, src_adj, kappa=kappa,
-                                 floor=floor, bounds=(grid.W, grid.H))
-        idx = 0 if axis == 1 else 1
-        return {v: (float(b[idx][0]), float(b[idx][1]))
-                for v, b in bars.items()}
-
     def _mono():
-        nonlocal new_pos
+        nonlocal new_pos, cur_books, cur_E
         new_pos, mi = edge_monotonize(new_pos, src_adj)
         info["mono_swaps"] += mi["swaps"]
         info["mono_time"] = round(info["mono_time"] + mi["time"], 4)
+        if mi["swaps"]:
+            cur_books, cur_E = _eval(new_pos)
 
     def _half(axis: int, force: bool) -> bool:
-        """Pack the axis's long-arm variables into lines via the exact
-        order-preserving DP (``pack_lines``, s3.59); accept if E does not
-        increase (or unconditionally when ``force``: the feasibility
-        projection). Returns True if the state changed."""
+        """Pack the axis's long-arm variables into lines; accept if the
+        gate energy does not increase (or unconditionally when
+        ``force``: the feasibility projection)."""
+        nonlocal cur_books, cur_E
         nlines = grid.H if axis == 1 else grid.W
-        lp = line_pools(grid)
-        if lp:
-            # integer sub-lane pools per line — the claim layer's census
-            # (8 on course-Zephyr lines, not the cap-mean's 7.68; s3.51
-            # item 4 resolved as data)
-            pool = [float(lp.get((axis, ln), 0)) for ln in range(nlines)]
-            if grid.stride > 1 and nlines >= 2:
-                # Boundary lines ZEROED (interim default, s3.61 verdict):
-                # the half-pool arm measured a genuine split — K100 7.92
-                # sub-template GATE-VALID and turan 7.02/spin_glass 12.01
-                # records, but K140 +2.07 and wsc_c3xK64 +0.74 from
-                # boundary spill breaking near-gates. Until the
-                # pressure-gated boundary arm (use boundary only when
-                # interior capacity is insufficient) is measured, the
-                # safe state is the s3.59 board. Ledger: s3.61.
-                pool[0] = 0.0
-                pool[nlines - 1] = 0.0
-        else:
-            # untyped fallback: no wire_map, keep the historical
-            # cap-mean pool
-            caps = grid.cap[:, :, 1] if axis == 1 else grid.cap[:, :, 0].T
-            pool = list(caps.mean(axis=1) * grid.stride)
-        ivs = _axis_ivs(axis)
-        parts = [v for v in sorted(new_pos)
-                 if ivs[v][1] - ivs[v][0] >= 1.0]
-        if not parts:
-            info["E"].append(efn(new_pos, src_adj))
+        o = axis  # orientation == axis by construction
+        items = [(a, b, v) for (line, a, b, v) in cur_books[2][o]]
+        if not items:
+            info["E"].append(cur_E)
             return False
+        parts = [v for (_a, _b, v) in items]
+        ivs = {v: (a, b) for (a, b, v) in items}
         order = sorted(parts, key=lambda v: (float(new_pos[v][axis]), v))
         trial = {v: new_pos[v].copy() for v in new_pos}
         miss = 0
-        if grid.stride > 1:
-            # course-resolved fabrics: the s3.59 exact DP with the shared
-            # integer census. Stride-gated after the s3.61 quiet-box P16
-            # remeasure caught the DP at +3 ACL on Pegasus turan (12.22
-            # vs the pre-DP 8.4-9.1) — the packer rounds were measured on
-            # Z12 only, so stride-1 fabrics keep the measured greedy.
+        if use_dp:
+            lp = line_pools(grid)
+            pool = [float(lp.get((o, ln), 0)) for ln in range(nlines)]
+            if nlines >= 2:
+                # boundary lines carry one course parity only
+                # (fabrics s4.3b); the avoid rule as pool data
+                pool[0] = 0.0
+                pool[nlines - 1] = 0.0
             assign, _cost = pack_lines(
                 [ivs[v] for v in order],
                 [float(new_pos[v][axis]) for v in order], pool)
             for v, ln in zip(order, assign):
                 if ln is None:
-                    miss += 1  # structurally unplaceable; stays put
+                    miss += 1
                 else:
                     trial[v][axis] = float(ln)
         else:
-            # stride-1: the pre-s3.59 greedy nearest-line packer, with
-            # the pre-s3.59 cap-mean pools (byte-parity with the
-            # consolidation-2 pipeline on Pegasus/Chimera)
             caps = grid.cap[:, :, 1] if axis == 1 else grid.cap[:, :, 0].T
-            gpool = caps.mean(axis=1) * grid.stride
+            gpool = caps.mean(axis=1)
             lines: Dict[int, list] = {i: [] for i in range(nlines)}
             for v in order:
                 y0 = float(new_pos[v][axis])
@@ -1305,19 +1304,19 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                         placed = True
                         break
                 if not placed:
-                    miss += 1  # no feasible line; stays put
-        e_old = efn(new_pos, src_adj)
-        e_new = efn(trial, src_adj)
-        if force or e_new <= e_old + 1e-9:
+                    miss += 1
+        books_new, e_new = _eval(trial)
+        if force or e_new <= cur_E + 1e-9:
             changed = any(not np.allclose(trial[v], new_pos[v])
                           for v in parts)
             for v in parts:
                 new_pos[v] = trial[v]
+            cur_books, cur_E = books_new, e_new
             packed_last[axis] = set(parts)
             info["unplaced"] = miss
             info["E"].append(e_new)
             return changed
-        info["E"].append(e_old)
+        info["E"].append(cur_E)
         return False
 
     for it in range(max(iters, 1)):
@@ -1330,28 +1329,17 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
             break
 
     if insert_sweeps > 0:
-        # s3.36 best-insertion order search, value-priced (2026-07-29):
-        # members = long-arm variables (floored w + h >= 1 tile); the proxy
-        # prices slots at the y-VALUES the permutation will assign (rank
-        # space lies on clustered layouts), with non-member neighbours
-        # folded in as fixed anchors (they guide, not just veto). Propose
-        # in rank space, apply as a permutation of the existing y-values,
-        # re-monotonize and repack, dispose by TRUE stair energy with full
-        # revert. Coarse moves + fine repair share ONE gate: a coarse
-        # reversal typically raises raw E before insertion repairs it, so
-        # gating the stages separately would reject every coarse move.
-        widths = bar_widths(derive_bars_stair(
-            new_pos, src_adj, kappa=kappa, floor=floor))
-        members = [v for v in sorted(new_pos)
-                   if float(widths[v][0] + widths[v][1]) >= 1.0]
+        # s3.36 best-insertion order search, value-priced; members are
+        # the union of both orientations' participants per the shared
+        # books (s3.66 — replaces the former summed-width predicate;
+        # gate-protected change)
+        members = sorted({v for o in (1, 0)
+                          for (_l, _a, _b, v) in cur_books[2][o]})
         for _composite in range(2):
             if len(members) < 3:
                 break
             ys = np.array(sorted(float(new_pos[v][1]) for v in members))
             member_set = set(members)
-            # anchors per VARIABLE (order-independent); materialized as
-            # aligned arrays per order below — passing arrays built for one
-            # order to a call receiving another mis-attaches every anchor
             anchor_of = {}
             for v in members:
                 ext = [float(new_pos[u][1]) for u in src_adj.get(v, [])
@@ -1371,32 +1359,30 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                 values=ys, anchors=_aligned(order0))
             if new_order == order0:
                 break
-            e_pre = efn(new_pos, src_adj)
-            ov_pre = (claim_overload(new_pos, src_adj, grid,
-                                     kappa=kappa, floor=floor)
-                      if grid.stride > 1 else 0.0)
-            # full-state snapshot: the composite's inner moves (monotonize
-            # is universal, packing re-derives participation) may touch
-            # non-members, and the revert must be total
-            snap = {v: new_pos[v].copy() for v in new_pos}
+            e_pre = cur_E
+            ov_pre = (claim_overload(new_pos, src_adj, grid, kappa=kappa,
+                                     floor=floor, snap=snap,
+                                     books=cur_books)
+                      if use_dp else 0.0)
+            snap_state = {v: new_pos[v].copy() for v in new_pos}
+            books_snap = cur_books
             for r, v in enumerate(new_order):
                 new_pos[v][1] = float(ys[r])
+            cur_books, cur_E = _eval(new_pos)
             _mono()
             _half(axis=1, force=False)
             _half(axis=0, force=False)
-            e_post = efn(new_pos, src_adj)
-            ov_post = (claim_overload(new_pos, src_adj, grid,
-                                      kappa=kappa, floor=floor)
-                       if grid.stride > 1 else 0.0)
-            # s3.61 hard veto: a permutation may not create uncolorable
-            # lines. The DP's capacity guarantee holds only for accepted
-            # DP proposals; the composite's y-permutation preserves
-            # per-line COUNTS but not interval DEPTHS, and lam only
-            # PRICES the violation (the measured 9-on-8 row that stranded
-            # turan's v160, s3.61 diagnosis). Structural feasibility is a
-            # gate condition, not a preference — trades never rank.
+            e_post = cur_E
+            ov_post = (claim_overload(new_pos, src_adj, grid, kappa=kappa,
+                                      floor=floor, snap=snap,
+                                      books=cur_books)
+                       if use_dp else 0.0)
+            # s3.61 hard veto (DP-policy fabrics): a permutation may not
+            # create uncolorable lines — structural feasibility is a
+            # gate condition, not a priced preference
             if e_post > e_pre + 1e-9 or ov_post > ov_pre + 1e-9:
-                new_pos = snap
+                new_pos = snap_state
+                cur_books, cur_E = books_snap, e_pre
                 info["insert_reverts"] += 1
                 break
             info["E"].append(e_post)

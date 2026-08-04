@@ -150,6 +150,9 @@ def centroids_of(chains: Embedding, pos: Dict[int, Point]) -> Centroids:
 # DRIVER
 # ==============================================================================
 
+FALLBACK_TIMEOUT = 60.0  # budget when the caller passes timeout=0/None
+SEED_STRIDE = 100        # router-seed derivation: seed*STRIDE (+99 fallback)
+
 CONTRACT_STEPS = 16  # stair steps of contraction before the first pack — the
                      # s3.52 cycle-0 mechanism (stock 1-step geometry was a
                      # frozen fixed point, s3.51: a single step on a 20-tile
@@ -218,16 +221,19 @@ class AttractConfig:
                                # to over-trade). Applied on stride>1 fabrics
                                # only (measured on Z12; unmeasured
                                # elsewhere). round_E stays raw stair-E.
-    vcycle: bool = False       # source-side multilevel init (s3.62, V0):
-                               # twin-first coarsening + weighted-Jaccard
-                               # matching (the ledger's closed-neighborhood
-                               # score), coarsest level on a deterministic
-                               # circle, positions inherited down — replaces
-                               # the spectral init entirely when on
-                               # (init-independence by construction, the
-                               # s3.36 standard). Fine-level machinery
-                               # unchanged. Default off pending the s3.62
-                               # probe.
+    vcycle: bool = True        # source-side two-stage coarsening init
+                               # (s3.62-3.64): twin-first + Jaccard
+                               # matching, spectral-of-the-coarse-graph
+                               # placement (circle fallback), inherited
+                               # positions. DEFAULT ON since
+                               # consolidation 3 (s3.66): under
+                               # outcome-first scoring the vc arm
+                               # beats-or-ties the spectral init on all
+                               # measured cells and beats minorminer
+                               # everywhere, including the cells the
+                               # old default lost; confirmed by the
+                               # s3.66 guard probe. False = the legacy
+                               # spectral init.
 
 
 def _auto_bins(n_qubits: int) -> int:
@@ -289,8 +295,8 @@ def attract_embed(
             cfg = replace(cfg, **picked)
 
         from ember_qc.algorithms.factored.field import (
-            TileGrid, _target_kappa, alternate_arrange, bar_widths,
-            complete_seeds, derive_bars_stair, stair_energy, stair_step,
+            TileGrid, _target_kappa, alternate_arrange, arm_books,
+            bar_widths, complete_seeds, stair_energy, stair_step,
             wire_seeds_iv)
 
         adj = build_adjacency(target_graph)
@@ -312,138 +318,103 @@ def attract_embed(
         # only, where junction completeness makes coverage = validity. On
         # stride-1 fabrics both are inert, so Pegasus/Chimera seeding
         # behavior is byte-identical to the first consolidation's default.
-        exact = cfg.exact_seeds and grid.stride > 1
-        lam = cfg.overload_lam if grid.stride > 1 else 0.0
-        # Boundary handling is packer-side pool data since s3.61 (half
-        # pool on stride-2 boundary lines + parity-preferring coloring)
-        # — no per-call switch, no grid.cap mutation.
+        # ---- EFFECTIVE CONFIG (s3.66): every fabric-policy decision,
+        # decided ONCE. field.py never inspects the fabric. On stride-1
+        # (Pegasus/Chimera/untyped) the pipeline runs the measured
+        # legacy policy end to end; courses=False on Zephyr therefore
+        # selects the WHOLE legacy pipeline, not just the folded wires.
+        stride2 = grid.stride > 1
+        eff_contract = CONTRACT_STEPS if stride2 else 1
+        eff_lam = cfg.overload_lam if stride2 else 0.0
+        eff_exact = cfg.exact_seeds and stride2
+        eff_snap = cfg.snap_claims and stride2
+        eff_dp = stride2
         bounds = (grid.W, grid.H)
         kappa = cfg.kappa if cfg.kappa is not None else _target_kappa(grid)
-
-        def _bars(tpts):
-            # arms are a pure readout of positions (s3.31/s3.34)
-            return derive_bars_stair(tpts, src_adj, kappa=kappa,
-                                     floor=cfg.span_floor, bounds=bounds)
 
         if cfg.vcycle:
             from ember_qc.algorithms.factored.coarsen import multilevel_init
             cent = multilevel_init(src_adj, lo, hi, seed=seed)
         else:
             cent = source_positions(source_graph, lo, hi)
-        last_emb: Optional[Embedding] = None
-        last_acl = math.inf
-        rounds_run = 0
-        last_info: dict = {"assigned": 0}
-        mm_skips = 0     # valid seeds skipped MM legalization
-        ex_last: Optional[dict] = None  # completion info
-        round_acls: List[Optional[float]] = []
-        round_E: List[float] = []
+        legal_emb: Optional[Embedding] = None
+        legal_acl = math.inf
+        mm_skipped = False
+        ex_info: Optional[dict] = None
 
-        # Placement phase: capped at round_frac of the budget so the polish
-        # (the phase where minorminer earns ~35% ACL, notes §3.15) cannot be
-        # starved.
-        rounds_deadline = (start + cfg.round_frac * timeout) if timeout else None
+        placement_deadline = (start + cfg.round_frac * timeout) \
+            if timeout else None
 
-        # Geometry: contract, then pack. One pass (the 1-shot protocol).
-        # Contraction is stride-gated like the rest of the consolidation-2
-        # flip: the consolidation2 probe measured it on P16 turan at +2.0
-        # ACL against a clean paired control (the s3.52 mechanism was
-        # measured on Z12 only). Stride-1 fabrics keep the pre-flip
-        # single-step geometry — the whole flip is now byte-identical off
-        # course-resolved Zephyr.
-        contract_steps = CONTRACT_STEPS if grid.stride > 1 else 1
         tpts = {v: grid.to_tile(p) for v, p in cent.items()}
-        for _s in range(contract_steps):
+        for _s in range(eff_contract):
             tpts = stair_step(tpts, src_adj, eta=cfg.eta)
         tpts, last_info = alternate_arrange(
             tpts, src_adj, grid, iters=cfg.arrange_iters,
             kappa=kappa, floor=cfg.span_floor,
             insert_sweeps=cfg.insert_sweeps,
-            overload_lam=lam)
+            overload_lam=eff_lam, use_dp=eff_dp, snap=eff_snap)
         cent = {v: grid.Minv @ (tpts[v] - grid.c) for v in cent}
-        # round_E stays RAW stair-E (recorded trajectory metric, comparable
-        # to history) regardless of overload_lam
-        round_E.append(round(stair_energy(tpts, src_adj), 1))
+        # raw stair-E (recorded trajectory metric)
+        stair_E = round(stair_energy(tpts, src_adj), 1)
 
-        seed_chains = wire_seeds_iv(
-            grid, tpts, _bars(tpts),
-            src_adj=src_adj if cfg.snap_claims else None)
-        if exact:
-            # s3.54 exactness completion: close the coverage deficit by
-            # interval arithmetic; if it hits zero the seeds ARE the legal
-            # embedding — skip MM legalization (the router-slack tax
-            # abolished). Residual deficit routes with the completed chains
-            # as a strictly better warm start.
+        books = arm_books(tpts, src_adj, grid, kappa=kappa,
+                          floor=cfg.span_floor, snap=eff_snap)
+        seed_chains = wire_seeds_iv(grid, tpts, books[1],
+                                    src_adj=src_adj, snap=eff_snap,
+                                    books=books)
+        if eff_exact:
             seed_chains, ex_info = complete_seeds(
                 grid, seed_chains, src_adj, adj)
-            ex_last = ex_info
-        else:
-            ex_info = None
         emb: Embedding = {}
-        attempted = False
         if (ex_info is not None
                 and ex_info["deficit_edges"] == 0
                 and ex_info["corner_deficit"] == 0
                 and is_valid_embedding(seed_chains, source_graph,
                                        target_graph, adj=adj)):
             emb = {v: list(c) for v, c in seed_chains.items()}
-            rounds_run += 1
-            mm_skips += 1
-            attempted = True
+            mm_skipped = True
         else:
-            cap = (rounds_deadline - time.perf_counter()) \
-                if rounds_deadline else 60.0
+            cap = (placement_deadline - time.perf_counter()) \
+                if placement_deadline else FALLBACK_TIMEOUT
             if cap > 0:
                 emb = _mm_route(source_graph, target_graph,
-                                chains=seed_chains, seed=seed * 100,
-                                timeout=cap)
-                rounds_run += 1
-                attempted = True
-        if emb:
-            emb = spur_prune(emb, src_adj, adj, deadline=deadline)
-            a = sum(len(c) for c in emb.values()) / len(emb)
-            round_acls.append(round(a, 3))
-            cent = centroids_of(emb, pos)
-            last_emb, last_acl = emb, a
-        elif attempted:
-            round_acls.append(None)
+                                chains=seed_chains,
+                                seed=seed * SEED_STRIDE, timeout=cap)
 
-        # Feasibility fallback: nothing legalized within the placement
-        # budget — one uncapped snap-seeded attempt with everything that
-        # remains. Degradation mode = "spectral-seeded stock MM" (§3.23's
-        # net feasibility winner).
-        if last_emb is None:
-            remaining = (deadline - time.perf_counter()) if deadline else 60.0
+        if not emb:
+            # feasibility fallback: one uncapped snap-seeded attempt
+            # (degradation mode = spectral-seeded stock MM, s3.23)
+            remaining = (deadline - time.perf_counter()) if deadline \
+                else FALLBACK_TIMEOUT
             if remaining > 0:
                 fb = {v: [q] for v, q in
                       snap(cent, coords, qubits, degree_order).items()}
                 emb = _mm_route(source_graph, target_graph, chains=fb,
-                                seed=seed * 100 + 99, timeout=remaining)
-                rounds_run += 1
-                if emb:
-                    emb = spur_prune(emb, src_adj, adj, deadline=deadline)
-                    a = sum(len(c) for c in emb.values()) / len(emb)
-                    round_acls.append(round(a, 3))
-                    last_emb, last_acl = emb, a
-                else:
-                    round_acls.append(None)
+                                seed=seed * SEED_STRIDE + 99,
+                                timeout=remaining)
+        if emb:
+            emb = spur_prune(emb, src_adj, adj, deadline=deadline)
+            legal_acl = sum(len(c) for c in emb.values()) / len(emb)
+            legal_emb = emb
 
-        if last_emb is None:
-            return _failure(rounds=rounds_run, round_acls=round_acls)
+        if legal_emb is None:
+            return _failure(stair_E=stair_E)
 
-        remaining = (deadline - time.perf_counter()) if deadline else 60.0
+        remaining = (deadline - time.perf_counter()) if deadline \
+            else FALLBACK_TIMEOUT
         if remaining > 0:
-            finished = _mm_route(source_graph, target_graph, warm=last_emb,
-                                 seed=seed, timeout=remaining) or last_emb
+            finished = _mm_route(source_graph, target_graph,
+                                 warm=legal_emb, seed=seed,
+                                 timeout=remaining) or legal_emb
         else:
-            finished = last_emb
-        # Paranoia guard: a broken finishing pass must never corrupt a legal
-        # result.
-        if not is_valid_embedding(finished, source_graph, target_graph, adj=adj):
-            finished = last_emb
+            finished = legal_emb
+        # a broken finishing pass must never corrupt a legal result
+        if not is_valid_embedding(finished, source_graph, target_graph,
+                                  adj=adj):
+            finished = legal_emb
 
         tpts = {v: grid.to_tile(p) for v, p in cent.items()}
-        widths = bar_widths(_bars(tpts))
+        widths = bar_widths(books[1])
         sizes = (np.array([widths[v].sum() for v in widths])
                  if widths else np.zeros(1))
         diag = {"assigned": int(last_info.get("assigned", 0)),
@@ -453,19 +424,20 @@ def attract_embed(
                 "mono_time": float(last_info.get("mono_time", 0.0)),
                 "extent_mean": round(float(sizes.mean()), 3),
                 "extent_max": round(float(sizes.max()), 3),
-                "stride": int(grid.stride)}
-        if exact:
-            diag["mm_skips"] = mm_skips
-            if ex_last is not None:
+                "stride": int(grid.stride),
+                # the hardware-relevant tail metric (s3.65): recorded
+                # from consolidation 3 onward, everywhere
+                "max_chain": max(len(c) for c in finished.values())}
+        if eff_exact:
+            diag["mm_skipped"] = mm_skipped
+            if ex_info is not None:
                 for k in ("deficit_edges", "corner_deficit", "extensions",
                           "ext_qubits", "bridges"):
-                    diag[k] = ex_last[k]
+                    diag[k] = ex_info[k]
         return {"embedding": finished,
                 "time": time.perf_counter() - start,
-                "rounds": rounds_run,
-                "round_acls": round_acls,
-                "round_E": round_E,
-                "legal_acl": round(last_acl, 3),
+                "stair_E": stair_E,
+                "legal_acl": round(legal_acl, 3),
                 "diag": diag}
     except Exception as exc:
         logger.error("attraction embed error: %s", exc)

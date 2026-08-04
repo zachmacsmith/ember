@@ -18,20 +18,22 @@ S=1 (collapses to one node — the template becomes a readout), turan
 block deg/(deg+2) (blocks collapse to the quotient graph), chain edge
 1/2 (heavy-edge matching recovered as the sparse limit), ER ~1/d flat
 (the s3.21 null class degenerates to edge matching, correctly).
-Deeper levels use the weighted form (sum-min / sum-max over weighted
-closed adjacency vectors, self-entry = node weight).
+The weighted form (sum-min / sum-max) applies at the coarse level's
+weighted candidates.
 
 **Exact twins are collapsed by hashing before any scoring** (open twins:
 N(u) == N(v); true twins: N[u] == N[v]) — whole groups at once, so a
 turan block or a clique collapses in one level and the hub-quadratic
 distance-2 candidate sets never get enumerated.
 
-V1 (s3.63, this file): exactly TWO stages — coarsen once (Max's
-flatten: V0's level loop was vestigial at our sizes), place the coarse
-quotient by spectral-of-the-COARSE-graph (circle fallback), expand with
-weight-proportional regions. The fine level never consults spectral;
-fine-level machinery (contraction, arrange, seeds) is unchanged and
-receives inherited positions. Deterministic per ``seed``.
+As shipped (consolidation 3, s3.66): exactly TWO stages — coarsen once,
+place the coarse quotient by spectral-of-the-COARSE-graph (circle
+fallback), expand children in golden-angle discs at COARSE_SPAN scale.
+The fine level never consults spectral; fine-level machinery is
+unchanged and receives inherited positions. Losing arms (wire-mass
+shares, tangent-tiling closure, segment spreads) live at the
+consolidation-3 archive marker with their s3.64 numbers. Deterministic
+per ``seed``.
 """
 
 from __future__ import annotations
@@ -43,36 +45,21 @@ import numpy as np
 
 Point = np.ndarray
 
-SIZING = "count"   # footprint area shares (s3.64 ladder verdicts):
-                   # "mass" = wire-mass shares (the moat fix; correct
-                   # bookkeeping, marginal measured effect — helps the
-                   # one heterogeneous cell, spin_glass 12.16) |
-                   # "count" = V1 (DEFAULT per the no-partial-changes
-                   # failure rule)
-TILING = False     # True = tangent-tiling closure: gates turan with NO
-                   # constant (d14->d0 at 8.80) + ladder-best ER 4.71,
-                   # but +0.66 vs the tuned 0.26 constant and taxes
-                   # ws/spin_glass | False = V1 COARSE_SPAN (DEFAULT)
-SHAPE = "disc"     # "segment" REFUTED (s3.64): the crystal is the
-                   # OUTPUT shape, not the input — pre-ordering members
-                   # pre-empts the moves that discover better orders
-                   # (K100 7.79->8.68, turan gate broken). Discs stand.
-COARSE_SPAN = 0.4  # only read when TILING is False (the V1 constant)
+COARSE_SPAN = 0.4  # coarse-layout halfspan as a fraction of the box
+                   # (== source_positions' middle-80% convention)
 
 
 class Level:
     """One level of the hierarchy: weighted graph + parent mapping."""
 
-    __slots__ = ("adj", "weight", "parent_of", "internal")
+    __slots__ = ("adj", "weight", "parent_of")
 
     def __init__(self, adj: Dict[int, Dict[int, float]],
                  weight: Dict[int, float],
-                 parent_of: Optional[Dict[int, int]] = None,
-                 internal: Optional[Dict[int, float]] = None):
+                 parent_of: Optional[Dict[int, int]] = None):
         self.adj = adj              # u -> {v: edge multiplicity}
         self.weight = weight        # node -> member count
         self.parent_of = parent_of  # finer node -> this level's node
-        self.internal = internal or {}  # node -> merged-away edge mass
 
 
 def _twin_groups(adj: Dict[int, Dict[int, float]]) -> List[List[int]]:
@@ -130,7 +117,6 @@ def _merge(adj: Dict[int, Dict[int, float]], weight: Dict[int, float],
     new_w: Dict[int, float] = {}
     for v in adj:
         new_w[rep[v]] = new_w.get(rep[v], 0.0) + weight[v]
-    new_int: Dict[int, float] = {}
     for v, nbrs in adj.items():
         rv = rep[v]
         d = new_adj.setdefault(rv, {})
@@ -138,14 +124,9 @@ def _merge(adj: Dict[int, Dict[int, float]], weight: Dict[int, float],
             ru = rep[u]
             if ru != rv:
                 d[ru] = d.get(ru, 0.0) + m
-            else:
-                # intra-supernode edge, seen once from each endpoint —
-                # the wire mass the count-sizing rule was blind to
-                # (s3.64 M1; Max's moat observation)
-                new_int[rv] = new_int.get(rv, 0.0) + m / 2.0
     for v in new_w:
         new_adj.setdefault(v, {})
-    return Level(new_adj, new_w, parent_of=rep, internal=new_int)
+    return Level(new_adj, new_w, parent_of=rep)
 
 
 def coarsen(src_adj: Dict[int, List[int]], *, threshold: float = 0.34,
@@ -200,48 +181,22 @@ def coarsen(src_adj: Dict[int, List[int]], *, threshold: float = 0.34,
     return [fine, coarse]
 
 
-def _stair_step_weighted(pos: Dict[int, Point],
-                         adj: Dict[int, Dict[int, float]],
-                         eta: float) -> Dict[int, Point]:
-    """One subgradient step on the weighted coarse graph: per closed
-    neighborhood, pull the two extreme members inward per axis, force
-    scaled by the net's edge mass; trust-region clipped at one tile
-    (the fine-level stair_step's shape, weight-aware)."""
-    new = {v: p.copy() for v, p in pos.items()}
-    force = {v: np.zeros(2) for v in pos}
-    for v, nbrs in adj.items():
-        if not nbrs:
-            continue
-        members = [v] + list(nbrs)
-        mass = sum(nbrs.values())
-        for ax in (0, 1):
-            xs = sorted(members, key=lambda m: (float(pos[m][ax]), m))
-            lo_m, hi_m = xs[0], xs[-1]
-            if float(pos[hi_m][ax]) - float(pos[lo_m][ax]) > 1e-9:
-                f = min(1.0, mass / max(1.0, len(members)))
-                force[lo_m][ax] += f
-                force[hi_m][ax] -= f
-    for v in pos:
-        step = np.clip(force[v], -1.0, 1.0) * eta
-        new[v] = pos[v] + step
-    return new
-
-
 def multilevel_init(src_adj: Dict[int, List[int]], lo: Point, hi: Point,
                     *, seed: int = 0,
                     threshold: float = 0.34) -> Dict[int, Point]:
-    """The V2 footprint-true init (s3.64): coarsen once; size each
-    supernode's footprint by WIRE MASS (SIZING="mass": area share =
-    sum of member fine-degrees — kappa cancels; the moat fix), set the
-    layout scale by the TANGENT-TILING closure (TILING=True: minimal
-    uniform scale at which footprints do not overlap — no free
-    constant; on box overflow the whole picture zooms down evenly),
-    and spread children along a DIAGONAL SEGMENT of footprint length
-    (SHAPE="segment": the crystal's own 1D-order form; members are
-    interchangeable by the merge score's certificate). Unit-layout
-    centers come from spectral-of-the-COARSE-graph (circle fallback).
-    The fine level never consults spectral. Deterministic per ``seed``
-    (seed only breaks circle-rotation ties on the fallback path)."""
+    """The two-stage V-cycle init (s3.62-3.66, the shipped cell of the
+    s3.64 ladder): coarsen once; place the coarse quotient by a
+    deterministic spectral layout of the weighted coarse graph (circle
+    fallback for degenerate spectra); spread each supernode's children
+    in a golden-angle disc with area proportional to member count at
+    COARSE_SPAN layout scale. Degenerate single-supernode quotients
+    (K_n and friends) reproduce the V0 measured geometry (circle-point
+    anchor + compact disc — the centered variant measured worse,
+    s3.63). Graphs that do not coarsen return the layout of the fine
+    graph directly. The fine level never consults spectral. Losing
+    arms (wire-mass shares, tangent-tiling closure, segment spreads)
+    live at the consolidation-3 archive marker with their s3.64
+    numbers. Deterministic per ``seed`` (circle-rotation ties only)."""
     import networkx as nx
 
     levels = coarsen(src_adj, threshold=threshold)
@@ -250,64 +205,32 @@ def multilevel_init(src_adj: Dict[int, List[int]], lo: Point, hi: Point,
     n = len(nodes)
     center = (lo + hi) / 2.0
     span_min = float(np.min(hi - lo))
-    R_AREA = 0.45 * span_min  # V1's measured total-area budget (shares
-                              # and scale change below; the budget does
-                              # not)
 
-    if SIZING == "mass":
-        mass = {v: 2.0 * coarse.internal.get(v, 0.0)
-                + sum(coarse.adj[v].values()) for v in nodes}
-        tot = sum(mass.values())
-        if tot <= 0:
-            mass = dict(coarse.weight)
-            tot = sum(mass.values()) or 1.0
-        share = {v: mass[v] / tot for v in nodes}
-    else:
-        W = sum(coarse.weight.values()) or 1.0
-        share = {v: coarse.weight[v] / W for v in nodes}
-    radius = {v: R_AREA * math.sqrt(share[v]) for v in nodes}
-
-    _DIAG = np.array([1.0, 1.0]) / math.sqrt(2.0)
+    W = sum(coarse.weight.values()) or 1.0
+    radius = {v: 0.45 * span_min * math.sqrt(coarse.weight[v] / W)
+              for v in nodes}
 
     def _spread(out, cs, cpos, r):
         k = len(cs)
         for i, c in enumerate(sorted(cs)):
             if k == 1:
                 out[c] = cpos.copy()
-            elif SHAPE == "segment":
-                t = -1.0 + 2.0 * i / (k - 1)
-                out[c] = cpos + r * t * _DIAG
             else:
-                a = 2.399963 * i  # golden angle (the V1 disc)
+                a = 2.399963 * i  # golden angle
                 rr = r * math.sqrt(i / (k - 1))
                 out[c] = cpos + rr * np.array([math.cos(a), math.sin(a)])
         return out
 
     if n == 1:
-        # degenerate quotient (K_n and friends). Disc arm: V0's MEASURED
-        # geometry exactly (circle-point anchor + compact disc; the
-        # centered repair measured worse — s3.63). Segment arm: the
-        # proto-staircase — children on the diagonal THROUGH THE CENTER
-        # at footprint length (the template's own geometry; the anchor
-        # was a disc artifact).
         v0 = nodes[0]
         cs = sorted(levels[0].adj) if len(levels) > 1 else [v0]
+        w = coarse.weight[v0]
+        anchor = center + (hi - lo) * COARSE_SPAN * np.array([1.0, 0.0])
+        r = 0.05 * span_min * math.sqrt(max(w, 1.0)) / 4.0
         out: Dict[int, Point] = {}
-        if SHAPE == "segment":
-            _spread(out, cs, center, radius[v0])
-        else:
-            w = coarse.weight[v0]
-            anchor = center + (hi - lo) * 0.4 * np.array([1.0, 0.0])
-            r = 0.05 * span_min * math.sqrt(max(w, 1.0)) / 4.0
-            for i, c in enumerate(cs):
-                a = 2.399963 * i
-                rr = r * math.sqrt(i / max(len(cs) - 1, 1)) \
-                    if len(cs) > 1 else 0.0
-                out[c] = anchor + rr * np.array([math.cos(a),
-                                                 math.sin(a)])
+        _spread(out, cs, anchor, r)
         return {v: np.clip(out[v], lo, hi) for v in out}
 
-    # unit layout: spectral of the weighted coarse graph, circle fallback
     arr = None
     if n >= 3:
         g = nx.Graph()
@@ -331,41 +254,19 @@ def multilevel_init(src_adj: Dict[int, List[int]], lo: Point, hi: Point,
         arr = np.array([[math.cos(2.0 * math.pi * order[i] / max(n, 1)),
                          math.sin(2.0 * math.pi * order[i] / max(n, 1))]
                         for i in range(n)])
+    halfspan = (hi - lo) * COARSE_SPAN
+    pos = {v: center + halfspan * arr[i] for i, v in enumerate(nodes)}
 
-    if TILING:
-        # tangent-tiling closure (s3.64 M3): the smallest uniform scale
-        # of the unit layout at which no two footprints overlap. If the
-        # tiled picture exceeds the box, zoom the WHOLE picture down
-        # evenly (footprints then overlap minimally and uniformly — the
-        # honest state when demand exceeds fabric).
-        lam = 1e-9
-        for i in range(n):
-            for j in range(i + 1, n):
-                dist = float(np.linalg.norm(arr[i] - arr[j]))
-                need = radius[nodes[i]] + radius[nodes[j]]
-                lam = max(lam, need / max(dist, 1e-9))
-        halfbox = (hi - lo) / 2.0
-        over = 1.0
-        for i, v in enumerate(nodes):
-            for ax in (0, 1):
-                ext = lam * abs(float(arr[i][ax])) + radius[v]
-                if ext > float(halfbox[ax]):
-                    over = max(over, ext / float(halfbox[ax]))
-        zoom = 1.0 / over
-        cpos = {v: center + (lam * zoom) * arr[i]
-                for i, v in enumerate(nodes)}
-        rad = {v: radius[v] * zoom for v in nodes}
-    else:
-        halfspan = (hi - lo) * COARSE_SPAN
-        cpos = {v: center + halfspan * arr[i]
-                for i, v in enumerate(nodes)}
-        rad = radius
+    if len(levels) == 1 or coarse.parent_of is None:
+        # graph did not coarsen (<= min_nodes or zero merges): the
+        # coarse layout IS the fine layout (the s3.66 guard — the
+        # missing branch the vcycle flip exposed on K8/chimera)
+        return {v: np.clip(pos[v], lo, hi) for v in pos}
 
-    parent_of = coarse.parent_of
     children: Dict[int, List[int]] = {}
     for c in sorted(levels[0].adj):
-        children.setdefault(parent_of[c], []).append(c)
+        children.setdefault(coarse.parent_of[c], []).append(c)
     fine_pos: Dict[int, Point] = {}
     for pnode, cs in sorted(children.items()):
-        _spread(fine_pos, cs, cpos[pnode], rad[pnode])
+        _spread(fine_pos, cs, pos[pnode], radius[pnode])
     return {v: np.clip(fine_pos[v], lo, hi) for v in fine_pos}

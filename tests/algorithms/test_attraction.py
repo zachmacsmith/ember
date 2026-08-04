@@ -115,11 +115,13 @@ class TestAttractEmbed:
     def test_dense_source_engages_arrangement(self, chimera):
         # deg > kappa forces participation: the dense machinery must engage
         k = nx.complete_graph(16)
-        res = attract_embed(k, chimera, timeout=60, seed=0)
+        # vcycle=False: this test pins the ARRANGE engagement mechanism;
+        # the coarse init compacts K16 below full participation (s3.66)
+        res = attract_embed(k, chimera, timeout=60, seed=0, vcycle=False)
         assert res["embedding"]
         assert validate_embedding(res["embedding"], k, chimera)
         assert res["diag"]["assigned"] == 16
-        assert res["round_E"], "stair energy trajectory missing"
+        assert res["stair_E"] is not None
 
     def test_diag_reports_arm_gating_fields(self, chimera, source):
         # participation is arm-length (per axis) since the 2026-07-29
@@ -143,7 +145,7 @@ class TestAttractEmbed:
         # unknown kwargs (including pre-consolidation knobs) are ignored
         res = attract_embed(source, chimera, timeout=60, seed=0,
                             max_rounds=1, state="cross", gamma=0.0)
-        assert res.get("rounds", 0) <= 1
+        assert "stair_E" in res or res["embedding"]
         if res["embedding"]:
             assert validate_embedding(res["embedding"], source, chimera)
 
@@ -173,12 +175,12 @@ class TestAttractEmbed:
         assert a["embedding"], "default exact stack failed on K10/Z3"
         assert validate_embedding(a["embedding"], k, z)
         assert a["embedding"] == b["embedding"]
-        for key in ("mm_skips", "deficit_edges", "corner_deficit",
+        for key in ("mm_skipped", "deficit_edges", "corner_deficit",
                     "extensions", "ext_qubits", "bridges"):
             assert key in a["diag"], key
-        assert a["diag"]["mm_skips"] >= 0
+        assert a["diag"]["mm_skipped"] in (True, False)
         assert a["diag"]["extensions"] == 0  # the snap fingerprint (s3.56)
-        assert a["round_E"], "stair energy trajectory missing"
+        assert a["stair_E"] is not None
 
     def test_stride_gate_byte_identity_off_zephyr(self, chimera, source):
         # the consolidation-2 flip is stride-gated: on stride-1 fabrics the
@@ -189,8 +191,8 @@ class TestAttractEmbed:
                           exact_seeds=False, overload_lam=0.0,
                           snap_claims=False)
         assert a["embedding"] and a["embedding"] == b["embedding"]
-        assert a["round_E"] == b["round_E"]
-        assert "mm_skips" not in a["diag"]
+        assert a["stair_E"] == b["stair_E"]
+        assert "mm_skipped" not in a["diag"]
 
     def test_courses_noop_off_zephyr(self, chimera):
         k = nx.complete_graph(8)
@@ -206,8 +208,7 @@ class TestAttractEmbed:
                             round_frac=0.0)
         assert res["embedding"], "fallback did not legalize an easy instance"
         assert validate_embedding(res["embedding"], source, chimera)
-        assert res["rounds"] == 1  # the fallback attempt only
-        assert len(res["round_acls"]) == 1
+        assert res["legal_acl"] is not None
 
     def test_untyped_target_fallback(self, source):
         target = nx.convert_node_labels_to_integers(nx.grid_2d_graph(12, 12))
