@@ -15,7 +15,7 @@ embedding won. Expected: a single arm carrying BOTH stories, strictly dominating
 parent (polish is validity- and monotonicity-preserving). Cost: ~20 lines + a dev-cell
 probe. Risk: none measurable (the polish self-terminates at its fixpoint).
 
-**STATUS (2026-08-03): BUILT** — p3-ember stage 4 (v1.2 P1/W1, §5 build record); verdict pends §4.15 T1a bars (i)/(ii) + §4.16 T2.
+**VERDICT (2026-08-03): LANDED — p3-ember ships.** §4.15 T1a all bars pass (never worse than ate; -1.3..-30.6% vsMM at 100%W). §4.16 library: +136 net successes, 23 small-win families, zero calibrated ACL violations, dense-structured 4/4 with success gains. The stack strictly dominates both parents as predicted.
 
 ## 2. Kill ate's sparse "insurance tax" with a sub-K_max gate  [BUILD, small]
 
@@ -25,7 +25,7 @@ below K_max — MM inside ate gets ~58 s vs the baseline's 60. Fix: skip the tem
 attempt below density ≈ 0.08 (every measured template win is at density ≥ 0.12;
 E0's sparse control (160, 0.05) is a template loss). Alternative/complement: item 3.
 
-**STATUS (2026-08-03): BUILT** — p3-ember stage 1 gate at density >= 0.08 below K_max (§5); verdict pends §4.15 bar (iii) (construct_s reading, amendment 2).
+**VERDICT (2026-08-03): LANDED.** §4.15 bar (iii): (160,0.05) median construct_s - MM wall = -0.07 s (was +0.3-0.5 s in ate) — the tax is dead; sparse cells simultaneously turned into wins via the stage-4 polish (-1.3%/-7.4%).
 
 ## 3. Cheapen the template attempt itself  [BUILD]
 
@@ -50,7 +50,7 @@ with stock-MM fallback on failure; (b) zero-risk: add a beta-dhat arm to the
 p3-race8 roster (the racer's selection machinery absorbs its feasibility risk and
 its diversity is exactly what the roster wants). (b) first; costs one roster line.
 
-**STATUS (2026-08-03): BUILT, both paths** — (b) race9's mm-beta roster slot; (a) p3-mm-beta (gate < 0.11) + p3-mm-beta-fb (0.6x-budget beta then stock-MM rescue), plus the NEW beta_ramp fork switch. Verdicts pend §4.15 T1c/T1d.
+**VERDICT (2026-08-03): anatomy CONFIRMED, product paths FAILED.** T1c: beta-dhat transfers to Z12 (-3.5%/-5.6% at n=140/180, 73/76%W, NO feasibility cost). But §4.16 kills p3-mm-beta-fb at library scale: the 0.6/0.4 split costs success on 5 families (planted_solution -104 graphs) — the v1.0-mmpolish 70/30 lesson — and beta engaged below the density gate HURTS structured sparse lattices (bcc +0.167; the win is deg-10-ER-specific). beta_ramp: 0/3 cells, margin erodes with n; stays a kwargs-only switch (ramp2h==ramp2 tie confirmed the plumbing). NEXT (v1.3, fresh pre-registration): mm-FIRST full budget + beta re-run in the leftover keeping the better — success == stock by construction; dev-ladder leftover is 43-56 s.
 
 ## 5. Racer terminal polish + roster upgrade  [BUILD, small]
 
@@ -60,7 +60,7 @@ polish quantum on the winner + the item-4 beta-dhat arm to the roster. Also cons
 seeding one roster slot from the previous round's best embedding on repeated calls
 (warm-start across instances is unexplored).
 
-**STATUS (2026-08-03): BUILT** — race9 terminal anytime_polish + mm-beta slot (warm-start across instances NOT built — unexplored still). Verdict pends §4.15 T1d.
+**VERDICT (2026-08-03): KILLED.** T1d: race9 +0.00% median both reads, 44/40%W, 48% pair-interference — mm-beta WINS 13-15/25 races individually but the 9th slot's dilution of arms 0-7 offsets it exactly; the roster is saturated at 8 (consistent with e0_ceiling's zero-freebie). Terminal polish: tpol=0.0 s — races consume the full budget, so the polish never engages. race8 remains the shipped racer.
 
 ## 6. clmm boundary science: johnson / random_planar / Z12 mid-band  [PAPER first]
 
@@ -134,4 +134,4 @@ minorminer.subgraph if available; budget ~100 ms); on success return chains of
 length 1 (ACL exactly 1.0, unbeatable). Makes all arms strictly >= MM on native
 sources and removes the recurring flag.
 
-**STATUS (2026-08-03): BUILT** — native.py three-tier fast path inside p3-ember (structural gates -> label identity -> Glasgow, eligibility-gated per §4.15 amendment 1). Verdict pends §4.15 T1b + §4.16 hardware_native retirement bar.
+**VERDICT (2026-08-03): LANDED — flag RETIRED.** T1b: ember 109/205 vs MM 98/205 on hardware_native, 7 graphs at ACL exactly 1.0 (6 glasgow + 1 label-identity, attribution deterministic). §4.16: success 21 vs 20, mean dACL -0.171 — the recurring M5 flag is closed. v1.3 refinements measured but not built: glasgow node-cap ~1000 (deletes the 2.06 s hopeless-solver tax on n~2000 eligible sources); adaptive glasgow budget on fabric-like sources (big honeycombs embed at ACL 1.2-1.6 under MM — near-subgraphs a longer solver run could hit at 1.0).

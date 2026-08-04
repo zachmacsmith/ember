@@ -1,7 +1,9 @@
 # Minor Embedding Has Two Regimes: A Density-Resolved Map and a Never-Worse Adaptive Embedder
 
 <!--
-  DRAFT v1.0 (2026-08-01) — paper3 manuscript, branch `paper3`.
+  DRAFT v1.2 (2026-08-03) — paper3 manuscript, branch `paper3`.
+  v1.2 adds Section 12 (addendum): the composed embedder p3-ember,
+  Zephyr-validated (§4.15/§4.16); Sections 1–11 unchanged from v1.0.
   Provenance convention: every quantitative claim carries a parenthetical anchor into the
   laboratory record — (§4.x) points into docs/paper3/notes.md, (§3.x) into
   docs/paper2/notes.md. Data files live in docs/paper3/data/; the measurement
@@ -1647,6 +1649,110 @@ everywhere; three of the four committed prediction clauses confirmed, and
 the one that failed was caught by the bar and repaired by the path written
 down before launch (§4.11). The map, the embedder, and the constitution that
 measured them are, as of this sweep, ecosystem-tested.
+
+---
+
+## 12 Addendum (v1.2): the composed embedder — Zephyr-validated
+
+*Added 2026-08-03. Scope: everything in this section is validated on Zephyr
+Z12 only (pre-registrations §4.15/§4.16); Pegasus/Chimera extension is
+deliberately deferred. Nothing in Sections 1–11 changed.*
+
+### 12.1 EMBER: composing the measured winners
+
+The v1.0 evaluation left three composable results on the table: the polish
+arm's near-universal small win (Section 6.7), ATE's dense dominance with its
+measured 0.3–0.5 s sparse insurance tax (§4.13), and the hardware_native
+families' recurring per-arm flags (§4.11). `p3-ember` composes them into one
+arm (ledger items 1, 2, 12): a **native fast path** (structural gates →
+label-subset identity → an eligibility-gated Glasgow subgraph call; a hit is
+all-length-1 chains, ACL exactly 1.0), then **ATE's template stage** gated at
+density ≥ 0.08 below K\_max (killing the sparse tax), then **stock minorminer**
+on the remaining budget, lower-ACL winner selected (tie → template), then the
+**exact-repair polish** on the leftover wall. The Glasgow tier is gated on
+source eligibility (≤15k edges and modal-degree concentration ≥ 0.6 — QPU
+graphs, grids, cycles, regular graphs pass; sparse ER, a measured pure-miss
+~1 s tax, does not), a bar amendment dated before launch (§4.15 am. 1).
+
+Dev gates (§4.15, five frozen Z12 cells + two K\_n cells, 25 pairs each):
+ember is **never worse than ATE on any cell** (better on 5/7, to −4.5%) and
+beats stock minorminer at **100% win rate on every readable cell** — medians
+−7.4% (100,0.2), −16.2% (100,0.3), −7.6% (140,0.12), −18.4% (140,0.2),
+−30.6% (K140), −1.3% (160,0.05); K179 5/5 where minorminer is 0/5. The
+sparse cells flip from ATE's ties to wins: the time-to-first-valid tax is
+**−0.07 s** (bar ≤ +0.2 s), i.e. the insurance premium is gone while the
+polish converts the saved budget into ACL. On the 41-graph hardware_native
+family (5 trials), ember embeds 109/205 vs minorminer's 98/205 with 7 graphs
+at ACL exactly 1.0 (attribution deterministic: 6 Glasgow hits, 1 label
+identity; §4.15 T1b).
+
+At library scale (§4.16: the same 30,201-graph Z12 set as Section 6.8,
+paired against the archived minorminer rows under the calibrated bars of
+§4.12.10 — drops real only above max(2.6 pt, 3 graphs), ACL at ≥10 pairs):
+**ember posts +136 net successes, zero family ACL violations, success gains
+of +4.5 to +12.2 pt on the dense-structured families it targets (complete
+−10.3%, kneser −10.9%, turan −8.2%, spin\_glass −6.2% at 70–78% win rates),
+23 families of polish-class small wins, and the hardware_native flag closed
+(success 21 vs 20, mean ΔACL −0.171).** One family tripped the letter of the
+success bar — honeycomb, net −5 graphs against a 3.9-graph threshold — and
+the pre-registered probe resolved it as the null's tail: at three fresh
+seeds per flip graph, minorminer and ember tie exactly (13/21 each; the flip
+graphs are n≈1900–2300 pigeonhole-edge lattices where cliff-seed variance
+dominates; §4.16 probe). Expected tail count across 35 families at the 95th
+percentile threshold is ~1.8.
+
+### 12.2 Negative results, measured
+
+The same cycle killed three candidates, each with a cause worth recording.
+
+**The beta product arms.** The finite diameter-scaled pricing of Section 7
+transfers to Zephyr as anatomy — −3.5%/−5.6% at n=140/180 on the deg-10
+ladder at 73–76% win rates, with *no* feasibility cost on the degree-20
+fabric (§4.15 T1c) — but both product paths failed. `p3-mm-beta-fb` (beta at
+0.6× budget, stock rescue) died at library scale: the fixed split costs
+success on five families (planted\_solution −104 graphs alone) because
+instances stock minorminer legalizes in 25–60 s get only a 24 s rescue — the
+v1.0 polish arm's 70/30 lesson (Section 6.7) reproduced in a new arm; and
+below the density gate the pricing *hurts* structured sparse lattices
+(bcc\_lattice +0.167) — the win is ER-specific. The dev ladder, which
+legalizes in 4–17 s, could not have caught the first failure; the §4.15
+transfer-risk clause anticipated exactly this gap. The measured fix — stock
+minorminer first at full budget, beta re-run in the leftover, keep the
+better — is ledgered for a future cycle, not shipped. **The beta ramp** (a
+new fork switch: max\_beta = D̂ growing ×2 per unembedded pass) holds
+feasibility by construction but surrenders the margin as n grows (0/3
+confirm cells; retention 71%/17%/negative vs the ≥80% bar): ramping toward
+infinite beta abandons finite pricing precisely where it pays. **The
+nine-arm racer** ties race8 exactly (+0.00% median): the beta arm
+individually wins 13–15 of 25 races when present, but the ninth slot's
+budget dilution of the other eight offsets its wins — the roster is
+saturated at this budget, consistent with the equal-wall-clock deflator of
+Section 3 (§4.15 T1d; race8 remains the shipped configuration).
+
+A methods footnote the sweep produced for free: the `complete` family under
+`p3-mm-beta-fb` is provably a stock-minorminer passthrough at a different
+derived seed, and its +0.108 mean ΔACL over 44 pairs *measures* the
+cross-batch ACL null at cliff K\_n families — the ±0.10 family ACL bar of
+Section 6.8 sits below the ACL seed-noise floor there, extending the
+passthrough-null trick of §4.12.10 from success rates to ACL.
+
+### 12.3 Provenance
+
+Pre-registrations §4.15/§4.16 (bars committed before launch; two dated
+pre-launch amendments); runs: T1 chain + remedies (QUEUE rows 11/13; two
+instrumentation incidents — a stale fork binary behind a pipe-masked build
+error, and a deploy that clobbered a live result file — were root-fixed,
+their blast radii audited, and their re-runs pre-registered; the re-run
+reproduced the preserved first-run medians exactly), T2 batch t2\_z12
+(60,402 rows), honeycomb probe (QUEUE row 14). Data in-repo:
+`dev_suite.csv`, `p6_probes_confirm_beta_z12.csv`, `t1c_arms_z12.csv`,
+`t1d_race9.csv`, `t2_verdicts_summary.txt`, `t2_z12_percategory.txt`,
+`t2_honeycomb_probe.csv`; analyzers `t1_verdicts.py`, `t2_verdicts.py`;
+batch DBs archived (run host + `results/t2_z12/`). Frozen-arm policy held:
+`p3-ate`, `p3-mmpolish`, `p3-race8`, `p3-template` byte-identical to v1.0;
+the one in-place edit (the clmm architecture gate) is Z12/P16
+byte-identity-regression-tested; the spur-prune fast path is corpus-proven
+output-identical (1.2–1.3× template speedup).
 
 ---
 
