@@ -96,6 +96,31 @@ Magic numbers, none swept: η=0.5, λ₀=3.0, round_frac=0.4, max_rounds=10, bin
 
 ## C. Idea ledger
 
+### CANDIDATE (undesigned): footprint-true initialization — V2 as proto-template drawing (recorded 2026-08-03, Max's moat observation)
+
+Two sizing errors in the V1 init, found in discussion: (1) region area
+uses MEMBER COUNT where the true quantity is WIRE MASS (sum member
+degrees / kappa — turan block vs clique at equal headcount differ 2x on
+Z12: 972 vs 1944 qubits; count-sizing leaves the perfect turan
+embedding "surrounded by a moat of empty qubits" and the moat = spread
+init = the s3.51 frozen smear); prerequisite: _merge must TRACK internal
+edge mass (currently discarded). (2) Children spread in DISCS where
+every measured crystal is a 1D order in costume (clique = diagonal
+staircase/triangle — Max's pyramid; block = consecutive lanes;
+member interchangeability means a segment spread costs no generality
+and hands monotonize/insertion the order for free). V2 principle: the
+init draws each supernode's TRUE footprint — area from mass/kappa
+(the fabrics packing constants per supernode), shape from the
+internal/external mass ratio (triangle / lane-rectangle / disc),
+layout scale from tangent-TILING the footprints (the closure rule,
+no free constant; subsumes COARSE_SPAN and the compression-adaptive
+proposal). This is the s3.48 "learn the template" road's destination:
+busclique's arithmetic becomes the init, search handles what templates
+cannot express. Pre-registration must demand beating the MEASURED V1
+board (discs overperform: five records incl. K100 7.79 sub-template),
+especially the two ungated cells (ER; spin_glass's last d1 edge).
+
+
 ### V-CYCLE V1 — turan gated 8.14, spin_glass at template parity, sparse healed; the span wants to be compression-adaptive (2026-08-03; notes s3.63)
 
 Two-stage flatten (Max's call) + spectral-of-coarse + weight regions.
