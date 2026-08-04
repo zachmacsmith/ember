@@ -21,4 +21,4 @@ Columns: script@sha is the pre-registered commit; W = workers.
 | 14 | honeycomb probe (§4.16 diagnostic) | t2_honeycomb_probe.py @ b04f906d | hyde06 | 14 | ~0.5 | DONE 2026-08-03 | NULL-TAIL: MM 13/21 = ember 13/21 at fresh seeds; native tax 2.06 s deterministic |
 | 15 | v1.3 probe P (§4.17) | p_glasgow_deep.py @ 209d7575 | hyde06 | 1 | ~0.2 | DONE 2026-08-03 | 0/7 hits at 5/10/20 s -> p3-ember2 NOT BUILT (decision tree) |
 | 16 | v1.3 T3a beta ladder (§4.17) | t3_beta_mf.py @ 1050acbe | hyde06 | 48 | ~4 | DONE 2026-08-03 | ALL BARS PASS: succ-set==stock every cell; -3.46%/71%W + -5.63%/80%W; never worse than -fb |
-| 17 | v1.3 T4 library re-verify (§4.17) | run_t4_hyde06.sh @ 16696c32 | hyde06 | 60 | ~150-250 (~4-7 h wall) | RUNNING 2026-08-03 (T3 green) | arm {p3-mm-beta-mf}; pairs vs archived m5full_z12 minorminer + t2_z12 -fb rows |
+| 17 | v1.3 T4 library re-verify (§4.17) | run_t4_hyde06.sh @ 16696c32 | hyde06 | 60 | ~5.5 h wall | DONE 2026-08-04 | BAR1 PASS (-28~null; +333 vs -fb, all five kill families clear); BAR2 trip = passthrough K_n artifact (3rd replicate, protocol caution recorded); BAR3 FAIL 1/3 -> safe arm, no library ACL headline |

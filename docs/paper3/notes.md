@@ -1376,3 +1376,60 @@ records in-repo t3_beta_mf_z12.csv + summary):
   library-scale phenomenon — T4's job).
 T3b: vacuous (p3-ember2 not built; probe P). T4 launch cleared per the
 pre-registered tree.
+
+§4.17 T4 RESULTS (2026-08-04; batch t4_z12 @ 16696c32, 30,201 rows complete;
+analyzer t4_verdicts.py; records t4_verdicts_summary.txt; results.db archived
+run host + local results/t4_z12/batch/):
+
+- **BAR1 (success within null on EVERY family): PASS — the redesign's core
+  guarantee holds at library scale.** Totals 21,248 vs stock's 21,276 (−28
+  ~ null; -fb was −361). All five §4.16 -fb kill families clear: vs -fb the
+  mm-first arm is +333 successes with gains exactly where -fb bled
+  (planted_solution +3.6 pt, kagome +3.8, king_graph +4.3, honeycomb +3.3,
+  frustrated_square +1.4, hardware_native +7.3). The budget-split failure
+  mode is gone by construction and measured gone.
+- **BAR2 (no ACL violation): trips on `complete` (+0.234 @ 44p) — a
+  PROVABLY-PASSTHROUGH family; the arm's code is exonerated by
+  construction and the trip is a measurement artifact, recorded as such.**
+  Verified: beta.py's _stock_mm call is parameter-identical to the CLI
+  minorminer arm (graph-object source, edge-list target, timeout, verbose=0,
+  random_seed) — on density >= 0.11 the arm IS stock MM at another derived
+  seed. Distribution: 8W/9T/27L; the large deltas are timeout-bound cliff
+  rows (K120 +2.31, K113 +1.52, K142 +0.99, K127 +0.91) while mid-range
+  patience-expired rows flip both directions on try-luck (K95 +1.27 with
+  the T4 run COMPLETING its 10 tries in 47.5 s vs m5's 60.4 s truncation;
+  K89 −1.08 the other way). 27L/8W is p ~ 0.001 under symmetric seed noise
+  — and it is the THIRD consistent positive replicate against the m5
+  baseline on this family (fb +0.108 [§4.16], mf +0.234, mf-vs-fb +0.126),
+  so the m5 K_n baseline is systematically favorable to a degree the ±0.10
+  bar cannot absorb. Leading mechanism candidate (unproven): batch
+  workload-mix throughput on TIMEOUT-BOUND rows — m5's 5-arm batch
+  interleaved 1-s template rows with MM rows, T2/T4 ran uniform-heavy
+  mixes; timeout-bound rows buy iterations with effective CPU share, which
+  walls cannot show. PROTOCOL CAUTION (added to the §4.16 methodological
+  note's lineage): cross-batch family ACL reads on timeout-bound rows are
+  the least trustworthy read in the CLI regime; passthrough families
+  provide the null FOR FREE and must be read against it; within-batch
+  script-route pairing remains the gold standard. spin_glass (+0.058, W 41,
+  sub-bar) shows the same signature at smaller amplitude — its K_n-like
+  dense tail is timeout-bound too.
+- **BAR3 (positive claim, >= 3 below-gate families at median < −0.5% AND
+  >= 55%W): FAIL — 1 of 3** (hardware_native −6.58% @ 60%W, 20 pairs;
+  lfr_benchmark −1.54% misses at 54.8%W — one pair short; watts_strogatz
+  −0.74% @ 52%W over 7,890 pairs, planted_solution −0.94% @ 52%W over
+  2,315, regular −0.54% @ 51%W over 1,946). The library's below-gate mass
+  is NOT deg-10 ER: on structured/WS/lattice sparse families the beta
+  improvement thins to broad ~−0.5..−1.5% medians at ~52%W — real negative
+  mean shifts on thousand-pair families (WS mean −0.067, planted −0.046,
+  regular −0.078) but below the pre-registered claim bar.
+
+VERDICT (per the §4.17 tree): **p3-mm-beta-mf is VALIDATED SAFE and becomes
+the below-gate default over -fb, but earns NO library-scale ACL headline.**
+It passes the kill bars (success == stock everywhere measured — BAR1; no
+arm-attributable ACL violation — BAR2 as decomposed above), sweeps T3's
+dev-scale bars (−3.46%/71%W, −5.63%/80%W on deg-10 ER), and strictly
+dominates -fb (+333 successes, never worse); its §4.8b sparse-ER win stands
+as a DEV-SCALE and anatomy claim only — at library scale the sparse mass is
+structurally diverse and the margin dilutes below claimability. -fb is
+retired in place (superseded); the paper's v1.3 note states the negative
+result with the dilution numbers.

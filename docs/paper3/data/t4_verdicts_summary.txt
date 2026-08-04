@@ -1,0 +1,55 @@
+================================================================================================
+T4 §4.17 verdicts — p3-mm-beta-mf, calibrated bars (drop real > max(2.6 pt, 3 graphs); ACL at >= 10 pairs)
+================================================================================================
+
+--- p3-mm-beta-mf vs minorminer ---
+  bcc_lattice            n=   22 succ    13 vs    14 (-4.5 pt) meanD -0.059 med% -0.81 W 54 @ 13p  [below-gate]
+  complete               n=   56 succ    44 vs    44 (-0.0 pt) meanD 0.234 med% 1.23 W 18 @ 44p  ACL-VIOL (+0.234)
+  cubic_lattice          n=   74 succ    40 vs    42 (-2.7 pt) meanD -0.015 med% -0.65 W 50 @ 40p  [below-gate]
+  cycle                  n=   63 succ    60 vs    61 (-1.6 pt) meanD -0.001 med% 0.0 W 20 @ 60p  [below-gate]
+  frustrated_square      n=   70 succ    49 vs    52 (-4.3 pt) meanD -0.037 med% 0.0 W 47 @ 49p  [below-gate]
+  grid                   n=  143 succ   121 vs   118 (+2.1 pt) meanD 0.014 med% 0.38 W 38 @ 118p  [below-gate]
+  hardware_native        n=   41 succ    22 vs    20 (+4.9 pt) meanD -0.105 med% -6.58 W 60 @ 20p  [below-gate]
+  honeycomb              n=  151 succ   109 vs   110 (-0.7 pt) meanD -0.003 med% -0.3 W 51 @ 107p  [below-gate]
+  kagome                 n=  130 succ    92 vs    93 (-0.8 pt) meanD 0.0 med% -0.62 W 51 @ 88p  [below-gate]
+  king_graph             n=   70 succ    50 vs    51 (-1.4 pt) meanD -0.017 med% 0.0 W 49 @ 49p  [below-gate]
+  kneser                 n=   41 succ    25 vs    23 (+4.9 pt) meanD -0.11 med% 0.0 W 43 @ 23p
+  lfr_benchmark          n=   61 succ    42 vs    42 (-0.0 pt) meanD -0.109 med% -1.54 W 55 @ 42p  [below-gate]
+  path                   n=   63 succ    61 vs    60 (+1.6 pt) meanD 0.0 med% 0.0 W 0 @ 60p  [below-gate]
+  planted_solution       n= 2616 succ  2376 vs  2386 (-0.4 pt) meanD -0.046 med% -0.94 W 52 @ 2315p  [below-gate]
+  regular                n= 3375 succ  1954 vs  1952 (+0.1 pt) meanD -0.078 med% -0.54 W 51 @ 1946p  [below-gate]
+  spin_glass             n=  598 succ   413 vs   414 (-0.2 pt) meanD 0.058 med% 0.0 W 41 @ 410p
+  watts_strogatz         n=11988 succ  7952 vs  7973 (-0.2 pt) meanD -0.067 med% -0.74 W 52 @ 7890p  [below-gate]
+  totals: 21248 vs 21276 (-28); families 35; null expectation ~1.8 tails
+
+BAR1 success within null on EVERY family: PASS  (the five §4.16 -fb kill families: all clear)
+BAR2 no ACL violation at >=10 pairs: FAIL [('complete', 0.234)]  (bcc_lattice/spin_glass: clear)
+BAR3 >=3 below-gate families med<-0.5% & >=55%W: 1 -> FAIL [('hardware_native', -6.58, 60)]
+(all small-win families, any density: [('hardware_native', -6.58, 60)])
+
+--- p3-mm-beta-mf vs p3-mm-beta-fb [redesign delta, informational] ---
+  barabasi_albert        n= 3416 succ  2270 vs  2229 (+1.2 pt) meanD -0.024 med% 0.0 W 43 @ 2226p  [below-gate]
+  bcc_lattice            n=   22 succ    13 vs    12 (+4.5 pt) meanD -0.228 med% -6.4 W 83 @ 12p  [below-gate]
+  circulant              n=  337 succ   295 vs   288 (+2.1 pt) meanD 0.002 med% 0.0 W 39 @ 283p  [below-gate]
+  complete               n=   56 succ    44 vs    44 (-0.0 pt) meanD 0.126 med% 0.0 W 23 @ 44p  ACL-VIOL (+0.126)
+  cubic_lattice          n=   74 succ    40 vs    41 (-1.4 pt) meanD -0.034 med% 0.0 W 40 @ 40p  [below-gate]
+  frustrated_square      n=   70 succ    49 vs    48 (+1.4 pt) meanD -0.068 med% 0.0 W 45 @ 47p  [below-gate]
+  generalized_petersen   n=  755 succ   687 vs   676 (+1.5 pt) meanD -0.002 med% 0.0 W 47 @ 670p  [below-gate]
+  grid                   n=  143 succ   121 vs   117 (+2.8 pt) meanD -0.003 med% 0.0 W 48 @ 117p  [below-gate]
+  hardware_native        n=   41 succ    22 vs    19 (+7.3 pt) meanD -0.059 med% 0.16 W 37 @ 19p  [below-gate]
+  honeycomb              n=  151 succ   109 vs   104 (+3.3 pt) meanD -0.008 med% 0.0 W 45 @ 103p  [below-gate]
+  johnson                n=   74 succ    32 vs    32 (-0.0 pt) meanD -0.129 med% -2.94 W 66 @ 32p
+  kagome                 n=  130 succ    92 vs    87 (+3.8 pt) meanD -0.007 med% 0.8 W 47 @ 86p  [below-gate]
+  king_graph             n=   70 succ    50 vs    47 (+4.3 pt) meanD -0.026 med% -2.28 W 54 @ 46p  [below-gate]
+  kneser                 n=   41 succ    25 vs    24 (+2.4 pt) meanD -0.001 med% 0.21 W 46 @ 24p
+  lfr_benchmark          n=   61 succ    42 vs    42 (-0.0 pt) meanD -0.043 med% -1.02 W 55 @ 42p  [below-gate]
+  path                   n=   63 succ    61 vs    59 (+3.2 pt) meanD 0.0 med% 0.0 W 0 @ 59p  [below-gate]
+  planted_solution       n= 2616 succ  2376 vs  2282 (+3.6 pt) meanD -0.034 med% 0.0 W 49 @ 2242p  [below-gate]
+  random_planar          n=  216 succ   192 vs   192 (-0.0 pt) meanD -0.029 med% -1.64 W 55 @ 192p  [below-gate]
+  spin_glass             n=  598 succ   413 vs   412 (+0.2 pt) meanD -0.054 med% 0.0 W 45 @ 408p
+  star                   n=   63 succ    45 vs    46 (-1.6 pt) meanD 0.001 med% 0.0 W 29 @ 45p  [below-gate]
+  tree                   n=   26 succ    24 vs    23 (+3.8 pt) meanD -0.008 med% 0.0 W 39 @ 23p  [below-gate]
+  triangular_lattice     n=  182 succ   163 vs   161 (+1.1 pt) meanD -0.006 med% 0.0 W 45 @ 158p  [below-gate]
+  weak_strong_cluster    n=  444 succ   243 vs   233 (+2.3 pt) meanD -0.009 med% 0.0 W 48 @ 224p  [below-gate]
+  wheel                  n=   62 succ    58 vs    55 (+4.8 pt) meanD -0.01 med% 0.0 W 40 @ 55p  [below-gate]
+  totals: 21248 vs 20915 (+333); families 35; null expectation ~1.8 tails
