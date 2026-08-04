@@ -1,0 +1,61 @@
+================================================================================================
+T2 §4.16 verdicts — noise-calibrated bars (item 10): success drop REAL only above max(2.6 pt, 3 graphs);
+ACL readable at >=10 pairs (violation = mean dACL > +0.10). Pairing (graph_id, graph_name) vs archived MM
+rows — '(instance, trial) [CLI]' regime, sd-1.57 pt/family null (errata 4.12.10).
+================================================================================================
+
+--- p3-ember ---
+  bcc_lattice            n=   22 succ    13 vs    14 (-4.5 pt) meanD -0.02 @ 13p
+  binary_tree            n=   11 succ     8 vs     9 (-9.1 pt) meanD 0.002 @ 8p
+  bipartite              n=  208 succ   174 vs   169 (+2.4 pt) meanD -0.979 @ 169p
+  complete               n=   56 succ    48 vs    44 (+7.1 pt) meanD -1.229 @ 44p
+  cubic_lattice          n=   74 succ    40 vs    42 (-2.7 pt) meanD -0.042 @ 40p
+  frustrated_square      n=   70 succ    51 vs    52 (-1.4 pt) meanD -0.089 @ 51p
+  hardware_native        n=   41 succ    21 vs    20 (+2.4 pt) meanD -0.171 @ 19p
+  honeycomb              n=  151 succ   105 vs   110 (-3.3 pt) meanD -0.007 @ 103p  DROP-REAL (5g > 3.9g)
+  king_graph             n=   70 succ    50 vs    51 (-1.4 pt) meanD -0.12 @ 50p
+  kneser                 n=   41 succ    28 vs    23 (+12.2 pt) meanD -1.304 @ 23p
+  path                   n=   63 succ    59 vs    60 (-1.6 pt) meanD 0.0 @ 59p
+  random_er              n= 3024 succ  2241 vs  2180 (+2.0 pt) meanD -0.589 @ 2178p
+  spin_glass             n=  598 succ   441 vs   414 (+4.5 pt) meanD -1.035 @ 414p
+  star                   n=   63 succ    46 vs    45 (+1.6 pt) meanD -0.005 @ 45p
+  turan                  n=  607 succ   535 vs   505 (+4.9 pt) meanD -1.321 @ 505p
+  wheel                  n=   62 succ    57 vs    58 (-1.6 pt) meanD -0.01 @ 57p
+  families: 35; REAL success drops: 1 [('honeycomb', 5)]
+  ACL violations (>=10p): []
+  null expectation at 95th-pct threshold: ~1.8 family tails by chance
+  POSITIVE dense-structured wins (med<-0.5% & >=55%W): [('complete', -10.27, 70), ('kneser', -10.94, 78), ('spin_glass', -6.19, 71), ('turan', -8.24, 71)] -> PASS (4/4)
+  POSITIVE mmpolish-class small wins on >=5 families: 23 families -> PASS
+    [('bipartite', -13.6, 64), ('kneser', -10.94, 78), ('complete', -10.27, 70), ('johnson', -8.6, 91), ('turan', -8.24, 71), ('spin_glass', -6.19, 71), ('shastry_sutherland', -5.15, 77), ('kagome', -5.0, 65), ('lfr_benchmark', -4.84, 69), ('king_graph', -4.14, 66), ('weak_strong_cluster', -4.1, 83), ('regular', -4.04, 68)]
+  POSITIVE hardware_native retired: succ 21 vs 20, meanD -0.171 @ 19p -> PASS
+  BAR success-within-null everywhere: FAIL ['honeycomb']
+  BAR no ACL violation: PASS
+
+--- p3-mm-beta-fb ---
+  barabasi_albert        n= 3416 succ  2229 vs  2266 (-1.1 pt) meanD -0.019 @ 2226p
+  bcc_lattice            n=   22 succ    12 vs    14 (-9.1 pt) meanD 0.167 @ 12p  ACL-VIOL (+0.167 @ 12p)
+  circulant              n=  337 succ   288 vs   293 (-1.5 pt) meanD -0.003 @ 283p
+  complete               n=   56 succ    44 vs    44 (-0.0 pt) meanD 0.108 @ 44p  ACL-VIOL (+0.108 @ 44p)
+  cubic_lattice          n=   74 succ    41 vs    42 (-1.4 pt) meanD 0.019 @ 41p
+  cycle                  n=   63 succ    60 vs    61 (-1.6 pt) meanD 0.0 @ 60p
+  frustrated_square      n=   70 succ    48 vs    52 (-5.7 pt) meanD 0.015 @ 48p  DROP-REAL (4g > 3.0g)
+  generalized_petersen   n=  755 succ   676 vs   692 (-2.1 pt) meanD 0.001 @ 673p
+  hardware_native        n=   41 succ    19 vs    20 (-2.4 pt) meanD -0.279 @ 18p
+  honeycomb              n=  151 succ   104 vs   110 (-4.0 pt) meanD 0.003 @ 101p  DROP-REAL (6g > 3.9g)
+  kagome                 n=  130 succ    87 vs    93 (-4.6 pt) meanD 0.003 @ 84p  DROP-REAL (6g > 3.4g)
+  king_graph             n=   70 succ    47 vs    51 (-5.7 pt) meanD 0.019 @ 46p  DROP-REAL (4g > 3.0g)
+  kneser                 n=   41 succ    24 vs    23 (+2.4 pt) meanD -0.065 @ 23p
+  path                   n=   63 succ    59 vs    60 (-1.6 pt) meanD 0.0 @ 59p
+  planted_solution       n= 2616 succ  2282 vs  2386 (-4.0 pt) meanD -0.014 @ 2253p  DROP-REAL (104g > 68.0g)
+  spin_glass             n=  598 succ   412 vs   414 (-0.3 pt) meanD 0.116 @ 410p  ACL-VIOL (+0.116 @ 410p)
+  star                   n=   63 succ    46 vs    45 (+1.6 pt) meanD -0.008 @ 45p
+  tree                   n=   26 succ    23 vs    24 (-3.8 pt) meanD -0.001 @ 23p
+  triangular_lattice     n=  182 succ   161 vs   164 (-1.6 pt) meanD -0.011 @ 159p
+  watts_strogatz         n=11988 succ  7850 vs  7973 (-1.0 pt) meanD -0.038 @ 7812p
+  weak_strong_cluster    n=  444 succ   233 vs   242 (-2.0 pt) meanD -0.016 @ 226p
+  wheel                  n=   62 succ    55 vs    58 (-4.8 pt) meanD -0.003 @ 54p
+  families: 35; REAL success drops: 5 [('frustrated_square', 4), ('honeycomb', 6), ('kagome', 6), ('king_graph', 4), ('planted_solution', 104)]
+  ACL violations (>=10p): [('bcc_lattice', 0.167, 12), ('complete', 0.108, 44), ('spin_glass', 0.116, 410)]
+  null expectation at 95th-pct threshold: ~1.8 family tails by chance
+  BAR (-fb) success within null on EVERY family: FAIL ['frustrated_square', 'honeycomb', 'kagome', 'king_graph', 'planted_solution']
+  ACL-claim families (med<-0.5% & >=55%W, >=3 needed): [('hardware_native', -11.34, 67), ('lfr_benchmark', -1.4, 62)]
