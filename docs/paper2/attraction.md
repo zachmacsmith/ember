@@ -96,6 +96,25 @@ Magic numbers, none swept: η=0.5, λ₀=3.0, round_frac=0.4, max_rounds=10, bin
 
 ## C. Idea ledger
 
+### THE CLAIM-PLAN ROUND — K100 sub-template gate-valid; boundary splits the board; interim default = s3.59; DECISION OPEN (2026-08-03; notes s3.61)
+
+Diagnosis inverted the design (no parity/abutment cases; d15 = one arm
+on a 9-on-8 row via PARTICIPATION DRIFT — the fifth books-mismatch,
+still open). Built light: composite hard veto + half-pool boundary +
+parity-preferring lane choice. Clean probe: **K100 7.92 s1 d0 (first
+sub-template gate-valid clique)**, turan 7.02 (best ever, gate lost),
+spin_glass 12.01 (record) — but K140 +2.07 and c3xK64 +0.74 from
+opportunistic boundary spill. Interim default: boundary zeroed (= the
+s3.59 board; no regressions). NAMED NEXT ARM: pressure-gated boundary
+(boundary pools only under interior-capacity pressure) + the
+participation-drift re-pack; expected to dominate both measured arms.
+Process record: first probe run invalidated by worker monkeypatch
+leakage (kept as *_contaminated.*); the quiet-box P16 remeasure caught
+the s3.59 DP un-stride-gated (turan P16 12.22 -> greedy restored on
+stride-1 -> 8.45 PASS; the s3.58 owed item closes). Max's call on the
+menu.
+
+
 ### RESTRICT_CHAINS PATCHED — the AND-mask convicted, the handoff unblocked (2026-08-03; notes s3.60)
 
 gdb-confirmed: the stock hang lived in link_path's unbounded parent walk

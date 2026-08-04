@@ -1,0 +1,119 @@
+load at start: (2.41552734375, 2.41845703125, 3.1181640625)
+/data/max/ember/docs/paper2/data/packer2_probe.py:77: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/packer2_probe.py:77: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/packer2_probe.py:77: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/packer2_probe.py:77: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/packer2_probe.py:77: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/packer2_probe.py:77: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/packer2_probe.py:77: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/packer2_probe.py:77: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/packer2_probe.py:77: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/packer2_probe.py:77: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/packer2_probe.py:77: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/packer2_probe.py:77: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+K100 att seed 0: 7.92 s=1 d=0 e=0 (31.1s)
+K100 att seed 1: 7.92 s=1 d=0 e=0 (29.2s)
+K100 att seed 2: 7.92 s=1 d=0 e=0 (25.8s)
+K100 att_noB seed 0: 8.13 s=1 d=0 e=0 (31.6s)
+K100 att_noB seed 1: 8.12 s=1 d=0 e=0 (36.9s)
+K100 att_noB seed 2: 8.12 s=1 d=0 e=0 (32.7s)
+K100 mm seed 0: 10.04 s=None d=None e=None (42.4s)
+K100 mm seed 1: 10.71 s=None d=None e=None (29.2s)
+K100 mm seed 2: 10.08 s=None d=None e=None (36.4s)
+K140 att seed 0: 13.429 s=0 d=28 e=48 (61.2s)
+K140 att seed 1: 13.057 s=0 d=28 e=48 (61.5s)
+K140 att seed 2: 12.443 s=0 d=28 e=48 (60.3s)
+K140 att_noB seed 0: 10.929 s=0 d=4 e=44 (57.4s)
+K140 att_noB seed 1: 10.793 s=0 d=4 e=44 (63.3s)
+K140 att_noB seed 2: 11.014 s=0 d=4 e=44 (40.6s)
+K140 mm seed 0: 16.893 s=None d=None e=None (62.3s)
+K140 mm seed 1: 27.364 s=None d=None e=None (60.8s)
+K140 mm seed 2: 16.586 s=None d=None e=None (61.8s)
+ER100_d10 att seed 0: 4.97 s=0 d=367 e=18 (2.8s)
+ER100_d10 att seed 1: 4.48 s=0 d=367 e=18 (6.2s)
+ER100_d10 att seed 2: 4.83 s=0 d=367 e=18 (3.4s)
+ER100_d10 att_noB seed 0: 4.97 s=0 d=367 e=18 (2.8s)
+ER100_d10 att_noB seed 1: 4.48 s=0 d=367 e=18 (6.3s)
+ER100_d10 att_noB seed 2: 4.83 s=0 d=367 e=18 (3.3s)
+ER100_d10 mm seed 0: 5.0 s=None d=None e=None (3.1s)
+ER100_d10 mm seed 1: 5.07 s=None d=None e=None (1.5s)
+ER100_d10 mm seed 2: 4.85 s=None d=None e=None (1.7s)
+turan_n162 att seed 0: 7.0 s=0 d=152 e=2 (63.6s)
+turan_n162 att seed 1: 6.698 s=0 d=152 e=2 (62.8s)
+turan_n162 att seed 2: 7.37 s=0 d=152 e=2 (54.9s)
+turan_n162 att_noB seed 0: 9.13 s=0 d=15 e=0 (15.3s)
+turan_n162 att_noB seed 1: 9.062 s=0 d=15 e=0 (14.7s)
+turan_n162 att_noB seed 2: 8.988 s=0 d=15 e=0 (61.2s)
+turan_n162 mm seed 0: 10.543 s=None d=None e=None (21.8s)
+turan_n162 mm seed 1: 13.963 s=None d=None e=None (33.3s)
+turan_n162 mm seed 2: 11.537 s=None d=None e=None (37.6s)
+spin_glass_n163 att seed 0: 11.785 s=0 d=16 e=44 (15.5s)
+spin_glass_n163 att seed 1: 12.307 s=0 d=16 e=44 (26.0s)
+spin_glass_n163 att seed 2: 11.945 s=0 d=16 e=44 (19.0s)
+spin_glass_n163 att_noB seed 0: 12.73 s=0 d=1 e=75 (14.2s)
+spin_glass_n163 att_noB seed 1: 13.049 s=0 d=1 e=75 (16.7s)
+spin_glass_n163 att_noB seed 2: 12.853 s=0 d=1 e=75 (15.2s)
+spin_glass_n163 mm seed 0: 17.479 s=None d=None e=None (60.8s)
+spin_glass_n163 mm seed 1: 17.497 s=None d=None e=None (60.0s)
+spin_glass_n163 mm seed 2: 17.129 s=None d=None e=None (60.8s)
+regular_n316 att seed 0: 2.759 s=0 d=95 e=22 (5.7s)
+regular_n316 att seed 1: 2.674 s=0 d=95 e=22 (5.7s)
+regular_n316 att seed 2: 3.136 s=0 d=95 e=22 (5.0s)
+regular_n316 att_noB seed 0: 2.759 s=0 d=95 e=22 (5.7s)
+regular_n316 att_noB seed 1: 2.674 s=0 d=95 e=22 (5.8s)
+regular_n316 att_noB seed 2: 3.136 s=0 d=95 e=22 (5.0s)
+regular_n316 mm seed 0: 3.364 s=None d=None e=None (2.1s)
+regular_n316 mm seed 1: 3.411 s=None d=None e=None (2.2s)
+regular_n316 mm seed 2: 3.291 s=None d=None e=None (2.9s)
+ws_n486 att seed 0: 3.019 s=0 d=762 e=21 (5.5s)
+ws_n486 att seed 1: 2.792 s=0 d=762 e=21 (6.7s)
+ws_n486 att seed 2: 3.545 s=0 d=762 e=21 (4.7s)
+ws_n486 att_noB seed 0: 3.019 s=0 d=762 e=21 (5.7s)
+ws_n486 att_noB seed 1: 2.792 s=0 d=762 e=21 (6.8s)
+ws_n486 att_noB seed 2: 3.545 s=0 d=762 e=21 (4.6s)
+ws_n486 mm seed 0: 3.233 s=None d=None e=None (2.8s)
+ws_n486 mm seed 1: 3.173 s=None d=None e=None (3.0s)
+ws_n486 mm seed 2: 2.821 s=None d=None e=None (4.3s)
+wsc_c8xK32 att seed 0: 3.734 s=0 d=85 e=47 (9.8s)
+wsc_c8xK32 att seed 1: 3.496 s=0 d=85 e=47 (11.1s)
+wsc_c8xK32 att seed 2: 3.926 s=0 d=85 e=47 (6.6s)
+wsc_c8xK32 att_noB seed 0: 3.746 s=0 d=50 e=32 (7.8s)
+wsc_c8xK32 att_noB seed 1: 3.926 s=0 d=50 e=32 (8.8s)
+wsc_c8xK32 att_noB seed 2: 3.625 s=0 d=50 e=32 (13.6s)
+wsc_c8xK32 mm seed 0: 3.68 s=None d=None e=None (8.5s)
+wsc_c8xK32 mm seed 1: 3.805 s=None d=None e=None (17.3s)
+wsc_c8xK32 mm seed 2: 3.859 s=None d=None e=None (8.5s)
+wsc_c3xK64 att seed 0: 7.312 s=0 d=183 e=0 (16.1s)
+wsc_c3xK64 att seed 1: 7.042 s=0 d=183 e=0 (25.2s)
+wsc_c3xK64 att seed 2: 6.969 s=0 d=183 e=0 (20.1s)
+wsc_c3xK64 att_noB seed 0: 7.266 s=0 d=6 e=0 (20.0s)
+wsc_c3xK64 att_noB seed 1: 5.818 s=0 d=6 e=0 (11.2s)
+wsc_c3xK64 att_noB seed 2: 6.031 s=0 d=6 e=0 (8.1s)
+wsc_c3xK64 mm seed 0: 7.026 s=None d=None e=None (38.7s)
+wsc_c3xK64 mm seed 1: 7.651 s=None d=None e=None (33.8s)
+wsc_c3xK64 mm seed 2: 7.266 s=None d=None e=None (18.4s)
+
+summary (ACL mean over legal seeds (n); s359 = pre-round att):
+K100              att=7.92(3) s1 d0 e0  att_noB=8.12(3) s1 d0 e0  mm=10.28(3)  s359=8.12  tmpl=8.00
+K140              att=12.98(3) s0 d28 e48  att_noB=10.91(3) s0 d4 e44  mm=20.28(3)  s359=10.91  tmpl=11.00
+ER100_d10         att=4.76(3) s0 d367 e18  att_noB=4.76(3) s0 d367 e18  mm=4.97(3)  s359=4.76  tmpl=-
+turan_n162        att=7.02(3) s0 d152 e2  att_noB=9.06(3) s0 d15 e0  mm=12.01(3)  s359=9.06  tmpl=6.00
+spin_glass_n163   att=12.01(3) s0 d16 e44  att_noB=12.88(3) s0 d1 e75  mm=17.37(3)  s359=12.88  tmpl=11.64
+regular_n316      att=2.86(3) s0 d95 e22  att_noB=2.86(3) s0 d95 e22  mm=3.36(3)  s359=2.86  tmpl=-
+ws_n486           att=3.12(3) s0 d762 e21  att_noB=3.12(3) s0 d762 e21  mm=3.08(3)  s359=3.12  tmpl=-
+wsc_c8xK32        att=3.72(3) s0 d85 e47  att_noB=3.77(3) s0 d50 e32  mm=3.78(3)  s359=3.89  tmpl=-
+wsc_c3xK64        att=7.11(3) s0 d183 e0  att_noB=6.37(3) s0 d6 e0  mm=7.31(3)  s359=6.37  tmpl=-
+load at end: (11.3134765625, 7.869140625, 5.20849609375)
+done-packer2-probe

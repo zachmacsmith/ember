@@ -920,26 +920,35 @@ class TestZephyrCourses:
                                       kappa=3.0, overload_lam=1.0)
         assert claim_overload(new, adj, course, kappa=3.0) == 0.0
 
-    def test_arrange_avoid_boundary(self):
-        # avoid_boundary=True keeps packed arms off tile lines 0 and
-        # last (the s3.54 rule as packer-side data)
+    def test_boundary_half_pool_and_parity_coloring(self):
+        # s3.61: stride-2 boundary lines pack at HALF pool (4), and the
+        # parity-preferring lane choice steers claims onto lanes that can
+        # couple boundary crossings (junction 0 = even-course only)
+        from ember_qc.algorithms.factored.field import pack_lines
         g, folded, course = self._grids()
-        n = 16
-        adj = {v: [u for u in range(n) if u != v] for v in range(n)}
-        pos = {v: np.array([1.0 + 0.2 * v, 1.0 + 0.2 * v])
-               for v in range(n)}
-        new, info = alternate_arrange(pos, adj, course, iters=4,
-                                      kappa=3.0, avoid_boundary=True)
-        packed = [v for v in new
-                  if float(new[v][1]).is_integer()
-                  or float(new[v][0]).is_integer()]
-        for v in new:
-            for axis, nl in ((1, course.H), (0, course.W)):
-                val = float(new[v][axis])
-                if val.is_integer() and val in (0.0, float(nl - 1)):
-                    # a variable may START on a boundary value; assert
-                    # only that the packer did not newly assign one
-                    assert float(pos[v][axis]) == val
+        # packer side: 5 mutually overlapping arms aimed at line 0 —
+        # only 4 fit (half pool); the 5th must go to line 1
+        ivs = [(0.0, 5.0)] * 5
+        ys = [0.0] * 5
+        pools = [4.0, 8.0, 8.0]
+        assign, _ = pack_lines(ivs, ys, pools)
+        assert all(a is not None for a in assign)
+        assert sum(1 for a in assign if a == 0) <= 4
+        # coloring side: a bar with a crossing at line 0 must take an
+        # even-parity lane even when an odd lane is free first
+        from ember_qc.algorithms.factored.field import _color_claim_bars
+        claimed: set = set()
+        chains = {0: []}
+        bars = [(3, 0.0, 3.0, 0)]
+        targets = {0: (0.0, 3.0, [0, 2])}  # crossing at junction 0
+        _color_claim_bars(course, claimed, chains, 1, bars, targets)
+        assert chains[0], "bar got no wire"
+        # every claimed qubit's sub-lane must reach junction 0: p*=0 needs
+        # even parity
+        subs = {s for q in chains[0]
+                for (o, ln, s), run in course.wire_map.items()
+                if o == 1 and ln == 3 and q in run.values()}
+        assert subs and all(s % 2 == 0 for s in subs), subs
 
     def test_course_wire_seeds_valid_connected(self):
         g, folded, course = self._grids()

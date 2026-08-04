@@ -3251,6 +3251,89 @@ fails fast and clean (over-constrained without seeds — correct
 best-effort behavior, formerly the hang). bar_domains (anatomy s8) is
 UNBLOCKED; the strip-minorminer-down probe is its own future round.
 
+### 3.61 The claim-plan round: diagnosis inverts the design, boundary splits the board, and the fifth books-mismatch appears (2026-08-03)
+
+**Phase 0 diagnosis (recorded before build) overturned both hypotheses.**
+The s3.59 turan d15 was NEITHER boundary parity NOR lane abutment
+(classification: 0/0): all 15 edges hang off ONE arm (v160) on a 9-on-8
+row the DP never certified — created downstream of the DP's guarantee.
+The un-avoided boundary arm measured d328 (all boundary class, r=0):
+avoid-outright's justification, now quantified. Consequence: the planned
+heavy claim_plan constructor was NOT built; three light mechanisms were:
+(1) hard composite veto (permutations may not raise claim_overload),
+(2) boundary lines at half pool instead of zeroed, (3) parity-preferring
+lane choice in _color_claim_bars (targets-aware, replaces free[0]).
+
+**Two process incidents on the record (honesty items):**
+- The first packer2 probe run was INVALIDATED by worker monkeypatch
+  leakage between arms (pooled workers are reused; the att arms ran
+  with the att_noB patch). Kept as packer2_probe_contaminated.*; the
+  isolation fix is in the probe. Lesson: per-arm state must be reset
+  in every worker invocation, never assumed fresh.
+- The QUIET-BOX P16 remeasure (owed since s3.58) caught the s3.59 DP
+  un-stride-gated: turan P16 12.22 vs the 8.4-9.1 pre-DP band, clean
+  control — the packer rounds were Z12-only and pack_lines had replaced
+  the greedy on Pegasus unmeasured. FIXED: the greedy packer (with
+  cap-mean pools) is restored as the stride-1 branch; the composite
+  veto is stride-gated too. P16 confirm: turan 8.45 <= 8.6 PASS, K100
+  13.19 <= 13.9 PASS (spin_glass 18.80 vs 18.0 — a letter-miss within
+  the cell's recorded cross-run variance; watch). The s3.58 owed
+  remeasure is CLOSED: the old anomaly was the un-gated DP, not noise.
+
+**Clean probe** (packer2_probe rerun, isolated arms; quiet box, all mm
+controls replicate; att = half-pool boundary + veto + parity coloring;
+att_noB = boundary zeroed = the s3.59 state):
+
+| cell | att | att_noB (=s3.59) | mm | tmpl |
+|---|---|---|---|---|
+| K100 | **7.92** s1 d0 e0 | 8.12 s1 d0 | 10.28 | 8.00 |
+| K140 | 12.98 d28 | **10.91** d4 | 20.28 | 11.00 |
+| ER100_d10 | 4.76 | 4.76 | 4.97 | -- |
+| turan_n162 | **7.02** d152 | 9.06 d15 | 12.01 | 6.00 |
+| spin_glass | **12.01** d16 | 12.88 d1 | 17.37 | 11.64 |
+| regular_n316 | 2.86 | 2.86 | 3.36 | -- |
+| ws_n486 | 3.12 | 3.12 | 3.08 | -- |
+| wsc_c8xK32 | **3.72** | 3.77 | 3.78 | -- |
+| wsc_c3xK64 | 7.11 d183 | **6.37** d6 | 7.31 | -- |
+
+1. **K100 7.92 s1 d0 e0, 3/3 — the first sub-template GATE-VALID clique
+   in program history** (template 8.00; boundary reclamation −0.20 with
+   validity kept: the parity coloring covered every boundary crossing).
+2. **turan 7.02** — best number the program has ever produced on the
+   cell (negotiated-record class; d152 = the router repaired the
+   boundary arms profitably). STRETCH (<=7.0) missed by 0.02; the
+   gate-valid MINIMUM clause failed (d152, not d0).
+3. **spin_glass 12.01 — record** (from 12.47); wsc_c8 3.72 beats mm.
+4. **The boundary split**: K140 +2.07 (d4 -> d28: boundary spill breaks
+   the near-gate) and wsc_c3xK64 +0.74 (d6 -> d183) — the half-pool is
+   opportunistic (the DP's displacement cost treats row 0 like any
+   row), so arms drift to boundary even when interior room exists.
+   The named refinement: PRESSURE-GATED boundary — boundary pools
+   available only when interior capacity is insufficient on that axis.
+   Predicted from the table: keeps K140 10.91 / c3xK64 6.37 (interior
+   sufficient) while retaining turan's boundary use (162 arms need it);
+   K100's -0.20 is the open question (its boundary use was voluntary).
+5. **The fifth books-mismatch**: att_noB turan still d15 — the composite
+   veto did NOT fix v160, so the 9-on-8 row forms by PARTICIPATION
+   DRIFT: a variable sub-tile at row-pack time grows a >=1-tile
+   h-interval during later column half-steps — a 9th claimant on a row
+   the DP certified at 8, with no permutation involved. (Books now
+   agreeing: representation, compaction, lane depth, gate pricing.
+   Still split: pack-time vs claim-time PARTICIPATION.) Fix candidates:
+   a final re-pack after the last column half-step, or claim-time
+   participation in the DP's books; undesigned.
+
+**Interim default (per the failure rule: report + discuss): boundary
+ZEROED** — the s3.61 mechanisms are in the tree but the default board
+is byte-equivalent to s3.59 (verified: turan 9.13/d15, K140 10.93/d4,
+seed 0). The s3.59 open decision RESOLVES as ship-the-DP (Z12) with the
+stride-gate amendment (greedy restored on stride-1, P16 confirmed).
+DECISION MENU for the next arm: (a) pressure-gated boundary
+(recommended; expected to dominate both current arms), (b) stand pat on
+the s3.59 board, (c) boundary-on accepting the K140/c3xK64 regressions
+(rejected). The participation-drift fix is orthogonal and small; it
+plausibly rides along with (a).
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).

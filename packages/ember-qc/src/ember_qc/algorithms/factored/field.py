@@ -394,7 +394,23 @@ def _color_claim_bars(grid: TileGrid, claimed: set,
             free = [c for c in subs if c not in used_colors]
             if not free:
                 continue  # line oversubscribed; leave this bar point-seeded
-            color = free[0]
+            if targets is not None and v in targets:
+                # s3.61 parity-preferring lane choice: pick the free lane
+                # that can physically couple the most of this arm's
+                # designated crossings (p* = c or c-1 by course parity
+                # must exist on the lane's run — false exactly at
+                # boundary junctions for the wrong parity). Replaces
+                # blind free[0]; makes half-pool boundary lines usable.
+                cls = targets[v][2]
+
+                def _covered(s_):
+                    run_ = grid.wire_map.get((orientation, line, s_), {})
+                    return sum(1 for c in cls
+                               if (c if c % 2 == s_ % 2 else c - 1) in run_)
+
+                color = max(free, key=lambda s_: (_covered(s_), -s_))
+            else:
+                color = free[0]
             used_colors[color] = b
             run = grid.wire_map.get((orientation, line, color), {})
             if targets is not None and v in targets:
@@ -1161,8 +1177,7 @@ def insertion_sweeps(order: List[int], src_adj: Dict[int, List[int]], *,
 def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                       grid: TileGrid, *, iters: int = 8, kappa: float = 13.0,
                       floor: bool = True, insert_sweeps: int = 0,
-                      overload_lam: float = 0.0,
-                      avoid_boundary: bool = False):
+                      overload_lam: float = 0.0):
     """Alternating 1-D arrangement on the stair energy.
 
     Participation is **per-axis by derived arm length** (2026-07-29
@@ -1233,13 +1248,15 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
             # (8 on course-Zephyr lines, not the cap-mean's 7.68; s3.51
             # item 4 resolved as data)
             pool = [float(lp.get((axis, ln), 0)) for ln in range(nlines)]
-            if avoid_boundary and nlines >= 2:
-                # s3.54 boundary-line avoidance, now packer-side data
-                # instead of a grid.cap mutation: junction lines 0/2m
-                # have half CROSSING capacity (fabrics s4.3b); until a
-                # crossing-parity census exists, arms stay off the
-                # boundary tile lines entirely (the proven-conservative
-                # rule; the refinement is on the ledger).
+            if grid.stride > 1 and nlines >= 2:
+                # Boundary lines ZEROED (interim default, s3.61 verdict):
+                # the half-pool arm measured a genuine split — K100 7.92
+                # sub-template GATE-VALID and turan 7.02/spin_glass 12.01
+                # records, but K140 +2.07 and wsc_c3xK64 +0.74 from
+                # boundary spill breaking near-gates. Until the
+                # pressure-gated boundary arm (use boundary only when
+                # interior capacity is insufficient) is measured, the
+                # safe state is the s3.59 board. Ledger: s3.61.
                 pool[0] = 0.0
                 pool[nlines - 1] = 0.0
         else:
@@ -1254,16 +1271,41 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
             info["E"].append(efn(new_pos, src_adj))
             return False
         order = sorted(parts, key=lambda v: (float(new_pos[v][axis]), v))
-        assign, _cost = pack_lines([ivs[v] for v in order],
-                                   [float(new_pos[v][axis]) for v in order],
-                                   pool)
         trial = {v: new_pos[v].copy() for v in new_pos}
         miss = 0
-        for v, ln in zip(order, assign):
-            if ln is None:
-                miss += 1  # structurally unplaceable; stays put
-            else:
-                trial[v][axis] = float(ln)
+        if grid.stride > 1:
+            # course-resolved fabrics: the s3.59 exact DP with the shared
+            # integer census. Stride-gated after the s3.61 quiet-box P16
+            # remeasure caught the DP at +3 ACL on Pegasus turan (12.22
+            # vs the pre-DP 8.4-9.1) — the packer rounds were measured on
+            # Z12 only, so stride-1 fabrics keep the measured greedy.
+            assign, _cost = pack_lines(
+                [ivs[v] for v in order],
+                [float(new_pos[v][axis]) for v in order], pool)
+            for v, ln in zip(order, assign):
+                if ln is None:
+                    miss += 1  # structurally unplaceable; stays put
+                else:
+                    trial[v][axis] = float(ln)
+        else:
+            # stride-1: the pre-s3.59 greedy nearest-line packer, with
+            # the pre-s3.59 cap-mean pools (byte-parity with the
+            # consolidation-2 pipeline on Pegasus/Chimera)
+            caps = grid.cap[:, :, 1] if axis == 1 else grid.cap[:, :, 0].T
+            gpool = caps.mean(axis=1) * grid.stride
+            lines: Dict[int, list] = {i: [] for i in range(nlines)}
+            for v in order:
+                y0 = float(new_pos[v][axis])
+                placed = False
+                for ln in sorted(range(nlines),
+                                 key=lambda i: (abs(i - y0), i)):
+                    if line_depth(lines[ln] + [ivs[v]]) <= gpool[ln]:
+                        lines[ln].append(ivs[v])
+                        trial[v][axis] = float(ln)
+                        placed = True
+                        break
+                if not placed:
+                    miss += 1  # no feasible line; stays put
         e_old = efn(new_pos, src_adj)
         e_new = efn(trial, src_adj)
         if force or e_new <= e_old + 1e-9:
@@ -1330,6 +1372,9 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
             if new_order == order0:
                 break
             e_pre = efn(new_pos, src_adj)
+            ov_pre = (claim_overload(new_pos, src_adj, grid,
+                                     kappa=kappa, floor=floor)
+                      if grid.stride > 1 else 0.0)
             # full-state snapshot: the composite's inner moves (monotonize
             # is universal, packing re-derives participation) may touch
             # non-members, and the revert must be total
@@ -1340,7 +1385,17 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
             _half(axis=1, force=False)
             _half(axis=0, force=False)
             e_post = efn(new_pos, src_adj)
-            if e_post > e_pre + 1e-9:
+            ov_post = (claim_overload(new_pos, src_adj, grid,
+                                      kappa=kappa, floor=floor)
+                       if grid.stride > 1 else 0.0)
+            # s3.61 hard veto: a permutation may not create uncolorable
+            # lines. The DP's capacity guarantee holds only for accepted
+            # DP proposals; the composite's y-permutation preserves
+            # per-line COUNTS but not interval DEPTHS, and lam only
+            # PRICES the violation (the measured 9-on-8 row that stranded
+            # turan's v160, s3.61 diagnosis). Structural feasibility is a
+            # gate condition, not a preference — trades never rank.
+            if e_post > e_pre + 1e-9 or ov_post > ov_pre + 1e-9:
                 new_pos = snap
                 info["insert_reverts"] += 1
                 break

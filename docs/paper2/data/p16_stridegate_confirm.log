@@ -1,0 +1,35 @@
+load at start: (2.41552734375, 2.41845703125, 3.1181640625)
+/data/max/ember/docs/paper2/data/p16_stridegate_confirm.py:51: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/p16_stridegate_confirm.py:51: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/p16_stridegate_confirm.py:51: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/p16_stridegate_confirm.py:51: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/p16_stridegate_confirm.py:51: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/p16_stridegate_confirm.py:51: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/p16_stridegate_confirm.py:51: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/p16_stridegate_confirm.py:51: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/p16_stridegate_confirm.py:51: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+P16 K100 att seed 0: 12.68 (25.7s)
+P16 K100 att seed 1: 13.27 (60.7s)
+P16 K100 att seed 2: 13.61 (21.6s)
+P16 turan_n162 att seed 0: 8.0 (63.6s)
+P16 turan_n162 att seed 1: 8.765 (46.4s)
+P16 turan_n162 att seed 2: 8.593 (60.6s)
+P16 spin_glass_n163 att seed 0: 18.417 (44.1s)
+P16 spin_glass_n163 att seed 1: 19.202 (16.8s)
+P16 spin_glass_n163 att seed 2: 18.791 (60.2s)
+
+summary (ACL mean over legal seeds (n) vs bar):
+  P16 K100             att=13.19(3)  bar<=13.9
+  P16 turan_n162       att=8.45(3)  bar<=8.6
+  P16 spin_glass_n163  att=18.80(3)  bar<=18.0
+load at end: (14.306640625, 6.0302734375, 4.32666015625)
+done-consolidation2-p16gate

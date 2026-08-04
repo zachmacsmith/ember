@@ -43,6 +43,39 @@ that *aren't* exact cliques, at parity-or-better off-template (s3.55). Easy
 instances stay cheap: participation is by arm length (§4), so the dense
 machinery is structurally inert wherever chains are sub-tile.
 
+## 0.5 The five hardware facts (all the "annoyance items" in one place)
+
+Everything fabric-specific in this codebase reduces to five measured facts
+(details + verification: fabrics.md). If you understand these, every
+parity/boundary/census mechanism below is just bookkeeping for one of them:
+
+1. **A qubit is a bar, not a node** — a horizontal or vertical segment on a
+   grid; the hardware graph is the intersection graph of bars. Anything that
+   abstracts qubits to points has silently chosen a projection (the j-fold
+   incident, fabrics §0).
+2. **Lines carry a fixed number of parallel lanes** (8 on course-resolved
+   Zephyr = 4 tracks x 2 courses). More overlapping arms than lanes on one
+   line = someone gets no wire. This is `line_pools`, the packer's hard
+   capacity, and `claim_overload`'s census — one book (s3.59/s3.61).
+3. **Bars have parity** (Zephyr courses): a course-j bar sits only at even
+   or only at odd positions. Interior crossings can be covered by either
+   parity (the two candidate positions carry one each); parity FORCES only
+   at claim endpoints and at the fabric boundary. This is `snap_claims`'
+   p* arithmetic and the parity-preferring lane choice.
+4. **Junctions are complete on Zephyr, ~56% on Pegasus** — on Zephyr,
+   claim-coverage arithmetic IS validity (the mm-skip gate); on Pegasus it
+   is not, which is why the exactness machinery is stride-gated off there.
+5. **Boundary junction lines have half the crossing reach** (one parity
+   only), so boundary tile lines pack at half pool and their perpendicular
+   partners must take the coupling parity (s3.61; formerly "avoid
+   outright").
+
+The engineering principle tying them together: **one accounting** — the
+packer, the coloring, and the verifier must read the same books, or the
+mismatch surfaces as a deficit on the tightest instance (turán, five rounds
+running: representation → compaction → lane depth → gate blindness →
+crossing coverage).
+
 ## 1. The state: positions only
 
 One continuous (x, y) per variable, in tile space. Everything extended

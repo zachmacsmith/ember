@@ -304,9 +304,9 @@ def attract_embed(
         # behavior is byte-identical to the first consolidation's default.
         exact = cfg.exact_seeds and grid.stride > 1
         lam = cfg.overload_lam if grid.stride > 1 else 0.0
-        # Boundary-line avoidance (s3.54) moved into the packer as pool
-        # data (alternate_arrange's avoid_boundary; s3.59) — the grid.cap
-        # mutation is gone.
+        # Boundary handling is packer-side pool data since s3.61 (half
+        # pool on stride-2 boundary lines + parity-preferring coloring)
+        # — no per-call switch, no grid.cap mutation.
         bounds = (grid.W, grid.H)
         kappa = cfg.kappa if cfg.kappa is not None else _target_kappa(grid)
 
@@ -345,7 +345,7 @@ def attract_embed(
             tpts, src_adj, grid, iters=cfg.arrange_iters,
             kappa=kappa, floor=cfg.span_floor,
             insert_sweeps=cfg.insert_sweeps,
-            overload_lam=lam, avoid_boundary=exact)
+            overload_lam=lam)
         cent = {v: grid.Minv @ (tpts[v] - grid.c) for v in cent}
         # round_E stays RAW stair-E (recorded trajectory metric, comparable
         # to history) regardless of overload_lam
