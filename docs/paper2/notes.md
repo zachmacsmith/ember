@@ -3458,6 +3458,63 @@ Standing V-cycle board (best arm per cell): K100 7.79g / K140 10.49g /
 turan 8.14g / spin_glass 11.64 (=tmpl) / ER 4.76 / regular 2.78 /
 ws 2.84 — five program records in one round, three of them gate-valid.
 
+### 3.64 V-cycle V2, footprint-true init: the ladder speaks — segments refuted, closure gates for free but not cheaply, mass is right-but-marginal (2026-08-03)
+
+The three discussion-derived mechanisms (ledger c2ac25c9), built as a
+5-arm attribution ladder (base / vc1 / +mass / +closure / +segments;
+per-worker constants always set). 539 tests green (moat-share, internal
+mass, tangency, collinearity). Probe: 7 cells x 5 arms x 3 seeds,
+quiet box.
+
+| cell | base | vc1 | vc2m (+mass) | vc2t (+closure) | vc2x (+segments) |
+|---|---|---|---|---|---|
+| K100 | 8.12g | **7.79g** | 7.79g | 7.79g | 8.68g |
+| K140 | 10.91 | 10.52g | 10.52g | 10.52g | **10.48g** |
+| ER100 | 4.76 | 4.79 | 4.83 | **4.71** | 4.87 |
+| turan | 9.06 | 8.12 (d14) | 8.12 (d14) | **8.80 s1 d0** | 9.10 d3 |
+| spin_glass | 12.88 | 12.42 | **12.16** | 12.39 | 12.30 |
+| regular | 2.86 | **2.78** | 2.78 | 2.80 | 2.81 |
+| ws | 3.12 | **2.84** | 2.90 | 2.98 | 2.95 |
+
+Ladder attribution (the round's whole point):
+
+1. **M4 segments: REFUTED.** K100 7.79 -> 8.68; turan's closure gate
+   broken (d0 -> d3); no cell won. The lesson is worth the round: **the
+   crystal is the OUTPUT shape, not the input shape.** The disc's 2D
+   scatter leaves arrange/monotonize the freedom to DISCOVER the
+   complementary staircase nesting; a pre-committed member order
+   pre-empts exactly the E-gated moves that find a better one. The fine
+   machinery wants a shapeless compact blob to knead. (Max's
+   circles-vs-crystals question, answered: circles.) Busclique's
+   arithmetic guides SIZING, not SHAPE.
+2. **M3 closure: real, constant-free, not dominating.** turan gates
+   fully with NO tuned constant (d14 -> d0 at 8.80 — the tangency
+   reproduces the compactness effect from geometry alone) and ER hits
+   its ladder-best 4.71; but the parameter-freedom costs +0.66 on turan
+   vs the tuned 0.26 constant (8.14, s3.63) and mildly taxes
+   ws/spin_glass. The constant-free-vs-tuned tension goes to
+   discussion.
+3. **M1/M2 mass sizing: correct bookkeeping, marginal measured effect.**
+   On symmetric cells (K_n single supernode; equal turan blocks) shares
+   == counts BY SYMMETRY — a structural no-op the pre-registration
+   failed to anticipate; the moat only exists on heterogeneous coarse
+   graphs. There it helps: spin_glass 12.16, the best gate-path number
+   (vc_c's 11.64 remains the record). ws pays 0.06.
+4. MINIMUM failed (vc2x K100 8.68 vs <= 7.9); no flip condition; per
+   the failure rule NO default changes — constants revert to V1
+   behavior with verdicts inline; segment code stays until the next
+   consolidation (refuted, recoverable).
+5. Process note: the probe sentinel bit twice (sed renames underscores;
+   sentinels use hyphens) — future probes: sentinel = "done-probe"
+   invariant, no name embedding.
+
+Standing best-arm board (unchanged defaults; per-cell best across
+measured arms): K100 7.79g / K140 10.48g / turan 8.14g (s3.63 vc_c) /
+spin_glass 11.64 (s3.63 vc_c) / ER 4.71 / regular 2.78 / ws 2.84.
+Open menu: constant-free closure vs tuned compact span; mass sizing
+default (helps only heterogeneous cells, costs ws 0.06); the vcycle
+flip council once one arm holds the full board.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).

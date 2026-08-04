@@ -1,0 +1,141 @@
+load at start: (2.84228515625, 2.828125, 3.0751953125)
+/data/max/ember/docs/paper2/data/vcycle3_probe.py:70: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/vcycle3_probe.py:70: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/vcycle3_probe.py:70: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/vcycle3_probe.py:70: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/vcycle3_probe.py:70: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/vcycle3_probe.py:70: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/vcycle3_probe.py:70: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/vcycle3_probe.py:70: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/vcycle3_probe.py:70: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/vcycle3_probe.py:70: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/vcycle3_probe.py:70: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/vcycle3_probe.py:70: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+K100 base seed 0: 8.13 s=1 d=0 (27.9s)
+K100 base seed 1: 8.12 s=1 d=0 (33.6s)
+K100 base seed 2: 8.12 s=1 d=0 (28.1s)
+K100 vc1 seed 0: 7.79 s=1 d=0 (14.5s)
+K100 vc1 seed 1: 7.79 s=1 d=0 (15.8s)
+K100 vc1 seed 2: 7.79 s=1 d=0 (17.4s)
+K100 vc2m seed 0: 7.79 s=1 d=0 (14.7s)
+K100 vc2m seed 1: 7.79 s=1 d=0 (15.9s)
+K100 vc2m seed 2: 7.79 s=1 d=0 (17.3s)
+K100 vc2t seed 0: 7.79 s=1 d=0 (14.5s)
+K100 vc2t seed 1: 7.79 s=1 d=0 (15.8s)
+K100 vc2t seed 2: 7.79 s=1 d=0 (17.3s)
+K100 vc2x seed 0: 8.68 s=1 d=0 (31.7s)
+K100 vc2x seed 1: 8.67 s=1 d=0 (29.9s)
+K100 vc2x seed 2: 8.69 s=1 d=0 (29.6s)
+K140 base seed 0: 10.929 s=0 d=4 (54.3s)
+K140 base seed 1: 10.793 s=0 d=4 (62.7s)
+K140 base seed 2: 11.014 s=0 d=4 (40.1s)
+K140 vc1 seed 0: 10.521 s=1 d=0 (46.9s)
+K140 vc1 seed 1: 10.521 s=1 d=0 (47.9s)
+K140 vc1 seed 2: 10.521 s=1 d=0 (46.6s)
+K140 vc2m seed 0: 10.521 s=1 d=0 (46.5s)
+K140 vc2m seed 1: 10.521 s=1 d=0 (48.3s)
+K140 vc2m seed 2: 10.521 s=1 d=0 (48.6s)
+K140 vc2t seed 0: 10.521 s=1 d=0 (46.2s)
+K140 vc2t seed 1: 10.521 s=1 d=0 (47.6s)
+K140 vc2t seed 2: 10.521 s=1 d=0 (47.9s)
+K140 vc2x seed 0: 10.479 s=1 d=0 (63.3s)
+K140 vc2x seed 1: 10.479 s=1 d=0 (63.9s)
+K140 vc2x seed 2: 10.479 s=1 d=0 (60.7s)
+ER100_d10 base seed 0: 4.97 s=0 d=367 (2.7s)
+ER100_d10 base seed 1: 4.48 s=0 d=367 (6.2s)
+ER100_d10 base seed 2: 4.83 s=0 d=367 (3.4s)
+ER100_d10 vc1 seed 0: 4.67 s=0 d=355 (4.4s)
+ER100_d10 vc1 seed 1: 5.18 s=0 d=355 (4.1s)
+ER100_d10 vc1 seed 2: 4.53 s=0 d=355 (5.3s)
+ER100_d10 vc2m seed 0: 5.17 s=0 d=354 (3.0s)
+ER100_d10 vc2m seed 1: 4.36 s=0 d=354 (5.7s)
+ER100_d10 vc2m seed 2: 4.96 s=0 d=354 (4.4s)
+ER100_d10 vc2t seed 0: 4.62 s=0 d=378 (3.5s)
+ER100_d10 vc2t seed 1: 4.9 s=0 d=378 (3.4s)
+ER100_d10 vc2t seed 2: 4.6 s=0 d=378 (4.4s)
+ER100_d10 vc2x seed 0: 4.98 s=0 d=383 (2.5s)
+ER100_d10 vc2x seed 1: 4.7 s=0 d=383 (3.4s)
+ER100_d10 vc2x seed 2: 4.93 s=0 d=383 (2.7s)
+turan_n162 base seed 0: 9.13 s=0 d=15 (15.1s)
+turan_n162 base seed 1: 9.062 s=0 d=15 (15.4s)
+turan_n162 base seed 2: 8.988 s=0 d=15 (60.6s)
+turan_n162 vc1 seed 0: 7.407 s=1 d=0 (34.5s)
+turan_n162 vc1 seed 1: 9.463 s=0 d=41 (60.2s)
+turan_n162 vc1 seed 2: 7.5 s=1 d=0 (34.8s)
+turan_n162 vc2m seed 0: 7.407 s=1 d=0 (34.2s)
+turan_n162 vc2m seed 1: 9.463 s=0 d=41 (60.2s)
+turan_n162 vc2m seed 2: 7.5 s=1 d=0 (33.8s)
+turan_n162 vc2t seed 0: 7.747 s=1 d=0 (23.6s)
+turan_n162 vc2t seed 1: 10.907 s=1 d=0 (39.7s)
+turan_n162 vc2t seed 2: 7.747 s=1 d=0 (24.0s)
+turan_n162 vc2x seed 0: 7.0 s=1 d=0 (28.9s)
+turan_n162 vc2x seed 1: 13.309 s=0 d=8 (32.3s)
+turan_n162 vc2x seed 2: 7.0 s=1 d=0 (30.0s)
+spin_glass_n163 base seed 0: 12.73 s=0 d=1 (14.4s)
+spin_glass_n163 base seed 1: 13.049 s=0 d=1 (16.5s)
+spin_glass_n163 base seed 2: 12.853 s=0 d=1 (15.2s)
+spin_glass_n163 vc1 seed 0: 12.337 s=0 d=7 (17.4s)
+spin_glass_n163 vc1 seed 1: 12.712 s=0 d=7 (25.4s)
+spin_glass_n163 vc1 seed 2: 12.221 s=0 d=7 (15.1s)
+spin_glass_n163 vc2m seed 0: 12.571 s=0 d=7 (20.2s)
+spin_glass_n163 vc2m seed 1: 11.822 s=0 d=7 (16.2s)
+spin_glass_n163 vc2m seed 2: 12.08 s=0 d=7 (15.8s)
+spin_glass_n163 vc2t seed 0: 12.423 s=0 d=19 (15.7s)
+spin_glass_n163 vc2t seed 1: 12.374 s=0 d=19 (15.0s)
+spin_glass_n163 vc2t seed 2: 12.368 s=0 d=19 (16.6s)
+spin_glass_n163 vc2x seed 0: 12.362 s=0 d=18 (18.4s)
+spin_glass_n163 vc2x seed 1: 12.448 s=0 d=18 (17.0s)
+spin_glass_n163 vc2x seed 2: 12.08 s=0 d=18 (15.6s)
+regular_n316 base seed 0: 2.759 s=0 d=95 (5.6s)
+regular_n316 base seed 1: 2.674 s=0 d=95 (5.7s)
+regular_n316 base seed 2: 3.136 s=0 d=95 (5.0s)
+regular_n316 vc1 seed 0: 2.728 s=0 d=132 (4.2s)
+regular_n316 vc1 seed 1: 2.956 s=0 d=132 (3.8s)
+regular_n316 vc1 seed 2: 2.658 s=0 d=132 (4.5s)
+regular_n316 vc2m seed 0: 2.728 s=0 d=132 (4.2s)
+regular_n316 vc2m seed 1: 2.956 s=0 d=132 (3.9s)
+regular_n316 vc2m seed 2: 2.658 s=0 d=132 (4.5s)
+regular_n316 vc2t seed 0: 2.873 s=0 d=60 (3.7s)
+regular_n316 vc2t seed 1: 2.684 s=0 d=60 (4.3s)
+regular_n316 vc2t seed 2: 2.835 s=0 d=60 (3.9s)
+regular_n316 vc2x seed 0: 2.981 s=0 d=67 (3.2s)
+regular_n316 vc2x seed 1: 2.756 s=0 d=67 (3.6s)
+regular_n316 vc2x seed 2: 2.703 s=0 d=67 (4.1s)
+ws_n486 base seed 0: 3.019 s=0 d=762 (5.7s)
+ws_n486 base seed 1: 2.792 s=0 d=762 (7.0s)
+ws_n486 base seed 2: 3.545 s=0 d=762 (4.9s)
+ws_n486 vc1 seed 0: 2.829 s=0 d=495 (10.5s)
+ws_n486 vc1 seed 1: 2.7 s=0 d=495 (10.3s)
+ws_n486 vc1 seed 2: 2.998 s=0 d=495 (9.9s)
+ws_n486 vc2m seed 0: 3.056 s=0 d=667 (6.0s)
+ws_n486 vc2m seed 1: 2.926 s=0 d=667 (5.5s)
+ws_n486 vc2m seed 2: 2.712 s=0 d=667 (6.5s)
+ws_n486 vc2t seed 0: 2.798 s=0 d=537 (11.1s)
+ws_n486 vc2t seed 1: 2.698 s=0 d=537 (10.8s)
+ws_n486 vc2t seed 2: 3.451 s=0 d=537 (9.8s)
+ws_n486 vc2x seed 0: 2.889 s=0 d=536 (8.8s)
+ws_n486 vc2x seed 1: 2.914 s=0 d=536 (9.6s)
+ws_n486 vc2x seed 2: 3.049 s=0 d=536 (8.7s)
+
+summary (ACL mean over legal seeds (n)):
+K100              base=8.12(3) s1 d0  vc1=7.79(3) s1 d0  vc2m=7.79(3) s1 d0  vc2t=7.79(3) s1 d0  vc2x=8.68(3) s1 d0  ref=8.12
+K140              base=10.91(3) s0 d4  vc1=10.52(3) s1 d0  vc2m=10.52(3) s1 d0  vc2t=10.52(3) s1 d0  vc2x=10.48(3) s1 d0  ref=10.91
+ER100_d10         base=4.76(3) s0 d367  vc1=4.79(3) s0 d355  vc2m=4.83(3) s0 d354  vc2t=4.71(3) s0 d378  vc2x=4.87(3) s0 d383  ref=4.76
+turan_n162        base=9.06(3) s0 d15  vc1=8.12(3) s1 d14  vc2m=8.12(3) s1 d14  vc2t=8.80(3) s1 d0  vc2x=9.10(3) s1 d3  ref=9.06
+spin_glass_n163   base=12.88(3) s0 d1  vc1=12.42(3) s0 d7  vc2m=12.16(3) s0 d7  vc2t=12.39(3) s0 d19  vc2x=12.30(3) s0 d18  ref=12.88
+regular_n316      base=2.86(3) s0 d95  vc1=2.78(3) s0 d132  vc2m=2.78(3) s0 d132  vc2t=2.80(3) s0 d60  vc2x=2.81(3) s0 d67  ref=2.86
+ws_n486           base=3.12(3) s0 d762  vc1=2.84(3) s0 d495  vc2m=2.90(3) s0 d667  vc2t=2.98(3) s0 d537  vc2x=2.95(3) s0 d536  ref=3.12
+load at end: (16.626953125, 8.93310546875, 5.37744140625)
+done-vcycle2-probe

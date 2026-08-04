@@ -96,6 +96,22 @@ Magic numbers, none swept: η=0.5, λ₀=3.0, round_frac=0.4, max_rounds=10, bin
 
 ## C. Idea ledger
 
+### V2 FOOTPRINT-TRUE INIT — segments REFUTED (the crystal is the output, not the input), closure gates constant-free at +0.66, mass right-but-marginal (2026-08-03; notes s3.64)
+
+The 5-arm ladder attributed all three mechanisms in one probe. Segments
+(crystal-shaped spreads): refuted — pre-ordering members pre-empts the
+E-gated moves that discover better orders; discs stand (Max's
+circles-vs-crystals, answered: circles). Closure (tangent tiling):
+gates turan with no constant (d14->d0, 8.80) + ladder-best ER 4.71,
+but the tuned 0.26 constant still wins the cell (8.14); constant-free
+vs tuned goes to discussion. Mass sizing: symmetric coarse graphs make
+shares==counts (a no-op the pre-registration missed); helps the one
+heterogeneous cell (spin_glass 12.16 best-gate-path). NO default
+changes per the failure rule. Do not resurrect segment spreads without
+new evidence; the refutation mechanism (order pre-emption) is the part
+to remember.
+
+
 ### CANDIDATE (undesigned): footprint-true initialization — V2 as proto-template drawing (recorded 2026-08-03, Max's moat observation)
 
 Two sizing errors in the V1 init, found in discussion: (1) region area
