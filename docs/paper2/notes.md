@@ -3393,6 +3393,71 @@ all metric work). 533 tests green (10 new).
    where they are single moves; the packer rounds' machinery reused),
    (b) spectral-of-coarse placement for the sparse fix, (c) both.
 
+### 3.63 V-cycle V1: two-stage flatten lands — turan gated at 8.14, spin_glass at template parity, sparse healed; one scale knob remains (2026-08-03)
+
+Built per Max's flatten: exactly [fine, coarse] (V0's level loop deleted
+— measured depths made it vestigial), coarse placement =
+spectral-of-the-COARSE-graph (circle fallback), weight-proportional
+child regions. Coarseness is graph-decided (twin partition + the
+tau-boxed threshold; tau-insensitivity now unit-tested at
+{0.25, 0.34, 0.45}). 535 tests green.
+
+**Discussion items folded in from Max (recorded as candidates):**
+(1) ER-merge reframing: the harm condition for a merge is low-agreement
+AND curvature; ER fails the second, so merging there is ~free and
+accidental variance-twins are genuine agreement — the "null class"
+language should not imply merge-hazard. Candidate arm: tau-sweep
+(0.10 vs 0.34) on ER/spin_glass/wsc; predicted ER flat-or-better.
+(2) The Jaccard denominator = total committed pull (benefit/(benefit+
+cost) — ranking by ratio; scale-free so one matching round compares
+deg-3 and deg-80 candidates; mutual non-adjacency appears NOWHERE, the
+defining Jaccard property, honoring "non-edges are not a problem").
+NOT complement-symmetric below the twin tier — correctly, since we
+embed G. Candidate: ratio-vs-net score shape probe if the matching
+ever shows scale bias.
+
+**Probe** (vcycle2_probe, two runs + a confirm; quiet box):
+Run 1 caught the single-supernode bug (K100 9.62: lone supernode at a
+circle point with a fabric-scale CLIPPED disc). Repair 1 (centered +
+compact) measured 8.29 d1 — worse than V0's 7.79: the repair changed
+two things at once. Repair 2 restored V0's measured geometry exactly
+(circle-point anchor + compact disc): K100 7.79 s1 d0 3/3 CONFIRMED
+(mechanism of off-center > centered unattributed; suspected
+corner-anchored diagonal bias; both variants on record).
+
+| cell | base | vc | vc_c (span 0.26) | verdict |
+|---|---|---|---|---|
+| K100* | 8.12 s1 d0 | **7.79 s1 d0** | (=vc) | record + gate (restored) |
+| K140 | 10.91 d4 | **10.49 s1 d0** | 10.49 s1 d0 | record + gate |
+| ER100 | 4.76 | 4.79 | 5.01 | bar met on vc; V0 gate lost |
+| turan | 9.06 | 8.12 s1 d14 (2/3) | **8.14 s1 d0** | PRIMARY PASSED; full gate on vc_c |
+| spin_glass | 12.88 | 12.42 | **11.64** d1 | TEMPLATE PARITY (11.64 = tmpl) |
+| regular_n316 | 2.86 | **2.78** | 2.83 | sparse healed |
+| ws_n486 | 3.12 | **2.84** | 3.37 | beats base AND mm (3.08) |
+
+(*K100 rows from the post-restore 3-seed confirm; runs 1-2 in the log.)
+
+1. **PRIMARY PASSED**: turan <= 8.5 — 8.12/8.14, and on the compactness
+   arm FULLY gate-valid (s1 d0 3/3) at 8.14: the best constructed
+   number the cell has ever had (from 7.90 pre-V-cycle... note the
+   negotiated 7.02 boundary arm remains the raw record, s3.61).
+2. **spin_glass 11.64 = the template quote** — the first template-parity
+   measurement on an irregular-dense cell, d1 (one edge from gating).
+3. **SPARSE HEALED (the V1 spectral-of-coarse claim)**: regular 2.78 and
+   ws 2.84 both BEAT base; ws beats mm for the first time.
+4. **The remaining tension is ONE global scale**: compact span (vc_c)
+   is what crystal cells want (turan full gate, spin_glass template);
+   spread (vc) is what liquid/sparse want (ws 2.84, ER 4.79). No single
+   COARSE_SPAN passes every gate guard, so `vcycle` STAYS DEFAULT-OFF.
+   The named next design: compression-adaptive span — COARSE_SPAN as a
+   function of the coarsening's own compression ratio (a property of
+   the structure found, not a topology gate); expected to dominate both
+   arms. Report + discuss.
+
+Standing V-cycle board (best arm per cell): K100 7.79g / K140 10.49g /
+turan 8.14g / spin_glass 11.64 (=tmpl) / ER 4.76 / regular 2.78 /
+ws 2.84 — five program records in one round, three of them gate-valid.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).

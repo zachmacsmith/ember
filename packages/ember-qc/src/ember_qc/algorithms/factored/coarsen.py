@@ -26,12 +26,12 @@ N(u) == N(v); true twins: N[u] == N[v]) — whole groups at once, so a
 turan block or a clique collapses in one level and the hub-quadratic
 distance-2 candidate sets never get enumerated.
 
-V0 (this file) builds the hierarchy and a **multilevel init** only: the
+V1 (s3.63, this file): exactly TWO stages — coarsen once (Max's
+flatten: V0's level loop was vestigial at our sizes), place the coarse
+quotient by spectral-of-the-COARSE-graph (circle fallback), expand with
+weight-proportional regions. The fine level never consults spectral;
 fine-level machinery (contraction, arrange, seeds) is unchanged and
-receives inherited positions instead of the spectral layout. The
-coarsest level is placed on a deterministic circle — the V-cycle never
-consults spectral, so init-independence (the s3.36 standard; the s3.40
-recorded miss) holds by construction. Deterministic per ``seed``.
+receives inherited positions. Deterministic per ``seed``.
 """
 
 from __future__ import annotations
@@ -42,6 +42,11 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 
 Point = np.ndarray
+
+COARSE_SPAN = 0.4  # coarse-layout halfspan as a fraction of the drawing
+                   # box; the vcycle2 rerun carries a compactness arm
+                   # (smaller value) probing whether V0's gate-completing
+                   # compactness can coexist with spectral's shape
 
 
 class Level:
@@ -125,54 +130,55 @@ def _merge(adj: Dict[int, Dict[int, float]], weight: Dict[int, float],
 
 
 def coarsen(src_adj: Dict[int, List[int]], *, threshold: float = 0.34,
-            min_nodes: int = 8, max_levels: int = 12) -> List[Level]:
-    """Build the hierarchy fine -> coarse. Level 0 is the input graph
-    (unit weights). Each round: collapse exact-twin groups, then greedy
-    max-score matching over distance <= 2 candidates with weighted
-    Jaccard >= ``threshold``. Stops when nothing merges, the graph is
-    small enough, or ``max_levels`` is hit (a backstop, not a target).
-    """
+            min_nodes: int = 8) -> List[Level]:
+    """Build the TWO-STAGE hierarchy [fine, coarse] (s3.63 flatten —
+    V0's level loop was vestigial at our sizes: measured depths <= 3
+    with later rounds nearly inert). ONE round: collapse exact-twin
+    groups (score 1, unconditional; whole blocks at once), then one
+    greedy weighted-Jaccard matching over distance <= 2 candidates at
+    score >= ``threshold``. No twin fixpoint — iterating would collapse
+    turan's block quotient (all true twins) to a point and destroy the
+    separation the coarse level exists to provide. Coarseness is decided
+    by the GRAPH (twin partition + the tau-boxed threshold: chain edge
+    1/2 must merge, ER ~1/d must not, star leaf 1/3 at the boundary),
+    never by a size target. Graphs already <= ``min_nodes`` skip
+    coarsening ([fine] only)."""
     adj0 = {v: {u: 1.0 for u in nbrs} for v, nbrs in src_adj.items()}
     for v in src_adj:
         adj0.setdefault(v, {})
-    levels = [Level(adj0, {v: 1.0 for v in adj0})]
-    while len(levels) <= max_levels:
-        cur = levels[-1]
-        if len(cur.adj) <= min_nodes:
-            break
-        groups = _twin_groups(cur.adj)
-        matched: set = {v for g in groups for v in g}
-        # greedy Jaccard matching on distance <= 2 pairs (pairs only;
-        # twin groups above already handle the mass collapses)
-        cands: List[Tuple[float, int, int]] = []
-        for v in sorted(cur.adj):
-            if v in matched:
-                continue
-            seen: set = set()
-            for u in cur.adj[v]:
-                if u > v and u not in matched:
-                    seen.add(u)
-            for u in cur.adj[v]:
-                for w in cur.adj.get(u, ()):  # distance 2
-                    if w > v and w not in matched and w not in cur.adj[v]:
-                        seen.add(w)
-            for u in sorted(seen):
-                s = _wjaccard(cur.adj[v], cur.weight[v], v,
-                              cur.adj[u], cur.weight[u], u)
-                if s >= threshold:
-                    cands.append((s, v, u))
-        cands.sort(key=lambda t: (-t[0], t[1], t[2]))
-        for s, v, u in cands:
-            if v not in matched and u not in matched:
-                groups.append([v, u])
-                matched.update((v, u))
-        if not groups:
-            break
-        nxt = _merge(cur.adj, cur.weight, groups)
-        if len(nxt.adj) >= len(cur.adj):
-            break
-        levels.append(nxt)
-    return levels
+    fine = Level(adj0, {v: 1.0 for v in adj0})
+    if len(adj0) <= min_nodes:
+        return [fine]
+    groups = _twin_groups(fine.adj)
+    matched: set = {v for g in groups for v in g}
+    cands: List[Tuple[float, int, int]] = []
+    for v in sorted(fine.adj):
+        if v in matched:
+            continue
+        seen: set = set()
+        for u in fine.adj[v]:
+            if u > v and u not in matched:
+                seen.add(u)
+        for u in fine.adj[v]:
+            for w in fine.adj.get(u, ()):  # distance 2
+                if w > v and w not in matched and w not in fine.adj[v]:
+                    seen.add(w)
+        for u in sorted(seen):
+            sc = _wjaccard(fine.adj[v], fine.weight[v], v,
+                           fine.adj[u], fine.weight[u], u)
+            if sc >= threshold:
+                cands.append((sc, v, u))
+    cands.sort(key=lambda t: (-t[0], t[1], t[2]))
+    for sc, v, u in cands:
+        if v not in matched and u not in matched:
+            groups.append([v, u])
+            matched.update((v, u))
+    if not groups:
+        return [fine]
+    coarse = _merge(fine.adj, fine.weight, groups)
+    if len(coarse.adj) >= len(fine.adj):
+        return [fine]
+    return [fine, coarse]
 
 
 def _stair_step_weighted(pos: Dict[int, Point],
@@ -203,48 +209,96 @@ def _stair_step_weighted(pos: Dict[int, Point],
 
 
 def multilevel_init(src_adj: Dict[int, List[int]], lo: Point, hi: Point,
-                    *, seed: int = 0, steps: int = 24,
+                    *, seed: int = 0,
                     threshold: float = 0.34) -> Dict[int, Point]:
-    """The V0 multilevel init: coarsen, place the coarsest level on a
-    deterministic circle (NO spectral anywhere), relax with weighted
-    stair steps, expand each level with position inheritance + a small
-    deterministic child spread, relax again. Returns fine-level
-    positions in the [lo, hi] drawing box — a drop-in replacement for
-    ``source_positions``."""
+    """The V1 two-stage init (s3.63): coarsen once, place the coarse
+    graph by a deterministic SPECTRAL layout of the weighted quotient
+    (circle fallback for degenerate spectra — the source_positions guard
+    pattern), then expand each supernode's children in a golden-angle
+    disc whose radius is WEIGHT-PROPORTIONAL (extent ~ sqrt(w/W_total) x
+    fabric span) — block spans decided at the coarse level, in the
+    minimal form. Heals V0's sparse regression by construction: where
+    coarsening finds no structure, coarse ~= fine and spectral-of-coarse
+    ~= the old spectral init. The FINE level never consults spectral.
+    No coarse relaxation (V0's recorded lesson: attraction collapses
+    supernodes). Deterministic per ``seed`` (the seed only breaks circle
+    rotation ties on the fallback path)."""
+    import networkx as nx
+
     levels = coarsen(src_adj, threshold=threshold)
     coarse = levels[-1]
     nodes = sorted(coarse.adj)
     n = len(nodes)
     center = (lo + hi) / 2.0
-    span = (hi - lo) * 0.4
-    rng = np.random.RandomState(seed)
-    order = list(range(n))
-    rng.shuffle(order)  # coarse placement must not depend on node ids
+    halfspan = (hi - lo) * COARSE_SPAN
+    if n == 1:
+        # degenerate quotient (K_n and friends): reproduce V0's MEASURED
+        # geometry exactly — lone supernode at the circle point (angle 0
+        # from the seed-shuffled singleton order), V0's compact disc.
+        # The first vcycle2 repair changed two things at once (centered
+        # AND kept the radius) and measured 8.29 d1 vs V0's gated 7.79;
+        # the off-center anchor evidently biases contraction+arrange
+        # toward the corner-anchored diagonal the crystal wants
+        # (mechanism unattributed; both variants on the s3.63 record).
+        v0 = nodes[0]
+        cs = sorted(levels[0].adj) if len(levels) > 1 else [v0]
+        w = coarse.weight[v0]
+        span_min = float(np.min(hi - lo))
+        anchor = center + (hi - lo) * 0.4 * np.array([1.0, 0.0])
+        r = 0.05 * span_min * math.sqrt(max(w, 1.0)) / 4.0
+        out = {}
+        for i, c in enumerate(cs):
+            a = 2.399963 * i
+            rr = r * math.sqrt(i / max(len(cs) - 1, 1)) if len(cs) > 1 \
+                else 0.0
+            out[c] = anchor + rr * np.array([math.cos(a), math.sin(a)])
+        return {v: np.clip(out[v], lo, hi) for v in out}
     pos: Dict[int, Point] = {}
+    arr = None
+    if n >= 3:
+        g = nx.Graph()
+        g.add_nodes_from(nodes)
+        for v, nbrs in coarse.adj.items():
+            for u, m in nbrs.items():
+                if u > v:
+                    g.add_edge(v, u, weight=m)
+        try:
+            sp = nx.spectral_layout(g, weight="weight")
+            cand = np.array([sp[v] for v in nodes], dtype=float)
+            span = cand.max(axis=0) - cand.min(axis=0)
+            if np.all(np.isfinite(cand)) and np.all(span > 1e-9):
+                arr = (cand - cand.min(axis=0)) / span * 2.0 - 1.0
+        except Exception:
+            arr = None
+    if arr is None:
+        rng = np.random.RandomState(seed)
+        order = list(range(n))
+        rng.shuffle(order)
+        arr = np.array([[math.cos(2.0 * math.pi * order[i] / max(n, 1)),
+                         math.sin(2.0 * math.pi * order[i] / max(n, 1))]
+                        for i in range(n)])
     for i, v in enumerate(nodes):
-        a = 2.0 * math.pi * order[i] / max(n, 1)
-        pos[v] = center + span * np.array([math.cos(a), math.sin(a)])
-    # NO coarse relaxation in V0: unweighted attraction's fixed point is
-    # collapse (the s3.18 lesson, re-measured at the coarse level during
-    # this build: K_{6,6}'s two supernodes met at the center). The
-    # V-cycle's V0 job is TOPOLOGY — who is near whom — which the circle
-    # already encodes; the fine pipeline's contraction + arrange do all
-    # metric work with capacity in the loop.
-    # expand down the hierarchy
-    for lvl in range(len(levels) - 1, 0, -1):
-        parent_of = levels[lvl].parent_of
-        children: Dict[int, List[int]] = {}
-        for c in sorted(levels[lvl - 1].adj):
-            children.setdefault(parent_of[c], []).append(c)
-        fine_pos: Dict[int, Point] = {}
-        for p, cs in sorted(children.items()):
-            w = levels[lvl].weight[p]
-            r = 0.05 * float(np.min(hi - lo)) * math.sqrt(max(w, 1.0)) / 4.0
-            for i, c in enumerate(sorted(cs)):
-                a = 2.399963 * i  # golden angle: deterministic spread
-                rr = r * math.sqrt(i / max(len(cs) - 1, 1)) if len(cs) > 1 \
-                    else 0.0
-                fine_pos[c] = pos[p] + rr * np.array([math.cos(a),
+        pos[v] = center + halfspan * arr[i]
+
+    if len(levels) == 1:
+        return {v: np.clip(pos[v], lo, hi) for v in pos}
+
+    total_w = sum(coarse.weight.values())
+    parent_of = coarse.parent_of
+    children: Dict[int, List[int]] = {}
+    for c in sorted(levels[0].adj):
+        children.setdefault(parent_of[c], []).append(c)
+    fine_pos: Dict[int, Point] = {}
+    span_min = float(np.min(hi - lo))
+    for pnode, cs in sorted(children.items()):
+        w = coarse.weight[pnode]
+        # weight-proportional region: a supernode's children occupy an
+        # extent ~ its share of the fabric (sqrt: area ~ weight)
+        r = 0.45 * span_min * math.sqrt(w / max(total_w, 1.0))
+        for i, c in enumerate(sorted(cs)):
+            a = 2.399963 * i  # golden angle: deterministic spread
+            rr = r * math.sqrt(i / max(len(cs) - 1, 1)) if len(cs) > 1 \
+                else 0.0
+            fine_pos[c] = pos[pnode] + rr * np.array([math.cos(a),
                                                       math.sin(a)])
-        pos = fine_pos
-    return {v: np.clip(pos[v], lo, hi) for v in pos}
+    return {v: np.clip(fine_pos[v], lo, hi) for v in fine_pos}

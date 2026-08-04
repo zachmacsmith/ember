@@ -51,6 +51,29 @@ class TestCoarsen:
         # the s3.21 null class: nothing to find; hierarchy stays shallow
         assert len(ls) <= 3
 
+    def test_two_stage_flat(self):
+        # s3.63: exactly [fine, coarse] — the level loop is gone
+        adj = {v: [u for u in range(12) if u != v] for v in range(12)}
+        assert len(coarsen(adj)) == 2
+        # tiny graphs skip coarsening entirely
+        adj_small = {0: [1], 1: [0]}
+        assert len(coarsen(adj_small)) == 1
+
+    def test_tau_insensitivity(self):
+        # the no-knob-zoo property: the coarse graph is identical across
+        # the tau window boxed by the derivation's limit values
+        structs = []
+        structs.append({v: [u for u in range(12) if u != v]
+                        for v in range(12)})                    # clique
+        structs.append({v: [u for u in range(12) if (u < 6) != (v < 6)]
+                        for v in range(12)})                    # biclique
+        structs.append({v: [u for u in range(15) if u // 5 != v // 5]
+                        for v in range(15)})                    # 3-partite
+        for adj in structs:
+            ref = sorted(coarsen(adj, threshold=0.34)[-1].adj)
+            for tau in (0.25, 0.45):
+                assert sorted(coarsen(adj, threshold=tau)[-1].adj) == ref
+
     def test_deterministic(self):
         g = nx.gnp_random_graph(40, 0.2, seed=9)
         adj = {v: sorted(g.neighbors(v)) for v in g}

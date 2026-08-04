@@ -96,6 +96,23 @@ Magic numbers, none swept: η=0.5, λ₀=3.0, round_frac=0.4, max_rounds=10, bin
 
 ## C. Idea ledger
 
+### V-CYCLE V1 — turan gated 8.14, spin_glass at template parity, sparse healed; the span wants to be compression-adaptive (2026-08-03; notes s3.63)
+
+Two-stage flatten (Max's call) + spectral-of-coarse + weight regions.
+Five records in one round: K100 7.79g (restored after a two-changes-at-
+once repair lesson), K140 10.49g, turan 8.14 FULLY GATED (primary bar
+passed), spin_glass 11.64 = TEMPLATE PARITY, ws 2.84 (beats mm).
+Sparse regression healed by spectral-of-coarse. Remaining: one global
+scale (COARSE_SPAN) splits crystal (wants compact) from liquid (wants
+spread) — no single value passes every gate guard, vcycle stays
+default-off. NAMED NEXT: compression-adaptive span (a property of the
+coarsening's own compression, not a topology gate). Also recorded from
+discussion: ER-merge harm condition = low-S AND curvature (merging on
+flat landscapes is ~free; tau-sweep candidate), and the denominator's
+role (benefit/(benefit+cost), scale-free matching, non-edges nowhere,
+complement-asymmetric below the twin tier by design).
+
+
 ### THE V-CYCLE, V0 — the gate fires on every dense cell (ER included); sparse pays for the circle; V1 MENU OPEN (2026-08-03; notes s3.62)
 
 The candidate's first measurement, built exactly as recorded (twin-first
