@@ -96,6 +96,24 @@ Magic numbers, none swept: η=0.5, λ₀=3.0, round_frac=0.4, max_rounds=10, bin
 
 ## C. Idea ledger
 
+### CONSOLIDATION 3 — archive marker (2026-08-04)
+
+Recovery point for the s3.66 cleanup (the s3.65 self-critique's
+inventory + the doctrine repair + the vcycle flip). Everything removed
+after this commit is recoverable here, as 612ced3e and 9d99ebdd serve
+the earlier consolidations. To be deleted in the following commit:
+the coarsen.py SIZING/TILING/SHAPE switchboard and its losing arms
+(segment spread REFUTED s3.64; wire-mass sizing + Level.internal;
+tangent-tiling closure — measured numbers preserved in s3.64's table),
+the rounds-protocol skeleton in attract_embed (round_acls/round_E/
+attempted/ex_last), the nine distributed stride forks (replaced by one
+effective-config block), duplicated spectral-or-circle and golden-angle
+implementations, dead pool computations, kappa=13.0 fossil defaults,
+and to_drawing_delta. Doctrine changes ride commit 3: outcome-first
+bars, gates demoted to diagnostics, single-configuration boards,
+invariant probe sentinels — and the approved vcycle default flip.
+
+
 ### THE SELF-CRITIQUE ROUND — the gate became the objective; the board became a portfolio; the polish is the lever (2026-08-04; notes s3.65)
 
 Pre-sweep audit (two fresh-eyes agents + context pass). Highest-order
