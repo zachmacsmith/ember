@@ -96,6 +96,22 @@ Magic numbers, none swept: η=0.5, λ₀=3.0, round_frac=0.4, max_rounds=10, bin
 
 ## C. Idea ledger
 
+### THE SELF-CRITIQUE ROUND — the gate became the objective; the board became a portfolio; the polish is the lever (2026-08-04; notes s3.65)
+
+Pre-sweep audit (two fresh-eyes agents + context pass). Highest-order
+findings: (A) gate-as-trophy is blocking the vcycle flip while the
+shipped default LOSES ws to mm; decision bars must be outcome-first.
+(B) the per-cell best-arm board is the portfolio trap as reporting —
+single-config boards henceforth. (C) free-polish doctrine is stale
+evidence; the restricted-polish (bar_domains) round is the highest-EV
+move and serves Pegasus. (E) max chain length has never been reported —
+the hardware claim could invert on the tail. (F) live one-accounting
+gap: claim_overload doesn't apply snap's hull widening. (G)
+consolidation-3 inventory recorded (nine stride forks, coarsen
+switchboard with false docstrings, rounds skeleton, triple spectral
+fallback). Full list + order: notes s3.65.
+
+
 ### V2 FOOTPRINT-TRUE INIT — segments REFUTED (the crystal is the output, not the input), closure gates constant-free at +0.66, mass right-but-marginal (2026-08-03; notes s3.64)
 
 The 5-arm ladder attributed all three mechanisms in one probe. Segments

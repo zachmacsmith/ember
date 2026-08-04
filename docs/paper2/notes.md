@@ -3515,6 +3515,103 @@ Open menu: constant-free closure vs tuned compact span; mass sizing
 default (helps only heterogeneous cells, costs ws 0.06); the vcycle
 flip council once one arm holds the full board.
 
+### 3.65 The self-critique round: look upon thy work (2026-08-04)
+
+Max's mandate before the full-Ember sweep ("I bet something could be
+more elegant... maybe there's an important idea still out there").
+Three passes: two fresh-eyes review agents (code inelegance; adversarial
+design) + the accumulated-context pass. Findings, prioritized; nothing
+built this round — the deliverable is the list.
+
+**A. The objective drifted: the gate became a trophy and now blocks
+shipping.** Every output passes through unconstrained MM polish, so no
+final embedding is "valid by construction" — the gate's value is
+instrumental (time, warm-start quality, determinism), none of it
+measured as such. Direct evidence the trophy misleads: turan
+7.02-negotiated beats 8.14-gated; and the vcycle flip is BLOCKED by
+gate-guard bars even though the vc arm beats mm on all 7 cells
+including ws_n486 — where the SHIPPED DEFAULT LOSES to mm (3.12 vs
+3.08). The exactness program is also anti-PathFinder while the refs
+canonize negotiation; the best turan number came from the negotiated
+side. FIX CLASS: demote s1/d0 to diagnostics; rewrite decision bars in
+final-ACL / wall-time / feasibility terms; one paired gate-vs-router
+ablation (same geometry, gate on/off, post-polish delta) to price the
+gate honestly.
+
+**B. The "standing best-arm board" is the portfolio trap as a
+reporting convention** — no shipped configuration produces the quoted
+per-cell-best numbers (Max's original warning, violated by the
+scoreboard). FIX: boards quote one configuration; the principled
+selector is the compression-adaptive function (structure-explained
+choice), and any predictive-criterion selection must first pass a
+rank-correlation validation (post-arrange stair-E/gate vs final ACL —
+needs E recorded in probe CSVs; currently not free).
+
+**C. The polish blind spot is the biggest unexplored lever, and its
+guard is stale.** 85-95% of runtime is geometry-blind polish; the
+free-polish doctrine (s3.22, -17% vs -37%) was measured on the
+pre-consolidation pipeline with soft vertex prices — a different
+mechanism than hard restrict_chains domains, which now work (s3.60)
+and posted the only live P16 improvement (11.81). The restricted-polish
+round (arms: free / domains m=2,3,4 / restricted-then-free) on BOTH
+fabrics re-litigates s3.22 at its proper mechanism and serves Pegasus
+essentially for free.
+
+**D. Two-pipeline drift.** Every mechanism since s3.52 is stride-gated;
+Pegasus (the installed base) runs a 5-round-old path. Cheapest moves in
+order: vcycle-on-P16 probe (fabric-agnostic, zero new code, never
+measured), restricted polish on P16 (item C), Pegasus line_pools books
+for the DP (the s3.61 P16 regression convicted wrong BOOKS, not the
+mechanism), coupler-aware aiming last.
+
+**E. Robustness holes ahead of any replacement claim.** (1) Defects:
+anatomy s0.5's five facts are pristine-fabric facts; one dead qubit
+breaks junction completeness locally, and gate rate vs defect density
+is unmeasured — the gate plausibly collapses on real chips (fails safe,
+but then the whole stack rides the router path the program has been
+deprioritizing). (2) MAX chain length is never reported anywhere —
+annealer physics is dominated by the longest chain; if att wins ACL by
+the median while fattening the tail, the hardware-relevant claim
+inverts. Add max-CL (and the distribution) to all future probes + the
+sweep. (3) 3 seeds x 7 cells; hard-frontier eval still owed (s3.23).
+
+**F. A live one-accounting violation found by fresh eyes**:
+claim_overload's census does NOT apply the parity-agnostic hull
+widening that _tuples applies to the actual claims when snap is on
+(field.py ~514-520 vs ~569-580) — the gates price narrower books than
+the coloring writes, on exactly the fabrics where both run. Possibly
+inert; testable in minutes; the cardinal-sin class regardless.
+
+**G. Consolidation-3 inventory (code hygiene, ~200+ lines):** the
+stride gate re-decided at NINE sites (one effective-config block or a
+grid capability flag); ~3x redundant contacts/bars recomputation per
+arrange gate (memoize one (contacts, bars, E) bundle); coarsen.py's
+refuted-variant switchboard (segment/mass/tiling arms) with docstrings
+describing the REFUTED arms in present tense (introduced at the s3.64
+constants revert — process slip); the rounds-protocol skeleton in
+attract_embed (round_E list-of-one, attempted flag, ex_last/ex_info,
+duplicated prune block; tests pin the fossils and still pass deleted
+knobs through the ignore-unknowns hole); spectral-or-circle implemented
+3x + golden angle 2x; dead pool computation in _half + kappa=13.0
+fossil defaults in four signatures; anatomy contradictions (s8 lists
+the SHIPPED DP as an open problem; "complete list — 10" vs 11 knobs;
+insertion described as per-iteration). Also the how-compact constant
+cluster (CONTRACT_STEPS x eta x max_step; 0.4 vs 0.45 vs margin 0.1)
+spread over three files.
+
+**H. Unmeasured cheap ablations on record**: insertion under vcycle
+(the coarse level may have absorbed its job); coarse-level WEIGHTED
+ARRANGE (the V1 menu item (a) that was never built — s3.62 refuted
+coarse attraction, not coarse arrangement; the COARSE_SPAN saga may be
+the symptom of the missing coarse metric step); freed-budget
+disposition when the gate fires (round_frac semantics).
+
+**Recommended order (Max's call):** (1) pre-sweep: outcome-first bars +
+single-config reporting + max-CL recording, then the sweep with base
+and vc arms on the free box; (2) the restricted-polish round (folds in
+the gate ablation and Pegasus); (3) consolidation 3; (4) defect sweep
+before paper claims.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).
