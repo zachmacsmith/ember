@@ -1,0 +1,9 @@
+T3a mm-first beta on the Z12 deg-10 ladder — §4.17 bars
+
+n=100: mm 75/75  fb 75  mf 75  succ-set==mm YES | mf vs mm med -0.040 (-0.88%) W 53% (75p)  | mf vs fb med +0.000 (75p)
+n=140: mm 75/75  fb 75  mf 75  succ-set==mm YES | mf vs mm med -0.207 (-3.46%) W 71% (75p) CELL-OK | mf vs fb med +0.000 (75p)
+n=180: mm 75/75  fb 75  mf 75  succ-set==mm YES | mf vs mm med -0.417 (-5.63%) W 80% (75p) CELL-OK | mf vs fb med +0.000 (75p)
+
+BAR1 success == stock exactly, every cell: PASS
+BAR2 median < -1% AND >=60%W on >=2/3 cells: 2/3 -> PASS
+BAR3 vs -fb: median <= 0 and no success deficit: PASS

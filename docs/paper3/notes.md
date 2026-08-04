@@ -1360,3 +1360,19 @@ loss. Ledger item 12 annotated; the quick-tier node-cap idea is subsumed
 §4.16's probe — and is not worth a new arm). v1.3 evaluation proceeds with
 W-A only (p3-mm-beta-mf); T3b parity is vacuous (nothing built) and T4 runs
 one arm.
+
+§4.17 T3 RESULTS (2026-08-03, hyde06 @ 1050acbe, 675 rows, 206 s at 48W;
+records in-repo t3_beta_mf_z12.csv + summary):
+**p3-mm-beta-mf — ALL THREE BARS PASS.**
+- BAR1 (the by-construction guarantee, measured): success SET == stock
+  exactly on every cell (75/75 everywhere, set equality not just counts).
+- BAR2: n=140 med -3.46% @ 71%W CELL-OK; n=180 med -5.63% @ 80%W CELL-OK;
+  n=100 -0.88% @ 53%W misses (exactly beta-dhat's own n=100 miss pattern in
+  T1c) -> 2/3 PASS. mf reproduces full-budget beta-dhat's margins on the
+  leftover alone (-3.46/-5.63 vs T1c's -3.46/-5.57) with HIGHER win rates —
+  losses are clipped by keeping MM's embedding when beta is worse.
+- BAR3: vs -fb median +0.000 both cells with pairs, no success deficit ->
+  PASS (ladder cells are easy for both stages; the -fb/mf difference is a
+  library-scale phenomenon — T4's job).
+T3b: vacuous (p3-ember2 not built; probe P). T4 launch cleared per the
+pre-registered tree.
