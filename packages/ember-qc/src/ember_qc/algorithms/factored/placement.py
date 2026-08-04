@@ -93,8 +93,28 @@ def source_positions(source: nx.Graph, lo: Point, hi: Point) -> Centroids:
     arr: Optional[np.ndarray] = None
     if n >= 3:
         try:
-            pos = nx.spectral_layout(source)
-            cand = np.array([pos[v] for v in nodes], dtype=float)
+            if n > 300:
+                # sparse path (s3.67): networkx's spectral_layout fell
+                # through to DENSE O(n^3) BLAS on large suite graphs —
+                # 100 sweep workers stuck in dtrmm for minutes-to-hours
+                # each (gdb-confirmed). Sparse eigsh is seconds at
+                # n=17k. Small n keeps the exact legacy numerics.
+                import scipy.sparse as sp
+                import scipy.sparse.linalg as spl
+                idx = {v: i for i, v in enumerate(nodes)}
+                rows, cols = [], []
+                for u, w in source.edges():
+                    rows += [idx[u], idx[w]]
+                    cols += [idx[w], idx[u]]
+                data = np.ones(len(rows))
+                A = sp.coo_matrix((data, (rows, cols)), shape=(n, n))
+                L = (sp.diags(np.asarray(A.sum(axis=1)).ravel()) - A).tocsc()
+                vals, vecs = spl.eigsh(L, k=3, sigma=-1e-3, which="LM")
+                order = np.argsort(vals)
+                cand = vecs[:, order[1:3]].astype(float)
+            else:
+                pos = nx.spectral_layout(source)
+                cand = np.array([pos[v] for v in nodes], dtype=float)
             span = cand.max(axis=0) - cand.min(axis=0)
             if np.all(np.isfinite(cand)) and np.all(span > 1e-9):
                 arr = cand
