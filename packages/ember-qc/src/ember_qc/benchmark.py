@@ -1490,9 +1490,11 @@ class EmbeddingBenchmark:
                 from ember_qc.load_graphs import (_manifest_by_id,
                                                   parse_graph_selection)
                 _man = _manifest_by_id()
+                _ids = parse_graph_selection(selection)
+                if -1 in _ids:  # wildcard: the lazy path must expand it
+                    _ids = set(_man.keys())
                 problems = [(gid, _man[gid]['name'], None)
-                            for gid in sorted(parse_graph_selection(selection))
-                            if gid in _man]
+                            for gid in sorted(_ids) if gid in _man]
             else:
                 problems = _load_test_graphs(selection)
             if not problems:
