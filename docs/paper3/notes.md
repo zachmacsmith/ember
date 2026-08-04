@@ -1345,3 +1345,18 @@ Decision after T4: surviving arms enter the paper as a §12 addendum update
 (v1.3, Zephyr-scoped); program returns to STOP for the P16/C16 decision.
 
 --- results appended below; nothing above this line is edited after launch ---
+
+§4.17 PROBE P RESULT (2026-08-03, hyde06 @ 209d7575): **0/7 validated hits at
+every timeout (5/10/20 s)** — walls flat at timeout+0.05 s, no early returns.
+DECISION TREE FIRES: **p3-ember2 is NOT BUILT**; W-B dies at the probe. Two
+readings, both fatal and indistinguishable here: (a) ~2000-node subgraph
+isomorphism into Z12 is beyond the solver at any sane budget; (b) the flip
+honeycombs may not BE subgraphs at all — MM's ACL 1.2-1.6 on them means
+20-40% of vertices carried chains >= 2 (periodic variants + graph structure
+can preclude an exact placement; the ACL-1.2 evidence showed nearness, not
+membership). Either way the deep tier buys nothing and its miss tax is pure
+loss. Ledger item 12 annotated; the quick-tier node-cap idea is subsumed
+(without a deep payoff the 2.06 s tax at n~2000 stays — measured harmless at
+§4.16's probe — and is not worth a new arm). v1.3 evaluation proceeds with
+W-A only (p3-mm-beta-mf); T3b parity is vacuous (nothing built) and T4 runs
+one arm.
