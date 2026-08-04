@@ -19,3 +19,9 @@ Standing rule: every new user prompt in Claude sessions on this repo is appended
 ## 2026-08-03 — v1.3 kickoff
 
 > Let's proceed with implementing the ledgers' top v1.3 candidates and evalaute them on Zephyr and comparing against the algorithms from this v1.2 run
+
+## 2026-08-04 — post-v1.3 questions
+
+> So of all the algorithms where you observed ACL improvements so far, can you summarize them and their benefits / results so far in a table ?
+
+> Make sure you commit and push everything.  Then, my question is, which of these algorithms calls MM under the hood, vs. which of these algorithms is a true alternative to MM - or uses a modified version of MM rather than stock MM?
