@@ -1736,9 +1736,40 @@ cross-batch ACL null at cliff K\_n families — the ±0.10 family ACL bar of
 Section 6.8 sits below the ACL seed-noise floor there, extending the
 passthrough-null trick of §4.12.10 from success rates to ACL.
 
-### 12.3 Provenance
+### 12.3 The v1.3 follow-through: one safe arm, two clean kills (added 2026-08-04)
 
-Pre-registrations §4.15/§4.16 (bars committed before launch; two dated
+The two v1.3 candidates the addendum's negative results pointed at were built
+(or probe-gated) and evaluated under fresh pre-registration (§4.17). The
+**deep-Glasgow tier died at its probe**: zero of seven flip-honeycomb
+subgraph searches hit at 5, 10, or 20 s solver budgets — the ACL-1.2–1.6
+evidence of Section 12.1 proved *nearness*, not membership, and no adaptive
+budget can rescue a tier whose hit probability at that scale is
+indistinguishable from zero. The **mm-first beta arm** (`p3-mm-beta-mf`:
+stock minorminer first at full budget, one β=D̂ re-run in the leftover, keep
+the strictly-lower-ACL embedding) repaired everything its 0.6/0.4-split
+predecessor broke: success identical to stock by construction and measured
+so (net −28 of 21,276 across the library, within the null; +333 successes
+over the retired split design, healing all five of its damaged families),
+with the dev-ladder margins intact (−3.5 %/−5.6 % at 71–80 % win rates on
+deg-10 ER). It does **not**, however, earn a library-scale ACL headline: the
+library's sparse mass is structurally diverse, and the pricing win thins to
+−0.5..−1.5 % medians at ≈52 % win rates — real mean shifts on thousand-pair
+families, below the pre-registered claim bar. The arm ships as the safe
+below-gate default; the sparse-ER win remains a dev-scale anatomy claim.
+
+One measurement finding earns a protocol caution: the `complete` family —
+provably a stock-passthrough under this arm (parameter-identical call) —
+showed +0.234 mean ΔACL against the archived baseline, the *third*
+consistent positive replicate on that family across independent re-runs
+(+0.108, +0.126 prior). Cross-batch ACL reads on **timeout-bound** rows
+carry a batch-level confound that walls cannot show (workload-mix CPU
+throughput is the leading candidate); passthrough families measure that
+null for free, and family ACL bars must be read against it. Within-batch
+script-route pairing remains the gold standard.
+
+### 12.4 Provenance
+
+Pre-registrations §4.15/§4.16/§4.17 (bars committed before launch; two dated
 pre-launch amendments); runs: T1 chain + remedies (QUEUE rows 11/13; two
 instrumentation incidents — a stale fork binary behind a pipe-masked build
 error, and a deploy that clobbered a live result file — were root-fixed,
@@ -1748,7 +1779,9 @@ reproduced the preserved first-run medians exactly), T2 batch t2\_z12
 `dev_suite.csv`, `p6_probes_confirm_beta_z12.csv`, `t1c_arms_z12.csv`,
 `t1d_race9.csv`, `t2_verdicts_summary.txt`, `t2_z12_percategory.txt`,
 `t2_honeycomb_probe.csv`; analyzers `t1_verdicts.py`, `t2_verdicts.py`;
-batch DBs archived (run host + `results/t2_z12/`). Frozen-arm policy held:
+batch DBs archived (run host + `results/t2_z12/`, `results/t4_z12/`); v1.3
+records: `p_glasgow_deep.py` (probe), `t3_beta_mf_z12.csv`,
+`t4_verdicts_summary.txt`. Frozen-arm policy held:
 `p3-ate`, `p3-mmpolish`, `p3-race8`, `p3-template` byte-identical to v1.0;
 the one in-place edit (the clmm architecture gate) is Z12/P16
 byte-identity-regression-tested; the spur-prune fast path is corpus-proven
