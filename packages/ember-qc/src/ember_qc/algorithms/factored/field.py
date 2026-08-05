@@ -1137,7 +1137,8 @@ def _order_proxy(order: List[int], src_adj: Dict[int, List[int]],
 def insertion_sweeps(order: List[int], src_adj: Dict[int, List[int]], *,
                      max_sweeps: int = 8,
                      values: Optional[np.ndarray] = None,
-                     anchors: Optional[Tuple[np.ndarray, np.ndarray]] = None):
+                     anchors: Optional[Tuple[np.ndarray, np.ndarray]] = None,
+                     deadline: Optional[float] = None):
     """Best-insertion order search in rank space (notes s3.36) — the general
     global move for the queue abstraction. Relocating one variable flips
     ALL its edge orientations across the jumped interval at once, giving
@@ -1176,6 +1177,10 @@ def insertion_sweeps(order: List[int], src_adj: Dict[int, List[int]], *,
     traj = [e_cur]
     sweep_vis = sorted(range(n), key=lambda i: members[i])
     for _ in range(max(max_sweeps, 1)):
+        import time as _t
+        if deadline is not None and _t.perf_counter() > deadline:
+            break  # placement budget exhausted (s3.67): anytime bail
+
         improved = False
         for vi in sweep_vis:
             if not has[vi]:
@@ -1218,7 +1223,8 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                       grid: TileGrid, *, iters: int = 8, kappa: float,
                       floor: bool = True, insert_sweeps: int = 0,
                       overload_lam: float = 0.0,
-                      use_dp: bool = False, snap: bool = False):
+                      use_dp: bool = False, snap: bool = False,
+                      deadline: Optional[float] = None):
     """Alternating 1-D arrangement on the stair energy.
 
     Policy is EXPLICIT (s3.66; this function never inspects the fabric):
@@ -1319,7 +1325,12 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
         info["E"].append(cur_E)
         return False
 
+    import time as _time_mod
     for it in range(max(iters, 1)):
+        if (deadline is not None and it > 0
+                and _time_mod.perf_counter() > deadline):
+            break  # placement budget exhausted (s3.67); iter-0 projection
+                   # always completes (feasibility is not optional)
         force = (it == 0)
         moved = _half(axis=1, force=force)
         _mono()
@@ -1338,6 +1349,9 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
         for _composite in range(2):
             if len(members) < 3:
                 break
+            if (deadline is not None
+                    and _time_mod.perf_counter() > deadline):
+                break  # s3.67 anytime bail
             ys = np.array(sorted(float(new_pos[v][1]) for v in members))
             member_set = set(members)
             anchor_of = {}
@@ -1356,7 +1370,7 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                             key=lambda v: (float(new_pos[v][1]), v))
             new_order, _tr = insertion_sweeps(
                 order0, src_adj, max_sweeps=insert_sweeps,
-                values=ys, anchors=_aligned(order0))
+                values=ys, anchors=_aligned(order0), deadline=deadline)
             if new_order == order0:
                 break
             e_pre = cur_E

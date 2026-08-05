@@ -892,65 +892,93 @@ def _execute_tasks(
     # ── Parallel path (n_workers > 1) ──────────────────────────────────────────
     else:
         task_queue: multiprocessing.Queue = multiprocessing.Queue()
-        result_queue: multiprocessing.Queue = multiprocessing.Queue()
 
         for task in tasks:
             task_queue.put(task)
         for _ in range(n_workers):
             task_queue.put(None)  # one sentinel per worker
 
+        # Prime offsets to current file sizes BEFORE any worker starts, so
+        # lines written by a PREVIOUS session (resume case) are not
+        # re-counted as this session's progress — n_tasks here is the
+        # remaining-task count only. New workers write to fresh per-PID
+        # files, so nothing from this session is skipped.
+        _jsonl_offsets: Dict[str, int] = {}
+        for _jf in workers_dir.glob("worker_*.jsonl"):
+            try:
+                _jsonl_offsets[_jf.name] = _jf.stat().st_size
+            except OSError:
+                pass
+
         worker_procs = []
         for _ in range(n_workers):
             p = multiprocessing.Process(
                 target=_worker_process,
-                args=(task_queue, result_queue, str(workers_dir), batch_id,
+                args=(task_queue, str(workers_dir), batch_id,
                       str(batch_logger.logs_runs_dir), timeout),
             )
             p.start()
             worker_procs.append(p)
 
+        # Progress accounting reads the workers' JSONL files directly — the
+        # durable channel each worker's own main thread writes before moving
+        # on. There is no worker→parent result queue: its per-process feeder
+        # threads are GIL-starved whenever the main thread sits in a long
+        # C-extension embed() call (minorminer holds the GIL for the whole
+        # trial), so delivery collapses at high worker counts while JSONL
+        # marches on — the s3.67 sweep hang (diagnosed 2026-08-05, py-spy).
+        # JSONL lines are counted incrementally via per-file byte offsets;
+        # a line exists iff its trailing newline is on disk, so counting
+        # b'\n' in appended bytes never sees a torn record.
+        def _count_new_lines() -> int:
+            new = 0
+            for jf in workers_dir.glob("worker_*.jsonl"):
+                key = jf.name
+                try:
+                    size = jf.stat().st_size
+                except OSError:
+                    continue
+                prev = _jsonl_offsets.get(key, 0)
+                if size > prev:
+                    try:
+                        with open(jf, 'rb') as fh:
+                            fh.seek(prev)
+                            chunk = fh.read(size - prev)
+                    except OSError:
+                        continue
+                    new += chunk.count(b'\n')
+                    _jsonl_offsets[key] = prev + len(chunk)
+            return new
+
         completed_display = 0
+        _last_beat = time.perf_counter()
         if not verbose:
             # Print initial bar so user sees state immediately (before any trial completes)
             print(f"\r  {_bar(0)}  {elapsed_offset:.0f}s elapsed", end="", flush=True)
         try:
-            while completed_display < n_tasks:
+            while True:
                 if _is_cancelled():
                     break
-                try:
-                    display = result_queue.get(timeout=0.5)
-                except queue.Empty:
-                    continue
-                completed_display += 1
-                batch_logger.log_run_from_display(display)
-
-                _dstatus = display.get('status', '')
-                if _dstatus == 'INVALID_OUTPUT':
-                    _inv = _warn_registry.setdefault('INVALID_OUTPUT', {})
-                    _dalgo = display['algorithm']
-                    _inv[_dalgo] = _inv.get(_dalgo, 0) + 1
-                elif _dstatus == 'CRASH':
-                    _cr = _warn_registry.setdefault('CRASH', {})
-                    _dalgo = display['algorithm']
-                    if _dalgo not in _cr:
-                        _cr[_dalgo] = {'count': 0, 'first_error': display.get('error')}
-                    _cr[_dalgo]['count'] += 1
-
-                if verbose:
-                    algo = display['algorithm']
-                    prob = display['graph_name']
-                    trial = display['trial']
-                    if display['success']:
-                        print(f"  [{completed_display}/{n_tasks}] {algo} / {prob} "
-                              f"trial {trial}: [ok] wall={display['wall_time']:.3f}s "
-                              f"avg_chain={display['avg_chain_length']:.2f}")
-                    else:
-                        print(f"  [{completed_display}/{n_tasks}] {algo} / {prob} "
-                              f"trial {trial}: [fail] {display['status']}")
-                else:
-                    elapsed = elapsed_offset + (time.perf_counter() - _start)
+                completed_display += _count_new_lines()
+                _now = time.perf_counter()
+                if not verbose:
+                    elapsed = elapsed_offset + (_now - _start)
                     print(f"\r  {_bar(completed_display)}  {elapsed:.0f}s elapsed",
                           end="", flush=True)
+                if _now - _last_beat >= 60.0:
+                    _alive = sum(1 for p in worker_procs if p.is_alive())
+                    batch_logger.info(
+                        f"heartbeat: {completed_display}/{n_tasks} complete, "
+                        f"{_alive}/{n_workers} workers alive")
+                    _last_beat = _now
+                if completed_display >= n_tasks:
+                    break
+                if not any(p.is_alive() for p in worker_procs):
+                    # Every worker has exited (sentinels consumed, or died).
+                    # One final sweep so the tally reflects all of JSONL.
+                    completed_display += _count_new_lines()
+                    break
+                time.sleep(2.0)
         except KeyboardInterrupt:
             _cancel_flag.set()
 
@@ -959,15 +987,8 @@ def _execute_tasks(
 
         if _is_cancelled():
             _cancelled = True
-            # Drain: collect results that arrived during/just after cancel signal
-            _drain_end = time.perf_counter() + cancel_delay
-            while time.perf_counter() < _drain_end:
-                try:
-                    display = result_queue.get(timeout=0.1)
-                    completed_display += 1
-                    batch_logger.log_run_from_display(display)
-                except queue.Empty:
-                    break
+            # Give in-flight trials a moment to finish their JSONL append
+            time.sleep(min(cancel_delay, 5.0))
             for p in worker_procs:
                 p.terminate()
             for p in worker_procs:
@@ -979,7 +1000,6 @@ def _execute_tasks(
             # Prevent Python from hanging at exit trying to flush queue pipes
             # whose feeder threads are stuck because workers were killed.
             task_queue.cancel_join_thread()
-            result_queue.cancel_join_thread()
             for jf in workers_dir.glob("worker_*.jsonl"):
                 _strip_truncated_jsonl(jf)
         else:
@@ -1034,7 +1054,10 @@ def _materialize_task(source_graph, target_graph, graph_id, topo_name):
         if source_graph is None:
             from ember_qc.load_graphs import load_graph
             source_graph = load_graph(graph_id)
-            if len(_LAZY_SOURCES) >= 128:
+            # Cache depth 8 (was 128): in parallel mode tasks scatter across
+            # workers so the hit rate is ~0, and at 100 workers a deep cache
+            # of large sources is a real RSS liability on a no-swap host.
+            if len(_LAZY_SOURCES) >= 8:
                 _LAZY_SOURCES.pop(next(iter(_LAZY_SOURCES)))
             _LAZY_SOURCES[graph_id] = source_graph
     return source_graph, target_graph
@@ -1050,20 +1073,20 @@ def _lazy_failure_result(algo_name, graph_name, graph_id, topo_name, trial,
 
 
 def _worker_process(task_queue: multiprocessing.Queue,
-                    result_queue: multiprocessing.Queue,
                     workers_dir_str: str,
                     batch_id: str,
                     logs_runs_dir_str: str,
                     timeout: float) -> None:
-    """Worker process: consume tasks, write JSONL, push display records.
+    """Worker process: consume tasks, write JSONL.
 
     Pulls (source_graph, target_graph, algo_name, graph_id, graph_name,
            topo_name, trial, trial_seed) tuples from task_queue until it
     receives a None sentinel, then exits. timeout is uniform across all tasks
     and passed as a top-level argument rather than stored in each tuple.
 
-    Workers never print anything — all output is driven by the main process
-    reading result_queue. Algorithm stdout/stderr is captured to a per-run
+    Workers never print anything — the main process derives all progress from
+    the workers' JSONL files (no worker→parent queue; see the parallel path in
+    _execute_tasks for why). Algorithm stdout/stderr is captured to a per-run
     log file in logs/runs/ for the duration of each embed() call.
     """
     # Detach from the parent's TTY so terminate() can't corrupt terminal state
@@ -1113,29 +1136,14 @@ def _worker_process(task_queue: multiprocessing.Queue,
         except OSError:
             pass
 
-        # Full result → JSONL (the durable record)
+        # Full result → JSONL (the durable record; also the parent's only
+        # progress channel — written by this thread, so it can never be
+        # starved the way a queue feeder thread can)
         with open(worker_file, "a") as wf:
             rec = result.to_jsonl_dict()
             rec['seed'] = trial_seed
             rec['batch_id'] = batch_id
             wf.write(json.dumps(rec) + "\n")
-
-        # Lightweight display record → result queue (main process only prints)
-        result_queue.put({
-            'algorithm':        algo_name,
-            'graph_name':       graph_name,
-            'topology_name':    topo_name,
-            'trial':            trial,
-            'seed':             trial_seed,
-            'status':           result.status,
-            'success':          result.success,
-            'wall_time':        result.wall_time,
-            'cpu_time':         result.cpu_time,
-            'total_qubits_used': result.total_qubits_used,
-            'avg_chain_length': result.avg_chain_length,
-            'is_valid':         result.is_valid,
-            'error':            result.error,
-        })
 
 
 class EmbeddingBenchmark:
@@ -1241,6 +1249,8 @@ class EmbeddingBenchmark:
                           batch_note: str = "",
                           seed: int = 42,
                           n_workers: int = 1,
+                          max_nodes: int = None,
+                          min_nodes: int = None,
                           verbose: bool = None,
                           output_dir: Optional[str] = None,
                           cancel_delay: float = 5.0,
@@ -1493,6 +1503,21 @@ class EmbeddingBenchmark:
                 _ids = parse_graph_selection(selection)
                 if -1 in _ids:  # wildcard: the lazy path must expand it
                     _ids = set(_man.keys())
+                if max_nodes:  # mirror load_test_graphs' node filter
+                    _ids = {g for g in _ids
+                            if _man.get(g, {}).get('nodes', 0) <= max_nodes}
+                if min_nodes:
+                    _ids = {g for g in _ids
+                            if _man.get(g, {}).get('nodes', 0) >= min_nodes}
+                # Mirror load_test_graphs' dedup: skip a redundant ID when its
+                # canonical is also selected. Keeps the lazy and eager paths'
+                # selections identical (resume identity) and drops ~29% of
+                # structurally duplicate work at full-library scale.
+                from ember_qc.load_graphs import _graph_dedup_info
+                _skip_to_canonical, _ = _graph_dedup_info()
+                _ids = {g for g in _ids
+                        if g not in _skip_to_canonical
+                        or _skip_to_canonical[g] not in _ids}
                 problems = [(gid, _man[gid]['name'], None)
                             for gid in sorted(_ids) if gid in _man]
             else:
@@ -1613,6 +1638,13 @@ class EmbeddingBenchmark:
                 if isinstance(faulty_couplers, dict)
                 else [list(e) for e in faulty_couplers] if faulty_couplers else None
             ),
+            # Resume identity: the exact resolved selection, so load_benchmark
+            # can rebuild the same task set regardless of selection-code drift
+            # (node filters are baked into graph_ids; lazy keeps resume lazy).
+            'max_nodes': max_nodes,
+            'min_nodes': min_nodes,
+            'lazy': lazy_load,
+            'graph_ids': [p[0] for p in problems] if lazy_load else None,
         }
         # Serialize custom problems into config so they can be reconstructed on resume
         if graph_selection is None or graph_selection == 'custom':
@@ -1721,8 +1753,10 @@ class EmbeddingBenchmark:
         for k, v in _warn_registry.items():
             exec_result.warning_registry.setdefault(k, v)
 
-        # ── Handle cancellation ────────────────────────────────────────────────
-        if exec_result.cancelled:
+        # ── Handle cancellation or an incomplete session ──────────────────────
+        # unfinished_tasks non-empty without cancel means workers died with
+        # tasks in flight — never compile a batch with holes; checkpoint it.
+        if exec_result.cancelled or exec_result.unfinished_tasks:
             write_checkpoint(
                 batch_dir,
                 unfinished_tasks=exec_result.unfinished_tasks,
@@ -1730,7 +1764,8 @@ class EmbeddingBenchmark:
                 completed_count=exec_result.completed_count,
             )
             batch_logger.teardown()
-            print(f"\nCancelled. {exec_result.completed_count}/{len(all_tasks)} trials complete.")
+            _stop_word = "Cancelled" if exec_result.cancelled else "Incomplete"
+            print(f"\n{_stop_word}. {exec_result.completed_count}/{len(all_tasks)} trials complete.")
             print(f"Checkpoint saved. Resume with: load_benchmark()")
             _print_warn_summary(exec_result.warning_registry, batch_dir / "logs")
             return None
@@ -1961,6 +1996,19 @@ def load_benchmark(batch_id: Optional[str] = None,
             (0, p['name'], nx.node_link_graph(p['graph'], edges="links"))
             for p in config['custom_problems']
         ]
+    elif config.get('graph_ids'):
+        # Exact resume identity: the resolved selection saved at run start.
+        # Node filters and dedup are already baked in; graphs stay lazy
+        # (None placeholders) — workers materialize by id, same as the
+        # original session.
+        from ember_qc.load_graphs import _manifest_by_id
+        _man = _manifest_by_id()
+        problems = [(gid, _man[gid]['name'], None)
+                    for gid in config['graph_ids'] if gid in _man]
+        _dropped = len(config['graph_ids']) - len(problems)
+        if _dropped:
+            print(f"  Note: {_dropped} saved graph id(s) no longer in the "
+                  f"manifest — skipped.")
     else:
         problems = _load_test_graphs(graph_selection)
         if not problems:
@@ -1995,15 +2043,19 @@ def load_benchmark(batch_id: Optional[str] = None,
                 _incompat_graph_topo_resume.add((graph_id, topo_name))
 
     # Build full task list (same order as original run) — 8-element tuple.
+    # Lazy batches ship None targets exactly like the original session did
+    # (workers rebuild from the registry); eager batches pickle the target.
+    _resume_lazy = bool(config.get('lazy'))
     all_tasks = []
     for _, target_graph, topo_name in topo_list:
+        _tg = None if _resume_lazy else target_graph
         for graph_id, graph_name, source_graph in problems:
             if (graph_id, topo_name) in _incompat_graph_topo_resume:
                 continue
             for algo_name in algorithms:
                 for trial in range(n_trials):
                     trial_seed = _derive_seed(seed, algo_name, graph_id, topo_name, trial)
-                    all_tasks.append((source_graph, target_graph, algo_name,
+                    all_tasks.append((source_graph, _tg, algo_name,
                                       graph_id, graph_name, topo_name, trial, trial_seed))
 
     # Determine which tasks remain
@@ -2110,8 +2162,8 @@ def load_benchmark(batch_id: Optional[str] = None,
     _warn_registry.update(_compute_postrun_warnings(all_results))
     exec_result.warning_registry.update(_warn_registry)
 
-    # ── Handle cancel during resume ────────────────────────────────────────────
-    if exec_result.cancelled:
+    # ── Handle cancel or an incomplete session during resume ──────────────────
+    if exec_result.cancelled or exec_result.unfinished_tasks:
         write_checkpoint(
             batch_dir,
             unfinished_tasks=exec_result.unfinished_tasks,
@@ -2121,7 +2173,8 @@ def load_benchmark(batch_id: Optional[str] = None,
         )
         batch_logger.teardown()
         n_done = len(all_tasks) - len(exec_result.unfinished_tasks)
-        print(f"\nCancelled. {n_done}/{len(all_tasks)} trials complete.")
+        _stop_word = "Cancelled" if exec_result.cancelled else "Incomplete"
+        print(f"\n{_stop_word}. {n_done}/{len(all_tasks)} trials complete.")
         print(f"Checkpoint saved. Resume again with: load_benchmark()")
         _print_warn_summary(exec_result.warning_registry, batch_dir / "logs")
         return batch_dir

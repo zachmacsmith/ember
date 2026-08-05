@@ -11,6 +11,9 @@ import os
 os.chdir("/data/max/ember")
 from ember_qc.benchmark import EmbeddingBenchmark
 
+import sys
+NODE_ARGS = ({"max_nodes": 1000} if "phaseA" in sys.argv
+             else {"min_nodes": 1001})
 for topo in ("pegasus_16", "zephyr_12"):
     bench = EmbeddingBenchmark(target_graph=None)
     d = bench.run_full_benchmark(
@@ -19,6 +22,8 @@ for topo in ("pegasus_16", "zephyr_12"):
         methods=["attraction", "minorminer"],
         n_trials=1,
         timeout=60,
+        n_workers=100,
+        **NODE_ARGS,
         batch_note=f"s3.67 full-Ember sweep 2: consolidated attraction "
                    f"vs stock mm, {topo}, paired seed",
     )

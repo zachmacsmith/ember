@@ -365,7 +365,8 @@ def attract_embed(
             tpts, src_adj, grid, iters=cfg.arrange_iters,
             kappa=kappa, floor=cfg.span_floor,
             insert_sweeps=cfg.insert_sweeps,
-            overload_lam=eff_lam, use_dp=eff_dp, snap=eff_snap)
+            overload_lam=eff_lam, use_dp=eff_dp, snap=eff_snap,
+            deadline=placement_deadline)
         cent = {v: grid.Minv @ (tpts[v] - grid.c) for v in cent}
         # raw stair-E (recorded trajectory metric)
         stair_E = round(stair_energy(tpts, src_adj), 1)
