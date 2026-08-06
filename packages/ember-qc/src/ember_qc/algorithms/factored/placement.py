@@ -240,6 +240,23 @@ class AttractConfig:
                                # old default lost; confirmed by the
                                # s3.66 guard probe. False = the legacy
                                # spectral init.
+    vcycle_agg: bool = False   # s3.68/s3.69: leader-aggregation fixpoint
+                               # replaces {one pairwise matching round +
+                               # the no-fixpoint decree}; twin hash kept
+                               # at round 0; quotient protection emerges
+                               # from the weighted score. Probe-validated
+                               # at board parity (s3.68). Inert unless
+                               # vcycle is active (stride-gated with it).
+    vcycle_transport: bool = False
+                               # s3.69 measure-transport junction: the
+                               # fine layout = the coarse layout's ORDERS
+                               # expanded by wire MASS (adjoint of the
+                               # merge; contiguous blocks, attachment
+                               # rank within, mass-CDF coordinates in the
+                               # standard box). Replaces the disc/anchor
+                               # spread and its geometry constants on
+                               # this path. Inert unless vcycle is
+                               # active.
 
 
 def _auto_bins(n_qubits: int) -> int:
@@ -347,7 +364,10 @@ def attract_embed(
 
         if eff_vcycle:
             from ember_qc.algorithms.factored.coarsen import multilevel_init
-            cent = multilevel_init(src_adj, lo, hi, seed=seed)
+            cent = multilevel_init(src_adj, lo, hi, seed=seed,
+                                   agg=cfg.vcycle_agg,
+                                   transport=cfg.vcycle_transport,
+                                   grid=grid, kappa=kappa)
         else:
             cent = source_positions(source_graph, lo, hi)
         legal_emb: Optional[Embedding] = None
@@ -359,8 +379,14 @@ def attract_embed(
             if timeout else None
 
         tpts = {v: grid.to_tile(p) for v, p in cent.items()}
+        # Galerkin-defect instrumentation (s3.69): stair-E of the raw
+        # interpolated init and after contraction — with the final
+        # stair_E below, attributes what the junction hands over vs
+        # what contraction and arrange must repair.
+        E_interp = round(stair_energy(tpts, src_adj), 1)
         for _s in range(eff_contract):
             tpts = stair_step(tpts, src_adj, eta=cfg.eta)
+        E_contract = round(stair_energy(tpts, src_adj), 1)
         tpts, last_info = alternate_arrange(
             tpts, src_adj, grid, iters=cfg.arrange_iters,
             kappa=kappa, floor=cfg.span_floor,
@@ -439,6 +465,10 @@ def attract_embed(
                 "extent_mean": round(float(sizes.mean()), 3),
                 "extent_max": round(float(sizes.max()), 3),
                 "stride": int(grid.stride),
+                # Galerkin-defect triple (s3.69): init handoff vs
+                # contraction vs arrange — junction-loss attribution
+                "E_interp": E_interp,
+                "E_contract": E_contract,
                 # the hardware-relevant tail metric (s3.65): recorded
                 # from consolidation 3 onward, everywhere
                 "max_chain": max(len(c) for c in finished.values())}

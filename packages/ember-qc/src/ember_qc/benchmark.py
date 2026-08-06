@@ -1072,6 +1072,103 @@ def _lazy_failure_result(algo_name, graph_name, graph_id, topo_name, trial,
     )
 
 
+_HARD_CAP_MIN = 120.0     # seconds — floor of the per-trial hard wall
+_HARD_CAP_FACTOR = 5.0    # × the cooperative timeout
+
+
+def _run_trial_hardcapped(source_graph, target_graph, algo_name, timeout,
+                          graph_name, graph_id, topo_name, trial, trial_seed,
+                          log_path, workers_dir_str) -> "EmbeddingResult":
+    """Run one trial in a forked child with a hard wall-clock cap of
+    max(120 s, 5 × timeout).
+
+    The cooperative `timeout` is not enforceable in-process: stock minorminer
+    checks it only at pass boundaries and can overrun by an hour on
+    hub-and-spoke sources (star_971/wheel_5315, measured 2026-08-05 —
+    /data/max/fullember3/diagnosis.log). The fork inherits the worker's
+    materialized target cache copy-on-write, so per-trial cost is
+    milliseconds. On breach the child is SIGKILLed and a synthetic TIMEOUT
+    row is recorded — every scheduled task therefore always yields exactly
+    one JSONL row, which the batch accounting depends on.
+    """
+    import pickle
+    import signal as _signal
+    hard_cap = max(_HARD_CAP_MIN, _HARD_CAP_FACTOR * float(timeout or 0.0))
+    tmp = Path(workers_dir_str) / f".trial_{os.getpid()}.pkl"
+    try:
+        tmp.unlink()
+    except FileNotFoundError:
+        pass
+    t0 = time.perf_counter()
+    pid = os.fork()
+    if pid == 0:
+        # ── forked child: compute, pickle to tmp file, hard-exit ──────────
+        try:
+            with capture_run(log_path):
+                result = benchmark_one(
+                    source_graph, target_graph, algo_name, timeout=timeout,
+                    graph_name=graph_name, graph_id=graph_id,
+                    topology_name=topo_name, trial=trial, seed=trial_seed)
+            with open(tmp, "wb") as fh:
+                pickle.dump(result, fh)
+        except BaseException:
+            try:
+                import traceback
+                with open(tmp, "wb") as fh:
+                    pickle.dump(EmbeddingResult(
+                        algorithm=algo_name, graph_name=graph_name,
+                        graph_id=graph_id, topology_name=topo_name,
+                        trial=trial, success=False, status='CRASH',
+                        wall_time=time.perf_counter() - t0,
+                        error=traceback.format_exc(limit=20)), fh)
+            except BaseException:
+                pass
+        finally:
+            os._exit(0)  # never run multiprocessing/atexit teardown here
+
+    # ── worker: reap with deadline (exponential backoff keeps fast trials
+    #    fast — first checks are ms-scale) ─────────────────────────────────
+    deadline = t0 + hard_cap
+    killed = False
+    pause = 0.002
+    while True:
+        done_pid, _ = os.waitpid(pid, os.WNOHANG)
+        if done_pid == pid:
+            break
+        if not killed and time.perf_counter() > deadline:
+            try:
+                os.kill(pid, _signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            killed = True
+        time.sleep(pause)
+        pause = min(pause * 1.5, 0.25)
+
+    if tmp.exists():
+        try:
+            with open(tmp, "rb") as fh:
+                result = pickle.load(fh)
+            tmp.unlink()
+            return result
+        except Exception:
+            try:
+                tmp.unlink()
+            except FileNotFoundError:
+                pass
+    wall = time.perf_counter() - t0
+    if killed:
+        err = (f"hard cap: killed after {wall:.0f}s "
+               f"(cooperative timeout={timeout:.0f}s overrun)")
+        status = 'TIMEOUT'
+    else:
+        err = "trial child exited without producing a result (crash?)"
+        status = 'CRASH'
+    return EmbeddingResult(
+        algorithm=algo_name, graph_name=graph_name, graph_id=graph_id,
+        topology_name=topo_name, trial=trial, success=False, status=status,
+        wall_time=wall, error=err)
+
+
 def _worker_process(task_queue: multiprocessing.Queue,
                     workers_dir_str: str,
                     batch_id: str,
@@ -1115,12 +1212,11 @@ def _worker_process(task_queue: multiprocessing.Queue,
             result = _lazy_failure_result(algo_name, graph_name, graph_id,
                                           topo_name, trial, _mat_exc)
         else:
-            with capture_run(log_path):
-                result = benchmark_one(
-                    source_graph, target_graph, algo_name,
-                    timeout=timeout, graph_name=graph_name, graph_id=graph_id,
-                    topology_name=topo_name, trial=trial, seed=trial_seed,
-                )
+            result = _run_trial_hardcapped(
+                source_graph, target_graph, algo_name, timeout,
+                graph_name, graph_id, topo_name, trial, trial_seed,
+                log_path, workers_dir_str,
+            )
 
         # Append runner diagnostics footer after capture exits (not captured)
         try:

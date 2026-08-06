@@ -117,6 +117,62 @@ Magic numbers, none swept: η=0.5, λ₀=3.0, round_frac=0.4, max_rounds=10, bin
 
 ## C. Idea ledger
 
+### THE ADJOINT ROUND — measure-transport junction: turan hits the template optimum (6.00) and the lattice block falls, but faithful transport of NOISE loses the expanders; parked as default by the pre-registered rule (2026-08-06; notes s3.69)
+
+Merge and unpack as adjoint: decompression = coarse ORDERS expanded by
+wire MASS (contiguous blocks, attachment-rank within, fabric-linear
+cumulative-mass scale, kappa*stride per-bar contacts), walked
+level-by-level down the aggregation fixpoint chain; single-supernode
+quotients are the rule's degenerate case (zero transportable
+information — every order a certified tie) and keep the measured V0
+anchor. Switches `vcycle_agg` + `vcycle_transport`, defaults OFF.
+RESULTS: turan_n162/Z12 **8.12 -> 6.00 all seeds — the constructive
+optimum from the general rule**; the whole s3.67 lattice loss block
+improves (grid −0.54, honeycomb −0.90, king −1.28, petersen −0.60,
+triangular −0.13..−0.21; the pre-registered grid/honeycomb null was
+MIS-SPECIFIED — boundary-pair erosion coarsens lattices and the
+level-walk exploits it — favorable violation, recorded); spin_glass
+−0.41, ER −0.09. BUT BAR1 FAILS on the no-structure class: regular
++0.74, ws/Z12 +0.51 (sbm_288 +1.11 off-board) — E_interp improves
+everywhere while finals worsen exactly where the coarse order is
+spectral noise (s3.21's null class): faithful transmission pre-empts
+the E-gated discovery the sloppy disc accidentally allowed. **Parked
+as default per the decision rule; switch-available; aggregation keeps
+s3.68 validation.** NAMED NEXT: the discriminator must come from the
+certificate itself (per-supernode attachment informativeness — where is
+the order REAL?), not a bolted-on gate; one theory cluster with the
+h/v mass split and fabric-side coarsening (the extents/dE/dd object,
+appearances 4-6). Probe `data/adjoint_probe.{py,csv,log}`; tests
+`test_coarsen.py::TestAdjoint`; Galerkin triple now in every diag.
+
+### THE AGGREGATION ROUND — clustering replaces matching at parity; the depth decree dies; the P16 gate surfaces as doc drift (2026-08-05; notes s3.68)
+
+Max's generality directive, made measurable. Coarsening's three hand-coded
+mechanisms (unweighted twin hash / ONE pairwise matching round / the
+"no twin fixpoint" decree) reduced to one rule: **leader aggregation
+(invariant-ordered seeds, radius-1 stars in the S ≥ τ graph) iterated to
+its natural fixpoint** — twin hash kept at round 0, `_wjaccard` and the
+whole unpack untouched (one flip; probe-local monkeypatch because the
+s3.67 sweep runs off this tree). Pre-registered bars, board + cycle,
+3 paired seeds: **BAR1 parity PASS** (twin-dominated cells exactly tied —
+aggregation provably inert there; regular +0.20 within tol with real
+1-round coarsening; ws −0.02 with a 3-round 486→265 hierarchy — the
+depth the cap forbade, free); **BAR2 PASS** — turan's quotient survives
+fixpoint with ZERO aggregation rounds, the S≈0.012 arithmetic doing the
+decree's job. No ACL dividend (BAR3) — expected: the dividend hypothesis
+lives in the unpack/self-entry, not clustering. DISCOVERY: the vcycle
+init is stride-gated (`placement.py` `cfg.vcycle and stride2`) — active
+on Zephyr ONLY; anatomy.md §4.5's "fabric-agnostic" is doc drift (fix
+queued); consequence: no coarsening improvement can touch Pegasus until
+that gate is revisited. VERDICT per decision rule: **validated candidate
+default** — the switch-guarded `coarsen.py` flip (`agg_fixpoint=True`)
+lands after s3.67 completes (frozen tree). OPEN (named, not settled):
+the score self-entry is the load-bearing free choice (count vs internal
+edge mass vs aligned — each breaks a different boxed cell); full hash
+absorption needs the extended-body dE/dd derivation — supernodes as
+boxes, the same missing object as the Galerkin/junction critique.
+Probe: `data/aggregation_probe.{py,csv,log}`.
+
 ### CONSOLIDATION 3 — verdict: one accounting literal, doctrine repaired, vcycle shipped where measured; ws falls, tails answered (2026-08-04; notes s3.66)
 
 arm_books unification (gap: +1 unit on spin_glass only), effective

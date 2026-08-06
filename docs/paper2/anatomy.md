@@ -185,10 +185,21 @@ derivation's limit values; unit-tested insensitive across the window).
 The coarse quotient is placed by spectral-of-the-COARSE-graph (circle
 fallback), children spread in golden-angle discs at COARSE_SPAN scale;
 single-supernode quotients use the V0 measured anchor geometry; graphs
-that don't coarsen get the coarse layout directly. Fabric-agnostic —
-active on every target. Measured (s3.62-64): five records, exactness
-gates firing on all dense cells; losing arms (mass shares, tangent
-closure, segments) at the consolidation-3 marker with their numbers.
+that don't coarsen get the coarse layout directly. **Stride-gated like
+the rest of the flip** (`eff_vcycle = cfg.vcycle and stride2`,
+placement.py — the s3.66 guard probe measured the compact coarse init
+regressing dense cells on the P16 legacy path): active on
+course-resolved Zephyr, inert on Pegasus/Chimera. (This paragraph
+previously claimed "fabric-agnostic — active on every target"; corrected
+2026-08-06 after the s3.68 probe surfaced the drift — no coarsening
+change can affect Pegasus until that gate is revisited.) Measured
+(s3.62-64): five records, exactness gates firing on all dense cells;
+losing arms (mass shares, tangent closure, segments) at the
+consolidation-3 marker with their numbers. Switch-guarded s3.69
+extensions (`vcycle_agg`, `vcycle_transport`, defaults off pending the
+adjoint-probe verdict): leader-aggregation fixpoint in place of the
+single matching round, and the measure-transport junction in place of
+the disc spread.
 
 ## 5. Seed derivation — bars to real qubit chains
 

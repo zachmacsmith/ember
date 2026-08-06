@@ -52,14 +52,19 @@ COARSE_SPAN = 0.4  # coarse-layout halfspan as a fraction of the box
 class Level:
     """One level of the hierarchy: weighted graph + parent mapping."""
 
-    __slots__ = ("adj", "weight", "parent_of")
+    __slots__ = ("adj", "weight", "parent_of", "self_mass", "diag")
 
     def __init__(self, adj: Dict[int, Dict[int, float]],
                  weight: Dict[int, float],
-                 parent_of: Optional[Dict[int, int]] = None):
+                 parent_of: Optional[Dict[int, int]] = None,
+                 self_mass: Optional[Dict[int, float]] = None):
         self.adj = adj              # u -> {v: edge multiplicity}
         self.weight = weight        # node -> member count
         self.parent_of = parent_of  # finer node -> this level's node
+        # Internal edge mass absorbed inside each supernode (s3.69):
+        # 0.0 at the fine level; _merge accumulates collapsed multiplicity.
+        self.self_mass = self_mass if self_mass is not None else {}
+        self.diag: Dict = {}        # per-call coarsening diagnostics (s3.69)
 
 
 def _twin_groups(adj: Dict[int, Dict[int, float]]) -> List[List[int]]:
@@ -103,9 +108,13 @@ def _wjaccard(au: Dict[int, float], wu: float, u: int,
 
 
 def _merge(adj: Dict[int, Dict[int, float]], weight: Dict[int, float],
-           groups: List[List[int]]) -> Level:
+           groups: List[List[int]],
+           self_mass: Optional[Dict[int, float]] = None) -> Level:
     """Collapse each group into its smallest-id member; rebuild the
-    weighted graph. Ungrouped nodes pass through."""
+    weighted graph. Ungrouped nodes pass through. Edge mass collapsed
+    INSIDE a group is accumulated into the supernode's self_mass (s3.69)
+    rather than discarded — each undirected internal edge is seen twice
+    in the directed sweep, hence the /2."""
     rep: Dict[int, int] = {}
     for g in groups:
         r = min(g)
@@ -115,8 +124,11 @@ def _merge(adj: Dict[int, Dict[int, float]], weight: Dict[int, float],
         rep.setdefault(v, v)
     new_adj: Dict[int, Dict[int, float]] = {}
     new_w: Dict[int, float] = {}
+    new_sm: Dict[int, float] = {}
     for v in adj:
         new_w[rep[v]] = new_w.get(rep[v], 0.0) + weight[v]
+        if self_mass:
+            new_sm[rep[v]] = new_sm.get(rep[v], 0.0) + self_mass.get(v, 0.0)
     for v, nbrs in adj.items():
         rv = rep[v]
         d = new_adj.setdefault(rv, {})
@@ -124,13 +136,16 @@ def _merge(adj: Dict[int, Dict[int, float]], weight: Dict[int, float],
             ru = rep[u]
             if ru != rv:
                 d[ru] = d.get(ru, 0.0) + m
+            else:
+                new_sm[rv] = new_sm.get(rv, 0.0) + m / 2.0
     for v in new_w:
         new_adj.setdefault(v, {})
-    return Level(new_adj, new_w, parent_of=rep)
+        new_sm.setdefault(v, 0.0)
+    return Level(new_adj, new_w, parent_of=rep, self_mass=new_sm)
 
 
 def coarsen(src_adj: Dict[int, List[int]], *, threshold: float = 0.34,
-            min_nodes: int = 8) -> List[Level]:
+            min_nodes: int = 8, agg: bool = False) -> List[Level]:
     """Build the TWO-STAGE hierarchy [fine, coarse] (s3.63 flatten —
     V0's level loop was vestigial at our sizes: measured depths <= 3
     with later rounds nearly inert). ONE round: collapse exact-twin
@@ -142,13 +157,24 @@ def coarsen(src_adj: Dict[int, List[int]], *, threshold: float = 0.34,
     by the GRAPH (twin partition + the tau-boxed threshold: chain edge
     1/2 must merge, ER ~1/d must not, star leaf 1/3 at the boundary),
     never by a size target. Graphs already <= ``min_nodes`` skip
-    coarsening ([fine] only)."""
+    coarsening ([fine] only).
+
+    ``agg=True`` (s3.68/s3.69) replaces the single pairwise-matching
+    round + the no-fixpoint decree with LEADER AGGREGATION ITERATED TO
+    ITS NATURAL FIXPOINT: twin round 0 unchanged, then per round stars
+    around invariant-ordered seeds under the same weighted score, until
+    a round produces no merge. The turan quotient is protected by the
+    SCORE (S ~ 0.012 << tau), not by decree — measured s3.68, parity on
+    the board with emergent protection. Returns [fine, coarsest] with
+    parent_of composed across rounds."""
     adj0 = {v: {u: 1.0 for u in nbrs} for v, nbrs in src_adj.items()}
     for v in src_adj:
         adj0.setdefault(v, {})
     fine = Level(adj0, {v: 1.0 for v in adj0})
     if len(adj0) <= min_nodes:
         return [fine]
+    if agg:
+        return _coarsen_agg(fine, threshold)
     groups = _twin_groups(fine.adj)
     matched: set = {v for g in groups for v in g}
     cands: List[Tuple[float, int, int]] = []
@@ -181,9 +207,260 @@ def coarsen(src_adj: Dict[int, List[int]], *, threshold: float = 0.34,
     return [fine, coarse]
 
 
+def _coarsen_agg(fine: Level, threshold: float) -> List[Level]:
+    """Leader aggregation iterated to fixpoint (s3.68, validated at
+    parity with emergent turan protection). Round 0: stock exact-twin
+    collapse (whole groups). Rounds 1..k: every node either seeds a
+    cluster or joins its best seed with S >= threshold; clusters are
+    stars in the similarity graph (radius 1 — no single-link chaining);
+    seed order is invariant (weight desc, degree desc; id as last-resort
+    tie-break, the documented residual label dependence). Iterates until
+    a round produces no merge and returns the FULL CHAIN [fine, L1, ...,
+    coarsest] — each level's parent_of maps the previous level's nodes
+    (the transport junction expands level-by-level; deep hierarchies are
+    compositions of the same adjoint pair, never a one-shot flatten).
+    Diagnostics on the coarsest Level's ``diag``."""
+    diag: Dict = {"rounds": 0, "ratios": [], "max_cluster": 1}
+    cur = fine
+    chain: List[Level] = [fine]
+
+    groups = _twin_groups(cur.adj)
+    if groups:
+        nxt = _merge(cur.adj, cur.weight, groups, cur.self_mass)
+        diag["ratios"].append(round(len(cur.adj) / len(nxt.adj), 3))
+        diag["max_cluster"] = max(len(g) for g in groups)
+        chain.append(nxt)
+        cur = nxt
+
+    while True:
+        adj, weight = cur.adj, cur.weight
+        order = sorted(adj, key=lambda v: (-weight[v], -len(adj[v]), v))
+        assigned: Dict[int, int] = {}
+        # Accumulated cluster state per seed: a joiner is scored against
+        # the cluster AS IT CURRENTLY IS, not the seed as it was — the
+        # correct semantics of joining, and what stops a star of
+        # individually-similar joiners from over-merging past what any
+        # pair would accept (K_{5,5,5}: B joins A at 0.47, then C vs the
+        # merged AB scores 0.15 < tau and correctly stays out).
+        cl_adj: Dict[int, Dict[int, float]] = {}
+        cl_w: Dict[int, float] = {}
+        cl_members: Dict[int, set] = {}
+        for v in order:
+            if v in assigned:
+                continue
+            cand: set = set()
+            for u in adj[v]:
+                if assigned.get(u) == u:
+                    cand.add(u)
+                for w in adj.get(u, ()):
+                    if w != v and assigned.get(w) == w:
+                        cand.add(w)
+            best, best_sc = None, threshold
+            for s in sorted(cand):
+                # Score against the cluster AS IF already merged: member
+                # keys collapse onto the cluster key (the direct-edge
+                # bundle), externals pass through. For a singleton
+                # cluster this reduces exactly to plain _wjaccard — the
+                # s3.68-measured pairwise semantics.
+                m_vs = sum(m for k, m in adj[v].items()
+                           if k in cl_members[s])
+                v_vec = {k: m for k, m in adj[v].items()
+                         if k not in cl_members[s]}
+                if m_vs:
+                    v_vec[s] = v_vec.get(s, 0.0) + m_vs
+                s_vec = {k: m for k, m in cl_adj[s].items()
+                         if k not in cl_members[s] and k != v}
+                if m_vs:
+                    s_vec[v] = s_vec.get(v, 0.0) + m_vs
+                sc = _wjaccard(v_vec, weight[v], v, s_vec, cl_w[s], s)
+                if sc > best_sc or (sc == best_sc and best is not None
+                                    and s < best):
+                    best, best_sc = s, sc
+            if best is None:
+                assigned[v] = v
+                cl_adj[v] = dict(adj[v])
+                cl_w[v] = weight[v]
+                cl_members[v] = {v}
+            else:
+                assigned[v] = best
+                cl_members[best].add(v)
+                cl_w[best] += weight[v]
+                d = cl_adj[best]
+                for k, m in adj[v].items():
+                    d[k] = d.get(k, 0.0) + m
+        clusters: Dict[int, List[int]] = {}
+        for v, s in assigned.items():
+            clusters.setdefault(s, []).append(v)
+        groups = [g for g in clusters.values() if len(g) > 1]
+        if not groups:
+            break
+        nxt = _merge(cur.adj, cur.weight, groups, cur.self_mass)
+        if len(nxt.adj) >= len(cur.adj):
+            break
+        diag["rounds"] += 1
+        diag["ratios"].append(round(len(cur.adj) / len(nxt.adj), 3))
+        diag["max_cluster"] = max(diag["max_cluster"],
+                                  max(len(g) for g in groups))
+        chain.append(nxt)
+        cur = nxt
+
+    chain[-1].diag = diag
+    return chain
+
+
+def unpack_transport(levels: List[Level],
+                     coarse_rank: Dict[int, "np.ndarray"],
+                     grid, kappa: float,
+                     src_adj: Dict[int, List[int]]) -> Dict[int, Point]:
+    """The measure-transport junction (s3.69): the fine layout is the
+    coarse layout's ORDERS, expanded by MASS.
+
+    Merge and unpack are adjoint — the merge score certifies which
+    sibling orders are free (interchangeability); this rule uses exactly
+    that freedom and no more. Per axis: fine order = coarse order with
+    each supernode a contiguous block (within-block order = external-
+    attachment rank; ties broken by invariants, certified free by the
+    merge); coordinates = cumulative wire-mass integral in tile units
+    scaled by the fabric's mean line-pool density. No cramming (every
+    node gets exactly its mass), no moats (no space without mass), no
+    shapes, no geometry constants — the disc/anchor/COARSE_SPAN family
+    is not consulted on this path. A single-supernode quotient is not a
+    special case: one contiguous block under cumulative mass on both
+    axes yields the diagonal-scale cloud (K_n's crystal) by arithmetic.
+
+    ``coarse_rank`` carries each COARSEST-level supernode's per-axis rank
+    source (spectral coordinates of the coarsest quotient — used for
+    ORDER only, their metric is discarded). The expansion walks the
+    chain one level at a time — each junction is one application of the
+    adjoint rule, using THAT level's adjacency for attachment ranks, so
+    deep fixpoint hierarchies (lattices) recover locality scale by
+    scale instead of being flattened through a single composed map.
+    Returns TILE-SPACE positions at the fabric-linear mass scale."""
+    fine = levels[0]
+
+    # Per-axis dense ranks, expanded coarsest -> fine.
+    rank: Dict[int, Tuple[float, float]] = {
+        v: (float(coarse_rank[v][0]), float(coarse_rank[v][1]))
+        for v in levels[-1].adj}
+    for i in range(len(levels) - 1, 0, -1):
+        upper, lower = levels[i], levels[i - 1]
+        children: Dict[int, List[int]] = {}
+        for c in sorted(lower.adj):
+            children.setdefault(upper.parent_of[c], []).append(c)
+        new_rank: Dict[int, List[float]] = {}
+        for axis in (0, 1):
+            sup_order = sorted(children,
+                               key=lambda p: (rank[p][axis], p))
+            sup_rank = {p: j for j, p in enumerate(sup_order)}
+            seq: List[int] = []
+            for p in sup_order:
+                cs = children[p]
+
+                # Within-block order: external-attachment rank — the
+                # mass-weighted mean rank of each child's neighbor
+                # blocks at THIS level. Ties (no external pull —
+                # merge-certified interchangeable) fall to invariants:
+                # weight desc, degree desc, id.
+                def _akey(c):
+                    num = den = 0.0
+                    for u, m in lower.adj[c].items():
+                        pu = upper.parent_of[u]
+                        if pu != p:
+                            num += m * sup_rank[pu]
+                            den += m
+                    att = num / den if den > 0 else float(sup_rank[p])
+                    return (att, -lower.weight[c],
+                            -len(lower.adj[c]), c)
+                seq.extend(sorted(cs, key=_akey))
+            for j, v in enumerate(seq):
+                new_rank.setdefault(v, [0.0, 0.0])[axis] = float(j)
+        rank = {v: (r[0], r[1]) for v, r in new_rank.items()}
+
+    # Wire mass (fabric units: body + arms). kappa is the fresh-contact
+    # rate per tile-STEP; a bar advances ``stride`` steps, so the
+    # per-bar rate is kappa*stride (Zephyr: 7.7*2 ~ the 16 contacts/bar
+    # of fabrics 4.2; stride-1 fabrics unchanged). Arm length in bars =
+    # deg / (kappa*stride).
+    k_bar = max(kappa, 1.0) * max(getattr(grid, "stride", 1), 1)
+    mass = {v: 1.0 + len(src_adj.get(v, ())) / k_bar
+            for v in fine.adj}
+
+    # Fabric-linear scale: the extent a mass M claims along an axis is
+    # M/rho tiles, where rho is the fabric's mean wire capacity per unit
+    # of that axis (grid.cap is (H, W, 2); pool 0 = vertical wires, pool
+    # 1 = horizontal; untyped grids carry a 0.5/0.5 split — still
+    # valid). Dense sources get their crystal-scale footprint (K100/Z12:
+    # ~7 tiles — matches the measured diagonal); sparse sources come out
+    # compact and the iteration-0 capacity projection spreads them
+    # exactly as far as the pools demand (its job, s3.52) — no moats,
+    # no cramming, no free constants. The h/v mass split by order
+    # duality is the documented extents refinement (v1: symmetric /2).
+    import numpy as _np
+    cap = _np.asarray(grid.cap, dtype=float)
+    rho = (max(cap[:, :, 1].sum() / max(grid.W, 1), 1.0),
+           max(cap[:, :, 0].sum() / max(grid.H, 1), 1.0))
+    span = (float(grid.W), float(grid.H))
+
+    out: Dict[int, Point] = {v: np.zeros(2) for v in fine.adj}
+    for axis in (0, 1):
+        seq = sorted(fine.adj, key=lambda v: (rank[v][axis], v))
+        total = sum(mass[v] for v in seq) / 2.0
+        need = total / rho[axis]          # tiles claimed by the mass
+        scale = min(1.0, (span[axis] - 1e-6) / max(need, 1e-9))
+        off = (span[axis] - min(need, span[axis])) / 2.0
+        cum = 0.0
+        for v in seq:
+            half = mass[v] / 2.0
+            cum += half / 2.0
+            out[v][axis] = off + scale * (cum / rho[axis])
+            cum += half / 2.0
+    return {v: np.clip(out[v], 0.0,
+                       np.array(span) - 1e-9) for v in out}
+
+
+def _coarse_rank_positions(coarse: Level, seed: int) -> Dict[int, "np.ndarray"]:
+    """Per-supernode rank source for the transport unpack: the same
+    deterministic spectral-of-the-weighted-coarse-graph (circle fallback)
+    the stock init uses — but consumed for ORDER only, so the returned
+    metric is arbitrary."""
+    import networkx as nx
+
+    nodes = sorted(coarse.adj)
+    n = len(nodes)
+    if n == 1:
+        return {nodes[0]: np.zeros(2)}
+    arr = None
+    if n >= 3:
+        g = nx.Graph()
+        g.add_nodes_from(nodes)
+        for v, nbrs in coarse.adj.items():
+            for u, m in nbrs.items():
+                if u > v:
+                    g.add_edge(v, u, weight=m)
+        try:
+            sp = nx.spectral_layout(g, weight="weight")
+            cand = np.array([sp[v] for v in nodes], dtype=float)
+            spn = cand.max(axis=0) - cand.min(axis=0)
+            if np.all(np.isfinite(cand)) and np.all(spn > 1e-9):
+                arr = cand
+        except Exception:
+            arr = None
+    if arr is None:
+        rng = np.random.RandomState(seed)
+        order = list(range(n))
+        rng.shuffle(order)
+        arr = np.array([[math.cos(2.0 * math.pi * order[i] / max(n, 1)),
+                         math.sin(2.0 * math.pi * order[i] / max(n, 1))]
+                        for i in range(n)])
+    return {v: arr[i] for i, v in enumerate(nodes)}
+
+
 def multilevel_init(src_adj: Dict[int, List[int]], lo: Point, hi: Point,
                     *, seed: int = 0,
-                    threshold: float = 0.34) -> Dict[int, Point]:
+                    threshold: float = 0.34,
+                    agg: bool = False, transport: bool = False,
+                    grid=None, kappa: Optional[float] = None
+                    ) -> Dict[int, Point]:
     """The two-stage V-cycle init (s3.62-3.66, the shipped cell of the
     s3.64 ladder): coarsen once; place the coarse quotient by a
     deterministic spectral layout of the weighted coarse graph (circle
@@ -199,7 +476,42 @@ def multilevel_init(src_adj: Dict[int, List[int]], lo: Point, hi: Point,
     numbers. Deterministic per ``seed`` (circle-rotation ties only)."""
     import networkx as nx
 
-    levels = coarsen(src_adj, threshold=threshold)
+    levels = coarsen(src_adj, threshold=threshold, agg=agg)
+
+    if transport:
+        # s3.69 measure-transport junction: orders + mass, no discs, no
+        # anchors, no COARSE_SPAN — see unpack_transport. Requires the
+        # fabric context (grid, kappa); returns drawing-space to keep
+        # the caller contract identical to the stock path.
+        if grid is None or kappa is None:
+            raise ValueError("transport unpack requires grid and kappa")
+        if len(levels[-1].adj) > 1:
+            cr = _coarse_rank_positions(levels[-1], seed)
+            tile_pts = unpack_transport(levels, cr, grid, kappa, src_adj)
+            return {v: grid.Minv @ (tile_pts[v] - grid.c)
+                    for v in tile_pts}
+        # Single-supernode quotient (K_n and friends): the transport
+        # rule's precondition fails — there are no coarse orders to
+        # preserve and every sibling order is a merge-certified tie, so
+        # the junction carries ZERO information. Among certified-free
+        # unpacks we keep the measured-best one (the V0 anchor geometry
+        # below, s3.63; the pre-formed diagonal measured +0.41 on K100 —
+        # the attraction.md 'pre-ordering pre-empts E-gated discovery'
+        # mechanism, re-observed s3.69). This is the rule acknowledging
+        # its degenerate case, not a shape heuristic: transport engages
+        # exactly when there is structure to transport.
+
+    if len(levels) > 2:
+        # Disc path on a deep (agg) chain: compose parent maps to the
+        # 2-level view the disc spread expects (the s3.68-measured
+        # configuration). The transport path above never flattens.
+        total = dict(levels[1].parent_of)
+        for lv in levels[2:]:
+            total = {f: lv.parent_of[c] for f, c in total.items()}
+        flat = levels[-1]
+        flat.parent_of = total
+        levels = [levels[0], flat]
+
     coarse = levels[-1]
     nodes = sorted(coarse.adj)
     n = len(nodes)

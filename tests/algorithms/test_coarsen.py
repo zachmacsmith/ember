@@ -119,3 +119,138 @@ class TestMultilevelInit:
         r = attract_embed(k, z, timeout=30, seed=0, vcycle=True)
         assert r["embedding"]
         assert validate_embedding(r["embedding"], k, z)
+
+
+class TestAdjoint:
+    """s3.69: aggregation fixpoint (agg=True) + measure-transport unpack.
+    Stock-path assertions above must stay green untouched — both features
+    are switch-guarded."""
+
+    def _grid(self):
+        import dwave_networkx as dnx
+        from ember_qc.algorithms.factored.field import (TileGrid,
+                                                        _target_kappa)
+        from ember_qc.algorithms.factored.placement import target_layout
+        z = dnx.zephyr_graph(3, 4)
+        grid = TileGrid(z, target_layout(z), courses=True)
+        return grid, _target_kappa(grid)
+
+    def _src(self, g):
+        return {v: sorted(g.neighbors(v)) for v in g.nodes()}
+
+    def test_agg_multipartite_quotient_protected(self):
+        # Sequential absorption: joiners score against the accumulated
+        # cluster — a star of individually-similar blocks must not
+        # over-merge past what the merged vector accepts.
+        ls = coarsen(self._src(nx.complete_multipartite_graph(5, 5, 5)),
+                     agg=True)
+        assert len(ls[-1].adj) >= 2
+
+    def test_agg_turan_quotient_emerges(self):
+        # The weighted score (S ~ 0.012) does the no-fixpoint decree's
+        # job: the 2-block quotient survives with zero agg rounds.
+        ls = coarsen(self._src(nx.turan_graph(162, 2)), agg=True)
+        assert len(ls[-1].adj) == 2
+        assert ls[-1].diag["rounds"] == 0
+
+    def test_agg_chain_deepens_and_star_collapses_whole(self):
+        stock = coarsen(self._src(nx.path_graph(200)))
+        agg = coarsen(self._src(nx.path_graph(200)), agg=True)
+        assert len(agg[-1].adj) < len(stock[-1].adj)  # fixpoint depth
+        star = coarsen(self._src(nx.star_graph(11)), agg=True)
+        assert len(star[-1].adj) <= 2  # leaves collapse as one group
+
+    def test_agg_internal_mass_tracked(self):
+        ls = coarsen(self._src(nx.complete_graph(12)), agg=True)
+        assert len(ls[-1].adj) == 1
+        (sm,) = ls[-1].self_mass.values()
+        assert sm == 66.0  # all K12 edges absorbed
+
+    def test_agg_deterministic(self):
+        src = self._src(nx.gnp_random_graph(60, 0.2, seed=3))
+        a = coarsen(src, agg=True)
+        b = coarsen(src, agg=True)
+        assert len(a) == len(b)
+        for la, lb in zip(a, b):
+            assert la.adj == lb.adj and la.weight == lb.weight
+
+    def test_transport_turan_blocks_contiguous(self):
+        from ember_qc.algorithms.factored.coarsen import (
+            _coarse_rank_positions, unpack_transport)
+        grid, kappa = self._grid()
+        src = self._src(nx.turan_graph(162, 2))
+        lv = coarsen(src, agg=True)
+        pts = unpack_transport(lv, _coarse_rank_positions(lv[-1], 0),
+                               grid, kappa, src)
+        xs = sorted((pts[v][0], v) for v in pts)
+        block = {v for _, v in xs[:81]}
+        assert block in (set(range(81)), set(range(81, 162)))
+
+    def test_transport_kn_diagonal_no_anchor(self):
+        # One supernode is not a special case: cumulative mass on both
+        # axes yields the diagonal crystal (replaces the V0 anchor).
+        from ember_qc.algorithms.factored.coarsen import (
+            _coarse_rank_positions, unpack_transport)
+        grid, kappa = self._grid()
+        src = self._src(nx.complete_graph(40))
+        lv = coarsen(src, agg=True)
+        pts = unpack_transport(lv, _coarse_rank_positions(lv[-1], 0),
+                               grid, kappa, src)
+        a = np.array([pts[v] for v in sorted(pts)])
+        corr = np.corrcoef(a[:, 0], a[:, 1])[0, 1]
+        assert corr > 0.999
+        assert a[:, 0].max() - a[:, 0].min() >= 1.0  # crystal-scale, not a point
+
+    def test_transport_path_uniform_measure(self):
+        from ember_qc.algorithms.factored.coarsen import (
+            _coarse_rank_positions, unpack_transport)
+        grid, kappa = self._grid()
+        src = self._src(nx.path_graph(100))
+        lv = coarsen(src, agg=True)
+        pts = unpack_transport(lv, _coarse_rank_positions(lv[-1], 0),
+                               grid, kappa, src)
+        xs = sorted(p[0] for p in pts.values())
+        gaps = np.diff(xs)
+        # uniform mass -> uniform spacing (interior gaps equal)
+        assert gaps.std() <= 0.05 * max(gaps.mean(), 1e-9) + 1e-9
+
+    def test_transport_lattice_locality(self):
+        # Deep fixpoint chains unpack level-by-level: adjacent lattice
+        # nodes stay near in the fine order (the one-shot flatten broke
+        # this — the s3.69 over-coarsening lesson).
+        import statistics
+        from ember_qc.algorithms.factored.coarsen import (
+            _coarse_rank_positions, unpack_transport)
+        grid, kappa = self._grid()
+        g = nx.convert_node_labels_to_integers(
+            nx.triangular_lattice_graph(8, 8))
+        src = self._src(g)
+        lv = coarsen(src, agg=True)
+        pts = unpack_transport(lv, _coarse_rank_positions(lv[-1], 0),
+                               grid, kappa, src)
+        n = len(pts)
+        d = [abs(pts[u][0] - pts[v][0]) + abs(pts[u][1] - pts[v][1])
+             for u in src for v in src[u] if u < v]
+        ext = (max(p[0] for p in pts.values())
+               - min(p[0] for p in pts.values()))
+        # median adjacent separation well below the layout extent
+        assert statistics.median(d) < 0.35 * max(ext, 1e-9)
+
+    def test_pipeline_adjoint_valid_and_gated(self):
+        import dwave_networkx as dnx
+        from ember_qc.algorithms.factored import attract_embed
+        from ember_qc.registry import validate_embedding
+        z = dnx.zephyr_graph(3, 4)
+        k = nx.complete_graph(10)
+        r = attract_embed(k, z, timeout=30, seed=0,
+                          vcycle_agg=True, vcycle_transport=True)
+        assert r["embedding"]
+        assert validate_embedding(r["embedding"], k, z)
+        # off-Zephyr the whole vcycle (and thus both new switches) is
+        # stride-gated: byte-identity with the stock arm
+        import dwave_networkx as dnx2
+        c = dnx2.chimera_graph(4, 4, 4)
+        r1 = attract_embed(k, c, timeout=20, seed=0)
+        r2 = attract_embed(k, c, timeout=20, seed=0,
+                           vcycle_agg=True, vcycle_transport=True)
+        assert r1["embedding"] == r2["embedding"]

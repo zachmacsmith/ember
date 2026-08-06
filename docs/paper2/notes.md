@@ -3690,6 +3690,150 @@ restricted-polish round (s3.65 C; bar_domains arms on both fabrics,
 gate-vs-router ablation folded in), then the full-Ember sweep on this
 stabilized algorithm.
 
+### 3.67 Full-Ember sweep 3 — IN FLIGHT (2026-08-05; writeup pending)
+
+The s3.67 sweep (attraction vs stock mm vs `clique`/busclique, both
+fabrics, dedup'd library, 1 trial / 60 s / seed 42) is running under the
+hardened harness as this is written. Harness round documented at
+`/data/max/fullember3/` (diagnosis.log: the six failed launches were a
+worker-side queue-feeder GIL-starvation hang, py-spy-confirmed; fixes:
+JSONL-only progress accounting, fork-per-trial hard cap max(120 s,
+5×timeout), resume identity via persisted graph_ids, external
+supervisor). PhaseA/P16 landed clean mid-run: 55,416/55,416 rows, worst
+wall 300 s (cap), 86 TIMEOUT rows = the former wedge class (star/wheel
+mm-route overruns + an `alternate_arrange` anytime-bail gap on
+wheel_5315 — the s3.67 bail plumbing does not cover `edge_monotonize`'s
+`h_total` loop, observed live at 65+ min). Results section to follow on
+completion.
+
+### 3.68 The aggregation round: clustering replaces matching, the depth cap dies at parity (2026-08-05)
+
+Prompted by Max's generality directive ("build general mechanisms") after
+a coarsening self-critique found THREE hand-coded mechanisms where one
+rule should live: the unweighted exact-twin hash, ONE pairwise greedy
+Jaccard matching round, and the "no twin fixpoint" depth decree. Analysis
+before code (recorded in the probe docstring): (a) the WEIGHTED score
+already refuses the turan-quotient collapse (S = 162/13122 ≈ 0.012 ≪ τ)
+that the decree exists to prevent — the unweighted hash is the
+over-collapser; (b) pairwise matching has a straggler pathology (odd twin
+family → {2,2,1} → {4,1}, leftover scores ≈ deg/(5deg+5) ≈ 0.2 < τ —
+permanently unmergeable with its own class, an artifact of the pairing
+schedule); (c) matching is a partitioning-tradition inheritance whose
+justifying constraint (balanced coarse nodes) this AMG-shaped problem
+does not have. One flip built (`aggregation_probe.py`, process-local
+monkeypatch of `coarsen.coarsen` — the s3.67 sweep runs off this tree,
+so no algorithm file was touched): LEADER AGGREGATION (invariant-ordered
+seeds, stars in the S ≥ τ graph — radius 1, no single-link chaining)
+ITERATED TO FIXPOINT; twin hash kept at round 0 unchanged; `_wjaccard`,
+τ = 0.34, and the entire unpack byte-identical.
+
+Probe (consolidation-3 board + a cycle cell, 3 seeds × 60 s, paired,
+niced under the running sweep — contention shared across arms):
+
+1. **BAR1 (parity) PASS.** Z12 board: K100/K140/ER/turan/spin_glass
+   exact ties (twin-dominated cells — aggregation provably inert,
+   rounds = 0); regular_n316 +0.20 (within the max(0.3, 5%) tol; 1
+   round, clusters ≤ 3, 316→308); ws_n486 −0.02 **with a 3-round
+   hierarchy 486→298→269→265** — the depth the cap forbade, at parity.
+2. **BAR2 (emergent protection) PASS.** turan/Z12 reaches n_coarse = 2
+   with ZERO aggregation rounds firing — the quotient protection the
+   deleted decree enforced emerges from the weighted score, exactly as
+   the 0.012 arithmetic predicted.
+3. **BAR3**: no ACL win beyond noise (expected — the dividend hypothesis
+   lives in the unpack/self-entry, not in clustering); the structural
+   dividend is real: fixpoint terminates in ≤ 3 rounds everywhere,
+   cluster sizes bounded (≤ 5), no runaway.
+4. **Fabric-gate discovery (doc drift):** the P16 cells are VACUOUS for
+   any coarsening change — `placement.py` gates the vcycle init
+   `cfg.vcycle and stride2` (stride-gated, s3.66 guard), while
+   anatomy.md §4.5 claims "fabric-agnostic — active on every target."
+   The code is right, the doc is wrong (fix queued). Consequence worth
+   stating: NO coarsening improvement can currently touch Pegasus; the
+   P16 deltas in the probe (e.g. ws +0.10) are pure contention noise on
+   byte-identical arms, and the probe's stale-diag artifact on P16 rows
+   (V2_DIAG read without a fresh coarsen call) was traced value-by-value
+   to earlier same-worker jobs (308 = regular, 265 = ws, 161 =
+   spin_glass).
+
+**Verdict (pre-registered decision rule): BAR1+BAR2 pass ⇒ aggregation
+fixpoint is a validated candidate default.** The real `coarsen.py` flip
+(switch-guarded `agg_fixpoint=True`, twin hash retained at round 0,
+decree and depth cap deleted) waits for s3.67 sweep completion — frozen
+tree until then. The open theory item stands apart and is NOT settled by
+this round: the score's self-entry (member count vs internal edge mass)
+is the load-bearing free choice — count breaks star-leaf capture without
+the hash, edge-mass breaks fine-level chains, alignment fixes stars but
+collapses turan — i.e. the twin hash's full absorption into the score
+needs the extended-body dE/dd derivation (supernodes as boxes with
+extents, the same missing object as the Galerkin/junction critique).
+Probe + csv: `data/aggregation_probe.{py,csv,log}`.
+
+### 3.69 The adjoint round: measure-transport junction — turan lands the template optimum; structure wins, noise loses; transport parked as default by the pre-registered rule (2026-08-06)
+
+The consolidation of three critique rounds (junction critique, s3.68
+aggregation, the sweep's lattice-block finding): **merge and unpack are
+adjoint** — the merge score certifies which sibling orders are free;
+decompression = the coarse layout's ORDERS expanded by wire MASS
+(contiguous blocks, external-attachment rank within, fabric-linear
+cumulative-mass coordinates), walked LEVEL-BY-LEVEL down the aggregation
+fixpoint chain. Switch-guarded (`vcycle_agg`, `vcycle_transport`,
+defaults OFF), stride-gated with the vcycle; disc/anchor constants not
+consulted on the transport path. Build lessons (each caught by a unit
+check before the probe): (a) star aggregation needs SEQUENTIAL
+ABSORPTION — joiners score against the accumulating cluster, else
+K_{5,5,5}-class quotients over-merge past what any pair accepts; (b) the
+junction must walk the chain level-by-level — a one-shot composed
+flatten destroys exactly the lattice locality the rule exists to
+preserve; (c) the per-bar contact rate is kappa*stride (7.7*2 ~ fabrics
+4.2's 16/bar) — kappa alone over-spreads K100's footprint 1.75x; (d) a
+single-supernode quotient carries ZERO transportable information (all
+orders certified ties) — transport degenerates to the measured V0
+anchor there, and the pre-formed-diagonal arm re-measured the
+attraction.md pre-emption mechanism (+0.41 on K100 despite BETTER
+junction energy). Galerkin triple (E_interp/E_contract/stair_E) now in
+every run's diag.
+
+Probe (`adjoint_probe.py`, 27 cells x {stock, agg, adjoint} x 3 seeds,
+60 s, paired):
+
+1. **turan_n162/Z12: 8.12 -> 6.00, all three seeds — THE CONSTRUCTIVE
+   TEMPLATE OPTIMUM (fabrics 4.4: ceil(81/16) = 6.00), from the general
+   rule with zero turan-specific anything.** E_interp 4700 -> 640. The
+   measure junction hands arrange the two contiguous mass-blocks and
+   arrange finishes the crystal.
+2. **The s3.67 lattice loss block moves as predicted — and more:**
+   triangular −0.13..−0.21 (all sizes), grid −0.24/−0.54, honeycomb
+   −0.13/−0.90, petersen −0.60, king −1.28 (small + at two largest
+   cells). Honest mis-specification note: the pre-registered
+   grid/honeycomb NULL (S below tau => machinery inert) was WRONG — the
+   fixpoint coarsens lattices through boundary-pair erosion (corner/edge
+   scores cross tau) and the level-walking junction exploits it; the
+   nulls moved favorably. The core claim (the JUNCTION was binding, not
+   the merge) is confirmed more strongly than registered; the tau
+   arithmetic sub-claim was mis-specified.
+3. **BAR1 FAIL — the losses are exactly the no-structure class:**
+   regular_n316 +0.74, ws_n486/Z12 +0.51 (board cells; also sbm_288
+   +1.11, ws_404 +0.37 off-board), all with E_interp IMPROVED — the
+   junction faithfully transmits the coarse order, and when that order
+   is spectral noise on an expander (s3.21: nothing to find), faithful
+   transmission pre-empts the E-gated discovery that the sloppy disc
+   accidentally permitted. Structure wins big; noise loses moderately.
+   K100/K140 exact ties (degenerate-case anchor); P16 gate integrity
+   clean (K100/turan byte-identical; the P16 ws wobble is wall-clock
+   nondeterminism under 24-way contention).
+
+**Verdict per the pre-registered decision rule: transport PARKED as
+default (BAR1 fail); aggregation keeps its s3.68 validation; both stay
+switch-available.** The named next question is the principled
+discriminator the data begs for: transport should engage exactly where
+the certificate says the order is REAL — per-supernode, from the score
+structure itself (attachment informativeness), not a bolted-on gate.
+That derivation, the h/v mass split, and the coarse-level capacity
+(fabric-side coarsening; acceptance cell hardware_native) are one
+cluster of theory work — the extents/dE/dd object, fourth, fifth, and
+sixth appearances. Probe + csv: `data/adjoint_probe.{py,csv,log}`;
+unit tests `tests/algorithms/test_coarsen.py::TestAdjoint`.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).
