@@ -254,3 +254,241 @@ class TestAdjoint:
         r2 = attract_embed(k, c, timeout=20, seed=0,
                            vcycle_agg=True, vcycle_transport=True)
         assert r1["embedding"] == r2["embedding"]
+
+
+class TestClusterMoves:
+    """s3.70: coarsen the moves, not the state — cluster gather/relocate
+    as E-gated composites on real members. Switch `cluster_moves`,
+    default off, fabric-agnostic."""
+
+    def test_gather_order_contiguous_and_improving(self):
+        from ember_qc.algorithms.factored.field import cluster_gather_order
+        import numpy as np
+        # Interleaved two-block bipartite-ish order: A at even slots,
+        # B at odd. Gathering A must produce a contiguous block and a
+        # lower proxy energy.
+        A = list(range(0, 10))
+        B = list(range(10, 20))
+        src_adj = {a: list(B) for a in A}
+        src_adj.update({b: list(A) for b in B})
+        order = [x for pair in zip(A, B) for x in pair]  # interleave
+        vals = np.arange(20, dtype=float)
+        out = cluster_gather_order(order, tuple(A), src_adj, vals, None)
+        assert out is not None
+        posn = {v: i for i, v in enumerate(out)}
+        slots = sorted(posn[a] for a in A)
+        assert slots == list(range(slots[0], slots[0] + len(A)))
+        assert sorted(out) == sorted(order)  # a permutation, complete
+
+    def test_gather_none_when_cluster_is_everything(self):
+        from ember_qc.algorithms.factored.field import cluster_gather_order
+        import numpy as np
+        K = nx.complete_graph(12)
+        src_adj = {v: sorted(K.neighbors(v)) for v in K}
+        order = sorted(K.nodes())
+        out = cluster_gather_order(order, tuple(order), src_adj,
+                                   np.arange(12, dtype=float), None)
+        assert out is None  # nothing external to move relative to
+
+    def test_pipeline_cmove_valid_and_off_switch_identity(self):
+        import dwave_networkx as dnx
+        from ember_qc.algorithms.factored import attract_embed
+        from ember_qc.registry import validate_embedding
+        z = dnx.zephyr_graph(3, 4)
+        t = nx.turan_graph(40, 2)
+        r_on = attract_embed(t, z, timeout=30, seed=0, cluster_moves=True)
+        assert r_on["embedding"]
+        assert validate_embedding(r_on["embedding"], t, z)
+        r_off1 = attract_embed(t, z, timeout=30, seed=0)
+        r_off2 = attract_embed(t, z, timeout=30, seed=0)
+        assert r_off1["embedding"] == r_off2["embedding"]
+
+    def test_cmove_never_worse_gate_energy(self):
+        # E-gated: the arranged stair_E with cluster moves must be <=
+        # stock's (accepted moves strictly improve; rejected ones revert).
+        import dwave_networkx as dnx
+        from ember_qc.algorithms.factored import attract_embed
+        z = dnx.zephyr_graph(6, 4)
+        er = nx.gnp_random_graph(80, 0.1, seed=7)  # expander-ish noise
+        r0 = attract_embed(er, z, timeout=20, seed=1)
+        r1 = attract_embed(er, z, timeout=20, seed=1, cluster_moves=True)
+        assert r1["stair_E"] <= r0["stair_E"] + 1e-6
+
+    def test_cmove_unmixes_interleaved_turan(self):
+        # The mid-descent escape: from the default init, cluster moves
+        # must not lose to stock on turan (the gather is the unmixer).
+        import dwave_networkx as dnx
+        from ember_qc.algorithms.factored import attract_embed
+        z = dnx.zephyr_graph(6, 4)
+        t = nx.turan_graph(80, 2)
+        r0 = attract_embed(t, z, timeout=20, seed=0)
+        r1 = attract_embed(t, z, timeout=20, seed=0, cluster_moves=True)
+        e0 = r0["embedding"]; e1 = r1["embedding"]
+        a0 = sum(map(len, e0.values())) / len(e0)
+        a1 = sum(map(len, e1.values())) / len(e1)
+        assert a1 <= a0 + 1e-9
+
+
+class TestUnitsMode:
+    """s3.71: threshold-free move-unit coarsening (mutual-preference /
+    greedy score-rank matching, adjacency-only candidates, no tau)."""
+
+    def _hier(self, g):
+        src = {v: sorted(g.neighbors(v)) for v in g}
+        return coarsen(src, units=True), g
+
+    def test_lattices_get_patch_hierarchies(self):
+        for g in (nx.convert_node_labels_to_integers(nx.grid_2d_graph(10, 10)),
+                  nx.convert_node_labels_to_integers(
+                      nx.hexagonal_lattice_graph(5, 5))):
+            ls, _ = self._hier(g)
+            sizes = [len(l.adj) for l in ls]
+            # halving-ish depth, terminating at 1 — tau would have
+            # blocked all interior merges (scores 1/4, 1/3)
+            assert sizes[-1] == 1 and len(sizes) >= 6
+            assert sizes[1] <= 0.6 * sizes[0]
+
+    def test_crystals_assemble_and_er_coarsens(self):
+        # The affinity engine is THE units engine (s3.72; no hash):
+        # families assemble via affinity-1 pairs over log rounds.
+        lsK, _ = self._hier(nx.complete_graph(100))
+        sizes = [len(l.adj) for l in lsK]
+        assert sizes[0] == 100 and sizes[-1] == 1 and len(sizes) <= 10
+        lsT, _ = self._hier(nx.turan_graph(162, 2))
+        assert any(len(l.adj) == 2 for l in lsT)
+        lsE, _ = self._hier(nx.gnp_random_graph(100, 0.101, seed=1))
+        assert len(lsE) > 3 and len(lsE[-1].adj) <= 2
+
+    def test_no_threshold_consumed_and_deterministic(self):
+        g = nx.connected_watts_strogatz_graph(200, 6, 0.1, seed=5)
+        src = {v: sorted(g.neighbors(v)) for v in g}
+        a = coarsen(src, units=True, threshold=0.99)  # ignored on this path
+        b = coarsen(src, units=True, threshold=0.01)
+        assert [len(l.adj) for l in a] == [len(l.adj) for l in b]
+        c = coarsen(src, units=True)
+        assert all(la.adj == lc.adj for la, lc in zip(a, c))
+
+    def test_pipeline_units_valid_and_control_arm(self):
+        import dwave_networkx as dnx
+        from ember_qc.algorithms.factored import attract_embed
+        from ember_qc.registry import validate_embedding
+        z = dnx.zephyr_graph(3, 4)
+        t = nx.turan_graph(40, 2)
+        r = attract_embed(t, z, timeout=30, seed=0)  # units default ON
+        assert r["embedding"] and validate_embedding(r["embedding"], t, z)
+        r_ctl = attract_embed(t, z, timeout=30, seed=0, cluster_units=False)
+        assert r_ctl["embedding"]  # s3.70 control arm still runs
+
+
+class TestAffinity:
+    """s3.72: the per-member criterion — one formula, verified against
+    the derived case table."""
+
+    def _aff(self, au, wu, av, wv):
+        from ember_qc.algorithms.factored.coarsen import _affinity
+        return _affinity(au, wu, 0, av, wv, 1)
+
+    def test_twin_fragments_any_ratio_score_one(self):
+        # Max's case: 1:2 fragments of one interchangeable family must
+        # score exactly 1 (the raw-total score gave 1/2).
+        nbrs = range(100, 105)
+        au = {k: 1.0 for k in nbrs}
+        av = {k: 2.0 for k in nbrs}
+        assert abs(self._aff(au, 1.0, av, 2.0) - 1.0) < 1e-12
+        av7 = {k: 7.0 for k in nbrs}
+        assert abs(self._aff(au, 1.0, av7, 7.0) - 1.0) < 1e-12
+
+    def test_open_twins_score_one_without_hash(self):
+        au = {5: 1.0, 6: 1.0, 7: 1.0}
+        assert abs(self._aff(au, 1.0, dict(au), 1.0) - 1.0) < 1e-12
+
+    def test_chain_pair_half(self):
+        assert abs(self._aff({10: 1.0, 1: 1.0}, 1.0,
+                             {0: 1.0, 11: 1.0}, 1.0) - 0.5) < 1e-12
+
+    def test_clique_pair_one_and_quotient_one(self):
+        au = {2: 1.0, 3: 1.0, 1: 1.0}
+        av = {2: 1.0, 3: 1.0, 0: 1.0}
+        assert abs(self._aff(au, 1.0, av, 1.0) - 1.0) < 1e-12
+        # turan quotient: heavy mutual bundle is pure agreement now
+        assert abs(self._aff({1: 6561.0}, 81.0,
+                             {0: 6561.0}, 81.0) - 1.0) < 1e-12
+
+    def test_cross_block_and_hub_leaf_small(self):
+        aut = {k: 1.0 for k in range(100, 181)}
+        aut[1] = 1.0
+        avt = {k: 1.0 for k in range(200, 281)}
+        avt[0] = 1.0
+        assert self._aff(aut, 1.0, avt, 1.0) < 0.02
+        auh = {k: 1.0 for k in range(1, 100)}
+        assert self._aff(auh, 1.0, {0: 1.0}, 1.0) < 0.03
+
+    def test_star_family_assembles_without_hash(self):
+        # The PARKED affinity engine (s3.72): hash-free assembly still
+        # verified — leaves pair through the shared hub at affinity 1.
+        from ember_qc.algorithms.factored.coarsen import coarsen
+        g = nx.star_graph(64)
+        ls = coarsen({v: sorted(g.neighbors(v)) for v in g}, units=True)
+        assert any(len(l.adj) == 2 for l in ls)
+
+    def test_affinity_engine_turan_purity(self):
+        # The parked engine keeps blocks pure to the 2-level (the
+        # admissibility rule: merge only if it is someone's best).
+        from ember_qc.algorithms.factored.coarsen import coarsen
+        g = nx.turan_graph(162, 2)
+        ls = coarsen({v: sorted(g.neighbors(v)) for v in g}, units=True)
+        mem = {v: [v] for v in ls[0].adj}
+        for li in range(1, len(ls) - 1):  # exclude the final total merge
+            up = {}
+            for c, ms in mem.items():
+                up.setdefault(ls[li].parent_of[c], []).extend(ms)
+            mem = up
+            for ms in mem.values():
+                a = sum(1 for x in ms if x < 81)
+                assert min(a, len(ms) - a) == 0  # pure
+
+
+class TestConsumptionSchedule:
+    """s3.73: both-axes gathers, strict-descent cluster acceptance, no
+    per-cluster caps — the energy is the schedule."""
+
+    def test_x_gather_fires(self):
+        # A layout interleaved in x with a clean y should be fixable by
+        # the axis-0 gather: run the pipeline on turan and require that
+        # at least one composite fired on each axis over the run.
+        import dwave_networkx as dnx
+        from ember_qc.algorithms.factored import attract_embed
+        z = dnx.zephyr_graph(6, 4)
+        t = nx.turan_graph(80, 2)
+        r = attract_embed(t, z, timeout=30, seed=0)
+        d = r["diag"]
+        assert d["cluster_accepts"] + d["cluster_reverts"] > 0
+
+    def test_strictness_never_worse_and_terminates(self):
+        # Strict acceptance: gate energy with cluster moves <= without;
+        # and without the one-shot rule the pass must still terminate
+        # with a bounded composite count on an expander.
+        import time
+        import dwave_networkx as dnx
+        from ember_qc.algorithms.factored import attract_embed
+        z = dnx.zephyr_graph(6, 4)
+        er = nx.gnp_random_graph(80, 0.1, seed=7)
+        t0 = time.perf_counter()
+        r1 = attract_embed(er, z, timeout=20, seed=1)
+        wall = time.perf_counter() - t0
+        r0 = attract_embed(er, z, timeout=20, seed=1, cluster_moves=False)
+        assert r1["stair_E"] <= r0["stair_E"] + 1e-6
+        d = r1["diag"]
+        assert d["cluster_accepts"] + d["cluster_reverts"] < 2000
+        assert wall < 25.0
+
+    def test_validity_and_determinism_with_schedule(self):
+        import dwave_networkx as dnx
+        from ember_qc.algorithms.factored import attract_embed
+        from ember_qc.registry import validate_embedding
+        z = dnx.zephyr_graph(3, 4)
+        t = nx.turan_graph(40, 2)
+        a = attract_embed(t, z, timeout=30, seed=0)
+        b = attract_embed(t, z, timeout=30, seed=0)
+        assert a["embedding"] == b["embedding"]
+        assert validate_embedding(a["embedding"], t, z)

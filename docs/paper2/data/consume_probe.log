@@ -1,0 +1,135 @@
+110 jobs; load (1.1279296875, 0.61328125, 0.29541015625)
+Z12 K100               s372   seed 0: 7.79 mx=10 acc/rev=0/0 w=15.0s
+Z12 K100               s372   seed 1: 7.79 mx=10 acc/rev=0/0 w=16.7s
+Z12 K100               s372   seed 2: 7.79 mx=10 acc/rev=0/0 w=18.3s
+Z12 K100               s373   seed 0: 7.79 mx=10 acc/rev=0/0 w=15.4s
+Z12 K100               s373   seed 1: 7.79 mx=10 acc/rev=0/0 w=17.3s
+Z12 K100               s373   seed 2: 7.79 mx=10 acc/rev=0/0 w=18.4s
+Z12 K140               s372   seed 0: 10.521 mx=12 acc/rev=0/0 w=50.6s
+Z12 K140               s372   seed 1: 10.521 mx=12 acc/rev=0/0 w=51.8s
+Z12 K140               s372   seed 2: 10.521 mx=12 acc/rev=0/0 w=53.8s
+Z12 K140               s373   seed 0: 10.521 mx=12 acc/rev=0/0 w=50.5s
+Z12 K140               s373   seed 1: 10.521 mx=12 acc/rev=0/0 w=51.0s
+Z12 K140               s373   seed 2: 10.521 mx=12 acc/rev=0/0 w=52.8s
+Z12 ER100_d10          s372   seed 0: 4.81 mx=9 acc/rev=3/15 w=3.7s
+Z12 ER100_d10          s372   seed 1: 4.93 mx=10 acc/rev=3/15 w=3.8s
+Z12 ER100_d10          s372   seed 2: 4.72 mx=9 acc/rev=3/15 w=3.1s
+Z12 ER100_d10          s373   seed 0: 4.68 mx=8 acc/rev=26/57 w=6.8s
+Z12 ER100_d10          s373   seed 1: 4.78 mx=8 acc/rev=26/57 w=5.9s
+Z12 ER100_d10          s373   seed 2: 4.97 mx=9 acc/rev=26/57 w=4.3s
+Z12 turan_n162         s372   seed 0: 6.741 mx=8 acc/rev=14/19 w=28.4s
+Z12 turan_n162         s372   seed 1: 6.772 mx=8 acc/rev=8/15 w=26.4s
+Z12 turan_n162         s372   seed 2: 6.747 mx=8 acc/rev=14/19 w=28.0s
+Z12 turan_n162         s372   seed 3: 6.735 mx=8 acc/rev=14/19 w=32.6s
+Z12 turan_n162         s372   seed 4: 6.728 mx=8 acc/rev=14/19 w=29.9s
+Z12 turan_n162         s372   seed 5: 6.796 mx=8 acc/rev=8/15 w=43.2s
+Z12 turan_n162         s372   seed 6: 6.784 mx=8 acc/rev=14/19 w=49.0s
+Z12 turan_n162         s372   seed 7: 6.235 mx=7 acc/rev=8/15 w=39.1s
+Z12 turan_n162         s372   seed 8: 6.796 mx=8 acc/rev=8/15 w=60.9s
+Z12 turan_n162         s372   seed 9: 6.747 mx=8 acc/rev=14/19 w=27.2s
+Z12 turan_n162         s373   seed 0: 6.772 mx=8 acc/rev=8/61 w=37.7s
+Z12 turan_n162         s373   seed 1: 6.772 mx=8 acc/rev=10/100 w=31.1s
+Z12 turan_n162         s373   seed 2: 6.802 mx=8 acc/rev=8/61 w=41.9s
+Z12 turan_n162         s373   seed 3: 7.0 mx=8 acc/rev=8/61 w=36.2s
+Z12 turan_n162         s373   seed 4: 7.0 mx=8 acc/rev=8/61 w=35.6s
+Z12 turan_n162         s373   seed 5: 6.772 mx=8 acc/rev=10/100 w=56.2s
+Z12 turan_n162         s373   seed 6: 6.753 mx=8 acc/rev=8/61 w=37.8s
+Z12 turan_n162         s373   seed 7: 6.778 mx=8 acc/rev=10/100 w=30.2s
+Z12 turan_n162         s373   seed 8: 6.772 mx=8 acc/rev=10/100 w=46.5s
+Z12 turan_n162         s373   seed 9: 6.5 mx=7 acc/rev=8/61 w=61.8s
+Z12 spin_glass_n163    s372   seed 0: 12.319 mx=20 acc/rev=9/23 w=18.3s
+Z12 spin_glass_n163    s372   seed 1: 12.307 mx=20 acc/rev=9/23 w=18.3s
+Z12 spin_glass_n163    s372   seed 2: 12.35 mx=20 acc/rev=9/23 w=18.0s
+Z12 spin_glass_n163    s373   seed 0: 12.006 mx=17 acc/rev=7/99 w=22.4s
+Z12 spin_glass_n163    s373   seed 1: 12.012 mx=17 acc/rev=7/99 w=19.6s
+Z12 spin_glass_n163    s373   seed 2: 12.031 mx=16 acc/rev=7/99 w=26.1s
+Z12 regular_n316       s372   seed 0: 2.725 mx=6 acc/rev=22/31 w=5.9s
+Z12 regular_n316       s372   seed 1: 2.845 mx=7 acc/rev=22/31 w=5.7s
+Z12 regular_n316       s372   seed 2: 2.946 mx=7 acc/rev=22/31 w=5.1s
+Z12 regular_n316       s373   seed 0: 2.813 mx=7 acc/rev=37/197 w=9.7s
+Z12 regular_n316       s373   seed 1: 2.693 mx=6 acc/rev=37/197 w=10.2s
+Z12 regular_n316       s373   seed 2: 2.864 mx=7 acc/rev=37/197 w=9.7s
+Z12 ws_n486            s372   seed 0: 2.753 mx=9 acc/rev=56/177 w=19.1s
+Z12 ws_n486            s372   seed 1: 2.811 mx=10 acc/rev=56/177 w=19.6s
+Z12 ws_n486            s372   seed 2: 2.78 mx=9 acc/rev=56/177 w=19.1s
+Z12 ws_n486            s373   seed 0: 2.712 mx=10 acc/rev=71/601 w=32.3s
+Z12 ws_n486            s373   seed 1: 2.679 mx=9 acc/rev=71/602 w=32.6s
+Z12 ws_n486            s373   seed 2: 2.576 mx=8 acc/rev=71/612 w=32.5s
+P16 K100               s372   seed 0: 12.68 mx=20 acc/rev=0/0 w=24.7s
+P16 K100               s372   seed 1: 13.27 mx=20 acc/rev=0/0 w=60.9s
+P16 K100               s372   seed 2: 13.61 mx=21 acc/rev=0/0 w=22.5s
+P16 K100               s373   seed 0: 12.68 mx=20 acc/rev=0/0 w=23.9s
+P16 K100               s373   seed 1: 13.27 mx=20 acc/rev=0/0 w=60.4s
+P16 K100               s373   seed 2: 13.61 mx=21 acc/rev=0/0 w=23.0s
+P16 turan_n162         s372   seed 0: 8.58 mx=9 acc/rev=7/9 w=63.0s
+P16 turan_n162         s372   seed 1: 8.765 mx=10 acc/rev=7/9 w=48.2s
+P16 turan_n162         s372   seed 2: 8.29 mx=9 acc/rev=7/9 w=56.3s
+P16 turan_n162         s373   seed 0: 7.815 mx=8 acc/rev=4/91 w=45.9s
+P16 turan_n162         s373   seed 1: 8.0 mx=8 acc/rev=4/91 w=51.5s
+P16 turan_n162         s373   seed 2: 8.0 mx=8 acc/rev=4/91 w=60.2s
+P16 ws_n486            s372   seed 0: 3.506 mx=15 acc/rev=17/61 w=13.8s
+P16 ws_n486            s372   seed 1: 3.539 mx=15 acc/rev=7/37 w=12.0s
+P16 ws_n486            s372   seed 2: 3.872 mx=17 acc/rev=12/52 w=13.6s
+P16 ws_n486            s373   seed 0: 3.652 mx=15 acc/rev=49/158 w=13.7s
+P16 ws_n486            s373   seed 1: 3.549 mx=18 acc/rev=35/309 w=22.0s
+P16 ws_n486            s373   seed 2: 3.794 mx=19 acc/rev=35/309 w=31.3s
+Z12 grid_200           s372   seed 0: 1.31 mx=3 acc/rev=11/25 w=1.4s
+Z12 grid_200           s372   seed 1: 1.445 mx=3 acc/rev=11/25 w=1.3s
+Z12 grid_200           s372   seed 2: 1.42 mx=3 acc/rev=11/25 w=1.4s
+Z12 grid_200           s373   seed 0: 1.455 mx=3 acc/rev=25/147 w=3.0s
+Z12 grid_200           s373   seed 1: 1.405 mx=3 acc/rev=25/147 w=3.1s
+Z12 grid_200           s373   seed 2: 1.37 mx=3 acc/rev=25/147 w=3.0s
+Z12 grid_588           s372   seed 0: 1.279 mx=3 acc/rev=44/63 w=10.7s
+Z12 grid_588           s372   seed 1: 1.31 mx=3 acc/rev=44/63 w=10.9s
+Z12 grid_588           s372   seed 2: 1.284 mx=3 acc/rev=44/63 w=10.7s
+Z12 grid_588           s373   seed 0: 1.301 mx=3 acc/rev=126/513 w=31.5s
+Z12 grid_588           s373   seed 1: 1.247 mx=3 acc/rev=126/520 w=31.4s
+Z12 grid_588           s373   seed 2: 1.287 mx=3 acc/rev=126/518 w=31.5s
+Z12 honeycomb_200      s372   seed 0: 1.91 mx=3 acc/rev=11/11 w=2.1s
+Z12 honeycomb_200      s372   seed 1: 2.125 mx=4 acc/rev=11/11 w=1.7s
+Z12 honeycomb_200      s372   seed 2: 1.825 mx=3 acc/rev=11/11 w=2.2s
+Z12 honeycomb_200      s373   seed 0: 1.915 mx=4 acc/rev=13/28 w=2.6s
+Z12 honeycomb_200      s373   seed 1: 1.775 mx=3 acc/rev=13/28 w=3.0s
+Z12 honeycomb_200      s373   seed 2: 1.73 mx=3 acc/rev=13/28 w=3.0s
+Z12 honeycomb_600      s372   seed 0: 1.187 mx=3 acc/rev=40/96 w=15.4s
+Z12 honeycomb_600      s372   seed 1: 1.168 mx=2 acc/rev=61/107 w=13.6s
+Z12 honeycomb_600      s372   seed 2: 1.262 mx=3 acc/rev=41/97 w=11.9s
+Z12 honeycomb_600      s373   seed 0: 1.29 mx=3 acc/rev=59/463 w=29.9s
+Z12 honeycomb_600      s373   seed 1: 1.267 mx=3 acc/rev=99/563 w=30.9s
+Z12 honeycomb_600      s373   seed 2: 1.27 mx=3 acc/rev=114/559 w=31.3s
+Z12 triangular_lat_400 s372   seed 0: 1.775 mx=4 acc/rev=14/27 w=3.8s
+Z12 triangular_lat_400 s372   seed 1: 1.742 mx=4 acc/rev=14/27 w=4.2s
+Z12 triangular_lat_400 s372   seed 2: 1.7 mx=4 acc/rev=14/27 w=4.5s
+Z12 triangular_lat_400 s373   seed 0: 1.71 mx=4 acc/rev=32/164 w=10.2s
+Z12 triangular_lat_400 s373   seed 1: 1.728 mx=4 acc/rev=32/164 w=10.1s
+Z12 triangular_lat_400 s373   seed 2: 1.705 mx=4 acc/rev=32/164 w=10.7s
+Z12 king_graph_196     s372   seed 0: 2.352 mx=5 acc/rev=6/11 w=2.6s
+Z12 king_graph_196     s372   seed 1: 2.76 mx=6 acc/rev=6/11 w=2.1s
+Z12 king_graph_196     s372   seed 2: 2.173 mx=5 acc/rev=6/11 w=2.5s
+Z12 king_graph_196     s373   seed 0: 2.357 mx=5 acc/rev=27/84 w=4.2s
+Z12 king_graph_196     s373   seed 1: 2.194 mx=5 acc/rev=27/84 w=4.1s
+Z12 king_graph_196     s373   seed 2: 2.531 mx=6 acc/rev=27/84 w=3.6s
+
+summary (mean ACL, mean wall; d = s373 - s372):
+Z12 K100                s372=7.79(3,w17)  s373=7.79(3,w17)  d=+0.00[ok]
+Z12 K140                s372=10.52(3,w52)  s373=10.52(3,w51)  d=+0.00[ok]
+Z12 ER100_d10           s372=4.82(3,w4)  s373=4.81(3,w6)  d=-0.01[ok]
+Z12 turan_n162          s372=6.71(10,w36)  s373=6.79(10,w42)  d=+0.08[ok]
+Z12 spin_glass_n163     s372=12.33(3,w18)  s373=12.02(3,w23)  d=-0.31[ok]
+Z12 regular_n316        s372=2.84(3,w6)  s373=2.79(3,w10)  d=-0.05[ok]
+Z12 ws_n486             s372=2.78(3,w19)  s373=2.66(3,w32)  d=-0.13[ok]
+P16 K100                s372=13.19(3,w36)  s373=13.19(3,w36)  d=+0.00[ok]
+P16 turan_n162          s372=8.54(3,w56)  s373=7.94(3,w53)  d=-0.61[ok]
+P16 ws_n486             s372=3.64(3,w13)  s373=3.67(3,w22)  d=+0.03[ok]
+Z12 grid_200            s372=1.39(3,w1)  s373=1.41(3,w3)  d=+0.02[ok]
+Z12 grid_588            s372=1.29(3,w11)  s373=1.28(3,w31)  d=-0.01[ok]
+Z12 honeycomb_200       s372=1.95(3,w2)  s373=1.81(3,w3)  d=-0.15[ok]
+Z12 honeycomb_600       s372=1.21(3,w14)  s373=1.28(3,w31)  d=+0.07[ok]
+Z12 triangular_lat_400  s372=1.74(3,w4)  s373=1.71(3,w10)  d=-0.02[ok]
+Z12 king_graph_196      s372=2.43(3,w2)  s373=2.36(3,w4)  d=-0.07[ok]
+
+BAR1 (parity-or-better): PASS
+BAR2 turan 10-seed (s373): 6.792 [FAIL]
+BAR3: lattice rows above. BAR4: expander acc/rev + walls.
+load at end: (16.38427734375, 7.333984375, 2.83935546875)
+done-probe

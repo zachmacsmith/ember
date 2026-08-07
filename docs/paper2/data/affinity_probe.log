@@ -1,0 +1,135 @@
+110 jobs; load (0.63916015625, 1.08154296875, 1.357421875)
+Z12 K100               s371     seed 0: 7.79 mx=10 acc/rev=0/0 w=15.5s
+Z12 K100               s371     seed 1: 7.79 mx=10 acc/rev=0/0 w=17.6s
+Z12 K100               s371     seed 2: 7.79 mx=10 acc/rev=0/0 w=18.4s
+Z12 K100               affinity seed 0: 7.79 mx=10 acc/rev=0/0 w=15.5s
+Z12 K100               affinity seed 1: 7.79 mx=10 acc/rev=0/0 w=17.7s
+Z12 K100               affinity seed 2: 7.79 mx=10 acc/rev=0/0 w=19.1s
+Z12 K140               s371     seed 0: 10.521 mx=12 acc/rev=0/0 w=50.3s
+Z12 K140               s371     seed 1: 10.521 mx=12 acc/rev=0/0 w=54.0s
+Z12 K140               s371     seed 2: 10.521 mx=12 acc/rev=0/0 w=53.1s
+Z12 K140               affinity seed 0: 10.521 mx=12 acc/rev=0/0 w=49.9s
+Z12 K140               affinity seed 1: 10.521 mx=12 acc/rev=0/0 w=51.9s
+Z12 K140               affinity seed 2: 10.521 mx=12 acc/rev=0/0 w=53.3s
+Z12 ER100_d10          s371     seed 0: 4.58 mx=8 acc/rev=3/15 w=4.0s
+Z12 ER100_d10          s371     seed 1: 4.67 mx=9 acc/rev=3/15 w=5.6s
+Z12 ER100_d10          s371     seed 2: 4.69 mx=9 acc/rev=3/15 w=4.1s
+Z12 ER100_d10          affinity seed 0: 4.81 mx=9 acc/rev=3/15 w=3.7s
+Z12 ER100_d10          affinity seed 1: 4.93 mx=10 acc/rev=3/15 w=3.8s
+Z12 ER100_d10          affinity seed 2: 4.72 mx=9 acc/rev=3/15 w=3.1s
+Z12 turan_n162         s371     seed 0: 6.698 mx=7 acc/rev=1/1 w=62.1s
+Z12 turan_n162         s371     seed 1: 6.228 mx=7 acc/rev=1/1 w=25.8s
+Z12 turan_n162         s371     seed 2: 6.5 mx=7 acc/rev=1/1 w=42.1s
+Z12 turan_n162         s371     seed 3: 6.691 mx=7 acc/rev=1/1 w=60.8s
+Z12 turan_n162         s371     seed 4: 6.796 mx=8 acc/rev=1/1 w=37.6s
+Z12 turan_n162         s371     seed 5: 6.228 mx=7 acc/rev=1/1 w=26.9s
+Z12 turan_n162         s371     seed 6: 6.698 mx=7 acc/rev=1/1 w=63.1s
+Z12 turan_n162         s371     seed 7: 6.228 mx=7 acc/rev=1/1 w=24.8s
+Z12 turan_n162         s371     seed 8: 6.0 mx=6 acc/rev=1/1 w=26.2s
+Z12 turan_n162         s371     seed 9: 6.5 mx=7 acc/rev=1/1 w=41.6s
+Z12 turan_n162         affinity seed 0: 6.741 mx=8 acc/rev=14/19 w=28.9s
+Z12 turan_n162         affinity seed 1: 6.772 mx=8 acc/rev=8/15 w=26.7s
+Z12 turan_n162         affinity seed 2: 6.747 mx=8 acc/rev=14/19 w=28.6s
+Z12 turan_n162         affinity seed 3: 6.735 mx=8 acc/rev=14/19 w=31.6s
+Z12 turan_n162         affinity seed 4: 6.728 mx=8 acc/rev=14/19 w=30.2s
+Z12 turan_n162         affinity seed 5: 6.796 mx=8 acc/rev=8/15 w=42.5s
+Z12 turan_n162         affinity seed 6: 6.784 mx=8 acc/rev=14/19 w=48.1s
+Z12 turan_n162         affinity seed 7: 6.235 mx=7 acc/rev=8/15 w=38.7s
+Z12 turan_n162         affinity seed 8: 6.796 mx=8 acc/rev=8/15 w=60.4s
+Z12 turan_n162         affinity seed 9: 6.747 mx=8 acc/rev=14/19 w=28.3s
+Z12 spin_glass_n163    s371     seed 0: 11.988 mx=16 acc/rev=5/3 w=37.2s
+Z12 spin_glass_n163    s371     seed 1: 11.914 mx=17 acc/rev=5/3 w=19.8s
+Z12 spin_glass_n163    s371     seed 2: 12.08 mx=18 acc/rev=5/3 w=19.5s
+Z12 spin_glass_n163    affinity seed 0: 12.319 mx=20 acc/rev=9/23 w=17.8s
+Z12 spin_glass_n163    affinity seed 1: 12.307 mx=20 acc/rev=9/23 w=18.0s
+Z12 spin_glass_n163    affinity seed 2: 12.35 mx=20 acc/rev=9/23 w=18.0s
+Z12 regular_n316       s371     seed 0: 2.674 mx=6 acc/rev=24/34 w=5.8s
+Z12 regular_n316       s371     seed 1: 2.788 mx=7 acc/rev=24/34 w=5.5s
+Z12 regular_n316       s371     seed 2: 2.896 mx=7 acc/rev=24/34 w=5.1s
+Z12 regular_n316       affinity seed 0: 2.725 mx=6 acc/rev=22/31 w=5.9s
+Z12 regular_n316       affinity seed 1: 2.845 mx=7 acc/rev=22/31 w=5.7s
+Z12 regular_n316       affinity seed 2: 2.946 mx=7 acc/rev=22/31 w=5.1s
+Z12 ws_n486            s371     seed 0: 2.49 mx=9 acc/rev=30/167 w=18.4s
+Z12 ws_n486            s371     seed 1: 2.605 mx=9 acc/rev=30/167 w=18.1s
+Z12 ws_n486            s371     seed 2: 2.521 mx=9 acc/rev=30/167 w=18.1s
+Z12 ws_n486            affinity seed 0: 2.753 mx=9 acc/rev=56/177 w=19.3s
+Z12 ws_n486            affinity seed 1: 2.811 mx=10 acc/rev=56/177 w=19.4s
+Z12 ws_n486            affinity seed 2: 2.78 mx=9 acc/rev=56/177 w=19.2s
+P16 K100               s371     seed 0: 12.68 mx=20 acc/rev=0/0 w=23.9s
+P16 K100               s371     seed 1: 13.27 mx=20 acc/rev=0/0 w=61.3s
+P16 K100               s371     seed 2: 13.61 mx=21 acc/rev=0/0 w=22.9s
+P16 K100               affinity seed 0: 12.68 mx=20 acc/rev=0/0 w=25.7s
+P16 K100               affinity seed 1: 13.27 mx=20 acc/rev=0/0 w=60.8s
+P16 K100               affinity seed 2: 13.61 mx=21 acc/rev=0/0 w=22.2s
+P16 turan_n162         s371     seed 0: 8.5 mx=9 acc/rev=1/0 w=44.5s
+P16 turan_n162         s371     seed 1: 8.5 mx=9 acc/rev=1/0 w=44.2s
+P16 turan_n162         s371     seed 2: 8.593 mx=9 acc/rev=1/0 w=61.8s
+P16 turan_n162         affinity seed 0: 8.58 mx=9 acc/rev=7/9 w=60.6s
+P16 turan_n162         affinity seed 1: 8.765 mx=10 acc/rev=7/9 w=46.0s
+P16 turan_n162         affinity seed 2: 8.29 mx=9 acc/rev=7/9 w=56.5s
+P16 ws_n486            s371     seed 0: 3.883 mx=17 acc/rev=11/69 w=11.0s
+P16 ws_n486            s371     seed 1: 3.646 mx=16 acc/rev=14/57 w=14.9s
+P16 ws_n486            s371     seed 2: 3.893 mx=19 acc/rev=9/33 w=15.3s
+P16 ws_n486            affinity seed 0: 3.632 mx=16 acc/rev=12/52 w=13.0s
+P16 ws_n486            affinity seed 1: 3.907 mx=18 acc/rev=17/61 w=15.3s
+P16 ws_n486            affinity seed 2: 3.872 mx=17 acc/rev=12/52 w=13.7s
+Z12 grid_200           s371     seed 0: 1.5 mx=3 acc/rev=12/19 w=1.3s
+Z12 grid_200           s371     seed 1: 1.44 mx=3 acc/rev=12/19 w=1.3s
+Z12 grid_200           s371     seed 2: 1.325 mx=3 acc/rev=12/19 w=1.5s
+Z12 grid_200           affinity seed 0: 1.31 mx=3 acc/rev=11/25 w=1.4s
+Z12 grid_200           affinity seed 1: 1.445 mx=3 acc/rev=11/25 w=1.3s
+Z12 grid_200           affinity seed 2: 1.42 mx=3 acc/rev=11/25 w=1.3s
+Z12 grid_588           s371     seed 0: 1.272 mx=3 acc/rev=43/54 w=9.8s
+Z12 grid_588           s371     seed 1: 1.301 mx=3 acc/rev=43/54 w=9.5s
+Z12 grid_588           s371     seed 2: 1.282 mx=3 acc/rev=43/54 w=9.7s
+Z12 grid_588           affinity seed 0: 1.279 mx=3 acc/rev=44/63 w=10.7s
+Z12 grid_588           affinity seed 1: 1.31 mx=3 acc/rev=44/63 w=10.9s
+Z12 grid_588           affinity seed 2: 1.284 mx=3 acc/rev=44/63 w=10.7s
+Z12 honeycomb_200      s371     seed 0: 1.915 mx=4 acc/rev=18/9 w=2.2s
+Z12 honeycomb_200      s371     seed 1: 1.87 mx=3 acc/rev=18/9 w=2.3s
+Z12 honeycomb_200      s371     seed 2: 1.985 mx=4 acc/rev=18/9 w=1.9s
+Z12 honeycomb_200      affinity seed 0: 1.91 mx=3 acc/rev=11/11 w=2.1s
+Z12 honeycomb_200      affinity seed 1: 2.125 mx=4 acc/rev=11/11 w=1.8s
+Z12 honeycomb_200      affinity seed 2: 1.825 mx=3 acc/rev=11/11 w=2.3s
+Z12 honeycomb_600      s371     seed 0: 1.253 mx=3 acc/rev=39/149 w=15.2s
+Z12 honeycomb_600      s371     seed 1: 1.213 mx=2 acc/rev=45/129 w=13.6s
+Z12 honeycomb_600      s371     seed 2: 1.172 mx=2 acc/rev=54/148 w=15.3s
+Z12 honeycomb_600      affinity seed 0: 1.168 mx=3 acc/rev=22/157 w=16.4s
+Z12 honeycomb_600      affinity seed 1: 1.21 mx=3 acc/rev=17/159 w=15.6s
+Z12 honeycomb_600      affinity seed 2: 1.255 mx=3 acc/rev=39/118 w=13.2s
+Z12 triangular_lat_400 s371     seed 0: 1.772 mx=4 acc/rev=19/37 w=4.8s
+Z12 triangular_lat_400 s371     seed 1: 1.735 mx=4 acc/rev=19/37 w=5.2s
+Z12 triangular_lat_400 s371     seed 2: 1.75 mx=4 acc/rev=19/37 w=4.9s
+Z12 triangular_lat_400 affinity seed 0: 1.775 mx=4 acc/rev=14/27 w=3.8s
+Z12 triangular_lat_400 affinity seed 1: 1.742 mx=4 acc/rev=14/27 w=4.1s
+Z12 triangular_lat_400 affinity seed 2: 1.7 mx=4 acc/rev=14/27 w=4.5s
+Z12 king_graph_196     s371     seed 0: 2.653 mx=6 acc/rev=12/5 w=1.7s
+Z12 king_graph_196     s371     seed 1: 2.255 mx=5 acc/rev=12/5 w=2.9s
+Z12 king_graph_196     s371     seed 2: 2.52 mx=6 acc/rev=12/5 w=2.2s
+Z12 king_graph_196     affinity seed 0: 2.352 mx=5 acc/rev=6/11 w=2.6s
+Z12 king_graph_196     affinity seed 1: 2.76 mx=6 acc/rev=6/11 w=2.2s
+Z12 king_graph_196     affinity seed 2: 2.173 mx=5 acc/rev=6/11 w=2.6s
+
+summary (mean ACL, mean wall; d = affinity - s371):
+Z12 K100                s371=7.79(3,w17)  affinity=7.79(3,w17)  d=+0.00[ok]
+Z12 K140                s371=10.52(3,w52)  affinity=10.52(3,w52)  d=+0.00[ok]
+Z12 ER100_d10           s371=4.65(3,w5)  affinity=4.82(3,w4)  d=+0.17[ok]
+Z12 turan_n162          s371=6.46(10,w41)  affinity=6.71(10,w36)  d=+0.25[ok]
+Z12 spin_glass_n163     s371=11.99(3,w26)  affinity=12.33(3,w18)  d=+0.33[ok]
+Z12 regular_n316        s371=2.79(3,w5)  affinity=2.84(3,w6)  d=+0.05[ok]
+Z12 ws_n486             s371=2.54(3,w18)  affinity=2.78(3,w19)  d=+0.24[ok]
+P16 K100                s371=13.19(3,w36)  affinity=13.19(3,w36)  d=+0.00[ok]
+P16 turan_n162          s371=8.53(3,w50)  affinity=8.54(3,w54)  d=+0.01[ok]
+P16 ws_n486             s371=3.81(3,w14)  affinity=3.80(3,w14)  d=-0.00[ok]
+Z12 grid_200            s371=1.42(3,w1)  affinity=1.39(3,w1)  d=-0.03[ok]
+Z12 grid_588            s371=1.28(3,w10)  affinity=1.29(3,w11)  d=+0.01[ok]
+Z12 honeycomb_200       s371=1.92(3,w2)  affinity=1.95(3,w2)  d=+0.03[ok]
+Z12 honeycomb_600       s371=1.21(3,w15)  affinity=1.21(3,w15)  d=-0.00[ok]
+Z12 triangular_lat_400  s371=1.75(3,w5)  affinity=1.74(3,w4)  d=-0.01[ok]
+Z12 king_graph_196      s371=2.48(3,w2)  affinity=2.43(3,w2)  d=-0.05[ok]
+
+BAR1 (parity-or-better): PASS
+BAR3 turan 10-seed (affinity): 6.708 (FAIL vs 6.46 + noise)
+BAR2: read grid/honeycomb rows. Hub walls: star/wheel rows.
+load at end: (14.1904296875, 6.90087890625, 3.50146484375)
+done-probe

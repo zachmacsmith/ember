@@ -195,11 +195,14 @@ previously claimed "fabric-agnostic — active on every target"; corrected
 change can affect Pegasus until that gate is revisited.) Measured
 (s3.62-64): five records, exactness gates firing on all dense cells;
 losing arms (mass shares, tangent closure, segments) at the
-consolidation-3 marker with their numbers. Switch-guarded s3.69
-extensions (`vcycle_agg`, `vcycle_transport`, defaults off pending the
-adjoint-probe verdict): leader-aggregation fixpoint in place of the
-single matching round, and the measure-transport junction in place of
-the disc spread.
+consolidation-3 marker with their numbers. Since s3.70 the DEFAULTS
+include `vcycle_agg=True` (leader-aggregation fixpoint in place of the
+single matching round — parity twice-measured) and `cluster_moves=True`
+(coarse moves: cluster gather/relocate as E-gated composites inside
+arrange, on raw members, fabric-agnostic — turán 8.10→6.53 at 10 seeds
+with the blow-up tail eliminated; expanders exactly at stock).
+`vcycle_transport` remains off (ungated init transport: wins lattices,
+loses expanders; its gather lives on as the cluster move).
 
 ## 5. Seed derivation — bars to real qubit chains
 

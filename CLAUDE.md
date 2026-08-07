@@ -18,18 +18,20 @@ on top of `main`'s benchmarking framework, exactly two things:
 **Ground rules.** Every change to minorminer must be a toggleable switch, defaulted to stock
 behavior, measured one flip at a time against the stock corner — paired by (instance, seed),
 never unpaired (survivor bias). Verify any claim about minorminer against its source, never
-its paper — the shipped program has repeatedly outgrown the 2014 description (notes §3.8, §3.14). Design rationale and the chronological lab record: `docs/paper2/notes.md`.
-Organized references: `docs/paper2/mm-internals.md` (what shipped minorminer
-actually does, with file:line citations into `external/minorminer-fork`),
-`docs/paper2/anatomy.md` (the attraction embedder as-built: every component of
-the current single pipeline and why it exists), `docs/paper2/attraction.md`
-(the idea ledger and fossil record — every tried/refuted/superseded variant
-with its verdict; superseded code lives at archive commit `612ced3e`), and
-`docs/paper2/fabrics.md` (the target-graph bestiary: measured anatomy of
-Chimera/Pegasus/Zephyr — bars, junctions, coupler censuses, packing constants —
-plus the translation checklist for adapting any new fabric). Consult
-these before re-deriving minorminer behavior, re-proposing tried ideas, or
-reasoning about a target topology from memory or paper figures.
+its paper — the shipped program has repeatedly outgrown the 2014 description.
+
+**Read `docs/paper2/ideas.md` FIRST.** It holds the principles that survived
+measurement, the open questions, and the five-practice method — the notes
+were condensed 2026-08-06 because accumulated micro-verdicts and
+Claude-invented doctrine were poisoning later sessions. The only rule is to
+find the correct algorithm from the principles of what makes it good.
+Supporting references: `docs/paper2/attraction.md` (condensed verdict ledger —
+check before proposing; prevents re-derivation), `docs/paper2/anatomy.md`
+(the pipeline as-built), `docs/paper2/fabrics.md` (measured fabric anatomy),
+`docs/paper2/mm-internals.md` (what shipped minorminer actually does),
+`docs/paper2/notes.md` (condensed chronicle). `docs/paper2/archive/` holds
+the full uncondensed records — history, not instruction: do not resurrect
+its doctrine vocabulary or treat its micro-observations as binding.
 
 The abandoned prior work (Reweave wrapper, speculative embedders, learning line) lives only
 on the `new-algorithm` branch. Do not reintroduce it.

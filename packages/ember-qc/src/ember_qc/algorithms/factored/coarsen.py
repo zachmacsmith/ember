@@ -145,7 +145,8 @@ def _merge(adj: Dict[int, Dict[int, float]], weight: Dict[int, float],
 
 
 def coarsen(src_adj: Dict[int, List[int]], *, threshold: float = 0.34,
-            min_nodes: int = 8, agg: bool = False) -> List[Level]:
+            min_nodes: int = 8, agg: bool = False,
+            units: bool = False) -> List[Level]:
     """Build the TWO-STAGE hierarchy [fine, coarse] (s3.63 flatten —
     V0's level loop was vestigial at our sizes: measured depths <= 3
     with later rounds nearly inert). ONE round: collapse exact-twin
@@ -173,6 +174,8 @@ def coarsen(src_adj: Dict[int, List[int]], *, threshold: float = 0.34,
     fine = Level(adj0, {v: 1.0 for v in adj0})
     if len(adj0) <= min_nodes:
         return [fine]
+    if units:
+        return _coarsen_units(fine)
     if agg:
         return _coarsen_agg(fine, threshold)
     groups = _twin_groups(fine.adj)
@@ -205,6 +208,138 @@ def coarsen(src_adj: Dict[int, List[int]], *, threshold: float = 0.34,
     if len(coarse.adj) >= len(fine.adj):
         return [fine]
     return [fine, coarse]
+
+
+def _affinity(au: Dict[int, float], wu: float, u: int,
+              av: Dict[int, float], wv: float, v: int) -> float:
+    """Per-member affinity (s3.72) — THE merge criterion, stated for
+    disjoint sets S, T over the real edges of the source graph:
+
+        p_S(w)  = E(S, w) / |S|          (per-member pull toward w)
+        mu      = 2 E(S, T) / (|S|+|T|)  (per-member mutual pull)
+        affinity = [sum_w min(p_S, p_T) + mu + 1]
+                 / [sum_w max(p_S, p_T) + mu + 1]
+
+    "Put the average member of S next to the average member of T: what
+    fraction of their pull do they agree on?" — mutual pull and one's
+    own body count as agreement. The +1 is one body per member
+    (constant; regularizer only — the old body term's size penalty was
+    WRONG: 1:2 fragments of one twin family scored 1/2; here any-ratio
+    fragments score exactly 1). Internal edges of S or T do not appear.
+    Nothing asks whether S and T touch: the direct edge is one term on
+    the same scale as shared support (chain neighbors 1/2; 99%-shared
+    non-adjacent pairs ~1). affinity = 1  <=>  the rest of the graph
+    cannot tell S and T apart (per member) — clique members and
+    same-block independent-set members alike, no species detection.
+
+    Here the sets are supernodes: au/av are aggregated adjacency rows
+    (cached sums of member rows), wu/wv the member counts."""
+    m = au.get(v, 0.0)
+    mu = 2.0 * m / (wu + wv)
+    smin = 0.0
+    smax = 0.0
+    for k, a in au.items():
+        if k == u or k == v:
+            continue
+        b = av.get(k, 0.0) / wv
+        a = a / wu
+        if a < b:
+            smin += a
+            smax += b
+        else:
+            smin += b
+            smax += a
+    for k, b in av.items():
+        if k == u or k == v or k in au:
+            continue
+        smax += b / wv
+    return (smin + mu + 1.0) / (smax + mu + 1.0)
+
+
+def _coarsen_units(fine: Level) -> List[Level]:
+    """Move-unit hierarchy (s3.72, THE units engine — Max, 2026-08-07:
+    the correct criterion ships even where the deleted wrong-but-working
+    one measured a hair better; wrong code does not stay default). Known
+    open defect, named and owned by the CONSUMPTION side, not this
+    engine: deep hierarchies emit nested fragment units whose one-shot
+    gathers can pre-empt a full-block gather (turan 6.71 vs 6.46) — the
+    fix is unit selection/ordering in the cluster pass.
+
+    The engine: ONE formula, no hash, no adjacency
+    rule, no threshold. Per round: enumerate pairs that share an edge or
+    a neighbor, rank them by ``_affinity`` (the per-member criterion —
+    see its docstring), greedy maximal matching by rank, rebuild, repeat
+    to fixpoint (one node per component). Ratio <= 2x per round -> log
+    depth. The gate owns correctness: over-generous units cost one
+    rejected proposal; missing units cost inexpressible joint moves.
+
+    Deleted here and why (s3.72):
+    - the exact-twin hash — topology detection; affinity-1 pairs
+      assemble twin families through the ordinary rounds;
+    - the adjacency-only candidate rule — it overrode the criterion's
+      own direct-edge/shared-support interpolation, and its
+      justification (connected units) was an UNMEASURED structural
+      indicator, retracted; the probe measures the outcome instead;
+    - the raw-total score — pure size mismatch read as disagreement
+      (1:2 twin fragments at 1/2); per-member profiles fix it at the
+      root, which also retires the straggler pathology permanently."""
+    diag: Dict = {"rounds": 0, "ratios": [], "max_cluster": 1}
+    cur = fine
+    chain: List[Level] = [fine]
+
+    while len(cur.adj) > 1:
+        adj, weight = cur.adj, cur.weight
+        pairs: List[Tuple[float, int, int]] = []
+        for v in sorted(adj):
+            cand: set = set()
+            for x in adj[v]:
+                if x > v:
+                    cand.add(x)
+                for y in adj.get(x, ()):
+                    if y > v:
+                        cand.add(y)
+            for x in sorted(cand):
+                pairs.append((_affinity(adj[v], weight[v], v,
+                                        adj[x], weight[x], x), v, x))
+        # Admissibility: a pair may merge only if it is at least ONE
+        # endpoint's best available option (ties allowed). Without this,
+        # greedy maximality forces leftovers of odd-count families into
+        # bad marriages (turan: one 0.012 cross-block pairing at round 1
+        # snowballed to a 64/17 mixed blob — no pure block level, every
+        # gather screened out). A leftover whose kin were all taken this
+        # round waits; next round its kin score 1 again at any size
+        # ratio (the per-member formula). The global-max pair is always
+        # admissible, so every round merges something and termination
+        # is unchanged.
+        bestval: Dict[int, float] = {}
+        for sc, v, x in pairs:
+            if sc > bestval.get(v, 0.0):
+                bestval[v] = sc
+            if sc > bestval.get(x, 0.0):
+                bestval[x] = sc
+        pairs.sort(key=lambda t: (-t[0], t[1], t[2]))
+        matched: set = set()
+        groups = []
+        for sc, v, x in pairs:
+            if v in matched or x in matched:
+                continue
+            if (sc < bestval.get(v, 0.0) - 1e-12
+                    and sc < bestval.get(x, 0.0) - 1e-12):
+                continue
+            groups.append([v, x])
+            matched.update((v, x))
+        if not groups:
+            break
+        nxt = _merge(cur.adj, cur.weight, groups, cur.self_mass)
+        if len(nxt.adj) >= len(cur.adj):
+            break
+        diag["rounds"] += 1
+        diag["ratios"].append(round(len(cur.adj) / len(nxt.adj), 3))
+        chain.append(nxt)
+        cur = nxt
+
+    chain[-1].diag = diag
+    return chain
 
 
 def _coarsen_agg(fine: Level, threshold: float) -> List[Level]:

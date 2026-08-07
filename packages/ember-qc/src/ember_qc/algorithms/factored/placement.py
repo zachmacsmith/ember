@@ -240,13 +240,14 @@ class AttractConfig:
                                # old default lost; confirmed by the
                                # s3.66 guard probe. False = the legacy
                                # spectral init.
-    vcycle_agg: bool = False   # s3.68/s3.69: leader-aggregation fixpoint
+    vcycle_agg: bool = True    # s3.68/s3.69: leader-aggregation fixpoint
                                # replaces {one pairwise matching round +
                                # the no-fixpoint decree}; twin hash kept
                                # at round 0; quotient protection emerges
                                # from the weighted score. Probe-validated
-                               # at board parity (s3.68). Inert unless
-                               # vcycle is active (stride-gated with it).
+                               # at board parity twice (s3.68, s3.70);
+                               # DEFAULT ON (Max, 2026-08-06: winners
+                               # ship). Inert unless vcycle is active.
     vcycle_transport: bool = False
                                # s3.69 measure-transport junction: the
                                # fine layout = the coarse layout's ORDERS
@@ -257,6 +258,27 @@ class AttractConfig:
                                # spread and its geometry constants on
                                # this path. Inert unless vcycle is
                                # active.
+    cluster_moves: bool = True
+                               # s3.70: coarsen the MOVES, not the state.
+                               # Clusters (aggregation-fixpoint groups)
+                               # are member sets gathered/relocated as
+                               # one E-gated composite inside arrange —
+                               # real bars through real gates, nothing
+                               # summarized, no sizes guessed. NOT
+                               # stride-gated: rides the ordinary gates
+                               # on every fabric. DEFAULT ON (Max,
+                               # 2026-08-06: obvious winners ship as
+                               # defaults — 10-seed turan 8.10→6.53 with
+                               # the tail killed, expanders at exact
+                               # parity, first Pegasus movement).
+    cluster_units: bool = True
+                               # s3.71: move units from THRESHOLD-FREE
+                               # mutual-preference coarsening (τ never
+                               # consulted; every graph gets its natural
+                               # log-depth hierarchy — lattices become
+                               # patch tilings, the gate filters).
+                               # False = s3.70's τ-aggregation units
+                               # (the measurement control arm).
 
 
 def _auto_bins(n_qubits: int) -> int:
@@ -387,12 +409,35 @@ def attract_embed(
         for _s in range(eff_contract):
             tpts = stair_step(tpts, src_adj, eta=cfg.eta)
         E_contract = round(stair_energy(tpts, src_adj), 1)
+        # s3.70 cluster moves: the aggregation hierarchy's groups, in
+        # FINE ids, one list per level (coarsest last). Position-free —
+        # computed once from the source graph.
+        cluster_groups = None
+        if cfg.cluster_moves:
+            from ember_qc.algorithms.factored.coarsen import (
+                coarsen as _coarsen)
+            _levels = (_coarsen(src_adj, units=True) if cfg.cluster_units
+                       else _coarsen(src_adj, agg=True))
+            if len(_levels) > 1:
+                cluster_groups = []
+                _mem = {v: [v] for v in _levels[0].adj}
+                for _li in range(1, len(_levels)):
+                    _up: dict = {}
+                    for _c, _ms in _mem.items():
+                        _p = _levels[_li].parent_of[_c]
+                        _up.setdefault(_p, []).extend(_ms)
+                    _mem = _up
+                    _g = [sorted(ms) for ms in _mem.values() if len(ms) > 1]
+                    if _g:
+                        cluster_groups.append(_g)
+                cluster_groups = cluster_groups or None
         tpts, last_info = alternate_arrange(
             tpts, src_adj, grid, iters=cfg.arrange_iters,
             kappa=kappa, floor=cfg.span_floor,
             insert_sweeps=cfg.insert_sweeps,
             overload_lam=eff_lam, use_dp=eff_dp, snap=eff_snap,
-            deadline=placement_deadline)
+            deadline=placement_deadline,
+            cluster_groups=cluster_groups)
         cent = {v: grid.Minv @ (tpts[v] - grid.c) for v in cent}
         # raw stair-E (recorded trajectory metric)
         stair_E = round(stair_energy(tpts, src_adj), 1)
@@ -461,6 +506,8 @@ def attract_embed(
                 "assigned_rows": int(last_info.get("assigned_rows", 0)),
                 "assigned_cols": int(last_info.get("assigned_cols", 0)),
                 "insert_reverts": int(last_info.get("insert_reverts", 0)),
+                "cluster_accepts": int(last_info.get("cluster_accepts", 0)),
+                "cluster_reverts": int(last_info.get("cluster_reverts", 0)),
                 "mono_time": float(last_info.get("mono_time", 0.0)),
                 "extent_mean": round(float(sizes.mean()), 3),
                 "extent_max": round(float(sizes.max()), 3),

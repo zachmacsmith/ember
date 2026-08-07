@@ -1134,6 +1134,66 @@ def _order_proxy(order: List[int], src_adj: Dict[int, List[int]],
     return members, n, A, val, lo_fix, hi_fix, has, energy
 
 
+def cluster_gather_order(order: List[int], cluster,
+                         src_adj: Dict[int, List[int]],
+                         values: Optional[np.ndarray],
+                         anchors: Optional[Tuple[np.ndarray, np.ndarray]]
+                         ) -> Optional[List[int]]:
+    """One coarse move in rank space (s3.70): gather ``cluster``'s members
+    into a contiguous block of the order. The cluster is a member SET
+    moved as one — nothing is summarized into a size; the caller's gated
+    composite judges the real packed result. Within-block order is
+    external-attachment rank (anchor midpoint — the certificate says ties
+    are free); candidate block positions are the members' mean slot and
+    the insertion points of the cluster's aggregate anchor bounds (the
+    single-member candidate rule generalized). Screened by the shared
+    O(n^2) proxy; returns the improving order or None."""
+    (members, n, A, val, lo_fix, hi_fix, has,
+     energy) = _order_proxy(order, src_adj, values, anchors)
+    if energy is None:
+        return None
+    idx = {v: i for i, v in enumerate(members)}
+    ins = [v for v in cluster if v in idx]
+    if len(ins) < 2 or len(ins) >= n:
+        return None
+    p0 = np.empty(n, dtype=float)
+    for slot, v in enumerate(order):
+        p0[idx[v]] = slot
+    e0 = energy(p0)
+
+    # Within-block order: anchor midpoint where finite, else the member's
+    # current priced value; ties broken by id (merge-certified free).
+    def _mid(v):
+        i = idx[v]
+        lo, hi = lo_fix[i], hi_fix[i]
+        if lo < np.inf and hi > -np.inf:
+            return 0.5 * (lo + hi)
+        return float(val[int(p0[i])])
+    block = sorted(ins, key=lambda v: (_mid(v), v))
+
+    rest = [v for v in order if v not in set(ins)]
+    k = len(ins)
+    cands = set()
+    cands.add(int(round(float(np.mean([p0[idx[v]] for v in ins])))))
+    agg_lo = min((lo_fix[idx[v]] for v in ins), default=np.inf)
+    agg_hi = max((hi_fix[idx[v]] for v in ins), default=-np.inf)
+    if agg_lo < np.inf:
+        cands.add(int(np.searchsorted(val, agg_lo)))
+    if agg_hi > -np.inf:
+        cands.add(int(np.searchsorted(val, agg_hi)))
+    best_e, best_order = e0 - 1e-9, None
+    for s in sorted(cands):
+        s = max(0, min(s, n - k))
+        new_order = rest[:s] + block + rest[s:]
+        p2 = np.empty(n, dtype=float)
+        for slot, v in enumerate(new_order):
+            p2[idx[v]] = slot
+        e2 = energy(p2)
+        if e2 < best_e:
+            best_e, best_order = e2, new_order
+    return best_order
+
+
 def insertion_sweeps(order: List[int], src_adj: Dict[int, List[int]], *,
                      max_sweeps: int = 8,
                      values: Optional[np.ndarray] = None,
@@ -1224,7 +1284,8 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                       floor: bool = True, insert_sweeps: int = 0,
                       overload_lam: float = 0.0,
                       use_dp: bool = False, snap: bool = False,
-                      deadline: Optional[float] = None):
+                      deadline: Optional[float] = None,
+                      cluster_groups=None):
     """Alternating 1-D arrangement on the stair energy.
 
     Policy is EXPLICIT (s3.66; this function never inspects the fabric):
@@ -1326,6 +1387,107 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
         return False
 
     import time as _time_mod
+
+    def _order_composite(_propose, members=None, axis=1, strict=False):
+        """One gated order composite (the s3.36/s3.61 flow, shared by the
+        insertion and cluster move families): rebuild the rank-space view
+        of the given AXIS from the current state, get a proposal, apply
+        as a permutation of that axis's coordinate multiset, re-monotonize
+        + repack, dispose by the gate energy with full revert. Returns
+        None (no proposal / no-op), True (accepted), False (reverted).
+        ``members=None`` recomputes participants from the current books
+        (cluster path); the insertion path passes its pre-loop member
+        list to preserve the exact s3.66 semantics. ``strict=True``
+        (cluster moves, s3.73) requires strict energy DESCENT — lateral
+        equal-energy accepts are what powered the expander churn loop
+        (gather, pack disperses at equal E, re-gather, forever); with
+        strict acceptance the energy itself bounds re-proposals and no
+        scheduling rule is needed."""
+        nonlocal new_pos, cur_books, cur_E
+        if members is None:
+            members = sorted({v for o in (1, 0)
+                              for (_l, _a, _b, v) in cur_books[2][o]})
+        if len(members) < 3:
+            return None
+        vals = np.array(sorted(float(new_pos[v][axis]) for v in members))
+        member_set = set(members)
+        anchor_of = {}
+        for v in members:
+            ext = [float(new_pos[u][axis]) for u in src_adj.get(v, [])
+                   if u in new_pos and u not in member_set]
+            anchor_of[v] = ((min(ext), max(ext)) if ext
+                            else (np.inf, -np.inf))
+        order0 = sorted(members,
+                        key=lambda v: (float(new_pos[v][axis]), v))
+        lo = np.array([anchor_of[v][0] for v in order0])
+        hi = np.array([anchor_of[v][1] for v in order0])
+        new_order = _propose(order0, vals, lo, hi)
+        if new_order is None or new_order == order0:
+            return None
+        e_pre = cur_E
+        ov_pre = (claim_overload(new_pos, src_adj, grid, kappa=kappa,
+                                 floor=floor, snap=snap,
+                                 books=cur_books)
+                  if use_dp else 0.0)
+        snap_state = {v: new_pos[v].copy() for v in new_pos}
+        books_snap = cur_books
+        for r, v in enumerate(new_order):
+            new_pos[v][axis] = float(vals[r])
+        cur_books, cur_E = _eval(new_pos)
+        _mono()
+        _half(axis=1, force=False)
+        _half(axis=0, force=False)
+        e_post = cur_E
+        ov_post = (claim_overload(new_pos, src_adj, grid, kappa=kappa,
+                                  floor=floor, snap=snap,
+                                  books=cur_books)
+                   if use_dp else 0.0)
+        # s3.61 hard veto (DP-policy fabrics): a permutation may not
+        # create uncolorable lines — structural feasibility is a
+        # gate condition, not a priced preference
+        e_bad = (e_post >= e_pre - 1e-9) if strict \
+            else (e_post > e_pre + 1e-9)
+        if e_bad or ov_post > ov_pre + 1e-9:
+            new_pos = snap_state
+            cur_books, cur_E = books_snap, e_pre
+            return False
+        info["E"].append(e_post)
+        return True
+
+    def _cluster_pass():
+        # s3.70/s3.73 cluster pass — coarse moves as gated composites. A
+        # cluster is a member SET gathered as one: proposed in rank space
+        # on the real members, judged by the same gate as every fine
+        # move. Both axes (a y-only gather is half an address on a 2-D
+        # fabric); STRICT descent (the energy is the schedule — see
+        # _order_composite); no per-cluster caps — unchanged contexts
+        # no-op for free at the proxy, and strict descent bounds total
+        # accepts. Coarsest level first: biggest blocks move first.
+        info.setdefault("cluster_accepts", 0)
+        info.setdefault("cluster_reverts", 0)
+        for level_groups in reversed(list(cluster_groups)):
+            for cl in sorted(level_groups, key=lambda g: (-len(g), g)):
+                # Size-2 units are expressible as one insertion, which
+                # the insertion sweeps already search exhaustively — the
+                # cluster pass exists only for moves the fine set
+                # CANNOT make.
+                if len(cl) < 3:
+                    continue
+                key = tuple(cl)
+                for ax in (1, 0):
+                    if (deadline is not None
+                            and _time_mod.perf_counter() > deadline):
+                        return  # s3.67 anytime bail
+                    res = _order_composite(
+                        lambda o0, vals, lo, hi, _cl=key:
+                        cluster_gather_order(o0, _cl, src_adj, vals,
+                                             (lo, hi)),
+                        axis=ax, strict=True)
+                    if res is True:
+                        info["cluster_accepts"] += 1
+                    elif res is False:
+                        info["cluster_reverts"] += 1
+
     for it in range(max(iters, 1)):
         if (deadline is not None and it > 0
                 and _time_mod.perf_counter() > deadline):
@@ -1336,70 +1498,46 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
         _mono()
         moved = _half(axis=0, force=force) or moved
         info["iters"] = it + 1
+        if cluster_groups:
+            # s3.70: one coarse pass per iteration, always after the
+            # projection (a pre-pack pass measured worse: gates compare
+            # fictions on the soft state). Pack and gather alternate, so
+            # each gather sees the multiset the previous round earned —
+            # E-gated, so converged iterations cost only proxy screens.
+            _cluster_pass()
         if not moved and not force:
             break
+
+    if cluster_groups:
+        _cluster_pass()  # late: coarse polish on the packed state
+
+
 
     if insert_sweeps > 0:
         # s3.36 best-insertion order search, value-priced; members are
         # the union of both orientations' participants per the shared
         # books (s3.66 — replaces the former summed-width predicate;
-        # gate-protected change)
-        members = sorted({v for o in (1, 0)
-                          for (_l, _a, _b, v) in cur_books[2][o]})
+        # gate-protected change). Members fixed before the composite loop
+        # (pre-refactor semantics preserved exactly).
+        def _ins_propose(order0, ys, lo, hi):
+            no, _tr = insertion_sweeps(
+                order0, src_adj, max_sweeps=insert_sweeps,
+                values=ys, anchors=(lo, hi), deadline=deadline)
+            return no
+
+        ins_members = sorted({v for o in (1, 0)
+                              for (_l, _a, _b, v) in cur_books[2][o]})
         for _composite in range(2):
-            if len(members) < 3:
+            if len(ins_members) < 3:
                 break
             if (deadline is not None
                     and _time_mod.perf_counter() > deadline):
                 break  # s3.67 anytime bail
-            ys = np.array(sorted(float(new_pos[v][1]) for v in members))
-            member_set = set(members)
-            anchor_of = {}
-            for v in members:
-                ext = [float(new_pos[u][1]) for u in src_adj.get(v, [])
-                       if u in new_pos and u not in member_set]
-                anchor_of[v] = ((min(ext), max(ext)) if ext
-                                else (np.inf, -np.inf))
-
-            def _aligned(olist):
-                lo = np.array([anchor_of[v][0] for v in olist])
-                hi = np.array([anchor_of[v][1] for v in olist])
-                return lo, hi
-
-            order0 = sorted(members,
-                            key=lambda v: (float(new_pos[v][1]), v))
-            new_order, _tr = insertion_sweeps(
-                order0, src_adj, max_sweeps=insert_sweeps,
-                values=ys, anchors=_aligned(order0), deadline=deadline)
-            if new_order == order0:
-                break
-            e_pre = cur_E
-            ov_pre = (claim_overload(new_pos, src_adj, grid, kappa=kappa,
-                                     floor=floor, snap=snap,
-                                     books=cur_books)
-                      if use_dp else 0.0)
-            snap_state = {v: new_pos[v].copy() for v in new_pos}
-            books_snap = cur_books
-            for r, v in enumerate(new_order):
-                new_pos[v][1] = float(ys[r])
-            cur_books, cur_E = _eval(new_pos)
-            _mono()
-            _half(axis=1, force=False)
-            _half(axis=0, force=False)
-            e_post = cur_E
-            ov_post = (claim_overload(new_pos, src_adj, grid, kappa=kappa,
-                                      floor=floor, snap=snap,
-                                      books=cur_books)
-                       if use_dp else 0.0)
-            # s3.61 hard veto (DP-policy fabrics): a permutation may not
-            # create uncolorable lines — structural feasibility is a
-            # gate condition, not a priced preference
-            if e_post > e_pre + 1e-9 or ov_post > ov_pre + 1e-9:
-                new_pos = snap_state
-                cur_books, cur_E = books_snap, e_pre
+            res = _order_composite(_ins_propose, members=ins_members)
+            if res is False:
                 info["insert_reverts"] += 1
+            if res is not True:
                 break
-            info["E"].append(e_post)
 
     info["assigned_rows"] = len(packed_last[1])
     info["assigned_cols"] = len(packed_last[0])

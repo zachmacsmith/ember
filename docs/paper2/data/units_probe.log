@@ -1,0 +1,135 @@
+110 jobs; load (0.65234375, 0.60986328125, 0.40478515625)
+Z12 K100               tau    seed 0: 7.79 mx=10 acc/rev=0/0 w=15.3s
+Z12 K100               tau    seed 1: 7.79 mx=10 acc/rev=0/0 w=17.5s
+Z12 K100               tau    seed 2: 7.79 mx=10 acc/rev=0/0 w=18.5s
+Z12 K100               units  seed 0: 7.79 mx=10 acc/rev=0/0 w=15.2s
+Z12 K100               units  seed 1: 7.79 mx=10 acc/rev=0/0 w=17.4s
+Z12 K100               units  seed 2: 7.79 mx=10 acc/rev=0/0 w=18.5s
+Z12 K140               tau    seed 0: 10.521 mx=12 acc/rev=0/0 w=51.4s
+Z12 K140               tau    seed 1: 10.521 mx=12 acc/rev=0/0 w=53.0s
+Z12 K140               tau    seed 2: 10.521 mx=12 acc/rev=0/0 w=55.1s
+Z12 K140               units  seed 0: 10.521 mx=12 acc/rev=0/0 w=51.0s
+Z12 K140               units  seed 1: 10.521 mx=12 acc/rev=0/0 w=52.7s
+Z12 K140               units  seed 2: 10.521 mx=12 acc/rev=0/0 w=53.3s
+Z12 ER100_d10          tau    seed 0: 4.88 mx=9 acc/rev=0/0 w=4.9s
+Z12 ER100_d10          tau    seed 1: 4.98 mx=9 acc/rev=0/0 w=3.1s
+Z12 ER100_d10          tau    seed 2: 4.69 mx=8 acc/rev=0/0 w=6.6s
+Z12 ER100_d10          units  seed 0: 4.58 mx=8 acc/rev=3/15 w=4.0s
+Z12 ER100_d10          units  seed 1: 4.67 mx=9 acc/rev=3/15 w=5.5s
+Z12 ER100_d10          units  seed 2: 4.69 mx=9 acc/rev=3/15 w=4.1s
+Z12 turan_n162         tau    seed 0: 6.698 mx=7 acc/rev=1/1 w=63.3s
+Z12 turan_n162         tau    seed 1: 6.228 mx=7 acc/rev=1/1 w=26.4s
+Z12 turan_n162         tau    seed 2: 6.5 mx=7 acc/rev=1/1 w=41.9s
+Z12 turan_n162         tau    seed 3: 6.691 mx=7 acc/rev=1/1 w=60.8s
+Z12 turan_n162         tau    seed 4: 6.796 mx=8 acc/rev=1/1 w=38.7s
+Z12 turan_n162         tau    seed 5: 6.228 mx=7 acc/rev=1/1 w=26.6s
+Z12 turan_n162         tau    seed 6: 6.698 mx=7 acc/rev=1/1 w=60.4s
+Z12 turan_n162         tau    seed 7: 6.228 mx=7 acc/rev=1/1 w=24.9s
+Z12 turan_n162         tau    seed 8: 6.0 mx=6 acc/rev=1/1 w=26.1s
+Z12 turan_n162         tau    seed 9: 6.5 mx=7 acc/rev=1/1 w=41.8s
+Z12 turan_n162         units  seed 0: 6.698 mx=7 acc/rev=1/1 w=60.6s
+Z12 turan_n162         units  seed 1: 6.228 mx=7 acc/rev=1/1 w=26.5s
+Z12 turan_n162         units  seed 2: 6.5 mx=7 acc/rev=1/1 w=42.2s
+Z12 turan_n162         units  seed 3: 6.691 mx=7 acc/rev=1/1 w=63.1s
+Z12 turan_n162         units  seed 4: 6.796 mx=8 acc/rev=1/1 w=38.0s
+Z12 turan_n162         units  seed 5: 6.228 mx=7 acc/rev=1/1 w=26.5s
+Z12 turan_n162         units  seed 6: 6.698 mx=7 acc/rev=1/1 w=61.8s
+Z12 turan_n162         units  seed 7: 6.228 mx=7 acc/rev=1/1 w=25.2s
+Z12 turan_n162         units  seed 8: 6.0 mx=6 acc/rev=1/1 w=26.0s
+Z12 turan_n162         units  seed 9: 6.5 mx=7 acc/rev=1/1 w=40.7s
+Z12 spin_glass_n163    tau    seed 0: 13.282 mx=23 acc/rev=0/0 w=28.3s
+Z12 spin_glass_n163    tau    seed 1: 11.712 mx=20 acc/rev=0/0 w=16.4s
+Z12 spin_glass_n163    tau    seed 2: 11.706 mx=24 acc/rev=0/0 w=14.8s
+Z12 spin_glass_n163    units  seed 0: 11.988 mx=16 acc/rev=5/3 w=36.9s
+Z12 spin_glass_n163    units  seed 1: 11.914 mx=17 acc/rev=5/3 w=19.6s
+Z12 spin_glass_n163    units  seed 2: 12.08 mx=18 acc/rev=5/3 w=19.5s
+Z12 regular_n316       tau    seed 0: 2.63 mx=6 acc/rev=0/0 w=4.0s
+Z12 regular_n316       tau    seed 1: 2.845 mx=7 acc/rev=0/0 w=3.5s
+Z12 regular_n316       tau    seed 2: 2.968 mx=7 acc/rev=0/0 w=3.5s
+Z12 regular_n316       units  seed 0: 2.674 mx=6 acc/rev=24/34 w=5.9s
+Z12 regular_n316       units  seed 1: 2.788 mx=7 acc/rev=24/34 w=5.4s
+Z12 regular_n316       units  seed 2: 2.896 mx=7 acc/rev=24/34 w=5.2s
+Z12 ws_n486            tau    seed 0: 2.512 mx=9 acc/rev=14/26 w=11.2s
+Z12 ws_n486            tau    seed 1: 2.714 mx=9 acc/rev=14/26 w=11.2s
+Z12 ws_n486            tau    seed 2: 2.63 mx=9 acc/rev=14/26 w=11.1s
+Z12 ws_n486            units  seed 0: 2.49 mx=9 acc/rev=30/167 w=18.4s
+Z12 ws_n486            units  seed 1: 2.605 mx=9 acc/rev=30/167 w=18.0s
+Z12 ws_n486            units  seed 2: 2.521 mx=9 acc/rev=30/167 w=17.9s
+P16 K100               tau    seed 0: 12.68 mx=20 acc/rev=0/0 w=24.8s
+P16 K100               tau    seed 1: 13.27 mx=20 acc/rev=0/0 w=61.6s
+P16 K100               tau    seed 2: 13.61 mx=21 acc/rev=0/0 w=21.8s
+P16 K100               units  seed 0: 12.68 mx=20 acc/rev=0/0 w=25.3s
+P16 K100               units  seed 1: 13.27 mx=20 acc/rev=0/0 w=60.9s
+P16 K100               units  seed 2: 13.61 mx=21 acc/rev=0/0 w=22.3s
+P16 turan_n162         tau    seed 0: 8.5 mx=9 acc/rev=1/0 w=44.5s
+P16 turan_n162         tau    seed 1: 8.5 mx=9 acc/rev=1/0 w=44.0s
+P16 turan_n162         tau    seed 2: 8.593 mx=9 acc/rev=1/0 w=61.5s
+P16 turan_n162         units  seed 0: 8.5 mx=9 acc/rev=1/0 w=41.6s
+P16 turan_n162         units  seed 1: 8.5 mx=9 acc/rev=1/0 w=42.8s
+P16 turan_n162         units  seed 2: 8.593 mx=9 acc/rev=1/0 w=61.3s
+P16 ws_n486            tau    seed 0: 4.016 mx=18 acc/rev=3/1 w=8.0s
+P16 ws_n486            tau    seed 1: 3.695 mx=17 acc/rev=2/1 w=6.5s
+P16 ws_n486            tau    seed 2: 4.148 mx=19 acc/rev=2/3 w=6.3s
+P16 ws_n486            units  seed 0: 3.883 mx=17 acc/rev=11/69 w=11.0s
+P16 ws_n486            units  seed 1: 3.471 mx=15 acc/rev=13/44 w=9.5s
+P16 ws_n486            units  seed 2: 3.613 mx=15 acc/rev=13/44 w=14.5s
+Z12 grid_200           tau    seed 0: 1.415 mx=3 acc/rev=12/6 w=1.3s
+Z12 grid_200           tau    seed 1: 1.46 mx=3 acc/rev=12/6 w=1.3s
+Z12 grid_200           tau    seed 2: 1.485 mx=3 acc/rev=12/6 w=1.2s
+Z12 grid_200           units  seed 0: 1.5 mx=3 acc/rev=12/19 w=1.3s
+Z12 grid_200           units  seed 1: 1.44 mx=3 acc/rev=12/19 w=1.3s
+Z12 grid_200           units  seed 2: 1.325 mx=3 acc/rev=12/19 w=1.5s
+Z12 grid_588           tau    seed 0: 1.294 mx=3 acc/rev=18/12 w=9.1s
+Z12 grid_588           tau    seed 1: 1.344 mx=3 acc/rev=18/12 w=9.0s
+Z12 grid_588           tau    seed 2: 1.272 mx=3 acc/rev=18/12 w=8.9s
+Z12 grid_588           units  seed 0: 1.272 mx=3 acc/rev=43/54 w=9.7s
+Z12 grid_588           units  seed 1: 1.301 mx=3 acc/rev=43/54 w=9.3s
+Z12 grid_588           units  seed 2: 1.282 mx=3 acc/rev=43/54 w=9.6s
+Z12 honeycomb_200      tau    seed 0: 2.185 mx=4 acc/rev=0/0 w=1.5s
+Z12 honeycomb_200      tau    seed 1: 1.96 mx=4 acc/rev=0/0 w=1.6s
+Z12 honeycomb_200      tau    seed 2: 2.035 mx=4 acc/rev=0/0 w=1.6s
+Z12 honeycomb_200      units  seed 0: 1.915 mx=4 acc/rev=18/9 w=2.3s
+Z12 honeycomb_200      units  seed 1: 1.87 mx=3 acc/rev=18/9 w=2.2s
+Z12 honeycomb_200      units  seed 2: 1.985 mx=4 acc/rev=18/9 w=2.0s
+Z12 honeycomb_600      tau    seed 0: 1.243 mx=3 acc/rev=0/0 w=4.6s
+Z12 honeycomb_600      tau    seed 1: 1.263 mx=3 acc/rev=0/0 w=4.5s
+Z12 honeycomb_600      tau    seed 2: 1.22 mx=3 acc/rev=0/0 w=7.8s
+Z12 honeycomb_600      units  seed 0: 1.187 mx=2 acc/rev=45/171 w=18.7s
+Z12 honeycomb_600      units  seed 1: 1.207 mx=3 acc/rev=60/128 w=13.6s
+Z12 honeycomb_600      units  seed 2: 1.22 mx=3 acc/rev=26/109 w=11.2s
+Z12 triangular_lat_400 tau    seed 0: 1.755 mx=4 acc/rev=27/28 w=5.1s
+Z12 triangular_lat_400 tau    seed 1: 1.738 mx=4 acc/rev=27/28 w=4.8s
+Z12 triangular_lat_400 tau    seed 2: 1.768 mx=4 acc/rev=27/28 w=4.5s
+Z12 triangular_lat_400 units  seed 0: 1.772 mx=4 acc/rev=19/37 w=4.7s
+Z12 triangular_lat_400 units  seed 1: 1.735 mx=4 acc/rev=19/37 w=5.0s
+Z12 triangular_lat_400 units  seed 2: 1.75 mx=4 acc/rev=19/37 w=5.0s
+Z12 king_graph_196     tau    seed 0: 2.281 mx=5 acc/rev=9/8 w=2.7s
+Z12 king_graph_196     tau    seed 1: 2.036 mx=5 acc/rev=9/8 w=3.0s
+Z12 king_graph_196     tau    seed 2: 2.546 mx=6 acc/rev=9/8 w=2.5s
+Z12 king_graph_196     units  seed 0: 2.653 mx=6 acc/rev=12/5 w=1.8s
+Z12 king_graph_196     units  seed 1: 2.255 mx=5 acc/rev=12/5 w=2.7s
+Z12 king_graph_196     units  seed 2: 2.52 mx=6 acc/rev=12/5 w=2.3s
+
+summary (mean ACL, mean wall; d = units - tau):
+Z12 K100                tau=7.79(3,w17)  units=7.79(3,w17)  d=+0.00[ok]
+Z12 K140                tau=10.52(3,w53)  units=10.52(3,w52)  d=+0.00[ok]
+Z12 ER100_d10           tau=4.85(3,w5)  units=4.65(3,w5)  d=-0.20[ok]
+Z12 turan_n162          tau=6.46(10,w41)  units=6.46(10,w41)  d=+0.00[ok]
+Z12 spin_glass_n163     tau=12.23(3,w20)  units=11.99(3,w25)  d=-0.24[REGRESS]
+Z12 regular_n316        tau=2.81(3,w4)  units=2.79(3,w6)  d=-0.03[REGRESS]
+Z12 ws_n486             tau=2.62(3,w11)  units=2.54(3,w18)  d=-0.08[REGRESS]
+P16 K100                tau=13.19(3,w36)  units=13.19(3,w36)  d=+0.00[ok]
+P16 turan_n162          tau=8.53(3,w50)  units=8.53(3,w49)  d=+0.00[ok]
+P16 ws_n486             tau=3.95(3,w7)  units=3.66(3,w12)  d=-0.30[REGRESS]
+Z12 grid_200            tau=1.45(3,w1)  units=1.42(3,w1)  d=-0.03[ok]
+Z12 grid_588            tau=1.30(3,w9)  units=1.28(3,w10)  d=-0.02[ok]
+Z12 honeycomb_200       tau=2.06(3,w2)  units=1.92(3,w2)  d=-0.14[ok]
+Z12 honeycomb_600       tau=1.24(3,w6)  units=1.20(3,w14)  d=-0.04[regress]
+Z12 triangular_lat_400  tau=1.75(3,w5)  units=1.75(3,w5)  d=-0.00[ok]
+Z12 king_graph_196      tau=2.29(3,w3)  units=2.48(3,w2)  d=+0.19[ok]
+
+BAR1 (board parity + wall): FAIL
+BAR3 turan/Z12 units 10-seed mean: 6.457 (PASS vs s3.70 6.53)
+BAR2: read grid/honeycomb rows above vs adjoint refs (-0.54 grid_200, -0.90 honeycomb_200).
+load at end: (11.95068359375, 6.333984375, 2.62060546875)
+done-probe
