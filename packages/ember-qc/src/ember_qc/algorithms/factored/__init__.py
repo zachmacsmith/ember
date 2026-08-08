@@ -40,6 +40,7 @@ from ember_qc.algorithms.factored.placement import (  # noqa: F401
     AttractConfig,
     attract_embed,
 )
+from ember_qc.algorithms.factored.ball import ball_polish  # noqa: F401
 
 
 @register_algorithm("factored")

@@ -27,7 +27,7 @@ Two deterministic, validity-preserving operations on a **legal** embedding:
 from __future__ import annotations
 
 import time
-from typing import Callable, Dict, List, Optional, Set
+from typing import Callable, Dict, Iterable, List, Optional, Set
 
 from ember_qc.embedding_backend import (
     Adjacency,
@@ -41,7 +41,8 @@ SrcAdj = Dict[int, List[int]]
 
 
 def spur_prune(chains: Embedding, src_adj: SrcAdj, adj: Adjacency,
-               *, deadline: Optional[float] = None) -> Embedding:
+               *, deadline: Optional[float] = None,
+               only: Optional[Iterable[int]] = None) -> Embedding:
     """Delete removable spur qubits from every chain, to a fixpoint.
 
     A qubit ``q`` in chain ``phi(v)`` is removable iff (a) ``phi(v) - {q}``
@@ -56,15 +57,21 @@ def spur_prune(chains: Embedding, src_adj: SrcAdj, adj: Adjacency,
     it, hub-and-spoke sources (star/wheel) with chains of hundreds of qubits
     made the quadratic inner loop blow through the caller's whole time budget
     (measured up to ~1000 s in the first full-Ember sweep).
+
+    ``only`` restricts WHICH chains get pruned; coverage is still checked
+    against every neighbour in ``chains``, so the caller must pass the
+    complete embedding, never a slice. Chains outside ``only`` are returned
+    byte-identical.
     """
     work: Embedding = {int(v): [int(q) for q in c] for v, c in chains.items()}
+    todo = sorted(work) if only is None else sorted(set(only) & set(work))
 
     changed = True
     while changed:
         if deadline is not None and time.perf_counter() > deadline:
             return work
         changed = False
-        for v in sorted(work):
+        for v in todo:
             if deadline is not None and time.perf_counter() > deadline:
                 return work
             chain = work[v]
