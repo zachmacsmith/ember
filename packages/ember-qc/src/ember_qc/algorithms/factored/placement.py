@@ -268,9 +268,11 @@ class AttractConfig:
                                # stride-gated: rides the ordinary gates
                                # on every fabric. DEFAULT ON (Max,
                                # 2026-08-06: obvious winners ship as
-                               # defaults — 10-seed turan 8.10→6.53 with
-                               # the tail killed, expanders at exact
-                               # parity, first Pegasus movement).
+                               # defaults — turan 8.12→6.52 at 3 seeds
+                               # with the tail killed (cmove_probe.csv;
+                               # s3.74 corrected the unartifacted 10-seed
+                               # figures), expanders at exact parity,
+                               # first Pegasus movement).
     cluster_units: bool = True
                                # s3.71: move units from THRESHOLD-FREE
                                # mutual-preference coarsening (τ never
@@ -279,6 +281,19 @@ class AttractConfig:
                                # patch tilings, the gate filters).
                                # False = s3.70's τ-aggregation units
                                # (the measurement control arm).
+    contract_stable: bool = False
+                               # s3.74: derived contraction stopping rule
+                               # in place of the CONTRACT_STEPS=16 count.
+                               # The count was a disguised density knob —
+                               # pure attraction's continuous minimum is
+                               # collapse; stopping early was the only
+                               # counter-force. Under this switch the
+                               # loop stops when best stair-E goes
+                               # unimproved 2 consecutive steps, hard cap
+                               # W+H (the fabric travel bound), and runs
+                               # UN-gated on stride-1 fabrics (the probe
+                               # asks whether contraction can be un-gated
+                               # on Pegasus under an honest rule).
 
 
 def _auto_bins(n_qubits: int) -> int:
@@ -406,8 +421,27 @@ def attract_embed(
         # stair_E below, attributes what the junction hands over vs
         # what contraction and arrange must repair.
         E_interp = round(stair_energy(tpts, src_adj), 1)
-        for _s in range(eff_contract):
-            tpts = stair_step(tpts, src_adj, eta=cfg.eta)
+        contract_steps = None
+        if cfg.contract_stable:
+            best_E = stair_energy(tpts, src_adj)
+            stall = 0
+            contract_steps = 0
+            step_cap = grid.W + grid.H
+            while stall < 2 and contract_steps < step_cap:
+                if (placement_deadline is not None
+                        and time.perf_counter() > placement_deadline):
+                    break
+                tpts = stair_step(tpts, src_adj, eta=cfg.eta)
+                contract_steps += 1
+                E_now = stair_energy(tpts, src_adj)
+                if E_now < best_E:
+                    best_E = E_now
+                    stall = 0
+                else:
+                    stall += 1
+        else:
+            for _s in range(eff_contract):
+                tpts = stair_step(tpts, src_adj, eta=cfg.eta)
         E_contract = round(stair_energy(tpts, src_adj), 1)
         # s3.70 cluster moves: the aggregation hierarchy's groups, in
         # FINE ids, one list per level (coarsest last). Position-free —
@@ -519,6 +553,8 @@ def attract_embed(
                 # the hardware-relevant tail metric (s3.65): recorded
                 # from consolidation 3 onward, everywhere
                 "max_chain": max(len(c) for c in finished.values())}
+        if contract_steps is not None:
+            diag["contract_steps"] = contract_steps
         if eff_exact:
             diag["mm_skipped"] = mm_skipped
             if ex_info is not None:

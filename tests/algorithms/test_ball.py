@@ -120,6 +120,27 @@ class TestHelpers:
                             time.perf_counter() - 1.0)
         assert out is None
 
+    def test_contract_stable_off_is_default(self, source):
+        # off-switch identity: the new field must not perturb defaults
+        from ember_qc.algorithms.factored import attract_embed
+        chim = dnx.chimera_graph(4, 4, 4)
+        a = attract_embed(source, chim, timeout=60, seed=0)
+        b = attract_embed(source, chim, timeout=60, seed=0,
+                          contract_stable=False)
+        assert a["embedding"] and a["embedding"] == b["embedding"]
+        assert a["stair_E"] == b["stair_E"]
+        assert "contract_steps" not in a["diag"]
+
+    def test_contract_stable_on_valid_and_capped(self, source):
+        from ember_qc.algorithms.factored import attract_embed
+        chim = dnx.chimera_graph(4, 4, 4)
+        r = attract_embed(source, chim, timeout=60, seed=0,
+                          contract_stable=True)
+        assert r["embedding"]
+        assert validate_embedding(r["embedding"], source, chim)
+        steps = r["diag"]["contract_steps"]
+        assert 1 <= steps <= 4 + 4  # cap = grid.W + grid.H on C4
+
     def test_spur_prune_only_restricts(self, source, zephyr, finished):
         pruned_all = spur_prune(finished, {int(v): sorted(source.neighbors(v))
                                            for v in source},
