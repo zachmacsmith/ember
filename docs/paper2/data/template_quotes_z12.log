@@ -1,0 +1,7 @@
+/data/max/ember/docs/paper2/data/template_quotes_z12.py:16: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+Z12 K_max = 184 (ACL 13.00)
+K162 template ACL = 12.00
+K184 template ACL = 13.00
+K_{80,80} template ACL = 5.50
+K_{81,81} template ACL = 11.00

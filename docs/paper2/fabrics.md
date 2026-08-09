@@ -105,9 +105,10 @@ A bar at position p covers junction lines {p, p+1} with p ∈ 0..2m−1, so
 **line 0 is reachable only by even-course (j=0) bars and line 2m only by
 odd-course** — the boundary lines see 4 crossing sub-lanes per side, not
 8. Parity-blind packing onto line 0 creates structurally uncoverable
-crossings (measured: 7 turán runs packed onto line 0 → 245 infeasible
-designated crossings, the dominant completion blocker before boundary
-avoidance). Any exactness-seeking layout should treat lines 0 and 2m as
+crossings (the "7 turán runs → 245 infeasible designated crossings"
+figure is archive-recorded with no retained artifact —
+`archive/notes_v3.69_full.md`, s3.74; the mechanism itself is verified
+by the parity arithmetic above). Any exactness-seeking layout should treat lines 0 and 2m as
 half-capacity or avoid them outright.
 
 ### 4.4 Packing constants (the lane arithmetic)
@@ -116,14 +117,21 @@ A straight same-course lane of L bars covers 2L junctions and meets **16L distin
 opposite sub-lanes** (8 per junction, no overlap between consecutive bars). Hence:
 
 - **Biclique**: K_{a,b} lanes need L = ⌈max(a,b)/16⌉. Turán n162 ≈ K_{81,81}:
-  **⌈81/16⌉ = 6** — and it is sharp to one variable (16·5 = 80: K_{80,80}
-  measures ACL 5.5, K_{81,81} exactly 6.0). Verified construction: every chain a
+  **⌈81/16⌉ = 6** — and it is sharp to one variable (16·5 = 80). Measured
+  (`data/template_quotes_z12.py`, s3.74 re-derivation): busclique's biclique
+  constructor gives K_{80,80} ACL 5.50, but at K_{81,81} it jumps to **11.00**,
+  NOT the 6.0 this file previously reported as measured — the 6.00 quote is
+  real but comes from the K162 clique template *restricted* to the turán edges
+  and spur-pruned (`data/zephyr_triad.log`: "K162-restriction template ACL =
+  6.00"). So ⌈81/16⌉ = 6 is achievable by construction while busclique's own
+  biclique call overshoots it ~2×. Verified construction: every chain a
   straight 6-bar run on one sub-lane, block A all-vertical, block B
   all-horizontal, adjacency 100% internal couplers, wires nested 2 chains each
   (the two courses, interleaved).
 - **Clique = biclique + one arm**: the clique chain is an L (one lane per block
   direction + 1 corner). K162 template ACL 12.00 = exactly 2 × turán's 6.00;
-  K184 (= K_max on Z12) ACL 13.00. The §3.35 "diagonal contains the biclique"
+  K184 (= K_max on Z12) ACL 13.00 (both re-derived s3.74:
+  `data/template_quotes_z12.log`). The §3.35 "diagonal contains the biclique"
   insight holds quantitatively: bipartiteness just deletes the own-block arm.
 - General rule: constants scale with the junction — 4t opposite lanes per bar.
   Fatter junctions or more tracks divide chain length directly.

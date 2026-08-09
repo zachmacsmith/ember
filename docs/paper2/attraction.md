@@ -16,8 +16,8 @@ condition — see the last section).
 
 | Idea | Verdict | Why |
 |---|---|---|
-| Leader aggregation to natural fixpoint | validated candidate | one clustering rule replaces twin-hash + matching + depth decree at parity; quotient protection emerges from the weighted score |
-| Cluster moves (coarsen the MOVES, not the state) | SHIPPED | member sets gathered as E-gated composites — no summarization, no sizes; eliminates transport's noise losses with zero discriminator machinery; turán 8.10→6.46 with the tail killed; first Pegasus movement |
+| Leader aggregation to natural fixpoint | validated candidate | one clustering rule replaces twin-hash + matching + depth decree at parity; quotient protection emerges from the weighted score (s3.74 caveat: "parity" carries a ±0.2 expander wobble at n=3 — regular +0.20 in `data/aggregation_probe.csv`, sign flipped in `data/adjoint_probe.csv`) |
+| Cluster moves (coarsen the MOVES, not the state) | SHIPPED | member sets gathered as E-gated composites — no summarization, no sizes; eliminates transport's noise losses with zero discriminator machinery; turán 8.12→6.52 at 3 seeds, worst 6.80 vs 9.46 (`data/cmove_probe.csv`; corrected s3.74 — "8.10→6.46" had grafted the s3.71 probe's number onto this mechanism); first Pegasus movement |
 | Generous merging (threshold-free move units) | SHIPPED | risk asymmetry inverted under the move frame: τ retired on the units path |
 | One-shot-per-cluster cap | SUPERSEDED | a budget rule wearing physics clothes; strict-descent acceptance + free proxy no-ops make the energy itself the schedule |
 | y-only cluster gathers | SUPERSEDED | inherited axis asymmetry, not designed; both-axes gathers produced the first dense-Pegasus win (P16 turán −0.61) |
@@ -102,6 +102,13 @@ condition — see the last section).
 | Wire-exact post-hoc matching | PARKED | coupler-blind layouts admit no perfect assignment; existence, not optimization, is the problem |
 | Coupler-aware coloring / coupled scoring | REFUTED (0-for-4) | metric saturates; superseded by exactness on junction-complete fabrics |
 | restrict_chains fork patch | SHIPPED | stock hang = leaky AND-mask + unbounded parent walk; fixed at byte-parity |
+
+## Polish / rerouting
+
+| Idea | Verdict | Why |
+|---|---|---|
+| Ball polish (whole-chain composite re-embed, s3.75) | validated candidate | beats warm-started mm grind 17/26 at equal seconds on identical inputs (turán −1.45; first fabric-agnostic Pegasus wins); strict descent = never harmful; lattices unmoved (order-level residual, out of the move class by design); rebuild primitive is router-grade — stage 1 shares the bar constructor |
+| Energy-plateau contraction stopping (contract_stable) | REFUTED | the plateau never fires: stair-E is monotone toward collapse, so the step count IS the repulsion — no honest internal stopping rule exists; 50-cap beat 16 on turán/spin_glass but lost K100 and still hurt P16; the fix is removing the continuous state, not re-knobbing it |
 
 ## Protocol / pipeline shape
 

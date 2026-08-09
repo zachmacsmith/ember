@@ -169,7 +169,7 @@ def polish(
     visit_counter: Optional[List[int]] = None,
 ) -> Embedding:
     """Full cleanup: spur-prune, shorten in free space, spur-prune again."""
-    work = spur_prune(chains, src_adj, adj)
+    work = spur_prune(chains, src_adj, adj, deadline=deadline)
     work = shorten_chains(work, src_adj, adj,
                           deadline=deadline, visit_counter=visit_counter)
-    return spur_prune(work, src_adj, adj)
+    return spur_prune(work, src_adj, adj, deadline=deadline)

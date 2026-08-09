@@ -148,10 +148,6 @@ def snap(cent: Centroids, coords: np.ndarray, qubits: Sequence[int],
     return seeds
 
 
-def centroids_of(chains: Embedding, pos: Dict[int, Point]) -> Centroids:
-    return {v: np.mean([pos[q] for q in c], axis=0) for v, c in chains.items()}
-
-
 # ==============================================================================
 # DRIVER
 # ==============================================================================
@@ -396,7 +392,6 @@ def attract_embed(
         # while helping sparse (ws 3.79->3.60; recorded as
         # restricted-polish-round evidence, s3.65 C).
         eff_vcycle = cfg.vcycle and stride2
-        bounds = (grid.W, grid.H)
         kappa = cfg.kappa if cfg.kappa is not None else _target_kappa(grid)
 
         if eff_vcycle:
@@ -532,7 +527,6 @@ def attract_embed(
                                   adj=adj):
             finished = legal_emb
 
-        tpts = {v: grid.to_tile(p) for v, p in cent.items()}
         widths = bar_widths(books[1])
         sizes = (np.array([widths[v].sum() for v in widths])
                  if widths else np.zeros(1))

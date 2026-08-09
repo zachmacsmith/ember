@@ -199,8 +199,10 @@ consolidation-3 marker with their numbers. Since s3.70 the DEFAULTS
 include `vcycle_agg=True` (leader-aggregation fixpoint in place of the
 single matching round — parity twice-measured) and `cluster_moves=True`
 (coarse moves: cluster gather/relocate as E-gated composites inside
-arrange, on raw members, fabric-agnostic — turán 8.10→6.53 at 10 seeds
-with the blow-up tail eliminated; expanders exactly at stock).
+arrange, on raw members, fabric-agnostic — turán 8.12→6.52 at 3 seeds
+with the blow-up tail eliminated, `data/cmove_probe.csv`; corrected
+s3.74, the earlier 10-seed figures had no artifact; expanders exactly
+at stock).
 `vcycle_transport` remains off (ungated init transport: wins lattices,
 loses expanders; its gather lives on as the cluster move).
 

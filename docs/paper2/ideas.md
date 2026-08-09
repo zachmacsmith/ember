@@ -50,8 +50,9 @@ Each entry: the principle, then the strongest single piece of evidence.
    graphs that stock minorminer cannot than vice versa, on both fabrics.*
 
 2. **In the crystal regime, search is the wrong instrument.** Every
-   search method, minorminer included, sits 30–60% above a free
-   constructive template on dense cells, and minorminer's polish cannot
+   search method, minorminer included, sits 8–57% above a free
+   constructive template on dense cells (per-cell range,
+   `data/dense_attrib.csv`; corrected s3.74), and minorminer's polish cannot
    improve the template at all. The answer is not to search harder but
    to make the construction **emerge from general rules** — never to
    hardcode it, and never to run a portfolio. *Turán reached the exact
@@ -105,8 +106,10 @@ Each entry: the principle, then the strongest single piece of evidence.
     by the same energy and capacity gates as every fine move. Nothing is
     summarized, so no size is ever guessed and density artifacts cannot
     exist; the E-gate is the only discriminator needed — where the
-    coarse order is real the moves fire (turán 8.10 → 6.53 at 10 seeds,
-    worst-seed 7.00 vs stock's 10.09), where it is noise they are
+    coarse order is real the moves fire (turán 8.12 → 6.52 at 3 seeds,
+    worst 6.80 vs stock's 9.46 — `data/cmove_probe.csv`; a
+    previously-cited 10-seed version of these numbers had no artifact,
+    s3.74), where it is noise they are
     silently rejected (expanders at exact stock parity, where
     unconditional transport had lost). Cadence matters: coarse moves
     judged on unpacked geometry accept fictions — they fire after each
@@ -143,16 +146,32 @@ Each entry: the principle, then the strongest single piece of evidence.
   "When is an order real?" is likewise resolved: the E-gate answers it
   per proposal, with no discriminator machinery.
 
-- **The init-time residual (now confirmed, s3.71).** Threshold-free
-  units gave lattices proper patch hierarchies — and grid/honeycomb
-  still barely moved, while everything else improved. The adjoint
-  wins there (−0.90, −0.54) definitively live in *init-time* ordering,
+- **The init-time residual (confirmed three ways; THE named target,
+  Max 2026-08-08).** Threshold-free units gave lattices proper patch
+  hierarchies — and grid/honeycomb still barely moved (s3.71). The
+  adjoint wins there (−0.90, −0.54) live in *init-time* ordering,
   before any lane commitment: a post-pack gated move cannot reproduce
   them, and a pre-pack gated move judges on fictions (measured, both
-  directions). The next round is the init: a safe form of
-  transport-at-init — perhaps trusted exactly where cluster moves'
-  accept/reject history certifies the order class as real, or an init
-  whose first projection is itself order-aware.
+  directions). s3.75 closed the last escape route: even whole-region
+  re-layout on the real wires (ball polish) cannot reach it — local
+  reconstruction renegotiates HOW a neighborhood is laid out, never
+  WHERE the order came from. The sparse geometric cells are cheap
+  graphs we lose for one reason: the init mangles an order the graph
+  makes obvious. The next round is the init.
+
+- **Remove the continuous state (Max, 2026-08-08).** The cheap
+  elimination failed informatively: cstable (s3.75) measured that
+  stair-E descends monotonically toward collapse — the plateau rule
+  never fires, so NO internal energy signal can honestly stop the
+  continuous phase; every step count or cap is a disguised density
+  knob. The counter-force was always the discretization. Endpoint:
+  state = two orders + lane assignments; continuous coordinates demoted
+  to an init-only order-generator (spectral ranks in, orders out). This
+  and the init-time residual are likely one project — under the
+  envelope view every regime is an order-quality problem (dense: the
+  identity order is optimal; sparse geometric: a 2-D snake; expanders:
+  none exists), so a state that IS the order unifies the regimes the
+  pipeline currently straddles.
 
 - **Unit selection from deep hierarchies (the s3.72 lesson).** The
   correct merge criterion is settled — per-member affinity: compare
@@ -167,18 +186,23 @@ Each entry: the principle, then the strongest single piece of evidence.
   descent, free proxy no-ops; the energy is the schedule. What remains
   is sharper: **the gate energy has a measured blind spot** — fragment
   moves strictly lower stair-E while worsening routed chains (turán
-  pinned at 6.8 while five other cells improved). The named next round
-  prices the claim-layer cost into cluster-composite scoring: make the
-  judge see what routing pays. Also banked in s3.73: the first
+  pinned at 6.8 while five other cells improved). Partially dissolved
+  by s3.75: post-embedding composites now exist that judge on routed
+  reality directly (ball polish — no pricing, just counted qubits), so
+  the claim-layer pricing question survives only for the in-arrange
+  gates, at lower priority. Also banked in s3.73: the first
   dense-Pegasus improvement ever (P16 turán −0.61 via 2-D gathers),
   reaching a fabric the stride-gated exactness stack never could.
 
 - **Fabric-side coarsening.** Only the source is coarsened today; the
   fabric coarsens naturally (supertiles with pooled capacities), and
   then every level is the same problem — coarser source on coarser
-  fabric, with real capacities at every scale. Acceptance case:
-  hardware_native graphs (literal fabric subgraphs with near-identity
-  embeddings) are currently *lost* to minorminer.
+  fabric, with real capacities at every scale. Acceptance case
+  (rescoped s3.74 — "lost to minorminer" was an overstatement): the
+  full sweep shows hardware_native *mixed*, not lost — P16 favors
+  attraction where both embed (−0.34/−0.39 at 101–1000; only-att 4 vs
+  only-mm 0 at n>1000) while Z12 keeps a +0.55 loss band at 101–300
+  (2/4) — so the acceptance case is the Z12 band.
 
 - **Pegasus.** Everything stride-gated is inert there; dense Pegasus
   still loses to minorminer. The exactness principle's generalization
@@ -236,14 +260,22 @@ resurrect them by name):
 
 The shipped `attraction` pipeline (spec: anatomy.md) beats stock
 minorminer on the full 24k-graph library on both fabrics — ACL edge
-−0.06 (P16) / −0.17 (Z12), feasibility ~2:1 in our favor, max chain no
-worse. Defaults now include the aggregation-fixpoint coarsening
+−0.06 (P16) / −0.17 (Z12), feasibility ~2:1 in our favor. Max chain ≤
+minorminer's on the 7-cell consolidation-3 board (n=3,
+`data/consolidation3_probe.csv`); the sweep itself recorded no
+max-chain column, so that claim is board-scope only (rescoped s3.74).
+Defaults now include the aggregation-fixpoint coarsening
 (`vcycle_agg`) and **cluster moves** (`cluster_moves`, s3.70 — coarse
-moves on raw members through the ordinary gates: turán 8.10→6.53 with
-the blow-up tail eliminated, expanders untouched, first Pegasus
-movement). Known remaining losses: grid/honeycomb lattices (the fix
-lives at init time — open question above) and dense Pegasus. Parked:
-`vcycle_transport` (subsumed as ungated init; lattice-init residual
-only), `bar_domains` (unblocked, unprobed). Full sweep data:
-`results/batch_2026-08-05_19-43-17` and siblings; report at
+moves on raw members through the ordinary gates: turán 8.12→6.52 at 3
+seeds with the blow-up tail eliminated, expanders untouched, first
+Pegasus movement). Known remaining losses: grid/honeycomb lattices (the fix
+lives at init time — open question above) and dense Pegasus. Standalone
+and validated but not yet in the pipeline: `ball_polish` (s3.75 —
+whole-chain composite re-embedding; beats minorminer's warm grind at
+equal seconds on 17/26 cells including the first fabric-agnostic
+Pegasus wins). Parked: `vcycle_transport` (subsumed as ungated init;
+lattice-init residual only), `bar_domains` (unblocked, unprobed),
+`contract_stable` (refuted as default; its probe is the measurement
+that the continuous phase has no honest stopping signal). Full sweep
+data: `results/batch_2026-08-05_19-43-17` and siblings; report at
 `/data/max/fullember3/REPORT.md`.

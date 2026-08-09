@@ -486,10 +486,6 @@ def wire_seeds_iv(grid: TileGrid, pos: Dict[int, Point],
         return {v: c for v, c in chains.items() if c}
 
     snap = snap and src_adj is not None
-    if books is None and src_adj is not None:
-        # kappa/floor only shape the bars, which the caller passed in —
-        # rebuild tuples from the given bars to stay faithful to them
-        books = None
     if books is not None:
         contacts, _, tuples = books
     else:

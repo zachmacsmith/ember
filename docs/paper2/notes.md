@@ -27,9 +27,10 @@ cost axis, the project's original thesis, is a wash** (3.13).
 Randomness and memory are substitutes.
 
 **3.14–3.17 (reading the real minorminer).** Shipped MM's constructor
-is already Steiner — union-of-paths is dead code (3.14). 85–95% of
-wall-clock is the post-legality shortening, which earns ~30–38% ACL
-(3.15). Legal-stage ACL does not predict polished ACL (r ≈ −0.01) —
+is already Steiner — union-of-paths is dead code (3.14). 78–95% of
+wall-clock is the post-legality shortening, which earns ~29–40% ACL
+(3.15; ER on P16 only — `data/mm_time_budget.csv`; corrected s3.74 from
+"85–95% / 30–38%"). Legal-stage ACL does not predict polished ACL (r ≈ −0.01) —
 best-of-N killed before it was built (3.16).
 
 **3.18–3.20 (the placement family is born).** Pure attraction orbits;
@@ -51,8 +52,9 @@ the feasibility gap.
 
 **3.24–3.27 (VLSI round).** Typed tile capacities + segment-smeared
 demand + Poisson field become default (3.25). The constructive ceiling
-measured: every search method sits 30–60% above the busclique template
-and MM's polish cannot improve the template — dense is representational,
+measured: every search method sits 8–57% above the busclique template
+(per-cell range in `data/dense_attrib.csv`; corrected s3.74 from
+"30–60%") and MM's polish cannot improve the template — dense is representational,
 search is the wrong instrument there (3.26). The μ multiplier field is
 inert next to the fresh hinge (3.27).
 
@@ -66,8 +68,11 @@ length** (3.31). The cliff opens (first K140 legalization).
 **3.32–3.35 (product mode and the diagonal).** Alternating exact 1-D
 packing replaces the continuous field — first dense ACL win over stock
 mm (3.32). Staircase readout halves seed mass; first irregular-dense
-win, spin_glass −19% (3.34). **Diagonal alignment + insertion order
-search: first search win over stock mm on K100; adjacent swaps proven
+win, spin_glass −19% (3.34 — caveat s3.74: mm legalized only 2/3 seeds
+there, so −19% compares a 3/3 mean against a 2-seed survivor mean plus
+one feasibility win). **Diagonal alignment + insertion order
+search: first search win over stock mm on K100 (P16-era testbed
+protocol); adjacent swaps proven
 plateau-bound; the crystal emerges from a topology-blind move** (3.35).
 Init-independence becomes the standard.
 
@@ -98,7 +103,9 @@ feasibility at once (K140 0/3 → 3/3) (3.50).
 **3.51–3.53 (compaction and contraction).** Coloring acquitted
 byte-identically; the residual is compaction — local rules cannot merge
 distant clumps (3.51). **Contract before the first pack: cycle 0 is the
-entire mechanism; first K100 win over mm** (3.52). Discrete order
+entire mechanism; first K100 win over mm on Z12** (3.52 — the s3.35
+"first" was the earlier P16-era testbed protocol; different fabric and
+protocol, both kept with their qualifiers). Discrete order
 annealing helps only while overload is invisible (3.53).
 
 **3.54–3.57 (validity by construction).** Exact seeds: coverage =
@@ -169,13 +176,17 @@ accept fictions — coarse moves fire after each projection) and one
 refactor (the insertion composite generalized to any order proposal).
 Probe: **BAR1 PASS — the s3.69 noise-transmission losses are eliminated
 (regular ±0.00, sbm +0.00 vs transport's +0.74/+1.11) with zero
-discriminator machinery**; turán 10-seed mean 6.535 vs stock 8.098 with
-the tail killed (worst 7.00 vs 10.09; 4/10 seeds at the 6.00 optimum) —
-**BAR2 (≤6.5) missed by 0.035**, so no default flip by rule; owner call
-open. First Pegasus movement from coarse machinery (ws −0.32). Residual:
-grid/honeycomb stay at stock (their adjoint wins lived in the ordered
-INIT, which gating can't reproduce post-pack) — the lattice fix lives at
-init time; named open. Switch `cluster_moves`, fabric-agnostic.
+discriminator machinery**; turán 3-seed mean 6.52 vs stock 8.12 with
+the tail killed (worst 6.80 vs 9.46; 1/3 seeds at the 6.00 optimum) —
+the probe printed **BAR2 (≤6.5): FAIL** (`data/cmove_probe.log`); owner
+call open. *(Corrected s3.74: this entry previously cited 10-seed
+statistics — 6.535 vs 8.098, worst 7.00 vs 10.09, 4/10 at optimum,
+"BAR2 missed by 0.035" — for which no artifact exists anywhere.)*
+First Pegasus movement from coarse machinery (ws −0.32). Residual:
+honeycomb at exact parity, grid +0.10 (inside probe tolerance; corrected
+s3.74 from "grid/honeycomb stay at stock") — their adjoint wins lived in
+the ordered INIT, which gating can't reproduce post-pack; the lattice fix
+lives at init time; named open. Switch `cluster_moves`, fabric-agnostic.
 
 **3.71 (generous merging — move units without thresholds).** The merge
 criterion was inherited from the init job; under the move frame the risk
@@ -189,12 +200,17 @@ units must induce connected subgraphs, by induction; round-0 twin
 classes exempt by nature) and one-composite-per-cluster (the pack
 disperses what gather assembles on expanders — 289-composite
 accept/perturb churn, zero ACL effect; repetition is the fine moves'
-domain). Probe (16 cells + 10-seed turán): **units win or tie EVERY
-cell** — ER −0.20, spin_glass −0.24, ws −0.08/P16 ws −0.30, honeycomb
-−0.14, turán 6.457 (beats s3.70's 6.53); zero ACL regressions; wall
-grew seconds on winning cells inside a 60 s budget (the pre-registered
-wall clause tripped as drafted — it mis-specified productive spend as
-waste; recorded). BAR2's decisive branch fired: patch units exist and
+domain). Probe (16 cells + 10-seed turán): units win or tie every cell
+**except king_graph_196 (+0.19)** — ER −0.20, spin_glass −0.24,
+ws −0.08/P16 ws −0.30, honeycomb −0.14 (`data/units_probe.csv`).
+Turán 10-seed 6.457 — but the in-probe τ control ALSO scored 6.457 with
+per-seed byte-identical results: the units change was a no-op on turán,
+and the apparent 6.53→6.46 gain over s3.70 was between-probe drift, not
+the mechanism. Wall grew seconds on winning cells inside a 60 s budget,
+and the probe printed **BAR1: FAIL** on its wall clause (the clause
+mis-specified productive spend as waste; recorded). *(Corrected s3.74:
+previously "win or tie EVERY cell … zero ACL regressions", with the
+turán delta credited to units.)* BAR2's decisive branch fired: patch units exist and
 barely move grid/honeycomb ⇒ **the lattice residual is init-time, not
 move-time — the next round is the init.** Default ON (winners ship);
 `cluster_units=False` = the τ control arm.
@@ -245,6 +261,74 @@ routed chains — the gate energy is provably incomplete at that margin,
 and no schedule can fix a lying judge. Named next: price the
 claim-layer cost into cluster-composite scoring. Control branch
 deleted; the schedule ships.
+
+**3.74 (the audit purge, 2026-08-08).** Every quantitative claim in the
+current notes was audited against the artifacts in `data/`,
+`/data/max/fullember3/`, and the archive. The empirical spine held
+(full-sweep 3, the fabric censuses, K140-below-template, history-inert,
+course unfold — all reproduce to the digit), but a contaminated layer
+concentrated in s3.70–s3.71 was purged in place, each site marked
+"corrected s3.74": the s3.70 10-seed turán statistics had **no
+artifact** (replaced by the 3-seed `cmove_probe` values; a real 10-seed
+stock-vs-cluster_moves run is open); s3.71's "zero regressions" was
+contradicted by its own CSV (king +0.19) and its turán credit was
+between-probe drift (τ control byte-identical); decorative ranges
+("30–60%", "85–95%") were widened back to their own tables; "max chain
+no worse" was rescoped from the sweep (which recorded no max-chain
+column) to the 7-cell board that measured it. Re-deriving fabrics
+§4.4's unlogged constants (`data/template_quotes_z12.py`) confirmed
+three of four exactly (K162 12.00, K184 13.00, K_{80,80} 5.50) and
+caught one wrong-as-stated: busclique's biclique constructor gives
+K_{81,81} ACL **11.00**, not "exactly 6.0" — the true 6.00 quote comes
+from the K162-restriction route (`data/zephyr_triad.log`), i.e. the
+sharpness fact was real but its attribution was not. Lessons that stand, in
+place of doctrine: a number enters these notes only with an artifact
+path; never splice an X→Y delta from two different runs (stock
+baselines drift — mm K100 ranged 10.28–13.62 across protocols); cells
+that fail in ALL arms must be listed, not dropped (sbm_600, ws_804,
+P16 sbm_288); n=3 cannot support a ±0.1 verdict. Probe-reading warning:
+`units_probe.py`'s printed [ok]/[REGRESS] tags are unreliable — the
+wall clause marks ACL winners REGRESS and the 0.3 tolerance marked the
+king regression ok; read the CSVs, not the tags. `data/` and `archive/`
+are historical records and were not edited.
+
+**3.75 (ball polish — the round the judge went real).** The move
+minorminer's one-chain audition cannot express, built standalone
+(`ball.py::ball_polish`): evict the WHOLE chains of a small variable set
+(affinity-hierarchy units + tile-window sets), rebuild them jointly
+against the frozen rest (frozen chains = forbidden fabric, edges to them
+= attachment targets), accept the composite iff total real chain length
+strictly drops, verifier backstop. No proxy energy exists anywhere in
+the loop — the s3.73 lying-judge class is structurally absent, and
+nothing needs junction completeness, so it is the program's first
+fabric-agnostic mechanism by construction. Probe
+(`data/ball_probe.csv`): 13 cells × {stock mm, attract} finished
+embeddings × 3 seeds; 30 s of ball vs 30 s of warm-started stock grind
+on the SAME embedding. **Ball wins 17/26 cells (worst loss +0.11);
+stock-input headliners turán −1.45, K140 −0.58, spin_glass −0.53 vs a
+grind that is at its own fixpoint in <1 s and occasionally returns worse
+than its input; first dense-Pegasus wins from an ungated mechanism (K100
+P16 −0.33/−0.19).** Two informative negatives: lattices barely move
+(grid 1.41→1.385; stock inputs already at floor) — the lattice residual
+is confirmed ORDER-level; local re-layout cannot reach it — and P16
+turán accepted zero balls in both arms (uniform-price router rebuilds
+cannot match near-straight incumbents on 56% junctions: the rebuild
+primitive, not the move class). Rider probe, `contract_stable`
+(energy-plateau stopping for contraction, cap W+H, un-gated on stride-1;
+`data/cstable_probe.csv`): **REFUTED as a default, decisive as a
+measurement — the plateau NEVER fires on Z12 (every cell ran to the
+cap): stair-E descends monotonically toward collapse, so no internal
+energy signal can honestly stop the continuous phase; the step count IS
+the repulsion, now measured.** 50 steps beat 16 on turán (6.78→6.25, a
+3-seed record) and spin_glass (−0.22) while losing K100 (+0.28), and
+un-gated contraction still hurts dense P16 (+0.42/+0.19) even under the
+honest rule. Course set by Max on the round's evidence: the sparse
+geometric cells are the named target, and the continuous state is to be
+REMOVED, not re-knobbed — state wants to be two orders plus lanes, with
+init demoted to a pure order-generator. ball_polish is a validated
+candidate, not yet wired into the pipeline; its stage-1 is sharing the
+bar constructor as the rebuild primitive (one way to build a chain, not
+two).
 
 ## 4. References
 

@@ -41,7 +41,7 @@ paying for it.
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Set
 
 from ember_qc.embedding_backend import (
     Adjacency,
@@ -144,7 +144,8 @@ def sph_tree(v, placed, chains, adj, prices, visit_counter, **kwargs):
 
 
 def union_of_paths(v, placed, chains, adj, prices, visit_counter, **kwargs):
-    """Union of independent shortest paths to the root — minorminer's inner step."""
+    """Union of independent shortest paths to the root — the 2014 paper's
+    constructor (dead code in shipped minorminer; see module header)."""
     return _assemble(v, placed, chains, adj, prices, visit_counter,
                      attach_to_root_only=True, **kwargs)
 

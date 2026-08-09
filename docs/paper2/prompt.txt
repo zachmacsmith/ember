@@ -9,7 +9,7 @@ general NP-Complete graph minor problem. Really this is a planar geometry questi
 a graph theory problem. Each hardware graph is essentially a product topology between 
 bipartite graphs and rows and columns of a grid, where the bipartite graphs sit at each junction, 
 connecting all rows to all columns. To that end, the 'Busclique' constructor D-wave has 
-tends to produce what I think are nearly optimal template embeddings for cliques and
+tends to produce what I suspect are nearly optimal template embeddings for cliques and
 other dense source graph specimens, where it just draws a straight line to the neighbors, 
 (maybe horizontal for prior neighbors and vertical for future neighbors). I think it's 
 telling that minor miner has a density cliff where it suddenly loses to this simple construction 
@@ -17,11 +17,14 @@ in general it seems that qubit chains of the embedding want to take that sort of
 before that it can be helpful to implicitly assume the existance of verical and horizontal arms 
 from the coordinates of 'point' variables in the plane). I'm thinking there must be something 
 out there that can combine the best aspects of both the template and minor miner's search (although 
-minor miner is doing a lot of overkill and waste but that's a different issue). I think there's 
-some fundamental rules for how this problem wants solutions to go that could essentially solve 
-the problem cheaply and offer a bridge between the templated dense constructions and the flexible 
-nondeterministic embeddings. It's just a matter of what those rules are. Once we know what general 
-guidance to give the problem, the natural solution should fall out. 
+minor miner is doing a lot of overkill and waste but that's a different issue). I've come to realize 
+that part of minor miner's overexpenditures is characterized by trying to make global or 
+multivariable moves out of single-variable moves. it seems unlikely that it can substantively change 
+the embedding that way and is probably wasting a lot of effort in the grind to do it by accident.
+I think there's some fundamental rules for how this problem wants solutions to go that could 
+essentially solve the problem cheaply and offer a bridge between the templated dense constructions 
+and the flexible nondeterministic embeddings. It's just a matter of what those rules are. 
+Once we know what general guidance to give the problem, the natural solution should fall out.
 
 It also bears mentioning that some things are NOT real algorithms, such as taking MinorMiner 
 and Busclique and just taking the better result (this is an obvious and trivial thing, that 

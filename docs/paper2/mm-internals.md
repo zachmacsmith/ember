@@ -58,7 +58,7 @@ The precise answer has two halves:
    implementation of node-weight dijkstra"). The header comment at `:43` claims
    Dijkstra is "responsible for 99% of our runtime" — **that claim is stale**: §3.15
    measured the legalization phase at ~5–15% of wall-clock on benchmark workloads.
-2. **Shortening — where 85–95% of the time actually goes: no.** `find_short_chain`
+2. **Shortening — where 78–95% of the time actually goes: no.** `find_short_chain`
    (`pathfinder.hpp:388-450`) expands one search per neighbour chain **through free
    qubits only at unit weight** (`d += 1` per hop, `:433`) — synchronized
    ("lockstep") BFS balls despite using a distance queue. Every free qubit reached
@@ -130,9 +130,11 @@ latter is inert inside real MM (§3.13, the history 2×2).
 
 ## 6. Measured economics (notes §3.15–§3.17)
 
-- **85–95% of wall-clock is the post-legality shortening phase**
-  (`improve_chainlength_pass` / `find_short_chain`), which earns a consistent
-  ~30–38% ACL reduction. Legalization is cheap and scales mildly. MM's economy:
+- **78–95% of wall-clock is the post-legality shortening phase**
+  (`improve_chainlength_pass` / `find_short_chain`), which earns
+  ~29–40% ACL reduction (corrected s3.74 from "85–95% / 30–38%" to
+  match the measured table; scope: ER on P16 only,
+  `data/mm_time_budget.csv`). Legalization is cheap and scales mildly. MM's economy:
   legalize fast and dumb, then spend 10× that budget polishing.
 - **Legal-stage ACL carries no information about polished ACL** (§3.16, r ≈ 0
   pooled): the grind washes out the starting basin (measured on ER; untested on
@@ -152,7 +154,7 @@ latter is inert inside real MM (§3.13, the history 2×2).
 | weight `diam(G)^occ` | capped exponential table, `max_beta` effectively infinite (lexicographic overlap) | `embedding_problem.hpp:254-265`, `util.hpp:134` |
 | random vertex order per restart | re-shuffle every pass + five order strategies | `embedding_problem.hpp:366` |
 | root = argmin (Boltzmann variant proposed) | uniform among exact-minimum ties | `pathfinder.hpp:372` |
-| (no shortening phase described) | shortening = 85–95% of runtime, lockstep BFS + exhaustive audition | `pathfinder.hpp:388` |
+| (no shortening phase described) | shortening = 78–95% of runtime, lockstep BFS + exhaustive audition | `pathfinder.hpp:388` |
 | Dijkstra as the engine | true in legalization; the dominant phase is unit-weight BFS | `pathfinder.hpp:507` vs `:433` |
 | `tries` as quality restarts (common reading) | feasibility restarts, stop at first success | `pathfinder.hpp:623` region |
 

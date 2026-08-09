@@ -212,6 +212,15 @@ class MyAlgorithm(EmbeddingAlgorithm):
 | `embedding_state_mutations` | Each time a chain assignment is created, changed, or destroyed |
 | `overlap_qubit_iterations` | Each complete pass of an overlap-resolution loop |
 
+`supported_counters` is optional metadata; algorithms that do not declare it
+simply report whatever counters they populate. Known deviations in shipped
+algorithms (documented 2026-08-08 rather than silently changing recorded
+numbers): `factored` counts *chain constructions* as
+`cost_function_evaluations` and *contested-qubit count summed per pass* as
+`overlap_qubit_iterations`, and its failure dict returns all four counters
+even when unmeasured-zero. Treat cross-algorithm counter comparisons involving
+`factored` accordingly.
+
 Only populate counters you can measure precisely. A wrong counter is worse than a
 missing one — it silently invalidates cross-algorithm comparisons. Each increment
 must be a single integer addition with no branching or allocation per increment.
