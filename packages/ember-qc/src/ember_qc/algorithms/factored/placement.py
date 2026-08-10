@@ -489,7 +489,7 @@ def attract_embed(
         # descent), so there is no split fraction: it runs under the
         # overall deadline and the grind gets whatever wall remains.
         ball_info = None
-        if cfg.tail in ("ball+mm", "ball"):
+        if cfg.tail in ("ball+mm", "ball", "ball-rng"):
             from ember_qc.algorithms.factored.ball import ball_polish
             # ONE sweep (structural cap, not a constant): the smoke
             # showed fixpoint-chasing starves the grind on lattices —
@@ -497,13 +497,15 @@ def attract_embed(
             balled, ball_info = ball_polish(
                 legal_emb, source_graph, target_graph,
                 deadline=deadline, adj=adj, grid=grid,
-                max_sweeps=1 if cfg.tail == "ball+mm" else None)
+                max_sweeps=1 if cfg.tail == "ball+mm" else None,
+                rng_seed=(seed * SEED_STRIDE + 7
+                          if cfg.tail == "ball-rng" else None))
             if is_valid_embedding(balled, source_graph, target_graph,
                                   adj=adj):
                 legal_emb = balled
         remaining = (deadline - time.perf_counter()) if deadline \
             else FALLBACK_TIMEOUT
-        if cfg.tail != "ball" and remaining > 0:
+        if cfg.tail not in ("ball", "ball-rng") and remaining > 0:
             finished = _mm_route(source_graph, target_graph,
                                  warm=legal_emb, seed=seed,
                                  timeout=remaining) or legal_emb

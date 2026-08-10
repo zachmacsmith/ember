@@ -371,7 +371,7 @@ def _color_claim_bars(grid: TileGrid, claimed: set,
                       chains: Dict[int, List[int]], orientation: int,
                       bars: List[Tuple[int, float, float, int]],
                       targets: Optional[Dict[int, tuple]] = None,
-                      require_free: bool = False) -> None:
+                      require_free: bool = False, rng=None) -> None:
     """Color explicit interval bars onto physical wires and claim runs.
     ``bars``: (line, start, end, v) tuples of one orientation. Bars sharing
     a line with disjoint intervals may share a wire; overlapping ones may
@@ -431,9 +431,18 @@ def _color_claim_bars(grid: TileGrid, claimed: set,
                     return sum(1 for c in cls
                                if (c if c % 2 == s_ % 2 else c - 1) in run_)
 
-                color = max(free, key=lambda s_: (_covered(s_), -s_))
+                if rng is None:
+                    color = max(free, key=lambda s_: (_covered(s_), -s_))
+                else:
+                    best_cov = max(_covered(s_) for s_ in free)
+                    ties = sorted(s_ for s_ in free
+                                  if _covered(s_) == best_cov)
+                    color = ties[rng.randrange(len(ties))]
             else:
-                color = free[0]
+                # all free lanes are cost-equal: a frozen die today,
+                # a fair one under re-asked descent (s3.82)
+                color = free[0] if rng is None \
+                    else free[rng.randrange(len(free))]
             used_colors[color] = b
             run = grid.wire_map.get((orientation, line, color), {})
             if targets is not None and v in targets:

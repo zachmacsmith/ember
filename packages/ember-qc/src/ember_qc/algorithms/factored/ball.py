@@ -29,6 +29,7 @@ Two ball selectors, both producing plain variable sets:
 
 from __future__ import annotations
 
+import random
 import time
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
@@ -129,7 +130,8 @@ def _trim_ball(S: Iterable[int],
 def _rebuild_ball(S: Tuple[int, ...], work: Embedding,
                   src_adj: Dict[int, List[int]], adj: Adjacency,
                   visits: List[int],
-                  deadline: Optional[float]) -> Optional[Embedding]:
+                  deadline: Optional[float],
+                  rng=None) -> Optional[Embedding]:
     """Jointly rebuild the chains of S against the frozen rest. Returns the
     new {v: chain} for S, or None (reject) on any failure or deadline."""
     frozen_used: Set[int] = set()
@@ -152,7 +154,7 @@ def _rebuild_ball(S: Tuple[int, ...], work: Embedding,
         placed = [u for u in src_adj.get(v, []) if u in local]
         chain = sph_tree(v, placed, local, adj, {}, visits,
                          forbidden_extra=frozen_used | rebuilt_used,
-                         require_all_neighbors=True)
+                         require_all_neighbors=True, rng=rng)
         if not chain:
             return None
         local[v] = chain
@@ -165,7 +167,8 @@ def _rebuild_ball(S: Tuple[int, ...], work: Embedding,
 def _rebuild_ball_bars(S: Tuple[int, ...], work: Embedding,
                        src_adj: Dict[int, List[int]], adj: Adjacency,
                        grid, kappa: float,
-                       deadline: Optional[float]) -> Optional[Embedding]:
+                       deadline: Optional[float],
+                       rng=None) -> Optional[Embedding]:
     """Bar-based joint rebuild (v4: one way to build a chain). The same
     constructor family as the pipeline: member positions from frozen
     obligations, the stair contact rule, straight arms colored onto
@@ -283,9 +286,9 @@ def _rebuild_ball_bars(S: Tuple[int, ...], work: Embedding,
     claimed = set(claimed0)
     new_chains: Embedding = {v: [] for v in S}
     _color_claim_bars(grid, claimed, new_chains, 1, tuples[1],
-                      require_free=True)
+                      require_free=True, rng=rng)
     _color_claim_bars(grid, claimed, new_chains, 0, tuples[0],
-                      require_free=True)
+                      require_free=True, rng=rng)
     _ensure_seeds(grid, claimed, new_chains, {v: pos[v] for v in S})
 
     full = {u: list(c) for u, c in work.items() if u not in Sset}
@@ -314,7 +317,8 @@ def ball_polish(chains: Embedding, source_graph: nx.Graph,
                 deadline: Optional[float] = None,
                 adj: Optional[Adjacency] = None,
                 grid=None,
-                max_sweeps: Optional[int] = None) -> Tuple[Embedding, dict]:
+                max_sweeps: Optional[int] = None,
+                rng_seed: Optional[int] = None) -> Tuple[Embedding, dict]:
     """Improve a finished legal embedding by ball eviction/re-embedding.
 
     Sweeps a fixed, deterministic ball list (unit balls fine->coarse, then
@@ -365,13 +369,18 @@ def ball_polish(chains: Embedding, source_graph: nx.Graph,
     info["rect_balls"] = sum(1 for S in rects if S)
 
     visits = [0]
+    rng = random.Random(rng_seed) if rng_seed is not None else None
+    dry = 0
     out_of_time = False
     while not out_of_time:
         if max_sweeps is not None and info["sweeps"] >= max_sweeps:
             break
         info["sweeps"] += 1
         any_accept = False
-        for S in balls:
+        sweep = list(balls)
+        if rng is not None:
+            rng.shuffle(sweep)
+        for S in sweep:
             if deadline is not None and time.perf_counter() > deadline:
                 out_of_time = True
                 break
@@ -380,12 +389,13 @@ def ball_polish(chains: Embedding, source_graph: nx.Graph,
             candidate = None
             if grid.wire_map:
                 candidate = _rebuild_ball_bars(S, work, src_adj, adj,
-                                               grid, kappa, deadline)
+                                               grid, kappa, deadline,
+                                               rng=rng)
                 if candidate is not None:
                     info["bar_rebuilds"] = info.get("bar_rebuilds", 0) + 1
             if candidate is None:
                 candidate = _rebuild_ball(S, work, src_adj, adj, visits,
-                                          deadline)
+                                          deadline, rng=rng)
             if candidate is None:
                 continue
             trial = dict(work)
@@ -395,8 +405,13 @@ def ball_polish(chains: Embedding, source_graph: nx.Graph,
                 work = trial
                 any_accept = True
                 info["accepted"] += 1
-        if not any_accept:
-            break
+        if any_accept:
+            dry = 0
+        else:
+            dry += 1
+            # under re-rolled ties one dry pass does not prove dryness
+            if dry >= (2 if rng is not None else 1):
+                break
 
     if not is_valid_embedding(work, source_graph, target_graph, adj=adj):
         # paranoia guard: a broken move can never corrupt a legal result
