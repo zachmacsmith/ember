@@ -277,6 +277,21 @@ class AttractConfig:
                                # patch tilings, the gate filters).
                                # False = s3.70's τ-aggregation units
                                # (the measurement control arm).
+    order_state: bool = False
+                               # v4 stage O1: the state is two orders.
+                               # Init points are reduced to per-axis
+                               # ranks (sort keys only); the continuous
+                               # contraction phase does not exist on
+                               # this arm; the DP packs with the TRUE
+                               # stair objective (field._axis_coeffs)
+                               # on every fabric, overload priced into
+                               # the gates fabric-agnostically, and all
+                               # variables live in the books. Positions
+                               # are thereafter always derived line
+                               # indices — a readout, never state.
+                               # Stride gates for exact_seeds/snap/
+                               # courses are untouched (junction
+                               # completeness is physics, not carrier).
     contract_stable: bool = False
                                # s3.74: derived contraction stopping rule
                                # in place of the CONTRACT_STEPS=16 count.
@@ -385,6 +400,12 @@ def attract_embed(
         eff_exact = cfg.exact_seeds and stride2
         eff_snap = cfg.snap_claims and stride2
         eff_dp = stride2
+        if cfg.order_state:
+            # v4: the packer and the overload gate are properties of the
+            # state representation, not of the fabric — fabric-agnostic
+            # under the switch. Exactness/snap stay stride-gated above.
+            eff_lam = cfg.overload_lam
+            eff_dp = True
         # vcycle activation is stride-gated (s3.66 guard probe): the
         # compact coarse init needs the contraction+DP machinery to
         # exploit it — on the P16 legacy path it regressed the dense
@@ -410,14 +431,28 @@ def attract_embed(
         placement_deadline = (start + cfg.round_frac * timeout) \
             if timeout else None
 
-        tpts = {v: grid.to_tile(p) for v, p in cent.items()}
+        if cfg.order_state:
+            # v4: the init's continuous points are reduced to their
+            # per-axis RANKS — sort keys for the first readout, nothing
+            # more. The first arrange projection replaces them with true
+            # line assignments; no continuous phase exists on this arm.
+            tpts = {v: np.zeros(2) for v in cent}
+            for axis in (0, 1):
+                ranked = sorted(cent, key=lambda v: (float(cent[v][axis]),
+                                                     v))
+                for r, v in enumerate(ranked):
+                    tpts[v][axis] = float(r)
+        else:
+            tpts = {v: grid.to_tile(p) for v, p in cent.items()}
         # Galerkin-defect instrumentation (s3.69): stair-E of the raw
         # interpolated init and after contraction — with the final
         # stair_E below, attributes what the junction hands over vs
         # what contraction and arrange must repair.
         E_interp = round(stair_energy(tpts, src_adj), 1)
         contract_steps = None
-        if cfg.contract_stable:
+        if cfg.order_state:
+            pass  # no contraction: the continuous phase is deleted here
+        elif cfg.contract_stable:
             best_E = stair_energy(tpts, src_adj)
             stall = 0
             contract_steps = 0
@@ -466,13 +501,16 @@ def attract_embed(
             insert_sweeps=cfg.insert_sweeps,
             overload_lam=eff_lam, use_dp=eff_dp, snap=eff_snap,
             deadline=placement_deadline,
-            cluster_groups=cluster_groups)
+            cluster_groups=cluster_groups,
+            order_mode=cfg.order_state)
         cent = {v: grid.Minv @ (tpts[v] - grid.c) for v in cent}
         # raw stair-E (recorded trajectory metric)
         stair_E = round(stair_energy(tpts, src_adj), 1)
 
+        # one accounting: the seeds read the SAME books the gates used
         books = arm_books(tpts, src_adj, grid, kappa=kappa,
-                          floor=cfg.span_floor, snap=eff_snap)
+                          floor=cfg.span_floor, snap=eff_snap,
+                          min_span=0.0 if cfg.order_state else 1.0)
         seed_chains = wire_seeds_iv(grid, tpts, books[1],
                                     src_adj=src_adj, snap=eff_snap,
                                     books=books)
@@ -549,6 +587,8 @@ def attract_embed(
                 "max_chain": max(len(c) for c in finished.values())}
         if contract_steps is not None:
             diag["contract_steps"] = contract_steps
+        if cfg.order_state:
+            diag["order_state"] = True
         if eff_exact:
             diag["mm_skipped"] = mm_skipped
             if ex_info is not None:

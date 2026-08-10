@@ -234,3 +234,55 @@ class TestAttractEmbed:
         assert res["embedding"]
         assert 100 in res["embedding"] and 101 in res["embedding"]
         assert validate_embedding(res["embedding"], g, chimera)
+
+
+class TestOrderState:
+    """v4 stage O1: state = two orders, positions = derived readout."""
+
+    def test_off_switch_is_default(self, source, chimera):
+        a = attract_embed(source, chimera, timeout=60, seed=0)
+        b = attract_embed(source, chimera, timeout=60, seed=0,
+                          order_state=False)
+        assert a["embedding"] and a["embedding"] == b["embedding"]
+        assert a["stair_E"] == b["stair_E"]
+        assert "order_state" not in a["diag"]
+
+    def test_order_state_valid_and_deterministic(self, source, chimera):
+        a = attract_embed(source, chimera, timeout=60, seed=0,
+                          order_state=True)
+        b = attract_embed(source, chimera, timeout=60, seed=0,
+                          order_state=True)
+        assert a["embedding"]
+        assert validate_embedding(a["embedding"], source, chimera)
+        assert a["embedding"] == b["embedding"]
+        assert a["diag"]["order_state"] is True
+
+    def test_order_state_zephyr_and_pegasus(self, source):
+        import dwave_networkx as dnx
+        for target in (dnx.zephyr_graph(3, 4), dnx.pegasus_graph(4)):
+            r = attract_embed(source, target, timeout=60, seed=0,
+                              order_state=True)
+            assert r["embedding"], f"failed on {target.graph.get('family')}"
+            assert validate_embedding(r["embedding"], source, target)
+
+    def test_positions_are_derived_line_indices(self, source):
+        # the derived-values invariant: after an order-mode arrange,
+        # every position is an integer line index (never a rank, never
+        # a fractional drift value) — the rank-pricing trap guard
+        import dwave_networkx as dnx
+        from ember_qc.algorithms.factored.field import (
+            TileGrid, alternate_arrange, _target_kappa)
+        from ember_qc.algorithms.factored.placement import target_layout
+        target = dnx.zephyr_graph(3, 4)
+        grid = TileGrid(target, target_layout(target), courses=True)
+        src_adj = {v: sorted(source.neighbors(v)) for v in source}
+        # rank-seeded start, as the driver builds it
+        import numpy as np
+        pos = {v: np.array([float(i), float(i)])
+               for i, v in enumerate(sorted(source))}
+        out, _info = alternate_arrange(
+            pos, src_adj, grid, iters=4, kappa=_target_kappa(grid),
+            use_dp=True, overload_lam=1.0, snap=True, order_mode=True)
+        for v, p in out.items():
+            assert float(p[0]).is_integer(), (v, p)
+            assert float(p[1]).is_integer(), (v, p)
