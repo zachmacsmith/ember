@@ -433,6 +433,30 @@ tests green. anatomy.md rewritten from the purged code in plain
 language (what/how/why per stage) as the substrate for the owner's
 question pass.
 
+**3.80 (the tail round — ball wired in; the ordering bet refuted).**
+ball_polish is now a pipeline stage (`tail=` in {"mm", "ball+mm",
+"ball"}; one-sweep structural cap on the tail ball after the smoke
+showed fixpoint-chasing starving the grind on lattices). Probe at equal
+TOTAL budget (`data/tail_probe.csv`): **ball-BEFORE-grind does not
+clear the bar** — wins on ER −0.33, K100 −0.06/P16 −0.05, spin_glass
+−0.06, grid −0.01, but turán +0.59 at 10 seeds (max chain 6.1→7.6) and
+ws +0.87 (max chain 11→22). Mechanism, read off the arms: ball-only ≈
+ball+mm on the losing cells — ball's greedy neighborhood descent moves
+the pre-polish embedding into basins the grind cannot escape (from the
+raw state the grind reaches 6.02 on turán; from the ball state it goes
+nowhere). The free-polish doctrine (s3.22) generalizes: nothing may
+constrain the polish's basin, including a smarter polisher run first.
+Joint reading with s3.75 (ball ON grind output: 17/26 wins, never
+harmful): **the ladder runs coarse→fine→coarse — clusters teleport,
+grind polishes chains, ball harvests LAST what the grind cannot see.**
+No default flip (bar failed by rule); `tail` stays as the measured
+platform; the named next arm is "mm+ball" (grind first, ball after,
+equal budget), which both prior datasets support. Also banked: on
+gate-fired dense Zephyr, tail="ball" ties the board with minorminer
+absent end to end — the minorminer-free Zephyr pipeline exists and
+costs nothing on crystals (turán 6.616 vs 6.612 ball+mm; the gap to
+6.02 is the grind's basin work, not legalization).
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).
