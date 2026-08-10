@@ -980,33 +980,13 @@ def pack_lines(intervals: List[Tuple[float, float]], values: List[float],
     # Feasible run starts: js[i] = minimal j such that the run of items
     # j..i-1 has depth <= c. Depth is monotone in window extension, so a
     # two-pointer sweep is exact; one pass per distinct capacity value.
-    # Incremental depth (byte-identical to line_depth per window): events
-    # rank-compressed by (coord, delta) — each rank is single-signed, so
-    # the max prefix over per-rank sums equals line_depth's event sweep.
     caps = sorted({int(p) for p in pools if p >= 1.0})
     jstar = {}
-    if caps:
-        rank_keys = sorted({(float(x), s) for a, b in intervals
-                            for x, s in ((a, 1), (b, -1))},
-                           key=lambda e: (e[0], e[1]))
-        rank_of = {k: r for r, k in enumerate(rank_keys)}
-        ra = [rank_of[(float(a), 1)] for a, _b in intervals]
-        rb = [rank_of[(float(b), -1)] for _a, b in intervals]
-        cnt = np.zeros(len(rank_keys), dtype=np.int64)
-
-        def _depth() -> int:
-            return int(max(0, np.cumsum(cnt).max())) if len(cnt) else 0
-
     for c in caps:
-        cnt[:] = 0
         arr = [0] * (n + 1)
         j = 0
         for i in range(1, n + 1):
-            cnt[ra[i - 1]] += 1
-            cnt[rb[i - 1]] -= 1
-            while _depth() > c:
-                cnt[ra[j]] -= 1
-                cnt[rb[j]] += 1
+            while line_depth(intervals[j:i]) > c:
                 j += 1
             arr[i] = j
         jstar[c] = arr
