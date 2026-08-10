@@ -246,6 +246,18 @@ class AttractConfig:
                                # consulted; every graph gets its natural
                                # log-depth hierarchy — lattices become
                                # patch tilings, the gate filters).
+    tail: str = "mm"
+                               # the pipeline tail after a legal
+                               # embedding exists (s3.80): "mm" = warm
+                               # minorminer grind only (control);
+                               # "ball+mm" = ball_polish to its
+                               # fixpoint, then the grind with the
+                               # remaining wall (the move-scale ladder:
+                               # clusters teleport, balls re-lay
+                               # neighborhoods, mm polishes chains);
+                               # "ball" = no minorminer after the ball
+                               # (with the mm-skip gate fired this is a
+                               # minorminer-free Zephyr pipeline).
                                # False = s3.70's τ-aggregation units
                                # (the measurement control arm).
 
@@ -466,9 +478,24 @@ def attract_embed(
         if legal_emb is None:
             return _failure(stair_E=stair_E)
 
+        # the tail: the move-scale ladder's last two rungs (Max,
+        # 2026-08-10 — cluster moves teleport, ball polish re-lays
+        # neighborhoods, minorminer polishes single chains, if anything).
+        # ball_polish terminates at a fixpoint on its own (strict integer
+        # descent), so there is no split fraction: it runs under the
+        # overall deadline and the grind gets whatever wall remains.
+        ball_info = None
+        if cfg.tail in ("ball+mm", "ball"):
+            from ember_qc.algorithms.factored.ball import ball_polish
+            balled, ball_info = ball_polish(
+                legal_emb, source_graph, target_graph,
+                deadline=deadline, adj=adj, grid=grid)
+            if is_valid_embedding(balled, source_graph, target_graph,
+                                  adj=adj):
+                legal_emb = balled
         remaining = (deadline - time.perf_counter()) if deadline \
             else FALLBACK_TIMEOUT
-        if remaining > 0:
+        if cfg.tail != "ball" and remaining > 0:
             finished = _mm_route(source_graph, target_graph,
                                  warm=legal_emb, seed=seed,
                                  timeout=remaining) or legal_emb
@@ -500,6 +527,10 @@ def attract_embed(
                 # the hardware-relevant tail metric (s3.65): recorded
                 # from consolidation 3 onward, everywhere
                 "max_chain": max(len(c) for c in finished.values())}
+        if ball_info is not None:
+            diag["ball_accepts"] = ball_info["accepted"]
+            diag["ball_tried"] = ball_info["tried"]
+            diag["ball_wall"] = round(ball_info["wall"], 1)
         if eff_exact:
             diag["mm_skipped"] = mm_skipped
             if ex_info is not None:
