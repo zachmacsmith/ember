@@ -566,6 +566,15 @@ def arm_books(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                 lines.add(int(round(float(pos[v][ax]))))
                 a = min(a, float(min(lines) - 1))
                 b = max(b, float(max(lines)))
+            if min_span < 1.0 and b - a < 1.0:
+                # occupancy footprint (order mode): a zero-width arm
+                # still occupies its tile. Without this the census is
+                # blind to point arms (line_depth treats touching
+                # endpoints as disjoint) and the true-objective DP packs
+                # every variable onto one line for free — the P16
+                # collapse of order_probe (E=0.0, turan 7.9->13.1).
+                # No-op wherever snap widening already applies.
+                b = a + 1.0
             line = int(round(float(pos[v][1] if o == 1
                                    else pos[v][0])))
             out.append((line, a, b, v))

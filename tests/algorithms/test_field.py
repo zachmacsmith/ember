@@ -1044,3 +1044,23 @@ class TestOrderMode:
                                coeffs=[-1.0, 1.0])
         assert a_true[0] is not None and a_true[1] is not None
         assert a_true[1] > a_true[0]     # order preserved, distinct lines
+
+    def test_order_mode_books_have_footprint(self):
+        # zero-width arms must be visible to the census: every tuple in
+        # order-mode books has width >= 1 (the P16 collapse guard)
+        import networkx as nx
+        import dwave_networkx as dnx
+        from ember_qc.algorithms.factored.field import (
+            TileGrid, arm_books, _target_kappa)
+        from ember_qc.algorithms.factored.placement import target_layout
+        target = dnx.pegasus_graph(3)
+        grid = TileGrid(target, target_layout(target))
+        g = nx.gnp_random_graph(12, 0.3, seed=2)
+        src_adj = {v: sorted(g.neighbors(v)) for v in g}
+        pos = {v: np.array([float(i), float(i)])
+               for i, v in enumerate(sorted(g))}
+        books = arm_books(pos, src_adj, grid,
+                          kappa=_target_kappa(grid), min_span=0.0)
+        for o in (1, 0):
+            for (_line, a, b, _v) in books[2][o]:
+                assert b - a >= 1.0 - 1e-9
