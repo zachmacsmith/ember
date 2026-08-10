@@ -157,7 +157,13 @@ Each entry: the principle, then the strongest single piece of evidence.
   reconstruction renegotiates HOW a neighborhood is laid out, never
   WHERE the order came from. The sparse geometric cells are cheap
   graphs we lose for one reason: the init mangles an order the graph
-  makes obvious. The next round is the init.
+  makes obvious. LARGELY RESOLVED by the order state (s3.76): with
+  positions derived from orders by the true-objective readout instead
+  of anchored displacement packing, the lattice block fell in one flip
+  (honeycomb 1.81→1.09, king 2.36→1.53, both below stock; grid
+  1.41→1.12 vs stock ~1.08). Residual: grid's last +0.04 to stock, and
+  the Z12 expanders now pay a modest toll (+0.16/+0.40) — the
+  no-order regime.
 
 - **Remove the continuous state (Max, 2026-08-08).** The cheap
   elimination failed informatively: cstable (s3.75) measured that
@@ -171,7 +177,29 @@ Each entry: the principle, then the strongest single piece of evidence.
   envelope view every regime is an order-quality problem (dense: the
   identity order is optimal; sparse geometric: a 2-D snake; expanders:
   none exists), so a state that IS the order unifies the regimes the
-  pipeline currently straddles.
+  pipeline currently straddles. STAGE O1 BUILT, MEASURED, AND DEFAULT
+  (s3.76, `order_state=True`; Max: it should be the default even if it
+  lost — a loss would locate the error elsewhere): both named residuals
+  moved in one flip — turán 6.02 at 10 seeds, lattices at/below stock,
+  all three P16 cells won — at a modest expander cost, exactly the
+  predicted regime split. Open: the expander/ER toll (next bullet);
+  retiring the positions dict entirely (stage O2, cosmetic once the
+  invariant holds).
+
+- **ER graphs are not order-free (Max, 2026-08-08).** The expander toll
+  reads as "no order to exploit," but a random graph only lacks order
+  in expectation: variance makes the average node measurably more alike
+  to some nodes than to others, and those should be placed together.
+  The affinity hierarchy already detects exactly this (its units are
+  the fluctuation clusters) — but it currently feeds only the cluster
+  MOVES, never the init ORDER, which still comes from spectral ranks
+  (noise on ER). Candidate: derive the init orders from the hierarchy
+  itself — a dendrogram linearization puts affine nodes adjacent by
+  construction, one order-generator serving lattices (patch snakes),
+  ER (variance clusters), and dense (twin blocks) alike — and it would
+  retire the V-cycle's disc/anchor geometry, which under the order
+  state generates continuous points only for them to be flattened into
+  ranks.
 
 - **Unit selection from deep hierarchies (the s3.72 lesson).** The
   correct merge criterion is settled — per-member affinity: compare

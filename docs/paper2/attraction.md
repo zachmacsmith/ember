@@ -103,6 +103,13 @@ condition — see the last section).
 | Coupler-aware coloring / coupled scoring | REFUTED (0-for-4) | metric saturates; superseded by exactness on junction-complete fabrics |
 | restrict_chains fork patch | SHIPPED | stock hang = leaky AND-mask + unbounded parent walk; fixed at byte-parity |
 
+## State representation (v4)
+
+| Idea | Verdict | Why |
+|---|---|---|
+| Order state (two orders; positions = derived readout, s3.76) | SHIPPED (default; Max 2026-08-08) | true-objective linear DP replaces displacement packing; turán 6.02 at 10 seeds ≈ the constructive optimum; lattice block falls (honeycomb 1.09, king 1.53); largest Pegasus movement ever (K100 −1.87, all three P16 cells win); expanders pay +0.16/+0.40 — but ER is not order-free (variance clusters; ideas §3) |
+| Occupancy footprint in order-mode books | SHIPPED (inside order_state) | zero-width arms are census-invisible (line_depth: touching = disjoint) → free total collapse on the no-snap path; a bar occupies its tile — width-floor b=a+1, no-op under snap |
+
 ## Polish / rerouting
 
 | Idea | Verdict | Why |

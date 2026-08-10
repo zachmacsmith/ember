@@ -76,11 +76,19 @@ mismatch surfaces as a deficit on the tightest instance (turán, five rounds
 running: representation → compaction → lane depth → gate blindness →
 crossing coverage).
 
-## 1. The state: positions only
+## 1. The state: two orders (v4, s3.76; formerly "positions only")
 
-One continuous (x, y) per variable, in tile space. Everything extended
-about a variable is a deterministic **readout** of positions (s3.31:
-"extents were never legitimate state").
+The state is the pair of per-axis total orders. Positions survive only
+as the in-memory carrier of the **readout**: the exact per-axis DP
+(true-objective mode, `_axis_coeffs` — the stair energy is LINEAR in
+the positions given the orders) assigns every variable an integer line
+index, and no code writes a position except that readout and
+order-permutations (invariant-tested). The init's continuous points are
+reduced to ranks; the contraction phase does not exist on the default
+arm (`order_state=False` keeps the old continuous carrier as the
+control). Everything extended about a variable remains a deterministic
+readout (s3.31: "extents were never legitimate state" — now the
+coordinates aren't either).
 
 Under the **diagonal rule** (`_stair_contacts`, s3.34 — busclique's
 staircase generalized): edge (u, v) is covered at u's h-arm × v's v-arm iff
@@ -125,9 +133,11 @@ are built from (16 fresh contacts/bar, 8 claimable sub-lanes per line).
 s3.48). Structural no-op on Pegasus/Chimera/untyped targets. κ derivation,
 claim loops, and arrange capacity all key off `grid.stride`.
 
-**The stride gate** (`placement.py`, consolidation 2): `exact_seeds`,
-`overload_lam`, and the 16-step contraction engage only when
-`grid.stride > 1`. Zephyr's junctions are complete K₈,₈ (fabrics §4.2), so
+**The stride gate** (`placement.py`, consolidation 2; narrowed at v4):
+`exact_seeds` and `snap_claims` engage only when `grid.stride > 1`.
+Since s3.76 the DP packer and the overload gate are properties of the
+state representation and run on EVERY fabric; the 16-step contraction
+only exists on the `order_state=False` control arm. Zephyr's junctions are complete K₈,₈ (fabrics §4.2), so
 claim-layer coverage arithmetic *is* validity; Pegasus's ~56% junctions
 (fabrics §3) do not qualify — coverage ≠ validity there, and the machinery
 is unmeasured on that fabric. On stride-1 targets the default is
@@ -257,13 +267,17 @@ deleted at consolidation 2: 1-shot beat rounds on all dense cells at the
 first consolidation, and the sparse cells that motivated rounds are now won
 by the exact stack (ws_n486 3.01 vs rounds' 3.41, s3.55).
 
-## 7. Knobs (the complete list — 11)
+## 7. Knobs (the complete list — 17)
 
 `round_frac=0.5`, `eta=0.5`, `arrange_iters=8`, `insert_sweeps=8`,
 `kappa=None` (derived from the target: degree-based on stride-1 fabrics,
 fresh contacts per tile on course-resolved Zephyr), `span_floor=True`,
 `courses=True`, `exact_seeds=True`, `snap_claims=True`, `overload_lam=1.0`,
-`vcycle=True` (the two-stage coarsening init; default since s3.66).
+`vcycle=True` (the two-stage coarsening init; default since s3.66),
+`vcycle_agg=True`, `vcycle_transport=False`, `cluster_moves=True`,
+`cluster_units=True`, **`order_state=True` (v4 default, s3.76 — the
+two-order state; False = the continuous-carrier control arm)**,
+`contract_stable=False` (control-arm-only stopping rule, s3.75).
 Unknown kwargs — including every deleted knob — are silently ignored.
 
 ## 8. Open problems (the reasons remaining complexity exists)

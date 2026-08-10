@@ -330,6 +330,44 @@ candidate, not yet wired into the pipeline; its stage-1 is sharing the
 bar constructor as the rebuild primitive (one way to build a chain, not
 two).
 
+**3.76 (the order state — v4 stage O1).** The continuous carrier
+removed in one switch (`order_state`): init points reduce to per-axis
+RANKS (sort keys only), no contraction phase exists, the DP packs with
+the TRUE stair objective — which is LINEAR given the orders
+(`_axis_coeffs`: E_axis = Σ c_v·pos_v for any order-preserving
+assignment, c_v = nets topped − nets bottomed) — and the packer +
+overload gate run on every fabric; positions are thereafter always
+derived line indices (invariant-tested). One real defect caught by the
+first run and fixed before the rerun: on the no-snap path zero-width
+arms were invisible to the census (`line_depth` treats point intervals
+as disjoint), so the true-objective DP collapsed the whole placement
+onto one line for free (P16 E=0.0, turán 7.9→13.1); the fix is the bar
+picture taken literally — an occupancy footprint (width-floor b=a+1) in
+the order-mode books; no-op under snap, which is why Zephyr was immune.
+Probe (`data/order_probe2.csv`; the collapsed first run kept as
+`data/order_probe.csv`): **turán/Z12 6.023 at 10 seeds (max chain
+8→6.1) — essentially the 6.00 constructive optimum as a structural
+property, the number three rounds chased; the lattice block falls
+(honeycomb 1.81→1.09, king 2.36→1.53 — both now BELOW stock mm's level;
+grid 1.41→1.12 vs stock's ~1.08); spin_glass −0.60, K140 −0.29; and the
+largest Pegasus movement in program history from the fabric-agnostic
+bundle: P16 K100 13.33→11.46 (max 20→16.7), P16 turán 7.94→7.65, P16
+ws 3.80→3.33.** Max chain improves nearly everywhere. Losses, all
+Z12 expanders/near-noise: regular +0.16, ws +0.40, K100 +0.05, ER
++0.01 — the no-order-to-exploit regime, consistent with the regime map.
+Deleting the vestigial organ did not lose contraction's covert order
+search; the honest readout replaced it and moved BOTH named residuals
+(lattice init, dense Pegasus) in one flip. **Default FLIPPED (Max,
+2026-08-08): "there's solid reasoning behind it and it wins. it should
+be the default even if it lost, because that would just mean the error
+is somewhere else."** `order_state=False` remains as the
+continuous-carrier control arm; the stride gate narrows to
+exact_seeds/snap only (the packer and gate are state properties now).
+Named next on the expander/ER toll: Max's variance observation — an ER
+graph is not order-free; fluctuation makes some nodes more alike than
+uniform, so there IS an order to find, just not a spectral one (see
+ideas §3).
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).

@@ -277,8 +277,17 @@ class AttractConfig:
                                # patch tilings, the gate filters).
                                # False = s3.70's τ-aggregation units
                                # (the measurement control arm).
-    order_state: bool = False
+    order_state: bool = True
                                # v4 stage O1: the state is two orders.
+                               # DEFAULT ON (Max, 2026-08-08: "there's
+                               # solid reasoning behind it and it wins.
+                               # it should be the default even if it
+                               # lost, because that would just mean the
+                               # error is somewhere else." s3.76: turán
+                               # 6.02@10 seeds, lattice block falls,
+                               # all three P16 cells win; expanders pay
+                               # +0.16/+0.40). False = the continuous-
+                               # carrier control arm.
                                # Init points are reduced to per-axis
                                # ranks (sort keys only); the continuous
                                # contraction phase does not exist on

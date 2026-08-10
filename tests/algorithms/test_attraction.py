@@ -183,13 +183,14 @@ class TestAttractEmbed:
         assert a["stair_E"] is not None
 
     def test_stride_gate_byte_identity_off_zephyr(self, chimera, source):
-        # the consolidation-2 flip is stride-gated: on stride-1 fabrics the
-        # default must be byte-identical to the exactness-off configuration
-        # (Pegasus/Chimera behavior unchanged, unmeasured machinery inert)
+        # the exactness/snap machinery stays stride-gated (junction
+        # completeness is physics): on stride-1 fabrics the default must
+        # be byte-identical to the exactness-off configuration. NOTE
+        # (v4, s3.76): overload_lam is no longer in this list — under
+        # the order state the gate is live on every fabric by design.
         a = attract_embed(source, chimera, timeout=60, seed=0)
         b = attract_embed(source, chimera, timeout=60, seed=0,
-                          exact_seeds=False, overload_lam=0.0,
-                          snap_claims=False)
+                          exact_seeds=False, snap_claims=False)
         assert a["embedding"] and a["embedding"] == b["embedding"]
         assert a["stair_E"] == b["stair_E"]
         assert "mm_skipped" not in a["diag"]
@@ -239,13 +240,19 @@ class TestAttractEmbed:
 class TestOrderState:
     """v4 stage O1: state = two orders, positions = derived readout."""
 
-    def test_off_switch_is_default(self, source, chimera):
+    def test_default_is_order_state(self, source, chimera):
+        # v4 default flip (s3.76): the default IS the order state; the
+        # continuous carrier survives only as the control arm
         a = attract_embed(source, chimera, timeout=60, seed=0)
         b = attract_embed(source, chimera, timeout=60, seed=0,
-                          order_state=False)
+                          order_state=True)
         assert a["embedding"] and a["embedding"] == b["embedding"]
-        assert a["stair_E"] == b["stair_E"]
-        assert "order_state" not in a["diag"]
+        assert a["diag"].get("order_state") is True
+        c = attract_embed(source, chimera, timeout=60, seed=0,
+                          order_state=False)
+        assert c["embedding"]
+        assert validate_embedding(c["embedding"], source, chimera)
+        assert "order_state" not in c["diag"]
 
     def test_order_state_valid_and_deterministic(self, source, chimera):
         a = attract_embed(source, chimera, timeout=60, seed=0,

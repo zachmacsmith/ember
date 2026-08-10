@@ -121,12 +121,14 @@ class TestHelpers:
         assert out is None
 
     def test_contract_stable_off_is_default(self, source):
-        # off-switch identity: the new field must not perturb defaults
+        # off-switch identity on the continuous control arm (v4: the
+        # contraction phase only exists when order_state=False)
         from ember_qc.algorithms.factored import attract_embed
         chim = dnx.chimera_graph(4, 4, 4)
-        a = attract_embed(source, chim, timeout=60, seed=0)
+        a = attract_embed(source, chim, timeout=60, seed=0,
+                          order_state=False)
         b = attract_embed(source, chim, timeout=60, seed=0,
-                          contract_stable=False)
+                          order_state=False, contract_stable=False)
         assert a["embedding"] and a["embedding"] == b["embedding"]
         assert a["stair_E"] == b["stair_E"]
         assert "contract_steps" not in a["diag"]
@@ -135,7 +137,7 @@ class TestHelpers:
         from ember_qc.algorithms.factored import attract_embed
         chim = dnx.chimera_graph(4, 4, 4)
         r = attract_embed(source, chim, timeout=60, seed=0,
-                          contract_stable=True)
+                          order_state=False, contract_stable=True)
         assert r["embedding"]
         assert validate_embedding(r["embedding"], source, chim)
         steps = r["diag"]["contract_steps"]
