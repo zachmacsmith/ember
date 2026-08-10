@@ -158,3 +158,40 @@ class TestHelpers:
                 assert pruned_sub[v] == finished[v]
         assert is_valid_embedding(pruned_sub, source, zephyr)
         assert is_valid_embedding(pruned_all, source, zephyr)
+
+
+class TestBarRebuild:
+    """v4 ball rebuild: one way to build a chain (bars, not Steiner)."""
+
+    def test_bars_arm_valid_deterministic(self, source, zephyr, finished):
+        a, ia = ball_polish(finished, source, zephyr, rebuild="bars")
+        b, ib = ball_polish(finished, source, zephyr, rebuild="bars")
+        assert a == b and ia["accepted"] == ib["accepted"]
+        assert validate_embedding(a, source, zephyr)
+        assert total(a) <= total(finished)
+
+    def test_fallback_arm_never_worse_than_bars(self, source, zephyr,
+                                                finished):
+        bars, _ = ball_polish(finished, source, zephyr, rebuild="bars")
+        both, _ = ball_polish(finished, source, zephyr,
+                              rebuild="bars+fallback")
+        assert validate_embedding(both, source, zephyr)
+        assert total(both) <= total(finished)
+
+    def test_router_arm_unchanged_semantics(self, source, zephyr,
+                                            finished):
+        r, info = ball_polish(finished, source, zephyr, rebuild="router")
+        assert validate_embedding(r, source, zephyr)
+        assert "bar_rebuilds" not in info
+
+    def test_bars_on_pegasus(self, source):
+        import minorminer
+        import dwave_networkx as dnx
+        tgt = dnx.pegasus_graph(4)
+        emb = minorminer.find_embedding(source, list(tgt.edges()),
+                                        random_seed=5, timeout=30)
+        assert emb and validate_embedding(emb, source, tgt)
+        emb = {int(v): sorted(int(q) for q in c) for v, c in emb.items()}
+        out, info = ball_polish(emb, source, tgt, rebuild="bars+fallback")
+        assert validate_embedding(out, source, tgt)
+        assert total(out) <= total(emb)
