@@ -249,8 +249,8 @@ def _stair_contacts(pos: Dict[int, Point],
 
 def derive_bars_stair(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                       *, kappa: float = 13.0, floor: bool = True,
-                      bounds: Optional[Tuple[int, int]] = None
-                      ) -> BarIntervals:
+                      bounds: Optional[Tuple[int, int]] = None,
+                      contacts=None) -> BarIntervals:
     """Single-coverage bars: v's h-arm spans the columns of its h-assigned
     contacts (+ its own column); v-arm spans the rows of its v-assigned
     contacts (+ its own row). Pure function of positions; never recentered.
@@ -258,9 +258,13 @@ def derive_bars_stair(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
     ``floor``: contact capacity (s3.30) — a chain of L qubits hosts at most
     ~kappa*L contacts, so total arm length owes w + h >= deg(v)/kappa - 1;
     any deficit is split evenly per axis and widened symmetrically.
-    ``bounds=(W, H)`` clips intervals into the grid.
+    ``bounds=(W, H)`` clips intervals into the grid. ``contacts`` (an
+    ``_stair_contacts`` result for the same y-order) skips recomputation
+    — contacts depend only on the y-ORDER, so any caller whose mutation
+    preserved it may pass the previous bundle through.
     """
-    contacts = _stair_contacts(pos, src_adj)
+    if contacts is None:
+        contacts = _stair_contacts(pos, src_adj)
     out: BarIntervals = {}
     for v in sorted(pos):
         h_us, v_us = contacts[v]
@@ -536,7 +540,8 @@ def wire_seeds_iv(grid: TileGrid, pos: Dict[int, Point],
 
 def arm_books(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
               grid: TileGrid, *, kappa: float, floor: bool = True,
-              snap: bool = False, min_span: float = 1.0):
+              snap: bool = False, min_span: float = 1.0,
+              contacts=None):
     """THE one accounting (s3.66): the claim layer's books, computed once
     — contacts, bars, and per-orientation (line, interval, participant)
     tuples with snap's parity-agnostic hull widening applied when
@@ -548,9 +553,10 @@ def arm_books(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
 
     Returns (contacts, bars, tuples) where tuples[o] is a list of
     (line, a, b, v) for orientation o in (1, 0)."""
-    contacts = _stair_contacts(pos, src_adj)
+    if contacts is None:
+        contacts = _stair_contacts(pos, src_adj)
     bars = derive_bars_stair(pos, src_adj, kappa=kappa, floor=floor,
-                             bounds=(grid.W, grid.H))
+                             bounds=(grid.W, grid.H), contacts=contacts)
     tuples = {}
     for o in (1, 0):
         ax = 0 if o == 1 else 1
@@ -1348,9 +1354,15 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
     """
     min_span = 0.0 if order_mode else 1.0
 
-    def _eval(p):
+    def _eval(p, contacts=None):
+        # ``contacts``: pass the previous bundle's contacts when the
+        # mutation provably preserved the y-ORDER (x-swaps, x-value
+        # permutations, and order-preserving packs on either axis) —
+        # contacts depend on nothing else, and recomputing them was the
+        # measured hotspot (2x _stair_contacts per arm_books, ~40% of
+        # arrange wall on turan).
         books = arm_books(p, src_adj, grid, kappa=kappa, floor=floor,
-                          snap=snap, min_span=min_span)
+                          snap=snap, min_span=min_span, contacts=contacts)
         e = stair_energy(p, src_adj, contacts=books[0])
         if overload_lam > 0.0:
             e += overload_lam * claim_overload(p, src_adj, grid,
@@ -1371,7 +1383,8 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
         info["mono_swaps"] += mi["swaps"]
         info["mono_time"] = round(info["mono_time"] + mi["time"], 4)
         if mi["swaps"]:
-            cur_books, cur_E = _eval(new_pos)
+            # x-transpositions never touch the y-order
+            cur_books, cur_E = _eval(new_pos, contacts=cur_books[0])
 
     def _half(axis: int, force: bool) -> bool:
         """Pack the axis's long-arm variables into lines; accept if the
@@ -1426,7 +1439,13 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                         break
                 if not placed:
                     miss += 1
-        books_new, e_new = _eval(trial)
+        # contacts reuse is safe ONLY for axis=0 (x untouched by y-order).
+        # axis=1 must recompute: even the order-preserving DP can collapse
+        # two distinct y values onto one line, and the (y, id) tie-break
+        # then flips any pair whose id order disagrees with the old value
+        # order — stale contacts there would be a silent proxy drift.
+        books_new, e_new = _eval(
+            trial, contacts=cur_books[0] if axis == 0 else None)
         if force or e_new <= cur_E + 1e-9:
             changed = any(not np.allclose(trial[v], new_pos[v])
                           for v in parts)
@@ -1487,7 +1506,9 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
         books_snap = cur_books
         for r, v in enumerate(new_order):
             new_pos[v][axis] = float(vals[r])
-        cur_books, cur_E = _eval(new_pos)
+        # x-axis proposals never touch the y-order; y-axis ones do
+        cur_books, cur_E = _eval(
+            new_pos, contacts=cur_books[0] if axis == 0 else None)
         _mono()
         _half(axis=1, force=False)
         _half(axis=0, force=False)
