@@ -487,9 +487,13 @@ def attract_embed(
         ball_info = None
         if cfg.tail in ("ball+mm", "ball"):
             from ember_qc.algorithms.factored.ball import ball_polish
+            # ONE sweep (structural cap, not a constant): the smoke
+            # showed fixpoint-chasing starves the grind on lattices —
+            # most ball accepts land in sweep 1; the grind gets the rest
             balled, ball_info = ball_polish(
                 legal_emb, source_graph, target_graph,
-                deadline=deadline, adj=adj, grid=grid)
+                deadline=deadline, adj=adj, grid=grid,
+                max_sweeps=1 if cfg.tail == "ball+mm" else None)
             if is_valid_embedding(balled, source_graph, target_graph,
                                   adj=adj):
                 legal_emb = balled

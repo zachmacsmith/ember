@@ -313,7 +313,8 @@ def ball_polish(chains: Embedding, source_graph: nx.Graph,
                 target_graph: nx.Graph, *,
                 deadline: Optional[float] = None,
                 adj: Optional[Adjacency] = None,
-                grid=None) -> Tuple[Embedding, dict]:
+                grid=None,
+                max_sweeps: Optional[int] = None) -> Tuple[Embedding, dict]:
     """Improve a finished legal embedding by ball eviction/re-embedding.
 
     Sweeps a fixed, deterministic ball list (unit balls fine->coarse, then
@@ -366,6 +367,8 @@ def ball_polish(chains: Embedding, source_graph: nx.Graph,
     visits = [0]
     out_of_time = False
     while not out_of_time:
+        if max_sweeps is not None and info["sweeps"] >= max_sweeps:
+            break
         info["sweeps"] += 1
         any_accept = False
         for S in balls:
