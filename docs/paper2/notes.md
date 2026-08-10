@@ -368,6 +368,36 @@ graph is not order-free; fluctuation makes some nodes more alike than
 uniform, so there IS an order to find, just not a spectral one (see
 ideas §3).
 
+**3.77 (the simple-and-fast round).** Three directives (Max): dirty
+fast init, slim the state-enabled complexity, bar-based ball rebuild.
+Speed, honestly: the planned pack_lines feasibility rewrite was benched
+and **REFUTED** (dense 6→6 ms, sparse 21→17 at n=486 — never the
+bottleneck; reverted same-day, property test kept). Profiling found the
+real sink: `arm_books` computed contacts twice per gate evaluation;
+fixed by y-order-invariant reuse (safe sites only — axis-1 mutations
+recompute, since a line-collapse can flip the (y,id) tie-break),
+byte-identical, ~2 s/embed returned to the move budget. **Ball v2**
+(`data/ballbar_probe.csv`): bar rebuild through the pipeline's own
+claim machinery (`require_free` coloring, `only=`-scoped completion;
+also fixed a live bug — ball's grid was built courses=False, folded
+wires). Verdict: **bars+fallback ≥ router on every cell** (turán 10.83
+vs 10.92, king 1.69 vs 1.71, rest ties) and ships as the default arm;
+**bars-only REFUTED standalone** (near-zero accepts off turán; stride-1
+corners are a ~56% junction coin without completion) — `sph_tree`
+remains load-bearing; the one-constructor unification is partial, not
+total. **Hier init REFUTED as built** (`data/hier_probe.csv`): the
+ER-variance thesis cells moved the WRONG way — ER +0.23 (diagonal arm
++1.21), regular +1.07, ws +0.36, king +0.74, honeycomb +0.10, all
+three P16 cells up — only the crystal regime at/below parity (turán
+exactly 6.000 on 10/10 seeds, its first all-seed optimum). Reading:
+the affinity hierarchy is the right MOVE-UNIT generator and the wrong
+ORDER generator for liquids — a dendrogram linearization seats
+variance clusters together but destroys the 2-D geometry that spectral
+ranks carry; the variance thesis itself stays open, this mechanism for
+it is parked. Spectral-ranks init remains default; consolidation 4
+rescoped — the vcycle/disc path SURVIVES (it feeds the winning init),
+and the continuous-arm deletion waits for its own round.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).

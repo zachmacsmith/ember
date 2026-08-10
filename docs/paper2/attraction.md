@@ -37,6 +37,8 @@ condition — see the last section).
 
 | Idea | Verdict | Why |
 |---|---|---|
+| Hier init (dendrogram orders: RCM quotient + attachment-rank expansion, s3.77) | REFUTED as init | ER/expander cells moved the WRONG way (ER +0.23, regular +1.07, king +0.74); linearization destroys the 2-D geometry spectral ranks carry; right move-unit generator, wrong order generator — turán's 10/10-seed 6.000 shows the crystal exception |
+| pack_lines incremental jstar | REFUTED (bench) | 6->6 / 21->17 ms — never the bottleneck; reverted same-day |
 | Segment ("crystal-shaped") member spreads | REFUTED | pre-ordering members pre-empts the E-gated moves that discover better orders |
 | Pre-formed K_n diagonal at the junction | REFUTED | same pre-emption mechanism, re-measured: +0.4 despite better energy |
 | Compact init | REFUTED | interleaves blocks harder than insertion recovers |
@@ -114,6 +116,8 @@ condition — see the last section).
 
 | Idea | Verdict | Why |
 |---|---|---|
+| Bar-based ball rebuild + router fallback (s3.77) | SHIPPED (default arm) | >= router on every probe cell; bars harvest quick wins ~30x faster, router restructures; requires require_free coloring + only=-scoped completion |
+| Bars-only ball rebuild | REFUTED standalone | near-zero accepts off turán; stride-1 corners are a ~56% junction coin without completion — sph_tree stays load-bearing |
 | Ball polish (whole-chain composite re-embed, s3.75) | validated candidate | beats warm-started mm grind 17/26 at equal seconds on identical inputs (turán −1.45; first fabric-agnostic Pegasus wins); strict descent = never harmful; lattices unmoved (order-level residual, out of the move class by design); rebuild primitive is router-grade — stage 1 shares the bar constructor |
 | Energy-plateau contraction stopping (contract_stable) | REFUTED | the plateau never fires: stair-E is monotone toward collapse, so the step count IS the repulsion — no honest internal stopping rule exists; 50-cap beat 16 on turán/spin_glass but lost K100 and still hurt P16; the fix is removing the continuous state, not re-knobbing it |
 

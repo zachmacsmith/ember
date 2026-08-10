@@ -199,7 +199,13 @@ Each entry: the principle, then the strongest single piece of evidence.
   ER (variance clusters), and dense (twin blocks) alike — and it would
   retire the V-cycle's disc/anchor geometry, which under the order
   state generates continuous points only for them to be flattened into
-  ranks.
+  ranks. MEASURED AND REFUTED AS BUILT (s3.77, `data/hier_probe.csv`):
+  the thesis cells moved the wrong way (ER +0.23, regular +1.07) while
+  only the crystal regime held (turán 6.000 on 10/10 seeds). The
+  hierarchy detects the variance but a 1-D dendrogram linearization
+  destroys the 2-D geometry spectral ranks carry — the thesis needs an
+  order generator that keeps both, and remains open. Spectral init
+  stays; the disc geometry survives as its feeder.
 
 - **Unit selection from deep hierarchies (the s3.72 lesson).** The
   correct merge criterion is settled — per-member affinity: compare
