@@ -536,7 +536,7 @@ def wire_seeds_iv(grid: TileGrid, pos: Dict[int, Point],
 
 def arm_books(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
               grid: TileGrid, *, kappa: float, floor: bool = True,
-              snap: bool = False):
+              snap: bool = False, min_span: float = 1.0):
     """THE one accounting (s3.66): the claim layer's books, computed once
     — contacts, bars, and per-orientation (line, interval, participant)
     tuples with snap's parity-agnostic hull widening applied when
@@ -557,7 +557,7 @@ def arm_books(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
         out = []
         for v in sorted(pos):
             iv = bars[v][0] if o == 1 else bars[v][1]
-            if float(iv[1] - iv[0]) < 1.0:  # participation: original iv
+            if float(iv[1] - iv[0]) < min_span:  # participation gate
                 continue
             a, b = float(iv[0]), float(iv[1])
             if snap:
@@ -910,8 +910,32 @@ def line_depth(intervals: List[Tuple[float, float]]) -> int:
 _MISS_COST = 1e6  # a skip must dominate any real displacement (|y-l| <= L)
 
 
+def _axis_coeffs(contacts, pos: Dict[int, Point],
+                 axis: int) -> Dict[int, int]:
+    """Linear coefficients of the stair energy's ``axis`` term (v4 order
+    state): given the orders, E_axis = sum over nets of (value of the
+    net's order-max member - value of its order-min member), which is
+    SUM_v c_v * pos[v][axis] with c_v = (#nets v tops) - (#nets v
+    bottoms). Valid for any order-preserving assignment, so the packer
+    can minimize the true objective instead of displacement. Nets on
+    axis 1 (row assignment / y values) are the v-nets {v} + v_us(v);
+    on axis 0 (column assignment / x values) the h-nets {v} + h_us(v).
+    Order-extremes are taken under (value, id) — the stair tie-break."""
+    side = 1 if axis == 1 else 0
+    c: Dict[int, int] = {v: 0 for v in pos}
+    for v, (h_us, v_us) in contacts.items():
+        members = [v] + (v_us if side == 1 else h_us)
+        if len(members) < 2:
+            continue
+        hi = max(members, key=lambda u: (float(pos[u][axis]), u))
+        lo = min(members, key=lambda u: (float(pos[u][axis]), u))
+        c[hi] += 1
+        c[lo] -= 1
+    return c
+
+
 def pack_lines(intervals: List[Tuple[float, float]], values: List[float],
-               pools: List[float]):
+               pools: List[float], coeffs: Optional[List[float]] = None):
     """Exact order-preserving line packing (the s3.59 DP; replaces the
     greedy nearest-line-with-room loop). Items must be pre-sorted by
     (value, id); the assignment is NON-DECREASING in that order — the
@@ -930,6 +954,13 @@ def pack_lines(intervals: List[Tuple[float, float]], values: List[float],
     k-th item or ``None`` (skipped). Deterministic. Complexity: one
     two-pointer feasibility pass per distinct pool value (windows are
     depth-bounded) plus an O(n * L) sliding-window-minimum DP.
+
+    ``coeffs`` (v4 order state) switches the cost to the TRUE stair
+    objective: item k assigned to line l costs coeffs[k] * l (linear in
+    the assignment, see ``_axis_coeffs``; negative coefficients are
+    fine). ``values`` then serves only as the pre-sort carrier. The gate
+    still re-checks the real energy on the caller's side, so the cost
+    mode changes which assignment is proposed, never what is accepted.
     """
     n = len(intervals)
     L = len(pools)
@@ -957,9 +988,13 @@ def pack_lines(intervals: List[Tuple[float, float]], values: List[float],
     f_prev = [i * _MISS_COST for i in range(n + 1)]
     parent = [[None] * (n + 1) for _ in range(L)]
     for l in range(L):
-        Cp = [0.0] * (n + 1)  # prefix sums of |value - l|
-        for k in range(n):
-            Cp[k + 1] = Cp[k] + abs(float(values[k]) - float(l))
+        Cp = [0.0] * (n + 1)  # prefix sums of the per-item cost on line l
+        if coeffs is None:
+            for k in range(n):
+                Cp[k + 1] = Cp[k] + abs(float(values[k]) - float(l))
+        else:
+            for k in range(n):
+                Cp[k + 1] = Cp[k] + float(coeffs[k]) * float(l)
         cl = int(pools[l]) if pools[l] >= 1.0 else 0
         js = jstar.get(cl)
         f_cur = [INF] * (n + 1)
@@ -1281,8 +1316,15 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                       overload_lam: float = 0.0,
                       use_dp: bool = False, snap: bool = False,
                       deadline: Optional[float] = None,
-                      cluster_groups=None):
+                      cluster_groups=None, order_mode: bool = False):
     """Alternating 1-D arrangement on the stair energy.
+
+    ``order_mode`` (v4 order state): every variable participates
+    (``min_span=0``, so the books census finally sees sub-tile arms) and
+    the DP packs with the TRUE stair objective (``_axis_coeffs``)
+    instead of displacement from the previous positions — the anchor
+    that made first projections nearly irrevocable. Caller must set
+    ``use_dp=True``; positions are then always derived line indices.
 
     Policy is EXPLICIT (s3.66; this function never inspects the fabric):
     ``use_dp`` selects the exact order-preserving DP packer with integer
@@ -1295,9 +1337,11 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
     per evaluated state, and the accepted state's energy is carried,
     not recomputed. Returns (new_pos, info).
     """
+    min_span = 0.0 if order_mode else 1.0
+
     def _eval(p):
         books = arm_books(p, src_adj, grid, kappa=kappa, floor=floor,
-                          snap=snap)
+                          snap=snap, min_span=min_span)
         e = stair_energy(p, src_adj, contacts=books[0])
         if overload_lam > 0.0:
             e += overload_lam * claim_overload(p, src_adj, grid,
@@ -1344,9 +1388,14 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                 # (fabrics s4.3b); the avoid rule as pool data
                 pool[0] = 0.0
                 pool[nlines - 1] = 0.0
+            cs = None
+            if order_mode:
+                cmap = _axis_coeffs(cur_books[0], new_pos, axis)
+                cs = [float(cmap.get(v, 0)) for v in order]
             assign, _cost = pack_lines(
                 [ivs[v] for v in order],
-                [float(new_pos[v][axis]) for v in order], pool)
+                [float(new_pos[v][axis]) for v in order], pool,
+                coeffs=cs)
             for v, ln in zip(order, assign):
                 if ln is None:
                     miss += 1

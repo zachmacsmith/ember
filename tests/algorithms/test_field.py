@@ -993,3 +993,54 @@ class TestBarDomains:
                 assert abs(i - 3) <= 1 and 1 <= j <= 7
             else:        # v-wire: col band around col 4, rows in [1-1, 5+1]
                 assert abs(j - 4) <= 1 and 0 <= i <= 6
+
+
+class TestOrderMode:
+    """v4 order-state machinery: linear true-objective coefficients and
+    the pack_lines coeffs cost mode."""
+
+    def test_axis_coeffs_reproduce_stair_energy(self):
+        import networkx as nx
+        from ember_qc.algorithms.factored.field import (
+            _axis_coeffs, _stair_contacts, stair_energy)
+        rng = np.random.default_rng(5)
+        g = nx.gnp_random_graph(14, 0.3, seed=9)
+        src_adj = {v: sorted(g.neighbors(v)) for v in g}
+        for trial in range(3):
+            pos = {v: np.array([float(rng.integers(0, 9)),
+                                float(rng.integers(0, 9))])
+                   for v in g}
+            # collapse the other axis to zero: the remaining energy is
+            # exactly this axis's term, which must equal sum(c_v * value)
+            for axis in (0, 1):
+                flat = {v: p.copy() for v, p in pos.items()}
+                for v in flat:
+                    flat[v][1 - axis] = 0.0
+                contacts = _stair_contacts(flat, src_adj)
+                c = _axis_coeffs(contacts, flat, axis)
+                lin = sum(c[v] * float(flat[v][axis]) for v in flat)
+                assert abs(lin - stair_energy(flat, src_adj)) < 1e-9
+
+    def test_pack_lines_coeffs_beats_displacement(self):
+        from ember_qc.algorithms.factored.field import pack_lines
+        # two items far apart in current values but linked by one net:
+        # coeffs (-1, +1) => true cost = l1 - l0, minimized by adjacency
+        intervals = [(0.0, 0.4), (0.0, 0.4)]
+        values = [1.0, 5.0]
+        pools = [2.0] * 7
+        a_disp, _ = pack_lines(intervals, values, pools)
+        a_true, _ = pack_lines(intervals, values, pools,
+                               coeffs=[-1.0, 1.0])
+        assert a_disp == [1, 5]          # displacement keeps them apart
+        assert a_true[0] == a_true[1]    # true objective packs them
+
+    def test_pack_lines_coeffs_respects_capacity(self):
+        from ember_qc.algorithms.factored.field import pack_lines
+        # overlapping intervals, pool 1 per line: cannot share a line
+        intervals = [(0.0, 2.0), (1.0, 3.0)]
+        values = [2.0, 4.0]
+        pools = [1.0] * 6
+        a_true, _ = pack_lines(intervals, values, pools,
+                               coeffs=[-1.0, 1.0])
+        assert a_true[0] is not None and a_true[1] is not None
+        assert a_true[1] > a_true[0]     # order preserved, distinct lines
