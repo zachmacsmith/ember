@@ -419,6 +419,20 @@ ornamentation — purge-eligible: any even generator serves. The spiral
 stays for now only because three lines that work need no replacement
 until the disc path's own consolidation.
 
+**3.79 (consolidation 4 — one code path, and the anatomy rewritten).**
+Purge to the winner configuration (archive commit `d8274198`): deleted
+the continuous control arm (contraction, CONTRACT_STEPS, eta,
+contract_stable, the order_state switch itself), the greedy packer,
+the order_mode/use_dp flags (true-objective DP + full census are now
+unconditional), the folded-courses arm, hier_orders/_rcm (s3.77),
+init_offsets (s3.78), vcycle_transport/unpack_transport (superseded —
+its lattice claim is solved by the order state, s3.76), and ball's
+rebuild knob (bars+fallback hardcoded). AttractConfig 20→12 fields;
+−819/+152 lines; default byte-identical on all three fabrics; 578
+tests green. anatomy.md rewritten from the purged code in plain
+language (what/how/why per stage) as the substrate for the owner's
+question pass.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).

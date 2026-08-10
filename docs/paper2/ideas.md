@@ -309,7 +309,6 @@ whole-chain composite re-embedding; beats minorminer's warm grind at
 equal seconds on 17/26 cells including the first fabric-agnostic
 Pegasus wins). Parked: `vcycle_transport` (subsumed as ungated init;
 lattice-init residual only), `bar_domains` (unblocked, unprobed),
-`contract_stable` (refuted as default; its probe is the measurement
-that the continuous phase has no honest stopping signal). Full sweep
+Deleted at consolidation 4 (archive d8274198): the continuous arm, transport, hier/offsets levers. Full sweep
 data: `results/batch_2026-08-05_19-43-17` and siblings; report at
 `/data/max/fullember3/REPORT.md`.
