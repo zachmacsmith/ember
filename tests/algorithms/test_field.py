@@ -1136,3 +1136,61 @@ class TestOrderMode:
                     assert depth <= c
                     # reference feasibility: run start within ref window
                     assert lo >= ref[c][hi + 1]
+
+    def test_complete_seeds_only_freezes_others(self):
+        # only= must leave non-member chains byte-identical while still
+        # covering member-incident edges (full dict passed, frozen world
+        # visible as claimed)
+        import networkx as nx
+        from ember_qc.algorithms.factored.field import (
+            TileGrid, arm_books, wire_seeds_iv, complete_seeds,
+            _target_kappa)
+        from ember_qc.algorithms.factored.placement import target_layout
+        from ember_qc.embedding_backend import build_adjacency
+        target = dnx.zephyr_graph(3, 4)
+        grid = TileGrid(target, target_layout(target), courses=True)
+        g = nx.gnp_random_graph(10, 0.5, seed=3)
+        src_adj = {v: sorted(g.neighbors(v)) for v in g}
+        pos = {v: np.array([float(v % 4) * 2, float(v // 4) * 2])
+               for v in g}
+        kappa = _target_kappa(grid)
+        books = arm_books(pos, src_adj, grid, kappa=kappa, snap=True)
+        seeds = wire_seeds_iv(grid, pos, books[1], src_adj=src_adj,
+                              snap=True, books=books)
+        adj = build_adjacency(target)
+        full, _ = complete_seeds(grid, seeds, src_adj, adj)
+        members = set(sorted(seeds)[:4])
+        scoped, _ = complete_seeds(grid, seeds, src_adj, adj,
+                                   only=members)
+        for v in seeds:
+            if v not in members:
+                assert scoped[v] == seeds[v], f"frozen chain {v} changed"
+        del full
+
+    def test_require_free_skips_occupied_lanes(self):
+        from ember_qc.algorithms.factored.field import (
+            TileGrid, _color_claim_bars)
+        from ember_qc.algorithms.factored.placement import target_layout
+        target = dnx.chimera_graph(2, 2, 4)
+        grid = TileGrid(target, target_layout(target))
+        # occupy every qubit of every lane on line 0 except sub-lane 3
+        claimed = set()
+        for (u, ln, s), run in grid.wire_map.items():
+            if u == 1 and ln == 0 and s != 3:
+                claimed.update(run.values())
+        chains = {7: []}
+        bars = [(0, 0.0, 1.0, 7)]
+        _color_claim_bars(grid, claimed, chains, 1, bars,
+                          require_free=True)
+        assert chains[7], "bar should have claimed the one free lane"
+        got = {grid.wire_map[(1, 0, 3)].get(t) for t in (0, 1)}
+        assert set(chains[7]) <= got
+        # and with NO free lane, nothing is claimed
+        claimed2 = set()
+        for (u, ln, s), run in grid.wire_map.items():
+            if u == 1 and ln == 0:
+                claimed2.update(run.values())
+        chains2 = {7: []}
+        _color_claim_bars(grid, claimed2, chains2, 1, bars,
+                          require_free=True)
+        assert chains2[7] == []

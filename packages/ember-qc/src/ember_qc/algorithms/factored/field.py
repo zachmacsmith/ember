@@ -370,7 +370,8 @@ def _nearest_free(grid: TileGrid, claimed: set, pt_tile: Point,
 def _color_claim_bars(grid: TileGrid, claimed: set,
                       chains: Dict[int, List[int]], orientation: int,
                       bars: List[Tuple[int, float, float, int]],
-                      targets: Optional[Dict[int, tuple]] = None) -> None:
+                      targets: Optional[Dict[int, tuple]] = None,
+                      require_free: bool = False) -> None:
     """Color explicit interval bars onto physical wires and claim runs.
     ``bars``: (line, start, end, v) tuples of one orientation. Bars sharing
     a line with disjoint intervals may share a wire; overlapping ones may
@@ -398,6 +399,22 @@ def _color_claim_bars(grid: TileGrid, claimed: set,
             for c in [c for c, e in used_colors.items() if e <= a]:
                 del used_colors[c]
             free = [c for c in subs if c not in used_colors]
+            if require_free:
+                # frozen-world awareness (ball rebuild): the color CHOICE
+                # must consult occupancy, not just claim-time stealing —
+                # otherwise a rebuild against a full fabric picks dead
+                # wires or claims disconnected fragments. Admissible =
+                # the lane's existing positions across the claim range
+                # are all unclaimed (and there is at least one).
+                lo0, hi0 = int(math.floor(a)), int(math.ceil(b))
+
+                def _free_run(s_):
+                    run_ = grid.wire_map.get((orientation, line, s_), {})
+                    qs = [run_.get(t) for t in range(lo0, hi0 + 1)]
+                    qs = [q for q in qs if q is not None]
+                    return bool(qs) and all(q not in claimed for q in qs)
+
+                free = [c for c in free if _free_run(c)]
             if not free:
                 continue  # line oversubscribed; leave this bar point-seeded
             if targets is not None and v in targets:
@@ -637,7 +654,8 @@ def claim_overload(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
 
 
 def complete_seeds(grid: TileGrid, chains: Dict[int, List[int]],
-                   src_adj: Dict[int, List[int]], adj) -> tuple:
+                   src_adj: Dict[int, List[int]], adj,
+                   only: Optional[set] = None) -> tuple:
     """Exactness completion (notes s3.54): drive the seed chains to validity
     by construction. On junction-complete fabrics (Zephyr) validity ==
     coverage, so uncovered edges are closed by pure interval arithmetic:
@@ -656,6 +674,12 @@ def complete_seeds(grid: TileGrid, chains: Dict[int, List[int]],
 
     Residual deficit > 0 is not failure — the completed chains are a
     strictly better warm start for the router. Returns (chains, info).
+
+    ``only`` (ball rebuild, the spur_prune precedent): restrict which
+    chains may be EXTENDED — the corner pass skips non-members, the edge
+    pass considers only edges incident to members and never extends a
+    frozen side, bridges attach to the member endpoint. Pass the FULL
+    chain dict regardless; frozen chains stay byte-identical.
     """
     out = {v: list(c) for v, c in chains.items()}
     claimed = set().union(*out.values()) if out else set()
@@ -733,6 +757,8 @@ def complete_seeds(grid: TileGrid, chains: Dict[int, List[int]],
 
     # ---- corner pass: each variable's own runs must couple ----------------
     for v in sorted(out):
+        if only is not None and v not in only:
+            continue
         by = runs_of(v)
         hr = sorted(k for k in by if k[0] == 1)
         vr = sorted(k for k in by if k[0] == 0)
@@ -760,6 +786,8 @@ def complete_seeds(grid: TileGrid, chains: Dict[int, List[int]],
     edges = sorted((min(a, b), max(a, b)) for a in src_adj
                    for b in src_adj[a] if a < b or b < a)
     edges = sorted(set(edges))
+    if only is not None:
+        edges = [e for e in edges if e[0] in only or e[1] in only]
     residual = []
     for a, b in edges:
         if a not in out or b not in out:
@@ -779,6 +807,10 @@ def complete_seeds(grid: TileGrid, chains: Dict[int, List[int]],
                     got = cross_cost(kh, sorted(src_runs[kh]),
                                      kv, sorted(dst_runs[kv]))
                     if got is not None:
+                        if only is not None and (
+                                (got[0] and va not in only)
+                                or (got[1] and vb not in only)):
+                            continue  # would extend a frozen chain
                         cost = len(got[0]) + len(got[1])
                         if best is None or cost < best[0]:
                             best = (cost, va, got[0], vb, got[1])
@@ -789,6 +821,9 @@ def complete_seeds(grid: TileGrid, chains: Dict[int, List[int]],
 
     # ---- bridge pass on the residual -------------------------------------
     for a, b in residual:
+        # under ``only`` the bridge qubits must live on a member chain
+        if only is not None and a not in only:
+            a, b = b, a
         sa, sb = set(out[a]), set(out[b])
         na = sorted({nb for q in sorted(sa) for nb in adj[q]
                      if nb not in claimed})
