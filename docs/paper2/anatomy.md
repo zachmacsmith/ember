@@ -26,10 +26,13 @@ are kept only if the real total chain length (plus a penalty for
 overfull wire bundles) does not get worse. On Zephyr, the resulting
 chains are completed into a provably valid embedding and minorminer is
 skipped entirely; otherwise minorminer legalizes the seeded layout.
-Either way, minorminer's polish runs last, unconstrained. A separate
-post-processor (`ball_polish`) can then evict small groups of chains and
-rebuild them jointly against the frozen rest, keeping only strict
-improvements.
+Either way, minorminer's polish runs last, unconstrained — minorminer
+is still the pipeline's final stage on every fabric. `ball_polish`
+(§7) is NOT part of the pipeline: it is a standalone post-processor,
+so far exercised only by probes, that evicts small groups of chains
+and rebuilds them jointly against the frozen rest, keeping only strict
+improvements. It is the measured candidate to *replace* the polish
+stage; that replacement has not been wired in yet.
 
 ## 0.5 The five hardware facts
 
