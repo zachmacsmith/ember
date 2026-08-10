@@ -509,6 +509,18 @@ def attract_embed(
         if not is_valid_embedding(finished, source_graph, target_graph,
                                   adj=adj):
             finished = legal_emb
+        if cfg.tail == "mm+ball":
+            # s3.80 reordering: the grind polishes chains first (its
+            # basin unconstrained, s3.22 doctrine), ball harvests LAST
+            # what the single-chain view cannot see (s3.75 protocol,
+            # now at equal total budget). Fixpoint under the deadline.
+            from ember_qc.algorithms.factored.ball import ball_polish
+            balled, ball_info = ball_polish(
+                finished, source_graph, target_graph,
+                deadline=deadline, adj=adj, grid=grid)
+            if is_valid_embedding(balled, source_graph, target_graph,
+                                  adj=adj):
+                finished = balled
 
         widths = bar_widths(books[1])
         sizes = (np.array([widths[v].sum() for v in widths])
