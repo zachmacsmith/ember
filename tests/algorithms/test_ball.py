@@ -177,9 +177,13 @@ class TestTail:
         assert r["diag"].get("mm_skipped") is True
         assert "ball_accepts" in r["diag"]
 
-    def test_tail_mm_is_default(self, source, zephyr):
+    def test_tail_default_is_mm_ball(self, source, zephyr):
         from ember_qc.algorithms.factored import attract_embed
         a = attract_embed(source, zephyr, timeout=45, seed=0)
-        b = attract_embed(source, zephyr, timeout=45, seed=0, tail="mm")
+        b = attract_embed(source, zephyr, timeout=45, seed=0,
+                          tail="mm+ball")
         assert a["embedding"] == b["embedding"]
-        assert "ball_accepts" not in a["diag"]
+        assert "ball_accepts" in a["diag"]
+        c = attract_embed(source, zephyr, timeout=45, seed=0, tail="mm")
+        assert c["embedding"]
+        assert "ball_accepts" not in c["diag"]

@@ -118,7 +118,7 @@ condition — see the last section).
 | Idea | Verdict | Why |
 |---|---|---|
 | tail="ball+mm" (ball BEFORE the grind, s3.80) | REFUTED | ball's greedy descent traps the grind's basin (turán +0.59@10 seeds, ws +0.87 with max chain 11→22); free-polish doctrine generalized: nothing runs before the polish that narrows its basin |
-| tail="mm+ball" (grind first, ball after) | named next | s3.75 measured ball-on-grind-output at 17/26 wins, never harmful; the equal-budget arm is unprobed |
+| tail="mm+ball" (grind first, ball after) | SHIPPED (default, s3.81) | wins or ties every board cell at equal budget, zero regressions, max chain never worse (ws −0.35 with max 11→9.3); the grind keeps its free basin, ball harvests what it cannot see |
 | Bar-based ball rebuild + router fallback (s3.77) | SHIPPED (default arm) | >= router on every probe cell; bars harvest quick wins ~30x faster, router restructures; requires require_free coloring + only=-scoped completion |
 | Bars-only ball rebuild | REFUTED standalone | near-zero accepts off turán; stride-1 corners are a ~56% junction coin without completion — sph_tree stays load-bearing |
 | Ball polish (whole-chain composite re-embed, s3.75) | validated candidate | beats warm-started mm grind 17/26 at equal seconds on identical inputs (turán −1.45; first fabric-agnostic Pegasus wins); strict descent = never harmful; lattices unmoved (order-level residual, out of the move class by design); rebuild primitive is router-grade — stage 1 shares the bar constructor |

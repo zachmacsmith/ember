@@ -246,7 +246,7 @@ class AttractConfig:
                                # consulted; every graph gets its natural
                                # log-depth hierarchy — lattices become
                                # patch tilings, the gate filters).
-    tail: str = "mm"
+    tail: str = "mm+ball"
                                # the pipeline tail after a legal
                                # embedding exists (s3.80): "mm" = warm
                                # minorminer grind only (control);
@@ -257,7 +257,11 @@ class AttractConfig:
                                # neighborhoods, mm polishes chains);
                                # "ball" = no minorminer after the ball
                                # (with the mm-skip gate fired this is a
-                               # minorminer-free Zephyr pipeline).
+                               # minorminer-free Zephyr pipeline);
+                               # "mm+ball" (DEFAULT, s3.81: wins or
+                               # ties every board cell, max chain never
+                               # worse — the grind's basin stays free,
+                               # ball harvests what it cannot see).
                                # False = s3.70's τ-aggregation units
                                # (the measurement control arm).
 

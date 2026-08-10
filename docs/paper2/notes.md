@@ -457,6 +457,24 @@ absent end to end — the minorminer-free Zephyr pipeline exists and
 costs nothing on crystals (turán 6.616 vs 6.612 ball+mm; the gap to
 6.02 is the grind's basin work, not legalization).
 
+**3.81 (mm+ball ships — the ladder is coarse→fine→coarse).** The
+reordered tail at equal total budget (`data/tail_probe2.csv`): **wins
+or ties EVERY cell, zero regressions** — ws −0.35 (max chain 11→9.3),
+P16 ws −0.22, ER −0.17, regular −0.06, K100 −0.05/P16 −0.03 (max
+16.7→15.7), spin_glass −0.05; ties on the gate-fired crystals (ball
+finds nothing after the grind there — the grind's basin work is
+complete) and the lattices. Max chain never worse. DEFAULT FLIPPED:
+`tail="mm+ball"`. Max's pre-run read stands: it IS weird that this
+works — the grind owns something we lack, and the s3.80/s3.81 pair
+names it precisely: cheap stochastic plateau diffusion (order
+reshuffled per pass, randomized ties/roots, hundreds of near-no-op
+passes) that strict descent deliberately excludes. Ball before the
+grind traps its basin; ball after harvests what single-chain vision
+cannot see. Named open (the replacement brainstorm): give OUR side a
+stochasticity source — keep-best kicks on ball composites, or
+top-level seeded diversity (distinct from the s3.16-killed best-of-N:
+no legal-stage proxy involved) — so the sandwich's middle can go.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).

@@ -26,13 +26,15 @@ are kept only if the real total chain length (plus a penalty for
 overfull wire bundles) does not get worse. On Zephyr, the resulting
 chains are completed into a provably valid embedding and minorminer is
 skipped entirely; otherwise minorminer legalizes the seeded layout.
-Either way, minorminer's polish runs last, unconstrained — minorminer
-is still the pipeline's final stage on every fabric. `ball_polish`
-(§7) is NOT part of the pipeline: it is a standalone post-processor,
-so far exercised only by probes, that evicts small groups of chains
-and rebuilds them jointly against the frozen rest, keeping only strict
-improvements. It is the measured candidate to *replace* the polish
-stage; that replacement has not been wired in yet.
+Either way, minorminer's polish runs next, unconstrained — and then
+`ball_polish` (§7) runs LAST, harvesting the coordinated improvements
+the single-chain grind cannot see (default `tail="mm+ball"`, s3.81:
+wins or ties every board cell). The ladder is coarse→fine→coarse:
+cluster moves teleport, the grind polishes chains, ball re-lays
+neighborhoods at the end. Running ball BEFORE the grind was measured
+worse (s3.80): the grind's stochastic wandering needs an unconstrained
+basin — nothing may run ahead of it that narrows its options,
+including a smarter polisher.
 
 ## 0.5 The five hardware facts
 
