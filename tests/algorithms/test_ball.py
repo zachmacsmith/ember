@@ -120,29 +120,6 @@ class TestHelpers:
                             time.perf_counter() - 1.0)
         assert out is None
 
-    def test_contract_stable_off_is_default(self, source):
-        # off-switch identity on the continuous control arm (v4: the
-        # contraction phase only exists when order_state=False)
-        from ember_qc.algorithms.factored import attract_embed
-        chim = dnx.chimera_graph(4, 4, 4)
-        a = attract_embed(source, chim, timeout=60, seed=0,
-                          order_state=False)
-        b = attract_embed(source, chim, timeout=60, seed=0,
-                          order_state=False, contract_stable=False)
-        assert a["embedding"] and a["embedding"] == b["embedding"]
-        assert a["stair_E"] == b["stair_E"]
-        assert "contract_steps" not in a["diag"]
-
-    def test_contract_stable_on_valid_and_capped(self, source):
-        from ember_qc.algorithms.factored import attract_embed
-        chim = dnx.chimera_graph(4, 4, 4)
-        r = attract_embed(source, chim, timeout=60, seed=0,
-                          order_state=False, contract_stable=True)
-        assert r["embedding"]
-        assert validate_embedding(r["embedding"], source, chim)
-        steps = r["diag"]["contract_steps"]
-        assert 1 <= steps <= 4 + 4  # cap = grid.W + grid.H on C4
-
     def test_spur_prune_only_restricts(self, source, zephyr, finished):
         pruned_all = spur_prune(finished, {int(v): sorted(source.neighbors(v))
                                            for v in source},
@@ -161,28 +138,9 @@ class TestHelpers:
 
 
 class TestBarRebuild:
-    """v4 ball rebuild: one way to build a chain (bars, not Steiner)."""
-
-    def test_bars_arm_valid_deterministic(self, source, zephyr, finished):
-        a, ia = ball_polish(finished, source, zephyr, rebuild="bars")
-        b, ib = ball_polish(finished, source, zephyr, rebuild="bars")
-        assert a == b and ia["accepted"] == ib["accepted"]
-        assert validate_embedding(a, source, zephyr)
-        assert total(a) <= total(finished)
-
-    def test_fallback_arm_never_worse_than_bars(self, source, zephyr,
-                                                finished):
-        bars, _ = ball_polish(finished, source, zephyr, rebuild="bars")
-        both, _ = ball_polish(finished, source, zephyr,
-                              rebuild="bars+fallback")
-        assert validate_embedding(both, source, zephyr)
-        assert total(both) <= total(finished)
-
-    def test_router_arm_unchanged_semantics(self, source, zephyr,
-                                            finished):
-        r, info = ball_polish(finished, source, zephyr, rebuild="router")
-        assert validate_embedding(r, source, zephyr)
-        assert "bar_rebuilds" not in info
+    """v4 ball rebuild: bars first, router fallback on bars-reject.
+    Determinism/validity/never-longer on the winner path are covered by
+    TestMove (plain ball_polish calls)."""
 
     def test_bars_on_pegasus(self, source):
         import minorminer
@@ -192,6 +150,6 @@ class TestBarRebuild:
                                         random_seed=5, timeout=30)
         assert emb and validate_embedding(emb, source, tgt)
         emb = {int(v): sorted(int(q) for q in c) for v, c in emb.items()}
-        out, info = ball_polish(emb, source, tgt, rebuild="bars+fallback")
+        out, info = ball_polish(emb, source, tgt)
         assert validate_embedding(out, source, tgt)
         assert total(out) <= total(emb)

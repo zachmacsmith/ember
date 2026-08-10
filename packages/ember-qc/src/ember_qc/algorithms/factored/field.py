@@ -1364,30 +1364,27 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                       grid: TileGrid, *, iters: int = 8, kappa: float,
                       floor: bool = True, insert_sweeps: int = 0,
                       overload_lam: float = 0.0,
-                      use_dp: bool = False, snap: bool = False,
+                      snap: bool = False,
                       deadline: Optional[float] = None,
-                      cluster_groups=None, order_mode: bool = False):
-    """Alternating 1-D arrangement on the stair energy.
+                      cluster_groups=None):
+    """Alternating 1-D arrangement on the stair energy (v4 order state).
 
-    ``order_mode`` (v4 order state): every variable participates
-    (``min_span=0``, so the books census finally sees sub-tile arms) and
-    the DP packs with the TRUE stair objective (``_axis_coeffs``)
-    instead of displacement from the previous positions — the anchor
-    that made first projections nearly irrevocable. Caller must set
-    ``use_dp=True``; positions are then always derived line indices.
+    Every variable participates (``min_span=0``, so the books census
+    sees sub-tile arms) and the exact order-preserving DP packer (integer
+    line pools, boundary zeroing) packs with the TRUE stair objective
+    (``_axis_coeffs``) instead of displacement from the previous
+    positions — the anchor that made first projections nearly
+    irrevocable. Positions are always derived line indices.
 
     Policy is EXPLICIT (s3.66; this function never inspects the fabric):
-    ``use_dp`` selects the exact order-preserving DP packer with integer
-    line pools and boundary zeroing (the course-resolved-Zephyr policy)
-    vs the greedy nearest-line packer with cap-mean pools (the measured
-    stride-1 policy); ``snap`` makes the shared books include the claim
-    layer's hull widening; ``overload_lam`` prices claim-layer
-    uncolorability into every gate (evaluation only). All bookkeeping
-    (participation, intervals, lines) comes from ONE `arm_books` bundle
-    per evaluated state, and the accepted state's energy is carried,
-    not recomputed. Returns (new_pos, info).
+    ``snap`` makes the shared books include the claim layer's hull
+    widening; ``overload_lam`` prices claim-layer uncolorability into
+    every gate (evaluation only). All bookkeeping (participation,
+    intervals, lines) comes from ONE `arm_books` bundle per evaluated
+    state, and the accepted state's energy is carried, not recomputed.
+    Returns (new_pos, info).
     """
-    min_span = 0.0 if order_mode else 1.0
+    min_span = 0.0
 
     def _eval(p, contacts=None):
         # ``contacts``: pass the previous bundle's contacts when the
@@ -1437,43 +1434,24 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
         order = sorted(parts, key=lambda v: (float(new_pos[v][axis]), v))
         trial = {v: new_pos[v].copy() for v in new_pos}
         miss = 0
-        if use_dp:
-            lp = line_pools(grid)
-            pool = [float(lp.get((o, ln), 0)) for ln in range(nlines)]
-            if nlines >= 2:
-                # boundary lines carry one course parity only
-                # (fabrics s4.3b); the avoid rule as pool data
-                pool[0] = 0.0
-                pool[nlines - 1] = 0.0
-            cs = None
-            if order_mode:
-                cmap = _axis_coeffs(cur_books[0], new_pos, axis)
-                cs = [float(cmap.get(v, 0)) for v in order]
-            assign, _cost = pack_lines(
-                [ivs[v] for v in order],
-                [float(new_pos[v][axis]) for v in order], pool,
-                coeffs=cs)
-            for v, ln in zip(order, assign):
-                if ln is None:
-                    miss += 1
-                else:
-                    trial[v][axis] = float(ln)
-        else:
-            caps = grid.cap[:, :, 1] if axis == 1 else grid.cap[:, :, 0].T
-            gpool = caps.mean(axis=1)
-            lines: Dict[int, list] = {i: [] for i in range(nlines)}
-            for v in order:
-                y0 = float(new_pos[v][axis])
-                placed = False
-                for ln in sorted(range(nlines),
-                                 key=lambda i: (abs(i - y0), i)):
-                    if line_depth(lines[ln] + [ivs[v]]) <= gpool[ln]:
-                        lines[ln].append(ivs[v])
-                        trial[v][axis] = float(ln)
-                        placed = True
-                        break
-                if not placed:
-                    miss += 1
+        lp = line_pools(grid)
+        pool = [float(lp.get((o, ln), 0)) for ln in range(nlines)]
+        if nlines >= 2:
+            # boundary lines carry one course parity only
+            # (fabrics s4.3b); the avoid rule as pool data
+            pool[0] = 0.0
+            pool[nlines - 1] = 0.0
+        cmap = _axis_coeffs(cur_books[0], new_pos, axis)
+        cs = [float(cmap.get(v, 0)) for v in order]
+        assign, _cost = pack_lines(
+            [ivs[v] for v in order],
+            [float(new_pos[v][axis]) for v in order], pool,
+            coeffs=cs)
+        for v, ln in zip(order, assign):
+            if ln is None:
+                miss += 1
+            else:
+                trial[v][axis] = float(ln)
         # contacts reuse is safe ONLY for axis=0 (x untouched by y-order).
         # axis=1 must recompute: even the order-preserving DP can collapse
         # two distinct y values onto one line, and the (y, id) tie-break
@@ -1533,10 +1511,9 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
         if new_order is None or new_order == order0:
             return None
         e_pre = cur_E
-        ov_pre = (claim_overload(new_pos, src_adj, grid, kappa=kappa,
-                                 floor=floor, snap=snap,
-                                 books=cur_books)
-                  if use_dp else 0.0)
+        ov_pre = claim_overload(new_pos, src_adj, grid, kappa=kappa,
+                                floor=floor, snap=snap,
+                                books=cur_books)
         snap_state = {v: new_pos[v].copy() for v in new_pos}
         books_snap = cur_books
         for r, v in enumerate(new_order):
@@ -1548,11 +1525,10 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
         _half(axis=1, force=False)
         _half(axis=0, force=False)
         e_post = cur_E
-        ov_post = (claim_overload(new_pos, src_adj, grid, kappa=kappa,
-                                  floor=floor, snap=snap,
-                                  books=cur_books)
-                   if use_dp else 0.0)
-        # s3.61 hard veto (DP-policy fabrics): a permutation may not
+        ov_post = claim_overload(new_pos, src_adj, grid, kappa=kappa,
+                                 floor=floor, snap=snap,
+                                 books=cur_books)
+        # s3.61 hard veto: a permutation may not
         # create uncolorable lines — structural feasibility is a
         # gate condition, not a priced preference
         e_bad = (e_post >= e_pre - 1e-9) if strict \

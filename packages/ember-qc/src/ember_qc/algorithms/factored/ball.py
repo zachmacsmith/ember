@@ -313,8 +313,7 @@ def ball_polish(chains: Embedding, source_graph: nx.Graph,
                 target_graph: nx.Graph, *,
                 deadline: Optional[float] = None,
                 adj: Optional[Adjacency] = None,
-                grid=None,
-                rebuild: str = "bars+fallback") -> Tuple[Embedding, dict]:
+                grid=None) -> Tuple[Embedding, dict]:
     """Improve a finished legal embedding by ball eviction/re-embedding.
 
     Sweeps a fixed, deterministic ball list (unit balls fine->coarse, then
@@ -322,10 +321,10 @@ def ball_polish(chains: Embedding, source_graph: nx.Graph,
     deadline passes. Returns ``(embedding, info)``; on invalid input the
     input is returned unchanged with ``info["invalid_input"] = True``.
 
-    ``rebuild``: "bars" (the pipeline's constructor family — straight
-    arms colored onto wires, stride-gated completion), "router" (the
-    sph_tree Steiner build), or "bars+fallback" (bars first, router when
-    bars reject). Untyped grids always use the router.
+    Rebuild: bars first (the pipeline's constructor family — straight
+    arms colored onto wires, stride-gated completion), the router (the
+    sph_tree Steiner build) when bars reject. Untyped grids always use
+    the router.
     """
     t0 = time.perf_counter()
     work: Embedding = {int(v): [int(q) for q in c] for v, c in chains.items()}
@@ -352,8 +351,6 @@ def ball_polish(chains: Embedding, source_graph: nx.Graph,
                         fallback_bins=_auto_bins(len(pos)), courses=True)
     from ember_qc.algorithms.factored.field import _target_kappa
     kappa = _target_kappa(grid)
-    use_bars = rebuild in ("bars", "bars+fallback") and bool(grid.wire_map)
-    use_router = rebuild in ("router", "bars+fallback") or not grid.wire_map
 
     units = [_trim_ball(S, src_adj) for S in _unit_balls(src_adj)]
     rects = [_trim_ball(S, src_adj) for S in _rect_balls(work, grid)]
@@ -378,12 +375,12 @@ def ball_polish(chains: Embedding, source_graph: nx.Graph,
             info["tried"] += 1
             incumbent = sum(len(work[v]) for v in S)
             candidate = None
-            if use_bars:
+            if grid.wire_map:
                 candidate = _rebuild_ball_bars(S, work, src_adj, adj,
                                                grid, kappa, deadline)
                 if candidate is not None:
                     info["bar_rebuilds"] = info.get("bar_rebuilds", 0) + 1
-            if candidate is None and use_router:
+            if candidate is None:
                 candidate = _rebuild_ball(S, work, src_adj, adj, visits,
                                           deadline)
             if candidate is None:

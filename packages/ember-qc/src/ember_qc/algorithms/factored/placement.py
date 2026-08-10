@@ -17,11 +17,10 @@ Pipeline per call (1-shot):
 
 1. **init** — the V-cycle two-stage coarsening init (``coarsen.py``,
    default since s3.66; ``vcycle=False`` = the legacy spectral init).
-2. **geometry** — contraction (``CONTRACT_STEPS`` stair steps on
-   stride-2 fabrics, the measured single step elsewhere — see the
-   effective-config block), then ``alternate_arrange`` under the policy
-   the effective config selected (DP packer + overload-priced gates on
-   course-resolved Zephyr; the measured greedy elsewhere).
+2. **geometry** — the init's points reduced to per-axis ranks (the v4
+   order state: two orders ARE the state), then ``alternate_arrange``
+   (true-stair-objective DP packer + overload-priced gates on every
+   fabric).
 3. **seeds** — one `arm_books` bundle feeds the snap-aimed coloring and,
    on stride-2 fabrics, the exactness completion; deficit 0 = the seeds
    ARE legal and minorminer legalization is skipped (diagnostic:
@@ -155,15 +154,6 @@ def snap(cent: Centroids, coords: np.ndarray, qubits: Sequence[int],
 FALLBACK_TIMEOUT = 60.0  # budget when the caller passes timeout=0/None
 SEED_STRIDE = 100        # router-seed derivation: seed*STRIDE (+99 fallback)
 
-CONTRACT_STEPS = 16  # stair steps of contraction before the first pack — the
-                     # s3.52 cycle-0 mechanism (stock 1-step geometry was a
-                     # frozen fixed point, s3.51: a single step on a 20-tile
-                     # cloud, then nearest-line packing snaps back all drift;
-                     # 16 steps take the turan bundle 19.8 -> ~12 tiles).
-                     # The decaying-amplitude reshakes of the s3.41 shell
-                     # added nothing (keep-best discarded them everywhere,
-                     # s3.52 attribution) and were deleted at consolidation 2.
-
 
 @dataclass(frozen=True)
 class AttractConfig:
@@ -176,7 +166,6 @@ class AttractConfig:
                                # phase may use; the rest is reserved for the
                                # polish (where minorminer earns ~35% ACL,
                                # mm-internals §6).
-    eta: float = 0.5           # attraction (subgradient) step size, tiles
     arrange_iters: int = 8     # alternation iterations per arrange call
     insert_sweeps: int = 8     # best-insertion order-search sweeps inside the
                                # alternation (s3.36; the move that makes block
@@ -190,13 +179,6 @@ class AttractConfig:
                                # by arm length.
     span_floor: bool = True    # apply the contact-capacity floor to derived
                                # bars (readout-side clamp, s3.30)
-    courses: bool = True       # Zephyr course-resolved wires (s3.49, fabrics
-                               # s4.5): sub-lane = 2k+j, stride-2 same-course
-                               # runs, kappa = fresh contacts per tile.
-                               # Default ON since consolidation 2 (the folded
-                               # representation was the measured 2x-template
-                               # ceiling, s3.48). False = the folded control
-                               # arm. No-op on Pegasus/Chimera/untyped.
     exact_seeds: bool = True   # exactness completion (s3.54): extend claims
                                # along their wires until every source edge
                                # has a physical coupler (corner + edge +
@@ -220,9 +202,8 @@ class AttractConfig:
                                # line-capacity violations. Evaluation only;
                                # lam trades, never ranks (lam=1 repairs
                                # turan's d729 for +0.2% E; lam>=4 measured
-                               # to over-trade). Applied on stride>1 fabrics
-                               # only (measured on Z12; unmeasured
-                               # elsewhere). round_E stays raw stair-E.
+                               # to over-trade). Fabric-agnostic since the
+                               # v4 order state. round_E stays raw stair-E.
     vcycle: bool = True        # source-side two-stage coarsening init
                                # (s3.62-3.64): twin-first + Jaccard
                                # matching, spectral-of-the-coarse-graph
@@ -244,16 +225,6 @@ class AttractConfig:
                                # at board parity twice (s3.68, s3.70);
                                # DEFAULT ON (Max, 2026-08-06: winners
                                # ship). Inert unless vcycle is active.
-    vcycle_transport: bool = False
-                               # s3.69 measure-transport junction: the
-                               # fine layout = the coarse layout's ORDERS
-                               # expanded by wire MASS (adjoint of the
-                               # merge; contiguous blocks, attachment
-                               # rank within, mass-CDF coordinates in the
-                               # standard box). Replaces the disc/anchor
-                               # spread and its geometry constants on
-                               # this path. Inert unless vcycle is
-                               # active.
     cluster_moves: bool = True
                                # s3.70: coarsen the MOVES, not the state.
                                # Clusters (aggregation-fixpoint groups)
@@ -277,65 +248,6 @@ class AttractConfig:
                                # patch tilings, the gate filters).
                                # False = s3.70's τ-aggregation units
                                # (the measurement control arm).
-    order_state: bool = True
-                               # v4 stage O1: the state is two orders.
-                               # DEFAULT ON (Max, 2026-08-08: "there's
-                               # solid reasoning behind it and it wins.
-                               # it should be the default even if it
-                               # lost, because that would just mean the
-                               # error is somewhere else." s3.76: turán
-                               # 6.02@10 seeds, lattice block falls,
-                               # all three P16 cells win; expanders pay
-                               # +0.16/+0.40). False = the continuous-
-                               # carrier control arm.
-                               # Init points are reduced to per-axis
-                               # ranks (sort keys only); the continuous
-                               # contraction phase does not exist on
-                               # this arm; the DP packs with the TRUE
-                               # stair objective (field._axis_coeffs)
-                               # on every fabric, overload priced into
-                               # the gates fabric-agnostically, and all
-                               # variables live in the books. Positions
-                               # are thereafter always derived line
-                               # indices — a readout, never state.
-                               # Stride gates for exact_seeds/snap/
-                               # courses are untouched (junction
-                               # completeness is physics, not carrier).
-    init_offsets: str = "spiral"
-                               # s3.78 probe: the disc expansion's child
-                               # offset generator — "spiral" (golden
-                               # angle: even + decorrelated projections),
-                               # "random" (decorrelated, sqrt-n clumpy),
-                               # "grid" (even, axis-aligned rank ties).
-                               # Isolates WHICH property of the
-                               # sunflower the rank-flattening needs.
-    hier_init: bool = False
-                               # v4 round 2: both axis orders straight
-                               # from the affinity hierarchy (RCM of the
-                               # quotient + attachment-rank expansion) —
-                               # no eigensolver, no disc geometry, any
-                               # fabric. Order-state only; measured as
-                               # one flip (hier_probe) before any
-                               # default decision.
-    hier_serpentine: bool = True
-                               # hier_init's x-order reverses child
-                               # blocks at odd ranks (a pure diagonal
-                               # disables edge_monotonize: dx*dy >= 0
-                               # on every edge). False = the diagonal
-                               # ablation arm.
-    contract_stable: bool = False
-                               # s3.74: derived contraction stopping rule
-                               # in place of the CONTRACT_STEPS=16 count.
-                               # The count was a disguised density knob —
-                               # pure attraction's continuous minimum is
-                               # collapse; stopping early was the only
-                               # counter-force. Under this switch the
-                               # loop stops when best stair-E goes
-                               # unimproved 2 consecutive steps, hard cap
-                               # W+H (the fabric travel bound), and runs
-                               # UN-gated on stride-1 fabrics (the probe
-                               # asks whether contraction can be un-gated
-                               # on Pegasus under an honest rule).
 
 
 def _auto_bins(n_qubits: int) -> int:
@@ -398,8 +310,7 @@ def attract_embed(
 
         from ember_qc.algorithms.factored.field import (
             TileGrid, _target_kappa, alternate_arrange, arm_books,
-            bar_widths, complete_seeds, stair_energy, stair_step,
-            wire_seeds_iv)
+            bar_widths, complete_seeds, stair_energy, wire_seeds_iv)
 
         adj = build_adjacency(target_graph)
         qubits = sorted(adj)
@@ -414,29 +325,20 @@ def attract_embed(
         lo, hi = coords.min(axis=0), coords.max(axis=0)
         grid = TileGrid(target_graph, pos,
                         fallback_bins=_auto_bins(len(qubits)),
-                        courses=cfg.courses)
-        # The stride gate (consolidation 2): the exactness path and the
-        # overload penalty are measured on stride>1 (course-resolved Zephyr)
-        # only, where junction completeness makes coverage = validity. On
-        # stride-1 fabrics both are inert, so Pegasus/Chimera seeding
-        # behavior is byte-identical to the first consolidation's default.
+                        courses=True)
+        # The stride gate (consolidation 2): the exactness path is
+        # measured on stride>1 (course-resolved Zephyr) only, where
+        # junction completeness makes coverage = validity. On stride-1
+        # fabrics it is inert.
         # ---- EFFECTIVE CONFIG (s3.66): every fabric-policy decision,
-        # decided ONCE. field.py never inspects the fabric. On stride-1
-        # (Pegasus/Chimera/untyped) the pipeline runs the measured
-        # legacy policy end to end; courses=False on Zephyr therefore
-        # selects the WHOLE legacy pipeline, not just the folded wires.
+        # decided ONCE. field.py never inspects the fabric. The packer
+        # and the overload gate are properties of the state
+        # representation (v4 order state), fabric-agnostic; exactness/
+        # snap stay stride-gated (junction completeness is physics).
         stride2 = grid.stride > 1
-        eff_contract = CONTRACT_STEPS if stride2 else 1
-        eff_lam = cfg.overload_lam if stride2 else 0.0
+        eff_lam = cfg.overload_lam
         eff_exact = cfg.exact_seeds and stride2
         eff_snap = cfg.snap_claims and stride2
-        eff_dp = stride2
-        if cfg.order_state:
-            # v4: the packer and the overload gate are properties of the
-            # state representation, not of the fabric — fabric-agnostic
-            # under the switch. Exactness/snap stay stride-gated above.
-            eff_lam = cfg.overload_lam
-            eff_dp = True
         # vcycle activation is stride-gated (s3.66 guard probe): the
         # compact coarse init needs the contraction+DP machinery to
         # exploit it — on the P16 legacy path it regressed the dense
@@ -445,27 +347,19 @@ def attract_embed(
         # restricted-polish-round evidence, s3.65 C).
         eff_vcycle = cfg.vcycle and stride2
         kappa = cfg.kappa if cfg.kappa is not None else _target_kappa(grid)
-        eff_hier = cfg.order_state and cfg.hier_init
 
-        # the units hierarchy is computed ONCE and shared between the
-        # hier init and the cluster moves (both consume the same levels)
+        # the units hierarchy is computed ONCE (the cluster moves
+        # consume it)
         _units_levels = None
-        if (eff_hier or (cfg.cluster_moves and cfg.cluster_units)):
+        if cfg.cluster_moves and cfg.cluster_units:
             from ember_qc.algorithms.factored.coarsen import (
                 coarsen as _coarsen)
             _units_levels = _coarsen(src_adj, units=True)
 
-        if eff_hier:
-            # v4 hier init: orders straight from the hierarchy — no
-            # eigensolver, no disc geometry, on any fabric
-            cent = {v: np.zeros(2) for v in src_adj}
-        elif eff_vcycle:
+        if eff_vcycle:
             from ember_qc.algorithms.factored.coarsen import multilevel_init
             cent = multilevel_init(src_adj, lo, hi, seed=seed,
-                                   agg=cfg.vcycle_agg,
-                                   transport=cfg.vcycle_transport,
-                                   grid=grid, kappa=kappa,
-                                   offsets=cfg.init_offsets)
+                                   agg=cfg.vcycle_agg)
         else:
             cent = source_positions(source_graph, lo, hi)
         legal_emb: Optional[Embedding] = None
@@ -476,54 +370,21 @@ def attract_embed(
         placement_deadline = (start + cfg.round_frac * timeout) \
             if timeout else None
 
-        if eff_hier:
-            from ember_qc.algorithms.factored.coarsen import hier_orders
-            _hr = hier_orders(_units_levels,
-                              serpentine=cfg.hier_serpentine)
-            tpts = {v: np.array([float(_hr[v][0]), float(_hr[v][1])])
-                    for v in src_adj}
-        elif cfg.order_state:
-            # v4: the init's continuous points are reduced to their
-            # per-axis RANKS — sort keys for the first readout, nothing
-            # more. The first arrange projection replaces them with true
-            # line assignments; no continuous phase exists on this arm.
-            tpts = {v: np.zeros(2) for v in cent}
-            for axis in (0, 1):
-                ranked = sorted(cent, key=lambda v: (float(cent[v][axis]),
-                                                     v))
-                for r, v in enumerate(ranked):
-                    tpts[v][axis] = float(r)
-        else:
-            tpts = {v: grid.to_tile(p) for v, p in cent.items()}
+        # v4: the init's continuous points are reduced to their
+        # per-axis RANKS — sort keys for the first readout, nothing
+        # more. The first arrange projection replaces them with true
+        # line assignments; no continuous phase exists.
+        tpts = {v: np.zeros(2) for v in cent}
+        for axis in (0, 1):
+            ranked = sorted(cent, key=lambda v: (float(cent[v][axis]),
+                                                 v))
+            for r, v in enumerate(ranked):
+                tpts[v][axis] = float(r)
         # Galerkin-defect instrumentation (s3.69): stair-E of the raw
-        # interpolated init and after contraction — with the final
-        # stair_E below, attributes what the junction hands over vs
-        # what contraction and arrange must repair.
+        # interpolated init — with the final stair_E below, attributes
+        # what the junction hands over vs what arrange must repair.
         E_interp = round(stair_energy(tpts, src_adj), 1)
-        contract_steps = None
-        if cfg.order_state:
-            pass  # no contraction: the continuous phase is deleted here
-        elif cfg.contract_stable:
-            best_E = stair_energy(tpts, src_adj)
-            stall = 0
-            contract_steps = 0
-            step_cap = grid.W + grid.H
-            while stall < 2 and contract_steps < step_cap:
-                if (placement_deadline is not None
-                        and time.perf_counter() > placement_deadline):
-                    break
-                tpts = stair_step(tpts, src_adj, eta=cfg.eta)
-                contract_steps += 1
-                E_now = stair_energy(tpts, src_adj)
-                if E_now < best_E:
-                    best_E = E_now
-                    stall = 0
-                else:
-                    stall += 1
-        else:
-            for _s in range(eff_contract):
-                tpts = stair_step(tpts, src_adj, eta=cfg.eta)
-        E_contract = round(stair_energy(tpts, src_adj), 1)
+        E_contract = E_interp
         # s3.70 cluster moves: the aggregation hierarchy's groups, in
         # FINE ids, one list per level (coarsest last). Position-free —
         # computed once from the source graph.
@@ -553,10 +414,9 @@ def attract_embed(
             tpts, src_adj, grid, iters=cfg.arrange_iters,
             kappa=kappa, floor=cfg.span_floor,
             insert_sweeps=cfg.insert_sweeps,
-            overload_lam=eff_lam, use_dp=eff_dp, snap=eff_snap,
+            overload_lam=eff_lam, snap=eff_snap,
             deadline=placement_deadline,
-            cluster_groups=cluster_groups,
-            order_mode=cfg.order_state)
+            cluster_groups=cluster_groups)
         cent = {v: grid.Minv @ (tpts[v] - grid.c) for v in cent}
         # raw stair-E (recorded trajectory metric)
         stair_E = round(stair_energy(tpts, src_adj), 1)
@@ -564,7 +424,7 @@ def attract_embed(
         # one accounting: the seeds read the SAME books the gates used
         books = arm_books(tpts, src_adj, grid, kappa=kappa,
                           floor=cfg.span_floor, snap=eff_snap,
-                          min_span=0.0 if cfg.order_state else 1.0)
+                          min_span=0.0)
         seed_chains = wire_seeds_iv(grid, tpts, books[1],
                                     src_adj=src_adj, snap=eff_snap,
                                     books=books)
@@ -632,17 +492,14 @@ def attract_embed(
                 "extent_mean": round(float(sizes.mean()), 3),
                 "extent_max": round(float(sizes.max()), 3),
                 "stride": int(grid.stride),
-                # Galerkin-defect triple (s3.69): init handoff vs
-                # contraction vs arrange — junction-loss attribution
+                # Galerkin-defect fields (s3.69): init handoff vs
+                # arrange — junction-loss attribution (E_contract ==
+                # E_interp since the contraction arm's deletion)
                 "E_interp": E_interp,
                 "E_contract": E_contract,
                 # the hardware-relevant tail metric (s3.65): recorded
                 # from consolidation 3 onward, everywhere
                 "max_chain": max(len(c) for c in finished.values())}
-        if contract_steps is not None:
-            diag["contract_steps"] = contract_steps
-        if cfg.order_state:
-            diag["order_state"] = True
         if eff_exact:
             diag["mm_skipped"] = mm_skipped
             if ex_info is not None:

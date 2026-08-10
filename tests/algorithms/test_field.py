@@ -199,18 +199,24 @@ class TestArrangement:
         assert line_depth([(0, 2), (1, 3), (2, 4)]) == 2
         assert line_depth([(0, 4), (1, 3), (2, 5)]) == 3
 
-    def test_arrange_packs_distinct_rows_and_is_monotone(self):
-        grid = self._grid()
-        n = 16  # kappa=3 makes the floor force extension (arm-length gate)
-        pos = {v: np.array([10.0 + 0.01 * v, 10.0 + 0.01 * v])
+    def test_arrange_packs_within_pools_and_is_monotone(self):
+        # winner path (DP + integer line pools from wire_map): a typed
+        # grid whose lines hold one lane each — the packed state must
+        # census to zero overload (overlapping intervals on one line are
+        # impossible by construction), E monotone after the projection
+        g = dnx.chimera_graph(8, 8, 1)
+        grid = TileGrid(g, target_layout(g))
+        n = 5
+        pos = {v: np.array([4.0 + 0.01 * v, 4.0 + 0.01 * v])
                for v in range(n)}
         adj = {v: [u for u in range(n) if u != v] for v in range(n)}
         new, info = alternate_arrange(pos, adj, grid, iters=8, kappa=3.0)
         assert info["assigned"] == n
-        rows = [int(round(new[v][1])) for v in range(n)]
-        cols = [int(round(new[v][0])) for v in range(n)]
-        # pool depth 1 per line: overlapping intervals need distinct lines
-        assert len(set(rows)) == n and len(set(cols)) == n
+        assert claim_overload(new, adj, grid, kappa=3.0) == 0.0
+        # positions are derived line indices after the pack
+        for v in range(n):
+            assert float(new[v][0]).is_integer()
+            assert float(new[v][1]).is_integer()
         # monotone after the feasibility projection (iteration 0 = 2 entries)
         tail = info["E"][3:]
         assert all(b <= a + 1e-6 for a, b in zip(tail, tail[1:]))
@@ -272,63 +278,15 @@ class TestArrangement:
         assert placed == sorted(placed)
         assert all(placed.count(l) <= 2 for l in set(placed))
 
-    def test_arrange_leaves_short_arms_untouched(self):
-        # sub-tile spans (geometric graph): no variable owes a wire run, so
-        # the arrangement is structurally inert — the arm-length criterion,
-        # not a degree gate
+    def test_untyped_grid_packs_nothing(self):
+        # untyped fallback grids have no wire_map, so the DP's integer
+        # line pools are empty: the packer proposes nothing and positions
+        # pass through unchanged (the router owns untyped targets)
         grid = self._grid()
         pos = {v: np.array([0.5 * v, 3.7]) for v in range(8)}
         adj = {v: [u for u in (v - 1, v + 1) if 0 <= u < 8] for v in range(8)}
         new, info = alternate_arrange(pos, adj, grid, kappa=13.0)
-        assert info["assigned"] == 0
         assert all(np.allclose(new[v], pos[v]) for v in pos)
-
-    def test_orders_couple_on_clique(self):
-        # K16 from an anti-diagonal-ish init: per-edge monotonization must
-        # land near the staircase optimum. Exact global rank equality was a
-        # SIDE EFFECT of the old global alignment (which re-imposed it after
-        # the packer's spill-boundary scrambles); the honest invariants are
-        # the energy (ideal aligned E = 2*sum(n-1-k) = 240 here) and a
-        # strongly monotone coupling of the two orders (either sign —
-        # diagonal and anti-diagonal staircases are mirror-equivalent).
-        grid = self._grid()
-        n = 16
-        pos = {v: np.array([10.0 - 0.3 * v, 4.0 + 0.3 * v])  # x anti-ordered
-               for v in range(n)}
-        adj = {v: [u for u in range(n) if u != v] for v in range(n)}
-        new, info = alternate_arrange(pos, adj, grid, iters=8, kappa=3.0)
-        # Measured insight (2026-07-29, this refinement): the stair energy
-        # requires contiguous SUFFIX VALUE-SETS, which global monotonicity
-        # achieves but does not uniquely achieve — per-edge descent finds
-        # E-equivalent mixed (part diagonal, part mirrored) couplings
-        # (rho ~ 0.17 here at E 242 vs ideal 240). The diagonal was
-        # sufficient, never necessary; whether E-equivalent mixtures ROUTE
-        # equally well is a probe question (K100/K140 guards), not a unit
-        # assertion. The invariant is the energy.
-        assert info["E"][-1] <= 250  # ideal 240; global-alignment era ~same
-
-    def test_side_by_side_patches_stay_side_by_side(self):
-        # two K12s in disjoint column bands with overlapping rows: the old
-        # global alignment interleaved their columns (one global order); the
-        # per-edge move has no cross-patch pressure, so the bands must stay
-        # disjoint while each patch aligns internally
-        grid = self._grid(B=20, cap=2.0)
-        a = list(range(12))
-        b = list(range(12, 24))
-        pos = {}
-        for i, v in enumerate(a):
-            pos[v] = np.array([2.0 + 0.3 * i, 6.0 + 0.5 * i])
-        for i, v in enumerate(b):
-            pos[v] = np.array([14.0 + 0.3 * i, 6.0 + 0.5 * i])
-        adj = {v: [u for u in (a if v in a else b) if u != v]
-               for v in range(24)}
-        new, info = alternate_arrange(pos, adj, grid, iters=8, kappa=3.0)
-        xa = [float(new[v][0]) for v in a]
-        xb = [float(new[v][0]) for v in b]
-        assert max(xa) < min(xb)  # column bands still disjoint
-        ya = sorted(a, key=lambda v: (new[v][1], v))
-        xa_r = sorted(a, key=lambda v: (new[v][0], v))
-        assert xa_r == ya or xa_r == ya[::-1]  # patch A internally aligned
 
 
 class TestEdgeMonotonize:
@@ -394,37 +352,41 @@ class TestEdgeMonotonize:
 
 
 class TestArmLengthGating:
+    """The min_span=1.0 participation gate lives on in ``arm_books``
+    (the pipeline passes 0.0 — every variable participates with a
+    footprint; see TestOrderMode); the gate semantics are asserted on
+    the books directly."""
+
     def _grid(self, B=20, cap=2.0):
         g = nx.convert_node_labels_to_integers(nx.grid_2d_graph(B, B))
         grid = TileGrid(g, nx.spectral_layout(g), fallback_bins=B)
         grid.cap[:, :, :] = cap
         return grid
 
-    def test_tight_clique_below_floor_not_packed(self):
+    def test_tight_clique_below_floor_not_gated_in(self):
         # K15 at sub-tile spread with the physical kappa: floor per axis
-        # ~0.08, spans ~0.14 — nobody owes a wire run, nothing is packed
+        # ~0.08, spans ~0.14 — nobody owes a wire run at min_span=1.0
+        from ember_qc.algorithms.factored.field import arm_books
         grid = self._grid()
         n = 15
         pos = {v: np.array([10.0 + 0.01 * v, 10.0 + 0.01 * v])
                for v in range(n)}
         adj = {v: [u for u in range(n) if u != v] for v in range(n)}
-        new, info = alternate_arrange(pos, adj, grid, iters=8, kappa=13.0)  # kappa=13
-        assert info["assigned"] == 0
-        assert all(np.allclose(new[v], pos[v]) for v in pos)
+        books = arm_books(pos, adj, grid, kappa=13.0, min_span=1.0)
+        assert books[2][1] == [] and books[2][0] == []
 
-    def test_long_shortcut_packs_on_its_axis_only(self):
+    def test_long_shortcut_participates_on_its_axis_only(self):
         # a low-degree variable with one long horizontal edge: its h-arm
         # exceeds a tile (it owns a wire run) but its v-arm does not — it
-        # enters row-packing only. Degree could never express this.
+        # enters the row books only. Degree could never express this.
+        from ember_qc.algorithms.factored.field import arm_books
         grid = self._grid()
         pos = {0: np.array([2.0, 5.3]), 1: np.array([8.0, 5.3]),
                2: np.array([2.4, 5.3])}
         adj = {0: [1, 2], 1: [0], 2: [0]}
-        new, info = alternate_arrange(pos, adj, grid, iters=2, kappa=13.0)
-        assert info["assigned_rows"] >= 1     # the long h-arms packed
-        assert info["assigned_cols"] == 0     # no v-arm exceeds a tile
-        for v in pos:  # x untouched by row-packing
-            assert float(new[v][0]) == pytest.approx(float(pos[v][0]))
+        books = arm_books(pos, adj, grid, kappa=13.0, min_span=1.0)
+        assert {t[3] for t in books[2][1]} == {0}   # long h-arms only
+        assert books[2][0] == []                    # no v-arm exceeds a tile
 
 
 class TestCompleteSeeds:
@@ -951,13 +913,13 @@ class TestZephyrCourses:
         assert subs and all(s % 2 == 0 for s in subs), subs
 
     def test_course_wire_seeds_valid_connected(self):
+        # spread diagonal K6: wide stair bars claim multi-qubit runs on
+        # course wires (positions given directly — the seed derivation,
+        # not the arrangement, is under test)
         g, folded, course = self._grids()
-        n = 12
+        n = 6
         adj = {v: [u for u in range(n) if u != v] for v in range(n)}
-        pos = {v: np.array([1.0 + 0.3 * v, 1.0 + 0.3 * v])
-               for v in range(n)}
-        pos = stair_step(pos, adj, eta=0.3)
-        pos, _ = alternate_arrange(pos, adj, course, iters=8, kappa=3.0)
+        pos = {v: np.array([float(v), float(v)]) for v in range(n)}
         bars = derive_bars_stair(pos, adj, bounds=(course.W, course.H))
         seeds = wire_seeds_iv(course, pos, bars)
         allq = [q for c in seeds.values() for q in c]
@@ -1045,7 +1007,7 @@ class TestOrderMode:
         assert a_true[0] is not None and a_true[1] is not None
         assert a_true[1] > a_true[0]     # order preserved, distinct lines
 
-    def test_order_mode_books_have_footprint(self):
+    def test_min_span_zero_books_have_footprint(self):
         # zero-width arms must be visible to the census: every tuple in
         # order-mode books has width >= 1 (the P16 collapse guard)
         import networkx as nx

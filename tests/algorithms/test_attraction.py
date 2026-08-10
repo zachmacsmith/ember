@@ -150,8 +150,8 @@ class TestAttractEmbed:
             assert validate_embedding(res["embedding"], source, chimera)
 
     def test_courses_default_on_zephyr(self):
-        # course-resolved wires (s3.49) are the default since consolidation
-        # 2; courses=False is the folded control arm
+        # course-resolved wires (s3.49) are the only representation since
+        # consolidation 4 (the folded control arm was deleted)
         import dwave_networkx as dnx
         z = dnx.zephyr_graph(3, 4)
         k = nx.complete_graph(10)
@@ -159,9 +159,6 @@ class TestAttractEmbed:
         assert res["embedding"], "default arm failed on K10/Z3"
         assert validate_embedding(res["embedding"], k, z)
         assert res["diag"]["stride"] == 2
-        res0 = attract_embed(k, z, timeout=60, seed=0, courses=False)
-        assert res0["embedding"]
-        assert res0["diag"]["stride"] == 1
 
     def test_exact_stack_default_diag_on_zephyr(self):
         # the consolidation-2 default = the measured s3.57 ovl_nos arm:
@@ -238,37 +235,14 @@ class TestAttractEmbed:
 
 
 class TestOrderState:
-    """v4 stage O1: state = two orders, positions = derived readout."""
+    """v4 stage O1: state = two orders, positions = derived readout —
+    the only code path since consolidation 4. Validity/determinism on
+    chimera is covered by TestAttractEmbed.test_valid_and_deterministic."""
 
-    def test_default_is_order_state(self, source, chimera):
-        # v4 default flip (s3.76): the default IS the order state; the
-        # continuous carrier survives only as the control arm
-        a = attract_embed(source, chimera, timeout=60, seed=0)
-        b = attract_embed(source, chimera, timeout=60, seed=0,
-                          order_state=True)
-        assert a["embedding"] and a["embedding"] == b["embedding"]
-        assert a["diag"].get("order_state") is True
-        c = attract_embed(source, chimera, timeout=60, seed=0,
-                          order_state=False)
-        assert c["embedding"]
-        assert validate_embedding(c["embedding"], source, chimera)
-        assert "order_state" not in c["diag"]
-
-    def test_order_state_valid_and_deterministic(self, source, chimera):
-        a = attract_embed(source, chimera, timeout=60, seed=0,
-                          order_state=True)
-        b = attract_embed(source, chimera, timeout=60, seed=0,
-                          order_state=True)
-        assert a["embedding"]
-        assert validate_embedding(a["embedding"], source, chimera)
-        assert a["embedding"] == b["embedding"]
-        assert a["diag"]["order_state"] is True
-
-    def test_order_state_zephyr_and_pegasus(self, source):
+    def test_zephyr_and_pegasus_valid(self, source):
         import dwave_networkx as dnx
         for target in (dnx.zephyr_graph(3, 4), dnx.pegasus_graph(4)):
-            r = attract_embed(source, target, timeout=60, seed=0,
-                              order_state=True)
+            r = attract_embed(source, target, timeout=60, seed=0)
             assert r["embedding"], f"failed on {target.graph.get('family')}"
             assert validate_embedding(r["embedding"], source, target)
 
@@ -289,56 +263,7 @@ class TestOrderState:
                for i, v in enumerate(sorted(source))}
         out, _info = alternate_arrange(
             pos, src_adj, grid, iters=4, kappa=_target_kappa(grid),
-            use_dp=True, overload_lam=1.0, snap=True, order_mode=True)
+            overload_lam=1.0, snap=True)
         for v, p in out.items():
             assert float(p[0]).is_integer(), (v, p)
             assert float(p[1]).is_integer(), (v, p)
-
-
-class TestHierInit:
-    def test_rcm_and_orders_deterministic(self):
-        from ember_qc.algorithms.factored.coarsen import (
-            _rcm, coarsen, hier_orders)
-        g = nx.grid_2d_graph(6, 6)
-        g = nx.convert_node_labels_to_integers(g)
-        src_adj = {v: sorted(g.neighbors(v)) for v in g}
-        levels = coarsen(src_adj, units=True)
-        a = hier_orders(levels)
-        b = hier_orders(levels)
-        assert a == b
-        adj0 = {v: {u: 1.0 for u in nb} for v, nb in src_adj.items()}
-        assert _rcm(adj0) == _rcm(dict(reversed(list(adj0.items()))))
-
-    def test_orders_are_permutations_and_serpentine_differs(self):
-        from ember_qc.algorithms.factored.coarsen import (
-            coarsen, hier_orders)
-        g = nx.convert_node_labels_to_integers(nx.grid_2d_graph(8, 8))
-        src_adj = {v: sorted(g.neighbors(v)) for v in g}
-        levels = coarsen(src_adj, units=True)
-        serp = hier_orders(levels, serpentine=True)
-        diag = hier_orders(levels, serpentine=False)
-        n = len(src_adj)
-        for orders in (serp, diag):
-            assert sorted(r[0] for r in orders.values()) == list(range(n))
-            assert sorted(r[1] for r in orders.values()) == list(range(n))
-        # diagonal: x == y everywhere; serpentine must break that
-        assert all(diag[v][0] == diag[v][1] for v in diag)
-        assert any(serp[v][0] != serp[v][1] for v in serp)
-
-    def test_hier_init_valid_deterministic_all_fabrics(self, source):
-        import dwave_networkx as dnx
-        for target in (dnx.chimera_graph(4, 4, 4),
-                       dnx.zephyr_graph(3, 4), dnx.pegasus_graph(4)):
-            a = attract_embed(source, target, timeout=60, seed=0,
-                              hier_init=True)
-            b = attract_embed(source, target, timeout=60, seed=0,
-                              hier_init=True)
-            assert a["embedding"], target.graph.get("family")
-            assert validate_embedding(a["embedding"], source, target)
-            assert a["embedding"] == b["embedding"]
-
-    def test_hier_init_off_is_default(self, source, chimera):
-        a = attract_embed(source, chimera, timeout=60, seed=0)
-        b = attract_embed(source, chimera, timeout=60, seed=0,
-                          hier_init=False)
-        assert a["embedding"] and a["embedding"] == b["embedding"]

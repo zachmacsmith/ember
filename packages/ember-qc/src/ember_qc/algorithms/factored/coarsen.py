@@ -443,237 +443,10 @@ def _coarsen_agg(fine: Level, threshold: float) -> List[Level]:
     return chain
 
 
-def _rcm(adj: Dict[int, Dict[int, float]]) -> List[int]:
-    """Deterministic reverse Cuthill-McKee over a Level adjacency: per
-    component (candidate starts by (degree, id)), BFS with neighbours
-    visited by (degree, id), concatenation reversed. No networkx (its
-    start/tie rules are insertion-order dependent), no matrices — O(E),
-    and RCM minimizes exactly the envelope the diagonal regime pays."""
-    deg = {v: len(nb) for v, nb in adj.items()}
-    seen: set = set()
-    order: List[int] = []
-    for start in sorted(adj, key=lambda v: (deg[v], v)):
-        if start in seen:
-            continue
-        queue = [start]
-        seen.add(start)
-        i = 0
-        while i < len(queue):
-            v = queue[i]
-            i += 1
-            for u in sorted(adj[v], key=lambda u: (deg[u], u)):
-                if u not in seen:
-                    seen.add(u)
-                    queue.append(u)
-        order.extend(queue)
-    return list(reversed(order))
-
-
-def hier_orders(levels: List[Level], *, serpentine: bool = True
-                ) -> Dict[int, Tuple[int, int]]:
-    """The hierarchy init (v4): both axis orders straight from the
-    affinity hierarchy — no eigensolver, no disc geometry, no metric.
-    Coarsest order = _rcm of the quotient; expansion is the adjoint
-    walk of unpack_transport (same children loop, same within-block
-    external-attachment rank) carrying integer RANKS only. Axis 1 (y)
-    = the plain linearization; axis 0 (x) reverses the child order in
-    every odd-ranked block at every level (``serpentine``) — a pure
-    diagonal (serpentine=False) makes every edge dx*dy >= 0 and
-    structurally disables edge_monotonize. Returns {v: (rank_x,
-    rank_y)} over the fine ids."""
-    if len(levels) < 2:
-        base = _rcm(levels[0].adj)
-        return {v: (j, j) for j, v in enumerate(base)}
-    coarse = _rcm(levels[-1].adj)
-    rank: Dict[int, Tuple[float, float]] = {
-        v: (float(j), float(j)) for j, v in enumerate(coarse)}
-    for i in range(len(levels) - 1, 0, -1):
-        upper, lower = levels[i], levels[i - 1]
-        children: Dict[int, List[int]] = {}
-        for c in sorted(lower.adj):
-            children.setdefault(upper.parent_of[c], []).append(c)
-        new_rank: Dict[int, List[float]] = {}
-        for axis in (0, 1):
-            sup_order = sorted(children,
-                               key=lambda p: (rank[p][axis], p))
-            sup_rank = {p: j for j, p in enumerate(sup_order)}
-            seq: List[int] = []
-            for j, p in enumerate(sup_order):
-                cs = children[p]
-
-                def _akey(c):
-                    num = den = 0.0
-                    for u, m in lower.adj[c].items():
-                        pu = upper.parent_of[u]
-                        if pu != p:
-                            num += m * sup_rank[pu]
-                            den += m
-                    att = num / den if den > 0 else float(sup_rank[p])
-                    return (att, -lower.weight[c],
-                            -len(lower.adj[c]), c)
-                block = sorted(cs, key=_akey)
-                if serpentine and axis == 0 and j % 2 == 1:
-                    block = list(reversed(block))
-                seq.extend(block)
-            for j2, v in enumerate(seq):
-                new_rank.setdefault(v, [0.0, 0.0])[axis] = float(j2)
-        rank = {v: (r[0], r[1]) for v, r in new_rank.items()}
-    return {v: (int(r[0]), int(r[1])) for v, r in rank.items()}
-
-
-def unpack_transport(levels: List[Level],
-                     coarse_rank: Dict[int, "np.ndarray"],
-                     grid, kappa: float,
-                     src_adj: Dict[int, List[int]]) -> Dict[int, Point]:
-    """The measure-transport junction (s3.69): the fine layout is the
-    coarse layout's ORDERS, expanded by MASS.
-
-    Merge and unpack are adjoint — the merge score certifies which
-    sibling orders are free (interchangeability); this rule uses exactly
-    that freedom and no more. Per axis: fine order = coarse order with
-    each supernode a contiguous block (within-block order = external-
-    attachment rank; ties broken by invariants, certified free by the
-    merge); coordinates = cumulative wire-mass integral in tile units
-    scaled by the fabric's mean line-pool density. No cramming (every
-    node gets exactly its mass), no moats (no space without mass), no
-    shapes, no geometry constants — the disc/anchor/COARSE_SPAN family
-    is not consulted on this path. A single-supernode quotient is not a
-    special case: one contiguous block under cumulative mass on both
-    axes yields the diagonal-scale cloud (K_n's crystal) by arithmetic.
-
-    ``coarse_rank`` carries each COARSEST-level supernode's per-axis rank
-    source (spectral coordinates of the coarsest quotient — used for
-    ORDER only, their metric is discarded). The expansion walks the
-    chain one level at a time — each junction is one application of the
-    adjoint rule, using THAT level's adjacency for attachment ranks, so
-    deep fixpoint hierarchies (lattices) recover locality scale by
-    scale instead of being flattened through a single composed map.
-    Returns TILE-SPACE positions at the fabric-linear mass scale."""
-    fine = levels[0]
-
-    # Per-axis dense ranks, expanded coarsest -> fine.
-    rank: Dict[int, Tuple[float, float]] = {
-        v: (float(coarse_rank[v][0]), float(coarse_rank[v][1]))
-        for v in levels[-1].adj}
-    for i in range(len(levels) - 1, 0, -1):
-        upper, lower = levels[i], levels[i - 1]
-        children: Dict[int, List[int]] = {}
-        for c in sorted(lower.adj):
-            children.setdefault(upper.parent_of[c], []).append(c)
-        new_rank: Dict[int, List[float]] = {}
-        for axis in (0, 1):
-            sup_order = sorted(children,
-                               key=lambda p: (rank[p][axis], p))
-            sup_rank = {p: j for j, p in enumerate(sup_order)}
-            seq: List[int] = []
-            for p in sup_order:
-                cs = children[p]
-
-                # Within-block order: external-attachment rank — the
-                # mass-weighted mean rank of each child's neighbor
-                # blocks at THIS level. Ties (no external pull —
-                # merge-certified interchangeable) fall to invariants:
-                # weight desc, degree desc, id.
-                def _akey(c):
-                    num = den = 0.0
-                    for u, m in lower.adj[c].items():
-                        pu = upper.parent_of[u]
-                        if pu != p:
-                            num += m * sup_rank[pu]
-                            den += m
-                    att = num / den if den > 0 else float(sup_rank[p])
-                    return (att, -lower.weight[c],
-                            -len(lower.adj[c]), c)
-                seq.extend(sorted(cs, key=_akey))
-            for j, v in enumerate(seq):
-                new_rank.setdefault(v, [0.0, 0.0])[axis] = float(j)
-        rank = {v: (r[0], r[1]) for v, r in new_rank.items()}
-
-    # Wire mass (fabric units: body + arms). kappa is the fresh-contact
-    # rate per tile-STEP; a bar advances ``stride`` steps, so the
-    # per-bar rate is kappa*stride (Zephyr: 7.7*2 ~ the 16 contacts/bar
-    # of fabrics 4.2; stride-1 fabrics unchanged). Arm length in bars =
-    # deg / (kappa*stride).
-    k_bar = max(kappa, 1.0) * max(getattr(grid, "stride", 1), 1)
-    mass = {v: 1.0 + len(src_adj.get(v, ())) / k_bar
-            for v in fine.adj}
-
-    # Fabric-linear scale: the extent a mass M claims along an axis is
-    # M/rho tiles, where rho is the fabric's mean wire capacity per unit
-    # of that axis (grid.cap is (H, W, 2); pool 0 = vertical wires, pool
-    # 1 = horizontal; untyped grids carry a 0.5/0.5 split — still
-    # valid). Dense sources get their crystal-scale footprint (K100/Z12:
-    # ~7 tiles — matches the measured diagonal); sparse sources come out
-    # compact and the iteration-0 capacity projection spreads them
-    # exactly as far as the pools demand (its job, s3.52) — no moats,
-    # no cramming, no free constants. The h/v mass split by order
-    # duality is the documented extents refinement (v1: symmetric /2).
-    import numpy as _np
-    cap = _np.asarray(grid.cap, dtype=float)
-    rho = (max(cap[:, :, 1].sum() / max(grid.W, 1), 1.0),
-           max(cap[:, :, 0].sum() / max(grid.H, 1), 1.0))
-    span = (float(grid.W), float(grid.H))
-
-    out: Dict[int, Point] = {v: np.zeros(2) for v in fine.adj}
-    for axis in (0, 1):
-        seq = sorted(fine.adj, key=lambda v: (rank[v][axis], v))
-        total = sum(mass[v] for v in seq) / 2.0
-        need = total / rho[axis]          # tiles claimed by the mass
-        scale = min(1.0, (span[axis] - 1e-6) / max(need, 1e-9))
-        off = (span[axis] - min(need, span[axis])) / 2.0
-        cum = 0.0
-        for v in seq:
-            half = mass[v] / 2.0
-            cum += half / 2.0
-            out[v][axis] = off + scale * (cum / rho[axis])
-            cum += half / 2.0
-    return {v: np.clip(out[v], 0.0,
-                       np.array(span) - 1e-9) for v in out}
-
-
-def _coarse_rank_positions(coarse: Level, seed: int) -> Dict[int, "np.ndarray"]:
-    """Per-supernode rank source for the transport unpack: the same
-    deterministic spectral-of-the-weighted-coarse-graph (circle fallback)
-    the stock init uses — but consumed for ORDER only, so the returned
-    metric is arbitrary."""
-    import networkx as nx
-
-    nodes = sorted(coarse.adj)
-    n = len(nodes)
-    if n == 1:
-        return {nodes[0]: np.zeros(2)}
-    arr = None
-    if n >= 3:
-        g = nx.Graph()
-        g.add_nodes_from(nodes)
-        for v, nbrs in coarse.adj.items():
-            for u, m in nbrs.items():
-                if u > v:
-                    g.add_edge(v, u, weight=m)
-        try:
-            sp = nx.spectral_layout(g, weight="weight")
-            cand = np.array([sp[v] for v in nodes], dtype=float)
-            spn = cand.max(axis=0) - cand.min(axis=0)
-            if np.all(np.isfinite(cand)) and np.all(spn > 1e-9):
-                arr = cand
-        except Exception:
-            arr = None
-    if arr is None:
-        rng = np.random.RandomState(seed)
-        order = list(range(n))
-        rng.shuffle(order)
-        arr = np.array([[math.cos(2.0 * math.pi * order[i] / max(n, 1)),
-                         math.sin(2.0 * math.pi * order[i] / max(n, 1))]
-                        for i in range(n)])
-    return {v: arr[i] for i, v in enumerate(nodes)}
-
-
 def multilevel_init(src_adj: Dict[int, List[int]], lo: Point, hi: Point,
                     *, seed: int = 0,
                     threshold: float = 0.34,
-                    agg: bool = False, transport: bool = False,
-                    grid=None, kappa: Optional[float] = None,
-                    offsets: str = "spiral") -> Dict[int, Point]:
+                    agg: bool = False) -> Dict[int, Point]:
     """The two-stage V-cycle init (s3.62-3.66, the shipped cell of the
     s3.64 ladder): coarsen once; place the coarse quotient by a
     deterministic spectral layout of the weighted coarse graph (circle
@@ -691,33 +464,10 @@ def multilevel_init(src_adj: Dict[int, List[int]], lo: Point, hi: Point,
 
     levels = coarsen(src_adj, threshold=threshold, agg=agg)
 
-    if transport:
-        # s3.69 measure-transport junction: orders + mass, no discs, no
-        # anchors, no COARSE_SPAN — see unpack_transport. Requires the
-        # fabric context (grid, kappa); returns drawing-space to keep
-        # the caller contract identical to the stock path.
-        if grid is None or kappa is None:
-            raise ValueError("transport unpack requires grid and kappa")
-        if len(levels[-1].adj) > 1:
-            cr = _coarse_rank_positions(levels[-1], seed)
-            tile_pts = unpack_transport(levels, cr, grid, kappa, src_adj)
-            return {v: grid.Minv @ (tile_pts[v] - grid.c)
-                    for v in tile_pts}
-        # Single-supernode quotient (K_n and friends): the transport
-        # rule's precondition fails — there are no coarse orders to
-        # preserve and every sibling order is a merge-certified tie, so
-        # the junction carries ZERO information. Among certified-free
-        # unpacks we keep the measured-best one (the V0 anchor geometry
-        # below, s3.63; the pre-formed diagonal measured +0.41 on K100 —
-        # the attraction.md 'pre-ordering pre-empts E-gated discovery'
-        # mechanism, re-observed s3.69). This is the rule acknowledging
-        # its degenerate case, not a shape heuristic: transport engages
-        # exactly when there is structure to transport.
-
     if len(levels) > 2:
         # Disc path on a deep (agg) chain: compose parent maps to the
         # 2-level view the disc spread expects (the s3.68-measured
-        # configuration). The transport path above never flattens.
+        # configuration).
         total = dict(levels[1].parent_of)
         for lv in levels[2:]:
             total = {f: lv.parent_of[c] for f, c in total.items()}
@@ -736,33 +486,15 @@ def multilevel_init(src_adj: Dict[int, List[int]], lo: Point, hi: Point,
               for v in nodes}
 
     def _spread(out, cs, cpos, r):
-        # ``offsets`` (s3.78 probe): what property of the sunflower does
-        # the rank-flattening actually need? spiral = even + decorrelated
-        # projections (low-discrepancy); random = decorrelated, uneven
-        # (sqrt-n clumping); grid = even, axis-ALIGNED (max rank ties).
         k = len(cs)
         cs_sorted = sorted(cs)
         if k == 1:
             out[cs_sorted[0]] = cpos.copy()
             return out
-        if offsets == "random":
-            rng = np.random.default_rng((seed, min(cs_sorted), k))
-            for c in cs_sorted:
-                rr = r * math.sqrt(rng.uniform())
-                a = 2.0 * math.pi * rng.uniform()
-                out[c] = cpos + rr * np.array([math.cos(a), math.sin(a)])
-        elif offsets == "grid":
-            side = int(math.ceil(math.sqrt(k)))
-            half = r / math.sqrt(2.0)
-            for i, c in enumerate(cs_sorted):
-                gx = (i % side) / max(side - 1, 1) * 2.0 - 1.0
-                gy = (i // side) / max(side - 1, 1) * 2.0 - 1.0
-                out[c] = cpos + half * np.array([gx, gy])
-        else:
-            for i, c in enumerate(cs_sorted):
-                a = 2.399963 * i  # golden angle
-                rr = r * math.sqrt(i / (k - 1))
-                out[c] = cpos + rr * np.array([math.cos(a), math.sin(a)])
+        for i, c in enumerate(cs_sorted):
+            a = 2.399963 * i  # golden angle
+            rr = r * math.sqrt(i / (k - 1))
+            out[c] = cpos + rr * np.array([math.cos(a), math.sin(a)])
         return out
 
     if n == 1:
