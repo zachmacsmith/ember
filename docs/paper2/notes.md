@@ -475,6 +475,28 @@ stochasticity source — keep-best kicks on ball composites, or
 top-level seeded diversity (distinct from the s3.16-killed best-of-N:
 no legal-stage proxy involved) — so the sandwich's middle can go.
 
+**3.82 (re-asked descent — REFUTED by its own mechanism check).** mm's
+two named stochasticity channels (per-pass order reshuffle, uniform
+ties) replicated at ball scale with strict acceptance untouched
+(`tail="ball-rng"`; rng=None byte-identical). Probe
+(`data/tail_probe3.csv`, turán AND ws at 10 seeds): **ball-rng ≈
+deterministic ball everywhere** (turán 6.633 vs 6.612, ws 4.141 vs
+4.126; only the lattices moved slightly, grid 1.44→1.35), and nowhere
+near mm+ball (turán 6.02, ws 2.76). The pre-registered check fired:
+re-asking is NOT minorminer's mechanism — or not sufficient. The
+sharpened reading: mm's diffusion runs over a COMPLETE, RELOCATING
+proposal family (any single chain, rebuilt anywhere in free fabric,
+every pass), while ball re-asks a small FIXED question set (units +
+windows, computed once, rebuilt in-place near their old footprint).
+Randomizing the ties of a confined family explores the confinement.
+What mm still owns is now named more precisely: not randomness per se
+but randomized interrogation × global relocation freedom at single-
+chain granularity. Named next candidates: relocating ball rebuilds
+(drop the in-place footprint restriction), per-chain re-ask (our own
+grind: mm's move at mm's granularity under our books), or regenerating
+the ball question set from the CURRENT embedding each pass (the fixed
+candidate list is itself a frozen die). No flip; the sandwich stays.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).

@@ -117,6 +117,7 @@ condition — see the last section).
 
 | Idea | Verdict | Why |
 |---|---|---|
+| Re-asked descent (mm's tie/order randomization at ball scale, s3.82) | REFUTED | ball-rng ≈ deterministic ball on every basin cell (turán 6.63 vs 6.61; ws 4.14 vs 4.13) — randomizing a confined fixed question set explores the confinement; mm's edge = randomized interrogation × global relocation at single-chain granularity |
 | tail="ball+mm" (ball BEFORE the grind, s3.80) | REFUTED | ball's greedy descent traps the grind's basin (turán +0.59@10 seeds, ws +0.87 with max chain 11→22); free-polish doctrine generalized: nothing runs before the polish that narrows its basin |
 | tail="mm+ball" (grind first, ball after) | SHIPPED (default, s3.81) | wins or ties every board cell at equal budget, zero regressions, max chain never worse (ws −0.35 with max 11→9.3); the grind keeps its free basin, ball harvests what it cannot see |
 | Bar-based ball rebuild + router fallback (s3.77) | SHIPPED (default arm) | >= router on every probe cell; bars harvest quick wins ~30x faster, router restructures; requires require_free coloring + only=-scoped completion |
