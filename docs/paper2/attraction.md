@@ -38,6 +38,7 @@ condition — see the last section).
 | Idea | Verdict | Why |
 |---|---|---|
 | Hier init (dendrogram orders: RCM quotient + attachment-rank expansion, s3.77) | REFUTED as init | ER/expander cells moved the WRONG way (ER +0.23, regular +1.07, king +0.74); linearization destroys the 2-D geometry spectral ranks carry; right move-unit generator, wrong order generator — turán's 10/10-seed 6.000 shows the crystal exception |
+| Init offset generator (spiral vs random vs grid, s3.78) | measured near-inert | arrange erases within-cluster offsets on ordinary cells; evenness matters only on giant twin blocks (turán 10-seed: spiral 6.02, grid 6.09, random 6.34); golden angle = ornamentation, purge-eligible |
 | pack_lines incremental jstar | REFUTED (bench) | 6->6 / 21->17 ms — never the bottleneck; reverted same-day |
 | Segment ("crystal-shaped") member spreads | REFUTED | pre-ordering members pre-empts the E-gated moves that discover better orders |
 | Pre-formed K_n diagonal at the junction | REFUTED | same pre-emption mechanism, re-measured: +0.4 despite better energy |

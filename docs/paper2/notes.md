@@ -398,6 +398,27 @@ it is parked. Spectral-ranks init remains default; consolidation 4
 rescoped — the vcycle/disc path SURVIVES (it feeds the winning init),
 and the continuous-arm deletion waits for its own round.
 
+**3.78 (the offsets probe — a pre-registered prediction refuted).**
+Which property of the golden-angle sunflower does the rank-flattening
+need? Three child-offset generators inside the unchanged disc expansion
+(`data/offsets_probe.csv`; spiral = even + decorrelated, random =
+decorrelated + clumpy, grid = even + axis-aligned). Predicted (recorded
+before the run): grid worst, spiral >= random. **Both wrong.** Grid is
+NOT worst — it wins or ties most cells (regular 2.72 vs spiral 2.85,
+spin_glass 11.23 vs 11.42, K100 7.72 vs 7.84) — and random beats spiral
+on several (ws −0.30, ER −0.17). Nearly all deltas sit inside the n=3
+noise band (spiral's own ws reading drifted 3.04→3.21 across probes).
+The one trustworthy signal is turán at 10 seeds: spiral 6.023, grid
+6.091, random 6.344 — on the giant-twin-block cell (two blocks of 81),
+EVENNESS matters (clumpy random pays +0.32) and axis-alignment does
+not. Conclusion: the decorrelation/irrationality story is refuted as
+load-bearing; the arrange machinery erases within-cluster offset
+structure on ordinary cells, and the only cargo is coarse geometry +
+membership (+ evenness on giant blocks). The golden angle is
+ornamentation — purge-eligible: any even generator serves. The spiral
+stays for now only because three lines that work need no replacement
+until the disc path's own consolidation.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).

@@ -301,6 +301,14 @@ class AttractConfig:
                                # Stride gates for exact_seeds/snap/
                                # courses are untouched (junction
                                # completeness is physics, not carrier).
+    init_offsets: str = "spiral"
+                               # s3.78 probe: the disc expansion's child
+                               # offset generator — "spiral" (golden
+                               # angle: even + decorrelated projections),
+                               # "random" (decorrelated, sqrt-n clumpy),
+                               # "grid" (even, axis-aligned rank ties).
+                               # Isolates WHICH property of the
+                               # sunflower the rank-flattening needs.
     hier_init: bool = False
                                # v4 round 2: both axis orders straight
                                # from the affinity hierarchy (RCM of the
@@ -456,7 +464,8 @@ def attract_embed(
             cent = multilevel_init(src_adj, lo, hi, seed=seed,
                                    agg=cfg.vcycle_agg,
                                    transport=cfg.vcycle_transport,
-                                   grid=grid, kappa=kappa)
+                                   grid=grid, kappa=kappa,
+                                   offsets=cfg.init_offsets)
         else:
             cent = source_positions(source_graph, lo, hi)
         legal_emb: Optional[Embedding] = None

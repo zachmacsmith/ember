@@ -672,8 +672,8 @@ def multilevel_init(src_adj: Dict[int, List[int]], lo: Point, hi: Point,
                     *, seed: int = 0,
                     threshold: float = 0.34,
                     agg: bool = False, transport: bool = False,
-                    grid=None, kappa: Optional[float] = None
-                    ) -> Dict[int, Point]:
+                    grid=None, kappa: Optional[float] = None,
+                    offsets: str = "spiral") -> Dict[int, Point]:
     """The two-stage V-cycle init (s3.62-3.66, the shipped cell of the
     s3.64 ladder): coarsen once; place the coarse quotient by a
     deterministic spectral layout of the weighted coarse graph (circle
@@ -736,11 +736,30 @@ def multilevel_init(src_adj: Dict[int, List[int]], lo: Point, hi: Point,
               for v in nodes}
 
     def _spread(out, cs, cpos, r):
+        # ``offsets`` (s3.78 probe): what property of the sunflower does
+        # the rank-flattening actually need? spiral = even + decorrelated
+        # projections (low-discrepancy); random = decorrelated, uneven
+        # (sqrt-n clumping); grid = even, axis-ALIGNED (max rank ties).
         k = len(cs)
-        for i, c in enumerate(sorted(cs)):
-            if k == 1:
-                out[c] = cpos.copy()
-            else:
+        cs_sorted = sorted(cs)
+        if k == 1:
+            out[cs_sorted[0]] = cpos.copy()
+            return out
+        if offsets == "random":
+            rng = np.random.default_rng((seed, min(cs_sorted), k))
+            for c in cs_sorted:
+                rr = r * math.sqrt(rng.uniform())
+                a = 2.0 * math.pi * rng.uniform()
+                out[c] = cpos + rr * np.array([math.cos(a), math.sin(a)])
+        elif offsets == "grid":
+            side = int(math.ceil(math.sqrt(k)))
+            half = r / math.sqrt(2.0)
+            for i, c in enumerate(cs_sorted):
+                gx = (i % side) / max(side - 1, 1) * 2.0 - 1.0
+                gy = (i // side) / max(side - 1, 1) * 2.0 - 1.0
+                out[c] = cpos + half * np.array([gx, gy])
+        else:
+            for i, c in enumerate(cs_sorted):
                 a = 2.399963 * i  # golden angle
                 rr = r * math.sqrt(i / (k - 1))
                 out[c] = cpos + rr * np.array([math.cos(a), math.sin(a)])
