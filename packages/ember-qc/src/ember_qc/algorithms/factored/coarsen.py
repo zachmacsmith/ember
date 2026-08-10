@@ -443,6 +443,84 @@ def _coarsen_agg(fine: Level, threshold: float) -> List[Level]:
     return chain
 
 
+def _rcm(adj: Dict[int, Dict[int, float]]) -> List[int]:
+    """Deterministic reverse Cuthill-McKee over a Level adjacency: per
+    component (candidate starts by (degree, id)), BFS with neighbours
+    visited by (degree, id), concatenation reversed. No networkx (its
+    start/tie rules are insertion-order dependent), no matrices — O(E),
+    and RCM minimizes exactly the envelope the diagonal regime pays."""
+    deg = {v: len(nb) for v, nb in adj.items()}
+    seen: set = set()
+    order: List[int] = []
+    for start in sorted(adj, key=lambda v: (deg[v], v)):
+        if start in seen:
+            continue
+        queue = [start]
+        seen.add(start)
+        i = 0
+        while i < len(queue):
+            v = queue[i]
+            i += 1
+            for u in sorted(adj[v], key=lambda u: (deg[u], u)):
+                if u not in seen:
+                    seen.add(u)
+                    queue.append(u)
+        order.extend(queue)
+    return list(reversed(order))
+
+
+def hier_orders(levels: List[Level], *, serpentine: bool = True
+                ) -> Dict[int, Tuple[int, int]]:
+    """The hierarchy init (v4): both axis orders straight from the
+    affinity hierarchy — no eigensolver, no disc geometry, no metric.
+    Coarsest order = _rcm of the quotient; expansion is the adjoint
+    walk of unpack_transport (same children loop, same within-block
+    external-attachment rank) carrying integer RANKS only. Axis 1 (y)
+    = the plain linearization; axis 0 (x) reverses the child order in
+    every odd-ranked block at every level (``serpentine``) — a pure
+    diagonal (serpentine=False) makes every edge dx*dy >= 0 and
+    structurally disables edge_monotonize. Returns {v: (rank_x,
+    rank_y)} over the fine ids."""
+    if len(levels) < 2:
+        base = _rcm(levels[0].adj)
+        return {v: (j, j) for j, v in enumerate(base)}
+    coarse = _rcm(levels[-1].adj)
+    rank: Dict[int, Tuple[float, float]] = {
+        v: (float(j), float(j)) for j, v in enumerate(coarse)}
+    for i in range(len(levels) - 1, 0, -1):
+        upper, lower = levels[i], levels[i - 1]
+        children: Dict[int, List[int]] = {}
+        for c in sorted(lower.adj):
+            children.setdefault(upper.parent_of[c], []).append(c)
+        new_rank: Dict[int, List[float]] = {}
+        for axis in (0, 1):
+            sup_order = sorted(children,
+                               key=lambda p: (rank[p][axis], p))
+            sup_rank = {p: j for j, p in enumerate(sup_order)}
+            seq: List[int] = []
+            for j, p in enumerate(sup_order):
+                cs = children[p]
+
+                def _akey(c):
+                    num = den = 0.0
+                    for u, m in lower.adj[c].items():
+                        pu = upper.parent_of[u]
+                        if pu != p:
+                            num += m * sup_rank[pu]
+                            den += m
+                    att = num / den if den > 0 else float(sup_rank[p])
+                    return (att, -lower.weight[c],
+                            -len(lower.adj[c]), c)
+                block = sorted(cs, key=_akey)
+                if serpentine and axis == 0 and j % 2 == 1:
+                    block = list(reversed(block))
+                seq.extend(block)
+            for j2, v in enumerate(seq):
+                new_rank.setdefault(v, [0.0, 0.0])[axis] = float(j2)
+        rank = {v: (r[0], r[1]) for v, r in new_rank.items()}
+    return {v: (int(r[0]), int(r[1])) for v, r in rank.items()}
+
+
 def unpack_transport(levels: List[Level],
                      coarse_rank: Dict[int, "np.ndarray"],
                      grid, kappa: float,

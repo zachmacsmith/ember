@@ -301,6 +301,20 @@ class AttractConfig:
                                # Stride gates for exact_seeds/snap/
                                # courses are untouched (junction
                                # completeness is physics, not carrier).
+    hier_init: bool = False
+                               # v4 round 2: both axis orders straight
+                               # from the affinity hierarchy (RCM of the
+                               # quotient + attachment-rank expansion) —
+                               # no eigensolver, no disc geometry, any
+                               # fabric. Order-state only; measured as
+                               # one flip (hier_probe) before any
+                               # default decision.
+    hier_serpentine: bool = True
+                               # hier_init's x-order reverses child
+                               # blocks at odd ranks (a pure diagonal
+                               # disables edge_monotonize: dx*dy >= 0
+                               # on every edge). False = the diagonal
+                               # ablation arm.
     contract_stable: bool = False
                                # s3.74: derived contraction stopping rule
                                # in place of the CONTRACT_STEPS=16 count.
@@ -423,8 +437,21 @@ def attract_embed(
         # restricted-polish-round evidence, s3.65 C).
         eff_vcycle = cfg.vcycle and stride2
         kappa = cfg.kappa if cfg.kappa is not None else _target_kappa(grid)
+        eff_hier = cfg.order_state and cfg.hier_init
 
-        if eff_vcycle:
+        # the units hierarchy is computed ONCE and shared between the
+        # hier init and the cluster moves (both consume the same levels)
+        _units_levels = None
+        if (eff_hier or (cfg.cluster_moves and cfg.cluster_units)):
+            from ember_qc.algorithms.factored.coarsen import (
+                coarsen as _coarsen)
+            _units_levels = _coarsen(src_adj, units=True)
+
+        if eff_hier:
+            # v4 hier init: orders straight from the hierarchy — no
+            # eigensolver, no disc geometry, on any fabric
+            cent = {v: np.zeros(2) for v in src_adj}
+        elif eff_vcycle:
             from ember_qc.algorithms.factored.coarsen import multilevel_init
             cent = multilevel_init(src_adj, lo, hi, seed=seed,
                                    agg=cfg.vcycle_agg,
@@ -440,7 +467,13 @@ def attract_embed(
         placement_deadline = (start + cfg.round_frac * timeout) \
             if timeout else None
 
-        if cfg.order_state:
+        if eff_hier:
+            from ember_qc.algorithms.factored.coarsen import hier_orders
+            _hr = hier_orders(_units_levels,
+                              serpentine=cfg.hier_serpentine)
+            tpts = {v: np.array([float(_hr[v][0]), float(_hr[v][1])])
+                    for v in src_adj}
+        elif cfg.order_state:
             # v4: the init's continuous points are reduced to their
             # per-axis RANKS — sort keys for the first readout, nothing
             # more. The first arrange projection replaces them with true
@@ -489,7 +522,10 @@ def attract_embed(
         if cfg.cluster_moves:
             from ember_qc.algorithms.factored.coarsen import (
                 coarsen as _coarsen)
-            _levels = (_coarsen(src_adj, units=True) if cfg.cluster_units
+            _levels = (_units_levels if (_units_levels is not None
+                                         and cfg.cluster_units)
+                       else _coarsen(src_adj, units=True)
+                       if cfg.cluster_units
                        else _coarsen(src_adj, agg=True))
             if len(_levels) > 1:
                 cluster_groups = []

@@ -293,3 +293,52 @@ class TestOrderState:
         for v, p in out.items():
             assert float(p[0]).is_integer(), (v, p)
             assert float(p[1]).is_integer(), (v, p)
+
+
+class TestHierInit:
+    def test_rcm_and_orders_deterministic(self):
+        from ember_qc.algorithms.factored.coarsen import (
+            _rcm, coarsen, hier_orders)
+        g = nx.grid_2d_graph(6, 6)
+        g = nx.convert_node_labels_to_integers(g)
+        src_adj = {v: sorted(g.neighbors(v)) for v in g}
+        levels = coarsen(src_adj, units=True)
+        a = hier_orders(levels)
+        b = hier_orders(levels)
+        assert a == b
+        adj0 = {v: {u: 1.0 for u in nb} for v, nb in src_adj.items()}
+        assert _rcm(adj0) == _rcm(dict(reversed(list(adj0.items()))))
+
+    def test_orders_are_permutations_and_serpentine_differs(self):
+        from ember_qc.algorithms.factored.coarsen import (
+            coarsen, hier_orders)
+        g = nx.convert_node_labels_to_integers(nx.grid_2d_graph(8, 8))
+        src_adj = {v: sorted(g.neighbors(v)) for v in g}
+        levels = coarsen(src_adj, units=True)
+        serp = hier_orders(levels, serpentine=True)
+        diag = hier_orders(levels, serpentine=False)
+        n = len(src_adj)
+        for orders in (serp, diag):
+            assert sorted(r[0] for r in orders.values()) == list(range(n))
+            assert sorted(r[1] for r in orders.values()) == list(range(n))
+        # diagonal: x == y everywhere; serpentine must break that
+        assert all(diag[v][0] == diag[v][1] for v in diag)
+        assert any(serp[v][0] != serp[v][1] for v in serp)
+
+    def test_hier_init_valid_deterministic_all_fabrics(self, source):
+        import dwave_networkx as dnx
+        for target in (dnx.chimera_graph(4, 4, 4),
+                       dnx.zephyr_graph(3, 4), dnx.pegasus_graph(4)):
+            a = attract_embed(source, target, timeout=60, seed=0,
+                              hier_init=True)
+            b = attract_embed(source, target, timeout=60, seed=0,
+                              hier_init=True)
+            assert a["embedding"], target.graph.get("family")
+            assert validate_embedding(a["embedding"], source, target)
+            assert a["embedding"] == b["embedding"]
+
+    def test_hier_init_off_is_default(self, source, chimera):
+        a = attract_embed(source, chimera, timeout=60, seed=0)
+        b = attract_embed(source, chimera, timeout=60, seed=0,
+                          hier_init=False)
+        assert a["embedding"] and a["embedding"] == b["embedding"]
