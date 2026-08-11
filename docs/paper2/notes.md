@@ -562,20 +562,24 @@ audit makes crystal no-ops near-instant (K100 ball wall 31s→1.3s —
 exact selection dries immediately). Seven probes have now eliminated
 EVERY move-level factor: granularity, randomness, their product,
 slack, askability, staleness, scale, per-candidate exactness. The
-polish phase is exonerated, which leaves exactly one structural
-difference standing, visible only now that everything else is gone:
-**every arm of ours moves valid-state-to-valid-state; the sandwich's
-warm minorminer is the only component permitted to transit INVALID
-intermediate states** (its grind runs the full pass loop — chains may
-overlap, overfill is priced and squeezed back). The plateau may simply
-be the boundary of what is reachable through always-valid moves; mm's
-edge would then be neither moves nor schedule but a capability class —
-relaxation through infeasible corridors, the same exponential-pricing
-trick its own legalizer uses. This reframes Max's "smoothly navigate
-downwards": the smooth paths may go through infeasible space. Named
-next question, owner's call: give OUR machinery a priced-overlap
-corridor (the books already price would-be overload — evaluation only,
-never inhabited), or refute this last hypothesis too.
+polish phase looked exonerated, and a "validity corridor" hypothesis
+was briefly recorded here — **CORRECTED the same day by Max against
+mm-internals (the house rule applied to our own claim): REFUTED BY
+SOURCE before costing a probe.** find_short_chain expands through FREE
+qubits only; the shipped overlap cost is lexicographically infinite;
+warm-started on a legal embedding the overfill passes no-op — the
+sandwich's minorminer never leaves legal space. What the correction
+exposes instead: the elimination factorial had a THIRD axis we only
+sampled — the audition. probe6's rshorten was chain-granularity × rng
+WITHOUT the audition (one sph build per chain per sweep); probe7's
+audit was audition × rng at BALL/bar level, never per-chain Steiner
+breadth. mm's actual move — chain granularity × rng × the full Steiner
+audition (construct at every mutually-reached root, radius order,
+first strict improvement) — has never been replicated. That cell,
+find_short_chain ported natively, is the last constructible
+discriminator: reproduce the sandwich and the mechanism is named and
+owned (minorminer exits); fail and the polish phase truly is
+exonerated, leaving the seeds alone.
 
 ## 4. References
 
