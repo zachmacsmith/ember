@@ -111,6 +111,7 @@ def shorten_chains(
     max_sweeps: int = 8,
     visit_counter: Optional[List[int]] = None,
     vertex_prices: Optional[Callable[[int], CostMap]] = None,
+    rng=None,
 ) -> Embedding:
     """Free-space rip-up-and-shorten sweeps over a legal embedding.
 
@@ -133,9 +134,13 @@ def shorten_chains(
     ones = {q: 1.0 for q in adj}
     used: Set[int] = {q for c in work.values() for q in c}
 
+    _dry = 0
     for _ in range(max_sweeps):
         improved = False
-        for v in sorted(work, key=lambda x: (-len(work[x]), x)):
+        order = sorted(work, key=lambda x: (-len(work[x]), x))
+        if rng is not None:
+            rng.shuffle(order)  # mm's per-pass reshuffle (s3.84)
+        for v in order:
             if deadline is not None and time.perf_counter() > deadline:
                 return work
             old = work[v]
@@ -149,6 +154,7 @@ def shorten_chains(
             new = sph_tree(
                 v, placed, work, adj, prices, visits,
                 forbidden_extra=forbidden, require_all_neighbors=True,
+                rng=rng,
             )
             if new and len(new) < len(old):
                 used -= set(old)
@@ -156,7 +162,11 @@ def shorten_chains(
                 work[v] = new
                 improved = True
         if not improved:
-            break
+            _dry += 1
+            if rng is None or _dry >= 2:
+                break
+        else:
+            _dry = 0
     return work
 
 

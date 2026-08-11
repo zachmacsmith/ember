@@ -521,6 +521,23 @@ Also banked: pure ball ties the sandwich on every gate-fired crystal
 at zero cost — the minorminer-free Zephyr pipeline remains real
 exactly where construction already owns the answer.
 
+**3.84 (the 2x2 closes in — slack refuted, one cell left).** The
+hypothesis-(b) discriminator (`data/tail_probe5.csv`): our native
+deterministic per-chain shortener where the grind sits (shorten+ball,
+no minorminer post-gate) lands at PURE-BALL levels, not sandwich
+levels — turán 6.63 vs 6.02, ws 4.18 vs 3.07, regular 4.08 vs 2.85,
+max chains ballooned identically. **Slack removal is refuted as the
+grind's role.** The elimination is now a clean factorial {chain, ball}
+x {deterministic, randomized}: ball-det (s3.81), ball-rng (s3.82), and
+chain-det (s3.84) all fail equally; minorminer occupies the one
+untested cell — per-chain granularity x randomized interrogation,
+JOINTLY. Built: `tail="rshorten+ball"` (shorten_chains with mm's
+channels: per-sweep order shuffle, rng root ties, patience 2,
+unbounded sweeps under the deadline). Probe running
+(`data/tail_probe6`): parity with mm+ball completes the exorcism with
+mm's mechanism named exactly; failure leaves something in mm still
+unnamed with every obvious factor eliminated.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).

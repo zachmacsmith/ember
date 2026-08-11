@@ -503,15 +503,20 @@ def attract_embed(
             if is_valid_embedding(balled, source_graph, target_graph,
                                   adj=adj):
                 legal_emb = balled
-        if cfg.tail == "shorten+ball":
+        if cfg.tail in ("shorten+ball", "rshorten+ball"):
             # hypothesis (b) discriminator (s3.84): is the middle rung
             # just per-chain slack removal? Our native deterministic
             # shortener where the grind would run, ball after, no
             # minorminer anywhere post-gate.
             from ember_qc.algorithms.factored.polish import shorten_chains
             from ember_qc.algorithms.factored.ball import ball_polish
+            import random as _random
+            _srng = (_random.Random(seed * SEED_STRIDE + 11)
+                     if cfg.tail == "rshorten+ball" else None)
             cand = shorten_chains(legal_emb, src_adj, adj,
-                                  deadline=deadline)
+                                  deadline=deadline,
+                                  max_sweeps=(10**6 if _srng else 8),
+                                  rng=_srng)
             if is_valid_embedding(cand, source_graph, target_graph,
                                   adj=adj):
                 legal_emb = cand
@@ -523,7 +528,8 @@ def attract_embed(
                 legal_emb = balled
         remaining = (deadline - time.perf_counter()) if deadline \
             else FALLBACK_TIMEOUT
-        if cfg.tail not in ("ball", "ball-rng", "shorten+ball") \
+        if cfg.tail not in ("ball", "ball-rng", "shorten+ball",
+                            "rshorten+ball") \
                 and remaining > 0:
             finished = _mm_route(source_graph, target_graph,
                                  warm=legal_emb, seed=seed,
