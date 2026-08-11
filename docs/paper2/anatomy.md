@@ -336,8 +336,14 @@ embedding: evict the whole chains of a small variable set, rebuild
 them jointly against everything else frozen, keep the rebuild only if
 total real chain length strictly drops.
 
-**How.** Ball candidates come from two selectors: the hierarchy's
-units (who belongs together) and tile windows (who lives together).
+**How.** One question per chain, regenerated from the live embedding
+at the start of every pass (v3, s3.83): the chain's obligation hull —
+its footprint's bounding rectangle, extended per source neighbour to
+the nearest line that neighbour's claimed runs occupy on each axis —
+selects as members every chain with a tile inside. No windows, no
+size caps, no inflation: the hull is derived, so questions scale with
+each chain's own situation and cliques self-gate to free no-ops
+(all-chain balls have no frozen boundary and trim away).
 Candidates are trimmed so every component touches the frozen world.
 Rebuild is bars-first: members get positions from the median of their
 frozen obligations, arms from the stair rule, wires from the coloring
