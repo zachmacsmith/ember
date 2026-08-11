@@ -533,10 +533,23 @@ chain-det (s3.84) all fail equally; minorminer occupies the one
 untested cell — per-chain granularity x randomized interrogation,
 JOINTLY. Built: `tail="rshorten+ball"` (shorten_chains with mm's
 channels: per-sweep order shuffle, rng root ties, patience 2,
-unbounded sweeps under the deadline). Probe running
-(`data/tail_probe6`): parity with mm+ball completes the exorcism with
-mm's mechanism named exactly; failure leaves something in mm still
-unnamed with every obvious factor eliminated.
+unbounded sweeps under the deadline). Probe verdict
+(`data/tail_probe6.csv`): **FAILED — the fourth cell does not
+reproduce minorminer either** (turán 6.64, ws 4.24, regular 4.04 — all
+at the same non-mm plateau as every other arm; crystals tie as
+always). The factorial is complete and every named factor is
+eliminated, jointly and severally: granularity, randomization, slack,
+askability, staleness, scale. What our reconstruction of mm's move
+never included, and mm-internals documented all along: the
+**exhaustive audition** — find_short_chain CONSTRUCTS the full chain
+at EVERY candidate root (each qubit reached by all neighbour balls)
+and keeps the measured best, hundreds of built-and-measured candidates
+per chain per pass, where our sph_tree picks ONE root and builds once.
+Not randomness, not granularity: per-move candidate breadth. The
+audition is the last unnamed mechanism standing and the next
+discriminator when the owner returns. Alternatively the wrongness is
+upstream (Max's (b), still live at pipeline level: all these arms
+polish the SAME seeds — only the sandwich's mm ever re-legalizes).
 
 ## 4. References
 
