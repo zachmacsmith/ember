@@ -551,6 +551,32 @@ discriminator when the owner returns. Alternatively the wrongness is
 upstream (Max's (b), still live at pipeline level: all these arms
 polish the SAME seeds — only the sandwich's mm ever re-legalizes).
 
+**3.85 (the lane audit — the polish phase is exonerated).** Member
+placement by measured cost over candidate lanes (mm's audition over the
+bar family, O(hull lines) arithmetic; kappa widening fell out as dead
+code). Probe (`data/tail_probe7.csv`): **the plateau survives exact
+selection too** — audited ball 6.65/4.62 (turán/ws), audited ball-rng
+6.65/4.48, sandwich 6.02/2.95. rng-over-exact helps lattices modestly
+(grid 1.39 vs 1.63, king 1.76 vs 2.01) but breaks nothing. Banked: the
+audit makes crystal no-ops near-instant (K100 ball wall 31s→1.3s —
+exact selection dries immediately). Seven probes have now eliminated
+EVERY move-level factor: granularity, randomness, their product,
+slack, askability, staleness, scale, per-candidate exactness. The
+polish phase is exonerated, which leaves exactly one structural
+difference standing, visible only now that everything else is gone:
+**every arm of ours moves valid-state-to-valid-state; the sandwich's
+warm minorminer is the only component permitted to transit INVALID
+intermediate states** (its grind runs the full pass loop — chains may
+overlap, overfill is priced and squeezed back). The plateau may simply
+be the boundary of what is reachable through always-valid moves; mm's
+edge would then be neither moves nor schedule but a capability class —
+relaxation through infeasible corridors, the same exponential-pricing
+trick its own legalizer uses. This reframes Max's "smoothly navigate
+downwards": the smooth paths may go through infeasible space. Named
+next question, owner's call: give OUR machinery a priced-overlap
+corridor (the books already price would-be overload — evaluation only,
+never inhabited), or refute this last hypothesis too.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).
