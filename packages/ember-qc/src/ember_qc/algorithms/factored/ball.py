@@ -31,6 +31,7 @@ question set shrinks and moves as the embedding improves.
 
 from __future__ import annotations
 
+import math
 import random
 import time
 from typing import Dict, Iterable, List, Optional, Set, Tuple
@@ -189,19 +190,79 @@ def _rebuild_ball(S: Tuple[int, ...], work: Embedding,
     return out
 
 
+def _audit_claim(grid, claimed, orientation: int, lines, lo: float,
+                 hi: float, cross_lines,
+                 rng=None) -> Optional[Tuple[int, int, List[int], int]]:
+    """Lane audit (s3.85): selection by MEASURED cost over the bar
+    family — minorminer's audition, O(candidate lanes) arithmetic.
+
+    A candidate is one physical lane: ``(orientation, line, s)`` in
+    ``grid.wire_map`` for ``line`` in ``lines``. Its run must cover the
+    interval ``[lo, hi]`` in tile-along positions: the PRESENT keys of
+    the run in that range (stride-aligned lanes hold one parity of p —
+    absent keys are not gaps). Infeasible if there are no present
+    positions, any present qubit is already ``claimed``, or the present
+    positions do not form a contiguous stride chain (a mid-run
+    claimed/dead qubit breaks the run). Cost = qubits to claim +
+    parity_miss, where parity_miss counts crossing targets in
+    ``cross_lines`` the lane cannot physically couple (p* = c if c and
+    s share parity else c-1 must be a key of the run; stride-1 fabrics
+    have no course parity — parity_miss = 0, the verifier judges).
+
+    Returns the best ``(line, s, qubits, cost)`` minimizing
+    ``(cost, line, s)``; with ``rng``, uniform among the exact
+    minimum-cost candidates. ``None`` if no lane is feasible."""
+    lo_i, hi_i = int(math.floor(lo)), int(math.ceil(hi))
+    cands: List[Tuple[int, int, int, List[int]]] = []
+    for line in sorted(set(lines)):
+        subs = sorted({s for (o_, ln, s) in grid.wire_map
+                       if o_ == orientation and ln == line})
+        for s in subs:
+            run = grid.wire_map[(orientation, line, s)]
+            present = [p for p in range(lo_i, hi_i + 1) if p in run]
+            if not present:
+                continue
+            if any(run[p] in claimed for p in present):
+                continue
+            if any(b - a != grid.stride
+                   for a, b in zip(present, present[1:])):
+                continue
+            if grid.stride > 1:
+                parity_miss = sum(
+                    1 for c in cross_lines
+                    if (c if c % 2 == s % 2 else c - 1) not in run)
+            else:
+                parity_miss = 0
+            cost = len(present) + parity_miss
+            cands.append((cost, line, s, [run[p] for p in present]))
+    if not cands:
+        return None
+    if rng is None:
+        cost, line, s, qs = min(cands, key=lambda t: t[:3])
+    else:
+        best_cost = min(t[0] for t in cands)
+        ties = sorted((t for t in cands if t[0] == best_cost),
+                      key=lambda t: t[:3])
+        cost, line, s, qs = ties[rng.randrange(len(ties))]
+    return line, s, qs, cost
+
+
 def _rebuild_ball_bars(S: Tuple[int, ...], work: Embedding,
                        src_adj: Dict[int, List[int]], adj: Adjacency,
-                       grid, kappa: float,
+                       grid,
                        deadline: Optional[float],
                        rng=None, rev=None) -> Optional[Embedding]:
-    """Bar-based joint rebuild (v4: one way to build a chain). The same
-    constructor family as the pipeline: member positions from frozen
-    obligations, the stair contact rule, straight arms colored onto
-    wires against the frozen world, stride-gated completion, scoped
-    verify. Reject is the only failure path."""
+    """Bar-based joint rebuild (v5: the lane audit). The same
+    constructor family as the pipeline — member positions from frozen
+    obligations, the stair contact rule, stride-gated completion,
+    scoped verify — but member placement is SELECTION BY MEASURED COST:
+    every candidate lane over the member's obligation hull is
+    auditioned via ``_audit_claim`` and the cheapest feasible run is
+    claimed, in the dynamic greedy order. Reject is the only failure
+    path."""
     import numpy as np
     from ember_qc.algorithms.factored.field import (
-        _color_claim_bars, _ensure_seeds, _stair_contacts, complete_seeds)
+        _stair_contacts, complete_seeds)
     if deadline is not None and time.perf_counter() > deadline:
         return None
     if not grid.wire_map:
@@ -265,10 +326,14 @@ def _rebuild_ball_bars(S: Tuple[int, ...], work: Embedding,
 
     contacts = _stair_contacts(pos, src_adj)
 
-    # bars: hull of own position, member contacts, and each frozen
-    # contact's nearest occupied line; orientation flips when the frozen
-    # side owns no run of the required orientation
-    tuples: Dict[int, list] = {1: [], 0: []}
+    # audit books per member: obligation hulls of own position, member
+    # contacts, and each frozen contact's nearest occupied line;
+    # orientation flips when the frozen side owns no run of the
+    # required orientation. The h-run's interval is the x-hull, its
+    # candidate LINES are every integer row of the y-hull, and its
+    # crossing targets are the hull's integer x-targets (own position
+    # term excluded); the v-run is symmetric.
+    books: Dict[int, tuple] = {}
     for v in sorted(S):
         h_us, v_us = contacts[v]
         h_list, v_list = [], []
@@ -294,28 +359,49 @@ def _rebuild_ball_bars(S: Tuple[int, ...], work: Embedding,
                 if not rs:
                     return None
                 vy.append(float(min(rs, key=lambda r: (abs(r - y_v), r))))
-        a_h, b_h = min(hx), max(hx)
-        a_v, b_v = min(vy), max(vy)
-        deg = sum(1 for u in src_adj.get(v, []) if u in pos)
-        deficit = deg / kappa - 1.0 - ((b_h - a_h) + (b_v - a_v))
-        if deficit > 0:
-            d4 = deficit / 4.0
-            a_h, b_h = a_h - d4, b_h + d4
-            a_v, b_v = a_v - d4, b_v + d4
-        a_h, b_h = max(a_h, 0.0), min(b_h, grid.W - 1.0)
-        a_v, b_v = max(a_v, 0.0), min(b_v, grid.H - 1.0)
-        if h_list or b_h - a_h > 0:
-            tuples[1].append((int(round(y_v)), a_h, b_h, v))
-        if v_list or b_v - a_v > 0:
-            tuples[0].append((int(round(x_v)), a_v, b_v, v))
+        need_h = bool(h_list) or max(hx) - min(hx) > 0
+        need_v = bool(v_list) or max(vy) - min(vy) > 0
+        h_rows = range(int(math.floor(min(vy))),
+                       int(math.ceil(max(vy))) + 1)
+        v_cols = range(int(math.floor(min(hx))),
+                       int(math.ceil(max(hx))) + 1)
+        h_cross = [int(round(x)) for x in hx[1:]]
+        v_cross = [int(round(y)) for y in vy[1:]]
+        books[v] = (need_h, need_v, (min(hx), max(hx)), (min(vy), max(vy)),
+                    h_rows, v_cols, h_cross, v_cross)
 
+    # member placement by measured cost: audition every candidate lane
+    # over the hull, claim the cheapest feasible run, in the dynamic
+    # greedy order (most already-placed neighbours first)
     claimed = set(claimed0)
     new_chains: Embedding = {v: [] for v in S}
-    _color_claim_bars(grid, claimed, new_chains, 1, tuples[1],
-                      require_free=True, rng=rng)
-    _color_claim_bars(grid, claimed, new_chains, 0, tuples[0],
-                      require_free=True, rng=rng)
-    _ensure_seeds(grid, claimed, new_chains, {v: pos[v] for v in S})
+    placed = set(work) - Sset
+    todo = set(S)
+    while todo:
+        v = max(sorted(todo),
+                key=lambda x: (sum(1 for u in src_adj.get(x, [])
+                                   if u in placed),
+                               len(src_adj.get(x, [])), -x))
+        need_h, need_v, h_iv, v_iv, h_rows, v_cols, h_cross, v_cross \
+            = books[v]
+        if need_h:
+            got = _audit_claim(grid, claimed, 1, h_rows, h_iv[0], h_iv[1],
+                               h_cross, rng=rng)
+            if got is None:
+                return None
+            claimed.update(got[2])
+            new_chains[v].extend(got[2])
+        if need_v:
+            got = _audit_claim(grid, claimed, 0, v_cols, v_iv[0], v_iv[1],
+                               v_cross, rng=rng)
+            if got is None:
+                return None
+            claimed.update(got[2])
+            new_chains[v].extend(got[2])
+        if not new_chains[v]:
+            return None
+        placed.add(v)
+        todo.discard(v)
 
     full = {u: list(c) for u, c in work.items() if u not in Sset}
     full.update({v: list(c) for v, c in new_chains.items()})
@@ -354,7 +440,8 @@ def ball_polish(chains: Embedding, source_graph: nx.Graph,
     ``info["invalid_input"] = True``.
 
     Rebuild: bars first (the pipeline's constructor family — straight
-    arms colored onto wires, stride-gated completion), the router (the
+    arm runs selected by measured cost over candidate lanes,
+    stride-gated completion), the router (the
     sph_tree Steiner build) when bars reject. Untyped grids (no
     wire_map) have no hull picture and yield no questions: ball_polish
     is a no-op there.
@@ -382,8 +469,6 @@ def ball_polish(chains: Embedding, source_graph: nx.Graph,
         # grid was a live bug — wrong sub-lanes on Zephyr)
         grid = TileGrid(target_graph, pos,
                         fallback_bins=_auto_bins(len(pos)), courses=True)
-    from ember_qc.algorithms.factored.field import _target_kappa
-    kappa = _target_kappa(grid)
     # shared qubit -> (orientation, line, sub, pos) map: hull questions
     # and the bar rebuild read the same frozen book
     rev: Dict[int, Tuple[int, int, int, int]] = {}
@@ -423,7 +508,7 @@ def ball_polish(chains: Embedding, source_graph: nx.Graph,
             candidate = None
             if grid.wire_map:
                 candidate = _rebuild_ball_bars(S, work, src_adj, adj,
-                                               grid, kappa, deadline,
+                                               grid, deadline,
                                                rng=rng, rev=rev)
                 if candidate is not None:
                     info["bar_rebuilds"] = info.get("bar_rebuilds", 0) + 1

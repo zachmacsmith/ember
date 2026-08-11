@@ -228,6 +228,53 @@ class TestHullQuestions:
         assert out == emb
 
 
+class TestAuditClaim:
+    """s3.85 lane audit: member placement by measured cost over
+    candidate lanes, not first-free proxy coloring."""
+
+    @staticmethod
+    def _grid(target):
+        from ember_qc.algorithms.factored.field import TileGrid
+        from ember_qc.algorithms.factored.placement import target_layout
+        return TileGrid(target, target_layout(target), courses=True)
+
+    def test_prefers_clean_lane(self):
+        from ember_qc.algorithms.factored.ball import _audit_claim
+        grid = self._grid(dnx.zephyr_graph(3, 4))
+        by_row = {}
+        for (o, ln, s) in grid.wire_map:
+            if o == 1:
+                by_row.setdefault(ln, set()).add(s)
+        row = next(ln for ln in sorted(by_row) if len(by_row[ln]) >= 2)
+        s0 = min(by_row[row])
+        run0 = grid.wire_map[(1, row, s0)]
+        pre = {q for p, q in run0.items() if 0 <= p <= 4}
+        assert pre, "lowest sub-lane has no positions in 0..4"
+        got = _audit_claim(grid, pre, 1, [row], 0, 4, [])
+        assert got is not None
+        line, s, qs, cost = got
+        # the pre-claimed lane is infeasible, not merely deprioritized
+        assert line == row and s != s0
+        run_s = grid.wire_map[(1, row, s)]
+        present = [p for p in range(0, 5) if p in run_s]
+        assert qs == [run_s[p] for p in present]
+        assert cost == len(qs) == len(present)
+        assert not pre & set(qs)
+
+    def test_audit_deterministic_and_rng_tied(self):
+        import random
+        from ember_qc.algorithms.factored.ball import _audit_claim
+        grid = self._grid(dnx.zephyr_graph(3, 4))
+        rows = sorted({ln for (o, ln, _s) in grid.wire_map if o == 1})
+        args = (grid, set(), 1, rows[len(rows) // 2:][:2], 0, 4, [1, 2])
+        a = _audit_claim(*args)
+        b = _audit_claim(*args)
+        assert a is not None and a == b
+        r = _audit_claim(*args, rng=random.Random(0))
+        assert r is not None
+        assert r[3] == a[3]  # rng only re-rolls exact-cost ties
+
+
 class TestBarRebuild:
     """v4 ball rebuild: bars first, router fallback on bars-reject.
     Determinism/validity/never-longer on the winner path are covered by
