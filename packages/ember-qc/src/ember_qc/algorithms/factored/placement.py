@@ -529,7 +529,7 @@ def attract_embed(
         remaining = (deadline - time.perf_counter()) if deadline \
             else FALLBACK_TIMEOUT
         if cfg.tail not in ("ball", "ball-rng", "shorten+ball",
-                            "rshorten+ball") \
+                            "rshorten+ball", "none") \
                 and remaining > 0:
             finished = _mm_route(source_graph, target_graph,
                                  warm=legal_emb, seed=seed,

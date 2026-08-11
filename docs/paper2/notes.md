@@ -581,6 +581,32 @@ discriminator: reproduce the sandwich and the mechanism is named and
 owned (minorminer exits); fail and the polish phase truly is
 exonerated, leaving the seeds alone.
 
+**3.86 (the autopsy — the seeds are guilty, measured).** Distribution
+tables only (`data/grind_autopsy.csv`), raw pre-tail seeds
+(tail="none") vs 30 s warm grind. The headline is upstream, exactly as
+Max hypothesized: **the raw liquid seeds contain monster chains — ws
+max chain 46 (grind → 11), regular 22 (→ 6), grid 10 (→ 3) — and the
+grind does not polish them, it RE-EMBEDS them wholesale**: ws
+2422/2430 chains changed, regular 948/948, grid 590/600;
+displacements >3 tiles dominate. Second finding, the capability gap
+made visible: on ws, 631 of 2422 changed chains GREW — the grind
+performs net-negative REDISTRIBUTION, trading length between chains —
+an operation forbidden by construction in every arm we built (per-
+chain strict descent cannot grow anything; sum-strict balls buy blight
+when they try). Turán's autopsy shows the crystal version: only
+150/810 rows changed, L→straight-run conversions at >3-tile
+displacement — the grind straightens what the seeds mis-bent. Verdict:
+seven tail probes measured the wrong phase. The blight is BORN in the
+seeds — the placement/coloring/completion stack emits massively
+imbalanced chains on liquids — and minorminer's seat in the middle is
+explained: it is the only component capable of re-embedding from a bad
+start (legalizer-grade rebuilding), which no polish of ours was ever
+meant to do. The question for the anatomy pass is now precise: WHICH
+stage births the 46-chain on ws — the arrange compaction, the kappa
+floor, the coloring, or completion's extensions. Fix the seeds and
+every tail experiment this week predicts the sandwich collapses on its
+own.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).
