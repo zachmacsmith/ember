@@ -497,6 +497,30 @@ grind: mm's move at mm's granularity under our books), or regenerating
 the ball question set from the CURRENT embedding each pass (the fixed
 candidate list is itself a frozen die). No flip; the sandwich stays.
 
+**3.83 (ball v3 — completeness achieved, and the askability
+hypothesis refuted by it).** The selector rebuilt constant-free: one
+question per chain from its obligation hull, regenerated every pass
+(`data/tail_probe4.csv`; unit balls, windows, caps, floor, inflation
+all deleted; clique self-gating verified in-test and in-probe — dense
+cells tie all arms at zero ball cost). The ladder prediction FAILED
+again, decisively: ball-first still wrecks the liquid cells (ws +1.68
+with max chain 10→22, regular +1.38, ER +1.13, P16 ws +1.54 with max
+13.7→31.7) even though the fat-chain repair question now provably
+exists every pass. So the s3.80 diagnosis ("the damage was unaskable")
+is refuted: asking is not answering — a sum-optimal state containing a
+blighted chain admits no sum-improving rebuild that removes it, so
+strict sum descent ratchets into blight regardless of question
+completeness. Max's geometry instinct sharpens into a measured fact:
+the damage is OBJECTIVE-level, not move-level. The move-strategy-first
+路 was tried per the owner's preference and measured insufficient;
+what remains is the acceptance/objective question we deferred (how to
+price or forbid blight without max/average dogma), or accepting the
+sandwich (mm+ball, still the unbeaten default — all v3 arms ≤ it
+nowhere, and ball-after gains no new ground from richer questions).
+Also banked: pure ball ties the sandwich on every gate-fired crystal
+at zero cost — the minorminer-free Zephyr pipeline remains real
+exactly where construction already owns the answer.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).
