@@ -75,8 +75,7 @@ class TestMove:
     def test_constructed_improvement(self):
         # a path source embedded, then made deliberately wasteful by
         # padding one chain with free connected qubits; the move must
-        # strictly shorten it back (the source must be big enough for
-        # unit balls to exist: coarsen skips sources <= 8 nodes)
+        # strictly shorten it back
         target = dnx.chimera_graph(3, 3, 4)
         source = nx.path_graph(12)
         import minorminer
@@ -135,6 +134,98 @@ class TestHelpers:
                 assert pruned_sub[v] == finished[v]
         assert is_valid_embedding(pruned_sub, source, zephyr)
         assert is_valid_embedding(pruned_all, source, zephyr)
+
+
+class TestHullQuestions:
+    """v3 selector: one question per chain from its obligation hull,
+    regenerated at the start of every pass."""
+
+    @staticmethod
+    def _grid_rev(target):
+        from ember_qc.algorithms.factored.field import TileGrid
+        from ember_qc.algorithms.factored.placement import target_layout
+        grid = TileGrid(target, target_layout(target), courses=True)
+        rev = {}
+        for (o, ln, s), run in grid.wire_map.items():
+            for p, q in run.items():
+                rev[q] = (o, ln, s, p)
+        return grid, rev
+
+    def test_every_chain_is_an_anchor(self, source, zephyr, finished):
+        from ember_qc.algorithms.factored.ball import _hull_balls
+        grid, rev = self._grid_rev(zephyr)
+        src_adj = {int(v): sorted(source.neighbors(v)) for v in source}
+        balls = _hull_balls(finished, src_adj, grid, rev)
+        assert balls
+        covered = set().union(*map(set, balls))
+        for v in source:
+            if source.degree(v) >= 1:
+                assert v in covered
+
+    def test_hull_contains_footprint_and_targets(self, source, zephyr,
+                                                 finished):
+        from ember_qc.algorithms.factored.ball import _hull_balls
+        grid, rev = self._grid_rev(zephyr)
+        src_adj = {int(v): sorted(source.neighbors(v)) for v in source}
+        balls = _hull_balls(finished, src_adj, grid, rev)
+
+        def footprint(v):
+            ts, cs, rs = set(), set(), set()
+            for q in finished[v]:
+                o, ln, _s, p = rev[q]
+                if o == 1:
+                    ts.add((p, ln))
+                    rs.add(ln)
+                else:
+                    ts.add((ln, p))
+                    cs.add(ln)
+            return ts, sorted(cs), sorted(rs)
+
+        v = next(v for v in sorted(finished) if src_adj.get(v))
+        ts, _, _ = footprint(v)
+        x0 = min(t[0] for t in ts)
+        x1 = max(t[0] for t in ts)
+        y0 = min(t[1] for t in ts)
+        y1 = max(t[1] for t in ts)
+        hx0, hx1, hy0, hy1 = x0, x1, y0, y1
+        for u in src_adj[v]:
+            _, ucols, urows = footprint(u)
+            if ucols:
+                t = min(ucols, key=lambda ln: (0 if x0 <= ln <= x1
+                                               else min(abs(ln - x0),
+                                                        abs(ln - x1)), ln))
+                hx0, hx1 = min(hx0, t), max(hx1, t)
+            if urows:
+                t = min(urows, key=lambda ln: (0 if y0 <= ln <= y1
+                                               else min(abs(ln - y0),
+                                                        abs(ln - y1)), ln))
+                hy0, hy1 = min(hy0, t), max(hy1, t)
+        expected = {v}
+        for w in finished:
+            if w == v:
+                continue
+            wts, _, _ = footprint(w)
+            if any(hx0 <= x <= hx1 and hy0 <= y <= hy1 for (x, y) in wts):
+                expected.add(w)
+        assert len(expected) >= 2
+        assert tuple(sorted(expected)) in balls
+
+    def test_clique_self_gates(self, zephyr):
+        # the exact-embed gate's clique layout is already at the
+        # constructor family's fixpoint: v3 questions exist every pass
+        # but none accepts, and dryness terminates without a deadline
+        from ember_qc.algorithms.factored import attract_embed
+        k = nx.complete_graph(10)
+        r = attract_embed(k, zephyr, timeout=45, seed=0)
+        assert r["embedding"]
+        assert r["diag"].get("mm_skipped") is True
+        emb = {int(v): sorted(int(q) for q in c)
+               for v, c in r["embedding"].items()}
+        assert validate_embedding(emb, k, zephyr)
+        out, info = ball_polish(emb, k, zephyr)
+        assert info["accepted"] == 0
+        assert info["sweeps"] <= 2
+        assert out == emb
 
 
 class TestBarRebuild:

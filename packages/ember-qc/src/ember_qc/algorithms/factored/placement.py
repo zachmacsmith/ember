@@ -553,6 +553,7 @@ def attract_embed(
             diag["ball_accepts"] = ball_info["accepted"]
             diag["ball_tried"] = ball_info["tried"]
             diag["ball_wall"] = round(ball_info["wall"], 1)
+            diag["ball_questions"] = ball_info.get("questions", 0)
         if eff_exact:
             diag["mm_skipped"] = mm_skipped
             if ex_info is not None:

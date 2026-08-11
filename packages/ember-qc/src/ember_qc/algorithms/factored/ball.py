@@ -20,11 +20,13 @@ Design rules (2026-08-08 discussion):
 - Fabric-agnostic by construction: nothing here needs junction completeness
   or courses — the first mechanism that runs on Pegasus ungated.
 
-Two ball selectors, both producing plain variable sets:
-- unit balls: the affinity coarsening hierarchy's member groups (the same
-  units the cluster moves use), fine to coarse;
-- rect balls: variables whose entire chain falls inside a raster window of
-  the tile grid (geometric locality the source-side hierarchy cannot see).
+Ball selector (v3): one question per chain, from its obligation hull,
+regenerated at the start of every pass. The anchor chain's hull is the
+bounding rectangle (in tile space) of its own footprint tiles extended,
+per source neighbour, to the nearest line the neighbour's runs occupy on
+each axis; the ball is the anchor plus every chain with a footprint tile
+inside that rectangle. No inflation, no floor, no cap, no windows — the
+question set shrinks and moves as the embedding improves.
 """
 
 from __future__ import annotations
@@ -42,62 +44,85 @@ from ember_qc.embedding_backend import (
     chain_connected,
     is_valid_embedding,
 )
-from ember_qc.algorithms.factored.coarsen import coarsen
 from ember_qc.algorithms.factored.polish import spur_prune
 from ember_qc.algorithms.factored.trees import sph_tree
 
-RECT_SIZE = 4    # tile window side; raster stride is RECT_SIZE // 2
-MAX_BALL = 16    # cost cap: bigger balls near-always reject but cost seconds
 
+def _hull_balls(work: Embedding, src_adj: Dict[int, List[int]],
+                grid, rev) -> List[Tuple[int, ...]]:
+    """One question per chain: its obligation hull, as a ball.
 
-def _unit_balls(src_adj: Dict[int, List[int]]) -> List[Tuple[int, ...]]:
-    """Member groups of the affinity hierarchy, fine to coarse, as sorted
-    tuples of fine ids (size 2..MAX_BALL, never more than half the source)."""
-    levels = coarsen(src_adj, units=True)
-    cap = min(MAX_BALL, len(src_adj) // 2)
-    balls: List[Tuple[int, ...]] = []
-    if len(levels) < 2:
-        return balls
-    mem = {v: [v] for v in levels[0].adj}
-    for li in range(1, len(levels)):
-        up: Dict[int, List[int]] = {}
-        for c, ms in mem.items():
-            p = levels[li].parent_of[c]
-            up.setdefault(p, []).extend(ms)
-        mem = up
-        for ms in sorted(map(sorted, mem.values())):
-            if 2 <= len(ms) <= cap:
-                balls.append(tuple(ms))
-    return balls
-
-
-def _rect_balls(chains: Embedding, grid) -> List[Tuple[int, ...]]:
-    """Variables whose entire chain maps into a RECT_SIZE tile window, for
-    raster windows at half-window stride. Uses the grid's affine drawing->
-    tile map (approximate on typed fabrics, exact enough for a selector;
-    works identically on untyped fallback grids)."""
-    cap = min(MAX_BALL, len(chains) // 2)
-    tile_of = {}
-    for k, q in enumerate(grid.qubits):
-        t = grid.to_tile(grid.coords[k])
-        tile_of[q] = (int(min(max(round(t[0]), 0), grid.W - 1)),
-                      int(min(max(round(t[1]), 0), grid.H - 1)))
-    span = {}
-    for v, c in chains.items():
-        ts = [tile_of[q] for q in c if q in tile_of]
+    ``rev`` is the qubit -> (orientation, line, sub, pos) map derived from
+    ``grid.wire_map``. Per anchor chain C the hull is the bounding
+    rectangle of C's footprint tiles, extended per source neighbour u to
+    the nearest line u's runs occupy on each axis: the x-interval grows to
+    include the nearest col of u's v-runs (if any), the y-interval to the
+    nearest row of u's h-runs (if any); "nearest" is measured from C's
+    footprint interval on that axis (distance 0 if inside; ties toward
+    the lower line). The ball is the anchor plus every other chain with a
+    footprint tile inside the hull (inclusive). Balls of size < 2 are
+    skipped; identical tuples are deduped keeping the first occurrence in
+    ascending anchor order. Untyped grids (empty rev) yield no balls.
+    """
+    tiles: Dict[int, Set[Tuple[int, int]]] = {}
+    cols: Dict[int, List[int]] = {}
+    rows: Dict[int, List[int]] = {}
+    for v, c in work.items():
+        ts: Set[Tuple[int, int]] = set()
+        cs: Set[int] = set()
+        rs: Set[int] = set()
+        for q in c:
+            k = rev.get(q)
+            if k is None:
+                continue
+            o, ln, _s, p = k
+            if o == 1:
+                ts.add((p, ln))
+                rs.add(ln)
+            else:
+                ts.add((ln, p))
+                cs.add(ln)
         if ts:
-            xs = [t[0] for t in ts]
-            ys = [t[1] for t in ts]
-            span[v] = (min(xs), max(xs), min(ys), max(ys))
-    step = max(RECT_SIZE // 2, 1)
+            tiles[v] = ts
+        cols[v] = sorted(cs)
+        rows[v] = sorted(rs)
+
+    def nearest(lines: List[int], lo: int, hi: int) -> int:
+        return min(lines, key=lambda ln: (0 if lo <= ln <= hi
+                                          else min(abs(ln - lo),
+                                                   abs(ln - hi)), ln))
+
+    seen: Set[Tuple[int, ...]] = set()
     balls: List[Tuple[int, ...]] = []
-    for y0 in range(0, max(grid.H - RECT_SIZE, 0) + 1, step):
-        for x0 in range(0, max(grid.W - RECT_SIZE, 0) + 1, step):
-            x1, y1 = x0 + RECT_SIZE - 1, y0 + RECT_SIZE - 1
-            ms = sorted(v for v, (a, b, c0, d) in span.items()
-                        if a >= x0 and b <= x1 and c0 >= y0 and d <= y1)
-            if 2 <= len(ms) <= cap:
-                balls.append(tuple(ms))
+    for v in sorted(work):
+        if not src_adj.get(v) or v not in tiles:
+            continue
+        fx = [t[0] for t in tiles[v]]
+        fy = [t[1] for t in tiles[v]]
+        fx0, fx1 = min(fx), max(fx)
+        fy0, fy1 = min(fy), max(fy)
+        xmin, xmax, ymin, ymax = fx0, fx1, fy0, fy1
+        for u in src_adj[v]:
+            if u == v or not work.get(u):
+                continue
+            cu = cols.get(u)
+            if cu:
+                t = nearest(cu, fx0, fx1)
+                xmin, xmax = min(xmin, t), max(xmax, t)
+            ru = rows.get(u)
+            if ru:
+                t = nearest(ru, fy0, fy1)
+                ymin, ymax = min(ymin, t), max(ymax, t)
+        members = {v}
+        for w, ts in tiles.items():
+            if w != v and any(xmin <= x <= xmax and ymin <= y <= ymax
+                              for (x, y) in ts):
+                members.add(w)
+        ball = tuple(sorted(members))
+        if len(ball) < 2 or ball in seen:
+            continue
+        seen.add(ball)
+        balls.append(ball)
     return balls
 
 
@@ -168,7 +193,7 @@ def _rebuild_ball_bars(S: Tuple[int, ...], work: Embedding,
                        src_adj: Dict[int, List[int]], adj: Adjacency,
                        grid, kappa: float,
                        deadline: Optional[float],
-                       rng=None) -> Optional[Embedding]:
+                       rng=None, rev=None) -> Optional[Embedding]:
     """Bar-based joint rebuild (v4: one way to build a chain). The same
     constructor family as the pipeline: member positions from frozen
     obligations, the stair contact rule, straight arms colored onto
@@ -186,10 +211,11 @@ def _rebuild_ball_bars(S: Tuple[int, ...], work: Embedding,
     for u, c in work.items():
         if u not in Sset:
             claimed0.update(c)
-    rev = {}
-    for (o_, ln, s), run in grid.wire_map.items():
-        for p, q in run.items():
-            rev[q] = (o_, ln, s, p)
+    if rev is None:
+        rev = {}
+        for (o_, ln, s), run in grid.wire_map.items():
+            for p, q in run.items():
+                rev[q] = (o_, ln, s, p)
 
     # frozen neighbours: which lines their runs occupy + pseudo-position
     frozen_nbrs = sorted({u for v in S for u in src_adj.get(v, [])
@@ -321,20 +347,22 @@ def ball_polish(chains: Embedding, source_graph: nx.Graph,
                 rng_seed: Optional[int] = None) -> Tuple[Embedding, dict]:
     """Improve a finished legal embedding by ball eviction/re-embedding.
 
-    Sweeps a fixed, deterministic ball list (unit balls fine->coarse, then
-    rect balls in raster order) until a full sweep accepts nothing or the
-    deadline passes. Returns ``(embedding, info)``; on invalid input the
-    input is returned unchanged with ``info["invalid_input"] = True``.
+    Sweeps one question per chain — its obligation hull ball, regenerated
+    at the start of every pass from the current embedding — until a full
+    sweep accepts nothing or the deadline passes. Returns ``(embedding,
+    info)``; on invalid input the input is returned unchanged with
+    ``info["invalid_input"] = True``.
 
     Rebuild: bars first (the pipeline's constructor family — straight
     arms colored onto wires, stride-gated completion), the router (the
-    sph_tree Steiner build) when bars reject. Untyped grids always use
-    the router.
+    sph_tree Steiner build) when bars reject. Untyped grids (no
+    wire_map) have no hull picture and yield no questions: ball_polish
+    is a no-op there.
     """
     t0 = time.perf_counter()
     work: Embedding = {int(v): [int(q) for q in c] for v, c in chains.items()}
     info = {"tried": 0, "accepted": 0, "sweeps": 0,
-            "unit_balls": 0, "rect_balls": 0, "wall": 0.0}
+            "questions": 0, "wall": 0.0}
     if adj is None:
         adj = build_adjacency(target_graph)
     if not work or not is_valid_embedding(work, source_graph, target_graph,
@@ -356,17 +384,12 @@ def ball_polish(chains: Embedding, source_graph: nx.Graph,
                         fallback_bins=_auto_bins(len(pos)), courses=True)
     from ember_qc.algorithms.factored.field import _target_kappa
     kappa = _target_kappa(grid)
-
-    units = [_trim_ball(S, src_adj) for S in _unit_balls(src_adj)]
-    rects = [_trim_ball(S, src_adj) for S in _rect_balls(work, grid)]
-    seen: Set[Tuple[int, ...]] = set()
-    balls: List[Tuple[int, ...]] = []
-    for S in units + rects:
-        if S and S not in seen:
-            seen.add(S)
-            balls.append(S)
-    info["unit_balls"] = sum(1 for S in units if S)
-    info["rect_balls"] = sum(1 for S in rects if S)
+    # shared qubit -> (orientation, line, sub, pos) map: hull questions
+    # and the bar rebuild read the same frozen book
+    rev: Dict[int, Tuple[int, int, int, int]] = {}
+    for (o_, ln, s), run in grid.wire_map.items():
+        for p, q in run.items():
+            rev[q] = (o_, ln, s, p)
 
     visits = [0]
     rng = random.Random(rng_seed) if rng_seed is not None else None
@@ -377,6 +400,17 @@ def ball_polish(chains: Embedding, source_graph: nx.Graph,
             break
         info["sweeps"] += 1
         any_accept = False
+        # regenerate the questions from the CURRENT embedding: the hulls
+        # shrink and move as chains improve
+        trimmed = [_trim_ball(S, src_adj)
+                   for S in _hull_balls(work, src_adj, grid, rev)]
+        seen: Set[Tuple[int, ...]] = set()
+        balls: List[Tuple[int, ...]] = []
+        for S in trimmed:
+            if S and S not in seen:
+                seen.add(S)
+                balls.append(S)
+        info["questions"] = len(balls)
         sweep = list(balls)
         if rng is not None:
             rng.shuffle(sweep)
@@ -390,7 +424,7 @@ def ball_polish(chains: Embedding, source_graph: nx.Graph,
             if grid.wire_map:
                 candidate = _rebuild_ball_bars(S, work, src_adj, adj,
                                                grid, kappa, deadline,
-                                               rng=rng)
+                                               rng=rng, rev=rev)
                 if candidate is not None:
                     info["bar_rebuilds"] = info.get("bar_rebuilds", 0) + 1
             if candidate is None:
