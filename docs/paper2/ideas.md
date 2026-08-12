@@ -252,6 +252,40 @@ Each entry: the principle, then the strongest single piece of evidence.
 - **Corridor pricing.** The arrange step does not price non-participant
   traversal; suspected loss mode on cluster-of-clusters sources.
 
+- **The fold (s3.86-87) — the liquid residual's mechanism, and the
+  design that answers it with no third mechanism.** Measured: our
+  liquid seeds carry monster chains because layouts never fold —
+  order-irreducible long edges (WS shortcuts) stay long; minorminer's
+  entire irreplaceable contribution is gradual folding via small
+  relocating strict-descent steps (all 16 >10-tile ws edges collapse
+  post-grind to max 7.3). Design notes, assembled with Max 2026-08-12:
+  (1) the units hierarchy is a FILTRATION — no thresholds, merges run
+  to one node per component; an edge's MERGE ROUND is a free, general,
+  threshold-free measure of structural range (ring edges round 1, WS
+  chords last). (2) The coarse-init layout still bills wrongly:
+  multiplicity-weighted springs charge per fine edge, but stair arms
+  are HULLS (parallel edges share arms) — bundles over-billed, lone
+  long edges under-billed, so the coarse circle always beats the fold.
+  (3) The fold's activation barrier (boundary stretch paid up front,
+  chord gain collected at completion) blocks every small-step path our
+  gates evaluate; COARSE relocations jump it — gates compare endpoints
+  only. (4) The endpoint consistent with "coarsen the moves, not the
+  state": delete the weighted coarse spectral rather than fix it —
+  dumb init, coarse-scale relocation moves judged on the REAL fine
+  books do the layout, unifying init and moves into one real-judged
+  family. Open: budget cost of layout-by-moves vs warm start. CENSUS RUN AND
+  PREDICTION REFUTED (2026-08-12): the late-merge FRACTION does not
+  separate strongholds (ws 0.04 ≈ grid 0.03; heavy tails belong to
+  DENSE cells — turán 1.00 trivially, blocks are internally edgeless).
+  Merge-round alone conflates long-range with dense/disordered. The
+  surviving detector: an edge that merges late AND is long in the
+  CURRENT layout — graph × layout, free to evaluate at coarse-move
+  time (where the layout exists), impossible only as the layout-free
+  statistic the census asked for. Also settled this exchange (Max):
+  the weighted-coarse-spectral init is the un-migrated half of
+  "coarsen the moves, not the state" — the endpoint deletes it (dumb
+  init + real-judged coarse relocations), not re-weights it.
+
 ## 4. Method
 
 The only rule is to find the correct algorithm based on the principles
