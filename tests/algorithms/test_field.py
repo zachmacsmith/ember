@@ -1156,3 +1156,25 @@ class TestOrderMode:
         _color_claim_bars(grid, claimed2, chains2, 1, bars,
                           require_free=True)
         assert chains2[7] == []
+
+
+class TestContactsFreshness:
+    """s3.86 (Max): is anything consuming stale contacts? The fence in
+    arm_books recomputes at every reusing gate evaluation and asserts
+    equality — run over liquid-shaped embeds where line-collapses (the
+    tie-flip hazard) are pervasive."""
+
+    def test_no_stale_contacts_on_liquid(self):
+        import networkx as nx
+        import dwave_networkx as dnx
+        from ember_qc.algorithms.factored import attract_embed
+        from ember_qc.algorithms.factored import field as F
+        F._VERIFY_CONTACTS = True
+        try:
+            for n, p, seed in ((120, 0.035, 5), (80, 0.06, 6)):
+                src = nx.gnp_random_graph(n, p, seed=seed)
+                r = attract_embed(src, dnx.zephyr_graph(6, 4),
+                                  timeout=20, seed=0, tail="none")
+                assert r["embedding"] is not None
+        finally:
+            F._VERIFY_CONTACTS = False

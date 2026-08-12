@@ -581,6 +581,12 @@ def arm_books(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
     (line, a, b, v) for orientation o in (1, 0)."""
     if contacts is None:
         contacts = _stair_contacts(pos, src_adj)
+    elif _VERIFY_CONTACTS:
+        # staleness fence (s3.86, Max's question): any reused contacts
+        # must equal a fresh recomputation — a mismatch here is the
+        # silent-proxy-drift bug class, caught mechanically
+        assert contacts == _stair_contacts(pos, src_adj), \
+            "stale contacts consumed by a gate evaluation"
     bars = derive_bars_stair(pos, src_adj, kappa=kappa, floor=floor,
                              bounds=(grid.W, grid.H), contacts=contacts)
     tuples = {}
@@ -965,6 +971,8 @@ def line_depth(intervals: List[Tuple[float, float]]) -> int:
             best = depth
     return best
 
+
+_VERIFY_CONTACTS = False  # staleness fence, tests only
 
 _MISS_COST = 1e6  # a skip must dominate any real displacement (|y-l| <= L)
 
