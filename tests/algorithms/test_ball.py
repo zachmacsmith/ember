@@ -354,3 +354,13 @@ class TestTail:
         assert a["embedding"] and a["embedding"] == b["embedding"]
         assert validate_embedding(a["embedding"], source, zephyr)
         assert "ball_accepts" in a["diag"]
+
+    def test_init_mode_trivial_valid_deterministic(self, source, zephyr):
+        from ember_qc.algorithms.factored import attract_embed
+        a = attract_embed(source, zephyr, timeout=45, seed=0,
+                          init_mode="trivial")
+        b = attract_embed(source, zephyr, timeout=45, seed=0,
+                          init_mode="trivial")
+        assert a["embedding"] and a["embedding"] == b["embedding"]
+        assert validate_embedding(a["embedding"], source, zephyr)
+        assert a["diag"]["init_wall"] <= 0.05

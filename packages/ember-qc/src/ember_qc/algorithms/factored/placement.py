@@ -246,6 +246,11 @@ class AttractConfig:
                                # consulted; every graph gets its natural
                                # log-depth hierarchy — lattices become
                                # patch tilings, the gate filters).
+    init_mode: str = "spectral"
+                               # s3.88 (every move real): "trivial"
+                               # skips vcycle/spectral — identity ranks
+                               # in, the real-judged moves do the
+                               # layout. See ideas §3, the fold entry.
     tail: str = "mm+ball"
                                # the pipeline tail after a legal
                                # embedding exists (s3.80): "mm" = warm
@@ -372,12 +377,18 @@ def attract_embed(
                 coarsen as _coarsen)
             _units_levels = _coarsen(src_adj, units=True)
 
-        if eff_vcycle:
+        _t_init = time.perf_counter()
+        if cfg.init_mode == "trivial":
+            # s3.88 every-move-real: no summary physics — identity
+            # ranks in; the real-judged moves do the layout
+            cent = {v: np.zeros(2) for v in src_adj}
+        elif eff_vcycle:
             from ember_qc.algorithms.factored.coarsen import multilevel_init
             cent = multilevel_init(src_adj, lo, hi, seed=seed,
                                    agg=cfg.vcycle_agg)
         else:
             cent = source_positions(source_graph, lo, hi)
+        init_wall = time.perf_counter() - _t_init
         legal_emb: Optional[Embedding] = None
         legal_acl = math.inf
         mm_skipped = False
@@ -426,6 +437,7 @@ def attract_embed(
                     if _g:
                         cluster_groups.append(_g)
                 cluster_groups = cluster_groups or None
+        _t_arr = time.perf_counter()
         tpts, last_info = alternate_arrange(
             tpts, src_adj, grid, iters=cfg.arrange_iters,
             kappa=kappa, floor=cfg.span_floor,
@@ -433,6 +445,7 @@ def attract_embed(
             overload_lam=eff_lam, snap=eff_snap,
             deadline=placement_deadline,
             cluster_groups=cluster_groups)
+        arrange_wall = time.perf_counter() - _t_arr
         cent = {v: grid.Minv @ (tpts[v] - grid.c) for v in cent}
         # raw stair-E (recorded trajectory metric)
         stair_E = round(stair_energy(tpts, src_adj), 1)
@@ -574,6 +587,8 @@ def attract_embed(
                 # the hardware-relevant tail metric (s3.65): recorded
                 # from consolidation 3 onward, everywhere
                 "max_chain": max(len(c) for c in finished.values())}
+        diag["init_wall"] = round(init_wall, 2)
+        diag["arrange_wall"] = round(arrange_wall, 2)
         if ball_info is not None:
             diag["ball_accepts"] = ball_info["accepted"]
             diag["ball_tried"] = ball_info["tried"]
