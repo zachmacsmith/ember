@@ -607,6 +607,34 @@ floor, the coloring, or completion's extensions. Fix the seeds and
 every tail experiment this week predicts the sandwich collapses on its
 own.
 
+**3.87 (the fold — the mystery resolves, and the L is exonerated).**
+Measured on ws seed 0 (edge-span distributions, endpoint-chain tile
+distance): raw seeds carry 16 edges spanning >10 tiles (the WS
+shortcuts; max 11.8); **after the warm grind, ZERO remain — all 16
+collapse to mean 3.9, max 7.3.** minorminer does not pay the shortcut
+tax with cleverer shapes; it MOVES the endpoints together. Combined
+with the s3.86 autopsy (every chain touched, displacements >3 tiles,
+cascade 1.0, redistribution with growth): the grind's irreplaceable
+contribution is **the fold** — gradual global re-layout via hundreds
+of small, strictly-improving, RELOCATING per-chain moves, each locally
+trivial, jointly folding the placement so order-irreducible long edges
+stop being long. This path exists only at chain granularity: the
+intermediate states of a fold are net-negative as single jumps, so
+every big-move arm of ours (composites, balls, one-shot rebuilds)
+correctly rejects them, and our per-chain arms never relocated. The
+week's seven refutations close coherently: not shapes (the bar-family
+pricing claim of s3.86-era is RETRACTED — third self-correction of the
+arc), not randomness, not audition breadth, not the seeds' books — the
+gap is a move class: small relocating strict-descent steps whose
+composition is a global fold. Candidate responses for the owner:
+(a) chain-granularity relocating polish (rebuild-toward-current-
+neighbours, iterated — mm's real mechanism, natively ownable);
+(b) fold-aware init sketch (the spectral circle leaves the fabric
+interior EMPTY on ring-like graphs; a stress layout folds chords at
+init — but s3.77 counsels humility on init cleverness); (c) an arrange
+move that relocates arcs across the net-negative ridge. The regime map
+gains a mechanism: liquids lose exactly where layouts need folding.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).
