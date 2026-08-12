@@ -635,6 +635,30 @@ init — but s3.77 counsels humility on init cleverness); (c) an arrange
 move that relocates arcs across the net-negative ridge. The regime map
 gains a mechanism: liquids lose exactly where layouts need folding.
 
+**3.88 (every move real — the warm sketch earns its keep, with one
+beautiful exception).** init_mode="trivial" (identity ranks, no
+summary physics; `data/fold_probe.csv`; stage walls now permanent
+diag). Verdict = pre-registered (c) with structure: **the sketch pays
+its way exactly where geometry exists to sketch** — lattices, liquids,
+Pegasus all regress from a dumb start (regular +0.67, king +0.59, P16
+K100 +0.74, ws +0.18) — while on crystals the summary physics was
+NOISE: **trivial hits turán's exact 6.000 optimum on 10/10 seeds,
+beating the sketch's 6.023**, and K100 improves −0.12 with max 9→8.
+The crystal is the output shape, purely (s3.64 at its strongest: the
+best dense init is NO init). The ws fold did not happen from the dumb
+start either — real-judged moves cannot fold from any origin, so the
+single-arc +D barrier holds at every scale we possess, and the
+tile-resolution corridor / telescoping multi-arc composites (ideas §3)
+are confirmed as the genuine frontier, to be DISCUSSED before built
+(Max's rule). Cost accounting: init_wall is negligible (<0.1 s) at
+benchmark sizes — the sketch is effectively free, so keeping it costs
+nothing; the trivial arm's losses are pure move-budget spent
+recovering what the sketch hands over. Standing default unchanged;
+candidate cheap flip for a future round: trivial init on gate-fired
+dense cells only — rejected as stated (graph-type rule); the general
+version (sketch-vs-trivial as measured per-instance restart arms)
+belongs to a portfolio discussion we have always refused. Park.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).
