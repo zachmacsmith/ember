@@ -199,8 +199,10 @@ class TestClusterMoves:
         src_adj.update({b: list(A) for b in B})
         order = [x for pair in zip(A, B) for x in pair]  # interleave
         vals = np.arange(20, dtype=float)
-        out = cluster_gather_order(order, tuple(A), src_adj, vals, None)
+        out, gain, _flip = cluster_gather_order(order, tuple(A), src_adj,
+                                                vals, None)
         assert out is not None
+        assert gain > 0.0  # s3.89: the discarded screen gain is returned
         posn = {v: i for i, v in enumerate(out)}
         slots = sorted(posn[a] for a in A)
         assert slots == list(range(slots[0], slots[0] + len(A)))
@@ -212,9 +214,12 @@ class TestClusterMoves:
         K = nx.complete_graph(12)
         src_adj = {v: sorted(K.neighbors(v)) for v in K}
         order = sorted(K.nodes())
-        out = cluster_gather_order(order, tuple(order), src_adj,
-                                   np.arange(12, dtype=float), None)
+        out, gain, _flip = cluster_gather_order(order, tuple(order),
+                                                src_adj,
+                                                np.arange(12, dtype=float),
+                                                None)
         assert out is None  # nothing external to move relative to
+        assert gain == 0.0
 
     def test_pipeline_cmove_valid_and_off_switch_identity(self):
         import dwave_networkx as dnx

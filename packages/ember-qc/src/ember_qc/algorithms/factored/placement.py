@@ -269,6 +269,98 @@ class AttractConfig:
                                # ball harvests what it cannot see).
                                # False = s3.70's τ-aggregation units
                                # (the measurement control arm).
+    gather_orient: bool = True
+                               # s3.89: every gather proposal also
+                               # offers its REVERSED block (the derived
+                               # within-block order is a candidate, not
+                               # a commitment — ideas §2.11). Reversal
+                               # is the fold's atom: the translations-
+                               # only move family cannot compose it
+                               # under strict descent. DEFAULT ON
+                               # (strain_probe.csv: ws −0.113/mx −0.6
+                               # at 10 seeds, grid −0.090, honeycomb/
+                               # king/regular all won, zero regressions
+                               # or wall cost anywhere). False =
+                               # forward-only gathers (control arm).
+    fold_moves: bool = False
+                               # s3.89: flagged-edge fold pass. Edges
+                               # ranked by span × merge-round (long in
+                               # the CURRENT layout AND late in the
+                               # affinity filtration — the graph×layout
+                               # detector; layout-free was refuted
+                               # 2026-08-12) nominate TWO-AXIS hairpin
+                               # composites (riffle on the strand axis,
+                               # strand split on the other; one-axis
+                               # reversal was refuted in-session,
+                               # 194/194 ov-vetoed), one executed per
+                               # pass, geometry-memoized, ov-ratchet
+                               # relaxed while infeasible. VALIDATED on
+                               # target (ws/Z12 −0.184, ws/P16 −0.271
+                               # w/ orient) but OFF: accepted folds are
+                               # stair-E fictions on incomplete
+                               # junctions (P16 K100 +1.05,
+                               # strain_probe.csv) — the Pegasus
+                               # exactness gap, named open item.
+    strain_rank: bool = False
+                               # s3.89: cluster composites execute in
+                               # descending proxy-gain order instead of
+                               # coarsest-first (same screens, ranked
+                               # execution). REFUTED as built
+                               # (strain_probe.csv: adds nothing over
+                               # the fold arm; ER +0.084, spin_glass
+                               # +0.104, P16 ws +0.4 vs fold — load-
+                               # noise caveat, later arms ran at load
+                               # 40-57). OFF = coarsest-first.
+    ball_singles: bool = False
+                               # s3.91 (ball-prime): ball_polish also
+                               # asks the |S|=1 exact-cross question
+                               # (cross._place_cross — exhaustive
+                               # anchor audition, the grind's move done
+                               # exactly). With tail="ball" this is the
+                               # grind-replacement stack. OFF = balls
+                               # only (s3.75 selector).
+    clamp_miss: bool = True
+                               # s3.92 straggler repair: a variable the
+                               # packer cannot fit is clamped to the
+                               # nearest real line instead of stranding
+                               # its init-rank coordinate in the books
+                               # (measured: 69 permanent ghosts on ws,
+                               # E 14x inflated, 1/8 arrange iterations
+                               # run, seeds discarded). DEFAULT ON —
+                               # it repairs the "positions are derived
+                               # line indices" invariant. False = the
+                               # pre-s3.92 behavior (control arm).
+                               # (Under unbounded_pack the in-loop
+                               # clamp is dead code by the L_max lemma;
+                               # it still guards the final projection.)
+    unbounded_pack: bool = True
+                               # s3.93 infinite packer: the arrange DP
+                               # packs the IDEAL crossbar — uniform
+                               # lanes, as many lines as demand needs,
+                               # no boundary zeroing, hard capacity
+                               # unchanged — so packing is always
+                               # feasible and skips are structurally
+                               # gone; the finite fabric is priced by
+                               # the census alone and enforced once by
+                               # a final bounded projection. DEFAULT ON
+                               # (unb_probe.csv, 10 seeds: ws 3.037 ->
+                               # 2.552 with max 10.7 -> 8.1 — first
+                               # sub-minorminer liquid; P16 ws -0.461;
+                               # turán exact 6.000 10/10; dense
+                               # identical; king +0.237 the one cost).
+                               # False = bounded packs (control arm).
+    submit_seeds: bool = False
+                               # s3.93 seed submission: when the
+                               # legalization slice is exhausted
+                               # (cap<=0 — measured on every liquid
+                               # cell), the fallback mm gets the
+                               # COMPLETED SEEDS warm instead of
+                               # single-qubit snap hints (the s3.92
+                               # discovery: 30 s of arrange was buying
+                               # position hints only; seeds cover ~90%
+                               # of edges). Single-qubit hints remain
+                               # the last resort. False = discard
+                               # (control arm).
 
 
 def _auto_bins(n_qubits: int) -> int:
@@ -416,6 +508,7 @@ def attract_embed(
         # FINE ids, one list per level (coarsest last). Position-free —
         # computed once from the source graph.
         cluster_groups = None
+        edge_rounds = None
         if cfg.cluster_moves:
             from ember_qc.algorithms.factored.coarsen import (
                 coarsen as _coarsen)
@@ -426,6 +519,14 @@ def attract_embed(
                        else _coarsen(src_adj, agg=True))
             if len(_levels) > 1:
                 cluster_groups = []
+                # s3.89: per-edge merge rounds ride the same composition
+                # — for each source edge, the first level at which its
+                # endpoints share a representative (the filtration is
+                # the free, threshold-free measure of structural range).
+                _rep = {v: v for v in _levels[0].adj}
+                _edge_rounds = ({tuple(sorted((u, v))): None
+                                 for u in src_adj for v in src_adj[u]
+                                 if u < v} if cfg.fold_moves else {})
                 _mem = {v: [v] for v in _levels[0].adj}
                 for _li in range(1, len(_levels)):
                     _up: dict = {}
@@ -436,7 +537,19 @@ def attract_embed(
                     _g = [sorted(ms) for ms in _mem.values() if len(ms) > 1]
                     if _g:
                         cluster_groups.append(_g)
+                    if _edge_rounds:
+                        for _v in _rep:
+                            _rep[_v] = _levels[_li].parent_of[_rep[_v]]
+                        for _e, _r in _edge_rounds.items():
+                            if _r is None and _rep[_e[0]] == _rep[_e[1]]:
+                                _edge_rounds[_e] = _li
                 cluster_groups = cluster_groups or None
+                if _edge_rounds:
+                    # unmerged edges (never same rep) rank above all:
+                    # maximally order-irreducible
+                    _deep = len(_levels)
+                    edge_rounds = {e: (_r if _r is not None else _deep)
+                                   for e, _r in _edge_rounds.items()}
         _t_arr = time.perf_counter()
         tpts, last_info = alternate_arrange(
             tpts, src_adj, grid, iters=cfg.arrange_iters,
@@ -444,7 +557,12 @@ def attract_embed(
             insert_sweeps=cfg.insert_sweeps,
             overload_lam=eff_lam, snap=eff_snap,
             deadline=placement_deadline,
-            cluster_groups=cluster_groups)
+            cluster_groups=cluster_groups,
+            gather_orient=cfg.gather_orient,
+            strain_rank=cfg.strain_rank,
+            edge_rounds=edge_rounds,
+            clamp_miss=cfg.clamp_miss,
+            unbounded_pack=cfg.unbounded_pack)
         arrange_wall = time.perf_counter() - _t_arr
         cent = {v: grid.Minv @ (tpts[v] - grid.c) for v in cent}
         # raw stair-E (recorded trajectory metric)
@@ -461,6 +579,7 @@ def attract_embed(
             seed_chains, ex_info = complete_seeds(
                 grid, seed_chains, src_adj, adj)
         emb: Embedding = {}
+        seeds_submitted = False
         if (ex_info is not None
                 and ex_info["deficit_edges"] == 0
                 and ex_info["corner_deficit"] == 0
@@ -476,6 +595,21 @@ def attract_embed(
                                 chains=seed_chains,
                                 seed=seed * SEED_STRIDE, timeout=cap)
 
+        if not emb and cfg.submit_seeds and seed_chains:
+            # s3.93 seed submission: the completed seeds cover ~90% of
+            # edges — hand them warm to the fallback instead of
+            # discarding them (the s3.92 discovery: on liquids
+            # legalization's slice is always exhausted and 30 s of
+            # arrange bought position hints only). mm ingests
+            # initial_chains with overlaps allowed.
+            remaining = (deadline - time.perf_counter()) if deadline \
+                else FALLBACK_TIMEOUT
+            if remaining > 0:
+                emb = _mm_route(source_graph, target_graph,
+                                chains=seed_chains,
+                                seed=seed * SEED_STRIDE + 98,
+                                timeout=remaining)
+                seeds_submitted = bool(emb)
         if not emb:
             # feasibility fallback: one uncapped snap-seeded attempt
             # (degradation mode = spectral-seeded stock MM, s3.23)
@@ -512,7 +646,8 @@ def attract_embed(
                 deadline=deadline, adj=adj, grid=grid,
                 max_sweeps=1 if cfg.tail == "ball+mm" else None,
                 rng_seed=(seed * SEED_STRIDE + 7
-                          if cfg.tail == "ball-rng" else None))
+                          if cfg.tail == "ball-rng" else None),
+                singles=cfg.ball_singles)
             if is_valid_embedding(balled, source_graph, target_graph,
                                   adj=adj):
                 legal_emb = balled
@@ -535,7 +670,8 @@ def attract_embed(
                 legal_emb = cand
             balled, ball_info = ball_polish(
                 legal_emb, source_graph, target_graph,
-                deadline=deadline, adj=adj, grid=grid)
+                deadline=deadline, adj=adj, grid=grid,
+                singles=cfg.ball_singles)
             if is_valid_embedding(balled, source_graph, target_graph,
                                   adj=adj):
                 legal_emb = balled
@@ -561,7 +697,8 @@ def attract_embed(
             from ember_qc.algorithms.factored.ball import ball_polish
             balled, ball_info = ball_polish(
                 finished, source_graph, target_graph,
-                deadline=deadline, adj=adj, grid=grid)
+                deadline=deadline, adj=adj, grid=grid,
+                singles=cfg.ball_singles)
             if is_valid_embedding(balled, source_graph, target_graph,
                                   adj=adj):
                 finished = balled
@@ -589,6 +726,31 @@ def attract_embed(
                 "max_chain": max(len(c) for c in finished.values())}
         diag["init_wall"] = round(init_wall, 2)
         diag["arrange_wall"] = round(arrange_wall, 2)
+        # s3.89 fold/orient/strain counters + the direct fold outcome
+        # metric: the worst post-arrange edge span in line units (the
+        # s3.87 statistic, now first-class)
+        diag["orient_accepts"] = int(last_info.get("orient_accepts", 0))
+        diag["fold_tried"] = int(last_info.get("fold_tried", 0))
+        diag["fold_accepts"] = int(last_info.get("fold_accepts", 0))
+        diag["fold_reverts"] = int(last_info.get("fold_reverts", 0))
+        diag["fold_ov_rej"] = int(last_info.get("fold_ov_rej", 0))
+        if "fold_dE_best" in last_info:
+            diag["fold_dE_best"] = round(
+                float(last_info["fold_dE_best"]), 2)
+        # s3.93 fit-vs-fabric observables + seed submission
+        for k in ("final_width_x", "final_width_y",
+                  "projection_misses", "unb_miss"):
+            if k in last_info:
+                diag[k] = int(last_info[k])
+        diag["seeds_submitted"] = bool(seeds_submitted)
+        _mes = 0.0
+        for _u in src_adj:
+            for _v in src_adj[_u]:
+                if _u < _v and _u in tpts and _v in tpts:
+                    _mes = max(_mes,
+                               abs(float(tpts[_u][0] - tpts[_v][0]))
+                               + abs(float(tpts[_u][1] - tpts[_v][1])))
+        diag["max_edge_span"] = round(_mes, 1)
         if ball_info is not None:
             diag["ball_accepts"] = ball_info["accepted"]
             diag["ball_tried"] = ball_info["tried"]

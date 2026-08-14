@@ -72,6 +72,21 @@ condition — see the last section).
 | Cycle-0 contraction before first pack | SHIPPED | cracks the frozen fixed point that nearest-line packing restores |
 | Radial inversion | REFUTED | null-to-harmful (confound recorded: no post-inversion repair ran) |
 | Degree gate for participation | SUPERSEDED | per-axis interval participation; κ is floor physics only |
+| Gather orientation bit (block[::-1] competes, s3.89) | SHIPPED (default) | reversal is the fold's atom translations can't compose; ws −0.113, grid −0.090, zero regressions/cost |
+| One-axis fold (rank-interval reversal, s3.89) | REFUTED | preserves the axis multiset — both strands on the same wires (194/194 ov-vetoed); trades chord span to the seam edge, net zero |
+| Two-axis hairpin fold (riffle + strand split, s3.89) | VALIDATED, off | first mechanism to move ws on BOTH fabrics (Z12 −0.184, P16 −0.271 w/ orient); held by P16-dense: stair-E folds are fictions on 56% junctions (K100 +1.05) |
+| Fold ov-ratchet relaxed while infeasible (s3.89) | SHIPPED (inside fold_moves) | the ratchet guards feasibility ONCE ATTAINED; mid-arrange it blocked E 57k→12k over +250 ov |
+| Eager fold pass (screen+execute everything) | REFUTED | ~150 composites ate the placement budget, acl worse DESPITE 9 accepts; one-per-pass + geometry memo is the shape |
+| strain_rank (proxy-gain-ordered cluster execution, s3.89) | REFUTED as built | adds nothing over the fold arm; coarsest-first was already good enough at these volumes — ranking wasn't the bottleneck |
+| Crossfinder: rip-and-replace as THE algorithm (s3.90) | PROTOTYPED; envelope measured | sparse structured: legal + near-optimal in seconds (cycle400 1.042/4.3s); liquids/dense DO NOT legalize — straight crosses can't route around load, and exclusive claims delete mm's load-bearing overlap; endpoint: occupancy-priced overlap + squeeze, to be discussed |
+| Ball-prime: grind removal via |S|=1 exact-cross questions (s3.91) | REFUTED for now | dense: grind-free ties at 6-20x speedup; everywhere else grind irreplaceable (turán +0.61, ws +1.31) — the tail polishes mm's own construction on sparse, and ball's sph/Dijkstra fallback (41 ms/tree) burns the budget; singles help marginally, lever kept |
+| Grind removal RE-MEASURED on the s3.93 baseline (s3.94) | REFUTED, conclusively | not a packer artifact: better seeds made the grind's contribution LARGER (ws +1.19 w/ max 8→16, turán +0.92 w/ max 6→14); dense still grind-free at 5-20x; next fronts are negotiated completion + a BFS-native ball router, not the grinder |
+| Straggler clamp (clamp_miss, s3.92) | SHIPPED (default), value gated on seed submission | repairs the 69-ghost death spiral (seeds: deficits 141→97) but final ACL is sub-tol WORSE on discard-pathway cells (ws +0.12, P16 ws +0.27) — better seeds thrown away, only hint-noise reaches the output; the discard fix is the unlock |
+| Incremental pack_lines feasibility (s3.92) | SHIPPED (identical) | the two-pointer re-sorted the window at every step (412k line_depth calls/run); lazy max segment tree, byte-identical jstar, equivalence-tested — no arm |
+| Seed discard on liquids (found s3.92) | NAMED DEFECT | arrange exhausts the placement half, cap<=0 skips legalization, fallback mm runs from single-qubit hints — completed seeds (90% edges covered) thrown away; repair: submit seeds warm to the fallback (to discuss) |
+| Infinite Zephyr packer (unbounded_pack, s3.93) | SHIPPED (default) | drop the line-count bound, keep hard capacity, census carries the finite fabric, one final bounded projection; ws 3.037→2.552 / mx 10.7→8.1 at 10 seeds — first sub-mm liquid; P16 ws −0.461; turán exact 6.000 10/10; dense identical; king +0.237 open |
+| submit_seeds (warm seeds to the fallback, s3.93) | REFUTED | no effect anywhere (ws +0.043) — legal-stage carries no information (mm-internals §6 confirmed in our pipeline); lever kept off |
+| Anchor unbounded layouts at line 1 (s3.93) | SHIPPED (inside unbounded_pack) | line 0 is a boundary line; anchoring there broke turán's exactness (6.00→6.70, skip gate dark) |
 
 ## Representation
 

@@ -430,7 +430,8 @@ def ball_polish(chains: Embedding, source_graph: nx.Graph,
                 adj: Optional[Adjacency] = None,
                 grid=None,
                 max_sweeps: Optional[int] = None,
-                rng_seed: Optional[int] = None) -> Tuple[Embedding, dict]:
+                rng_seed: Optional[int] = None,
+                singles: bool = False) -> Tuple[Embedding, dict]:
     """Improve a finished legal embedding by ball eviction/re-embedding.
 
     Sweeps one question per chain — its obligation hull ball, regenerated
@@ -445,6 +446,14 @@ def ball_polish(chains: Embedding, source_graph: nx.Graph,
     sph_tree Steiner build) when bars reject. Untyped grids (no
     wire_map) have no hull picture and yield no questions: ball_polish
     is a no-op there.
+
+    ``singles`` (s3.91, ball-prime): each sweep additionally asks the
+    |S|=1 question the selector structurally excludes — evict one
+    chain and re-place it in its exact best cross against the frozen
+    rest (``cross._place_cross``: exhaustive anchor audition, the move
+    minorminer's ``find_short_chain`` approximates by radius-ordered
+    Steiner auditions). Same accounting: scoped spur-prune, strict
+    qubit-count descent. This is the grind-replacement arm.
     """
     t0 = time.perf_counter()
     work: Embedding = {int(v): [int(q) for q in c] for v, c in chains.items()}
@@ -485,6 +494,42 @@ def ball_polish(chains: Embedding, source_graph: nx.Graph,
             break
         info["sweeps"] += 1
         any_accept = False
+        if singles:
+            # s3.91 singles pass: the |S|=1 exact-cross question, every
+            # chain, before the balls (cheap, exhaustive; the balls then
+            # harvest what single-chain moves cannot see)
+            from ember_qc.algorithms.factored.cross import _place_cross
+            info.setdefault("single_tried", 0)
+            info.setdefault("single_accepts", 0)
+            sing = sorted(work)
+            if rng is not None:
+                rng.shuffle(sing)
+            for v in sing:
+                if deadline is not None and time.perf_counter() > deadline:
+                    out_of_time = True
+                    break
+                if not src_adj.get(v) or len(work[v]) <= 1:
+                    continue
+                info["single_tried"] += 1
+                old = work.pop(v)
+                chain = _place_cross(v, work, src_adj, adj, grid, rev,
+                                     rng, allow_deficit=False,
+                                     incumbent=len(old), realize_cap=6,
+                                     deadline=deadline, visits=visits,
+                                     window=2)
+                if chain is not None:
+                    trial = dict(work)
+                    trial[v] = chain
+                    trial = spur_prune(trial, src_adj, adj,
+                                       deadline=deadline, only={v})
+                    if len(trial[v]) < len(old):
+                        work = trial
+                        any_accept = True
+                        info["single_accepts"] += 1
+                        continue
+                work[v] = old
+            if out_of_time:
+                break
         # regenerate the questions from the CURRENT embedding: the hulls
         # shrink and move as chains improve
         trimmed = [_trim_ball(S, src_adj)

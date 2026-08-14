@@ -242,7 +242,27 @@ Each entry: the principle, then the strongest single piece of evidence.
   still loses to minorminer. The exactness principle's generalization
   test is coupler-aware claim aiming on incomplete (~56%) junctions.
 
-- **The bounds as instruments.** Three lower bounds — contact (deg/κ),
+- **Legalization is not one thing (Max, 2026-08-14).** With the
+  infinite packer condensing layouts onto the chip, part of
+  legalization now demonstrably lives BEFORE any embedding exists —
+  and the rest decomposes. Four separable obligations that
+  minorminer's legalizer bundles (because its representation cannot
+  separate them): (1) **geometric fit** — the layout must fit the
+  window under lane capacity; now placement's job (census + width
+  observables + final projection, s3.93). (2) **micro-realization**
+  — each edge needs an actual coupler (parity, corners, junction
+  existence); the claim adapter's job; residues are tiny where seeds
+  are submitted (ER 1 edge, regular 19, grid 29 — s3.92). (3)
+  **topological connection** — chains connected, residues bridged;
+  completion's corner/bridge passes. (4) **local re-construction** —
+  when the placement is genuinely wrong somewhere, re-route
+  through/around occupied fabric; the only part that intrinsically
+  wants mm-style overlap negotiation, and it shrinks as 1–3 improve.
+  The campaign against mm's legalizer is therefore not one battle:
+  (1) is won, (2)–(3) want the negotiated-completion design
+  (eviction audit at claim time, pre-ratchet), and the open question
+  is how much genuine (4) remains per cell once the rest is native —
+  measurable as the deficit counts on the s3.93 baseline. Three lower bounds — contact (deg/κ),
   cut (wires crossing a sweep line bound every separator), treewidth
   (feasibility; busclique is its witness) — are one object at three
   scales. They are currently used only as floors in the code; as
@@ -285,6 +305,23 @@ Each entry: the principle, then the strongest single piece of evidence.
   the weighted-coarse-spectral init is the un-migrated half of
   "coarsen the moves, not the state" — the endpoint deletes it (dumb
   init + real-judged coarse relocations), not re-weights it.
+  MOVED (s3.89, discussed then built 2026-08-13): the move family was
+  translations-only — a reversal cannot be composed from translations
+  under strict descent, so the fold was unreachable BY CONSTRUCTION.
+  The orientation bit (every gather offers its reversed block; the
+  gate picks) SHIPPED as default: ws −0.113, grid −0.090 at zero cost.
+  The fold itself is irreducibly TWO-AXIS — a one-axis reversal
+  preserves the axis's value multiset, putting both strands on the
+  same wires (194/194 ov-vetoed, refuted); the shipped shape riffles
+  the interval on the strand axis and splits its own multiset on the
+  other. First mechanism to move ws on both fabrics (Z12 2.998→2.814
+  with max 10.4→9.4 at 10 seeds; P16 −0.271) — held OFF by one
+  defect: on incomplete junctions accepted folds are stair-E fictions
+  (P16 K100 +1.05), the Pegasus exactness gap surfacing in a new
+  mechanism. Banked lesson: the s3.61 ratchet guards feasibility ONCE
+  ATTAINED — on infeasible mid-states it blocked E 57k→12k over +250
+  overload; the fold composite relaxes it there, absolute once
+  colorable.
 
 ## 4. Method
 
@@ -346,3 +383,16 @@ lattice-init residual only), `bar_domains` (unblocked, unprobed),
 Deleted at consolidation 4 (archive d8274198): the continuous arm, transport, hier/offsets levers. Full sweep
 data: `results/batch_2026-08-05_19-43-17` and siblings; report at
 `/data/max/fullember3/REPORT.md`.
+
+Update (2026-08-14, s3.89-93): the gather orientation bit and the
+INFINITE PACKER (`unbounded_pack` — drop the line-count bound, keep
+hard capacity, census carries the finite fabric) are shipped
+defaults; **the liquid loss is resolved** — ws/Z12 2.552 with max
+chain 8.1 at 10 seeds, below stock minorminer's band for the first
+time, plus P16 ws −0.46 — by deleting a constraint, not adding a
+mechanism. The board deserves a fresh full sweep on the new
+baseline; the s3.91 grind question and the parked fold lever deserve
+re-measurement there too (several residuals were downstream of the
+deleted bound). Known remaining: king_graph +0.24 under the new
+packer (open), dense Pegasus, the mm legalizer/grind dependencies
+(the membrane map, notes s3.92).

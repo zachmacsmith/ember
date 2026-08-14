@@ -1178,3 +1178,175 @@ class TestContactsFreshness:
                 assert r["embedding"] is not None
         finally:
             F._VERIFY_CONTACTS = False
+
+
+class TestPackLinesFeasibilityEquivalence:
+    """s3.92: the incremental (segment-tree) feasibility pass must
+    reproduce the old per-window line_depth sweep exactly — same jstar,
+    hence same assignments and cost."""
+
+    def _reference_pack(self, intervals, values, pools, coeffs):
+        # the pre-s3.92 feasibility pass, kept here as the oracle
+        from ember_qc.algorithms.factored.field import (
+            line_depth, _MISS_COST)
+        n = len(intervals)
+        L = len(pools)
+        if n == 0:
+            return [], 0.0
+        from collections import deque
+        caps = sorted({int(p) for p in pools if p >= 1.0})
+        jstar = {}
+        for c in caps:
+            arr = [0] * (n + 1)
+            j = 0
+            for i in range(1, n + 1):
+                while line_depth(intervals[j:i]) > c:
+                    j += 1
+                arr[i] = j
+            jstar[c] = arr
+        INF = float("inf")
+        f_prev = [i * _MISS_COST for i in range(n + 1)]
+        parent = [[None] * (n + 1) for _ in range(L)]
+        for l in range(L):
+            Cp = [0.0] * (n + 1)
+            if coeffs is None:
+                for k in range(n):
+                    Cp[k + 1] = Cp[k] + abs(float(values[k]) - float(l))
+            else:
+                for k in range(n):
+                    Cp[k + 1] = Cp[k] + float(coeffs[k]) * float(l)
+            cl = int(pools[l]) if pools[l] >= 1.0 else 0
+            js = jstar.get(cl)
+            f_cur = [INF] * (n + 1)
+            f_cur[0] = 0.0
+            dq = deque()
+            for i in range(1, n + 1):
+                best, par = f_prev[i], ("c",)
+                if js is not None:
+                    jnew = i - 1
+                    g = f_prev[jnew] - Cp[jnew]
+                    while dq and dq[-1][0] >= g:
+                        dq.pop()
+                    dq.append((g, jnew))
+                    while dq and dq[0][1] < js[i]:
+                        dq.popleft()
+                    if dq:
+                        cand = dq[0][0] + Cp[i]
+                        if cand < best - 1e-12:
+                            best, par = cand, ("r", dq[0][1])
+                scand = f_cur[i - 1] + _MISS_COST
+                if scand < best - 1e-12:
+                    best, par = scand, ("s",)
+                f_cur[i] = best
+                parent[l][i] = par
+            f_prev = f_cur
+        cost = f_prev[n]
+        assign = [None] * n
+        i, l = n, L - 1
+        while i > 0:
+            if l < 0:
+                i -= 1
+                continue
+            par = parent[l][i]
+            if par[0] == "c":
+                l -= 1
+            elif par[0] == "s":
+                i -= 1
+            else:
+                j = par[1]
+                for k in range(j, i):
+                    assign[k] = l
+                i = j
+                l -= 1
+        return assign, cost
+
+    def test_randomized_equivalence(self):
+        import random
+        from ember_qc.algorithms.factored.field import pack_lines
+        rng = random.Random(9)
+        for trial in range(200):
+            n = rng.randint(0, 40)
+            L = rng.randint(1, 12)
+            items = []
+            for _ in range(n):
+                v = (rng.uniform(0, L) if rng.random() < 0.8
+                     else rng.uniform(0, 20 * L))  # rank-scale straggler
+                w = (0.0 if rng.random() < 0.15
+                     else rng.uniform(0.2, 0.6 * L) if rng.random() < 0.8
+                     else rng.uniform(L, 15 * L))  # giant interval
+                items.append((v, (v - w / 2, v + w / 2)))
+            items.sort(key=lambda t: t[0])
+            values = [v for v, _iv in items]
+            intervals = [iv for _v, iv in items]
+            pools = [float(rng.choice([0, 0, 1, 2, 3, 8]))
+                     for _ in range(L)]
+            coeffs = (None if rng.random() < 0.5 else
+                      [float(rng.randint(-3, 3)) for _ in range(n)])
+            got = pack_lines(intervals, values, pools, coeffs=coeffs)
+            want = self._reference_pack(intervals, values, pools, coeffs)
+            assert got[0] == want[0], f"trial {trial}: assign differs"
+            assert abs(got[1] - want[1]) < 1e-6, f"trial {trial}: cost"
+
+
+class TestUnboundedPack:
+    """s3.93 infinite packer: unbounded uniform lines, hard capacity
+    unchanged, census as the sole carrier of the finite fabric."""
+
+    def test_feasibility_lemma_no_misses(self):
+        # uniform pools with L >= ceil(n/pool) never yield None
+        import random
+        from ember_qc.algorithms.factored.field import pack_lines
+        rng = random.Random(4)
+        for _ in range(50):
+            n = rng.randint(1, 60)
+            pool = float(rng.randint(1, 8))
+            L = (n + int(pool) - 1) // int(pool) + rng.randint(0, 5)
+            items = sorted(rng.uniform(0, 40) for _ in range(n))
+            ivs = [(v - rng.uniform(0, 30), v + rng.uniform(0, 30))
+                   for v in items]
+            assign, _cost = pack_lines(ivs, items, [pool] * L,
+                                       coeffs=[float(rng.randint(-3, 3))
+                                               for _ in range(n)])
+            assert None not in assign
+
+    def test_control_identity_and_unbounded_runs(self):
+        import networkx as nx
+        import dwave_networkx as dnx
+        from ember_qc.algorithms.factored import attract_embed
+        z = dnx.zephyr_graph(3, 4)
+        for g in (nx.complete_graph(8), nx.cycle_graph(20)):
+            a = attract_embed(g, z, timeout=20, seed=0)
+            b = attract_embed(g, z, timeout=20, seed=0,
+                              unbounded_pack=True)
+            assert a["embedding"] == b["embedding"]  # ON is the default
+            ctl = attract_embed(g, z, timeout=20, seed=0,
+                                unbounded_pack=False)
+            assert ctl["embedding"]  # control arm stays functional
+            c = attract_embed(g, z, timeout=20, seed=0,
+                              unbounded_pack=True)
+            assert c["embedding"], c["diag"]
+            d = c["diag"]
+            assert d.get("unb_miss", 0) == 0  # the L_max lemma held
+            assert "final_width_x" in d and "final_width_y" in d
+
+    def test_submit_seeds_reaches_mm(self):
+        import networkx as nx
+        import dwave_networkx as dnx
+        import ember_qc.algorithms.factored.placement as pl
+        z = dnx.zephyr_graph(3, 4)
+        g = nx.random_regular_graph(3, 30, seed=7)
+        g = nx.convert_node_labels_to_integers(g)
+        calls = []
+        orig = pl._mm_route
+        def wrap(*a, **kw):
+            cc = kw.get("chains")
+            if cc:
+                calls.append(sum(1 for c in cc.values() if len(c) > 1))
+            return orig(*a, **kw)
+        pl._mm_route = wrap
+        try:
+            r = pl.attract_embed(g, z, timeout=10, seed=0,
+                                 submit_seeds=True, tail="none")
+        finally:
+            pl._mm_route = orig
+        assert r["embedding"]

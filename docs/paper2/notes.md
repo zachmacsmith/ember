@@ -659,6 +659,227 @@ dense cells only — rejected as stated (graph-type rule); the general
 version (sketch-vs-trivial as measured per-instance restart arms)
 belongs to a portfolio discussion we have always refused. Park.
 
+**3.89 (the orientation bit, the two-axis fold, and the strain agenda —
+the fold barrier finally moves).** Design discussed with Max 2026-08-13
+(the ideas §3 "DISCUSSED before built" marker): the move family was
+translations-only — monotonize (transposition), insertion (singleton
+relocation), gather (block relocation, internal order DERIVED) — and a
+reversal cannot be composed from translations under strict descent, so
+the fold was unreachable by construction. Three switches
+(`data/strain_probe.py`, cumulative arms, 10 seeds on the deciding
+cells, load caveat: box load rose 30→58 through the run, later arms
+disadvantaged):
+
+- **`gather_orient` — SHIPPED, DEFAULT ON.** Every gather offers its
+  reversed block; the E-gate picks (ideas §2.11 honored: the derived
+  order is a candidate, not a commitment). ws −0.113/max −0.6 (10
+  seeds), grid −0.090 (the lattice residual moves), honeycomb/king/
+  regular won, dense parity, zero regressions, zero wall cost. One
+  line of mechanism (`block[::-1]` competes in the screen).
+- **`fold_moves` — VALIDATED ON TARGET, OFF pending the Pegasus
+  defect.** Two findings en route, both measured in-session: (1) the
+  ONE-AXIS rank-interval reversal is NOT the fold — it preserves the
+  axis's value multiset, so both strands land on the same wires
+  (194/194 overload-vetoed) and in rank terms it trades the chord's
+  span to the seam edge, net zero. The fold is irreducibly two-axis:
+  riffle the [u..v] interval on the strand axis (partners on adjacent
+  slots), split the interval's own value multiset on the other axis
+  (strands on different lines). (2) The s3.61 overload ratchet guards
+  feasibility ONCE ATTAINED; applied to still-infeasible mid-arrange
+  states it blocked E 57k→12k drops over +250 overload (fold_trace) —
+  the fold composite relaxes it while ov_pre > 0, absolute once
+  colorable. Cadence: eager folding starved the ordinary moves (~150
+  composites ate the placement budget, acl WORSE despite 9 accepts);
+  shipped shape is ONE executed composite per pass, lazily screened
+  down the span×merge-round ranking, rejections memoized by geometry.
+  Result: ws/Z12 2.998→2.814 with max 10.4→9.4, ws/P16 −0.271 with
+  max 13.3→11.7 — the first mechanism to move the fold residual on
+  both fabrics. Defect that holds it: on P16 K100 the accepted folds
+  (2/3, all seeds) are stair-E fictions on 56% junctions — +1.05 acl,
+  max 16.7→18. The Pegasus exactness gap surfacing inside a new
+  mechanism; the fold pass needs a coupler-aware judge there (or the
+  general fix, ideas §3 "Pegasus").
+- **`strain_rank` — REFUTED as built.** Executing cluster composites
+  in descending proxy-gain order (the screen's own e0−best_e, priced
+  over both orientations) instead of coarsest-first: adds nothing over
+  the fold arm on any cell beyond noise; ER +0.084, spin_glass +0.104,
+  king +0.029, P16 ws +0.4-vs-fold (all with the load caveat). The
+  estimate-schedules-gates-decide principle survives — the RANKING was
+  not the bottleneck at these move volumes; coarsest-first was already
+  a good-enough schedule once the moves themselves are right. Lever
+  kept off for one round pending discussion; purge candidate.
+
+Also banked: per-edge merge rounds (the filtration as a free
+structural-range measure) ride the existing membership composition;
+`max_edge_span` is a first-class diag (the s3.87 statistic, live in
+every run); fold counters + fold_trace in diag. The spin_glass wall
+"failure" in the probe bar is load noise (fold arm: 0 accepts, exact
+reverts, identical layouts, arrange_wall ≈ default; the +13 s totals
+track the box load ramp).
+
+**3.90 (crossfinder — THE move built standalone; the capability
+envelope measured, and overlap identified as mm's load-bearing
+feature).** Paradigm thesis (discussed 2026-08-13): every winning move
+is evict-a-subset-and-re-place-against-the-frozen-rest; build that as
+the whole algorithm at cross granularity — mm's own loop shape
+(mm-internals: the dominant phase IS rip + ball-intersection
+candidates + exhaustive audition) with the fabric's native chain
+shape and an exact O(deg)-per-anchor audition attacking mm's measured
+90% slice. Built: `cross.py` / `crossfinder_embed` / registered
+`"crossfinder"`; state = real claimed chains (judge-real, no proxy
+anywhere), operator = score all ~W×H anchors by interval arithmetic
+(per-neighbour h/v coverage choice, hull cost, lexicographic
+deficit-first pricing), realize ranked anchors via the frozen-aware
+lane audit + scoped completion + scoped verify, sph_tree fallback;
+passes = strict-coverage BFS init → legalize (rip + re-place) →
+worst-first shorten → optional hull-window evictions (`rip_windows`).
+Attraction pipeline untouched.
+
+Measured envelope (Z12, 60 s, seed 0): **sparse structured is a
+clean win on wall** — cycle400 ACL 1.042 legal in 4.3 s, grid 14×14
+1.816 in 2.6 s, small graphs instant — but **liquids and dense do not
+legalize**: ws_n486 stuck at 143/972 uncovered edges (down 395 → 238 →
+143 across three legalization designs: deficit-deferral, strict init +
+interval blocker rips, eviction-priced lanes — each helped, none
+converged), K100 catastrophic (2850/4950). The diagnosis is
+structural, twofold: (1) **a straight cross cannot route around
+occupied bands** — its hull necessarily spans the crowded region its
+targets live in, so a fully-free straight run is exponentially rare
+at load, and (2) **exclusive claims delete mm's actual load-bearing
+legalization feature: overlap** — mm's chains coexist on qubits at
+lexicographically-hard occupancy prices and the overfill is squeezed
+afterwards; rip-based negotiation without escalating prices cycles
+(A evicts B evicts A). The named endpoint, to be DISCUSSED before
+built (Max's rule): occupancy-priced overlap in the claim model
+(claims as multisets + a pushdown/squeeze phase) — mm's §4 pricing
+transplanted, at cross granularity. No probe was run: the deciding
+cells fail at legalize, so a board probe would only record that fact
+at 24 workers. Tests pin the working envelope
+(`test_crossfinder.py`); the prototype's per-variable exact
+re-placement operator (`_place_cross`) and eviction-priced audit
+(`_audit_claim_evict`) are the reusable artifacts either way — the
+operator is exactly the "single-variable ball" that s3.75's selector
+structurally excluded.
+
+**3.91 (kill-the-grinder — REFUTED for now, with the map and the
+reasons).** Ball-prime = ball_polish + the |S|=1 exact-cross question
+(`cross._place_cross` via `ball_singles`; profiled 1.2 ms/question —
+the singles were never the cost). Probe (`data/grind_probe.csv`, 4
+arms, load-ramp caveat again): **the grind is dead weight on dense**
+— K100/K140/spin_glass tie grind-free at 6-20x wall speedup (K100
+7.84 in 1.1 s vs ~20 s) — **and irreplaceable everywhere else**:
+turán +0.61 (the grind polishes crystal seeds 6.65→6.05; ball
+cannot), ws +1.31/max 10→21, ER +1.02, regular +1.31, lattices
++0.2-0.5. Singles beat plain ball consistently but marginally (ER
+−0.11, ws −0.12, grid −0.01). Two named reasons the no-grind arms
+lose: (1) on sparse cells the tail polishes MM'S OWN CONSTRUCTION
+(seeds discarded or mm-legalized) — the grind is continuous with it;
+(2) ball's fallback router is the wall hog: `sph_tree`'s
+weighted_multisource_dijkstra at 41 ms/tree, 14.2 of 15 profiled
+seconds — exactly the heap mm-internals says a native shortener must
+not use. Ball-prime stays a lever (`ball_singles`, off). Caveat: all
+sparse rows measured the PRE-s3.92 broken arrange; re-measure after.
+
+**3.92 (the pack_lines repairs — Max-directed diagnosis: "something
+in there is janky and I don't think it needs an experiment").**
+Profiled on ws: arrange ran 1 of 8 iterations (~18-20 s each) and
+permanently dropped 69/486 variables. Two defects: (1) **stragglers**
+— a variable the DP cannot fit keeps its OLD position, at init a rank
+coordinate (≤485 on a 25-line fabric); its hulls then stay enormous
+so it never fits again — 69 permanent ghosts, E inflated 14x, cluster
+churn on phantom proxy gains, seeds worthless. Fixed: `clamp_miss`
+(default ON) clamps misses to the nearest real line — the census then
+sees localized real pressure and the hulls shrink to packable.
+(2) **the feasibility pass re-sorted the whole window at every
+two-pointer step** — 412k line_depth calls / 14M comparator lambdas
+per ws run; the docstring's "one two-pointer pass" was aspirational.
+Fixed: incremental lazy max-segment-tree over compressed endpoints,
+byte-identical jstar (equivalence-tested on 200 randomized instances
+incl. rank-scale stragglers; no probe arm needed). Smoke: dense inert
+(K100/turán byte-identical); ws completion deficits 141→97 with
+cluster accepts 23→48 — but final ws ACL is NOISE because of the
+discovery underneath: **on ws the pipeline discards its seeds
+entirely** — arrange exhausts the placement half, `cap <= 0` skips
+seed legalization, and the FALLBACK runs stock mm from single-qubit
+nearest-tile hints. 30 s of arrange currently buys position hints,
+nothing more, on exactly the liquid cells. The named next repair (to
+discuss): when `cap <= 0`, submit the completed seeds warm to the
+fallback instead of single-qubit hints — the seeds cover ~90% of
+edges (97/972 deficits); discarding them is a bug-shaped decision,
+not a doctrine. Probe verdict (`data/pack_probe.csv`, clamp
+single-flip): dense + ER byte-identical (clamp inert, as predicted);
+on every cell where misses exist the clamp arm is consistently but
+sub-tolerance WORSE on final ACL (ws +0.123 at 10 seeds, P16 ws
++0.268, regular +0.086; all < tol 0.3) — exactly the pre-registered
+hint-noise mechanism: the improved seeds are DISCARDED on those
+cells, so the clamp's only reachable effect is different fallback
+hints. The clamp stays default per the pre-registered rule, but the
+verdict couples the two repairs: the clamp's value (deficits 141→97)
+is unrealizable until seeds are submitted — the discard fix is the
+unlock, not an independent nicety.
+Also banked: the sparse-cell membrane is tiny where seeds ARE
+submitted — ER 1 deficit edge, regular 19, grid 29 — mm's negotiation
+summoned to patch ONE edge on ER; the negotiated-completion design
+(eviction audit at claim time, before the validity ratchet) is the
+named legalizer attack there.
+
+**3.93 (the infinite Zephyr packer — the liquid residual falls).**
+Root cause named by Max: even when the optimum fits, the INITIAL
+layout can demand more fabric than exists, and the bounded DP's only
+recourse was dropping variables. Design settled in discussion: keep
+lane capacity HARD (the only honest anti-collapse force — the
+isotonic/PAV idea died against Max's "what else could possibly
+prevent collapse"), drop the LINE-COUNT bound (the only reason skips
+ever fired; with unbounded uniform lines, hard-capacity packing is
+always feasible by the L_max lemma), let the CENSUS alone carry the
+finite fabric (verified: `claim_overload` already prices unknown
+lines at pool 0 — out-of-window mass was priced by shipped machinery
+all along), and project once into the real window at the end. Clean-
+topology separation: the DP now packs the ideal crossbar; Zephyr's
+finiteness/boundaries live in census + claim adapter only. One
+measured correction en route: canonical translation must anchor at
+line 1, not 0 (line 0 is a boundary line; anchoring there broke
+turán's exactness 6.00→6.70).
+
+Verdict (`data/unb_probe.csv`, 2x2 with submit_seeds, 10 seeds on
+deciders): **`unbounded_pack` SHIPS, DEFAULT ON. ws/Z12 3.037→2.552
+with max chain 10.7→8.1 — the first sub-minorminer liquid result in
+program history (stock band 2.82-3.23 / mx 11-13), at 10 seeds, both
+metrics at once.** ws/P16 −0.461 (mx 14→12) unprompted; turán exact
+6.000 on 10/10 (beats default's 6.046); regular −0.075; dense
+byte-identical; costs: king +0.237 (within tol, the one real
+regression — open item), honeycomb +0.027 with a wall flag at load
+~40. The new observables tell the story: ideal widths turán 12×12,
+grid 9×9, K100 13×13, ws 22-25×25 — ws genuinely wants nearly the
+whole chip, which is WHY the bounded packer choked on it; the
+algorithm now reports fabric demand per instance instead of gambling
+at projection. **`submit_seeds` REFUTED** (no effect anywhere; ws
++0.043 — consistent with mm-internals "legal-stage ACL carries no
+information"); lever kept off. Fallout: the s3.92 clamp is dead code
+on typed grids under the new default (guards only the final
+projection); the s3.91 grind question and the fold/orient levers
+deserve re-measurement on top of the new baseline — several
+residuals (fold, seed-discard, stragglers) were downstream of the
+one deleted constraint.
+
+**3.94 (grind re-measure on the s3.93 baseline — the grinder's
+territory is real, not a packer artifact).** Same four arms as s3.91
+(`data/grind_probe2.csv`). The new default replicates s3.93 cleanly
+(ws 2.554/8.1 at 10 seeds; turán exact 6.000/6.0). The grind verdict
+is unchanged and STRONGER: no-grind arms lose ws +1.19 (max 8.1→16),
+turán +0.92 (max 6→14.2!), regular +1.43, ER +1.02, lattices
++0.22-0.46; dense still ties grind-free at 5-20x speedup. Better
+seeds made the grind's absolute contribution LARGER, not smaller —
+its chain-level polish (randomized shortening through free fabric)
+is genuine value the tail cannot yet replicate, and ball still burns
+the full 60 s chasing its fixpoint through the sph/Dijkstra fallback
+(the mm-internals §3 lesson: a native shortener wants plain BFS, not
+a heap). Campaign implication: the grinder is the WRONG next target —
+its value is real; the cheap fronts are obligations (2)-(3) of the
+legalization decomposition (negotiated completion over 1-29-edge
+residues) and making ball's router BFS-native so the tail gets more
+shots per second.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).

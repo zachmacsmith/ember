@@ -155,25 +155,111 @@ measured P16 collapse, s3.76).
 **Why.** Arms are readouts, not state (s3.31). The floor is counting,
 not tuning: it is the minimum length physics allows given the degree.
 
-### 3c. The line assignment (the true-objective DP)
+### 3c. The line assignment (the infinite packer, s3.93)
 
 **What.** The step that turns order into geometry: assign each variable
-a row (its y line) and a column (its x line), respecting the orders and
-the wire capacities, minimizing real total arm length.
+a row (its y line) and a column (its x line), respecting the orders,
+minimizing real total arm length under hard lane capacity. Since s3.93
+the assignment is made on the IDEAL crossbar — uniform lanes, as many
+lines as demand needs — so it always succeeds; the finite chip enters
+only through the census (3d) and one final projection (step 7 below).
 
-**How.** One axis at a time. Sort the variables by their current value
-on that axis (ties by id). The key fact: *given the orders, total arm
-length is a linear function of the assigned positions* — each variable
-gets a fixed coefficient equal to (number of nets it is the top of)
-minus (number it is the bottom of), because every net's span is just
-(top member's position − bottom member's position). A dynamic program
-then assigns contiguous runs of the sorted sequence to successive
-lines: a run is feasible on a line if its arms' interval-overlap depth
-fits the line's integer lane pool (boundary lines: pool zero), and the
-cost of a run on line l is (sum of the run's coefficients) × l. The DP
-is exact and order-preserving by construction. Row assignment needs the
-column extents (for capacity) and vice versa, so the two axes alternate
-inside the arrange loop until neither changes.
+**How, step by step** (one axis at a time; "rows" below, columns are
+symmetric):
+
+1. **Sort.** Take every variable with its h-arm's x-interval (from the
+   frozen column side) and sort by (current y-value, id). The id
+   tie-break is load-bearing: it makes the extreme member of every hull
+   unique, which step 2 needs. The assignment below is required to be
+   non-decreasing along this sorted sequence — nothing is ever
+   reordered here; reordering is the move family's job (§4), and
+   order-preservation is precisely what keeps step 2's cost exact.
+
+2. **The linear-cost identity.** Given the orders, total arm length is
+   a LINEAR function of the assigned positions. Each v-arm is a hull:
+   it reaches from its owner down to the LOWEST of the owner's
+   below-contacts, one reach covering all of them. So every hull's
+   vertical span is (position of its unique order-max member) −
+   (position of its unique order-min member), and summing over hulls,
+   each variable appears with a fixed integer coefficient: (#hulls it
+   tops) − (#hulls it bottoms). Intuition: moving up with many
+   neighbours below costs exactly 1 per unit (your own arm stretches
+   once — it is a hull, not per-edge wires); moving down costs 1 per
+   hull you are currently the bottom of (only those neighbours whose
+   arms you define — not all of them). The identity holds on the whole
+   order-preserving set and ONLY there: let two variables cross and
+   the hull extremes change, so the coefficients would lie. That is
+   the real reason order preservation is a hard constraint.
+
+3. **The ideal fabric.** Lane pools are uniform (8 on course-resolved
+   Zephyr) on L_max = real-lines + ⌈n/pool⌉ virtual lines. L_max is
+   feasibility-safe by a two-line lemma: a run's overlap depth never
+   exceeds its size, so runs of ≤ pool variables are always feasible,
+   and ⌈n/pool⌉ such runs always fit. Hence the packer NEVER drops a
+   variable — the pre-s3.93 skip valve (and the straggler death
+   spiral it caused, s3.92) is structurally gone. No boundary zeroing
+   here: boundary halving is a chip fact, not an ideal-crossbar fact,
+   and lives in the census and the claim layer.
+
+4. **The DP.** Walk lines 1, 2, 3, … in order. Each line receives one
+   CONTIGUOUS run of the still-unassigned prefix of the sorted
+   sequence (possibly empty). A run is feasible iff its x-intervals
+   overlap at most pool-deep at any point (arms that do not overlap
+   share a lane — the interval-coloring fact, §5a). The cost of a run
+   on line ℓ is (sum of its members' coefficients) × ℓ. The DP is
+   exact over all such partitions. Two ingredients keep it fast:
+   - *Feasibility table*: js[i] = the earliest sorted position a run
+     ending at i may start from. Depth only grows as a window extends,
+     so a two-pointer sweep is exact; the window's depth is maintained
+     INCREMENTALLY (a lazy max segment tree over the compressed
+     interval endpoints, +1/−1 per enter/leave) — s3.92 replaced a
+     from-scratch re-sort per pointer step (412k of them per ws run).
+   - *Run-start choice*: for each i, the best legal start j minimizes
+     (cost-before-j − cost-prefix-at-j), a function of j alone, over a
+     window whose left edge (js[i]) only moves right. A monotone deque
+     (pop dominated candidates from the back, expire out-of-window
+     ones from the front) yields the minimum in O(1) amortized — the
+     textbook sliding-window-minimum structure.
+
+5. **Canonical translation.** The unbounded cost is translation-
+   invariant, so the layout is anchored with its lowest occupied line
+   at line 1 — NOT line 0, which is a boundary line with halved real
+   capacity (measured: anchoring at 0 broke turán's exactness,
+   6.00 → 6.70). Anchoring makes census values comparable across
+   packs.
+
+6. **Alternation.** Row assignment needs the column extents (the
+   x-intervals) and vice versa, so the two axes alternate inside the
+   arrange loop until neither changes — Sinkhorn's shape without
+   Sinkhorn's guarantees: each axis is solved exactly, the pair is
+   coordinate descent with no convergence theorem. The overload
+   census (3d) is the cross-axis referee: every accept/reject sees
+   both axes' books.
+
+7. **Final projection.** After the arrange loop, one forced bounded
+   pack per axis — real pools, boundary zeroing, clamp for residues
+   (`clamp_miss`, dead code until here) — lands every position in the
+   real window for the claim layer. Just before it, the layout's
+   occupied span is recorded as `final_width_x/y`: the instance's
+   ideal fabric demand (turán 12, grid 9, K100 13, ws 22–25 of 25 —
+   the liquid genuinely wants the whole chip, which is why the
+   bounded packer choked on it for weeks). `projection_misses` counts
+   clamped residues.
+
+**Why.** The previous packer minimized displacement from prior
+positions (sticky early layouts); the s3.59 exact DP fixed that but
+enforced the chip's line count as a hard constraint, whose only
+escape was skipping variables — correct refusal, catastrophic
+aftermath (s3.92). Deleting the line-count bound (Max, s3.93) while
+keeping hard lane capacity (the only honest anti-collapse force —
+without it the linear cost drives total collapse, measured s3.75)
+made packing total: every order now gets its exact best geometry,
+"does it fit" became a reported number instead of a per-variable
+gamble, and the liquid residual fell (ws 3.037 → 2.552, max chain
+10.7 → 8.1, 10 seeds, unb_probe.csv — the first sub-minorminer
+liquid result). Contacts are reused across evaluations whenever the
+mutation provably preserved the y-order; any y-order change
+recomputes them.
 
 **Why.** The previous packer minimized *displacement from the previous
 positions* — a memory of the continuous era that made early layouts
@@ -198,7 +284,14 @@ priced into evaluation only — nothing descends on it.
 **Why.** Gates that cannot see infeasibility accept configurations the
 claim layer cannot build; pricing overload into every gate made a whole
 annealing mechanism unnecessary (s3.57). The census reads the same
-books as the packer and the coloring.
+books as the packer and the coloring. Since s3.93 it carries a second
+duty: it is the ONLY place the finite chip exists during arrange —
+the packer works on the ideal crossbar, and lines outside the real
+window (pool 0 here) or over their real pools are priced by the
+census alone, so the E-gated moves are what condense an unbounded
+layout onto the chip. Part of what minorminer's legalizer used to do
+— making the embedding FIT — now happens here, before any embedding
+exists.
 
 ## 4. The moves
 
@@ -233,7 +326,26 @@ throughout; the deadline is checked between iterations.
   real positions, judged by the ordinary gate with strict descent —
   nothing is summarized, no sizes are guessed (ideas §2.10). Where the
   coarse structure is real the gathers fire (turán's crystal); where
-  it is noise they are silently rejected (expanders).
+  it is noise they are silently rejected (expanders). Since s3.89
+  every gather also offers its REVERSED block (`gather_orient`,
+  default on): the derived within-block order is a candidate, never a
+  commitment (ideas §2.11), and reversal is the fold's atom — the
+  otherwise translations-only move family cannot compose it under
+  strict descent. Shipped on ws −0.113 / grid −0.090 with zero
+  regressions or wall cost.
+- **Fold composites (`fold_moves`, s3.89 — validated, default OFF).**
+  The flagged-edge nominator: edges ranked by span × merge-round
+  (long in the CURRENT layout and late in the affinity filtration)
+  propose a TWO-AXIS hairpin — riffle the [u..v] rank interval on the
+  strand axis so partners land adjacent, split the interval's own
+  value multiset on the other axis so the strands take different
+  lines. One executed composite per pass, lazily screened, rejections
+  memoized by geometry; the s3.61 overload ratchet applies absolutely
+  only once the state is colorable (on infeasible mid-states the
+  priced energy decides — measured blocking 57k→12k energy drops over
+  +250 overload otherwise). Moves ws on both fabrics (Z12 −0.184, P16
+  −0.271 with orient) but held off by the Pegasus-dense defect:
+  stair-E accepts are fictions on 56% junctions (P16 K100 +1.05).
 
 ## 4.5 The hierarchy
 
@@ -365,13 +477,19 @@ cells, never harmful, first fabric-agnostic Pegasus wins (s3.75);
 bars+fallback beat both pure arms (s3.77). Not yet wired into the
 pipeline's tail — that replacement is a named open item.
 
-## 8. Knobs (complete list — 12) and diagnostics
+## 8. Knobs (complete list — 20) and diagnostics
 
 `round_frac=0.5` (budget fraction before the polish),
 `arrange_iters=8`, `insert_sweeps=8`, `kappa=None` (derived from the
 fabric), `span_floor=True`, `exact_seeds=True` (Zephyr gate),
 `snap_claims=True` (Zephyr gate), `overload_lam=1.0`, `vcycle=True`,
-`vcycle_agg=True`, `cluster_moves=True`, `cluster_units=True`.
+`vcycle_agg=True`, `cluster_moves=True`, `cluster_units=True`,
+`init_mode="spectral"`, `gather_orient=True` (s3.89),
+`fold_moves=False` (s3.89, validated/parked), `strain_rank=False`
+(s3.89, refuted as built), `ball_singles=False` (s3.91, lever),
+`clamp_miss=True` (s3.92; dead code on typed grids under
+unbounded_pack, guards the final projection), `unbounded_pack=True`
+(s3.93, the infinite packer), `submit_seeds=False` (s3.93, refuted).
 Unknown kwargs are ignored (old probe scripts degrade gracefully).
 
 Diagnostics (`diag`): `assigned`/`assigned_rows`/`assigned_cols`
