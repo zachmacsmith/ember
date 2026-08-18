@@ -971,6 +971,29 @@ number: five cells provably mm-free-legalizable today; the follow-up
 flip when wanted: skip mm legalization when certified (behavior
 change, own probe).
 
+**3.98 (consolidation 5 — the purge).** Archive commit **09467299**
+holds everything deleted; behavior-neutrality PROVEN, not assumed:
+K100/turán/ws/grid seed-0 embeddings byte-identical before and after
+(sha256 of the sorted chains), full suite green (596 tests; 24
+deleted with their subjects). Fold gate first (Max: re-measure, then
+decide): `data/fold2_probe.csv` — fold wins NOTHING beyond tol on the
+s3.93 baseline (best −0.04; ws −0.001) and still regresses P16 K100
++0.94 → DELETED per the pre-registered rule. Also deleted: strain_rank
+(refuted s3.89), submit_seeds (refuted s3.93), census_required
+(refuted s3.97; `certified` diag and `_arm_targets` survive),
+the crossfinder driver (envelope recorded s3.90; `_place_cross` +
+`_runs_of` moved into ball.py where their only consumer, the singles
+pass, lives), the ball-rng/shorten+ball/rshorten+ball tails (settled
+s3.82/s3.84; `shorten_chains` itself survives with its unit tests).
+Shipped winners made UNCONDITIONAL (knobs deleted): the orientation
+bit, the infinite packer (bounded mode survives only as the final
+projection), the exact converter (the stride gate alone decides), the
+straggler clamp (reachable only at projection). AttractConfig: 20 →
+15 knobs. Kept deliberately: ball_singles + _place_cross (the
+grind-replacement front), bar_domains (parked, unblock condition
+recorded), wire_seeds_iv (P16/untyped), _coarsen_agg (live in the
+default init), all of data/ (history).
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).

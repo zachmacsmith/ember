@@ -1316,75 +1316,17 @@ class TestUnboundedPack:
         z = dnx.zephyr_graph(3, 4)
         for g in (nx.complete_graph(8), nx.cycle_graph(20)):
             a = attract_embed(g, z, timeout=20, seed=0)
-            b = attract_embed(g, z, timeout=20, seed=0,
-                              unbounded_pack=True)
-            assert a["embedding"] == b["embedding"]  # ON is the default
-            ctl = attract_embed(g, z, timeout=20, seed=0,
-                                unbounded_pack=False)
-            assert ctl["embedding"]  # control arm stays functional
-            c = attract_embed(g, z, timeout=20, seed=0,
-                              unbounded_pack=True)
+            c = attract_embed(g, z, timeout=20, seed=0)
+            assert a["embedding"] == c["embedding"]  # deterministic
             assert c["embedding"], c["diag"]
             d = c["diag"]
             assert d.get("unb_miss", 0) == 0  # the L_max lemma held
             assert "final_width_x" in d and "final_width_y" in d
 
-    def test_submit_seeds_reaches_mm(self):
-        import networkx as nx
-        import dwave_networkx as dnx
-        import ember_qc.algorithms.factored.placement as pl
-        z = dnx.zephyr_graph(3, 4)
-        g = nx.random_regular_graph(3, 30, seed=7)
-        g = nx.convert_node_labels_to_integers(g)
-        calls = []
-        orig = pl._mm_route
-        def wrap(*a, **kw):
-            cc = kw.get("chains")
-            if cc:
-                calls.append(sum(1 for c in cc.values() if len(c) > 1))
-            return orig(*a, **kw)
-        pl._mm_route = wrap
-        try:
-            r = pl.attract_embed(g, z, timeout=10, seed=0,
-                                 submit_seeds=True, tail="none")
-        finally:
-            pl._mm_route = orig
-        assert r["embedding"]
 
-
-class TestRequiredCensus:
-    """s3.97: the required-hull census and the certificate."""
-
-    def test_blind_spot_priced_only_in_required_mode(self):
-        # two arms on one line whose BOOKS hulls are narrow/disjoint
-        # (books census sees nothing) but whose parity-target hulls
-        # overlap beyond the pool: only required=True prices it
-        import numpy as np
-        import networkx as nx
-        import dwave_networkx as dnx
-        from ember_qc.algorithms.factored.field import (
-            TileGrid, arm_books, claim_overload, line_pools)
-        from ember_qc.algorithms.factored.placement import target_layout
-        z = dnx.zephyr_graph(3, 4)
-        grid = TileGrid(z, target_layout(z), courses=True)
-        pool = max(line_pools(grid).values())
-        # a star: hub h at (3, 3) with `pool+1` leaves above at spread
-        # columns -> the hub's h-arm books hull is wide, but build the
-        # leaves so their own h-arms are points while their v-target
-        # rows all hit the hub's row: required hulls on the hub's row
-        # stack pool+1 deep only when targets are counted
-        n_leaves = int(pool) + 1
-        src = nx.star_graph(n_leaves)  # 0 = hub
-        adjd = {v: sorted(src.neighbors(v)) for v in src}
-        pos = {0: np.array([3.0, 1.0])}
-        for k in range(1, n_leaves + 1):
-            pos[k] = np.array([float(k % 5), 3.0])
-        books = arm_books(pos, adjd, grid, kappa=13.0)
-        ov_books = claim_overload(pos, adjd, grid, kappa=13.0,
-                                  books=books)
-        ov_req = claim_overload(pos, adjd, grid, kappa=13.0,
-                                books=books, required=True)
-        assert ov_req >= ov_books  # required mode never sees LESS
+class TestCertificate:
+    """s3.97: the certified diag (converter misses 0 + completion
+    closed => provably valid)."""
 
     def test_certificate_sound(self):
         import networkx as nx
@@ -1399,14 +1341,3 @@ class TestRequiredCensus:
             if d.get("certified"):
                 assert r["embedding"]
                 assert validate_embedding(r["embedding"], g, z)
-
-    def test_census_off_is_control(self):
-        import networkx as nx
-        import dwave_networkx as dnx
-        from ember_qc.algorithms.factored import attract_embed
-        z = dnx.zephyr_graph(3, 4)
-        g = nx.cycle_graph(20)
-        a = attract_embed(g, z, timeout=20, seed=0)
-        b = attract_embed(g, z, timeout=20, seed=0,
-                          census_required=False)
-        assert a["embedding"] == b["embedding"]

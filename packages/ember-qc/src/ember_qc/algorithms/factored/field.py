@@ -837,7 +837,7 @@ def line_pools(grid: TileGrid) -> Dict[Tuple[int, int], int]:
 def claim_overload(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                    grid: TileGrid, *, kappa: float,
                    floor: bool = True, snap: bool = False,
-                   books=None, required: bool = False) -> float:
+                   books=None) -> float:
     """Line-capacity violation of the claim layer's own census (s3.57):
     per orientation and line, hinge^2 of (interval depth - available
     sub-lanes), computed on the SHARED books (`arm_books`) — including
@@ -846,27 +846,13 @@ def claim_overload(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
     if books is None:
         books = arm_books(pos, src_adj, grid, kappa=kappa, floor=floor,
                           snap=snap)
-    contacts, bars_, tuples = books
+    _, _, tuples = books
     lp = line_pools(grid)
     total = 0.0
     for o in (1, 0):
-        # required mode (s3.97): price the REQUIRED hulls — the spans
-        # the converter will actually claim (parity targets + corner;
-        # the union over both parity variants is [min(cls)-1, max(cls)]
-        # since p* is always c or c-1) — instead of the books hulls.
-        # This is the s3.73 blind spot made visible to every gate:
-        # parity/corner obligations now carry census weight.
-        tg = (_arm_targets(pos, contacts, bars_, o,
-                           {t[3] for t in tuples[o]})
-              if required else None)
         by_line: Dict[int, list] = {}
         for line, a, b, v in tuples[o]:
-            if tg is not None and v in tg and tg[v][2]:
-                cls = tg[v][2]
-                by_line.setdefault(line, []).append(
-                    (float(max(0, min(cls) - 1)), float(max(cls))))
-            else:
-                by_line.setdefault(line, []).append((a, b))
+            by_line.setdefault(line, []).append((a, b))
         for line, ivs in by_line.items():
             subs = lp.get((o, line), 0)
             over = line_depth(ivs) - subs
@@ -1488,31 +1474,29 @@ def _order_proxy(order: List[int], src_adj: Dict[int, List[int]],
 def cluster_gather_order(order: List[int], cluster,
                          src_adj: Dict[int, List[int]],
                          values: Optional[np.ndarray],
-                         anchors: Optional[Tuple[np.ndarray, np.ndarray]],
-                         orient: bool = False
-                         ) -> Tuple[Optional[List[int]], float, bool]:
+                         anchors: Optional[Tuple[np.ndarray, np.ndarray]]
+                         ) -> Tuple[Optional[List[int]], bool]:
     """One coarse move in rank space (s3.70): gather ``cluster``'s members
     into a contiguous block of the order. The cluster is a member SET
     moved as one — nothing is summarized into a size; the caller's gated
     composite judges the real packed result. Within-block order is
     external-attachment rank (anchor midpoint — the certificate says ties
-    are free); with ``orient`` (s3.89) the REVERSED block competes too —
+    are free); the REVERSED block always competes (s3.89, shipped) —
     the derived order is a candidate, never a commitment (ideas s2.11),
     and reversal is the fold's atom. Candidate block positions are the
     members' mean slot and the insertion points of the cluster's
     aggregate anchor bounds (the single-member candidate rule
     generalized). Screened by the shared O(n^2) proxy; returns
-    ``(order, gain, flipped)`` — the improving order, its proxy gain
-    ``e0 - best_e`` (the strain estimate, s3.89), and whether the
-    reversed block won; ``(None, 0.0, False)`` when nothing improves."""
+    ``(order, flipped)`` — the improving order and whether the
+    reversed block won; ``(None, False)`` when nothing improves."""
     (members, n, A, val, lo_fix, hi_fix, has,
      energy) = _order_proxy(order, src_adj, values, anchors)
     if energy is None:
-        return None, 0.0, False
+        return None, False
     idx = {v: i for i, v in enumerate(members)}
     ins = [v for v in cluster if v in idx]
     if len(ins) < 2 or len(ins) >= n:
-        return None, 0.0, False
+        return None, False
     p0 = np.empty(n, dtype=float)
     for slot, v in enumerate(order):
         p0[idx[v]] = slot
@@ -1538,8 +1522,7 @@ def cluster_gather_order(order: List[int], cluster,
         cands.add(int(np.searchsorted(val, agg_lo)))
     if agg_hi > -np.inf:
         cands.add(int(np.searchsorted(val, agg_hi)))
-    blocks = ((block, False), (block[::-1], True)) if orient \
-        else ((block, False),)
+    blocks = ((block, False), (block[::-1], True))
     best_e, best_order, best_flip = e0 - 1e-9, None, False
     for s in sorted(cands):
         s = max(0, min(s, n - k))
@@ -1552,8 +1535,8 @@ def cluster_gather_order(order: List[int], cluster,
             if e2 < best_e:
                 best_e, best_order, best_flip = e2, new_order, flip
     if best_order is None:
-        return None, 0.0, False
-    return best_order, float(e0 - best_e), best_flip
+        return None, False
+    return best_order, best_flip
 
 
 def insertion_sweeps(order: List[int], src_adj: Dict[int, List[int]], *,
@@ -1647,13 +1630,7 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                       overload_lam: float = 0.0,
                       snap: bool = False,
                       deadline: Optional[float] = None,
-                      cluster_groups=None,
-                      gather_orient: bool = False,
-                      strain_rank: bool = False,
-                      edge_rounds=None,
-                      clamp_miss: bool = True,
-                      unbounded_pack: bool = False,
-                      census_required: bool = False):
+                      cluster_groups=None):
     """Alternating 1-D arrangement on the stair energy (v4 order state).
 
     Every variable participates (``min_span=0``, so the books census
@@ -1686,7 +1663,7 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
         if overload_lam > 0.0:
             e += overload_lam * claim_overload(
                 p, src_adj, grid, kappa=kappa, floor=floor,
-                snap=snap, books=books, required=census_required)
+                snap=snap, books=books)
         return books, e
 
     new_pos = {v: np.asarray(p, dtype=float).copy() for v, p in pos.items()}
@@ -1724,7 +1701,7 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
         trial = {v: new_pos[v].copy() for v in new_pos}
         miss = 0
         lp = line_pools(grid)
-        unb = unbounded_pack and not bounded and bool(lp)
+        unb = (not bounded) and bool(lp)
         if unb:
             # s3.93 infinite packer: the ideal crossbar has uniform
             # lanes and as many lines as demand needs — hard capacity
@@ -1777,7 +1754,7 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                 # (typed grids only: untyped targets have no real lines
                 # and their contract is positions-pass-through — the
                 # router owns them)
-                if clamp_miss and grid.wire_map:
+                if grid.wire_map:
                     # s3.92 straggler clamp: a skipped variable must
                     # still live on a REAL line. Leaving it at its old
                     # value strands init-rank coordinates (up to n on a
@@ -1839,8 +1816,7 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
         hi = np.array([anchor_of[v][1] for v in order0])
         return order0, vals, lo, hi
 
-    def _order_composite(_propose, members=None, axis=1, strict=False,
-                         probe=None, settle=1):
+    def _order_composite(_propose, members=None, axis=1, strict=False):
         """One gated order composite (the s3.36/s3.61 flow, shared by the
         insertion and cluster move families): rebuild the rank-space view
         of the given AXIS from the current state, get a proposal, apply
@@ -1866,8 +1842,7 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
         e_pre = cur_E
         ov_pre = claim_overload(new_pos, src_adj, grid, kappa=kappa,
                                 floor=floor, snap=snap,
-                                books=cur_books,
-                                required=census_required)
+                                books=cur_books)
         snap_state = {v: new_pos[v].copy() for v in new_pos}
         books_snap = cur_books
         for r, v in enumerate(new_order):
@@ -1876,30 +1851,17 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
         cur_books, cur_E = _eval(
             new_pos, contacts=cur_books[0] if axis == 0 else None)
         _mono()
-        for _s in range(max(1, settle)):
-            # ``settle`` > 1 (fold composites, s3.89): a reversal folds
-            # two strands onto SHARED lines (the multiset is preserved
-            # by construction), so the seam needs extra alternating
-            # pack rounds to spread apart before the verdict — the
-            # E-gate prices the spreading (overload² relief vs stair
-            # cost), the packs just get the chance to do it.
-            e_before = cur_E
-            _half(axis=1, force=False)
-            _half(axis=0, force=False)
-            if _s > 0 and cur_E >= e_before - 1e-9:
-                break
+        _half(axis=1, force=False)
+        _half(axis=0, force=False)
         e_post = cur_E
         ov_post = claim_overload(new_pos, src_adj, grid, kappa=kappa,
                                  floor=floor, snap=snap,
-                                 books=cur_books,
-                                 required=census_required)
+                                 books=cur_books)
         # s3.61 hard veto: a permutation may not
         # create uncolorable lines — structural feasibility is a
         # gate condition, not a priced preference
         e_bad = (e_post >= e_pre - 1e-9) if strict \
             else (e_post > e_pre + 1e-9)
-        if probe is not None:
-            probe.append((e_post - e_pre, ov_post - ov_pre))
         if e_bad or ov_post > ov_pre + 1e-9:
             new_pos = snap_state
             cur_books, cur_E = books_snap, e_pre
@@ -1910,291 +1872,43 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
     def _cluster_pass():
         # s3.70/s3.73 cluster pass — coarse moves as gated composites. A
         # cluster is a member SET gathered as one: proposed in rank space
-        # on the real members, judged by the same gate as every fine
-        # move. Both axes (a y-only gather is half an address on a 2-D
-        # fabric); STRICT descent (the energy is the schedule — see
-        # _order_composite); no per-cluster caps — unchanged contexts
-        # no-op for free at the proxy, and strict descent bounds total
-        # accepts. Coarsest level first — or, with ``strain_rank``
-        # (s3.89), in descending order of the screen's estimated gain:
-        # the same proxy screens run either way; ranking changes only
-        # the execution order and which items a tight deadline starves.
-        # Estimates schedule, gates decide — a wrong estimate can only
-        # defer a proposal (the composite re-proposes on the live
-        # state), never corrupt an acceptance.
+        # on the real members (both block orientations compete, s3.89),
+        # judged by the same gate as every fine move. Both axes; STRICT
+        # descent (the energy is the schedule — see _order_composite);
+        # no per-cluster caps — unchanged contexts no-op for free at the
+        # proxy, and strict descent bounds total accepts. Coarsest level
+        # first: biggest blocks move first.
         info.setdefault("cluster_accepts", 0)
         info.setdefault("cluster_reverts", 0)
         info.setdefault("orient_accepts", 0)
-
-        def _units():
-            for level_groups in reversed(list(cluster_groups)):
-                for cl in sorted(level_groups, key=lambda g: (-len(g), g)):
-                    # Size-2 units are expressible as one insertion,
-                    # which the insertion sweeps already search
-                    # exhaustively — the cluster pass exists only for
-                    # moves the fine set CANNOT make.
-                    if len(cl) < 3:
-                        continue
-                    yield tuple(cl)
-
-        def _run(key, ax):
-            seen_flip = [False]
-
-            def _prop(o0, vals, lo, hi, _cl=key):
-                no, _gain, flip = cluster_gather_order(
-                    o0, _cl, src_adj, vals, (lo, hi),
-                    orient=gather_orient)
-                seen_flip[0] = flip
-                return no
-
-            res = _order_composite(_prop, axis=ax, strict=True)
-            if res is True:
-                info["cluster_accepts"] += 1
-                if seen_flip[0]:
-                    info["orient_accepts"] += 1
-            elif res is False:
-                info["cluster_reverts"] += 1
-
-        if not strain_rank:
-            for key in _units():
+        for level_groups in reversed(list(cluster_groups)):
+            for cl in sorted(level_groups, key=lambda g: (-len(g), g)):
+                # Size-2 units are expressible as one insertion, which
+                # the insertion sweeps already search exhaustively — the
+                # cluster pass exists only for moves the fine set
+                # CANNOT make.
+                if len(cl) < 3:
+                    continue
+                key = tuple(cl)
                 for ax in (1, 0):
                     if (deadline is not None
                             and _time_mod.perf_counter() > deadline):
                         return  # s3.67 anytime bail
-                    _run(key, ax)
-            return
-        # s3.89 strain agenda: screen every (unit, axis) once on the
-        # current state, then execute in descending estimated gain.
-        agenda = []
-        views = {ax: _axis_view(ax) for ax in (1, 0)}
-        for key in _units():
-            if (deadline is not None
-                    and _time_mod.perf_counter() > deadline):
-                break  # execute what is scored so far (defer, not drop)
-            for ax in (1, 0):
-                view = views[ax]
-                if view is None:
-                    continue
-                o0, vals, lo, hi = view
-                no, gain, _flip = cluster_gather_order(
-                    o0, key, src_adj, vals, (lo, hi),
-                    orient=gather_orient)
-                if no is not None and gain > 0.0:
-                    agenda.append((gain, key, ax))
-        agenda.sort(key=lambda t: (-t[0], t[1], t[2]))
-        for _gain, key, ax in agenda:
-            if (deadline is not None
-                    and _time_mod.perf_counter() > deadline):
-                return  # s3.67 anytime bail
-            _run(key, ax)
+                    seen_flip = [False]
 
-    fold_seen: Dict[Tuple[int, int, int], Tuple[int, int]] = {}
+                    def _prop(o0, vals, lo, hi, _cl=key):
+                        no, flip = cluster_gather_order(
+                            o0, _cl, src_adj, vals, (lo, hi))
+                        seen_flip[0] = flip
+                        return no
 
-    def _fold_riffle(order_s, u, v):
-        """The hairpin permutation of the [u..v] rank interval on the
-        strand axis: far half reversed and RIFFLED into the near half,
-        so strand partners land on adjacent slots (the DP then packs
-        partner pairs onto shared lines). Returns (i, j, new_order) or
-        None. A plain block reversal was measured dead here (194/194
-        overload-vetoed): one axis preserves the value multiset, so
-        both strands sat on the same lines — the fold is irreducibly
-        a two-axis object."""
-        iu = {x: r for r, x in enumerate(order_s)}
-        if u not in iu or v not in iu:
-            return None
-        i, j = iu[u], iu[v]
-        if i > j:
-            i, j = j, i
-        if j - i < 3:
-            return None
-        seg = order_s[i:j + 1]
-        m = (len(seg) + 1) // 2
-        near, far = seg[:m], seg[m:][::-1]  # far leads with v
-        riff = []
-        for k in range(m):
-            riff.append(near[k])
-            if k < len(far):
-                riff.append(far[k])
-        return i, j, order_s[:i] + riff + order_s[j + 1:]
-
-    def _fold_composite(u, v, s_ax):
-        # s3.89 two-axis hairpin composite: riffle the [u..v] interval
-        # on the strand axis s AND split the interval's OWN value
-        # multiset on the other axis t — near strand takes the lower
-        # half, far strand the upper half (each keeping its internal
-        # t-order) — so the two strands separate onto different lines
-        # instead of doubling back over the same wires. Both
-        # permutations preserve their axis's value multiset; judged by
-        # the ordinary gate (strict descent + the s3.61 overload veto)
-        # with settle rounds, full snapshot revert. Returns
-        # None/True/False like _order_composite.
-        nonlocal new_pos, cur_books, cur_E
-        t_ax = 1 - s_ax
-        view = _axis_view(s_ax)
-        if view is None:
-            return None
-        order_s, vals_s, _lo, _hi = view
-        rf = _fold_riffle(order_s, u, v)
-        if rf is None:
-            return None
-        _i, _j, new_s = rf
-        seg = order_s[_i:_j + 1]
-        m = (len(seg) + 1) // 2
-        near, far = seg[:m], seg[m:]
-        tvals = sorted(float(new_pos[x][t_ax]) for x in seg)
-        near_t = sorted(near, key=lambda x: (float(new_pos[x][t_ax]), x))
-        far_t = sorted(far, key=lambda x: (float(new_pos[x][t_ax]), x))
-        assign_t = {x: tvals[r] for r, x in enumerate(near_t + far_t)}
-        e_pre = cur_E
-        ov_pre = claim_overload(new_pos, src_adj, grid, kappa=kappa,
-                                floor=floor, snap=snap, books=cur_books,
-                                required=census_required)
-        snap_state = {x: new_pos[x].copy() for x in new_pos}
-        books_snap = cur_books
-        for r, x in enumerate(new_s):
-            new_pos[x][s_ax] = float(vals_s[r])
-        for x, tv in assign_t.items():
-            new_pos[x][t_ax] = tv
-        cur_books, cur_E = _eval(new_pos)  # y-order changed: no reuse
-        _mono()
-        for _s in range(3):
-            e_before = cur_E
-            _half(axis=1, force=False)
-            _half(axis=0, force=False)
-            if cur_E >= e_before - 1e-9:
-                break
-        e_post = cur_E
-        ov_post = claim_overload(new_pos, src_adj, grid, kappa=kappa,
-                                 floor=floor, snap=snap, books=cur_books,
-                                 required=census_required)
-        info["fold_dE_best"] = min(
-            info.get("fold_dE_best", float("inf")), e_post - e_pre)
-        if len(info.setdefault("fold_trace", [])) < 12:
-            info["fold_trace"].append(
-                (round(e_pre, 1), round(e_post, 1),
-                 round(ov_pre, 1), round(ov_post, 1)))
-        # The s3.61 ratchet guards feasibility ONCE ATTAINED. On a
-        # still-infeasible state (ov_pre > 0: uncolorable lines exist
-        # NOW) the ratchet was measured blocking 4-6x energy drops over
-        # an overload epsilon (fold_trace, ws seed 0: E 57k -> 12k at
-        # ov 391 -> 600, 84/84 vetoed) — there the priced energy, which
-        # already contains lam x overload, is the guide.
-        ov_bad = (ov_pre <= 1e-9 and ov_post > 1e-9)
-        if e_post >= e_pre - 1e-9 or ov_bad:
-            if ov_bad:
-                info["fold_ov_rej"] = info.get("fold_ov_rej", 0) + 1
-            new_pos = snap_state
-            cur_books, cur_E = books_snap, e_pre
-            return False
-        info["E"].append(e_post)
-        return True
-
-    def _fold_pass():
-        # s3.89 fold pass — the flagged-edge nominator. An edge that
-        # merges LATE in the affinity filtration AND is long in the
-        # CURRENT layout (graph x layout; the layout-free census was
-        # refuted 2026-08-12) nominates a two-axis hairpin of the rank
-        # interval between its endpoints, per strand axis. Nominations
-        # are ranked by span x merge_round (threshold-free AND) and
-        # screened by the strand-axis proxy so unchanged/hopeless
-        # contexts no-op for free (an unscreened pass would eat the
-        # placement budget on dense cells); the TOP-scored edge
-        # bypasses the screen unconditionally — the detector's #1
-        # target always reaches the real gate, so a proxy blind spot
-        # can defer folds, never delete them. A rejected proposal is
-        # remembered by its (i, j) rank context and not re-asked until
-        # the context changes.
-        info.setdefault("fold_tried", 0)
-        info.setdefault("fold_accepts", 0)
-        info.setdefault("fold_reverts", 0)
-        if not edge_rounds:
-            return
-        scored = []
-        for (u, v), rnd in edge_rounds.items():
-            pu, pv = new_pos.get(u), new_pos.get(v)
-            if pu is None or pv is None:
-                continue
-            span = (abs(float(pu[0] - pv[0]))
-                    + abs(float(pu[1] - pv[1])))
-            if span < 2.0:
-                continue  # nothing to fold at rank-adjacent distance
-            scored.append((span * float(rnd), u, v))
-        if not scored:
-            return
-        scored.sort(key=lambda t: (-t[0], t[1], t[2]))
-        top_uv = (scored[0][1], scored[0][2])
-
-        # ONE executed composite per pass, found by lazy screening down
-        # the span x round ranking. Folds are surgical, not bulk: a
-        # measured eager pass (screen everything, execute everything
-        # improving) spent the entire placement budget on fold
-        # composites and screens (~150 x ~0.3 s) and starved the
-        # ordinary moves that finish the layout — acl WORSE despite 9
-        # accepted folds. One per pass x arrange_iters passes gives the
-        # chords their surgical chances at ~5% of the budget.
-        proxies = {}
-
-        def _proxy_for(ax):
-            if ax not in proxies:
-                view = _axis_view(ax)
-                if view is None:
-                    proxies[ax] = None
-                else:
-                    o0, vals, lo, hi = view
-                    pr = _order_proxy(o0, src_adj, vals, (lo, hi))
-                    energy = pr[7]
-                    if energy is None:
-                        proxies[ax] = None
-                    else:
-                        n = pr[1]
-                        e0 = energy(np.arange(n, dtype=float))
-                        idx = {x: r for r, x in enumerate(o0)}
-                        proxies[ax] = (o0, n, idx, e0, energy)
-            return proxies[ax]
-
-        for _score, u, v in scored:
-            if (deadline is not None
-                    and _time_mod.perf_counter() > deadline):
-                return  # s3.67 anytime bail
-            pu, pv = new_pos[u], new_pos[v]
-            # fold along the longer axis first
-            axes = sorted((1, 0), key=lambda a:
-                          -abs(float(pu[a] - pv[a])))
-            for ax in axes:
-                pr = _proxy_for(ax)
-                if pr is None:
-                    continue
-                o0, n, idx, e0, energy = pr
-                rf = _fold_riffle(o0, u, v)
-                if rf is None:
-                    continue
-                i, j, no = rf
-                key = (u, v, ax)
-                # context = the edge's GEOMETRY (interval size + line
-                # spans), not raw ranks: rank drift from unrelated
-                # packs must not re-buy an identical rejection.
-                ctx = (j - i,
-                       int(abs(float(pu[ax] - pv[ax]))),
-                       int(abs(float(pu[1 - ax] - pv[1 - ax]))))
-                if fold_seen.get(key) == ctx:
-                    continue  # unchanged geometry: free no-op
-                p2 = np.empty(n, dtype=float)
-                for slot, x in enumerate(no):
-                    p2[idx[x]] = slot
-                gain = float(e0 - energy(p2))
-                if gain <= 1e-9 and (u, v) != top_uv:
-                    fold_seen[key] = ctx  # screened out at this context
-                    continue
-                res = _fold_composite(u, v, ax)
-                if res is None:
-                    continue
-                info["fold_tried"] += 1
-                if res is True:
-                    info["fold_accepts"] += 1
-                else:
-                    info["fold_reverts"] += 1
-                    fold_seen[key] = ctx
-                return  # one executed composite per pass
+                    res = _order_composite(_prop, axis=ax, strict=True)
+                    if res is True:
+                        info["cluster_accepts"] += 1
+                        if seen_flip[0]:
+                            info["orient_accepts"] += 1
+                    elif res is False:
+                        info["cluster_reverts"] += 1
 
     for it in range(max(iters, 1)):
         if (deadline is not None and it > 0
@@ -2213,19 +1927,13 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
             # each gather sees the multiset the previous round earned —
             # E-gated, so converged iterations cost only proxy screens.
             _cluster_pass()
-        if edge_rounds:
-            # s3.89: folds judge packed geometry (same cadence rule as
-            # the cluster pass — never before the projection).
-            _fold_pass()
         if not moved and not force:
             break
 
     if cluster_groups:
         _cluster_pass()  # late: coarse polish on the packed state
-    if edge_rounds:
-        _fold_pass()  # late: fold polish on the packed state
 
-    if unbounded_pack and line_pools(grid):
+    if line_pools(grid):
         # s3.93 final projection to the real window: record the ideal
         # layout's occupied width (the honest fit-vs-fabric
         # observable), then one forced bounded pack per axis (real

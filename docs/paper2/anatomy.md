@@ -25,7 +25,7 @@ fallback rebuild and the minorminer-analysis family).
    ever dropped.
 3. **Arrange**: one E-gated loop of order moves — alternating packs,
    per-edge monotonize, insertion sweeps, cluster gathers with the
-   orientation bit (fold pass: parked lever) — each judged by the one
+   orientation bit (always on since consolidation 5) — judged by the one
    gate (stair energy + overload census) with strict-descent
    composites and full revert.
 4. **Final projection**: one forced bounded pack per axis lands the
@@ -476,20 +476,22 @@ cells, never harmful, first fabric-agnostic Pegasus wins (s3.75);
 bars+fallback beat both pure arms (s3.77). Not yet wired into the
 pipeline's tail — that replacement is a named open item.
 
-## 8. Knobs (complete list — 20) and diagnostics
+## 8. Knobs (complete list — 15) and diagnostics
 
 `round_frac=0.5` (budget fraction before the polish),
 `arrange_iters=8`, `insert_sweeps=8`, `kappa=None` (derived from the
 fabric), `span_floor=True`, `exact_seeds=True` (Zephyr gate),
 `snap_claims=True` (Zephyr gate), `overload_lam=1.0`, `vcycle=True`,
 `vcycle_agg=True`, `cluster_moves=True`, `cluster_units=True`,
-`init_mode="spectral"`, `gather_orient=True` (s3.89),
-`fold_moves=False` (s3.89, validated/parked), `strain_rank=False`
-(s3.89, refuted as built), `ball_singles=False` (s3.91, lever),
-`clamp_miss=True` (s3.92; dead code on typed grids under
-unbounded_pack, guards the final projection), `unbounded_pack=True`
-(s3.93, the infinite packer), `submit_seeds=False` (s3.93, refuted).
-Unknown kwargs are ignored (old probe scripts degrade gracefully).
+`init_mode="spectral"`, `tail="mm+ball"` ({"mm+ball", "ball+mm",
+"mm", "ball", "none"}), `ball_singles=False` (s3.91 lever, the
+grind-replacement front). Consolidation 5 (s3.98, archive 09467299)
+deleted the settled levers: the shipped winners (orientation bit,
+infinite packer, exact converter, straggler clamp) are now
+UNCONDITIONAL, and the refuted ones (strain_rank, submit_seeds,
+census_required, fold_moves, ball-rng/shorten tails, the crossfinder
+driver) are gone. Unknown kwargs are ignored (old probe scripts
+degrade gracefully).
 
 Diagnostics (`diag`): `assigned`/`assigned_rows`/`assigned_cols`
 (participants placed by the last packs), `insert_reverts`,

@@ -336,25 +336,6 @@ class TestTail:
         c, _ = ball_polish(finished, source, zephyr, rng_seed=6)
         assert validate_embedding(c, source, zephyr)
 
-    def test_tail_ball_rng_valid_deterministic(self, source, zephyr):
-        from ember_qc.algorithms.factored import attract_embed
-        a = attract_embed(source, zephyr, timeout=45, seed=0,
-                          tail="ball-rng")
-        b = attract_embed(source, zephyr, timeout=45, seed=0,
-                          tail="ball-rng")
-        assert a["embedding"] and a["embedding"] == b["embedding"]
-        assert validate_embedding(a["embedding"], source, zephyr)
-
-    def test_tail_shorten_ball_valid_deterministic(self, source, zephyr):
-        from ember_qc.algorithms.factored import attract_embed
-        a = attract_embed(source, zephyr, timeout=45, seed=0,
-                          tail="shorten+ball")
-        b = attract_embed(source, zephyr, timeout=45, seed=0,
-                          tail="shorten+ball")
-        assert a["embedding"] and a["embedding"] == b["embedding"]
-        assert validate_embedding(a["embedding"], source, zephyr)
-        assert "ball_accepts" in a["diag"]
-
     def test_init_mode_trivial_valid_deterministic(self, source, zephyr):
         from ember_qc.algorithms.factored import attract_embed
         a = attract_embed(source, zephyr, timeout=45, seed=0,

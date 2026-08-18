@@ -41,10 +41,6 @@ from ember_qc.algorithms.factored.placement import (  # noqa: F401
     attract_embed,
 )
 from ember_qc.algorithms.factored.ball import ball_polish  # noqa: F401
-from ember_qc.algorithms.factored.cross import (  # noqa: F401
-    CrossConfig,
-    crossfinder_embed,
-)
 
 
 @register_algorithm("factored")
@@ -91,31 +87,6 @@ class Attraction(EmbeddingAlgorithm):
         if seed is None:
             seed = 0
         return attract_embed(
-            source_graph, target_graph,
-            timeout=timeout, seed=int(seed), **kwargs,
-        )
-
-
-@register_algorithm("crossfinder")
-class Crossfinder(EmbeddingAlgorithm):
-    """Iterated rip-and-replace at cross granularity (s3.90): every
-    chain is one h-run + one v-run; the single operator evicts a
-    variable (or a hull window with ``rip_windows``) and re-places it
-    in its exact best cross against the frozen rest — anchor tiles
-    scored by interval arithmetic, realized via the frozen-aware lane
-    audit, judged on routed reality. minorminer's own loop shape with
-    the fabric's native chain shape and a cheap exact audition; no
-    orders, no hierarchy, no proxy energy. See ``factored.CrossConfig``."""
-
-    @property
-    def version(self) -> str:
-        return "0.1.0"
-
-    def embed(self, source_graph, target_graph, timeout: float = 60.0, **kwargs) -> dict:
-        seed = kwargs.pop("seed", 0)
-        if seed is None:
-            seed = 0
-        return crossfinder_embed(
             source_graph, target_graph,
             timeout=timeout, seed=int(seed), **kwargs,
         )

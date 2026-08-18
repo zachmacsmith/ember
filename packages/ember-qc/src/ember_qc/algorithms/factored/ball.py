@@ -247,6 +247,280 @@ def _audit_claim(grid, claimed, orientation: int, lines, lo: float,
     return line, s, qs, cost
 
 
+# ---------------------------------------------------------------------------
+# The exact single-chain operator (moved from the retired crossfinder,
+# consolidation 5 / s3.98; archive 09467299 holds the standalone driver).
+# _place_cross is the |S|=1 question of the singles pass: evict one chain,
+# re-place it in its exact best cross against the frozen rest.
+# ---------------------------------------------------------------------------
+def _runs_of(chain: List[int], rev) -> Tuple[List[Tuple[int, int, int]],
+                                             List[Tuple[int, int, int]]]:
+    """A chain's physical runs: (h_runs, v_runs) where an h_run is
+    (row_line, p_lo, p_hi) over column positions and a v_run is
+    (col_line, p_lo, p_hi) over row positions."""
+    by_lane: Dict[Tuple[int, int, int], List[int]] = {}
+    for q in chain:
+        k = rev.get(q)
+        if k is None:
+            continue
+        o, ln, s, p = k
+        by_lane.setdefault((o, ln, s), []).append(p)
+    h_runs: List[Tuple[int, int, int]] = []
+    v_runs: List[Tuple[int, int, int]] = []
+    for (o, ln, _s), ps in by_lane.items():
+        ps.sort()
+        (h_runs if o == 1 else v_runs).append((ln, ps[0], ps[-1]))
+    return h_runs, v_runs
+
+
+def _place_cross(v: int, work: Embedding, src_adj, adj, grid, rev,
+                 rng, *, allow_deficit: bool, incumbent: Optional[int],
+                 realize_cap: int, deadline: Optional[float],
+                 visits=None, window: int = 0) -> Optional[List[int]]:
+    """THE move: place v's cross exactly-best against the frozen rest.
+
+    v must already be evicted from ``work``. Scores every anchor tile
+    (r, c) by exact interval arithmetic — per placed neighbour u, the
+    h-arm covers u iff some v-run of u spans row r (reach = extend the
+    h-hull to that run's column; nearest run wins), symmetrically for
+    the v-arm; neither side available = a coverage deficit. Anchor cost
+    is lexicographic (deficits, hull length) — mm's shipped pricing
+    shape. Ranked anchors (seeded tie-shuffle) are then REALIZED via
+    the frozen-aware lane audit + scoped completion + scoped verify;
+    the first realization that beats ``incumbent`` (or any realization
+    when ``incumbent`` is None) wins. Falls back to the sph_tree
+    Steiner build through free fabric when no anchor realizes (ball
+    measured bars+fallback beating either pure arm, s3.77). Returns
+    the new chain or None.
+    """
+    from ember_qc.algorithms.factored.field import complete_seeds
+
+    W, H = grid.W, grid.H
+    placed_nbrs = [u for u in src_adj.get(v, []) if work.get(u)]
+    claimed: Set[int] = set()
+    for u, c in work.items():
+        claimed.update(c)
+
+    # neighbour run books
+    nb_v_runs: Dict[int, List[Tuple[int, int, int]]] = {}
+    nb_h_runs: Dict[int, List[Tuple[int, int, int]]] = {}
+    for u in placed_nbrs:
+        h_runs, v_runs = _runs_of(work[u], rev)
+        nb_h_runs[u] = h_runs
+        nb_v_runs[u] = v_runs
+
+
+    # ---- stage 1: score every anchor by interval arithmetic ----
+    # ``window`` > 0 (the polish use-case): restrict anchors to the
+    # hull of the neighbours' reachable lines +/- window — mm's
+    # ball-intersection trick as a pure speedup (a full 576-anchor
+    # Python scan cost ~80 ms/question and starved the singles pass)
+    if window > 0 and placed_nbrs:
+        rset: Set[int] = set()
+        cset: Set[int] = set()
+        for u in placed_nbrs:
+            for (row, p0, p1) in nb_h_runs.get(u, ()):
+                rset.add(row)
+                cset.update((p0, p1))
+            for (col, p0, p1) in nb_v_runs.get(u, ()):
+                cset.add(col)
+                rset.update((p0, p1))
+        r_range = range(max(0, min(rset) - window),
+                        min(H - 1, max(rset) + window) + 1)
+        c_range = range(max(0, min(cset) - window),
+                        min(W - 1, max(cset) + window) + 1)
+    else:
+        r_range = range(H)
+        c_range = range(W)
+    scored: List[Tuple[int, float, float, int, int]] = []
+    for r in r_range:
+        for c in c_range:
+            deficit = 0
+            x_lo = x_hi = float(c)
+            y_lo = y_hi = float(r)
+            for u in placed_nbrs:
+                best: Optional[Tuple[float, int, int]] = None
+                for (col, p0, p1) in nb_v_runs.get(u, ()):
+                    if p0 <= r <= p1:
+                        d = abs(col - c)
+                        if best is None or d < best[0]:
+                            best = (d, 1, col)
+                for (row, p0, p1) in nb_h_runs.get(u, ()):
+                    if p0 <= c <= p1:
+                        d = abs(row - r)
+                        if best is None or d < best[0]:
+                            best = (d, 0, row)
+                if best is None:
+                    deficit += 1
+                elif best[1] == 1:
+                    x_lo = min(x_lo, float(best[2]))
+                    x_hi = max(x_hi, float(best[2]))
+                else:
+                    y_lo = min(y_lo, float(best[2]))
+                    y_hi = max(y_hi, float(best[2]))
+            length = (x_hi - x_lo) + (y_hi - y_lo)
+            tie = 0.0
+            scored.append((deficit, length, tie, r, c))
+    if not scored:
+        return None
+    if not allow_deficit:
+        feasible = [t for t in scored if t[0] == 0]
+        if feasible:
+            scored = feasible
+    scored.sort(key=lambda t: (t[0], t[1], t[2]))
+    # seeded shuffle within exact (deficit, length) ties — feasibility
+    # randomness, the mm lesson
+    i = 0
+    shuffled: List[Tuple[int, float, float, int, int]] = []
+    while i < len(scored):
+        j = i
+        while (j < len(scored)
+               and scored[j][:2] == scored[i][:2]):
+            j += 1
+        group = scored[i:j]
+        if rng is not None and len(group) > 1:
+            rng.shuffle(group)
+        shuffled.extend(group)
+        i = j
+    scored = shuffled
+
+    # ---- stage 2: realize down the ranking ----
+    attempts = 0
+    bad_h_lines: Set[int] = set()
+    bad_v_lines: Set[int] = set()
+    for deficit, _length, _tie, r, c in scored:
+        if attempts >= realize_cap:
+            break
+        if deadline is not None and time.perf_counter() > deadline:
+            return None
+        # a line that already failed its audit this placement fails
+        # again for near-identical intervals — skip without spending
+        # the cap, so the ranked scan escapes a crowded region
+        if r in bad_h_lines or c in bad_v_lines:
+            continue
+        attempts += 1
+        # rebuild the coverage assignment at this anchor:
+        # (neighbour, target-line) pairs per arm, so degradation can
+        # drop a target and its coverage claim together
+        h_cov: List[Tuple[int, int]] = []
+        v_cov: List[Tuple[int, int]] = []
+        n_cov = 0
+        for u in placed_nbrs:
+            best = None
+            for (col, p0, p1) in nb_v_runs.get(u, ()):
+                if p0 <= r <= p1:
+                    d = abs(col - c)
+                    if best is None or d < best[0]:
+                        best = (d, 1, col)
+            for (row, p0, p1) in nb_h_runs.get(u, ()):
+                if p0 <= c <= p1:
+                    d = abs(row - r)
+                    if best is None or d < best[0]:
+                        best = (d, 0, row)
+            if best is None:
+                continue
+            n_cov += 1
+            if best[1] == 1:
+                h_cov.append((u, best[2]))
+            else:
+                v_cov.append((u, best[2]))
+        if not allow_deficit and n_cov < len(placed_nbrs):
+            continue
+        # graceful degradation under allow_deficit: when an arm's full
+        # hull has no free lane, drop that arm's FARTHEST
+        # (neighbour, target) pair and retry — coverage decays into
+        # recorded deficits instead of collapsing to the router
+        # fallback
+        while True:
+            h_targets = [t for _u, t in h_cov]
+            v_targets = [t for _u, t in v_cov]
+            hx = [float(c)] + [float(x) for x in h_targets]
+            vy = [float(r)] + [float(y) for y in v_targets]
+            need_h = bool(h_targets) or bool(v_targets)
+            need_v = bool(v_targets) or bool(h_targets)
+            # deg-0-placed case: claim a single qubit at the anchor
+            if not h_targets and not v_targets:
+                need_h, need_v = True, False
+            local_claim = set(claimed)
+            chain = []
+            ok = True
+            fail_arm = None
+            if need_h:
+                got = _audit_claim(grid, local_claim, 1, [r],
+                                   min(hx), max(hx),
+                                   [int(round(x)) for x in h_targets],
+                                   rng=rng)
+                if got is None:
+                    ok, fail_arm = False, "h"
+                else:
+                    local_claim.update(got[2])
+                    chain.extend(got[2])
+            if ok and need_v:
+                got = _audit_claim(grid, local_claim, 0, [c],
+                                   min(vy), max(vy),
+                                   [int(round(y)) for y in v_targets],
+                                   rng=rng)
+                if got is None:
+                    ok, fail_arm = False, "v"
+                else:
+                    local_claim.update(got[2])
+                    chain.extend(got[2])
+            if ok:
+                break
+            if not allow_deficit:
+                break
+            if fail_arm == "h" and h_cov:
+                h_cov.remove(max(h_cov, key=lambda t: abs(t[1] - c)))
+            elif fail_arm == "v" and v_cov:
+                v_cov.remove(max(v_cov, key=lambda t: abs(t[1] - r)))
+            else:
+                break
+        if ok and chain and incumbent is not None \
+                and len(chain) >= incumbent:
+            # completion only ADDS qubits — reject before paying for it
+            continue
+        if not ok or not chain:
+            if fail_arm == "h":
+                bad_h_lines.add(r)
+            elif fail_arm == "v":
+                bad_v_lines.add(c)
+            continue
+        covered = [u for u, _t in h_cov] + [u for u, _t in v_cov]
+        full = {u: list(cc) for u, cc in work.items()}
+        full[v] = list(chain)
+        if grid.stride > 1:
+            full, _ci = complete_seeds(grid, full, src_adj, adj,
+                                       only={v})
+        cand = full.get(v)
+        if not cand or not chain_connected(cand, adj):
+            continue
+        good = True
+        for u in covered:
+            uset = set(work[u])
+            if not any(nb in uset for q in cand for nb in adj.get(q, ())):
+                good = False
+                break
+        if not good:
+            continue
+        if incumbent is not None and len(cand) >= incumbent:
+            continue
+        return sorted(int(q) for q in cand)
+
+    # ---- fallback: Steiner build through free fabric ----
+    if placed_nbrs and (allow_deficit or incumbent is None):
+        chain = sph_tree(v, placed_nbrs, work, adj, {},
+                         visits if visits is not None else [0],
+                         forbidden_extra=claimed,
+                         require_all_neighbors=not allow_deficit,
+                         rng=rng)
+        if chain:
+            if incumbent is not None and len(chain) >= incumbent:
+                return None
+            return sorted(int(q) for q in chain)
+    return None
+
+
+
 def _rebuild_ball_bars(S: Tuple[int, ...], work: Embedding,
                        src_adj: Dict[int, List[int]], adj: Adjacency,
                        grid,
@@ -450,7 +724,7 @@ def ball_polish(chains: Embedding, source_graph: nx.Graph,
     ``singles`` (s3.91, ball-prime): each sweep additionally asks the
     |S|=1 question the selector structurally excludes — evict one
     chain and re-place it in its exact best cross against the frozen
-    rest (``cross._place_cross``: exhaustive anchor audition, the move
+    rest (``_place_cross``: exhaustive anchor audition, the move
     minorminer's ``find_short_chain`` approximates by radius-ordered
     Steiner auditions). Same accounting: scoped spur-prune, strict
     qubit-count descent. This is the grind-replacement arm.
@@ -498,7 +772,6 @@ def ball_polish(chains: Embedding, source_graph: nx.Graph,
             # s3.91 singles pass: the |S|=1 exact-cross question, every
             # chain, before the balls (cheap, exhaustive; the balls then
             # harvest what single-chain moves cannot see)
-            from ember_qc.algorithms.factored.cross import _place_cross
             info.setdefault("single_tried", 0)
             info.setdefault("single_accepts", 0)
             sing = sorted(work)
