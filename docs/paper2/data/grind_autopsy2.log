@@ -1,0 +1,79 @@
+/data/max/ember/docs/paper2/data/grind_autopsy2.py:46: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/grind_autopsy2.py:46: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/grind_autopsy2.py:46: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/grind_autopsy2.py:46: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/grind_autopsy2.py:46: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/grind_autopsy2.py:46: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/grind_autopsy2.py:46: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/grind_autopsy2.py:46: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/grind_autopsy2.py:46: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/grind_autopsy2.py:46: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/grind_autopsy2.py:46: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/grind_autopsy2.py:46: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/grind_autopsy2.py:46: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/grind_autopsy2.py:46: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/grind_autopsy2.py:46: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/grind_autopsy2.py:46: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+turan_n162 seed 0: 81/162 chains changed, dACL -0.580
+turan_n162 seed 1: 155/162 chains changed, dACL -1.111
+turan_n162 seed 2: 119/162 chains changed, dACL -0.580
+turan_n162 seed 3: 151/162 chains changed, dACL -0.580
+turan_n162 seed 4: 153/162 chains changed, dACL -0.580
+ws_n486 seed 0: 486/486 chains changed, dACL -1.216
+ws_n486 seed 1: 484/486 chains changed, dACL -1.319
+ws_n486 seed 2: 484/486 chains changed, dACL -1.259
+ws_n486 seed 3: 486/486 chains changed, dACL -1.134
+ws_n486 seed 4: 484/486 chains changed, dACL -0.877
+regular_n316 seed 0: 316/316 chains changed, dACL -2.142
+regular_n316 seed 1: 316/316 chains changed, dACL -2.354
+regular_n316 seed 2: 316/316 chains changed, dACL -2.392
+grid_200 seed 0: 188/200 chains changed, dACL -0.510
+grid_200 seed 1: 175/200 chains changed, dACL -0.220
+grid_200 seed 2: 196/200 chains changed, dACL -0.740
+
+===== aggregates per cell (changed chains only) =====
+
+turan_n162: 659 changed rows (of 810), mean deg changed 81.0 vs all 81.0
+  len delta: {'<=-3': 57, '-2': 14, '-1': 296, '0': 291, '+1': 1, '>=+2': 0}
+  displacement: {'0': 13, '<=1': 101, '<=3': 215, '>3': 330}
+  shape transitions: {('L', '1run'): 88, ('1run', '1run'): 548, ('1run', 'L'): 14, ('L', 'L'): 5, ('tree', '1run'): 4}
+  shrinks in-place(<=1 tile) 74 vs moved(>1) 293
+  cascade fraction 1.00; max chain 19->6
+
+ws_n486: 2424 changed rows (of 2430), mean deg changed 4.0 vs all 4.0
+  len delta: {'<=-3': 610, '-2': 256, '-1': 387, '0': 567, '+1': 344, '>=+2': 260}
+  displacement: {'0': 28, '<=1': 306, '<=3': 971, '>3': 1119}
+  shape transitions: {('1run', '1run'): 511, ('tree', 'tree'): 175, ('tree', '1run'): 252, ('1run', 'tree'): 113, ('tree', 'L'): 250, ('L', 'L'): 319, ('L', 'tree'): 126, ('L', '1run'): 391, ('1run', 'L'): 287}
+  shrinks in-place(<=1 tile) 165 vs moved(>1) 1088
+  cascade fraction 1.00; max chain 20->9
+
+regular_n316: 948 changed rows (of 948), mean deg changed 4.0 vs all 4.0
+  len delta: {'<=-3': 413, '-2': 161, '-1': 133, '0': 99, '+1': 75, '>=+2': 67}
+  displacement: {'0': 7, '<=1': 107, '<=3': 446, '>3': 388}
+  shape transitions: {('L', 'L'): 196, ('1run', 'L'): 128, ('tree', 'L'): 115, ('tree', 'tree'): 33, ('L', 'tree'): 69, ('1run', 'tree'): 56, ('1run', '1run'): 96, ('L', '1run'): 182, ('tree', '1run'): 73}
+  shrinks in-place(<=1 tile) 92 vs moved(>1) 615
+  cascade fraction 1.00; max chain 21->7
+
+grid_200: 559 changed rows (of 600), mean deg changed 3.7 vs all 3.7
+  len delta: {'<=-3': 10, '-2': 47, '-1': 169, '0': 316, '+1': 17, '>=+2': 0}
+  displacement: {'0': 131, '<=1': 281, '<=3': 146, '>3': 1}
+  shape transitions: {('1run', '1run'): 357, ('L', '1run'): 162, ('tree', '1run'): 17, ('1run', 'L'): 15, ('L', 'L'): 6, ('tree', 'L'): 2}
+  shrinks in-place(<=1 tile) 154 vs moved(>1) 72
+  cascade fraction 1.00; max chain 16->2
+done-probe

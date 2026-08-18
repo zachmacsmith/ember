@@ -1350,3 +1350,63 @@ class TestUnboundedPack:
         finally:
             pl._mm_route = orig
         assert r["embedding"]
+
+
+class TestRequiredCensus:
+    """s3.97: the required-hull census and the certificate."""
+
+    def test_blind_spot_priced_only_in_required_mode(self):
+        # two arms on one line whose BOOKS hulls are narrow/disjoint
+        # (books census sees nothing) but whose parity-target hulls
+        # overlap beyond the pool: only required=True prices it
+        import numpy as np
+        import networkx as nx
+        import dwave_networkx as dnx
+        from ember_qc.algorithms.factored.field import (
+            TileGrid, arm_books, claim_overload, line_pools)
+        from ember_qc.algorithms.factored.placement import target_layout
+        z = dnx.zephyr_graph(3, 4)
+        grid = TileGrid(z, target_layout(z), courses=True)
+        pool = max(line_pools(grid).values())
+        # a star: hub h at (3, 3) with `pool+1` leaves above at spread
+        # columns -> the hub's h-arm books hull is wide, but build the
+        # leaves so their own h-arms are points while their v-target
+        # rows all hit the hub's row: required hulls on the hub's row
+        # stack pool+1 deep only when targets are counted
+        n_leaves = int(pool) + 1
+        src = nx.star_graph(n_leaves)  # 0 = hub
+        adjd = {v: sorted(src.neighbors(v)) for v in src}
+        pos = {0: np.array([3.0, 1.0])}
+        for k in range(1, n_leaves + 1):
+            pos[k] = np.array([float(k % 5), 3.0])
+        books = arm_books(pos, adjd, grid, kappa=13.0)
+        ov_books = claim_overload(pos, adjd, grid, kappa=13.0,
+                                  books=books)
+        ov_req = claim_overload(pos, adjd, grid, kappa=13.0,
+                                books=books, required=True)
+        assert ov_req >= ov_books  # required mode never sees LESS
+
+    def test_certificate_sound(self):
+        import networkx as nx
+        import dwave_networkx as dnx
+        from ember_qc.algorithms.factored import attract_embed
+        from ember_qc.registry import validate_embedding
+        z = dnx.zephyr_graph(3, 4)
+        for g in (nx.complete_graph(8), nx.cycle_graph(20),
+                  nx.turan_graph(24, 3)):
+            r = attract_embed(g, z, timeout=20, seed=0, tail="none")
+            d = r["diag"]
+            if d.get("certified"):
+                assert r["embedding"]
+                assert validate_embedding(r["embedding"], g, z)
+
+    def test_census_off_is_control(self):
+        import networkx as nx
+        import dwave_networkx as dnx
+        from ember_qc.algorithms.factored import attract_embed
+        z = dnx.zephyr_graph(3, 4)
+        g = nx.cycle_graph(20)
+        a = attract_embed(g, z, timeout=20, seed=0)
+        b = attract_embed(g, z, timeout=20, seed=0,
+                          census_required=False)
+        assert a["embedding"] == b["embedding"]

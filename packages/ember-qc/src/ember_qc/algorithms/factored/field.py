@@ -564,6 +564,199 @@ def wire_seeds_iv(grid: TileGrid, pos: Dict[int, Point],
     return {v: c for v, c in chains.items() if c}
 
 
+def _arm_targets(pos: Dict[int, Point], contacts, bars: BarIntervals,
+                 orientation: int, present) -> Dict[int, tuple]:
+    """Per-arm snap targets for one orientation: (a0, b0, sorted crossing
+    lines incl. the arm's own corner). Shared by the exact converter and
+    the required-hull census so the two can never drift (one
+    accounting)."""
+    ax = 0 if orientation == 1 else 1
+    out: Dict[int, tuple] = {}
+    for v in sorted(pos):
+        if v not in present:
+            continue
+        us = contacts[v][0] if orientation == 1 else contacts[v][1]
+        lines = {int(round(float(pos[u][ax]))) for u in us}
+        lines.add(int(round(float(pos[v][ax]))))
+        iv = bars[v][0] if orientation == 1 else bars[v][1]
+        out[v] = (float(iv[0]), float(iv[1]), sorted(lines))
+    return out
+
+
+def _convert_line(grid: TileGrid, claimed: set,
+                  chains: Dict[int, List[int]], orientation: int,
+                  line: int, items: List[Tuple[float, float, int]],
+                  targets: Optional[Dict[int, tuple]]) -> Tuple[int, int]:
+    """The exact per-line converter, v2 (s3.96): jointly choose a
+    parity class and a lane for every arm on one line so that every
+    designated crossing (and the arm's own corner — it is in the
+    target list) is parity-covered.
+
+    v2 fixes the two measured v1 defects (notes s3.96): (1) claims
+    contest POSITIONS, not books-hulls — an arm claims only its
+    REQUIRED hull (the span of its parity targets), so benign overlap
+    of the wider books intervals no longer blocks seating and chains
+    get shorter than the kappa-floor width; (2) the class assignment
+    is an exact DP whose state is the CLASSED ACTIVE SET — any
+    feasible line keeps <= cap0+cap1 (= 8) arms alive at once, so the
+    state space is tiny and the v1 greedy+repair thrash (1747 flips
+    on ws) is gone. Dead qubits are absorbed as lane-infeasibility;
+    they never reach the packer. Returns (misses, 0)."""
+    subs_all = sorted({s for (o_, ln_, s) in grid.wire_map
+                       if o_ == orientation and ln_ == line})
+    if not subs_all or not items:
+        return (len(items), 0)
+    lanes = {0: [s for s in subs_all if s % 2 == 0],
+             1: [s for s in subs_all if s % 2 == 1]}
+    caps = {0: len(lanes[0]), 1: len(lanes[1])}
+
+    # per arm, per parity: the REQUIRED hull — the span of the
+    # parity-snapped targets only (p*(c,pi) is always == pi mod 2, so
+    # covering the hull covers every target). The books interval
+    # matters only as the fallback seed when an arm has no targets.
+    arms = []
+    for a, b, v in sorted(items):
+        cls = (list(targets[v][2])
+               if targets is not None and v in targets else [])
+        R = {}
+        for pi in (0, 1):
+            ps = [c if c % 2 == pi else c - 1 for c in cls]
+            ps = [p for p in ps if p >= 0]
+            if ps:
+                R[pi] = (min(ps), max(ps))
+            else:
+                p0 = int(round((a + b) / 2.0))
+                p0 = p0 if p0 % 2 == pi else max(0, p0 - 1)
+                R[pi] = (p0, p0)
+        arms.append((a, b, v, R))
+    n = len(arms)
+
+    # ---- exact class assignment: DP over arms (sorted by earliest
+    # required-lo), state = frozenset of (arm index, class) for arms
+    # still active; any feasible state has <= 8 members. Cost =
+    # total required-hull length (shorter claims win ties).
+    order_i = sorted(range(n), key=lambda i: (min(arms[i][3][0][0],
+                                                  arms[i][3][1][0]),
+                                              arms[i][2]))
+    states: Dict[frozenset, Tuple[float, tuple]] = {frozenset(): (0.0, ())}
+    for i in order_i:
+        lo0, hi0 = arms[i][3][0]
+        lo1, hi1 = arms[i][3][1]
+        nxt: Dict[frozenset, Tuple[float, tuple]] = {}
+        for st, (cost, hist) in states.items():
+            # expire actives whose interval ends before this arm starts
+            # (interval-graph fact: depth maxima occur at starts, so
+            # checking capacity at starts is exact)
+            for pi, lo in ((0, lo0), (1, lo1)):
+                live = frozenset(
+                    (j, cj) for (j, cj) in st
+                    if arms[j][3][cj][1] >= lo)
+                cnt = sum(1 for (_j, cj) in live if cj == pi)
+                if cnt + 1 > caps[pi]:
+                    continue
+                st2 = live | {(i, pi)}
+                c2 = cost + (arms[i][3][pi][1] - arms[i][3][pi][0])
+                h2 = hist + ((i, pi),)
+                cur = nxt.get(st2)
+                if cur is None or (c2, h2) < cur:
+                    nxt[st2] = (c2, h2)
+        if not nxt:
+            # no feasible class assignment at all: seat greedily below
+            states = {}
+            break
+        # prune: keep best cost per state
+        states = nxt
+    assign: Dict[int, int] = {}
+    if states:
+        best = min(states.values(), key=lambda t: (t[0], t[1]))
+        for (i, pi) in best[1]:
+            assign[i] = pi
+
+    def _lane_ok(s: int, lo: int, hi: int) -> Optional[List[int]]:
+        run = grid.wire_map.get((orientation, line, s), {})
+        present = [p for p in range(lo, hi + 1) if p in run]
+        if not present:
+            return None
+        if any(run[p] in claimed for p in present):
+            return None
+        if any(b_ - a_ != grid.stride
+               for a_, b_ in zip(present, present[1:])):
+            return None
+        return [run[p] for p in present]
+
+    # ---- seating: left-endpoint per class over REQUIRED hulls;
+    # per-lane runs are position-disjoint by construction
+    misses = 0
+    lane_busy: Dict[int, int] = {}
+    seat_order = sorted(range(n),
+                        key=lambda i: arms[i][3][assign.get(i, 0)][0])
+    for i in seat_order:
+        a, b, v, R = arms[i]
+        pi = assign.get(i)
+        tried = ([pi, 1 - pi] if pi is not None else [0, 1])
+        seated = False
+        for cls_pi in tried:
+            lo, hi = R[cls_pi]
+            for s in lanes[cls_pi]:
+                if lane_busy.get(s, -10**9) >= lo:
+                    continue
+                qs = _lane_ok(s, lo, hi)
+                if qs is None:
+                    continue
+                for q in qs:
+                    claimed.add(q)
+                    chains[v].append(q)
+                lane_busy[s] = hi
+                seated = True
+                break
+            if seated:
+                break
+        if not seated:
+            # fallback: books interval on any lane (old greedy claim)
+            for s in subs_all:
+                if lane_busy.get(s, -10**9) >= int(math.floor(a)):
+                    continue
+                qs = _lane_ok(s, int(math.floor(a)), int(math.ceil(b)))
+                if qs is None:
+                    continue
+                for q in qs:
+                    claimed.add(q)
+                    chains[v].append(q)
+                lane_busy[s] = int(math.ceil(b))
+                break
+            misses += 1
+    return (misses, 0)
+
+
+def wire_seeds_exact(grid: TileGrid, pos: Dict[int, Point],
+                     bars: BarIntervals,
+                     src_adj: Dict[int, List[int]],
+                     books) -> Tuple[Dict[int, List[int]], dict]:
+    """The exact converter (s3.96): plane layout -> claimed wires, one
+    exact per-line solve at a time (``_convert_line``), replacing the
+    three global greedy passes (snap coloring + completion's
+    corner/edge repairs) with joint parity+lane choices. Completion
+    still runs afterwards as the VERIFIER and bridge net. Reads the
+    same shared books as everything else; returns (chains, info)."""
+    claimed: set = set()
+    chains: Dict[int, List[int]] = {v: [] for v in pos}
+    info = {"convert_miss": 0, "convert_flips": 0}
+    contacts, _, tuples = books
+    for o in (1, 0):
+        present = {t[3] for t in tuples[o]}
+        targets = _arm_targets(pos, contacts, bars, o, present)
+        by_line: Dict[int, list] = {}
+        for line, a, b, v in tuples[o]:
+            by_line.setdefault(line, []).append((a, b, v))
+        for line, items in sorted(by_line.items()):
+            m, f = _convert_line(grid, claimed, chains, o, line,
+                                 items, targets)
+            info["convert_miss"] += m
+            info["convert_flips"] += f
+    _ensure_seeds(grid, claimed, chains, pos)
+    return {v: c for v, c in chains.items() if c}, info
+
+
 def arm_books(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
               grid: TileGrid, *, kappa: float, floor: bool = True,
               snap: bool = False, min_span: float = 1.0,
@@ -644,7 +837,7 @@ def line_pools(grid: TileGrid) -> Dict[Tuple[int, int], int]:
 def claim_overload(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                    grid: TileGrid, *, kappa: float,
                    floor: bool = True, snap: bool = False,
-                   books=None) -> float:
+                   books=None, required: bool = False) -> float:
     """Line-capacity violation of the claim layer's own census (s3.57):
     per orientation and line, hinge^2 of (interval depth - available
     sub-lanes), computed on the SHARED books (`arm_books`) — including
@@ -653,13 +846,27 @@ def claim_overload(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
     if books is None:
         books = arm_books(pos, src_adj, grid, kappa=kappa, floor=floor,
                           snap=snap)
-    _, _, tuples = books
+    contacts, bars_, tuples = books
     lp = line_pools(grid)
     total = 0.0
     for o in (1, 0):
+        # required mode (s3.97): price the REQUIRED hulls — the spans
+        # the converter will actually claim (parity targets + corner;
+        # the union over both parity variants is [min(cls)-1, max(cls)]
+        # since p* is always c or c-1) — instead of the books hulls.
+        # This is the s3.73 blind spot made visible to every gate:
+        # parity/corner obligations now carry census weight.
+        tg = (_arm_targets(pos, contacts, bars_, o,
+                           {t[3] for t in tuples[o]})
+              if required else None)
         by_line: Dict[int, list] = {}
         for line, a, b, v in tuples[o]:
-            by_line.setdefault(line, []).append((a, b))
+            if tg is not None and v in tg and tg[v][2]:
+                cls = tg[v][2]
+                by_line.setdefault(line, []).append(
+                    (float(max(0, min(cls) - 1)), float(max(cls))))
+            else:
+                by_line.setdefault(line, []).append((a, b))
         for line, ivs in by_line.items():
             subs = lp.get((o, line), 0)
             over = line_depth(ivs) - subs
@@ -1445,7 +1652,8 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                       strain_rank: bool = False,
                       edge_rounds=None,
                       clamp_miss: bool = True,
-                      unbounded_pack: bool = False):
+                      unbounded_pack: bool = False,
+                      census_required: bool = False):
     """Alternating 1-D arrangement on the stair energy (v4 order state).
 
     Every variable participates (``min_span=0``, so the books census
@@ -1476,9 +1684,9 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                           snap=snap, min_span=min_span, contacts=contacts)
         e = stair_energy(p, src_adj, contacts=books[0])
         if overload_lam > 0.0:
-            e += overload_lam * claim_overload(p, src_adj, grid,
-                                               kappa=kappa, floor=floor,
-                                               snap=snap, books=books)
+            e += overload_lam * claim_overload(
+                p, src_adj, grid, kappa=kappa, floor=floor,
+                snap=snap, books=books, required=census_required)
         return books, e
 
     new_pos = {v: np.asarray(p, dtype=float).copy() for v, p in pos.items()}
@@ -1658,7 +1866,8 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
         e_pre = cur_E
         ov_pre = claim_overload(new_pos, src_adj, grid, kappa=kappa,
                                 floor=floor, snap=snap,
-                                books=cur_books)
+                                books=cur_books,
+                                required=census_required)
         snap_state = {v: new_pos[v].copy() for v in new_pos}
         books_snap = cur_books
         for r, v in enumerate(new_order):
@@ -1682,7 +1891,8 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
         e_post = cur_E
         ov_post = claim_overload(new_pos, src_adj, grid, kappa=kappa,
                                  floor=floor, snap=snap,
-                                 books=cur_books)
+                                 books=cur_books,
+                                 required=census_required)
         # s3.61 hard veto: a permutation may not
         # create uncolorable lines — structural feasibility is a
         # gate condition, not a priced preference
@@ -1837,7 +2047,8 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
         assign_t = {x: tvals[r] for r, x in enumerate(near_t + far_t)}
         e_pre = cur_E
         ov_pre = claim_overload(new_pos, src_adj, grid, kappa=kappa,
-                                floor=floor, snap=snap, books=cur_books)
+                                floor=floor, snap=snap, books=cur_books,
+                                required=census_required)
         snap_state = {x: new_pos[x].copy() for x in new_pos}
         books_snap = cur_books
         for r, x in enumerate(new_s):
@@ -1854,7 +2065,8 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                 break
         e_post = cur_E
         ov_post = claim_overload(new_pos, src_adj, grid, kappa=kappa,
-                                 floor=floor, snap=snap, books=cur_books)
+                                 floor=floor, snap=snap, books=cur_books,
+                                 required=census_required)
         info["fold_dE_best"] = min(
             info.get("fold_dE_best", float("inf")), e_post - e_pre)
         if len(info.setdefault("fold_trace", [])) < 12:

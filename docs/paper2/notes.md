@@ -880,6 +880,97 @@ legalization decomposition (negotiated completion over 1-29-edge
 residues) and making ball's router BFS-native so the tail gets more
 shots per second.
 
+**3.95 (the demotion autopsy — is the grind still editing our
+patterns on the s3.93 baseline?).** Re-run of the s3.86 autopsy
+(`data/grind_autopsy2.csv`; emb0 = tail="none", emb1 = 30 s warm
+grind). Verdict: **demotion is real on lattices, partial on the
+crystal, and NOT yet true on liquids/expanders.** grid_200: demoted —
+412/559 changed chains moved ≤1 tile, ONE moved >3, transitions
+overwhelmingly →1run, max 16→2: coupler-snapping and in-place
+slimming, the layout survives. turán: the crystal pattern holds
+(548 1run→1run) but the grind relocates 330/659 chains >3 tiles and
+fixes max-chain OUTLIERS (19→6) the claim layer leaves — evidence
+for the exact per-line converter (the outliers are conversion
+artifacts, not layout artifacts). ws: better than s3.86 (max 20→9
+vs 46→11; big moves 46% vs 54%) but still heavy editing — 1119/2424
+chains >3 tiles, shape churn in all directions, grind earns −1.2;
+yet warm-from-ours (2.55) beats cold mm (2.9+), so the global
+pattern is load-bearing even as chains wander locally. regular:
+NOT demoted — 615/948 moved, grind earns −2.3; the expander seeds
+are still weak (the no-order regime, ideas §2.12). Campaign map by
+cell: grid needs only the converter + slack shortener; turán needs
+the converter (outlier tails); ws/regular still have plane-level
+residuals the grind is papering over.
+
+**3.96 (the exact per-line converter — built, first-measured, NOT yet
+the win; honest status).** Built as designed (`wire_seeds_exact` /
+`_convert_line`, toggle `exact_convert` OFF): joint parity+lane choice
+per line (exhaustive ≤12 arms, greedy+deepest-point repair above),
+widened-interval occupancy (fixing the diagnosed s3.61 defect:
+`_color_claim_bars` tracks occupancy by the UN-widened end while
+claiming through the widened one — silent truncation), dead qubits
+absorbed as lane-infeasibility (never the packer's problem — Max).
+First smoke (seed 0, tail="none"): **mixed** — ws corner deficits
+collapse 23→2 (the corner logic works) but edge deficits WORSEN 32→48
+with convert_miss 84 and 1747 repair flips; ER slightly worse; turán
+parity (and note: today's baseline turán premx at seed 0 is 10, not
+the autopsy's cross-seed 19 — the outlier is seed-dependent).
+Diagnosis: (1) strict widened-DISJOINTNESS refuses seatings the old
+greedy survives by benign truncation — overlap is sometimes harmless
+when the contested positions differ; (2) the greedy+repair parity
+path (which crowded ws lines always take, n>12) is weak — the flip
+churn shows it thrashing where the true small-state DP would be
+exact. The design's promise lives or dies on those two: next
+iteration = the real (cap0+1)x(cap1+1)-state DP over endpoint events
+(exact at any n) + truncation-tolerant seating (contest POSITIONS,
+not hulls). Toggle stays off; all 617 tests green; control untouched.
+
+V2 BUILT AND SHIPPED (same day): both diagnosed fixes landed —
+required-hull claims (arms contest only the span their parity targets
+need; benign overlap stops blocking seats and chains shed the
+kappa-floor padding) and the exact classed-active-set DP (state = the
+<=8 live (arm, class) pairs; the greedy+repair thrash is gone).
+Smoke: corner deficits 0 on EVERY cell; **ER 1→0 deficits and the
+skip gate fires on a sparse cell for the first time in program
+history**; regular 17→10 (premx 18→13), grid 21→10, ws 32→30,
+extensions collapse everywhere. Probe (`data/conv_probe.csv`, single
+flip, box load ~50-87 — wall caveat): wins or ties every cell —
+**K100 −0.260 with max 9→8, K140 −0.272, spin_glass −0.313, ER
+−0.120, regular −0.088** (the dense wins are the shed floor padding:
+shorter claims = shorter chains), deciders turán/ws at exact parity,
+one wall flag (K100 26→37 s at load 87, noise-suspect).
+`exact_convert` DEFAULT ON per the winners rule; 617 tests green.
+Named next (discussed with Max, not yet built): the EXACT CENSUS
+certificate — strengthen the census to the converter's true per-line
+feasibility (per-parity required-hull depth <= 4), closing the s3.73
+blind spot and making "exact-census 0 ⇒ valid embedding" a provable
+pre-claims guarantee; mm then needed exactly on runs ending
+exact-census > 0, with ball's sph router as the native last resort.
+
+**3.97 (the certificate ships; the census pressure is refuted as
+priced).** Built per the discussed design: `_arm_targets` shared
+helper (converter and census read one book), `claim_overload(
+required=True)` pricing the converter's actual claim spans, the
+`certified` diag (converter misses 0 AND completion closed — the
+conditional theorem's premise, verified post-hoc every run). Probe
+(`data/cens_probe.csv`, load ~55-68): **census_required is INERT on
+Z12** — byte-identical on every cell despite the blind spot being
+genuinely visible (41 vs 6 census units on the ws end-state,
+threading verified live): a ±35 delta against stair-E in the
+thousands flips no strict-descent decision at lam=1. On P16 it
+REGRESSED turán +0.629 — mispricing hulls nothing will claim (the
+converter is stride-gated; the lever now is too). Verdict: REFUTED
+as an energy term at shipped pricing; lever kept off; re-pricing is
+a lam study nobody asked for. **The certificate is the product**:
+certified-and-invalid = 0 everywhere (soundness held empirically);
+Z12 certified rates — K100/K140/ER/spin_glass 3/3 (all also skip
+mm), turán 0/10 (44 fallback-seated arms: valid but premise fails —
+the certificate honestly refuses), ws/grid/honeycomb/king/regular 0
+(real deficits). The mm-elimination criterion is now a per-cell
+number: five cells provably mm-free-legalizable today; the follow-up
+flip when wanted: skip mm legalization when certified (behavior
+change, own probe).
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).

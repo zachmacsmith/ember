@@ -13,28 +13,44 @@ seeds, completion), `coarsen.py` (hierarchy + init), `polish.py`
 `loop.py` + `costs.py` (the separate `factored` router used as the
 fallback rebuild and the minorminer-analysis family).
 
-## 0. The algorithm in one paragraph
+## 0. The pipeline, one sentence per step
 
-Every variable of the source graph gets a place on the hardware's tile
-grid, expressed as two orders: who is left of whom, and who is below
-whom. From those two orders alone, everything physical is *derived*:
-which row and column each variable's two arms occupy, how long the arms
-are, which wires they claim, which qubits form the chain. A small set of
-deterministic moves permutes the orders, and an exact assignment step
-(the "readout") recomputes the physical layout after each move; moves
-are kept only if the real total chain length (plus a penalty for
-overfull wire bundles) does not get worse. On Zephyr, the resulting
-chains are completed into a provably valid embedding and minorminer is
-skipped entirely; otherwise minorminer legalizes the seeded layout.
-Either way, minorminer's polish runs next, unconstrained — and then
-`ball_polish` (§7) runs LAST, harvesting the coordinated improvements
-the single-chain grind cannot see (default `tail="mm+ball"`, s3.81:
-wins or ties every board cell). The ladder is coarse→fine→coarse:
-cluster moves teleport, the grind polishes chains, ball re-lays
-neighborhoods at the end. Running ball BEFORE the grind was measured
-worse (s3.80): the grind's stochastic wandering needs an unconstrained
-basin — nothing may run ahead of it that narrows its options,
-including a smarter polisher.
+1. **Init**: a spectral sketch of the source graph is computed once and
+   immediately discarded except for its per-axis ranks — the two orders
+   (x and y) that are the algorithm's entire state, initially a
+   permutation matrix.
+2. **Bootstrap readout**: from the orders, the books are derived —
+   stair contacts, arm hulls, and the infinite-crossbar DP pack per
+   axis — collapsing the rank gauge onto (virtual) lines with nobody
+   ever dropped.
+3. **Arrange**: one E-gated loop of order moves — alternating packs,
+   per-edge monotonize, insertion sweeps, cluster gathers with the
+   orientation bit (fold pass: parked lever) — each judged by the one
+   gate (stair energy + overload census) with strict-descent
+   composites and full revert.
+4. **Final projection**: one forced bounded pack per axis lands the
+   ideal-plane layout inside the real 25-line window, reporting the
+   instance's ideal fabric demand (`final_width`) on the way.
+5. **Conversion**: the exact per-line converter claims actual wires —
+   parity targets and corners chosen jointly per line — and completion
+   runs as verifier and bridge, emitting the `certified` flag
+   (converter misses 0 + deficits 0 ⇒ provably valid, known before
+   any fallback).
+6. **Legalization fallback** (the shrinking minorminer territory):
+   only when deficits remain, capped mm legalization from our seeds,
+   then an uncapped last-resort attempt — five board cells now
+   provably never enter this step.
+7. **Tail polish**: minorminer's warm unconstrained grind (measured
+   irreplaceable for now, s3.94), then ball_polish LAST, harvesting
+   the coordinated re-layouts single-chain moves cannot see.
+8. **Done**: spur-pruned, validity-guarded — a broken late pass can
+   never corrupt a legal result.
+
+The ladder is coarse→fine→coarse: cluster moves teleport, the grind
+polishes chains, ball re-lays neighborhoods at the end (ball before
+the grind was measured worse, s3.80 — nothing may narrow the grind's
+basin). Steps 1–4 live on the ideal infinite crossbar and never touch
+hardware facts; steps 5–8 are the adapter and its nets.
 
 ## 0.5 The five hardware facts
 
@@ -155,121 +171,104 @@ measured P16 collapse, s3.76).
 **Why.** Arms are readouts, not state (s3.31). The floor is counting,
 not tuning: it is the minimum length physics allows given the degree.
 
-### 3c. The line assignment (the infinite packer, s3.93)
+### 3c. The packer (the infinite-crossbar DP, s3.93)
 
-**What.** The step that turns order into geometry: assign each variable
-a row (its y line) and a column (its x line), respecting the orders,
-minimizing real total arm length under hard lane capacity. Since s3.93
-the assignment is made on the IDEAL crossbar — uniform lanes, as many
-lines as demand needs — so it always succeeds; the finite chip enters
-only through the census (3d) and one final projection (step 7 below).
+**What.** The readout's core: given the two orders, assign every
+variable a row and a column — exactly the cheapest assignment those
+orders allow, under hard lane capacity. It is the order's PRICE TAG:
+moves propose orders, this step says what each is worth, the gate
+compares. Packing happens on the IDEAL crossbar (uniform lanes, as
+many lines as needed), so it always succeeds; the finite chip enters
+only through the census (3d) and one final projection.
 
-**How, step by step** (one axis at a time; "rows" below, columns are
-symmetric):
+**The objects, in words** (rows below; columns are the mirror):
 
-1. **Sort.** Take every variable with its h-arm's x-interval (from the
-   frozen column side) and sort by (current y-value, id). The id
-   tie-break is load-bearing: it makes the extreme member of every hull
-   unique, which step 2 needs. The assignment below is required to be
-   non-decreasing along this sorted sequence — nothing is ever
-   reordered here; reordering is the move family's job (§4), and
-   order-preservation is precisely what keeps step 2's cost exact.
+- **The lineup.** The variables in y-order. Packing y = seating the
+  lineup into rows, in order: each row takes one contiguous group
+  (order preservation), and a row is the home of its members' h-arms.
+  The only decisions in the whole problem are where each row's group
+  ends.
+- **The coefficient.** One integer per variable: (#hulls it tops) −
+  (#hulls it bottoms). Total arm length is a sum of hull gaps; folded
+  per variable (the accordion), it becomes Σ coefficient × row — each
+  variable carries its own separable term, fixed by the order. This
+  fold is what makes tiny DP states possible: no joint hull
+  bookkeeping survives it. Safety comes with it: every hull donates
+  one +1 and one −1 (translation invariance — elevation never pays),
+  and order preservation keeps every gap ≥ 0.
+- **The window.** For each possible group-end, the earliest legal
+  start. Capacity (arms ≤ 8 deep) is monotone — growing a group never
+  fixes it, shrinking never breaks it — so legal starts form an
+  interval whose left edge only moves right. One two-pointer sweep
+  computes it; the depth inside is maintained incrementally (segment
+  tree, s3.92).
+- **The scoreboard.** The DP table, two indexes: best[rows used]
+  [variables seated] = cheapest arrangement seating that many in
+  those rows. Two indexes because both resources are metered:
+  banking a hull-bottom's negative term high up also SPENDS rows,
+  and everything unpaid must then sit higher still — the escrow that
+  makes mid-table negatives safe. Cell values are ledgers, not
+  energies: candidates within one cell owe identical futures, so
+  ledger differences are total differences.
+- **The queue (deque).** Pure speed, zero authority. A cell's SEAT
+  option asks "cheapest legal place this row's group could have
+  started" — a min over a window that only slides right, the
+  textbook sliding-window minimum. Each queue item is an IOU ("this
+  row could open here"), valued by scoreboard-below minus
+  cost-prefix; an IOU dies from the front when capacity outlaws it,
+  from the back when a younger one arrives no more expensive (it
+  could never win again). What remains is the staircase of
+  still-rational new-row decisions; the front is the answer. Delete
+  the queue and scan the window instead: same table, same answers,
+  just O(n) slower.
 
-2. **The linear-cost identity.** Given the orders, total arm length is
-   a LINEAR function of the assigned positions. Each v-arm is a hull:
-   it reaches from its owner down to the LOWEST of the owner's
-   below-contacts, one reach covering all of them. So every hull's
-   vertical span is (position of its unique order-max member) −
-   (position of its unique order-min member), and summing over hulls,
-   each variable appears with a fixed integer coefficient: (#hulls it
-   tops) − (#hulls it bottoms). Intuition: moving up with many
-   neighbours below costs exactly 1 per unit (your own arm stretches
-   once — it is a hull, not per-edge wires); moving down costs 1 per
-   hull you are currently the bottom of (only those neighbours whose
-   arms you define — not all of them). The identity holds on the whole
-   order-preserving set and ONLY there: let two variables cross and
-   the hull extremes change, so the coefficients would lie. That is
-   the real reason order preservation is a hard constraint.
+**The algorithm.** Two nested loops — rows outer (bottom to top),
+lineup inner (left to right). Every cell is one min of two options:
+CARRY (this row seats nobody new — copy the cell below) or SEAT
+(group from the queue's front through here — scoreboard at the start
+plus group coefficient-sum × row). Cells are written once, never
+revised: "join the row" is a group silently extending; "take a new
+row" is a carry followed by a start chosen one row up. Competing
+hypotheses coexist in different cells until the future EXTENDS the
+cheaper one — revision is replaced by superposition, which is why no
+flip-flop is possible inside a pack. At the end, the final cell is
+the exact minimum and recorded choices are walked backward to read
+off each variable's row. No iteration inside a pack; the x/y
+ALTERNATION around it (rows need frozen column extents, and vice
+versa) is coordinate descent — energy monotone under the accept
+rule, no convergence theorem, capped at arrange_iters.
 
-3. **The ideal fabric.** Lane pools are uniform (8 on course-resolved
-   Zephyr) on L_max = real-lines + ⌈n/pool⌉ virtual lines. L_max is
-   feasibility-safe by a two-line lemma: a run's overlap depth never
-   exceeds its size, so runs of ≤ pool variables are always feasible,
-   and ⌈n/pool⌉ such runs always fit. Hence the packer NEVER drops a
-   variable — the pre-s3.93 skip valve (and the straggler death
-   spiral it caused, s3.92) is structurally gone. No boundary zeroing
-   here: boundary halving is a chip fact, not an ideal-crossbar fact,
-   and lives in the census and the claim layer.
+**Boundary conditions.**
+- *Bootstrap:* ranks are already coordinates in a stretched gauge;
+  the first pack collapses the gauge. (Permutation-matrix framing,
+  Max 2026-08-14: the init IS a permutation matrix; packing relaxes
+  it toward the best ≤8-per-line matrix that fits the window; the
+  alternation is Sinkhorn's silhouette; the crystal is the identity.)
+- *Ideal fabric (s3.93):* uniform pools on real-lines + ⌈n/8⌉
+  virtual lines — always enough (groups of ≤8 always fit), so nobody
+  is ever dropped and the s3.92 straggler class is structurally
+  gone. Layouts anchor at line 1: line 0 is a boundary line
+  (hardware fact; anchoring there broke turán 6.00→6.70).
+- *Projection:* after the arrange loop, one forced bounded pack per
+  axis (real pools, boundary zeroing, clamp) lands everything in the
+  real window. `final_width_x/y` first records the ideal demand
+  (turán 12, grid 9, K100 13, ws 22-25 of 25) and
+  `projection_misses` the residue.
 
-4. **The DP.** Walk lines 1, 2, 3, … in order. Each line receives one
-   CONTIGUOUS run of the still-unassigned prefix of the sorted
-   sequence (possibly empty). A run is feasible iff its x-intervals
-   overlap at most pool-deep at any point (arms that do not overlap
-   share a lane — the interval-coloring fact, §5a). The cost of a run
-   on line ℓ is (sum of its members' coefficients) × ℓ. The DP is
-   exact over all such partitions. Two ingredients keep it fast:
-   - *Feasibility table*: js[i] = the earliest sorted position a run
-     ending at i may start from. Depth only grows as a window extends,
-     so a two-pointer sweep is exact; the window's depth is maintained
-     INCREMENTALLY (a lazy max segment tree over the compressed
-     interval endpoints, +1/−1 per enter/leave) — s3.92 replaced a
-     from-scratch re-sort per pointer step (412k of them per ws run).
-   - *Run-start choice*: for each i, the best legal start j minimizes
-     (cost-before-j − cost-prefix-at-j), a function of j alone, over a
-     window whose left edge (js[i]) only moves right. A monotone deque
-     (pop dominated candidates from the back, expire out-of-window
-     ones from the front) yields the minimum in O(1) amortized — the
-     textbook sliding-window-minimum structure.
-
-5. **Canonical translation.** The unbounded cost is translation-
-   invariant, so the layout is anchored with its lowest occupied line
-   at line 1 — NOT line 0, which is a boundary line with halved real
-   capacity (measured: anchoring at 0 broke turán's exactness,
-   6.00 → 6.70). Anchoring makes census values comparable across
-   packs.
-
-6. **Alternation.** Row assignment needs the column extents (the
-   x-intervals) and vice versa, so the two axes alternate inside the
-   arrange loop until neither changes — Sinkhorn's shape without
-   Sinkhorn's guarantees: each axis is solved exactly, the pair is
-   coordinate descent with no convergence theorem. The overload
-   census (3d) is the cross-axis referee: every accept/reject sees
-   both axes' books.
-
-7. **Final projection.** After the arrange loop, one forced bounded
-   pack per axis — real pools, boundary zeroing, clamp for residues
-   (`clamp_miss`, dead code until here) — lands every position in the
-   real window for the claim layer. Just before it, the layout's
-   occupied span is recorded as `final_width_x/y`: the instance's
-   ideal fabric demand (turán 12, grid 9, K100 13, ws 22–25 of 25 —
-   the liquid genuinely wants the whole chip, which is why the
-   bounded packer choked on it for weeks). `projection_misses` counts
-   clamped residues.
-
-**Why.** The previous packer minimized displacement from prior
-positions (sticky early layouts); the s3.59 exact DP fixed that but
-enforced the chip's line count as a hard constraint, whose only
-escape was skipping variables — correct refusal, catastrophic
-aftermath (s3.92). Deleting the line-count bound (Max, s3.93) while
-keeping hard lane capacity (the only honest anti-collapse force —
-without it the linear cost drives total collapse, measured s3.75)
-made packing total: every order now gets its exact best geometry,
-"does it fit" became a reported number instead of a per-variable
-gamble, and the liquid residual fell (ws 3.037 → 2.552, max chain
-10.7 → 8.1, 10 seeds, unb_probe.csv — the first sub-minorminer
-liquid result). Contacts are reused across evaluations whenever the
-mutation provably preserved the y-order; any y-order change
-recomputes them.
-
-**Why.** The previous packer minimized *displacement from the previous
-positions* — a memory of the continuous era that made early layouts
-sticky. Minimizing the actual objective given the order is what
-"positions are a readout" means taken literally. Capacity as a hard
-constraint in the same DP is what abolished lane oversubscription
-structurally (s3.59). Contacts are reused across evaluations whenever
-the mutation provably preserved the y-order (x-swaps, x-permutations);
-any y-order change recomputes them, because collapsing two y-values
-onto one line can flip a tie-break (a silent proxy drift otherwise).
+**Why this and not greedy.** The step's job is evaluation, not
+compaction. State = orders requires positions = derived-BEST: a
+greedy packer turns the gate into a lying judge (its error is noise
+over the order signal — measured, s3.59/s3.73 — and first-fit
+misprices exactly the orders whose value hinges on ending a row
+early, the ones the moves must discover). Within its model class the
+abstraction is lossless: any cross-shaped line-level embedding is
+order-preserving for the order it induces, so minimizing packed cost
+over orders IS finding the model-class optimum; the residual gaps to
+the true optimum are orientation freedom, shape freedom, and qubit
+granularity — all outside this layer. Lineage: displacement packer →
+exact bounded DP (s3.59) → repairs (s3.92) → line-count bound
+deleted (s3.93: ws 3.037→2.552 at 10 seeds, the first
+sub-minorminer liquid).
 
 ### 3d. The overload census
 

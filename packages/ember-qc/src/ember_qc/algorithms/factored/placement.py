@@ -349,6 +349,28 @@ class AttractConfig:
                                # turán exact 6.000 10/10; dense
                                # identical; king +0.237 the one cost).
                                # False = bounded packs (control arm).
+    exact_convert: bool = True
+                               # s3.96 exact per-line converter (v2):
+                               # required-hull claims + classed-active-
+                               # set class DP replace the greedy snap
+                               # coloring. Stride-2 gate (course parity
+                               # is a hardware fact). DEFAULT ON
+                               # (conv_probe.csv: wins/ties every cell
+                               # — K100 −0.26 w/ mx 9→8, K140 −0.27,
+                               # spin_glass −0.31, ER −0.12; deciders
+                               # at exact parity; corner deficits 0
+                               # everywhere; ER legalizes natively,
+                               # first sparse skip-gate fire; K100
+                               # wall flag at box load 87 = noise-
+                               # suspect). False = greedy converter
+                               # (control arm).
+    census_required: bool = False
+                               # s3.97 required-hull census: the gate
+                               # census prices the spans the converter
+                               # will actually claim (parity targets +
+                               # corner) instead of the books hulls —
+                               # the s3.73 blind spot made visible.
+                               # OFF = books-hull census (control arm).
     submit_seeds: bool = False
                                # s3.93 seed submission: when the
                                # legalization slice is exhausted
@@ -562,7 +584,9 @@ def attract_embed(
             strain_rank=cfg.strain_rank,
             edge_rounds=edge_rounds,
             clamp_miss=cfg.clamp_miss,
-            unbounded_pack=cfg.unbounded_pack)
+            unbounded_pack=cfg.unbounded_pack,
+            census_required=(cfg.census_required
+                             and grid.stride > 1))
         arrange_wall = time.perf_counter() - _t_arr
         cent = {v: grid.Minv @ (tpts[v] - grid.c) for v in cent}
         # raw stair-E (recorded trajectory metric)
@@ -572,9 +596,16 @@ def attract_embed(
         books = arm_books(tpts, src_adj, grid, kappa=kappa,
                           floor=cfg.span_floor, snap=eff_snap,
                           min_span=0.0)
-        seed_chains = wire_seeds_iv(grid, tpts, books[1],
-                                    src_adj=src_adj, snap=eff_snap,
-                                    books=books)
+        conv_info = None
+        if cfg.exact_convert and grid.stride > 1 and grid.wire_map:
+            from ember_qc.algorithms.factored.field import (
+                wire_seeds_exact)
+            seed_chains, conv_info = wire_seeds_exact(
+                grid, tpts, books[1], src_adj, books)
+        else:
+            seed_chains = wire_seeds_iv(grid, tpts, books[1],
+                                        src_adj=src_adj, snap=eff_snap,
+                                        books=books)
         if eff_exact:
             seed_chains, ex_info = complete_seeds(
                 grid, seed_chains, src_adj, adj)
@@ -743,6 +774,18 @@ def attract_embed(
             if k in last_info:
                 diag[k] = int(last_info[k])
         diag["seeds_submitted"] = bool(seeds_submitted)
+        if conv_info is not None:
+            diag["convert_miss"] = int(conv_info["convert_miss"])
+            diag["convert_flips"] = int(conv_info["convert_flips"])
+            # s3.97 certificate: the conditional theorem's premise —
+            # every arm seated its required hull AND completion closed.
+            # The validity verifier stays as the paranoia net; this is
+            # the pre-claims PREDICTION, checkable against it.
+            diag["certified"] = bool(
+                conv_info["convert_miss"] == 0
+                and ex_info is not None
+                and ex_info.get("deficit_edges", 1) == 0
+                and ex_info.get("corner_deficit", 1) == 0)
         _mes = 0.0
         for _u in src_adj:
             for _v in src_adj[_u]:
