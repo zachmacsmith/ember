@@ -277,6 +277,92 @@ class AttractConfig:
                                # exactly). With tail="ball" this is the
                                # grind-replacement stack. OFF = balls
                                # only (s3.75 selector).
+    align_moves: bool = True
+                               # s3.100 (alignment reinsertion): the
+                               # cluster pass's executor becomes the
+                               # interleaving DP — units are removed
+                               # from the axis order and reinserted at
+                               # the exact optimum over ALL merges with
+                               # the rest (forward and reversed), with
+                               # induced-rule pricing on the y-axis
+                               # (contacts re-derived per candidate —
+                               # orientation freedom inside a GATED
+                               # composite, the structural fix the
+                               # orient_flips probe demanded) and
+                               # frozen-net pricing on x (exact there).
+                               # Same nominations and gate as gathers;
+                               # riffled placements (the fold's atom)
+                               # come out of the same DP when optimal.
+                               # DEFAULT ON (Max, 2026-08-20: it wins
+                               # and there are reasons behind it
+                               # winning — s3.100b board: 6 cells won,
+                               # nothing beyond tol, turán exact
+                               # 10/10). False = the gather executor
+                               # (the control arm).
+    arrange_mode: str = "orders"
+                               # s3.102 (the seat engine): "seats"
+                               # replaces the arrange step with the v5
+                               # prototype — state = carried integer
+                               # seats, moves = exhaustive exact
+                               # single-variable re-seat + rigid unit
+                               # translation, strict descent on ONE
+                               # objective (raw stair energy + per-tile
+                               # cover hinge²) with proposer == judge.
+                               # Init (spectral ranks + one exact pack)
+                               # and the whole adapter/tail are shared
+                               # verbatim — perfectly paired vs the
+                               # default. "orders" = the shipped
+                               # order-state arrange (default).
+    align_insert: bool = False
+                               # s3.101 (truth round, A): the insertion
+                               # sweeps' proposer becomes |S|=1
+                               # alignment DP sweeps — exact
+                               # induced-rule pricing over ALL slots —
+                               # replacing _order_proxy's O(n^2)
+                               # symmetric double-coverage energy (the
+                               # pre-s3.34 objective). Same composition
+                               # and composite judging. OFF = the proxy
+                               # sweeps (control arm).
+    census_required: bool = False
+                               # s3.97 required-hull census, RESTORED
+                               # s3.101 from archive 09467299: the gate
+                               # census prices the spans the converter
+                               # will actually claim (parity targets +
+                               # corner) instead of the books hulls —
+                               # the s3.73 blind spot made visible.
+                               # Refuted as inert against the GATHER
+                               # move set; re-measured against align's
+                               # exact proposals, which reach the claim
+                               # margin the old moves never did.
+                               # Stride-gated (parity is meaningless at
+                               # stride 1). OFF = books-hull census.
+    cap_pressure: bool = False
+                               # s3.101 (truth round, C): the alignment
+                               # DP's screen objective gains per-line
+                               # crossing-depth hinge^2 pressure on the
+                               # moving axis's own arms (whose
+                               # perpendicular lines are STATIC during
+                               # the move) — the level-1-vs-2 capacity
+                               # blindness priced with no new DP state.
+                               # OFF = capacity-blind screen (control).
+    orient_flips: bool = False
+                               # s3.99 (the y-rule relaxation): per-edge
+                               # orientation bits — who spends h-arm vs
+                               # v-arm — initialized from the diagonal
+                               # rule, then improved by a deterministic
+                               # strict-descent flip pass inside the
+                               # readout (each flip re-prices exactly
+                               # four hull spans; descent from the
+                               # y-rule, so seed stair-E is never worse
+                               # than the rule it relaxes). Contacts
+                               # stay a readout of the orders, never
+                               # state. Target: the extreme-rank hub
+                               # pathology (one arm paying a whole
+                               # neighbourhood hull — the suspected
+                               # liquid blight driver) and the medium-
+                               # density orientation freedom.
+                               # Fabric-agnostic. OFF = the y-rule
+                               # control arm.
 
 
 def _auto_bins(n_qubits: int) -> int:
@@ -338,8 +424,9 @@ def attract_embed(
             cfg = replace(cfg, **picked)
 
         from ember_qc.algorithms.factored.field import (
-            TileGrid, _target_kappa, alternate_arrange, arm_books,
-            bar_widths, complete_seeds, stair_energy, wire_seeds_iv)
+            TileGrid, _oriented_contacts, _target_kappa,
+            alternate_arrange, arm_books, bar_widths, complete_seeds,
+            stair_energy, wire_seeds_iv)
 
         adj = build_adjacency(target_graph)
         qubits = sorted(adj)
@@ -418,7 +505,12 @@ def attract_embed(
         # Galerkin-defect instrumentation (s3.69): stair-E of the raw
         # interpolated init — with the final stair_E below, attributes
         # what the junction hands over vs what arrange must repair.
-        E_interp = round(stair_energy(tpts, src_adj), 1)
+        # s3.99: priced under the same orientation rule as the gates,
+        # so the two ends of the attribution stay comparable.
+        E_interp = round(stair_energy(
+            tpts, src_adj,
+            contacts=(_oriented_contacts(tpts, src_adj)
+                      if cfg.orient_flips else None)), 1)
         E_contract = E_interp
         # s3.70 cluster moves: the aggregation hierarchy's groups, in
         # FINE ids, one list per level (coarsest last). Position-free —
@@ -446,22 +538,70 @@ def attract_embed(
                         cluster_groups.append(_g)
                 cluster_groups = cluster_groups or None
         _t_arr = time.perf_counter()
-        tpts, last_info = alternate_arrange(
-            tpts, src_adj, grid, iters=cfg.arrange_iters,
-            kappa=kappa, floor=cfg.span_floor,
-            insert_sweeps=cfg.insert_sweeps,
-            overload_lam=eff_lam, snap=eff_snap,
-            deadline=placement_deadline,
-            cluster_groups=cluster_groups)
+        if cfg.arrange_mode == "seats":
+            # s3.102 seat engine: the same init + ONE exact pack (the
+            # global skeleton that wins dense), then the seat search;
+            # everything downstream identical
+            from ember_qc.algorithms.factored.seat import seat_arrange
+            tpts, _proj_info = alternate_arrange(
+                tpts, src_adj, grid, iters=1, kappa=kappa,
+                floor=cfg.span_floor, insert_sweeps=0,
+                overload_lam=eff_lam, snap=eff_snap,
+                deadline=placement_deadline, cluster_groups=None)
+            def _pack_move(p):
+                # the blessed packer as a global move (s3.104: the
+                # borrowed order-engine iteration is gone — gathers are
+                # native now; NOTE for the purge round: a thin direct
+                # pack-only wrapper would shed this wrapper's internal
+                # monotonize)
+                out, _pi = alternate_arrange(
+                    p, src_adj, grid, iters=1, kappa=kappa,
+                    floor=cfg.span_floor, insert_sweeps=0,
+                    overload_lam=eff_lam, snap=eff_snap,
+                    deadline=placement_deadline, cluster_groups=None)
+                return out
+
+            tpts, last_info = seat_arrange(
+                tpts, src_adj, grid, cluster_groups,
+                lam=(eff_lam if eff_lam > 0 else 1.0),
+                deadline=placement_deadline, pack_move=_pack_move)
+            # the seat search's capacity is soft (hinge); the claim
+            # layer needs a hard-capacity state — one exact pack per
+            # axis legalizes the seat-discovered orders (the single
+            # remaining conversion, smoke-measured necessary: without
+            # it turán 6.0 -> 15.5 with mx 28)
+            tpts, _legal_info = alternate_arrange(
+                tpts, src_adj, grid, iters=1, kappa=kappa,
+                floor=cfg.span_floor, insert_sweeps=0,
+                overload_lam=eff_lam, snap=eff_snap,
+                deadline=placement_deadline, cluster_groups=None)
+        else:
+            tpts, last_info = alternate_arrange(
+                tpts, src_adj, grid, iters=cfg.arrange_iters,
+                kappa=kappa, floor=cfg.span_floor,
+                insert_sweeps=cfg.insert_sweeps,
+                overload_lam=eff_lam, snap=eff_snap,
+                deadline=placement_deadline,
+                cluster_groups=cluster_groups,
+                orient_flips=cfg.orient_flips,
+                align_moves=cfg.align_moves,
+                census_required=(cfg.census_required
+                                 and grid.stride > 1),
+                align_insert=cfg.align_insert,
+                cap_pressure=cfg.cap_pressure)
         arrange_wall = time.perf_counter() - _t_arr
         cent = {v: grid.Minv @ (tpts[v] - grid.c) for v in cent}
-        # raw stair-E (recorded trajectory metric)
-        stair_E = round(stair_energy(tpts, src_adj), 1)
 
         # one accounting: the seeds read the SAME books the gates used
+        # (s3.99: the flag must reach this recomputation too, or the
+        # seeds would be built under y-rule bits while the layout was
+        # gated under flipped ones — the two-books bug)
         books = arm_books(tpts, src_adj, grid, kappa=kappa,
                           floor=cfg.span_floor, snap=eff_snap,
-                          min_span=0.0)
+                          min_span=0.0, orient_flips=cfg.orient_flips)
+        # raw stair-E (recorded trajectory metric), priced on the same
+        # contacts the seeds consume
+        stair_E = round(stair_energy(tpts, src_adj, contacts=books[0]), 1)
         conv_info = None
         if grid.stride > 1 and grid.wire_map:
             from ember_qc.algorithms.factored.field import (
@@ -584,6 +724,32 @@ def attract_embed(
         # metric: the worst post-arrange edge span in line units (the
         # s3.87 statistic, now first-class)
         diag["orient_accepts"] = int(last_info.get("orient_accepts", 0))
+        # s3.99 orientation-flip counters (arrange-side accumulation)
+        diag["flip_accepts"] = int(last_info.get("flip_accepts", 0))
+        diag["flip_sweeps"] = int(last_info.get("flip_sweeps", 0))
+        # s3.100 alignment-move counters
+        diag["align_props"] = int(last_info.get("align_props", 0))
+        diag["align_noops"] = int(last_info.get("align_noops", 0))
+        diag["align_memo"] = int(last_info.get("align_memo", 0))
+        # s3.101 revert attribution: which gate side refused (census
+        # rose = the level-1-vs-2 capacity gap's fingerprint)
+        diag["revert_ov"] = int(last_info.get("revert_ov", 0))
+        diag["revert_e"] = int(last_info.get("revert_e", 0))
+        # s3.102 seat-engine counters
+        if cfg.arrange_mode == "seats":
+            diag["seat_accepts"] = int(last_info.get("seat_accepts", 0))
+            diag["trans_accepts"] = int(
+                last_info.get("trans_accepts", 0))
+            diag["seat_passes"] = int(last_info.get("passes", 0))
+            diag["seat_fast_miss"] = int(
+                last_info.get("fast_miss", 0))
+            diag["pack_accepts"] = int(last_info.get("pack_accepts", 0))
+            diag["mono_accepts"] = int(last_info.get("mono_accepts", 0))
+            diag["swap_accepts"] = int(last_info.get("swap_accepts", 0))
+            diag["gather_accepts"] = int(
+                last_info.get("gather_accepts", 0))
+            diag["accept_traj"] = list(
+                last_info.get("accept_traj", []))[:12]
         # s3.93 fit-vs-fabric observables + seed submission
         for k in ("final_width_x", "final_width_y",
                   "projection_misses", "unb_miss"):

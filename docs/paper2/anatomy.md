@@ -49,8 +49,10 @@ fallback rebuild and the minorminer-analysis family).
 The ladder is coarse→fine→coarse: cluster moves teleport, the grind
 polishes chains, ball re-lays neighborhoods at the end (ball before
 the grind was measured worse, s3.80 — nothing may narrow the grind's
-basin). Steps 1–4 live on the ideal infinite crossbar and never touch
-hardware facts; steps 5–8 are the adapter and its nets.
+basin) (I still stand in incredible disbelief of this, surely this is 
+only happening because something else is going on somewhere else and 
+it's rippling to effect us here). Steps 1–4 live on the ideal infinite 
+crossbar and never touch hardware facts; steps 5–8 are the adapter and its nets.
 
 ## 0.5 The five hardware facts
 
@@ -150,6 +152,14 @@ exactly, and on sparse graphs it decays gracefully into short local
 arms. Paying for each edge once (instead of at both possible crossings)
 halved seed cost when introduced (s3.34). The rule depends only on the
 y-*order* — which is what makes orders a sufficient state.
+
+*Lever (s3.99, default OFF):* `orient_flips` relaxes the y-keying —
+per-edge orientation bits initialized from the rule, improved by a
+strict-descent flip pass on raw hull spans (never worse than the rule
+at seed level; contacts stay a derived readout). Measured mixed: wins
+king/spin_glass/P16-ws, regresses dense K100 both fabrics — the flip
+pass is un-gated inside the readout and the claim-margin blind spot
+(s3.73) has no voice there. See notes s3.99 and the attraction.md row.
 
 ### 3b. Bars
 
@@ -318,8 +328,14 @@ throughout; the deadline is checked between iterations.
   revert on the full gate. Up to two accepted composites per call.
   This is the global relocation move that makes block structure emerge
   from any init (s3.36).
-- **Cluster composites.** The same composite mechanism, but the
-  proposal is "gather this hierarchy unit into a contiguous block of
+- **Cluster composites.** The same composite mechanism; since s3.100b
+  (default) the executor is the ALIGNMENT DP: the unit is removed from
+  the axis order and reinserted at the exact optimum over all
+  interleavings with the rest (forward and reversed block), with
+  induced-rule pricing on y (contacts re-derived per candidate) and
+  frozen-net pricing on x, plus an unchanged-context memo.
+  `align_moves=False` restores the old gather executor described next:
+  "gather this hierarchy unit into a contiguous block of
   ranks" (both axes, coarsest units first). Units come from the
   affinity coarsening (§4.5); members are moved as one proposal, on
   real positions, judged by the ordinary gate with strict descent —

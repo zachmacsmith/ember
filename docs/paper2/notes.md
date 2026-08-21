@@ -994,6 +994,291 @@ grind-replacement front), bar_domains (parked, unblock condition
 recorded), wire_seeds_iv (P16/untyped), _coarsen_agg (live in the
 default init), all of data/ (history).
 
+**3.99 (orientation flips — the y-rule relaxation, first measurement).**
+Design discussed with Max 2026-08-19: the stair rule's y-keyed
+orientation is a one-order-era artifact; the real freedom is a per-edge
+bit, and the safe relaxation is strict-descent flips FROM the y-rule
+(each flip re-prices exactly four raw hull spans, so seed stair-E can
+never exceed the rule it relaxes; the hub-blight hypothesis — an
+extreme-rank hub pays a whole neighbourhood hull on one arm — named as
+the target). Built as `orient_flips` (default OFF): `_flip_contacts` /
+`_oriented_contacts` in the readout, threaded through arm_books, the
+seed books, and a mode-aware staleness fence; `edge_monotonize` now
+takes the LIVE bits (a fresh y-rule recompute inside it would gate
+swaps on nets the pipeline no longer prices — found in design
+validation, fixed before first run; flag-off byte-identical, 606 tests
+green). Probe (`data/orient_probe.csv`, 13 cells, 10 seeds on the
+deciders): **mixed — wins exactly where geometry is frustrated, loses
+exactly where the gate is blind.** Wins: king −0.145 with mx 3.3→2.7
+(recovering the s3.93 open regression, both metrics), spin_glass
+−0.098, P16 ws −0.120 with mx 12.7→11.0, P16 turán −0.054. Parity:
+turán/Z12 exact 6.000 on 10/10 (the diagonal is flip-free by mirror
+symmetry, as predicted), ws/Z12 2.55 vs 2.56 at 10 seeds (the smoke's
+seed-0 −0.118 was noise), K140, honeycomb. Losses: **dense K100 on
+BOTH fabrics** — Z12 +0.33 with mx 8→10 and the skip gate firing in
+both arms (a deterministic seed-quality regression, not legalization
+noise), P16 +0.79; regular +0.128 with mx 6→7; grid wall flag (arrange
++2.2 s of flip cost; the rest of the +12 s total tracks the load ramp
+4→21). Lever stays OFF per the pre-registered rule (no win beyond tol;
+one regression beyond it). The mechanism reading, sharper than the
+fold's version of the same lesson: **the flip pass is un-gated by
+construction** — it lives inside the readout, accepts on raw hull
+spans alone, and since every flip weakly lowers stair-E the E-gate
+could never veto one anyway; the claim layer (parity/nesting on
+complete junctions — K100/Z12 skip-fired both arms, so junction
+existence is NOT the mechanism) has no voice at the only decision
+point. The blind spot s3.73 measured as a margin is load-bearing the
+moment a new degree of freedom prices against it. Named candidate
+responses (to discuss): a claim-aware flip margin (flip only when the
+hull-span gain clears a parity/nesting toll), or batch flips per
+vertex (the single-flip activation barrier on hubs — one leaf +4, all
+ten −25 — is measured arithmetic, notes of the design session), or
+accepting the regime split and gating flips off the certified path.
+Hub-blight verdict: NOT confirmed on Z12 liquids (ws mx 8.2→8.2,
+regular mx worse); the max-chain wins landed on king and P16 ws
+instead.
+
+**3.100 (alignment reinsertion — the interleaving DP, first
+measurement).** Design settled with Max 2026-08-19: the cluster pass's
+executor becomes an alignment DP — a unit is removed from the axis
+order and reinserted at the exact optimum over ALL interleavings with
+the rest (both sequences keep internal order; the reversed block
+competes), replacing the gather's one-position screen. Two structural
+upgrades landed in the build: **induced-rule pricing** on the y-axis
+(the stair rule is an order statistic of the y-order and the DP builds
+that order bottom-up, so contacts are re-derived per candidate — the
+y-staleness every y-composite carried is deleted, and orientation
+freedom arrives INSIDE a gated composite, the fix the s3.99 defect
+demanded), and exact frozen-net pricing on x. Pricing verified exact
+by test: DP best == brute-force min of ground-truth stair energy over
+all merges x orientations, both axes (`TestAlignReinsert`); 615 tests
+green; switch `align_moves`, default OFF. Probe
+(`data/align_probe.csv`, 13 cells, 10 deep seeds): **the gated route
+works where s3.99's un-gated flips failed — dense Zephyr improves
+(K100 −0.060, K140 −0.107) instead of regressing — plus spin_glass
+−0.208, king −0.119 (mx 3.3→2.7, the s3.93 open regression again
+recovered), grid −0.031, P16 ws −0.078 (mx 12.3→11.3), turán exact
+6.000 on 10/10.** Held OFF by two named defects: (1) **wall** — the
+DP's Python constants eat placement budget (turán arrange 6.9→30 s,
+regular 7→30, honeycomb 3.5→20; spin_glass won anyway), a mechanical
+fix (numpy-ified neighbour setup + the fold-style unchanged-context
+memo); (2) **the s3.73 gate blind spot, now actively exploited** — ER
++0.600 (426 accepted composites on an expander where gathers accept
+~none; stair-E-real, claim-layer-fictional — the sub-capacity
+parity/nesting margin) and P16 K100 +0.604 (junction fictions, the
+fold's defect verbatim, at only 5.8 s arrange — genuine mispricing,
+not budget). The sharpened lesson: **a stronger proposal optimizer
+makes the judge's blind spots load-bearing** — the gate energy that
+was good enough for weak moves is now the binding constraint, which
+re-motivates the exact-census pricing line (s3.97's census_required
+was inert at lam=1 against the OLD move set; against align's exact
+proposals that inertness claim needs re-measurement). Verdict: lever
+OFF per the pre-registered rule; the campaign order is perf fix →
+re-probe → gate-pricing round.
+
+**s3.100b (the perf round — profiled, not guessed).** The DP was not
+the hog: setup vectorization + a per-row minimum.accumulate DP (the
+right/down grid recurrence collapses each line to one running-min)
+gave 2.5x per call, but the profile showed **15.5 of turán's 19.8 s
+arrange was edge_monotonize inside the composites** — ~700k full
+h_total re-reductions, a pre-existing cost that align's stronger
+proposals expose. Fix: incremental per-net span accounting in
+edge_monotonize (a swap re-prices only the nets containing its two
+endpoints against a cached row-span vector) — decisions provably
+identical on integer line indices, pinned by a permanent oracle test
+against the old evaluator (the s3.92 pattern); benefits the DEFAULT
+pipeline too. Plus the unchanged-context memo (fingerprint of global
+positions; state-preserving outcomes only). 616 tests green. Re-probe
+(`data/align_probe.csv`; v1 archived as `align_probe1.csv`): **every
+ACL bar now passes.** ER +0.600 → +0.160 (three-quarters of the v1
+regression was budget displacement, as hypothesized; the in-tol
+residue is the gate blind spot's true size there), P16 K100 +0.604 →
++0.360 (in-tol at that cell's 5% band), regular +0.112, ws/Z12 +0.036
+≈ parity at 10 seeds. Wins unchanged: K100 −0.060, K140 −0.107,
+spin_glass −0.208, king −0.119 (mx 3.3→2.7), grid −0.031, honeycomb
+−0.025; turán exact 6.000 on 10/10. Remaining flags are wall-only
+(spin_glass 37.6→50.7 s, honeycomb 20.7→29.9 of the 60 s budget):
+the align arm now SPENDS more of its allowed budget on cells that
+used to finish early — and wins them. **DEFAULT FLIPPED (Max, 2026-08-20: "it wins and there's reasons
+behind it winning")** — `align_moves=True`; the gather executor
+survives as the control arm. The gate-pricing round (re-measuring
+s3.97's census inertness against this move set) remains the named
+attack on the in-tol expander/Pegasus residue. CORRECTED (Max's
+question, 2026-08-20): gate pricing targets FALSE ACCEPTS only (the
+gate-vs-reality gap). The ws revert volume (584 vs 42 accepts) is the
+OTHER gap — proposal-view-vs-gate, dominated by the DP's capacity
+blindness — which gate pricing does not shrink (and may slightly
+widen); revert COST was already slashed by the s3.100b monotonize fix,
+and an early-bail inside the composite (the applied state's
+stair+census is known before the packs run) is the named cheap cut if
+the residue matters. Capacity awareness inside the proposal DP itself
+is explicitly NOT planned (the complexity it would import into the
+proposer is the reason the two-level design exists).
+
+**3.101 (the truth round — three level boundaries priced, first
+measurement).** Built as planned (625 tests green, all switches
+default OFF): `align_insert` (|S|=1 alignment DP replaces
+_order_proxy's O(n²) double-coverage energy under the insertion
+sweeps; long-net-quartile nomination as the wall guard),
+`census_required` (the s3.97 required-hull gate term restored verbatim
+from archive 09467299 with its monotonicity test; stride-gated),
+`cap_pressure` (per-line crossing-depth hinge² folded into the
+alignment DP's gap pricing — the screen objective becomes energy +
+capacity pressure with no new DP state; verified by a brute-force
+oracle of the pressured objective), and the revert-attribution
+counters (census-rose vs energy-rose, per composite). Probe
+(`data/truth_probe.csv`, cumulative arms, 10 deep seeds on deciders):
+
+- **The 1→2 gap measured (Max's question): the proposal view's
+  capacity blindness is nearly the whole story on sparse cells** — ws
+  472 census-reverts vs 72 energy-reverts (87%), regular 726 vs 7
+  (99%). And it is regime-diagnostic: spin_glass inverts (1 vs 404 —
+  its reverts are footprint-gap, not capacity).
+- **census_required is NOT inert against this move set** (the s3.97
+  verdict was move-set-relative, as suspected): ws/Z12 −0.050 at 10
+  seeds, P16 ws −0.070, dense/crystals byte-inert (identical counters
+  — structurally inert where it doesn't bind), no regression beyond
+  tol anywhere. The lam=4 escalation over-trades exactly as the old
+  doctrine said (turán 6.09, P16 K100 +0.224) — REFUTED, lam=1 right.
+- **cap_pressure is the arm that moves the liquids** — ws/Z12
+  2.634→2.514 (−0.120, mx 8.4→8.0) and P16 ws −0.148 (mx 11→10.3),
+  the predicted monotone gradient across the stack on both fabrics —
+  **but it regresses ER +0.577**: the attribution shows the mechanism
+  (ER's revert counts barely move, 253→251) — the pressure doesn't
+  prevent doomed proposals there, it DISTORTS the ranking among
+  candidates: on a uniformly-crowded expander every line sits at the
+  hinge, so the pressure integral swamps the tiny energy differences
+  and steers merges by capacity noise. A units/normalization question,
+  not a mechanism refutation; unresolved.
+- `align_insert` alone is near-inert on the board (byte-identical on
+  most cells; spin_glass +0.135 in-tol its one delta) — the proxy's
+  candidate restriction was not costing outcomes; the replacement's
+  value is consolidation (deletes the O(n²) proxy dependency), not
+  quality.
+- turán exact 6.000 10/10 on every arm except the refuted lam-4; no
+  wall flags anywhere.
+
+Verdict: no default flips by the pre-registered rule (inscap's ER
++0.577 is beyond tol; insreq's wins are sub-tol). The live design
+question for the owner: insreq is strictly safe with small liquid
+wins; cap_pressure's liquid wins are real and its ER defect is a
+pressure-units problem (candidate fixes: normalize the hinge to the
+energy scale, or hinge only above pool+1, or restrict pressure to
+lines the census already flags). Levers all OFF pending that
+discussion.
+
+**3.102 (the seat engine — v5 prototype, built and first-measured).**
+Decided with Max: the three-level architecture exists to make two DPs
+possible by freezing what they can't carry; the alternative paradigm is
+crossfinder's loop (s3.90) with the STATE on the ideal plane — carried
+integer seats, capacity a COUNT (both recorded crossfinder killers are
+claim-level artifacts with no plane referent). Built (`seat.py`,
+`arrange_mode="seats"`, default "orders"; init + adapter + tail shared
+verbatim): one objective (raw stair + per-tile cover hinge², proposer
+== judge, reference-scored acceptance — strict descent unconditional),
+two moves (exhaustive exact single-variable re-seat; rigid unit
+translation with full boundary-vertex hull recompute — cross-boundary
+edges can flip the arm assignment, Max's catch) plus the exact packer
+as a gap-free pack-move. Three measured corrections in-session: soft
+capacity needs one hard-pack legalization after the search (turán
+15.5→9.1 without it); a translate work-bound (2→6 passes, real
+convergence); the pack-move itself (turán declined it — informative).
+633 tests green incl. brute-force oracles for both moves and the
+contact-flip case. Probe (`data/seat_probe.csv`, 10 deep seeds on
+deciders): **a ~250-line engine at its first board wins K100/Z12
+−0.170, ER −0.173 (the cell the s3.101 truth round could not move),
+king −0.052, regular −0.047, and holds ws at parity (−0.003 with max
+chain 8.3→8.1) — while losing the turán crystal family decisively
+(Z12 +1.91, P16 +1.18) and spin_glass +0.249.** The turán loss is
+mechanistically understood and was converged (accept-free fixpoint,
+25s): the twin-block diagonal ORDER is discovered by the order moves
+(monotonize's sorting network, gathers) that the seat engine
+deliberately lacks — the packer alone cannot reach it from seat-space
+fixpoints (pack-move declined). Note K100's crystal IS reachable
+(seats beat default there): the loss is specifically the bipartite
+twin-block structure. Also measured: seats' raw placement beats the
+ENTIRE order machinery on ws pre-tail (3.63 vs 3.68 no-tail, seed 0).
+Open: fast-grid ranking noise on liquids (fast_miss high — collision
+corrections omitted; audit width 4), and the v5 synthesis question —
+which halves of the two engines belong together. Lever stays
+"orders"; owner discussion next.
+
+**3.103 (the crystal rescue — the seat/orders synthesis, and the
+Pegasus fact resurfacing).** Max's mandate: keep the seat paradigm
+("the two orders alternative is not something I want to go back to").
+The arc, all arms measured on turán/Z12 seed 0 no-tail: mono_move
+borrowed as a proposal (9.07, converged — insufficient late); pass
+reordering (marginal); native 3-mode pairwise swaps built with O(1)
+ext4 third-party updates, oracle-exact (`_swap_exact`; 10.15 — greedy
+fine swaps narrowed the coarse basin, the s3.80 lesson inside the
+engine); the coarse-first ladder (8.49); and the answer hiding behind
+all four: **one full order-engine iteration (packs + monotonize +
+gathers) borrowed as a SINGLE proposal, re-scored on the seat
+objective — turán lands exactly 6.000/mx 6, converged.** The v5 shape
+this proves: carried seats, one objective, proposer == judge, native
+seat moves, and the entire two-orders machinery demoted to one
+proposal generator the engine is free to decline. Board
+(`data/seat_probe.csv`, synthesized engine): **Z12 at effective
+parity-or-better with the shipped default across the board** — K100
+−0.170, regular −0.076, ER −0.020, ws +0.007 (mx 8.2→8.1), turán
+6.076 at 10 seeds (one seed FAILED to embed — a feasibility miss vs
+default's 10/10, open), lattices/spin_glass within noise. **P16 is
+the catastrophe and the diagnosis is the oldest fact in the file:**
+turán/P16 21.5 with mx 46 — the seat objective's cover counts assume
+crossing = coupler, which is FALSE on 56% junctions; the fold's s3.89
+defect, now in the seat engine's own capacity model, plus orders_move
+wall blowups (P16 K100 60.5 s). The paradigm's counts are truth
+exactly where junctions are complete — the engine as built is a
+ZEPHYR engine, and the honest first-release shape is the same stride
+gate every exactness mechanism carries (a hardware fact, not tuning);
+the real generalization is predicate-aware cover accounting (ideas
+§3 "Pegasus"). Walls also flagged on Z12 dense/lattice cells
+(orders_move cost per pass — cadence tuning open). Lever stays
+"orders"; 634 tests green; owner call on the Z12-gated flip vs the
+predicate round first.
+
+**3.104 (the native gather — built, oracle-green, and the round's real
+finding: OUR judge lies on the crystal).** The borrowed `_orders_move`
+deleted; the native gather built under the evict-S schema ("restrict
+the family, never the fidelity" — expressivity lives in the CANDIDATE
+SET: contiguous insert at {mean, bottom, top} x {forward, reversed}
+per axis, pure splice + rank-wise multiset reassignment, displacement
+by construction, every candidate reference-judged; 635 tests green
+incl. its brute-force oracle). It works as a move: turán 8.49 → 7.44
+with 13 accepts, genuine coarse fixpoint. But the pre-registered 6.1
+bar is unreachable by ANY move, measured directly: **the orders
+engine's crystal layout scores seat_energy 1766 while the seat
+engine's stalled non-crystal state scores 1704 — the seat objective
+(raw hulls + above-pool hinge) PREFERS the layout that converts to
+~7.4 ACL over the one that converts to 6.0.** The sub-pool
+nesting/parity blindness (the s3.73 class) is inside our own
+objective; s3.103's turán 6.000 was PATH LUCK (the borrowed proposal
+was accepted early, before the engine dug below the crystal's energy —
+consistent with the probe's 9/10 with variance). Matthew 23:26 lands
+on the objective itself: the inner cup is the energy. CORRECTED same session (three follow-up measurements, Max's
+what-objective question): (1) qubit pricing (per-arm ceil((L+1)/2))
+TIES the two states at exactly 972 — the unit-error story is refuted;
+(2) the required-hull census barely separates them (1.0 vs 0.0);
+(3) converting BOTH states through the real claim path: crystal →
+seeds ACL 7.04, deficits 0, COMPLETE; stalled → seeds ACL 6.84 but
+**73 deficit edges** — its cheaper seeds are bought with unfinished
+coverage, and the 6.0-vs-7.4 endpoint difference is the tail working
+from a complete vs an incomplete start. So the quantity that actually
+separates them is **completability** — whether the designated
+crossings can all be realized — and EVERY plane-resolution term we
+own (junction-stair, qubit-stair, tile hinge, required-hull hinge)
+is blind to it, including s3.97's census (1 unit vs 73 deficits: the
+blind-spot indictment now reaches the required census itself). The
+separating structure is still deterministic ideal-Zephyr arithmetic
+(course parity, per-junction wire seats — fabric structure, not
+defects), so this is a RESOLUTION gap, not NP-mortality leaking in —
+but the hope that one line-resolution objective suffices on dense is
+measured dead. Open (diagnose before designing): WHERE do the 73
+deficits come from — which per-junction/parity condition does the
+stalled layout violate that the crystal satisfies, and what is the
+cheapest plane-computable term that predicts it. Probe not spent;
+lever stays "orders".
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).

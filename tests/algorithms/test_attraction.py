@@ -267,3 +267,104 @@ class TestOrderState:
         for v, p in out.items():
             assert float(p[0]).is_integer(), (v, p)
             assert float(p[1]).is_integer(), (v, p)
+
+
+class TestOrientFlips:
+    """s3.99: the orient_flips switch — a known AttractConfig field,
+    threaded end to end; the on-arm stays valid and deterministic and
+    surfaces its counters."""
+
+    def test_knob_is_a_known_field(self):
+        from dataclasses import fields
+        from ember_qc.algorithms.factored.placement import AttractConfig
+        names = {f.name for f in fields(AttractConfig)}
+        assert "orient_flips" in names
+        assert AttractConfig().orient_flips is False  # control arm default
+
+    def test_flips_on_valid_deterministic_with_diag(self, chimera, source):
+        a = attract_embed(source, chimera, timeout=60, seed=0,
+                          orient_flips=True)
+        b = attract_embed(source, chimera, timeout=60, seed=0,
+                          orient_flips=True)
+        assert a["embedding"]
+        assert validate_embedding(a["embedding"], source, chimera)
+        assert a["embedding"] == b["embedding"]
+        assert "flip_accepts" in a["diag"] and "flip_sweeps" in a["diag"]
+        assert a["diag"]["flip_sweeps"] >= 1
+
+    def test_flips_on_zephyr_valid(self, source):
+        import dwave_networkx as dnx
+        z = dnx.zephyr_graph(3, 4)
+        r = attract_embed(source, z, timeout=60, seed=0,
+                          orient_flips=True)
+        assert r["embedding"]
+        assert validate_embedding(r["embedding"], source, z)
+
+
+class TestAlignMoves:
+    """s3.100: the align_moves switch — known field, threaded end to
+    end; the on-arm stays valid and deterministic with counters."""
+
+    def test_knob_is_a_known_field(self):
+        from dataclasses import fields
+        from ember_qc.algorithms.factored.placement import AttractConfig
+        names = {f.name for f in fields(AttractConfig)}
+        assert "align_moves" in names
+        # DEFAULT ON since s3.100b (winners ship); False = control arm
+        assert AttractConfig().align_moves is True
+
+    def test_align_on_valid_deterministic_with_diag(self, chimera, source):
+        a = attract_embed(source, chimera, timeout=60, seed=0,
+                          align_moves=True)
+        b = attract_embed(source, chimera, timeout=60, seed=0,
+                          align_moves=True)
+        assert a["embedding"]
+        assert validate_embedding(a["embedding"], source, chimera)
+        assert a["embedding"] == b["embedding"]
+        assert "align_props" in a["diag"] and "align_noops" in a["diag"]
+
+    def test_align_on_zephyr_valid(self, source):
+        import dwave_networkx as dnx
+        z = dnx.zephyr_graph(3, 4)
+        r = attract_embed(source, z, timeout=60, seed=0,
+                          align_moves=True)
+        assert r["embedding"]
+        assert validate_embedding(r["embedding"], source, z)
+        assert r["diag"]["align_props"] + r["diag"]["align_noops"] >= 0
+
+
+class TestTruthRoundKnobs:
+    """s3.101: align_insert / census_required / cap_pressure — known
+    fields, default off, valid and deterministic when on, stride gate
+    on the census."""
+
+    def test_knobs_are_known_fields_default_off(self):
+        from dataclasses import fields
+        from ember_qc.algorithms.factored.placement import AttractConfig
+        names = {f.name for f in fields(AttractConfig)}
+        cfg = AttractConfig()
+        for k in ("align_insert", "census_required", "cap_pressure"):
+            assert k in names
+            assert getattr(cfg, k) is False
+
+    def test_each_switch_valid_deterministic_on_zephyr(self, source):
+        import dwave_networkx as dnx
+        z = dnx.zephyr_graph(3, 4)
+        for kw in ({"align_insert": True}, {"census_required": True},
+                   {"cap_pressure": True}):
+            a = attract_embed(source, z, timeout=60, seed=0, **kw)
+            b = attract_embed(source, z, timeout=60, seed=0, **kw)
+            assert a["embedding"], kw
+            assert validate_embedding(a["embedding"], source, z)
+            assert a["embedding"] == b["embedding"], kw
+            assert "revert_ov" in a["diag"] and "revert_e" in a["diag"]
+
+    def test_census_required_stride_gated_off_chimera(self, chimera,
+                                                      source):
+        # parity is meaningless at stride 1: the knob must be
+        # byte-identical to default off Zephyr
+        a = attract_embed(source, chimera, timeout=60, seed=0)
+        b = attract_embed(source, chimera, timeout=60, seed=0,
+                          census_required=True)
+        assert a["embedding"] == b["embedding"]
+        assert a["stair_E"] == b["stair_E"]

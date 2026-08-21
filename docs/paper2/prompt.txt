@@ -37,3 +37,24 @@ to my notes after you have an answer, or check them at a later time) take the pr
 consideration, but don't get too stuck on its suggestions. I want to make sure all good ideas 
 out there have been thought of.
 
+other thing:
+give the paper2 notes files a critique. I'm curious to know what you think. I've recently 
+been thinking a lot about the initial stages of the algorithm. it begins on an infinite 
+abstraction of zephyr and tries permuting an ordering of x and y of the variables 'centers' 
+(the crosses end up being derived), and it has a dynamic programming thing that checks the 
+derived qubit utilization. I'm convinced that the dynamic programming thing is the right 
+thing to do (as well as the state being two orders) or at least that this approach is right 
+given those components stay in place. But I'm not sure that the subsequent proposer of 
+reporderings is objectively correct at all. there's a tree of similarity clustering type moves, 
+and I think its separate from the other proposable move types (I hate that this feels like a 
+little 'portfolio' nested inside the algorithm). It just doesn't feel objective. 
+But it seems to be working, the algorithm actually beats busclique on cliques and other dense 
+graphs sometimes, but I think it can struggle on medium-ish graph instances for various reasons. 
+there's just so so many open fronts right now, and changing one piece of the algorithm can cascade 
+and make things that used to be bad good again and I'm a bit overwhelmed. I think that finding the 
+simplest and cleanest thing possible will just end up mooting 
+every ugly question that comes up, sort of like the narrative of how dijkstra found his namesake 
+algorithm in his head. it certainly seems that some kind of order-permuting step with derived bars 
+is a necessary backbone to a minor-miner-like local search if you want to be good at dense graphs. 
+But what sort of movement laws make us good at everything else as well? give it a read and let me 
+know what you think

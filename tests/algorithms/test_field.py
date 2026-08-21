@@ -334,6 +334,65 @@ class TestEdgeMonotonize:
         for v in pos:
             assert np.linalg.norm(new[v] - pos[v]) <= 0.5  # edge-scale only
 
+    def test_incremental_matches_full_reevaluation(self):
+        # s3.100b: the incremental per-net span accounting must make
+        # the same decisions as the original full h_total re-reduction
+        # (exact for integer line-index coordinates, the pipeline
+        # regime) — the reference below IS the pre-s3.100b evaluator
+        import networkx as nx
+
+        def reference(pos, src_adj, max_sweeps=16):
+            nodes = sorted(pos)
+            idx = {v: i for i, v in enumerate(nodes)}
+            x = np.array([float(pos[v][0]) for v in nodes])
+            y = np.array([float(pos[v][1]) for v in nodes])
+            contacts = _stair_contacts(pos, src_adj)
+            hnets = [[idx[w]] + [idx[u] for u in contacts[w][0]]
+                     for w in nodes]
+            width = max(len(h) for h in hnets)
+            H = np.array([h + [h[0]] * (width - len(h)) for h in hnets])
+
+            def h_total(xv):
+                vals = xv[H]
+                return float((vals.max(axis=1) - vals.min(axis=1)).sum())
+
+            edges = [(idx[v], idx[u]) for v in nodes
+                     for u in src_adj.get(v, []) if u in idx and u > v]
+            cur = h_total(x)
+            swaps = 0
+            for _ in range(max(max_sweeps, 1)):
+                improved = False
+                for iu, iv in edges:
+                    dx = x[iu] - x[iv]
+                    dy = y[iu] - y[iv]
+                    if abs(dx) < 1e-9 or abs(dy) < 1e-9 or dx * dy > 0:
+                        continue
+                    x[iu], x[iv] = x[iv], x[iu]
+                    new = h_total(x)
+                    if new < cur - 1e-9:
+                        cur = new
+                        swaps += 1
+                        improved = True
+                    else:
+                        x[iu], x[iv] = x[iv], x[iu]
+                if not improved:
+                    break
+            return ({v: np.array([x[idx[v]], float(pos[v][1])])
+                     for v in nodes}, swaps)
+
+        rng = np.random.default_rng(1)
+        for _trial in range(25):
+            n = int(rng.integers(6, 30))
+            g = nx.gnp_random_graph(n, 0.4, seed=int(rng.integers(9999)))
+            adj = {v: sorted(g.neighbors(v)) for v in g.nodes()}
+            pos = {v: np.array([float(rng.integers(0, 12)),
+                                float(rng.integers(0, 12))]) for v in g}
+            a, sa = reference({v: q.copy() for v, q in pos.items()}, adj)
+            b, ib = edge_monotonize(
+                {v: q.copy() for v, q in pos.items()}, adj)
+            assert ib["swaps"] == sa
+            assert all(np.array_equal(a[v], b[v]) for v in pos)
+
     def test_no_cross_patch_pressure(self):
         # two disjoint K6 patches, each internally inverted, placed in
         # different column bands: monotonization sorts each internally but
@@ -349,6 +408,551 @@ class TestEdgeMonotonize:
         new, _ = edge_monotonize(pos, adj)
         assert all(float(new[v][0]) <= 2.0 + 1e-9 for v in a)
         assert all(float(new[v][0]) >= 10.5 - 1e-9 for v in b)
+
+
+class TestOrientFlips:
+    """s3.99: the y-rule relaxation — per-edge orientation bits
+    initialized from the diagonal rule and improved by a deterministic
+    strict-descent flip pass. The pass may only descend (it starts at
+    the y-rule), must keep the two-sided contact structure consistent,
+    and must be idempotent and deterministic."""
+
+    def _rand_case(self, rng, n=None, p=0.3):
+        import networkx as nx
+        n = n if n is not None else int(rng.integers(5, 25))
+        g = nx.gnp_random_graph(n, p, seed=int(rng.integers(10000)))
+        adj = {v: sorted(g.neighbors(v)) for v in g.nodes()}
+        pos = {v: np.array([float(rng.integers(0, 12)),
+                            float(rng.integers(0, 12))])
+               for v in g.nodes()}
+        return pos, adj
+
+    def test_flip_descends_and_stays_consistent(self):
+        from ember_qc.algorithms.factored.field import (
+            _contacts_consistent, _flip_contacts)
+        rng = np.random.default_rng(3)
+        for _trial in range(20):
+            pos, adj = self._rand_case(rng)
+            c0 = _stair_contacts(pos, adj)
+            assert _contacts_consistent(c0, pos, adj)  # y-rule qualifies
+            c1, acc, _sw = _flip_contacts(pos, adj, c0)
+            assert _contacts_consistent(c1, pos, adj)
+            e0 = stair_energy(pos, adj, contacts=c0)
+            e1 = stair_energy(pos, adj, contacts=c1)
+            assert e1 <= e0 + 1e-9
+            if acc == 0:
+                assert e1 == pytest.approx(e0)
+
+    def test_flip_idempotent_and_deterministic(self):
+        from ember_qc.algorithms.factored.field import _flip_contacts
+        rng = np.random.default_rng(11)
+        pos, adj = self._rand_case(rng, n=20, p=0.35)
+        c0 = _stair_contacts(pos, adj)
+        c1, acc1, _ = _flip_contacts(pos, adj, c0)
+        c1b, acc1b, _ = _flip_contacts(pos, adj, c0)
+        assert c1 == c1b and acc1 == acc1b       # deterministic
+        c2, acc2, sweeps2 = _flip_contacts(pos, adj, c1)
+        assert acc2 == 0 and sweeps2 == 1        # fixpoint is stable
+        assert c2 == c1
+
+    def test_single_flip_win_case(self):
+        # u's h-hull is stretched solely by v; flipping (u, v) trades a
+        # span-9 h-reach for a span-1 v-reach (the constructed -9 case),
+        # and one follow-on flip of (u, a) is also strictly improving.
+        from ember_qc.algorithms.factored.field import (
+            _contacts_consistent, _flip_contacts)
+        pos = {0: np.array([0.0, 0.0]),   # u
+               1: np.array([10.0, 1.0]),  # v
+               2: np.array([1.0, 5.0]),   # a
+               3: np.array([0.0, 2.0])}   # b
+        adj = {0: [1, 2], 1: [0, 3], 2: [0], 3: [1]}
+        c0 = _stair_contacts(pos, adj)
+        e0 = stair_energy(pos, adj, contacts=c0)
+        assert e0 == pytest.approx(27.0)
+        c1, acc, _sw = _flip_contacts(pos, adj, c0)
+        e1 = stair_energy(pos, adj, contacts=c1)
+        assert acc >= 1 and e1 < e0 - 1e-9
+        assert e1 == pytest.approx(17.0)
+        assert _contacts_consistent(c1, pos, adj)
+        # the (u, v) edge flipped: v now spends h toward u's column
+        assert 0 in c1[1][0] and 1 in c1[0][1]
+
+    def test_diagonal_clique_is_flip_free(self):
+        # on the diagonal K_n both orientations of every edge price
+        # identically (mirror symmetry): strict descent never flips
+        from ember_qc.algorithms.factored.field import _flip_contacts
+        n = 8
+        pos = {v: np.array([float(v), float(v)]) for v in range(n)}
+        adj = {v: [u for u in range(n) if u != v] for v in range(n)}
+        c0 = _stair_contacts(pos, adj)
+        c1, acc, _sw = _flip_contacts(pos, adj, c0)
+        assert acc == 0
+        for v in range(n):
+            assert c1[v][0] == sorted(c0[v][0])
+            assert c1[v][1] == sorted(c0[v][1])
+
+    def test_axis_coeffs_reproduce_stair_energy_flipped(self):
+        # the linear-coefficient identity is orientation-agnostic: it
+        # must hold for flipped contacts exactly as for the y-rule's
+        import networkx as nx
+        from ember_qc.algorithms.factored.field import (
+            _axis_coeffs, _oriented_contacts)
+        rng = np.random.default_rng(5)
+        g = nx.gnp_random_graph(14, 0.3, seed=9)
+        src_adj = {v: sorted(g.neighbors(v)) for v in g}
+        for _trial in range(3):
+            pos = {v: np.array([float(rng.integers(0, 9)),
+                                float(rng.integers(0, 9))])
+                   for v in g}
+            for axis in (0, 1):
+                flat = {v: p.copy() for v, p in pos.items()}
+                for v in flat:
+                    flat[v][1 - axis] = 0.0
+                contacts = _oriented_contacts(flat, src_adj)
+                c = _axis_coeffs(contacts, flat, axis)
+                lin = sum(c[v] * float(flat[v][axis]) for v in flat)
+                assert abs(lin - stair_energy(flat, src_adj,
+                                              contacts=contacts)) < 1e-9
+
+    def test_fence_flips_on_liquid(self):
+        # the flips-on staleness fence: reused bits must stay
+        # structurally valid through a full embed (the equality fence is
+        # the wrong bar under flips — stale bits are valid by design)
+        import networkx as nx
+        import dwave_networkx as dnx
+        from ember_qc.algorithms.factored import attract_embed
+        from ember_qc.algorithms.factored import field as F
+        F._VERIFY_CONTACTS = True
+        try:
+            src = nx.gnp_random_graph(80, 0.06, seed=6)
+            r = attract_embed(src, dnx.zephyr_graph(6, 4),
+                              timeout=20, seed=0, tail="none",
+                              orient_flips=True)
+            assert r["embedding"] is not None
+        finally:
+            F._VERIFY_CONTACTS = False
+
+    def test_arrange_flag_on_valid_and_monotone(self):
+        # the on-arm keeps the arrange contracts: integer derived
+        # positions, zero packed overload, monotone post-projection E,
+        # determinism (the s3.76 invariants, now under flipped books)
+        g = dnx.chimera_graph(8, 8, 1)
+        grid = TileGrid(g, target_layout(g))
+        n = 6
+        rng = np.random.default_rng(2)
+        pos = {v: np.array([float(rng.integers(0, 8)),
+                            float(rng.integers(0, 8))]) for v in range(n)}
+        adj = {v: [u for u in range(n) if u != v and (u + v) % 3]
+               for v in range(n)}
+        new, info = alternate_arrange(pos, adj, grid, iters=8, kappa=3.0,
+                                      orient_flips=True)
+        assert claim_overload(new, adj, grid, kappa=3.0) == 0.0
+        for v in range(n):
+            assert float(new[v][0]).is_integer()
+            assert float(new[v][1]).is_integer()
+        tail = info["E"][3:]
+        assert all(b <= a + 1e-6 for a, b in zip(tail, tail[1:]))
+        again, _ = alternate_arrange(pos, adj, grid, iters=8, kappa=3.0,
+                                     orient_flips=True)
+        assert all(np.allclose(new[v], again[v]) for v in pos)
+        assert info["flip_accepts"] >= 0 and info["flip_sweeps"] >= 1
+
+
+class TestAlignReinsert:
+    """s3.100: the alignment reinsertion move — exact optimum over all
+    interleavings of a unit with the rest, induced-rule pricing on y,
+    frozen-net pricing on x. The load-bearing tests are exactness
+    (DP cost == ground-truth stair energy of the merged state) and
+    optimality (DP best == brute-force min over all merges x both
+    orientations)."""
+
+    @staticmethod
+    def _merges(R, S):
+        import itertools
+        n = len(R) + len(S)
+        for slots in itertools.combinations(range(n), len(S)):
+            slot_set = set(slots)
+            out, ri, si = [], 0, 0
+            for k in range(n):
+                if k in slot_set:
+                    out.append(S[si])
+                    si += 1
+                else:
+                    out.append(R[ri])
+                    ri += 1
+            yield out
+
+    @staticmethod
+    def _gt_y(merged, adj, values, other):
+        # ground truth: apply values by rank on y (epsilon-ramped, the
+        # DP's own units), keep x static, re-derive contacts fresh
+        n = len(merged)
+        val = np.asarray(values, dtype=float) + 1e-4 * np.arange(n)
+        pos = {v: np.array([float(other[v]), float(val[r])])
+               for r, v in enumerate(merged)}
+        return stair_energy(pos, adj)
+
+    @staticmethod
+    def _gt_x(merged, adj, values, other, contacts):
+        n = len(merged)
+        val = np.asarray(values, dtype=float) + 1e-4 * np.arange(n)
+        pos = {v: np.array([float(val[r]), float(other[v])])
+               for r, v in enumerate(merged)}
+        return stair_energy(pos, adj, contacts=contacts)
+
+    def _case(self, rng, n):
+        import networkx as nx
+        g = nx.gnp_random_graph(n, 0.5, seed=int(rng.integers(10000)))
+        adj = {v: sorted(g.neighbors(v)) for v in g.nodes()}
+        order = list(rng.permutation(n))
+        values = sorted(float(x) for x in
+                        rng.choice(np.arange(0, 3 * n), n, replace=False))
+        other = {v: float(rng.integers(0, 12)) for v in range(n)}
+        k = int(rng.integers(2, 5))
+        S = sorted(rng.choice(n, size=k, replace=False).tolist())
+        return adj, order, values, other, S
+
+    def test_axis1_exact_and_optimal_vs_brute_force(self):
+        from ember_qc.algorithms.factored.field import align_reinsert
+        rng = np.random.default_rng(7)
+        for _trial in range(15):
+            adj, order, values, other, S = self._case(
+                rng, int(rng.integers(6, 10)))
+            Sseq = [v for v in order if v in set(S)]
+            R = [v for v in order if v not in set(S)]
+            e_cur = self._gt_y(order, adj, values, other)
+            brute = min(
+                self._gt_y(mg, adj, values, other)
+                for Q in (Sseq, Sseq[::-1])
+                for mg in self._merges(R, Q))
+            res, _flip = align_reinsert(
+                order, set(S), adj, values, None,
+                axis=1, other=other, contacts=None)
+            if res is not None:
+                got = self._gt_y(res, adj, values, other)
+                assert abs(got - brute) < 1e-6, (got, brute)
+                assert got < e_cur - 1e-9
+            else:
+                assert brute >= e_cur - 1e-6
+
+    def test_axis0_exact_and_optimal_vs_brute_force(self):
+        from ember_qc.algorithms.factored.field import align_reinsert
+        rng = np.random.default_rng(19)
+        for _trial in range(15):
+            adj, order, values, other, S = self._case(
+                rng, int(rng.integers(6, 10)))
+            n = len(order)
+            # contacts frozen from the CURRENT state (y = other, static)
+            val = np.asarray(values, dtype=float) + 1e-4 * np.arange(n)
+            pos0 = {v: np.array([float(val[r]), float(other[v])])
+                    for r, v in enumerate(order)}
+            contacts = _stair_contacts(pos0, adj)
+            Sseq = [v for v in order if v in set(S)]
+            R = [v for v in order if v not in set(S)]
+            e_cur = self._gt_x(order, adj, values, other, contacts)
+            brute = min(
+                self._gt_x(mg, adj, values, other, contacts)
+                for Q in (Sseq, Sseq[::-1])
+                for mg in self._merges(R, Q))
+            res, _flip = align_reinsert(
+                order, set(S), adj, values, None,
+                axis=0, other=other, contacts=contacts)
+            if res is not None:
+                got = self._gt_x(res, adj, values, other, contacts)
+                assert abs(got - brute) < 1e-6, (got, brute)
+                assert got < e_cur - 1e-9
+            else:
+                assert brute >= e_cur - 1e-6
+
+    def test_deterministic_and_noop_on_optimal(self):
+        from ember_qc.algorithms.factored.field import align_reinsert
+        # sorted path: already optimal — any relocation of {2,3} is
+        # no better, so the move must decline
+        adj = {v: [u for u in (v - 1, v + 1) if 0 <= u < 6]
+               for v in range(6)}
+        order = list(range(6))
+        values = [float(v) for v in range(6)]
+        other = {v: float(v) for v in range(6)}
+        res, flip = align_reinsert(order, {2, 3}, adj, values, None,
+                                   axis=1, other=other, contacts=None)
+        assert res is None and flip is False
+        # determinism on an improving case
+        rng = np.random.default_rng(3)
+        adj2, order2, values2, other2, S2 = self._case(rng, 9)
+        a = align_reinsert(order2, set(S2), adj2, values2, None,
+                           axis=1, other=other2, contacts=None)
+        b = align_reinsert(order2, set(S2), adj2, values2, None,
+                           axis=1, other=other2, contacts=None)
+        assert a == b
+
+    def test_anchored_view_declines(self):
+        from ember_qc.algorithms.factored.field import align_reinsert
+        adj = {0: [1], 1: [0, 2], 2: [1], 3: []}
+        order = [0, 1, 2, 3]
+        lo = np.array([np.inf, 3.0, np.inf, np.inf])  # one finite anchor
+        hi = np.full(4, -np.inf)
+        res, flip = align_reinsert(
+            order, {1, 2}, adj, [0.0, 1.0, 2.0, 3.0], (lo, hi),
+            axis=1, other={v: 0.0 for v in order}, contacts=None)
+        assert res is None and flip is False
+
+    def test_arrange_align_valid_monotone_deterministic(self):
+        # the composite path: two K4 blocks nominated as units, align
+        # executor on — arrange invariants must hold (the s3.76 set)
+        g = dnx.chimera_graph(8, 8, 1)
+        grid = TileGrid(g, target_layout(g))
+        n = 8
+        rng = np.random.default_rng(4)
+        pos = {v: np.array([float(rng.integers(0, 8)),
+                            float(rng.integers(0, 8))]) for v in range(n)}
+        adj = {v: sorted(u for u in range(n) if u != v
+                         and (u // 4 == v // 4)) for v in range(n)}
+        adj[0] = sorted(adj[0] + [4])
+        adj[4] = sorted(adj[4] + [0])
+        groups = [[[0, 1, 2, 3], [4, 5, 6, 7]]]
+        new, info = alternate_arrange(
+            pos, adj, grid, iters=6, kappa=3.0,
+            cluster_groups=groups, align_moves=True)
+        assert claim_overload(new, adj, grid, kappa=3.0) == 0.0
+        for v in range(n):
+            assert float(new[v][0]).is_integer()
+            assert float(new[v][1]).is_integer()
+        # NOTE: no raw E-tail monotonicity assertion here — with
+        # cluster_groups, mid-composite _half appends survive reverts
+        # and the forced final projection appends land in the tail
+        # (pre-existing accounting, measured identical on the gather
+        # control arm); acceptance itself stays strict-descent.
+        assert info["align_props"] + info["align_noops"] >= 1
+        again, _ = alternate_arrange(
+            pos, adj, grid, iters=6, kappa=3.0,
+            cluster_groups=groups, align_moves=True)
+        assert all(np.allclose(new[v], again[v]) for v in pos)
+
+    def test_explicit_on_matches_default(self):
+        # align_moves defaults ON since s3.100b: an explicit True must
+        # be byte-identical to the bare default; the False control arm
+        # must still run valid and deterministic
+        g = dnx.chimera_graph(8, 8, 1)
+        grid = TileGrid(g, target_layout(g))
+        n = 6
+        pos = {v: np.array([4.0 + 0.01 * v, 4.0 + 0.01 * v])
+               for v in range(n)}
+        adj = {v: [u for u in range(n) if u != v] for v in range(n)}
+        groups = [[[0, 1, 2], [3, 4, 5]]]
+        a, _ = alternate_arrange(pos, adj, grid, iters=6, kappa=3.0,
+                                 cluster_groups=groups)
+        b, _ = alternate_arrange(pos, adj, grid, iters=6, kappa=3.0,
+                                 cluster_groups=groups,
+                                 align_moves=True)
+        assert all(np.allclose(a[v], b[v]) for v in pos)
+        c1, _ = alternate_arrange(pos, adj, grid, iters=6, kappa=3.0,
+                                  cluster_groups=groups,
+                                  align_moves=False)
+        c2, _ = alternate_arrange(pos, adj, grid, iters=6, kappa=3.0,
+                                  cluster_groups=groups,
+                                  align_moves=False)
+        assert all(np.allclose(c1[v], c2[v]) for v in pos)
+
+
+class TestTruthRound:
+    """s3.101: the truth round — |S|=1 exact insertion, the restored
+    required-hull census, cap_pressure in the proposal DP, and the
+    revert-attribution counters."""
+
+    def _case(self, rng, n, p_edge=0.5):
+        import networkx as nx
+        g = nx.gnp_random_graph(n, p_edge, seed=int(rng.integers(9999)))
+        adj = {v: sorted(g.neighbors(v)) for v in g.nodes()}
+        order = list(rng.permutation(n))
+        values = sorted(float(x) for x in
+                        rng.choice(np.arange(0, 3 * n), n, replace=False))
+        other = {v: float(rng.integers(0, 5)) for v in range(n)}
+        return adj, order, values, other
+
+    @staticmethod
+    def _gt_y(merged, adj, values, other):
+        n = len(merged)
+        val = np.asarray(values, dtype=float) + 1e-4 * np.arange(n)
+        pos = {v: np.array([float(other[v]), float(val[r])])
+               for r, v in enumerate(merged)}
+        return stair_energy(pos, adj)
+
+    @staticmethod
+    def _gt_pressure_y(merged, adj, values, other, pools, dflt):
+        # brute-force pressure integral: per slot gap, per column,
+        # hinge^2 of (#column arms crossing - pool), integrated over
+        # gap lengths. An arm of w crosses a gap iff w is unplaced
+        # while >=1 neighbour is placed; w's arm lives on column
+        # round(other[w]).
+        n = len(merged)
+        val = np.asarray(values, dtype=float) + 1e-4 * np.arange(n)
+        placed = set()
+        total = 0.0
+        for k in range(n):
+            if k >= 1:
+                gap = float(val[k] - val[k - 1])
+                cnt: dict = {}
+                for w in merged:
+                    if w in placed:
+                        continue
+                    if any(u in placed for u in adj.get(w, [])):
+                        c = int(round(float(other[w])))
+                        cnt[c] = cnt.get(c, 0) + 1
+                for c, cc in cnt.items():
+                    over = cc - pools.get(c, dflt)
+                    if over > 0:
+                        total += gap * float(over) ** 2
+            placed.add(merged[k])
+        return total
+
+    def test_singleton_dp_is_exact_best_insertion(self):
+        # |S| = 1: the DP must equal brute-force best insertion over
+        # ALL slots, ground-truth priced (the proxy searched <=2deg+2)
+        from ember_qc.algorithms.factored.field import align_reinsert
+        rng = np.random.default_rng(23)
+        for _trial in range(12):
+            adj, order, values, other = self._case(
+                rng, int(rng.integers(6, 11)))
+            v = int(order[int(rng.integers(len(order)))])
+            rest = [u for u in order if u != v]
+            e_cur = self._gt_y(order, adj, values, other)
+            brute = min(
+                self._gt_y(rest[:k] + [v] + rest[k:], adj, values, other)
+                for k in range(len(order)))
+            res, flip = align_reinsert(
+                order, {v}, adj, values, None,
+                axis=1, other=other, contacts=None)
+            assert flip is False  # singleton reversal is the identity
+            if res is not None:
+                got = self._gt_y(res, adj, values, other)
+                assert abs(got - brute) < 1e-6
+                assert got < e_cur - 1e-9
+            else:
+                assert brute >= e_cur - 1e-6
+
+    def test_cap_pressure_optimum_matches_bruteforce(self):
+        # the pressured screen objective (energy + per-column depth
+        # hinge^2 integral) — DP best equals brute-force min over all
+        # merges x orientations under the SAME objective
+        import itertools
+        from ember_qc.algorithms.factored.field import align_reinsert
+        rng = np.random.default_rng(31)
+        for _trial in range(8):
+            adj, order, values, other = self._case(
+                rng, int(rng.integers(6, 9)))
+            S = sorted(rng.choice(len(order), size=3,
+                                  replace=False).tolist())
+            Sseq = [v for v in order if v in set(S)]
+            R = [v for v in order if v not in set(S)]
+            pools, dflt = {}, 1  # tight uniform pool: pressure is live
+
+            def full(mg):
+                return (self._gt_y(mg, adj, values, other)
+                        + self._gt_pressure_y(mg, adj, values, other,
+                                              pools, dflt))
+
+            merges = []
+            for Q in (Sseq, Sseq[::-1]):
+                for slots in itertools.combinations(
+                        range(len(order)), len(Q)):
+                    ss = set(slots)
+                    out, ri, si = [], 0, 0
+                    for k in range(len(order)):
+                        if k in ss:
+                            out.append(Q[si]); si += 1
+                        else:
+                            out.append(R[ri]); ri += 1
+                    merges.append(out)
+            brute = min(full(mg) for mg in merges)
+            e_cur = full(order)
+            res, _f = align_reinsert(
+                order, set(S), adj, values, None, axis=1, other=other,
+                contacts=None, cap_pool=(pools, dflt))
+            if res is not None:
+                assert abs(full(res) - brute) < 1e-6
+                assert full(res) < e_cur - 1e-9
+            else:
+                assert brute >= e_cur - 1e-6
+
+    def test_cap_pressure_huge_pool_is_identity(self):
+        from ember_qc.algorithms.factored.field import align_reinsert
+        rng = np.random.default_rng(5)
+        adj, order, values, other = self._case(rng, 10)
+        S = set(order[:3])
+        a = align_reinsert(order, S, adj, values, None, axis=1,
+                           other=other, contacts=None)
+        b = align_reinsert(order, S, adj, values, None, axis=1,
+                           other=other, contacts=None,
+                           cap_pool=({}, 10 ** 6))
+        assert a == b
+
+    def test_required_census_monotone(self):
+        # restored s3.97 invariant: required mode never sees LESS —
+        # the parity/corner obligations only widen intervals
+        import dwave_networkx as dnx
+        import networkx as nx
+        from ember_qc.algorithms.factored.field import arm_books
+        z = dnx.zephyr_graph(3, 4)
+        grid = TileGrid(z, target_layout(z), courses=True)
+        rng = np.random.default_rng(9)
+        for _trial in range(6):
+            g = nx.gnp_random_graph(24, 0.25,
+                                    seed=int(rng.integers(999)))
+            adj = {v: sorted(g.neighbors(v)) for v in g.nodes()}
+            pos = {v: np.array([float(rng.integers(0, grid.W)),
+                                float(rng.integers(0, grid.H))])
+                   for v in g.nodes()}
+            books = arm_books(pos, adj, grid, kappa=7.7, snap=True,
+                              min_span=0.0)
+            ov_books = claim_overload(pos, adj, grid, kappa=7.7,
+                                      snap=True, books=books)
+            ov_req = claim_overload(pos, adj, grid, kappa=7.7,
+                                    snap=True, books=books,
+                                    required=True)
+            assert ov_req >= ov_books - 1e-9
+
+    def test_revert_counters_sum_to_reverts(self):
+        g = dnx.chimera_graph(8, 8, 1)
+        grid = TileGrid(g, target_layout(g))
+        n = 8
+        rng = np.random.default_rng(4)
+        pos = {v: np.array([float(rng.integers(0, 8)),
+                            float(rng.integers(0, 8))]) for v in range(n)}
+        adj = {v: sorted(u for u in range(n) if u != v
+                         and (u // 4 == v // 4)) for v in range(n)}
+        adj[0] = sorted(adj[0] + [4])
+        adj[4] = sorted(adj[4] + [0])
+        groups = [[[0, 1, 2, 3], [4, 5, 6, 7]]]
+        _, info = alternate_arrange(pos, adj, grid, iters=6, kappa=3.0,
+                                    cluster_groups=groups,
+                                    insert_sweeps=4)
+        assert (info["revert_ov"] + info["revert_e"]
+                == info["cluster_reverts"] + info["insert_reverts"])
+
+    def test_align_insertion_sweeps_improves_or_declines(self):
+        from ember_qc.algorithms.factored.field import (
+            align_insertion_sweeps)
+        # sorted path: optimal, must decline
+        adj = {v: [u for u in (v - 1, v + 1) if 0 <= u < 8]
+               for v in range(8)}
+        order = list(range(8))
+        values = [float(v) for v in range(8)]
+        other = {v: float(v) for v in range(8)}
+        assert align_insertion_sweeps(
+            order, adj, values, axis=1, other=other,
+            contacts=None) is None
+        # improving random case: composed order strictly better,
+        # deterministic
+        rng = np.random.default_rng(12)
+        adjr, orderr, valuesr, otherr = self._case(rng, 12, 0.4)
+        a = align_insertion_sweeps(orderr, adjr, valuesr, axis=1,
+                                   other=otherr, contacts=None)
+        b = align_insertion_sweeps(orderr, adjr, valuesr, axis=1,
+                                   other=otherr, contacts=None)
+        assert a == b
+        if a is not None:
+            assert (self._gt_y(a, adjr, valuesr, otherr)
+                    < self._gt_y(orderr, adjr, valuesr, otherr) - 1e-9)
 
 
 class TestArmLengthGating:
