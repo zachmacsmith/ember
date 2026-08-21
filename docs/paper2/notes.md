@@ -1279,6 +1279,33 @@ stalled layout violate that the crystal satisfies, and what is the
 cheapest plane-computable term that predicts it. Probe not spent;
 lever stays "orders".
 
+**3.105 (consolidation 6 — the refuted-lever purge).** Archive commit
+**5be76754** holds the pre-purge state. Deleted (all measured-refuted
+or dead, all default-off): `orient_flips` and its whole machinery
+(`_flip_contacts`/`_oriented_contacts`/`_contacts_consistent`, the
+mode-aware fence — reverted to the plain s3.86 equality assert — and
+all threading), `align_insert` (`align_insertion_sweeps`, the
+singleton guard reverted), `cap_pressure` (the per-line pressure grids
+and threading), and the seat engine's dead `mono_move` hook. KEPT with
+reasons on record: `census_required` (validated; the claim-arithmetic
+toolkit of the completability question), the entire orders engine
+(shipped default; its search half is consolidation-7 material, gated
+on a seat-engine board), the packer + converter (the convertibility
+technology — see ideas §2.15), and the seat engine with its four
+moves. Behavior-neutrality PROVEN: sha256 of sorted-chain default
+embeddings byte-identical pre/post on K100 (bdd0fdd9), turán
+(d59bac34), ws (34d5e39b), grid (23c023ff), Z12 seed 0; 621 tests
+green (14 retired with their subjects); AttractConfig 21 → 18 fields.
+Docs trued in the same pass: anatomy's stale fold_moves text replaced
+with its deletion note, the knob list refreshed, a seat-engine section
+added (§9); ideas.md gained principles 2.14 (restrict the family,
+never the fidelity) and 2.15 (completability by construction) and the
+§3 completability question — Max's edit/veto invited on those.
+Answer to the owner's why-can-orders-reach-turán question recorded in
+full at s3.104/ideas 2.15: the orders engine's states are ALL packer
+output, a regular subfamily the exactness stack was co-designed with —
+completability enforced by representation, not by pricing.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).

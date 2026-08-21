@@ -135,7 +135,37 @@ Each entry: the principle, then the strongest single piece of evidence.
     current pipeline beats minorminer on both simultaneously (max chain
     ≤ minorminer's on every board cell).
 
+14. **Restrict the family, never the fidelity.** Expressivity lives in
+    the candidate set, never in a proposal view: a restricted family
+    judged exactly can only miss moves; a corrupted evaluation takes
+    wrong ones and lies about the losers. *The alignment DP's
+    exponential family under a capacity-blind view ran 87–99% gate
+    rejections on sparse cells (s3.101 revert attribution); every
+    seat-engine move is a small exact-judged family and has no revert
+    class at all (s3.102).*
+
+15. **Completability is enforced by construction, or it is not
+    enforced.** The orders pipeline never needed its gates to see
+    claim-realizability because every state it occupies is packer
+    output — a regular subfamily the exactness stack was co-designed
+    with (s3.37/56). A representation with free expressivity inherits
+    completability as a missing penalty, and no line-resolution price
+    expresses it (s3.104: two turán layouts tie at 972 qubit-priced,
+    census 0-vs-1, yet convert to deficits 0 vs 73). The packer and
+    the converter arithmetic are the convertibility technology, not
+    "orders code."
+
 ## 3. Open questions — where the next ideas are needed
+
+- **The completability term (s3.104 — the seat engine's stopping
+  point).** What per-junction/parity condition do the 73 deficit edges
+  violate that the crystal satisfies, and what is the cheapest
+  plane-computable quantity that predicts it? The separator is
+  deterministic ideal-fabric arithmetic (course parity, wire seats —
+  structure, not defects), so this is a resolution gap, not
+  NP-mortality. Named candidate: the converter's own per-line verdict
+  as a LOCAL judge term (existing arithmetic, evaluated incrementally
+  on touched lines). Diagnose the 73 before designing the term.
 
 - **The extents object — mostly dissolved (s3.70).** The six blocked
   items needed extents only because the coarse level *summarized*;

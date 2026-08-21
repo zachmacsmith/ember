@@ -654,16 +654,13 @@ def swap_sweep(pos, src_adj, grid, *, lam, e_cur, info, live,
 
 def seat_arrange(pos0: Dict[int, Point], src_adj: Dict[int, List[int]],
                  grid: TileGrid, units, *, lam: float = 1.0,
-                 deadline: Optional[float] = None, pack_move=None,
-                 mono_move=None):
+                 deadline: Optional[float] = None, pack_move=None):
     """Passes of (every variable via best_seat, id order; every unit
     via best_translate, coarsest first; then the PACK MOVE — the exact
     packer as one move among moves, its joint reseating re-scored on
     the seat objective and accepted only on strict descent, gap-free
     by construction), until an accept-free pass or the deadline.
-    ``pack_move`` is a callable(pos) -> pos supplied by the driver
-    (measured necessary for dense: singles + translations alone leave
-    the crystal unreachable — turán 8.9 vs the packer's 6.0)."""
+    ``pack_move`` is a callable(pos) -> pos supplied by the driver."""
     import time as _time
     if not getattr(grid, "typed", False) or not line_pools(grid):
         return ({v: p.copy() for v, p in pos0.items()},
@@ -677,7 +674,7 @@ def seat_arrange(pos0: Dict[int, Point], src_adj: Dict[int, List[int]],
     e_cur = live.E
     info = {"seat_accepts": 0, "trans_accepts": 0, "passes": 0,
             "accept_traj": [], "fast_miss": 0, "pack_accepts": 0,
-            "mono_accepts": 0, "swap_accepts": 0, "gather_accepts": 0}
+            "swap_accepts": 0, "gather_accepts": 0}
     unit_lists = []
     if units:
         for level in reversed(list(units)):
@@ -704,21 +701,6 @@ def seat_arrange(pos0: Dict[int, Point], src_adj: Dict[int, List[int]],
                 live = _Live(pos, src_adj, grid, lam)
                 info["gather_accepts"] += 1
                 accepts += 1
-        if mono_move is not None and (deadline is None
-                                      or _time.perf_counter()
-                                      < deadline):
-            # s3.103 crystal rescue: monotonize's swaps ARE seat-space
-            # x-swaps with rows fixed (contacts invariant) — the
-            # sorting network that builds the diagonal, borrowed as a
-            # proposal and re-scored on the seat objective
-            cand = mono_move({v: p.copy() for v, p in pos.items()})
-            if cand is not None:
-                e2 = seat_energy(cand, src_adj, grid, lam=lam)
-                if e2 < e_cur - 1e-9:
-                    pos, e_cur = cand, e2
-                    live = _Live(pos, src_adj, grid, lam)
-                    info["mono_accepts"] += 1
-                    accepts += 1
         if pack_move is not None and (deadline is None
                                       or _time.perf_counter()
                                       < deadline):

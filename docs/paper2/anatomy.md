@@ -348,19 +348,10 @@ throughout; the deadline is checked between iterations.
   otherwise translations-only move family cannot compose it under
   strict descent. Shipped on ws −0.113 / grid −0.090 with zero
   regressions or wall cost.
-- **Fold composites (`fold_moves`, s3.89 — validated, default OFF).**
-  The flagged-edge nominator: edges ranked by span × merge-round
-  (long in the CURRENT layout and late in the affinity filtration)
-  propose a TWO-AXIS hairpin — riffle the [u..v] rank interval on the
-  strand axis so partners land adjacent, split the interval's own
-  value multiset on the other axis so the strands take different
-  lines. One executed composite per pass, lazily screened, rejections
-  memoized by geometry; the s3.61 overload ratchet applies absolutely
-  only once the state is colorable (on infeasible mid-states the
-  priced energy decides — measured blocking 57k→12k energy drops over
-  +250 overload otherwise). Moves ws on both fabrics (Z12 −0.184, P16
-  −0.271 with orient) but held off by the Pegasus-dense defect:
-  stair-E accepts are fictions on 56% junctions (P16 K100 +1.05).
+- *(The fold composites (`fold_moves`, s3.89) were DELETED at
+  consolidation 5 after the s3.93 re-measure — this section previously
+  described them as a live default-OFF lever, which was stale; verdicts
+  in attraction.md.)*
 
 ## 4.5 The hierarchy
 
@@ -492,7 +483,7 @@ cells, never harmful, first fabric-agnostic Pegasus wins (s3.75);
 bars+fallback beat both pure arms (s3.77). Not yet wired into the
 pipeline's tail — that replacement is a named open item.
 
-## 8. Knobs (complete list — 15) and diagnostics
+## 8. Knobs (complete list — 18) and diagnostics
 
 `round_frac=0.5` (budget fraction before the polish),
 `arrange_iters=8`, `insert_sweeps=8`, `kappa=None` (derived from the
@@ -500,14 +491,16 @@ fabric), `span_floor=True`, `exact_seeds=True` (Zephyr gate),
 `snap_claims=True` (Zephyr gate), `overload_lam=1.0`, `vcycle=True`,
 `vcycle_agg=True`, `cluster_moves=True`, `cluster_units=True`,
 `init_mode="spectral"`, `tail="mm+ball"` ({"mm+ball", "ball+mm",
-"mm", "ball", "none"}), `ball_singles=False` (s3.91 lever, the
-grind-replacement front). Consolidation 5 (s3.98, archive 09467299)
-deleted the settled levers: the shipped winners (orientation bit,
-infinite packer, exact converter, straggler clamp) are now
-UNCONDITIONAL, and the refuted ones (strain_rank, submit_seeds,
-census_required, fold_moves, ball-rng/shorten tails, the crossfinder
-driver) are gone. Unknown kwargs are ignored (old probe scripts
-degrade gracefully).
+"mm", "ball", "none"}), `ball_singles=False` (s3.91 lever),
+`align_moves=True` (s3.100b default — the alignment-DP gather
+executor), `arrange_mode="orders"` ("seats" = the s3.102 seat-engine
+research vehicle, section 10), `census_required=False` (s3.97/101,
+kept as the completability toolkit). Consolidation 5 (archive
+09467299) deleted strain_rank, submit_seeds, fold_moves, the ball-rng
+tails and the crossfinder driver; consolidation 6 (archive 5be76754)
+deleted orient_flips, align_insert and cap_pressure (verdicts in
+attraction.md). Unknown kwargs are ignored (old probe scripts degrade
+gracefully).
 
 Diagnostics (`diag`): `assigned`/`assigned_rows`/`assigned_cols`
 (participants placed by the last packs), `insert_reverts`,
@@ -518,7 +511,28 @@ consolidation 4 — the contraction phase no longer exists),
 `max_chain`, and on Zephyr `mm_skipped`, `deficit_edges`,
 `corner_deficit`, `extensions`, `ext_qubits`, `bridges`.
 
-## 9. Known gaps
+## 9. The seat engine (arrange_mode="seats" — the v5 research vehicle)
+
+**What.** A parallel arrange engine (s3.102-104, `seat.py`): state =
+every variable's integer (col, row) seat, carried, nothing derived;
+ONE objective (raw stair energy + per-tile cover hinge², capacity as a
+COUNT, never a claim) evaluated identically for proposer and judge;
+moves under the evict-S schema ("restrict the family, never the
+fidelity"): exhaustive single-variable re-seat, rigid unit
+translation, pairwise seat swaps (three variants), the native gather
+(contiguous splice with displacement by construction), and the packer
+as a gap-free global move. Init and the entire adapter/tail are shared
+with the default verbatim.
+
+**Status (s3.104).** Z12 board at parity-or-better with the default
+except the turán crystal family; the stopping point is measured and
+named: completability — two turán layouts tie under every
+line-resolution price yet convert to deficits 0 vs 73. The orders
+engine avoids the issue BY CONSTRUCTION (every state is packer
+output; the exactness stack was co-designed with that subfamily) —
+see ideas.md §2.15 and the §3 completability question.
+
+## 10. Known gaps
 
 See ideas.md §3 for the live list. The load-bearing ones: the polish
 is still minorminer (ball_polish is the replacement path); the

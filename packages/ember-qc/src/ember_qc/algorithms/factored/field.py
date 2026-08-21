@@ -247,126 +247,6 @@ def _stair_contacts(pos: Dict[int, Point],
     return out
 
 
-def _contacts_consistent(contacts, pos: Dict[int, Point],
-                         src_adj: Dict[int, List[int]]) -> bool:
-    """Structural validity of an orientation assignment (the flips-on
-    staleness fence, s3.99): every present neighbour of v appears in
-    exactly one of v's lists, and the two sides of each edge agree —
-    u in h_us(v) iff v in v_us(u), so each edge is covered exactly once
-    at v's h-arm x u's v-arm. Any assignment passing this is realizable;
-    the y-rule is one instance."""
-    for v in pos:
-        if v not in contacts:
-            return False
-        h_us, v_us = contacts[v]
-        hs, vs = set(h_us), set(v_us)
-        nbrs = {u for u in src_adj.get(v, []) if u in pos and u != v}
-        if (hs & vs) or (hs | vs) != nbrs:
-            return False
-        if len(h_us) != len(hs) or len(v_us) != len(vs):
-            return False
-    for v in pos:
-        for u in contacts[v][0]:
-            if v not in contacts[u][1]:
-                return False
-    return True
-
-
-def _flip_contacts(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
-                   contacts, *, max_sweeps: int = 64):
-    """Strict-descent per-edge orientation flips (s3.99, the y-rule
-    relaxation). The diagonal rule fixes every edge's orientation from
-    the y-order alone; the real freedom is a per-edge bit — either u's
-    h-arm reaches v's column and v's v-arm reaches u's row, or the
-    mirror. Because arms are HULLS, per-edge greedy choice would double-
-    pay bundles; a flip's true cost is the change in exactly four raw
-    hull spans (both endpoints' h- and v-hulls), so descent on the hull-
-    span sum (= stair energy, un-floored) is exact and safe: it starts
-    at the y-rule and only descends, so the result is never worse than
-    the rule it relaxes. Deterministic (sorted edge sweeps, strict gate,
-    ties never flip); ``max_sweeps`` is a distant safety net, not a
-    schedule — sweeps run to the accept-free fixpoint.
-
-    Suspected payoff (the extreme-rank hub pathology): a high-degree
-    variable near a y-order extreme has all contacts one-sided, so one
-    arm pays the whole neighbourhood hull.
-
-    Returns (contacts', accepts, sweeps). contacts' has sorted member
-    lists (consumers only take hulls; sorting is for determinism)."""
-    from bisect import bisect_left, insort
-
-    nodes = sorted(pos)
-    hset = {v: set(u for u in contacts[v][0]) for v in nodes}
-    hxs: Dict[int, list] = {}
-    vys: Dict[int, list] = {}
-    for v in nodes:
-        h_us, v_us = contacts[v]
-        hxs[v] = sorted([float(pos[u][0]) for u in h_us]
-                        + [float(pos[v][0])])
-        vys[v] = sorted([float(pos[u][1]) for u in v_us]
-                        + [float(pos[v][1])])
-
-    def _rm_span(L, a):
-        # span after removing one copy of a (len(L) >= 2; a in L)
-        lo = L[1] if a == L[0] else L[0]
-        hi = L[-2] if a == L[-1] else L[-1]
-        return hi - lo
-
-    def _add_span(L, b):
-        return max(L[-1], b) - min(L[0], b)
-
-    edges = sorted((v, u) for v in nodes
-                   for u in src_adj.get(v, [])
-                   if u in hset and u > v)
-
-    accepts = 0
-    sweeps = 0
-    for _ in range(max(max_sweeps, 1)):
-        sweeps += 1
-        improved = False
-        for a, b in edges:
-            # s spends h toward t's column; t spends v toward s's row
-            s, t = (a, b) if b in hset[a] else (b, a)
-            x_s, y_s = float(pos[s][0]), float(pos[s][1])
-            x_t, y_t = float(pos[t][0]), float(pos[t][1])
-            delta = ((_rm_span(hxs[s], x_t) - (hxs[s][-1] - hxs[s][0]))
-                     + (_add_span(vys[s], y_t) - (vys[s][-1] - vys[s][0]))
-                     + (_rm_span(vys[t], y_s) - (vys[t][-1] - vys[t][0]))
-                     + (_add_span(hxs[t], x_s) - (hxs[t][-1] - hxs[t][0])))
-            if delta < -1e-9:
-                hxs[s].pop(bisect_left(hxs[s], x_t))
-                insort(vys[s], y_t)
-                vys[t].pop(bisect_left(vys[t], y_s))
-                insort(hxs[t], x_s)
-                hset[s].discard(t)
-                hset[t].add(s)
-                accepts += 1
-                improved = True
-        if not improved:
-            break
-
-    out = {}
-    for v in nodes:
-        nbrs = [u for u in src_adj.get(v, []) if u in hset and u != v]
-        out[v] = (sorted(u for u in nbrs if u in hset[v]),
-                  sorted(u for u in nbrs if u not in hset[v]))
-    return out, accepts, sweeps
-
-
-def _oriented_contacts(pos: Dict[int, Point],
-                       src_adj: Dict[int, List[int]], stats=None):
-    """The flips-on contact readout (s3.99): the diagonal rule's
-    assignment, improved by `_flip_contacts`. A pure, deterministic
-    function of the two orders — contacts stay a readout, never state.
-    ``stats``: optional dict accumulating flip_accepts/flip_sweeps."""
-    contacts, acc, sw = _flip_contacts(pos, src_adj,
-                                       _stair_contacts(pos, src_adj))
-    if stats is not None:
-        stats["flip_accepts"] = stats.get("flip_accepts", 0) + acc
-        stats["flip_sweeps"] = stats.get("flip_sweeps", 0) + sw
-    return contacts
-
-
 def derive_bars_stair(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                       *, kappa: float = 13.0, floor: bool = True,
                       bounds: Optional[Tuple[int, int]] = None,
@@ -378,11 +258,10 @@ def derive_bars_stair(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
     ``floor``: contact capacity (s3.30) — a chain of L qubits hosts at most
     ~kappa*L contacts, so total arm length owes w + h >= deg(v)/kappa - 1;
     any deficit is split evenly per axis and widened symmetrically.
-    ``bounds=(W, H)`` clips intervals into the grid. ``contacts`` (a
-    ``_stair_contacts`` or ``_oriented_contacts`` result) skips
-    recomputation — y-rule contacts depend only on the y-ORDER, so any
-    caller whose mutation preserved it may pass the previous bundle
-    through; flipped bits (s3.99) are carried as stale-but-valid.
+    ``bounds=(W, H)`` clips intervals into the grid. ``contacts`` (an
+    ``_stair_contacts`` result for the same y-order) skips recomputation
+    — contacts depend only on the y-ORDER, so any caller whose mutation
+    preserved it may pass the previous bundle through.
     """
     if contacts is None:
         contacts = _stair_contacts(pos, src_adj)
@@ -881,8 +760,7 @@ def wire_seeds_exact(grid: TileGrid, pos: Dict[int, Point],
 def arm_books(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
               grid: TileGrid, *, kappa: float, floor: bool = True,
               snap: bool = False, min_span: float = 1.0,
-              contacts=None, orient_flips: bool = False,
-              flip_stats=None):
+              contacts=None):
     """THE one accounting (s3.66): the claim layer's books, computed once
     — contacts, bars, and per-orientation (line, interval, participant)
     tuples with snap's parity-agnostic hull widening applied when
@@ -895,22 +773,13 @@ def arm_books(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
     Returns (contacts, bars, tuples) where tuples[o] is a list of
     (line, a, b, v) for orientation o in (1, 0)."""
     if contacts is None:
-        contacts = (_oriented_contacts(pos, src_adj, stats=flip_stats)
-                    if orient_flips else _stair_contacts(pos, src_adj))
+        contacts = _stair_contacts(pos, src_adj)
     elif _VERIFY_CONTACTS:
         # staleness fence (s3.86, Max's question): any reused contacts
         # must equal a fresh recomputation — a mismatch here is the
-        # silent-proxy-drift bug class, caught mechanically. Under
-        # orient_flips (s3.99) equality is the wrong bar: reused bits
-        # are stale-but-VALID by design (any consistent orientation is
-        # realizable; staleness only means suboptimal pricing), so the
-        # fence checks structural validity instead.
-        if orient_flips:
-            assert _contacts_consistent(contacts, pos, src_adj), \
-                "inconsistent orientation bits consumed by a gate"
-        else:
-            assert contacts == _stair_contacts(pos, src_adj), \
-                "stale contacts consumed by a gate evaluation"
+        # silent-proxy-drift bug class, caught mechanically
+        assert contacts == _stair_contacts(pos, src_adj), \
+            "stale contacts consumed by a gate evaluation"
     bars = derive_bars_stair(pos, src_adj, kappa=kappa, floor=floor,
                              bounds=(grid.W, grid.H), contacts=contacts)
     tuples = {}
@@ -1514,10 +1383,10 @@ def edge_monotonize(pos: Dict[int, Point], src_adj: Dict[int, List[int]], *,
     x-swaps never change the orientation ASSIGNMENT (with the bits held
     fixed, v-hulls depend only on ys), so only h-spans change through the
     sweep — the gate is evaluated on the h-span total, with the (constant)
-    v-span total omitted. ``contacts``: the caller's live bits (s3.99 —
-    under orient_flips a fresh y-rule recompute here would gate swaps on
-    the WRONG nets and could silently raise the carried energy); None
-    recomputes the y-rule, byte-identical to the pre-s3.99 behavior.
+    v-span total omitted. ``contacts``: pass the caller's live contacts
+    to skip the recompute (byte-identical: at every pipeline call site
+    the carried contacts equal a fresh y-rule recomputation); None
+    recomputes the y-rule.
     Deterministic (sorted edge order, strict gate). Returns
     (new_pos, info): info carries sweep/swap counts and wall time (the
     pre-registered wall-time bar reads it).
@@ -1712,8 +1581,7 @@ def cluster_gather_order(order: List[int], cluster,
 def align_reinsert(order: List[int], cluster,
                    src_adj: Dict[int, List[int]],
                    values, anchors, *, axis: int,
-                   other: Dict[int, float], contacts,
-                   cap_pool=None
+                   other: Dict[int, float], contacts
                    ) -> Tuple[Optional[List[int]], bool]:
     """The alignment reinsertion move (s3.100): remove ``cluster``'s
     members from the order and reinsert them at the exact optimum over
@@ -1758,7 +1626,7 @@ def align_reinsert(order: List[int], cluster,
             return None, False
     cset = set(cluster)
     S = [v for v in order if v in cset]
-    if len(S) < 1 or len(S) >= n:  # singletons allowed since s3.101
+    if len(S) < 2 or len(S) >= n:
         return None, False
     R = [v for v in order if v not in cset]
     p, m = len(R), len(S)
@@ -1821,8 +1689,7 @@ def align_reinsert(order: List[int], cluster,
 
     net_stats = None
     if axis == 0:
-        # frozen h-nets ({w} + h_us(w)) as forward index bounds, plus
-        # the net's static row (the owner's y — where its h-arm lives)
+        # frozen h-nets ({w} + h_us(w)) as forward index bounds
         net_stats = []
         for t, w in enumerate(order):
             mem = [t]
@@ -1839,27 +1706,7 @@ def align_reinsert(order: List[int], cluster,
             net_stats.append((int(rs.min()) if rs.size else BIG,
                               int(rs.max()) if rs.size else -1,
                               int(qs.min()) if qs.size else BIG,
-                              int(qs.max()) if qs.size else -1,
-                              int(round(float(other[w])))))
-
-    # s3.101 cap_pressure bookkeeping (shared): each moving-axis arm
-    # lives on a STATIC perpendicular line (axis=1: the owner's column;
-    # axis=0: the net owner's row). Only lines that could exceed their
-    # pool need a per-line crossing grid (count <= pool prunes).
-    press_eligible = None
-    if cap_pool is not None:
-        pools_map, pool_dflt = cap_pool
-        cnt: Dict[int, int] = {}
-        if axis == 1:
-            ent_line = [int(round(float(other[v]))) for v in order]
-            for ln in ent_line:
-                cnt[ln] = cnt.get(ln, 0) + 1
-        else:
-            ent_line = [st[4] for st in net_stats]
-            for ln in ent_line:
-                cnt[ln] = cnt.get(ln, 0) + 1
-        press_eligible = {ln for ln, c in cnt.items()
-                          if c > pools_map.get(ln, pool_dflt)}
+                              int(qs.max()) if qs.size else -1))
 
     # stepQ's R-side extrema rows are arm-independent: per S slot, the
     # extrema of static x over R-neighbours with index >= i, all i
@@ -1943,33 +1790,18 @@ def align_reinsert(order: List[int], cluster,
         # crossing the next slot gap at cell (i, j) — a pure function of
         # the placed set, built by rectangle scatter + 2-D prefix sum.
         diff = np.zeros((p + 2, m + 2))
-        press_bufs: Dict[int, np.ndarray] = {}
 
-        def _rect(i0, i1, j0, j1, w, buf=None):
-            tgt = diff if buf is None else buf
+        def _rect(i0, i1, j0, j1, w):
             i0 = max(i0, 0)
             j0 = max(j0, 0)
             i1 = min(i1, p)
             j1 = min(j1, m)
             if i1 < i0 or j1 < j0:
                 return
-            tgt[i0, j0] += w
-            tgt[i1 + 1, j0] -= w
-            tgt[i0, j1 + 1] -= w
-            tgt[i1 + 1, j1 + 1] += w
-
-        def _scatter(rects, ent_idx):
-            for r in rects:
-                _rect(*r)
-            if press_eligible is not None:
-                ln = ent_line[ent_idx]
-                if ln in press_eligible:
-                    buf = press_bufs.get(ln)
-                    if buf is None:
-                        buf = press_bufs.setdefault(
-                            ln, np.zeros((p + 2, m + 2)))
-                    for r in rects:
-                        _rect(*r, buf=buf)
+            diff[i0, j0] += w
+            diff[i1 + 1, j0] -= w
+            diff[i0, j1 + 1] -= w
+            diff[i1 + 1, j1 + 1] += w
 
         if axis == 1:
             # arm of v crosses the gap at (i, j) iff v is unplaced and
@@ -1980,35 +1812,22 @@ def align_reinsert(order: List[int], cluster,
                 mq_ = int(minQv[t])
                 if not inS[t]:
                     r = int(rpos[t])
-                    _scatter(((0, r, 0, m, +1.0),
-                              (0, min(r, mr), 0, mq_, -1.0)), t)
+                    _rect(0, r, 0, m, +1.0)
+                    _rect(0, min(r, mr), 0, mq_, -1.0)
                 else:
                     q = int(m - 1 - qpos[t]) if arm_flip else int(qpos[t])
-                    _scatter(((0, p, 0, q, +1.0),
-                              (0, mr, 0, min(q, mq_), -1.0)), t)
+                    _rect(0, p, 0, q, +1.0)
+                    _rect(0, mr, 0, min(q, mq_), -1.0)
         else:
             # h-net of w crosses the gap iff some member is placed and
             # some is not: 1 - [none placed] - [all placed]
-            for ni, (mnR, mxR, mnQ, mxQ, _row) in enumerate(net_stats):
+            for (mnR, mxR, mnQ, mxQ) in net_stats:
                 if arm_flip:
                     mnQ, mxQ = m - 1 - mxQ, m - 1 - mnQ
-                _scatter(((0, p, 0, m, +1.0),
-                          (0, mnR, 0, mnQ, -1.0),
-                          (mxR + 1, p, mxQ + 1, m, -1.0)), ni)
+                _rect(0, p, 0, m, +1.0)
+                _rect(0, mnR, 0, mnQ, -1.0)
+                _rect(mxR + 1, p, mxQ + 1, m, -1.0)
         CG = np.cumsum(np.cumsum(diff, axis=0), axis=1)[:p + 1, :m + 1]
-        if press_bufs:
-            # s3.101 cap_pressure: per-line crossing depth vs pool,
-            # hinge^2, folded into the gap-pricing grid — the screen's
-            # objective becomes energy + capacity pressure, no new DP
-            # state (evaluation-only, like every census term)
-            PG = np.zeros_like(CG)
-            for ln, buf in press_bufs.items():
-                Ac = np.cumsum(np.cumsum(buf, axis=0),
-                               axis=1)[:p + 1, :m + 1]
-                Ac -= pools_map.get(ln, pool_dflt)
-                np.maximum(Ac, 0.0, out=Ac)
-                PG += Ac * Ac
-            CG = CG + PG
 
         # the DP. Full transition-cost matrices first: a[i, j] = cost of
         # the R-step into (i, j), b[i, j] = the Q-step's. Then the
@@ -2072,10 +1891,7 @@ def align_reinsert(order: List[int], cluster,
         return float(T[p, m]), merged, e_path
 
     bf, of, e0 = _arm(False, path_of=order)
-    if m == 1:
-        bb, ob = np.inf, None  # reversal of a singleton is the identity
-    else:
-        bb, ob, _ = _arm(True)
+    bb, ob, _ = _arm(True)
     if bb < bf - 1e-12:
         best, border, flip = bb, ob, True
     else:
@@ -2083,68 +1899,6 @@ def align_reinsert(order: List[int], cluster,
     if best < e0 - 1e-9 and border != order:
         return border, flip
     return None, False
-
-
-def align_insertion_sweeps(order: List[int],
-                           src_adj: Dict[int, List[int]], values, *,
-                           axis: int, other: Dict[int, float], contacts,
-                           max_sweeps: int = 8, deadline=None,
-                           cap_pool=None) -> Optional[List[int]]:
-    """s3.101 exact insertion sweeps: the |S|=1 alignment DP replaces
-    the O(n^2) double-coverage proxy under the insertion move. Same
-    composition semantics as ``insertion_sweeps`` — candidates visited
-    in deterministic id order, later relocations see earlier ones, the
-    composed order is judged ONCE by the caller's gated composite — but
-    each relocation is the exact optimum over ALL n slots under the
-    induced-rule (axis=1) / frozen-net (axis=0) view pricing, instead
-    of the best of <=2*deg+2 candidates under the symmetric proxy.
-
-    Wall guard (measured need, s3.100b lesson): each |S|=1 DP costs
-    O(E + n) setup, so the sweep visits only the top-quartile
-    long-net variables (by current-view net span) rather than all
-    members — nomination, not evaluation, so exactness per relocation
-    is untouched. Returns the composed order, or None if no relocation
-    improved."""
-    import time as _time
-    n = len(order)
-    if n <= 2:
-        return None
-    work = list(order)
-
-    def _long_net_ids(cur):
-        # per-variable span of {v} + neighbours in current values —
-        # the axis's own net span, the honest "long arm" measure
-        val_of = {}
-        vals = np.asarray(values, dtype=float) + 1e-4 * np.arange(n)
-        for r, v in enumerate(cur):
-            val_of[v] = float(vals[r])
-        spans = []
-        for v in cur:
-            lo = hi = val_of[v]
-            for u in src_adj.get(v, []):
-                if u in val_of:
-                    lo = min(lo, val_of[u])
-                    hi = max(hi, val_of[u])
-            spans.append((hi - lo, v))
-        spans.sort(key=lambda s: (-s[0], s[1]))
-        k = max(8, n // 4)
-        return sorted(v for _s, v in spans[:k])
-
-    changed = False
-    for _ in range(max(max_sweeps, 1)):
-        if deadline is not None and _time.perf_counter() > deadline:
-            break
-        improved = False
-        for v in _long_net_ids(work):
-            res, _flip = align_reinsert(
-                work, {v}, src_adj, values, None, axis=axis,
-                other=other, contacts=contacts, cap_pool=cap_pool)
-            if res is not None:
-                work = res
-                improved = changed = True
-        if not improved:
-            break
-    return work if changed else None
 
 
 def insertion_sweeps(order: List[int], src_adj: Dict[int, List[int]], *,
@@ -2239,11 +1993,8 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                       snap: bool = False,
                       deadline: Optional[float] = None,
                       cluster_groups=None,
-                      orient_flips: bool = False,
                       align_moves: bool = False,
-                      census_required: bool = False,
-                      align_insert: bool = False,
-                      cap_pressure: bool = False):
+                      census_required: bool = False):
     """Alternating 1-D arrangement on the stair energy (v4 order state).
 
     Every variable participates (``min_span=0``, so the books census
@@ -2269,14 +2020,9 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
         # permutations, and order-preserving packs on either axis) —
         # contacts depend on nothing else, and recomputing them was the
         # measured hotspot (2x _stair_contacts per arm_books, ~40% of
-        # arrange wall on turan). Under orient_flips (s3.99) the same
-        # reuse carries the flipped bits unchanged: stale-but-valid
-        # (any consistent orientation is realizable — staleness means
-        # suboptimal pricing, never inconsistency); fresh evaluations
-        # re-run the flip descent from the y-rule.
+        # arrange wall on turan).
         books = arm_books(p, src_adj, grid, kappa=kappa, floor=floor,
-                          snap=snap, min_span=min_span, contacts=contacts,
-                          orient_flips=orient_flips, flip_stats=info)
+                          snap=snap, min_span=min_span, contacts=contacts)
         e = stair_energy(p, src_adj, contacts=books[0])
         if overload_lam > 0.0:
             e += overload_lam * claim_overload(
@@ -2288,7 +2034,6 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
     info = {"iters": 0, "unplaced": 0,
             "assigned": 0, "assigned_rows": 0, "assigned_cols": 0,
             "insert_reverts": 0, "mono_swaps": 0, "mono_time": 0.0,
-            "flip_accepts": 0, "flip_sweeps": 0,
             "align_props": 0, "align_noops": 0, "align_memo": 0,
             "revert_ov": 0, "revert_e": 0}
     # s3.100b: unchanged-context memo for align proposals (the fold-arc
@@ -2299,31 +2044,12 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
     # changes positions, so its fingerprint can never recur.
     align_memo: set = set()
     _memo_nodes = sorted(new_pos)
-    # s3.101 cap_pressure: per-perpendicular-line pools for the DP's
-    # pressure grids. axis=1 moves put v-arms on COLUMNS (orientation-0
-    # lines); axis=0 moves put h-nets on ROWS (orientation-1 lines).
-    # Untyped grids (no pools) leave the pressure off.
-    cap_pool_axis = {1: None, 0: None}
-    if cap_pressure:
-        _lp = line_pools(grid)
-        if _lp:
-            _dflt = max(_lp.values())
-            cap_pool_axis = {
-                1: ({ln: pl for (o_, ln), pl in _lp.items() if o_ == 0},
-                    _dflt),
-                0: ({ln: pl for (o_, ln), pl in _lp.items() if o_ == 1},
-                    _dflt)}
     cur_books, cur_E = _eval(new_pos)
     info["E"] = [cur_E]
     packed_last: Dict[int, set] = {1: set(), 0: set()}
 
     def _mono():
         nonlocal new_pos, cur_books, cur_E
-        # s3.99: monotonize gates on the LIVE bits (cur_books[0]) — a
-        # fresh y-rule recompute inside it would judge swaps on nets the
-        # pipeline no longer prices. Flag-off this is byte-identical:
-        # at every call site the carried contacts equal a fresh y-rule
-        # recomputation for the current positions.
         new_pos, mi = edge_monotonize(new_pos, src_adj,
                                       contacts=cur_books[0])
         info["mono_swaps"] += mi["swaps"]
@@ -2578,8 +2304,7 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                             no, flip = align_reinsert(
                                 o0, _cl, src_adj, vals, None,
                                 axis=_ax, other=xo,
-                                contacts=cur_books[0],
-                                cap_pool=cap_pool_axis[_ax])
+                                contacts=cur_books[0])
                             info["align_props" if no is not None
                                  else "align_noops"] += 1
                         else:
@@ -2643,17 +2368,6 @@ def alternate_arrange(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
         # gate-protected change). Members fixed before the composite loop
         # (pre-refactor semantics preserved exactly).
         def _ins_propose(order0, ys, lo, hi):
-            # s3.101: the exact |S|=1 alignment sweep replaces the
-            # O(n^2) proxy when the switch is on and the view is
-            # unanchored (always, in the pipeline); the insertion
-            # composite runs on axis=1 (the _order_composite default)
-            if align_insert and not ((np.asarray(lo) < np.inf).any()
-                                     or (np.asarray(hi) > -np.inf).any()):
-                xo = {v: float(new_pos[v][0]) for v in order0}
-                return align_insertion_sweeps(
-                    order0, src_adj, ys, axis=1, other=xo,
-                    contacts=cur_books[0], max_sweeps=insert_sweeps,
-                    deadline=deadline, cap_pool=cap_pool_axis[1])
             no, _tr = insertion_sweeps(
                 order0, src_adj, max_sweeps=insert_sweeps,
                 values=ys, anchors=(lo, hi), deadline=deadline)
