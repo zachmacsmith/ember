@@ -16,6 +16,38 @@ pools come from ``line_pools``. Capacity is a COUNT, not a claim: the
 two recorded crossfinder killers (exclusive-claim deadlock; unable to
 route around claimed bands, notes s3.90) have no referent.
 
+Objective MODES (one enum, one derivation — `_mode_params`):
+
+- ``"stock"``: the s3.102 objective verbatim — junction ruler for both
+  cover and stair, all sides deposit, weight = lam.
+- ``"brick"`` (s3.107/s3.109): the along-axis RULER becomes the fabric
+  parity period — one brick = ``grid.stride`` junctions = one
+  qubit-length. Hulls stay in junction coordinates everywhere (seats,
+  contacts, transverse line choices keep full resolution); only the
+  ACCOUNTING quantizes, at the deposit boundary: cover intervals AND
+  stair spans map through ``p // stride`` (whole-brick booking —
+  end-rounding, no phantom half-qubit savings), pools become
+  per-(line, brick) counts derived from ``wire_map``, and arms are
+  demand-honest — a side with no contacts deposits nothing (the stair
+  rule assigns every edge to one h-arm and one v-arm; an empty side
+  needs no bar; the phantom own-coordinate deposit was the s3.108
+  gate's artifact).
+- ``"lex"`` (s3.110, the two-ruler engine): capacity is a CONSTRAINT,
+  not a price. Cover quantizes to bricks (parity-honest ruler, honest
+  arms, wire_map pools — the near-hard capacity), stair stays at
+  junction resolution (the sharp ruler), and the acceptance order is
+  lexicographic (overload, stair) — expressed as the single scalar
+  ``pen * 2**26 + stair``, exact in floats because every quantity is
+  integer-valued. Capacity never trades against length at any rate:
+  lam is ignored, the swamping/weighting family of defects is
+  unrepresentable, and a search that reaches pen 0 holds feasibility
+  as an invariant thereafter (strict descent cannot re-enter
+  overload).
+
+Every mode shares the same moves, audits, and books; ``"stock"``
+reproduces the original arithmetic exactly (quanta 1, all sides
+deposit, weight = lam).
+
 Moves, both strict descent, deterministic:
 
 1. ``best_seat``  — one variable, every in-window seat evaluated.
@@ -30,9 +62,12 @@ collision corrections omitted), but every chosen candidate is
 RE-SCORED exactly — by applying its cover deltas to real arrays, which
 is multiset-correct by construction — before acceptance, so strict
 descent on the true objective holds unconditionally. ``fast_miss``
-counts scan/exact disagreements (oracle-tested in the suite). The
-capacity here is SOFT (a price); the driver's caller runs one exact
-hard-capacity pack on the result (the single remaining conversion).
+counts scan/exact disagreements (oracle-tested in the suite). In the
+stock and brick modes capacity is SOFT (a price) and the driver's
+caller runs one exact hard-capacity pack on the result; in lex mode
+capacity is the leading lexicographic key — near-hard by the brick
+pools — and the driver hands the state to the converter directly,
+with no legalization pack and no pack move.
 """
 
 from __future__ import annotations
@@ -44,11 +79,32 @@ import numpy as np
 from ember_qc.algorithms.factored.field import (
     TileGrid,
     _stair_contacts,
+    align_reinsert,
     line_pools,
     stair_energy,
 )
 
 Point = np.ndarray
+
+# lexicographic weight: pen * M + stair is exact in floats (worst-case
+# pen*M ~ 4e14 < 2^53) and M exceeds any reachable stair total (< 25k),
+# so scalar comparison IS (pen, stair) tuple comparison
+_LEX_M = float(2 ** 26)
+
+
+def _mode_params(grid: TileGrid, mode: str, lam: float):
+    """(s_cov, s_len, honest, weight) for an objective mode. s_cov
+    quantizes cover deposits/pools, s_len quantizes stair spans;
+    honest gates the demand-honest arm deposits; weight multiplies the
+    capacity term."""
+    stride = max(int(getattr(grid, "stride", 1)), 1)
+    if mode == "stock":
+        return 1, 1, False, lam
+    if mode == "brick":
+        return stride, stride, True, lam
+    if mode == "lex":
+        return stride, 1, True, _LEX_M
+    raise ValueError(f"unknown seat objective mode: {mode!r}")
 
 
 def _pool_arrays(grid: TileGrid):
@@ -63,9 +119,42 @@ def _pool_arrays(grid: TileGrid):
     return pool_h, pool_v
 
 
+def _brick_pool_arrays(grid: TileGrid, s: int):
+    """Per-(line, brick) pools from wire_map: one slot per (wire, bar
+    position) with the bar keyed to brick ``t // s``. Interior Zephyr
+    bricks count 8 (4 aligned + 4 straddling); dead qubits and the
+    over-allocated boundary column self-absorb to smaller pools (the
+    packer's own boundary treatment, one accounting). Memoized on the
+    grid (the line_pools pattern): the reference evaluator is called
+    per gather candidate."""
+    cache = getattr(grid, "_brick_pools", None)
+    if cache is not None and s in cache:
+        return cache[s]
+    Wb = (grid.W + s - 1) // s
+    Hb = (grid.H + s - 1) // s
+    ph = np.zeros((grid.H, Wb), dtype=float)
+    pv = np.zeros((grid.W, Hb), dtype=float)
+    for (o, ln, _sub), d in grid.wire_map.items():
+        A = ph if o == 1 else pv
+        if not (0 <= ln < A.shape[0]):
+            continue
+        for t in d:
+            tq = t // s
+            if 0 <= tq < A.shape[1]:
+                A[ln, tq] += 1.0
+    if cache is None:
+        cache = {}
+        try:
+            grid._brick_pools = cache
+        except AttributeError:
+            return ph, pv
+    cache[s] = (ph, pv)
+    return ph, pv
+
+
 def _arms(pos: Dict[int, Point], contacts) -> Dict[int, tuple]:
     """Integer arm intervals: (row, ha, hb, col, va, vb), endpoints
-    inclusive."""
+    inclusive, junction coordinates."""
     out = {}
     for v, (h_us, v_us) in contacts.items():
         x = int(round(float(pos[v][0])))
@@ -85,17 +174,98 @@ def _cover_arrays(arms, grid: TileGrid):
     return Ch, Cv
 
 
+_ECACHE: dict = {}
+
+
+def _edge_arrays(pos, src_adj):
+    """Sorted vertex ids and the edge index arrays (u > v once), for
+    the vectorized evaluator. Cached per (adjacency identity, vertex
+    count) — one graph at a time (the gather evaluates ~12 candidates
+    per call over the same graph; the per-edge Python walk was the
+    s3.109 perf round's hog)."""
+    key = (id(src_adj), len(pos))
+    hit = _ECACHE.get(key)
+    if hit is not None:
+        return hit
+    ids = sorted(pos)
+    ix = {v: i for i, v in enumerate(ids)}
+    A: List[int] = []
+    B: List[int] = []
+    for v in ids:
+        for u in src_adj.get(v, []):
+            if u > v and u in ix:
+                A.append(ix[v])
+                B.append(ix[u])
+    out = (ids, np.asarray(A, dtype=np.int64),
+           np.asarray(B, dtype=np.int64))
+    _ECACHE.clear()
+    _ECACHE[key] = out
+    return out
+
+
 def seat_energy(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
-                grid: TileGrid, *, lam: float = 1.0) -> float:
-    """THE reference evaluator — the objective's definition."""
-    contacts = _stair_contacts(pos, src_adj)
-    e = stair_energy(pos, src_adj, contacts=contacts)
-    arms = _arms(pos, contacts)
-    Ch, Cv = _cover_arrays(arms, grid)
-    pool_h, pool_v = _pool_arrays(grid)
-    oh = np.maximum(Ch - pool_h[:, None], 0.0)
-    ov = np.maximum(Cv - pool_v[:, None], 0.0)
-    return float(e + lam * ((oh * oh).sum() + (ov * ov).sum()))
+                grid: TileGrid, *, lam: float = 1.0,
+                mode: str = "stock") -> float:
+    """THE reference evaluator — the objective's definition.
+
+    Vectorized (s3.109 perf round; verified == the per-edge original
+    on both rulers): the stair rule per edge is "the (y, id)-lower
+    endpoint spends the h-arm", hulls come from scatter-min/max, cover
+    from the diff-and-cumsum trick. All quantities are integer-valued,
+    so sums are exact in any order. ``mode`` selects the ruler pair
+    and weight (see the module docstring / `_mode_params`)."""
+    s_cov, s_len, honest, w = _mode_params(grid, mode, lam)
+    ids, A, B = _edge_arrays(pos, src_adj)
+    n = len(ids)
+    X = np.fromiter((int(round(float(pos[v][0]))) for v in ids),
+                    dtype=np.int64, count=n)
+    Y = np.fromiter((int(round(float(pos[v][1]))) for v in ids),
+                    dtype=np.int64, count=n)
+    lower = (Y[A] < Y[B]) | ((Y[A] == Y[B]) & (A < B))
+    L = np.where(lower, A, B)
+    Hi = np.where(lower, B, A)
+    hmin = X.copy()
+    hmax = X.copy()
+    vmin = Y.copy()
+    vmax = Y.copy()
+    if len(A):
+        np.minimum.at(hmin, L, X[Hi])
+        np.maximum.at(hmax, L, X[Hi])
+        np.minimum.at(vmin, Hi, Y[L])
+        np.maximum.at(vmax, Hi, Y[L])
+    e = float((hmax // s_len - hmin // s_len).sum()
+              + (vmax // s_len - vmin // s_len).sum())
+    Wb = (grid.W + s_cov - 1) // s_cov
+    Hb = (grid.H + s_cov - 1) // s_cov
+    qhmin, qhmax = hmin // s_cov, hmax // s_cov
+    qvmin, qvmax = vmin // s_cov, vmax // s_cov
+    if honest:
+        hcnt = np.zeros(n, dtype=np.int64)
+        vcnt = np.zeros(n, dtype=np.int64)
+        if len(A):
+            np.add.at(hcnt, L, 1)
+            np.add.at(vcnt, Hi, 1)
+        hm = hcnt > 0
+        vm = vcnt > 0
+    else:
+        hm = np.ones(n, dtype=bool)
+        vm = hm
+    Dh = np.zeros((grid.H, Wb + 1))
+    Dv = np.zeros((grid.W, Hb + 1))
+    np.add.at(Dh, (Y[hm], qhmin[hm]), 1.0)
+    np.add.at(Dh, (Y[hm], qhmax[hm] + 1), -1.0)
+    np.add.at(Dv, (X[vm], qvmin[vm]), 1.0)
+    np.add.at(Dv, (X[vm], qvmax[vm] + 1), -1.0)
+    Ch = np.cumsum(Dh, axis=1)[:, :Wb]
+    Cv = np.cumsum(Dv, axis=1)[:, :Hb]
+    if honest:
+        ph, pv = _brick_pool_arrays(grid, s_cov)
+    else:
+        pool_h, pool_v = _pool_arrays(grid)
+        ph, pv = pool_h[:, None], pool_v[:, None]
+    oh = np.maximum(Ch - ph, 0.0)
+    ov = np.maximum(Cv - pv, 0.0)
+    return float(e + w * ((oh * oh).sum() + (ov * ov).sum()))
 
 
 def _ext4(vals: List[int]):
@@ -132,14 +302,33 @@ def _excl_hi(e4, x):
 class _Live:
     """Live books: contacts, arms, covers, prefix caches, exclusion
     extremes. Rebuilt from scratch on every accepted move (accepts are
-    rare relative to evaluations; O(E) rebuild is measured cheap)."""
+    rare relative to evaluations; O(E) rebuild is measured cheap).
 
-    def __init__(self, pos, src_adj, grid, lam):
+    Accounting convention (uniform across stock and brick): hull
+    VALUES are junction coordinates; every cover deposit/removal and
+    every deposit maps endpoints through ``// s_cov`` and every
+    stair span through ``// s_len`` at the array boundary; quanta
+    of 1 reproduce stock arithmetic
+    exactly. Under brick, ``h_act``/``v_act`` mark demand-honest
+    sides — only active sides carry a deposit (spans of inactive
+    sides are 0 by construction, so span arithmetic never branches).
+    """
+
+    def __init__(self, pos, src_adj, grid, lam, mode: str = "stock"):
         self.pos = pos
         self.adj = src_adj
         self.grid = grid
         self.lam = lam
-        self.pool_h, self.pool_v = _pool_arrays(grid)
+        self.mode = mode
+        (self.s_cov, self.s_len,
+         self.honest, self.w) = _mode_params(grid, mode, lam)
+        if self.honest:
+            self.pool_h2, self.pool_v2 = _brick_pool_arrays(grid,
+                                                            self.s_cov)
+        else:
+            pool_h, pool_v = _pool_arrays(grid)
+            self.pool_h2 = pool_h[:, None]
+            self.pool_v2 = pool_v[:, None]
         self.rebuild()
 
     def rebuild(self):
@@ -149,13 +338,37 @@ class _Live:
                    for v, p in self.pos.items()}
         self.contacts = _stair_contacts(self.pos, self.adj)
         self.arms = _arms(self.pos, self.contacts)
-        self.Ch, self.Cv = _cover_arrays(self.arms, self.grid)
-        self.e_stair = stair_energy(self.pos, self.adj,
-                                    contacts=self.contacts)
-        oh = np.maximum(self.Ch - self.pool_h[:, None], 0.0)
-        ov = np.maximum(self.Cv - self.pool_v[:, None], 0.0)
+        if self.honest:
+            self.h_act = {v: bool(c[0])
+                          for v, c in self.contacts.items()}
+            self.v_act = {v: bool(c[1])
+                          for v, c in self.contacts.items()}
+            sc, sl = self.s_cov, self.s_len
+            Wb = (self.grid.W + sc - 1) // sc
+            Hb = (self.grid.H + sc - 1) // sc
+            self.Ch = np.zeros((self.grid.H, Wb), dtype=float)
+            self.Cv = np.zeros((self.grid.W, Hb), dtype=float)
+            e = 0.0
+            for v, (row, ha, hb, col, va, vb) in self.arms.items():
+                e += float((hb // sl - ha // sl)
+                           + (vb // sl - va // sl))
+                if self.h_act[v]:
+                    self.Ch[row, ha // sc:hb // sc + 1] += 1.0
+                if self.v_act[v]:
+                    self.Cv[col, va // sc:vb // sc + 1] += 1.0
+            self.e_stair = e
+        else:
+            self.h_act = {v: True for v in self.contacts}
+            self.v_act = {v: True for v in self.contacts}
+            self.Ch, self.Cv = _cover_arrays(self.arms, self.grid)
+            self.e_stair = stair_energy(self.pos, self.adj,
+                                        contacts=self.contacts)
+        assert self.e_stair < _LEX_M, "stair total exceeds the lex " \
+                                      "weight — raise _LEX_M"
+        oh = np.maximum(self.Ch - self.pool_h2, 0.0)
+        ov = np.maximum(self.Cv - self.pool_v2, 0.0)
         self.pen = float((oh * oh).sum() + (ov * ov).sum())
-        self.E = self.e_stair + self.lam * self.pen
+        self.E = self.e_stair + self.w * self.pen
         # exclusion-extreme caches per hull (values incl. own coord)
         self.hx4 = {}
         self.vy4 = {}
@@ -166,21 +379,26 @@ class _Live:
                                 + [self.yi[v]])
 
     def _pen_of(self, Ch, Cv):
-        oh = np.maximum(Ch - self.pool_h[:, None], 0.0)
-        ov = np.maximum(Cv - self.pool_v[:, None], 0.0)
+        oh = np.maximum(Ch - self.pool_h2, 0.0)
+        ov = np.maximum(Cv - self.pool_v2, 0.0)
         return float((oh * oh).sum() + (ov * ov).sum())
 
     # ---- the without-v world (shared by scan and audit) ----
     def without(self, v):
         """Remove v's influence: its arms, and each neighbour's hull
         shrunk to its exclusion extremes. Returns (Ch2, Cv2, e_wo,
-        nb_wo) where nb_wo[u] = (side, row/col, without-v hull)."""
+        nb_wo) where nb_wo[u] = (side, row/col, without-v hull,
+        still-deposited flag)."""
+        sc, sl = self.s_cov, self.s_len
         Ch2 = self.Ch.copy()
         Cv2 = self.Cv.copy()
         row, ha, hb, col, va, vb = self.arms[v]
-        Ch2[row, ha:hb + 1] -= 1.0
-        Cv2[col, va:vb + 1] -= 1.0
-        e_wo = self.e_stair - float((hb - ha) + (vb - va))
+        if self.h_act[v]:
+            Ch2[row, ha // sc:hb // sc + 1] -= 1.0
+        if self.v_act[v]:
+            Cv2[col, va // sc:vb // sc + 1] -= 1.0
+        e_wo = self.e_stair - float((hb // sl - ha // sl)
+                                    + (vb // sl - va // sl))
         nb_wo = {}
         for u in self.adj.get(v, []):
             if u not in self.pos or u == v:
@@ -190,20 +408,33 @@ class _Live:
                 # v was in u's h-net: shrink u's h-arm
                 na = int(_excl_lo(self.hx4[u], self.xi[v]))
                 nb = int(_excl_hi(self.hx4[u], self.xi[v]))
-                if (na, nb) != (uha, uhb):
-                    Ch2[urow, uha:uhb + 1] -= 1.0
-                    Ch2[urow, na:nb + 1] += 1.0
-                    e_wo -= float((uhb - uha) - (nb - na))
-                nb_wo[u] = (1, urow, na, nb)
+                act2 = ((not self.honest)
+                        or len(self.contacts[u][0]) > 1)
+                if not act2:
+                    # u's h-net was {v}: the deposit goes entirely
+                    Ch2[urow, uha // sc:uhb // sc + 1] -= 1.0
+                    e_wo -= float(uhb // sl - uha // sl)
+                elif (na, nb) != (uha, uhb):
+                    Ch2[urow, uha // sc:uhb // sc + 1] -= 1.0
+                    Ch2[urow, na // sc:nb // sc + 1] += 1.0
+                    e_wo -= float((uhb // sl - uha // sl)
+                                  - (nb // sl - na // sl))
+                nb_wo[u] = (1, urow, na, nb, act2)
             else:
                 # v was in u's v-net: shrink u's v-arm
                 na = int(_excl_lo(self.vy4[u], self.yi[v]))
                 nb = int(_excl_hi(self.vy4[u], self.yi[v]))
-                if (na, nb) != (uva, uvb):
-                    Cv2[ucol, uva:uvb + 1] -= 1.0
-                    Cv2[ucol, na:nb + 1] += 1.0
-                    e_wo -= float((uvb - uva) - (nb - na))
-                nb_wo[u] = (0, ucol, na, nb)
+                act2 = ((not self.honest)
+                        or len(self.contacts[u][1]) > 1)
+                if not act2:
+                    Cv2[ucol, uva // sc:uvb // sc + 1] -= 1.0
+                    e_wo -= float(uvb // sl - uva // sl)
+                elif (na, nb) != (uva, uvb):
+                    Cv2[ucol, uva // sc:uvb // sc + 1] -= 1.0
+                    Cv2[ucol, na // sc:nb // sc + 1] += 1.0
+                    e_wo -= float((uvb // sl - uva // sl)
+                                  - (nb // sl - na // sl))
+                nb_wo[u] = (0, ucol, na, nb, act2)
         return Ch2, Cv2, e_wo, nb_wo
 
     def exact_full(self, v, c, r, wo):
@@ -211,6 +442,7 @@ class _Live:
         Handles the role assignment cleanly: for each neighbour u,
         v joins exactly one of u's nets by the stair rule at the NEW
         coordinates, extending u's without-v hull on that side."""
+        sc, sl = self.s_cov, self.s_len
         Ch2, Cv2, e_wo, nb_wo = wo
         Ch3 = Ch2.copy()
         Cv3 = Cv2.copy()
@@ -232,30 +464,44 @@ class _Live:
             # u's hull on ext_side: without-v hull, extended by ext_val
             urow, _uha, _uhb, ucol, _uva, _uvb = self.arms[u]
             if u in nb_wo and nb_wo[u][0] == ext_side:
-                _so, line, na, nb = nb_wo[u]
+                _so, line, na, nb, act2 = nb_wo[u]
             else:
                 # u's other-side hull is untouched by v's removal
                 if ext_side == 1:
                     line = urow
                     na, nb = self.arms[u][1], self.arms[u][2]
+                    act2 = self.h_act[u]
                 else:
                     line = ucol
                     na, nb = self.arms[u][4], self.arms[u][5]
+                    act2 = self.v_act[u]
             na2, nb2 = min(na, ext_val), max(nb, ext_val)
-            if (na2, nb2) != (na, nb):
+            if not act2:
+                # u's net on this side was empty; v joins it: the
+                # deposit is fresh even when the hull is unchanged
                 if ext_side == 1:
-                    Ch3[line, na:nb + 1] -= 1.0
-                    Ch3[line, na2:nb2 + 1] += 1.0
+                    Ch3[line, na2 // sc:nb2 // sc + 1] += 1.0
                 else:
-                    Cv3[line, na:nb + 1] -= 1.0
-                    Cv3[line, na2:nb2 + 1] += 1.0
-                e += float((nb2 - na2) - (nb - na))
+                    Cv3[line, na2 // sc:nb2 // sc + 1] += 1.0
+                e += float((nb2 // sl - na2 // sl)
+                           - (nb // sl - na // sl))
+            elif (na2, nb2) != (na, nb):
+                if ext_side == 1:
+                    Ch3[line, na // sc:nb // sc + 1] -= 1.0
+                    Ch3[line, na2 // sc:nb2 // sc + 1] += 1.0
+                else:
+                    Cv3[line, na // sc:nb // sc + 1] -= 1.0
+                    Cv3[line, na2 // sc:nb2 // sc + 1] += 1.0
+                e += float((nb2 // sl - na2 // sl)
+                           - (nb // sl - na // sl))
         ha, hb = min(h_vals), max(h_vals)
         va, vb = min(v_vals), max(v_vals)
-        Ch3[r, ha:hb + 1] += 1.0
-        Cv3[c, va:vb + 1] += 1.0
-        e += float((hb - ha) + (vb - va))
-        return e + self.lam * self._pen_of(Ch3, Cv3)
+        if (not self.honest) or len(h_vals) > 1:
+            Ch3[r, ha // sc:hb // sc + 1] += 1.0
+        if (not self.honest) or len(v_vals) > 1:
+            Cv3[c, va // sc:vb // sc + 1] += 1.0
+        e += float((hb // sl - ha // sl) + (vb // sl - va // sl))
+        return e + self.w * self._pen_of(Ch3, Cv3)
 
 
 def _fast_seat_grid(live: _Live, v, wo):
@@ -264,24 +510,26 @@ def _fast_seat_grid(live: _Live, v, wo):
     exact audit absorbs them)."""
     grid = live.grid
     W, H = grid.W, grid.H
-    lam = live.lam
+    w_cap = live.w
+    sc, sl = live.s_cov, live.s_len
+    honest = live.honest
     Ch2, Cv2, e_wo, nb_wo = wo
     nbrs = [u for u in live.adj.get(v, []) if u in live.pos and u != v]
     xv = live.xi
     yv = live.yi
 
-    def _gain_prefix(C, pool):
-        g = lam * ((np.maximum(C + 1.0 - pool[:, None], 0.0) ** 2)
-                   - (np.maximum(C - pool[:, None], 0.0) ** 2))
+    def _gain_prefix(C, pool2):
+        g = w_cap * ((np.maximum(C + 1.0 - pool2, 0.0) ** 2)
+                     - (np.maximum(C - pool2, 0.0) ** 2))
         P = np.zeros((C.shape[0], C.shape[1] + 1))
         np.cumsum(g, axis=1, out=P[:, 1:])
         return P
 
-    Ph = _gain_prefix(Ch2, live.pool_h)
-    Pv = _gain_prefix(Cv2, live.pool_v)
-    oh = np.maximum(Ch2 - live.pool_h[:, None], 0.0)
-    ov = np.maximum(Cv2 - live.pool_v[:, None], 0.0)
-    pen_wo = lam * float((oh * oh).sum() + (ov * ov).sum())
+    Ph = _gain_prefix(Ch2, live.pool_h2)
+    Pv = _gain_prefix(Cv2, live.pool_v2)
+    oh = np.maximum(Ch2 - live.pool_h2, 0.0)
+    ov = np.maximum(Cv2 - live.pool_v2, 0.0)
+    pen_wo = w_cap * float((oh * oh).sum() + (ov * ov).sum())
 
     cc = np.arange(W, dtype=int)
     total = np.full((H, W), e_wo + pen_wo, dtype=float)
@@ -297,17 +545,21 @@ def _fast_seat_grid(live: _Live, v, wo):
         else:
             ha = cc
             hb = cc
-        row_total = (total[r]
-                     + (hb - ha).astype(float)
-                     + Ph[r, hb + 1] - Ph[r, ha])
+        if h_us or not honest:
+            row_total = (total[r]
+                         + (hb // sl - ha // sl).astype(float)
+                         + Ph[r, hb // sc + 1] - Ph[r, ha // sc])
+        else:
+            row_total = total[r] + 0.0
         if v_us:
             rlo = min(yv[u] for u in v_us)
             rhi = max(yv[u] for u in v_us)
             va, vb = min(rlo, r), max(rhi, r)
         else:
             va, vb = r, r
-        row_total = (row_total + float(vb - va)
-                     + Pv[cc, vb + 1] - Pv[cc, va])
+        if v_us or not honest:
+            row_total = (row_total + float(vb // sl - va // sl)
+                         + Pv[cc, vb // sc + 1] - Pv[cc, va // sc])
         for u in nbrs:
             ux, uy = xv[u], yv[u]
             if (r, v) < (uy, u):
@@ -315,38 +567,55 @@ def _fast_seat_grid(live: _Live, v, wo):
             else:
                 ext_side, ext_is_grid = 1, True    # u's h-arm to col c
             if u in nb_wo and nb_wo[u][0] == ext_side:
-                _so, line, na, nb = nb_wo[u]
+                _so, line, na, nb, act2 = nb_wo[u]
             else:
                 if ext_side == 1:
                     line, na, nb = (live.arms[u][0], live.arms[u][1],
                                     live.arms[u][2])
+                    act2 = live.h_act[u]
                 else:
                     line, na, nb = (live.arms[u][3], live.arms[u][4],
                                     live.arms[u][5])
+                    act2 = live.v_act[u]
             if ext_is_grid:
                 na2 = np.minimum(na, cc)
                 nb2 = np.maximum(nb, cc)
-                d = ((nb2 - na2) - (nb - na)).astype(float)
-                dpen = ((Ph[line, nb2 + 1] - Ph[line, na2])
-                        - (Ph[line, nb + 1] - Ph[line, na]))
+                d = ((nb2 // sl - na2 // sl)
+                     - (nb // sl - na // sl)).astype(float)
+                if act2:
+                    dpen = ((Ph[line, nb2 // sc + 1]
+                             - Ph[line, na2 // sc])
+                            - (Ph[line, nb // sc + 1]
+                               - Ph[line, na // sc]))
+                else:
+                    dpen = (Ph[line, nb2 // sc + 1]
+                            - Ph[line, na2 // sc])
                 row_total = row_total + d + dpen
             else:
                 na2, nb2 = min(na, r), max(nb, r)
-                d = float((nb2 - na2) - (nb - na))
-                dpen = float((Pv[line, nb2 + 1] - Pv[line, na2])
-                             - (Pv[line, nb + 1] - Pv[line, na]))
+                d = float((nb2 // sl - na2 // sl)
+                          - (nb // sl - na // sl))
+                if act2:
+                    dpen = float((Pv[line, nb2 // sc + 1]
+                                  - Pv[line, na2 // sc])
+                                 - (Pv[line, nb // sc + 1]
+                                    - Pv[line, na // sc]))
+                else:
+                    dpen = float(Pv[line, nb2 // sc + 1]
+                                 - Pv[line, na2 // sc])
                 row_total = row_total + d + dpen
         total[r] = row_total
     return total
 
 
-def best_seat(v, pos, src_adj, grid, *, lam, e_cur, info, live=None):
+def best_seat(v, pos, src_adj, grid, *, lam, e_cur, info, live=None,
+              mode: str = "stock"):
     """Try every seat for ``v``; exact (array-patch) re-score of the
     top fast candidates; strict descent. Returns (new_pos, new_E) or
     None."""
     if live is None:
         live = _Live({u: p.copy() for u, p in pos.items()},
-                     src_adj, grid, lam)
+                     src_adj, grid, lam, mode)
     wo = live.without(v)
     scores = _fast_seat_grid(live, v, wo)
     r0, c0 = live.yi[v], live.xi[v]
@@ -380,7 +649,7 @@ def _unit_boundary(unit_set, pos, src_adj):
 
 
 def best_translate(unit, pos, src_adj, grid, *, lam, e_cur, info,
-                   live=None):
+                   live=None, mode: str = "stock"):
     """Every rigid in-window offset for ``unit``; exact per-offset
     delta (boundary hulls recomputed in full — cross-boundary contact
     flips included, Max's catch — plus the moved cover field, applied
@@ -391,7 +660,9 @@ def best_translate(unit, pos, src_adj, grid, *, lam, e_cur, info,
         return None
     if live is None:
         live = _Live({u: p.copy() for u, p in pos.items()},
-                     src_adj, grid, lam)
+                     src_adj, grid, lam, mode)
+    sc, sl = live.s_cov, live.s_len
+    honest = live.honest
     Uset = set(U)
     cols = [live.xi[w] for w in U]
     rows = [live.yi[w] for w in U]
@@ -408,9 +679,12 @@ def best_translate(unit, pos, src_adj, grid, *, lam, e_cur, info,
     old_span = {}
     for w in touched:
         row, ha, hb, col, va, vb = arms[w]
-        Ch_wo[row, ha:hb + 1] -= 1.0
-        Cv_wo[col, va:vb + 1] -= 1.0
-        old_span[w] = float((hb - ha) + (vb - va))
+        if live.h_act[w]:
+            Ch_wo[row, ha // sc:hb // sc + 1] -= 1.0
+        if live.v_act[w]:
+            Cv_wo[col, va // sc:vb // sc + 1] -= 1.0
+        old_span[w] = float((hb // sl - ha // sl)
+                            + (vb // sl - va // sl))
     xi, yi = live.xi, live.yi
     reshaped = sorted(B)
     rigid = [w for w in U if w not in B]
@@ -421,8 +695,19 @@ def best_translate(unit, pos, src_adj, grid, *, lam, e_cur, info,
         d_stair = 0.0
         for w in rigid:
             row, ha, hb, col, va, vb = arms[w]
-            Ch2[row + dr, ha + dc:hb + dc + 1] += 1.0
-            Cv2[col + dc, va + dr:vb + dr + 1] += 1.0
+            if live.h_act[w]:
+                Ch2[row + dr,
+                    (ha + dc) // sc:(hb + dc) // sc + 1] += 1.0
+            if live.v_act[w]:
+                Cv2[col + dc,
+                    (va + dr) // sc:(vb + dr) // sc + 1] += 1.0
+            if sl > 1:
+                # brick spans are not translation-invariant: the shift
+                # can change the end-rounding (a real cost, priced)
+                d_stair += (float(((hb + dc) // sl - (ha + dc) // sl)
+                                  + ((vb + dr) // sl
+                                     - (va + dr) // sl))
+                            - old_span[w])
         for w in reshaped:
             inU = w in Uset
             wx = xi[w] + (dc if inU else 0)
@@ -440,11 +725,14 @@ def best_translate(unit, pos, src_adj, grid, *, lam, e_cur, info,
                     ys.append(uy)
             ha, hb = min(xs), max(xs)
             va, vb = min(ys), max(ys)
-            Ch2[wy, ha:hb + 1] += 1.0
-            Cv2[wx, va:vb + 1] += 1.0
-            d_stair += float((hb - ha) + (vb - va)) - old_span[w]
+            if (not honest) or len(xs) > 1:
+                Ch2[wy, ha // sc:hb // sc + 1] += 1.0
+            if (not honest) or len(ys) > 1:
+                Cv2[wx, va // sc:vb // sc + 1] += 1.0
+            d_stair += (float((hb // sl - ha // sl)
+                              + (vb // sl - va // sl)) - old_span[w])
         return (live.e_stair + d_stair
-                + lam * live._pen_of(Ch2, Cv2))
+                + live.w * live._pen_of(Ch2, Cv2))
 
     per_off = (len(rigid)
                + sum(len(src_adj.get(w, [])) for w in reshaped)
@@ -487,6 +775,7 @@ def _swap_exact(live: _Live, u, w, mode):
     neighbours fall back to per-t recompute (skipped when large — a
     work bound, not a rule). Returns new E or None (skipped)."""
     adj = live.adj
+    sc, sl = live.s_cov, live.s_len
     xi, yi = live.xi, live.yi
     Nu = [t for t in adj.get(u, []) if t in live.pos and t != u]
     Nw = [t for t in adj.get(w, []) if t in live.pos and t != w]
@@ -509,39 +798,55 @@ def _swap_exact(live: _Live, u, w, mode):
     def _hulls_scratch(t):
         xs = [newx[t]]
         ys = [newy[t]]
-        for s in adj.get(t, []):
-            if s not in live.pos or s == t:
+        for t2 in adj.get(t, []):
+            if t2 not in live.pos or t2 == t:
                 continue
-            if (newy[t], t) < (newy[s], s):
-                xs.append(newx[s])
+            if (newy[t], t) < (newy[t2], t2):
+                xs.append(newx[t2])
             else:
-                ys.append(newy[s])
-        return (min(xs), max(xs)), (min(ys), max(ys))
+                ys.append(newy[t2])
+        nh_act = (len(xs) > 1) if live.honest else True
+        nv_act = (len(ys) > 1) if live.honest else True
+        return ((min(xs), max(xs), nh_act),
+                (min(ys), max(ys), nv_act))
 
     def _third(t, m):
         """t's new hulls in O(1): t sees only ``m`` (one of u, w)
         change — remove m's old (side, value) entry via the ext4
-        caches, add its new one."""
+        caches, add its new one. When m's side ASSIGNMENT flips (a
+        y-move can migrate m between t's h-net and v-net), the net
+        sizes change with it — the active flags are recomputed from
+        the migration, not carried over."""
         row, ha, hb, col, va, vb = live.arms[t]
         old_h = (yi[t], t) < (yi[m], m)     # m was above t: h-side
         new_h = (yi[t], t) < (newy[m], m)
+        n_h = len(live.contacts[t][0])
+        n_v = len(live.contacts[t][1])
         if old_h:
             base_h = (int(_excl_lo(live.hx4[t], xi[m])),
                       int(_excl_hi(live.hx4[t], xi[m])))
             base_v = (va, vb)
+            n_h -= 1
         else:
             base_h = (ha, hb)
             base_v = (int(_excl_lo(live.vy4[t], yi[m])),
                       int(_excl_hi(live.vy4[t], yi[m])))
+            n_v -= 1
         if new_h:
             nh = (min(base_h[0], newx[m]), max(base_h[1], newx[m]))
             nv = base_v
+            n_h += 1
         else:
             nh = base_h
             nv = (min(base_v[0], newy[m]), max(base_v[1], newy[m]))
-        return nh, nv
+            n_v += 1
+        nh_act = (n_h > 0) if live.honest else True
+        nv_act = (n_v > 0) if live.honest else True
+        return nh, nv, nh_act, nv_act
 
-    diffs = []      # (orient, line_old, iv_old, line_new, iv_new)
+    # diffs: (orient, line_old, iv_old, act_old, line_new, iv_new,
+    #         act_new)
+    diffs = []
     d_stair = 0.0
     seen = set()
     for t in sorted({u, w} | set(Nu) | set(Nw)):
@@ -549,32 +854,41 @@ def _swap_exact(live: _Live, u, w, mode):
             continue
         seen.add(t)
         row, ha, hb, col, va, vb = live.arms[t]
+        h_act0, v_act0 = live.h_act[t], live.v_act[t]
         if t == u or t == w or t in common:
-            (nha, nhb), (nva, nvb) = _hulls_scratch(t)
+            ((nha, nhb, nh_act),
+             (nva, nvb, nv_act)) = _hulls_scratch(t)
         elif t in set(Nu):
-            (nha, nhb), (nva, nvb) = _third(t, u)
+            (nha, nhb), (nva, nvb), nh_act, nv_act = _third(t, u)
         else:
-            (nha, nhb), (nva, nvb) = _third(t, w)
+            (nha, nhb), (nva, nvb), nh_act, nv_act = _third(t, w)
         nrow, ncol = newy[t], newx[t]
-        if (nrow, nha, nhb) != (row, ha, hb):
-            diffs.append((1, row, (ha, hb), nrow, (nha, nhb)))
-        if (ncol, nva, nvb) != (col, va, vb):
-            diffs.append((0, col, (va, vb), ncol, (nva, nvb)))
-        d_stair += (float((nhb - nha) + (nvb - nva))
-                    - float((hb - ha) + (vb - va)))
+        if (nrow, nha, nhb, nh_act) != (row, ha, hb, h_act0):
+            diffs.append((1, row, (ha, hb), h_act0,
+                          nrow, (nha, nhb), nh_act))
+        if (ncol, nva, nvb, nv_act) != (col, va, vb, v_act0):
+            diffs.append((0, col, (va, vb), v_act0,
+                          ncol, (nva, nvb), nv_act))
+        d_stair += (float((nhb // sl - nha // sl)
+                          + (nvb // sl - nva // sl))
+                    - float((hb // sl - ha // sl)
+                            + (vb // sl - va // sl)))
     if not diffs:
         return None
     Ch2 = live.Ch.copy()
     Cv2 = live.Cv.copy()
-    for o, lo_line, (a0, b0), nl_line, (a1, b1) in diffs:
+    for o, l0, (a0, b0), act0, l1, (a1, b1), act1 in diffs:
         A = Ch2 if o == 1 else Cv2
-        A[lo_line, a0:b0 + 1] -= 1.0
-        A[nl_line, a1:b1 + 1] += 1.0
+        if act0:
+            A[l0, a0 // sc:b0 // sc + 1] -= 1.0
+        if act1:
+            A[l1, a1 // sc:b1 // sc + 1] += 1.0
     return (live.e_stair + d_stair
-            + live.lam * live._pen_of(Ch2, Cv2))
+            + live.w * live._pen_of(Ch2, Cv2))
 
 
-def best_gather(unit, pos, src_adj, grid, *, lam, e_cur, info):
+def best_gather(unit, pos, src_adj, grid, *, lam, e_cur, info,
+                mode: str = "stock"):
     """The native gather (s3.104): evict unit U from one axis's
     coordinate order and reinsert it CONTIGUOUSLY, handing the same
     value multiset back out by rank — displacement/room-making by
@@ -609,10 +923,63 @@ def best_gather(unit, pos, src_adj, grid, *, lam, e_cur, info):
                 cand = {v: p.copy() for v, p in pos.items()}
                 for r, v in enumerate(cand_order):
                     cand[v][axis] = float(vals[r])
-                e2 = seat_energy(cand, src_adj, grid, lam=lam)
+                e2 = seat_energy(cand, src_adj, grid, lam=lam,
+                                 mode=mode)
                 if e2 < best_e:
                     best_e = e2
                     best = cand
+    if best is not None:
+        return best, best_e
+    return None
+
+
+def best_interleave(unit, pos, src_adj, grid, *, lam, e_cur, info,
+                    live=None, mode: str = "stock"):
+    """The insertion DP resurrected as a one-court move (s3.111,
+    Max's sliced-Wasserstein frame): evict unit U from one axis's
+    coordinate order and re-insert it at the EXACT optimum over ALL
+    interleavings — ``align_reinsert``'s s3.100 machinery
+    (induced-rule pricing on y, frozen contacts on x, forward and
+    reversed arms), handing the same value multiset back by rank
+    (the gather's idiom; the gather's contiguous family is a strict
+    subset of this one). The DP's interior prices the
+    frozen-other-axis stair exactly and is capacity-blind; the single
+    candidate per axis is AUDITED by the reference evaluator and
+    accepted only on strict descent of the true objective. One court:
+    a decline costs one evaluation, never a rejection cycle — near
+    the optimum almost every call certifies "already optimal for this
+    (set, axis)" (interleave_noops), and the audit's few declines
+    (interleave_declines) are the measured answer to whether the DP
+    interior ever needs a capacity term. As a JUMP move it cannot be
+    path-blocked: in lex mode it lands directly on the best final
+    interleaving without traversing overloaded intermediates (the
+    s3.110b lesson's named counter-move)."""
+    U = sorted(w for w in unit if w in pos)
+    if len(U) < 2 or len(U) >= len(pos):
+        return None
+    contacts = (live.contacts if live is not None
+                else _stair_contacts(pos, src_adj))
+    best = None
+    best_e = e_cur - 1e-9
+    for axis in (1, 0):
+        order = sorted(pos, key=lambda v: (float(pos[v][axis]), v))
+        vals = sorted(float(pos[v][axis]) for v in order)
+        other = {v: float(pos[v][1 - axis]) for v in pos}
+        new_order, _flip = align_reinsert(
+            order, U, src_adj, vals, None, axis=axis, other=other,
+            contacts=contacts)
+        if new_order is None:
+            info["interleave_noops"] += 1   # view-local optimum
+            continue
+        cand = {v: p.copy() for v, p in pos.items()}
+        for r, v in enumerate(new_order):
+            cand[v][axis] = float(vals[r])
+        e2 = seat_energy(cand, src_adj, grid, lam=lam, mode=mode)
+        if e2 < best_e:
+            best_e = e2
+            best = cand
+        else:
+            info["interleave_declines"] += 1
     if best is not None:
         return best, best_e
     return None
@@ -643,7 +1010,7 @@ def swap_sweep(pos, src_adj, grid, *, lam, e_cur, info, live,
                     pos[v][0], pos[u][0] = pos[u][0], pos[v][0]
                 if best_mode in ("y", "b"):
                     pos[v][1], pos[u][1] = pos[u][1], pos[v][1]
-                live = _Live(pos, src_adj, grid, lam)
+                live = _Live(pos, src_adj, grid, lam, live.mode)
                 e_cur = live.E
                 info["swap_accepts"] += 1
                 improved = True
@@ -654,27 +1021,34 @@ def swap_sweep(pos, src_adj, grid, *, lam, e_cur, info, live,
 
 def seat_arrange(pos0: Dict[int, Point], src_adj: Dict[int, List[int]],
                  grid: TileGrid, units, *, lam: float = 1.0,
-                 deadline: Optional[float] = None, pack_move=None):
+                 deadline: Optional[float] = None, pack_move=None,
+                 mode: str = "stock", interleave: bool = False):
     """Passes of (every variable via best_seat, id order; every unit
     via best_translate, coarsest first; then the PACK MOVE — the exact
     packer as one move among moves, its joint reseating re-scored on
     the seat objective and accepted only on strict descent, gap-free
     by construction), until an accept-free pass or the deadline.
-    ``pack_move`` is a callable(pos) -> pos supplied by the driver."""
+    ``pack_move`` is a callable(pos) -> pos supplied by the driver.
+    ``mode`` selects the objective (stock / brick / lex — module
+    docstring); positions and the candidate lattice stay at junction
+    resolution in every mode."""
     import time as _time
     if not getattr(grid, "typed", False) or not line_pools(grid):
         return ({v: p.copy() for v, p in pos0.items()},
                 {"seat_accepts": 0, "trans_accepts": 0, "passes": 0,
-                 "accept_traj": [], "fast_miss": 0, "seat_E": None})
+                 "accept_traj": [], "fast_miss": 0, "seat_E": None,
+                 "seat_pen": None, "seat_stair": None})
     pos = {v: np.asarray(p, dtype=float).copy() for v, p in pos0.items()}
     for v in pos:
         pos[v][0] = float(min(max(int(round(pos[v][0])), 0), grid.W - 1))
         pos[v][1] = float(min(max(int(round(pos[v][1])), 0), grid.H - 1))
-    live = _Live(pos, src_adj, grid, lam)
+    live = _Live(pos, src_adj, grid, lam, mode)
     e_cur = live.E
     info = {"seat_accepts": 0, "trans_accepts": 0, "passes": 0,
             "accept_traj": [], "fast_miss": 0, "pack_accepts": 0,
-            "swap_accepts": 0, "gather_accepts": 0}
+            "swap_accepts": 0, "gather_accepts": 0,
+            "interleave_accepts": 0, "interleave_declines": 0,
+            "interleave_noops": 0}
     unit_lists = []
     if units:
         for level in reversed(list(units)):
@@ -694,12 +1068,18 @@ def seat_arrange(pos0: Dict[int, Point], src_adj: Dict[int, List[int]],
             if (deadline is not None
                     and _time.perf_counter() > deadline):
                 break
-            res = best_gather(cl, pos, src_adj, grid, lam=lam,
-                              e_cur=e_cur, info=info)
+            if interleave:
+                res = best_interleave(cl, pos, src_adj, grid, lam=lam,
+                                      e_cur=e_cur, info=info,
+                                      live=live, mode=mode)
+            else:
+                res = best_gather(cl, pos, src_adj, grid, lam=lam,
+                                  e_cur=e_cur, info=info, mode=mode)
             if res is not None:
                 pos, e_cur = res
-                live = _Live(pos, src_adj, grid, lam)
-                info["gather_accepts"] += 1
+                live = _Live(pos, src_adj, grid, lam, mode)
+                info["interleave_accepts" if interleave
+                     else "gather_accepts"] += 1
                 accepts += 1
         if pack_move is not None and (deadline is None
                                       or _time.perf_counter()
@@ -711,10 +1091,11 @@ def seat_arrange(pos0: Dict[int, Point], src_adj: Dict[int, List[int]],
                                                0), grid.W - 1))
                     cand[v][1] = float(min(max(int(round(cand[v][1])),
                                                0), grid.H - 1))
-                e2 = seat_energy(cand, src_adj, grid, lam=lam)
+                e2 = seat_energy(cand, src_adj, grid, lam=lam,
+                                 mode=mode)
                 if e2 < e_cur - 1e-9:
                     pos, e_cur = cand, e2
-                    live = _Live(pos, src_adj, grid, lam)
+                    live = _Live(pos, src_adj, grid, lam, mode)
                     info["pack_accepts"] += 1
                     accepts += 1
         pre_swaps = info["swap_accepts"]
@@ -731,7 +1112,7 @@ def seat_arrange(pos0: Dict[int, Point], src_adj: Dict[int, List[int]],
                             e_cur=e_cur, info=info, live=live)
             if res is not None:
                 pos, e_cur = res
-                live = _Live(pos, src_adj, grid, lam)
+                live = _Live(pos, src_adj, grid, lam, mode)
                 info["seat_accepts"] += 1
                 accepts += 1
         for cl in unit_lists:
@@ -742,15 +1123,15 @@ def seat_arrange(pos0: Dict[int, Point], src_adj: Dict[int, List[int]],
                                  e_cur=e_cur, info=info, live=live)
             if res is not None:
                 pos, e_cur = res
-                live = _Live(pos, src_adj, grid, lam)
+                live = _Live(pos, src_adj, grid, lam, mode)
                 info["trans_accepts"] += 1
                 accepts += 1
         # per-pass honesty cross-check: live books vs the reference
-        e_ref = seat_energy(pos, src_adj, grid, lam=lam)
+        e_ref = seat_energy(pos, src_adj, grid, lam=lam, mode=mode)
         if abs(e_ref - e_cur) > 1e-6:
             info["fast_miss"] += 1000   # loud drift marker
             e_cur = e_ref
-            live = _Live(pos, src_adj, grid, lam)
+            live = _Live(pos, src_adj, grid, lam, mode)
         info["accept_traj"].append(accepts)
         if accepts == 0:
             if coarse_phase:
@@ -758,4 +1139,9 @@ def seat_arrange(pos0: Dict[int, Point], src_adj: Dict[int, List[int]],
                 continue
             break
     info["seat_E"] = round(e_cur, 1)
+    # the composite made legible: capacity and length reported apart
+    # (in lex mode seat_pen == 0 means feasibility was reached and
+    # held as an invariant)
+    info["seat_pen"] = round(live.pen, 1)
+    info["seat_stair"] = round(live.e_stair, 1)
     return pos, info

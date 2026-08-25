@@ -1,0 +1,42 @@
+[crystal  (0 deficits)]
+  [raw   ] junction: maxcov=8 cells=0 hinge2=0 | brick: maxcov=16 cells=10 hinge2=514
+      h line=11 brick= 1 cover= 9 pool=8
+      h line=12 brick= 2 cover=16 pool=8
+      h line=12 brick= 3 cover=16 pool=8
+      h line=12 brick= 4 cover=16 pool=8
+      h line=12 brick= 5 cover=16 pool=8
+      v line= 1 brick= 1 cover=16 pool=8
+      v line= 1 brick= 2 cover=16 pool=8
+      v line= 1 brick= 3 cover=16 pool=8
+      v line= 1 brick= 4 cover=16 pool=8
+      v line= 2 brick= 5 cover= 9 pool=8
+  [honest] junction: maxcov=8 cells=0 hinge2=0 | brick: maxcov=8 cells=0 hinge2=0
+  stair=1766  pen(as-shipped)=0  seat_E(lam=1)=1766
+[stalled (73 deficits)]
+  [raw   ] junction: maxcov=9 cells=11 hinge2=11 | brick: maxcov=16 cells=17 hinge2=521
+      h line=11 brick= 1 cover= 9 pool=8
+      h line=12 brick= 1 cover= 9 pool=8
+      h line=12 brick= 2 cover=16 pool=8
+      h line=12 brick= 3 cover=16 pool=8
+      h line=12 brick= 4 cover=16 pool=8
+      h line=12 brick= 5 cover=16 pool=8
+      v line= 1 brick= 1 cover=16 pool=8
+      v line= 1 brick= 2 cover=16 pool=8
+      v line= 1 brick= 3 cover=16 pool=8
+      v line= 1 brick= 4 cover=16 pool=8
+      v line= 1 brick= 5 cover= 9 pool=8
+      v line= 2 brick= 0 cover= 9 pool=8
+      v line= 2 brick= 1 cover= 9 pool=8
+      v line= 2 brick= 2 cover= 9 pool=8
+      v line= 2 brick= 3 cover= 9 pool=8
+      v line= 2 brick= 4 cover= 9 pool=8
+      v line= 2 brick= 5 cover= 9 pool=8
+  [honest] junction: maxcov=9 cells=11 hinge2=11 | brick: maxcov=9 cells=6 hinge2=6
+      v line= 2 brick= 0 cover= 9 pool=8
+      v line= 2 brick= 1 cover= 9 pool=8
+      v line= 2 brick= 2 cover= 9 pool=8
+      v line= 2 brick= 3 cover= 9 pool=8
+      v line= 2 brick= 4 cover= 9 pool=8
+      v line= 2 brick= 5 cover= 9 pool=8
+  stair=1693  pen(as-shipped)=11  seat_E(lam=1)=1704
+done-gate

@@ -306,9 +306,16 @@ class AttractConfig:
                                # strict descent on ONE objective with
                                # proposer == judge. Init and the whole
                                # adapter/tail are shared verbatim.
-                               # Open at the s3.104 stopping point:
-                               # the completability term. "orders" =
-                               # the shipped order-state arrange.
+                               # "lex" (s3.110, the two-ruler engine):
+                               # the seat moves under lexicographic
+                               # (capacity, stair) descent — capacity
+                               # at brick ruler (honest arms, wire_map
+                               # pools, near-hard), stair at junction
+                               # ruler; no pack move, no legalization
+                               # pack, feasibility is the search's
+                               # invariant; overload_lam unused.
+                               # "orders" = the shipped order-state
+                               # arrange.
     census_required: bool = False
                                # s3.97 required-hull census, RESTORED
                                # s3.101 from archive 09467299: the gate
@@ -322,6 +329,35 @@ class AttractConfig:
                                # the completability question.
                                # Stride-gated (parity is meaningless
                                # at stride 1). OFF = books-hull census.
+    brick_plane: bool = False
+                               # s3.107/s3.109 (the brick plane): the
+                               # seat engine's along-axis RULER becomes
+                               # the fabric parity period (one brick =
+                               # stride junctions = one qubit-length).
+                               # Seats/lines keep junction resolution;
+                               # ACCOUNTING quantizes: cover + stair
+                               # spans in whole bricks (end-rounding —
+                               # no phantom half-qubit savings),
+                               # per-(line, brick) pools from wire_map,
+                               # demand-honest arms (a contact-free
+                               # side deposits nothing — the s3.108
+                               # phantom-arm lesson). Seats mode only;
+                               # stride-gated like the exactness stack
+                               # (Chimera is already brick-quantized).
+                               # Default stock (junction ruler).
+    interleave_moves: bool = False
+                               # s3.111 (the insertion DP as a
+                               # one-court move): the seat engines'
+                               # unit move becomes best_interleave —
+                               # align_reinsert's exact all-
+                               # interleavings DP (s3.100 machinery),
+                               # audited by the reference evaluator
+                               # (proposer == judge: declines are one
+                               # evaluation, never a rejection cycle).
+                               # A JUMP move: cannot be path-blocked
+                               # by the lex mode's hard capacity key.
+                               # OFF = best_gather (the contiguous
+                               # 6-candidate subset).
 
 
 def _auto_bins(n_qubits: int) -> int:
@@ -413,6 +449,7 @@ def attract_embed(
         eff_lam = cfg.overload_lam
         eff_exact = cfg.exact_seeds and stride2
         eff_snap = cfg.snap_claims and stride2
+        eff_brick = cfg.brick_plane and stride2
         # vcycle activation is stride-gated (s3.66 guard probe): the
         # compact coarse init needs the contraction+DP machinery to
         # exploit it — on the P16 legacy path it regressed the dense
@@ -517,12 +554,45 @@ def attract_embed(
             tpts, last_info = seat_arrange(
                 tpts, src_adj, grid, cluster_groups,
                 lam=(eff_lam if eff_lam > 0 else 1.0),
-                deadline=placement_deadline, pack_move=_pack_move)
+                deadline=placement_deadline, pack_move=_pack_move,
+                mode=("brick" if eff_brick else "stock"),
+                interleave=cfg.interleave_moves)
             # the seat search's capacity is soft (hinge); the claim
             # layer needs a hard-capacity state — one exact pack per
             # axis legalizes the seat-discovered orders (the single
             # remaining conversion, smoke-measured necessary: without
             # it turán 6.0 -> 15.5 with mx 28)
+            tpts, _legal_info = alternate_arrange(
+                tpts, src_adj, grid, iters=1, kappa=kappa,
+                floor=cfg.span_floor, insert_sweeps=0,
+                overload_lam=eff_lam, snap=eff_snap,
+                deadline=placement_deadline, cluster_groups=None)
+        elif cfg.arrange_mode == "lex":
+            # s3.110 the two-ruler engine: init + ONE exact pack (init
+            # projection), ONE lexicographic search — capacity (brick
+            # ruler, honest arms, wire_map pools) is the leading key,
+            # stair (junction ruler) the second — then ONE pack as the
+            # FAMILY NORMALIZER before conversion. Measured (s3.110
+            # smoke): a pen-0 lex state converts at 578 deficits raw
+            # and 0 deficits after one pack, and the pack PRESERVES
+            # pen 0 — the packer's irreplaceable role is not capacity
+            # (the invariant owns that now) but normalizing the state
+            # into the family the converter/completion stack was
+            # co-designed with (ideas 2.15). No per-pass pack moves,
+            # no lam. The named open question: a lex-family converter
+            # (spill-aware per-line brick seating) would delete this
+            # normalizer too. Pipeline a person can follow:
+            # init -> pack -> search -> pack -> convert -> verify.
+            from ember_qc.algorithms.factored.seat import seat_arrange
+            tpts, _proj_info = alternate_arrange(
+                tpts, src_adj, grid, iters=1, kappa=kappa,
+                floor=cfg.span_floor, insert_sweeps=0,
+                overload_lam=eff_lam, snap=eff_snap,
+                deadline=placement_deadline, cluster_groups=None)
+            tpts, last_info = seat_arrange(
+                tpts, src_adj, grid, cluster_groups,
+                deadline=placement_deadline, mode="lex",
+                interleave=cfg.interleave_moves)
             tpts, _legal_info = alternate_arrange(
                 tpts, src_adj, grid, iters=1, kappa=kappa,
                 floor=cfg.span_floor, insert_sweeps=0,
@@ -682,8 +752,8 @@ def attract_embed(
         # rose = the level-1-vs-2 capacity gap's fingerprint)
         diag["revert_ov"] = int(last_info.get("revert_ov", 0))
         diag["revert_e"] = int(last_info.get("revert_e", 0))
-        # s3.102 seat-engine counters
-        if cfg.arrange_mode == "seats":
+        # s3.102 seat-engine counters (s3.110: lex shares them)
+        if cfg.arrange_mode in ("seats", "lex"):
             diag["seat_accepts"] = int(last_info.get("seat_accepts", 0))
             diag["trans_accepts"] = int(
                 last_info.get("trans_accepts", 0))
@@ -694,8 +764,19 @@ def attract_embed(
             diag["swap_accepts"] = int(last_info.get("swap_accepts", 0))
             diag["gather_accepts"] = int(
                 last_info.get("gather_accepts", 0))
+            diag["interleave_accepts"] = int(
+                last_info.get("interleave_accepts", 0))
+            diag["interleave_declines"] = int(
+                last_info.get("interleave_declines", 0))
+            diag["interleave_noops"] = int(
+                last_info.get("interleave_noops", 0))
             diag["accept_traj"] = list(
                 last_info.get("accept_traj", []))[:12]
+            # s3.110: capacity and length reported apart; in lex mode
+            # seat_pen == 0 certifies the feasibility invariant held
+            if last_info.get("seat_pen") is not None:
+                diag["seat_pen"] = last_info["seat_pen"]
+                diag["seat_stair"] = last_info["seat_stair"]
         # s3.93 fit-vs-fabric observables + seed submission
         for k in ("final_width_x", "final_width_y",
                   "projection_misses", "unb_miss"):

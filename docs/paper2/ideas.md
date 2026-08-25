@@ -166,6 +166,19 @@ Each entry: the principle, then the strongest single piece of evidence.
   NP-mortality. Named candidate: the converter's own per-line verdict
   as a LOCAL judge term (existing arithmetic, evaluated incrementally
   on touched lines). Diagnose the 73 before designing the term.
+  GATE RESULT (s3.108/b): the gate refuted only the VISIBILITY
+  premise — with demand-honest books (phantom point arms excluded)
+  the junction plane already sees the stalled state's overload, so
+  the brick ruler is not needed to SEE this stall. The shipped hinge
+  term separates the states but is outvoted by the stair term;
+  reweighting it is retracted (hinge² over-trading is a standing
+  ledger verdict). The brick plane's STRUCTURAL content is untested
+  and open: whole-qubit stair pricing (junction units book phantom
+  half-qubits — the crystal's benign trims are that fiction),
+  promises that cannot be parity-infeasible (converter retreats
+  toward plain interval seating + spill), depth ⟺ seatability as a
+  theorem. Adjudication = build the switch, measure the board
+  (notes s3.108b).
 
 - **The extents object — mostly dissolved (s3.70).** The six blocked
   items needed extents only because the coarse level *summarized*;

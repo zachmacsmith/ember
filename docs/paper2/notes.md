@@ -1306,6 +1306,419 @@ full at s3.104/ideas 2.15: the orders engine's states are ALL packer
 output, a regular subfamily the exactness stack was co-designed with —
 completability enforced by representation, not by pricing.
 
+**3.106 (the deficit autopsy — one general class, not 73 anecdotes).**
+Run with the overfitting guard built in: the same classifier on the
+seat-stalled turán (73 deficits), the orders crystal (control), and
+the orders engine's OWN natural membrane on ws (41 deficits).
+Findings: **(1) deficits are overwhelmingly LONG-RANGE, not
+parity-local** — turán/seat: minimum closest-approach 3 tiles, 60/73
+at ≥5; ws/orders: 23/41 at ≥5, only 1 co-tile — the failing chains are
+nowhere near each other; the mechanism is ARM TRUNCATION (claims far
+short of the promised hulls), not crossing-level parity misses.
+**(2) convert_miss does not predict deficits**: the crystal carries 65
+converter misses and completes to 0 deficits (stalled: 63 misses → 73
+deficits) — what differs is whether completion can locally REPAIR a
+miss, i.e., whether the truncated arm's partner is still within
+extension reach. **(3) the class is general** — the dominant failure
+is identical in both engines, differing only in volume, so a term
+addressing it is not turán-tuning. Design conclusion (consistent with
+Max's sum-vs-max principle: the term is a COUNT): the plane's
+tile-depth hinge says "≤8 fits", but the claim layer must seat
+REQUIRED (snap-widened, parity-classed) hulls into 8 lanes per line —
+a strictly tighter per-line feasibility that the converter's own
+classed-active-set DP already decides. CAVEAT (caught answering
+Max's converter-miss question, same session): raw MISS COUNT does not
+separate the states either — crystal 65 misses/0 deficits vs stalled
+63 misses/73 deficits — so "per-line converter feasibility" as a
+count is measurably as blind as the census; the separator is what
+happens AFTER a miss (truncation magnitude / whether the partner
+stays within repair reach). Refined candidates measured same
+session: lost-span MASS also fails to separate (crystal 65 vs stalled
+74) — but the DISTRIBUTION separates cleanly: crystal = 65 lossy
+arms each losing EXACTLY 1 junction (the benign parity-slack trim —
+the crossing survives at the other course; worst=1), stalled = 63
+arms with amputations up to 12 junctions (worst=12). **The separating
+term: Σ max(0, truncation − 1) — truncation beyond the one-junction
+parity slack — scores crystal 0, stalled positive.** Sum-natured
+(Max's principle), per-line computable, prices the general amputation
+class, not turán. Note the resonance: the separator is the TAIL of
+the truncation distribution, not its mass — Max's avg-vs-max weekend
+observation recurring one level down, resolved the same way (a sum
+with the benign unit exempted). Awaiting the owner's call on building
+it into the seat judge. Bearing on the bigger deletion Max floated: if the judge
+carries per-line seatability, the regularity the packer currently
+provides by construction may emerge from the objective, and the
+packer could retreat to init-only — plausible, testable only after
+the term exists, promised as nothing.
+
+**3.107 (design note, discussed with Max 2026-08-24 — the brick
+plane; UNBUILT, recorded against compaction).** The s3.106 autopsy's
+cure is a RULER change, not a term: quantize the ideal plane to the
+fabric's parity period — on Zephyr one "brick" = 2 junctions = one
+qubit-length. Framings that must survive: (1) **effective-Chimera
+resolution** — Zephyr is two Chimera sheets stapled at half-cell
+offset; a brick is one cell of each sheet superimposed; Chimera was
+ALREADY brick-quantized (qubit = cell), and every parity pathology is
+the leak from keeping cell-resolution paper over 2-cell dominoes. The
+principle: the plane lives at one qubit per cell per lane. (2) **the
+geometric budget** — the coarsening quantum is the BAR LENGTH (one
+qubit-length), not the sheet count; what matters is chip width in
+qubit-lengths: Chimera ~16, Z12 ~12.5, P16 ~5 — deriving "Pegasus
+looks mortal" in advance (thin geometric regime + incomplete gluing
+as a second independent wound). (3) **the overpay analysis** (Max's
+question): end-rounding to brick boundaries costs ≤1 junction per
+arm-end but ZERO extra qubits vs reality — the old junction-plane was
+booking phantom half-qubit savings (the crystal's 65 benign 1-unit
+trims are this rounding surfacing at conversion); the parity does NOT
+vanish physically — it is demoted to a **straddle spill**: the 4
+phase-aligned wires per ribbon host brick-intervals at exactly 1
+qubit/brick (clean depth≤4 theorem), the 4 off-phase wires host them
+at +1 qubit spill per arm, payable from the whole-brick booking —
+graceful, bounded, taken only when aligned wires fill. Honest theorem
+status: exact seatability guaranteed at depth ≤ 4, practical at ≤ 8
+with spill-aware seating — the falsification gate before any build:
+at brick resolution the stalled turán state's infeasibility must
+become VISIBLE as cover overload while the crystal stays clean.
+(4) **roles**: a variable = a cross of bricks; its NUCLEUS = the
+corner brick where its two arms meet (sub-brick corner-qubit choice
+belongs to the converter); the plane decides LINES (seats + hulls),
+the converter decides WIRES (per-ribbon interval seating, aligned
+phase preferred, spill as fallback), completion verifies. Supersedes
+the s3.106 term-hunting: Σ max(0, truncation − slack) remains the
+diagnostic that found this, not the design.
+
+**3.107b (sharpening, from Max's two-rows-of-8 question, same day).**
+The brick quantization is ANISOTROPIC — per arm, along the arm's own
+axis only. Parallel lines are spaced HALF a qubit-length apart (a bar
+spans 2 junctions ⇒ 2 perpendicular lines per bar-length, fabrics.md
+§4), so a fully-2D brick would swallow TWO parallel lines = 16 wires
+per brick-row. We do NOT pool them: an arm cannot continue from line
+w to line w±1 (no same-orientation coupler crosses lines; a line
+switch is a bend through a perpendicular bar), so 16-per-brick-row
+would be paper capacity across an uncrossable boundary — exactly the
+phantom-fidelity sin the design removes. Ledger stays per line:
+transverse coordinates (WHICH line each arm sits on, hence the
+nucleus) remain at full line resolution; only arm EXTENTS are
+brick-quantized. Capacity per (line, brick) = 8 wires, 4 aligned +
+4 straddling. Corollaries: (a) the crossing junction between u and v
+is fully determined by the two line choices (u's h-line × v's v-line)
+— nothing new for a converter to decide about WHERE; junction
+K_{8,8}-completeness makes any wire pair couple there, so the
+converter's surviving job is only which wire within each line, with
+coverage of the crossing brick guaranteed by the aligned/spill
+booking. (b) Brick boundaries = even junctions: j=0 bars tile bricks
+{2z, 2z+1} exactly; j=1 bars straddle; the leftover junction 2m at
+the chip edge is the known boundary-half-capacity fact appearing as a
+half-brick. The "2×2 superimposed Chimera cell" of s3.107 is the
+DERIVATION of the quantum (why one qubit-length, why Chimera never
+had the disease), not the data structure. The absorption mechanism,
+stated once (Max's how-is-parity-absorbed question): a brick contains
+one junction of EACH parity, so a whole-brick promise covers both
+classes at every step of its length — no whole-brick promise can be
+parity-infeasible, and covering a brick covers both its junctions, so
+which one the partner's crossing lands on is free (this is why
+extents can be coarse while line choices stay exact). Each
+orientation's accounting cell is 1 line × 1 brick = a 1×2 domino in
+junction units = exactly one qubit footprint; the two orientations'
+cell grids are woven dominoes — no common 2×2 supertile exists
+anywhere in the algorithm, only in the derivation.
+STATUS: refuted at its own gate — see s3.108. Nothing was built.
+
+**3.108 (the brick gate — s3.107's premise refuted; the objective
+already sees the doom).** Ran the recorded falsification gate
+(`data/brick_gate.py`, kept; states = the exact s3.106 autopsy
+specimens, deterministic). Three findings, in the order they fell:
+**(1) the raw census does not separate** — with `_arms` as
+seat_energy uses them, brick-resolution cover shows cover-16 bricks
+in BOTH states (crystal hinge² 514 vs stalled 521, same lines h12/v1).
+Breakdown traced every cover-16 cell to **phantom point arms**:
+`_arms` seeds each side's interval with the variable's own
+coordinate, so a contact-free side still deposits cover 1; stacks of
+8 co-located variables put 8 phantom points per junction, and two
+adjacent stacks merge to 16 at brick resolution. Under the stair rule
+an edge consumes u's h-arm and v's v-arm only — an empty side demands
+no bar. (Benign at junction resolution today: stacking is capped at
+pool, so phantoms never cross the hinge; any coarser or
+required-widened census they poison.) **(2) the demand-honest census
+separates at BOTH resolutions**: excluding empty sides, the crystal
+is perfectly clean (junction 0, brick 0) and the stalled state is
+visibly overloaded (junction hinge² 11, brick 6 — v-line 2 at depth
+9 > pool 8 along its whole length, a plain depth violation, not a
+parity artifact). **The s3.107 premise — infeasibility invisible at
+junction resolution, visible only at brick — is false. The junction
+plane already sees it; the brick ruler adds nothing for this failure
+mode.** Design refuted at its own gate; no engine code was changed.
+**(3) the completability question's answer was hiding in the shipped
+objective**: seat_energy decomposes as crystal = 1766 stair + 0 pen,
+stalled = 1693 stair + 11 pen (λ=1). The capacity term SEES the
+stalled state's infeasibility — it is outvoted: Δstair 73 vs Δpen 11,
+endpoint ordering flips at λ > 73/11 ≈ 6.6. (Resolves the s3.104
+"blind objective" reading: the qubit-pricing tie and the
+line-granular census-1 were the wrong instruments; per-cell hinge
+integration along the line reads 11. Note also Δstair = 73 =
+deficit count is numerology until shown otherwise.) Caveat kept honest: cover ≤
+pool is necessary, not sufficient (the converter's classed DP is the
+real judge); depth-9-on-one-line is not yet shown to account for all
+73 deficits.
+
+**3.108b (same-session correction, at Max's challenge).** Two
+overstatements withdrawn. (1) The λ-sweep suggestion (reweight the
+hinge via `overload_lam`) is RETRACTED: it contradicts the standing
+cap_pressure verdict (hinge² integral swamps energy gaps on
+uniformly-crowded graphs — the ER defect) and the measured lam=4
+over-trade; hinge² is on record as the non-decomposable form of the
+right idea, and turning it up is the knob the ledger already warns
+about. (2) "Design refuted at gate" over-claimed: the gate tested
+ONLY the visibility premise (stalled doom invisible at junction
+resolution — false), on one state pair. The brick plane's structural
+content was NOT tested and remains open: whole-qubit stair pricing
+(the junction ruler books phantom half-qubits; the crystal's 65
+benign trims are that fiction surfacing), promises that cannot be
+parity-infeasible (the converter's parity-classed DP retreats toward
+plain interval seating + spill), and depth ⟺ seatability becoming a
+theorem rather than an approximation. Adjudication of those is
+build-and-measure per house rules: the switch (Phase B plan, sites
+enumerated) defaulted off, judged by the paired board — pending the
+owner's word.
+
+**3.109 (the brick plane BUILT — `brick_plane`, seats-mode switch,
+default off).** Max's call ("let's build it and see what happens").
+The implementation rule that kept it tractable: **hulls stay in
+junction coordinates everywhere** (seats, contacts, transverse line
+choices, the candidate lattice); only the ACCOUNTING quantizes, at
+the array boundary — every cover deposit/removal and every stair
+span maps endpoints through `p // s` with `s = grid.stride` (1 when
+off → stock arithmetic reproduced exactly), pools become
+per-(line, brick) counts derived from `wire_map` (interior Zephyr 8;
+the over-allocated boundary column self-absorbs to 0 — the packer's
+own boundary treatment), and arms are demand-honest (a contact-free
+side deposits nothing; spans of empty sides are 0 by construction so
+span arithmetic never branches — only deposits carry act flags).
+Threaded through the whole engine: `_Live`
+(rebuild/without/exact_full with 5-tuple nb_wo carrying the act
+flag), `_fast_seat_grid` (brick prefix arrays, junction candidate
+lattice, fresh-deposit pricing for empty→nonempty nets),
+`best_translate._delta` (deposits quantized AFTER the shift — brick
+spans are deliberately not translation-invariant, end-rounding is a
+real cost), `_swap_exact` (diffs carry act-old/act-new), gather/pack
+re-scored by the brick reference. One real bug caught by the swap
+oracle on the stride-2 grid: `_third`'s "net sizes unchanged"
+assumption is FALSE under y-moves (the moved endpoint migrates
+between the third party's h-net and v-net; act flags must be
+recomputed from the migration). Knob `AttractConfig.brick_plane`
+(default False), stride-gated like the exactness stack. Perf round
+(the s3.100b precedent, the probe walls forced it): the reference
+evaluator (`seat_energy`) vectorized — stair rule as scatter-min/max
+over edge index arrays, cover via diff-and-cumsum, per-graph edge
+cache; verified `==` (exact, not approx) against the per-edge
+original on 800 random cases both rulers both fabrics; brick pools
+memoized on the grid (the line_pools pattern). All integer-valued
+quantities, so vectorized sums are exact. 634 tests green (oracle
+matrix: stock-Chimera, brick-Chimera s=1, brick-Zephyr s=2;
+hand-pinned brick cases incl. the boundary brick and the
+same-brick-partners-cost-the-same design claim); default-path
+fingerprints byte-identical pre/post (K100 56ec1320736ff19e, turan
+5edf09889bfba452, ws 4aa8f0d4729ca26c, grid 5b37c311a83ba60d — note
+these are this session's protocol hashes, not s3.105's). Smoke
+(turán Z12 seed 0, 60s): seats 6.000/mx 6, brick 6.500/mx 7, BOTH
+deficit-0 and mm-skipped; at 240s brick converter misses drop to 24
+vs stock's 43 (the parity-miss class shrinking, the design's
+promise) but ACL holds at 6.5 — under the brick ruler the crystal's
+junction-packed abutment states are priced differently and the
+engine settles elsewhere. Board probe `data/brick_probe.py`
+(seats vs seats+brick, one flip) launched; verdict entry to follow.
+
+**3.109b (the brick board verdict — VALIDATED MIXED, lever off).**
+`data/brick_probe.csv`, 13 cells, deep seeds turán/ws Z12, paired,
+TIMEOUT 60. Bar: PASS (no cell beyond tolerance, no feasibility
+loss). Deltas (brick − seats, negative = brick wins): the liquids
+and lattices lean brick — ER100 −0.210 (the expander, the s3.102
+engine's own best regime), ws −0.069 with mx 8.8→8.6 (the BAR
+liquid, 10 seeds), grid −0.028, honeycomb −0.035, king −0.003;
+the ordered-dense cells lean stock — turán +0.092 (6.0→6.092, mx
+6.0→6.4; the crystal family again: junction-packed abutment at
+exactly pool is optimal there and whole-brick booking prices it
+conservatively), spin_glass +0.086, regular +0.097; K100/K140
+tie/noise. P16 gate check: K100 ties EXACTLY (the stride gate is a
+true no-op); P16 turán/ws deltas (−0.763/+0.165) are deadline
+jitter under load ~86, not signal — both arms run byte-identical
+code there and only wall-clock differs. Converter misses under
+brick hold in the 20s on turán rather than dropping to zero — the
+smoke's 43→24 improvement came with the budget, not the ruler
+alone. Verdict: the ruler change is REAL but not a default-flipper
+— it trades a small crystal-family toll for small liquid/lattice/
+expander gains, all in-tol. Lever stays off; the brick plane is now
+a measured one-line switch on the seats research vehicle, and the
+s3.107 theory stands adjusted: whole-brick booking is honest about
+qubits but conservative about abutment-sharing, exactly where the
+crystal lives (the s3.108 gate's lesson, now visible in ACL).
+SCOPE CAVEAT (Max's question, same day): this verdict measured a
+MIXED-RULER pipeline, not brick end-to-end — the seats branch still
+brackets the search with three junction-ruler packer invocations:
+the init projection (imposed), the pack move (harmless — re-scored
+under brick E, strict descent), and the FINAL HARD LEGALIZATION
+(imposed, un-gated: the last touch before the converter re-jostles
+the state at junction resolution, blind to bricks). The small
+losses could live entirely in that last pack. Named follow-up, not
+yet run: brick arm with the final legalization skipped — the brick
+hinge over per-brick wire_map pools is near-hard capacity, so if
+brick-clean states convert WITHOUT the packer's rescue, the ruler
+does by pricing what the packer does by construction (the
+packer-retreats-to-init-only deletion, with a measurable path);
+if not, the packer's tenure is re-confirmed. Owner's call.
+
+**3.110 (the two-ruler lexicographic engine BUILT —
+`arrange_mode="lex"` — and the packer's true job discovered).**
+Max's directive: capacity as certificate, each detail at its own
+resolution, fewer steps. Design: descend on lexicographic
+(overload, stair) — capacity at the BRICK ruler (honest arms,
+wire_map per-(line, brick) pools; the near-hard constraint), stair
+at the JUNCTION ruler (the sharp objective; no brick plateaus) —
+expressed as ONE scalar `pen * 2**26 + stair`, exact in floats
+because every quantity is integer-valued, so the entire existing
+scalar machinery (moves, audits, prefix scans, thresholds) carries
+over unchanged. Implementation: the s3.109 single quantum `s`
+split into `s_cov` (deposits/pools) and `s_len` (spans); one mode
+enum {stock, brick, lex} derived in `_mode_params`; λ is UNUSED in
+lex — the swamping/weighting defect family (cap_pressure ER, the
+s3.108 outvoting) is unrepresentable, mooted not tuned. 642 tests
+green (4-mode oracle matrix; lex hand-pins; the pen-never-rises
+invariant; e2e). Fingerprint protocol caveat discovered: the ws
+board fingerprint is NOT run-stable at 60s under load (two runs of
+identical code differ; deadline jitter) — K100/turan/grid remain
+byte-stable and matched. **The finding that outranks the build**:
+the plan's no-legalization pipeline FAILED its smoke in the most
+informative way — the lex search does its job perfectly (pen 0,
+stair 1695 < the seats arm's 1704) and the converter then produces
+578 deficits on the raw state; ONE packer pass on the same state →
+0 deficits, with pen 0 PRESERVED. So the packer's irreplaceable
+role was never capacity (the invariant owns that now, measured):
+it is FAMILY NORMALIZATION — wire_seeds_exact + completion are
+co-designed with packer-output states (ideas 2.15, now measured
+from the other side). Not snap-specific (snap off: still 323
+deficits); the lex state carries stacks (max 9 vs packed 8) and
+per-line order shapes the exactness stack has never seen. Shipped
+accordingly: lex pipeline = init → pack → search → pack(normalizer)
+→ convert → verify — still shorter than seats (no per-pass pack
+moves, no λ), e2e turán 6.500/mx 7/0 deficits/certified at 60s.
+NAMED NEXT (the deletion that finishes the design): a lex-family
+converter — per-line spill-aware brick-interval seating (aligned
+wires host abutting bricks bar-for-bar; straddling wires need
+1-brick gaps, the +1 spill; the even-lo required-hull poke is the
+boundary case) — would delete the normalizer AND the classed
+active-set DP. That is converter co-design work for discussion,
+not a solo build. Board verdict (lex vs seats vs default,
+`data/lex_probe.py`): entry to follow.
+
+**3.110b (the lex board verdict — REFUTED AS REPLACEMENT; the
+path-freedom lesson).** `data/lex_probe.csv`, 13 cells × 3 arms
+(default/seats/lex), deep seeds turán/ws Z12, TIMEOUT 60. Bar: FAIL
+— Z12 turán +1.326 vs default (7.326/10 seeds, mx 10, where the
+seats arm holds 6.000 exactly; P16 turán fails for both engine arms,
+the known crossing≠coupler defect, lex 19.1 < seats 24.6 but both
+far out). The rest of the board is parity-or-better for lex vs
+default: K100 −0.170, ER −0.196 (its best cell — the expander
+again), ws −0.002 with mx 8.2→8.5 (vs the seats arm's +0.075/9.0),
+king −0.012; small losses spin_glass +0.208, grid +0.155,
+honeycomb +0.068. **The diagnosis that matters**: the crystal IS
+inside the lex-feasible family (the s3.108 gate measured it pen-0),
+so this is not a representation failure — it is a PATH failure.
+Strict descent under a hard leading key cannot cross even one
+transiently-overloaded state, and the routes into the crystal basin
+apparently wade through overload; the soft hinge (λ=1) that the
+seats arm keeps is load-bearing exactly as path freedom, not as a
+price. The session's completability lesson closes into a loop: the
+orders engine reaches the crystal by CONSTRUCTION, the seats engine
+by WADING, and the lex engine — which holds the strongest
+end-state guarantee — cannot get there at all. Constraint
+handling, not the constraint itself, is the open design surface:
+what survives of s3.110 regardless is the λ deletion mechanism
+(scalar lexicographic weight), the two-ruler split, the invariant
+machinery, and the measured normalizer discovery. Lever stays off;
+"lex" remains in the tree as the third mode of the shared engine
+(one enum, no duplicated machinery). For the owner: the fork is
+(a) path-freedom variants of lex (e.g., lex only after first
+feasibility, soft within pen-ties) — design discussion first, house
+warning about knob-breeding applies; (b) accept the seats engine's
+soft hinge as the wading mechanism and spend the simplification
+budget on the converter co-design instead (the normalizer deletion,
+which s3.110 measured as the packer's last load-bearing role).
+
+**3.111 (best_interleave — the insertion DP resurrected as a
+one-court move; Max's sliced-Wasserstein frame).** The owner's
+insight, recorded as the design's premise: the alignment DP's
+frozen-rest assumption is exact at the optimum and near-exact nearby
+(the sliced plan agreeing with the true plan in the limit); its
+historical failure was the ARCHITECTURE around it — exact
+optimization in one court, judged and mostly rejected by another (a
+rejection generator) — never the assumption. In the seat engine
+proposer == judge, so the same DP cannot generate a rejection
+cycle: each call either returns a true improvement, certifies "this
+(set, axis) is already optimally interleaved" (interleave_noops —
+the measure-zero-disagreement set), or has its stair-optimal
+candidate declined by the audit at the cost of ONE evaluation
+(interleave_declines — the measured diagnostic for whether the DP
+interior ever needs a capacity term; none built speculatively).
+Build: `best_interleave` in seat.py — evict unit, re-insert at the
+exact optimum over ALL interleavings via the EXISTING
+`align_reinsert` (s3.100/100b machinery, untouched), value multiset
+handed back by rank (the gather idiom; the gather's 6-candidate
+family is a strict subset), audited by `seat_energy(mode)`; knob
+`interleave_moves` (default off) swaps it for best_gather in the
+unit loop of both seat modes. Doubles as the named counter-move to
+the s3.110b path-blocking refutation: a JUMP lands on the final
+interleaving without traversing overloaded intermediates, so the
+lex mode's hard capacity key cannot block its route. 649 tests
+green (exact-optimum oracle vs brute force over all interleavings
+on the capacity-slack tier — the DP's view-argmin matched the true
+optimum; soundness+determinism across all four mode/grid combos);
+stable fingerprints byte-identical (ws excluded per the s3.110
+jitter finding). SMOKE, the headline: turán Z12 seed 0 at 60s under
+lex+interleave = **6.000 / mx 6 / 0 deficits / certified** — the
+crystal-class result the lex engine alone could not reach (6.5-7.3),
+via 2 accepted jumps, 357 cheap declines, 937 noop certificates.
+Board probe `data/int_probe.py` (default / seats / seats+int / lex /
+lex+int): verdict entry to follow.
+
+**3.111b (the interleave board verdict — lex+interleave reaches
+BOARD PARITY with the shipped default on Z12; the complementarity
+finding).** `data/int_probe.csv`, 13 cells x 5 arms, deep seeds
+turán/ws Z12, TIMEOUT 60. The headline: **lex+interleave holds
+turán at 6.000/mx 6 across ALL TEN deep seeds — exact parity with
+the orders default on the cell that refuted lex outright at
+s3.110b** — and posts no Z12 ACL loss beyond tolerance anywhere:
+wins K100 −0.210, ER −0.263 (the expander, the family's best cell),
+king −0.058, ws +0.028 with the best max chain on the board (8.1 vs
+default 8.2); small in-tol losses spin_glass +0.156, regular
++0.074, grid +0.071, K140 +0.036, honeycomb +0.015. **The
+complementarity finding (the run's deepest fact)**: the jump and
+the hard key only work TOGETHER — seats+interleave (jump, soft
+key) LOSES turán to 7.28, lex alone (hard key, no jump) loses it
+to 7.42, lex+interleave lands 6.000/10. Mechanism: the DP's
+stair-optimal jumps need the lexicographic audit to filter them
+onto the feasible manifold (soft λ=1 accepts stair-good/pen-bad
+jumps that wander off the crystal path), and the hard key needs
+the jump to cross the overloaded valleys it cannot walk through.
+Max's sliced-Wasserstein resurrection and the capacity certificate
+are two halves of one move-acceptance geometry. P16: the whole
+seat family remains broken (crossing≠coupler, the standing named
+gap; seats+interleave is outright toxic there, K100 25.4 — the
+jump amplifies the broken cover model). Wall bars: engine arms
+consume the full budget on K140/grid (slower, in-budget).
+CONSEQUENCE FOR THE OWNER: the seat engine (as lex+interleave) has
+for the first time met the consolidation-7 precondition on Z12 —
+board parity with the orders engine, crystal included — with a
+shorter pipeline (init → pack → lex-search-with-jumps →
+pack-normalizer → convert → verify; no per-pass packs, no λ, no
+insertion sweeps, no align court in the loop). What consolidation
+7 would delete if Max calls it: the order-search court
+(monotonize, insertion_sweeps, _order_composite, the arrange move
+machinery, cluster order gathers), with align_reinsert RETAINED —
+it is now the seat engine's own jump interior (the resurrection
+inverted the deletion list). Gates before the call: P16 predicate
+work or an explicit P16 carve-out; a deeper seed sweep on the
+in-tol losses; the owner's word.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).

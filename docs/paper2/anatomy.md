@@ -494,8 +494,11 @@ fabric), `span_floor=True`, `exact_seeds=True` (Zephyr gate),
 "mm", "ball", "none"}), `ball_singles=False` (s3.91 lever),
 `align_moves=True` (s3.100b default — the alignment-DP gather
 executor), `arrange_mode="orders"` ("seats" = the s3.102 seat-engine
-research vehicle, section 10), `census_required=False` (s3.97/101,
-kept as the completability toolkit). Consolidation 5 (archive
+research vehicle; "lex" = the s3.110 two-ruler lexicographic engine,
+section 9), `census_required=False` (s3.97/101,
+kept as the completability toolkit), `brick_plane=False` (s3.109 —
+the seat engine's along-axis ruler quantized to the parity period;
+seats-mode-only, stride-gated). Consolidation 5 (archive
 09467299) deleted strain_rank, submit_seeds, fold_moves, the ball-rng
 tails and the crossfinder driver; consolidation 6 (archive 5be76754)
 deleted orient_flips, align_insert and cap_pressure (verdicts in
@@ -531,6 +534,31 @@ line-resolution price yet convert to deficits 0 vs 73. The orders
 engine avoids the issue BY CONSTRUCTION (every state is packer
 output; the exactness stack was co-designed with that subfamily) —
 see ideas.md §2.15 and the §3 completability question.
+
+**The brick ruler (s3.107-109, `brick_plane=True`).** The same
+engine with the along-axis accounting quantized to the fabric parity
+period (one brick = stride junctions = one qubit-length): cover and
+stair spans in whole bricks (end-rounding — no phantom half-qubit
+savings), per-(line, brick) pools from wire_map, demand-honest arms
+(a contact-free side deposits nothing). Hulls, seats, and transverse
+line choices keep full junction resolution — only the ruler at the
+accounting boundary changes. Verdict: notes s3.109 and the
+brick_probe ledger row.
+
+**The two-ruler lexicographic engine (s3.110,
+`arrange_mode="lex"`).** The seat moves under lexicographic
+(capacity, stair) descent: capacity at the brick ruler (honest arms,
+wire_map pools — the leading key, never traded), stair at the
+junction ruler (the second key). One scalar `pen·2^26 + stair`
+carries the order exactly (integer-valued quantities). No pack
+moves, no λ. Pipeline: init → pack → search → pack → convert →
+verify — the second pack is the FAMILY NORMALIZER, not a capacity
+rescue (measured: a pen-0 lex state converts at 578 deficits raw, 0
+after one pack, pen preserved — the converter/completion stack is
+co-designed with packer-family states, ideas 2.15). The named
+deletion that finishes the design: a lex-family converter
+(spill-aware per-line brick seating) would remove the normalizer
+and the classed active-set DP. Verdict: notes s3.110/b.
 
 ## 10. Known gaps
 
