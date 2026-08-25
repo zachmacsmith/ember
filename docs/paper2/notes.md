@@ -1719,6 +1719,52 @@ inverted the deletion list). Gates before the call: P16 predicate
 work or an explicit P16 carve-out; a deeper seed sweep on the
 in-tol losses; the owner's word.
 
+**3.112 (CONSOLIDATION 7 — the winner ships, the orders court
+closes).** Max's call after the s3.111b board ("it's probably just
+time to consolidate now, this seems like a clear winner"; goal: the
+algorithm "in as small a state as possible so that I can steer it
+again"). THE FLIP: lex+interleave becomes the default — then every
+mode/engine knob dissolves. ONE pipeline: init → pack_project → the
+lex engine (lexicographic (capacity, stair); moves: interleave-jump,
+swaps, re-seats, translations) → pack_project (family normalizer) →
+converter → completion → tail. AttractConfig 20 → 12 knobs (deleted:
+arrange_mode, interleave_moves, brick_plane, align_moves,
+census_required, arrange_iters, insert_sweeps, overload_lam).
+DELETED (archive 12fe484c; purge commit 37d3439c; −1145/+282 lines
+across field/placement/seat): `alternate_arrange` and its court
+(order composites, cluster pass, the insertion court, align memo,
+revert attribution), `insertion_sweeps`, `cluster_gather_order`,
+`_order_proxy`, `claim_overload`; seat.py collapsed to the single
+lex objective (mode enum, stock/brick branches, best_gather, the
+pack_move hook all gone). SURVIVED WITH NEW JOBS: `edge_monotonize`
+— the dependency map proved it LOAD-BEARING inside the pack
+projection (it permutes x between the two unbounded packs; its
+removal would be a behavior change, recorded as an optional future
+measured flip) — and `align_reinsert`, now the jump move's interior
+(the deletion list inverted at s3.111). `pack_project` is the
+verbatim extraction of the old iters-1 path (books → forced pack(y)
+→ monotonize → forced pack(x) → bounded final projections); the
+map's dead-energy analysis (every accept forced ⇒ stair/census
+evaluations unread) predicted byte-identity and the protocol
+CONFIRMED it: post-flip fingerprints K100 7e109b936a1435fd / turan
+20333e0b0f33e5aa / grid 2714eeb5c3e0325a byte-identical through the
+purge (ws excluded per the s3.110 jitter finding). 609 tests green
+(courts' suites deleted with their subjects; align_reinsert
+exactness core, packer, converter, and the lex oracles kept green;
+fixtures re-tuned to pack_project). Smoke on the finished tree:
+turán Z12 seed 0 = 6.000 / mx 6 / 0 deficits / pen 0 / certified /
+mm skipped, via 2 interleave jumps. P16 WRITTEN OFF (Max: "weird
+and going obsolete... if I never saw pegasus results again I don't
+think I'd mind") — the lex engine runs there but regresses vs the
+deleted orders engine; recorded openly, the elegant-adapter idea
+parked in ideas.md; probe boards may drop P16 cells. data/ probes
+untouched (history; stale calls allowed — the consolidation-6
+precedent). Named next fronts, in the order the week ranked them:
+the lex-family converter (deletes the normalizer pack AND the
+classed active-set DP — the last two-court seam), the P16 predicate
+(only if Pegasus ever matters again), max-chain's lexicographic
+slot (parked).
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).

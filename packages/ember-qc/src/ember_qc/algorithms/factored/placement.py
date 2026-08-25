@@ -13,23 +13,28 @@ unconstrained. The placement earns its keep by improving the endpoint of an
 *unconstrained* polish (free-polish doctrine, notes §3.22); hobbling the
 polisher to protect the layout was tried and measured worse.
 
-Pipeline per call (1-shot):
+Pipeline per call (1-shot; consolidation 7, s3.112 — one path):
 
-1. **init** — the V-cycle two-stage coarsening init (``coarsen.py``,
-   default since s3.66; ``vcycle=False`` = the legacy spectral init).
-2. **geometry** — the init's points reduced to per-axis ranks (the v4
-   order state: two orders ARE the state), then ``alternate_arrange``
-   (true-stair-objective DP packer + overload-priced gates on every
-   fabric).
-3. **seeds** — one `arm_books` bundle feeds the snap-aimed coloring and,
-   on stride-2 fabrics, the exactness completion; deficit 0 = the seeds
-   ARE legal and minorminer legalization is skipped (diagnostic:
-   ``mm_skipped``).
-4. **routing** — otherwise stock minorminer seeded legalization, capped
-   at ``round_frac`` of the timeout.
+1. **init** — the V-cycle two-stage coarsening init (``coarsen.py``).
+2. **geometry** — the init's points reduced to per-axis ranks, then
+   ``pack_project`` (the exact DP packer as init projection), the LEX
+   ENGINE (``seat.py``: lexicographic (capacity, stair) descent with
+   interleave jumps, swaps, re-seats, translations), and one more
+   ``pack_project`` as the family normalizer before conversion.
+3. **seeds** — one `arm_books` bundle feeds the snap-aimed coloring
+   and, on stride-2 fabrics, the exactness completion; deficit 0 =
+   the seeds ARE legal and minorminer legalization is skipped
+   (diagnostic: ``mm_skipped``).
+4. **routing** — otherwise stock minorminer seeded legalization,
+   capped at ``round_frac`` of the timeout.
 5. **feasibility fallback** — one uncapped snap-seeded attempt.
 6. **finish** — stock minorminer's full grind warm-started,
    unconstrained; validity-guarded.
+
+Pegasus note (s3.112): the lex engine's capacity model assumes
+junction completeness; P16 runs but regresses vs the deleted orders
+engine (owner's call — Zephyr is the target; the elegant-adapter
+idea is parked in ideas.md).
 
 Deterministic per ``seed``.
 """
@@ -157,7 +162,8 @@ SEED_STRIDE = 100        # router-seed derivation: seed*STRIDE (+99 fallback)
 
 @dataclass(frozen=True)
 class AttractConfig:
-    """The attraction embedder's knobs (consolidation 2: one code path).
+    """The attraction embedder's knobs (consolidation 7: 12 knobs,
+    one code path).
 
     Unknown keyword arguments to :func:`attract_embed` are ignored, so
     pre-consolidation knobs silently fall back to the single pipeline.

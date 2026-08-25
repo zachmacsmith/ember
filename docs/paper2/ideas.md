@@ -145,40 +145,45 @@ Each entry: the principle, then the strongest single piece of evidence.
     class at all (s3.102).*
 
 15. **Completability is enforced by construction, or it is not
-    enforced.** The orders pipeline never needed its gates to see
-    claim-realizability because every state it occupies is packer
-    output — a regular subfamily the exactness stack was co-designed
-    with (s3.37/56). A representation with free expressivity inherits
-    completability as a missing penalty, and no line-resolution price
-    expresses it (s3.104: two turán layouts tie at 972 qubit-priced,
-    census 0-vs-1, yet convert to deficits 0 vs 73). The packer and
-    the converter arithmetic are the convertibility technology, not
-    "orders code."
+    enforced — REFINED at s3.110/112.** The orders pipeline never
+    needed its gates to see claim-realizability because every state
+    it occupies was packer output — a regular subfamily the
+    exactness stack was co-designed with (s3.37/56). The lex engine
+    resolves the same obligation differently: capacity is a
+    lexicographic INVARIANT of the search (near-hard by the brick
+    pools), and ONE pack — the family NORMALIZER — projects the
+    result into the packer-shaped family before conversion
+    (measured, s3.110: pen-0 states convert at 578 deficits raw, 0
+    after one pack, pen preserved). So the converter arithmetic is
+    convertibility technology co-designed with a FAMILY, and either
+    the state stays in the family by construction (orders era) or
+    is projected into it once (lex era). The remaining sharpening:
+    a converter co-designed with the LEX family (spill-aware
+    per-line brick seating) would delete the projection too.
 
 ## 3. Open questions — where the next ideas are needed
 
-- **The completability term (s3.104 — the seat engine's stopping
-  point).** What per-junction/parity condition do the 73 deficit edges
-  violate that the crystal satisfies, and what is the cheapest
-  plane-computable quantity that predicts it? The separator is
-  deterministic ideal-fabric arithmetic (course parity, wire seats —
-  structure, not defects), so this is a resolution gap, not
-  NP-mortality. Named candidate: the converter's own per-line verdict
-  as a LOCAL judge term (existing arithmetic, evaluated incrementally
-  on touched lines). Diagnose the 73 before designing the term.
-  GATE RESULT (s3.108/b): the gate refuted only the VISIBILITY
-  premise — with demand-honest books (phantom point arms excluded)
-  the junction plane already sees the stalled state's overload, so
-  the brick ruler is not needed to SEE this stall. The shipped hinge
-  term separates the states but is outvoted by the stair term;
-  reweighting it is retracted (hinge² over-trading is a standing
-  ledger verdict). The brick plane's STRUCTURAL content is untested
-  and open: whole-qubit stair pricing (junction units book phantom
-  half-qubits — the crystal's benign trims are that fiction),
-  promises that cannot be parity-infeasible (converter retreats
-  toward plain interval seating + spill), depth ⟺ seatability as a
-  theorem. Adjudication = build the switch, measure the board
-  (notes s3.108b).
+- **The completability question — CLOSED (s3.104 → s3.112).** The
+  answer arrived in three measured pieces, none of them a "term":
+  the brick ruler makes capacity near-hard (a brick holds one
+  junction of each parity, so whole-brick honest-arm promises
+  cannot be parity-infeasible — s3.107/109); the lexicographic
+  order makes it an invariant instead of a price (λ deleted, the
+  swamping defect class unrepresentable — s3.110); and the
+  interleave JUMP gives the hard key the reach the soft engines got
+  by wading (s3.111b, the complementarity: jump+soft loses turán
+  7.28, hard-without-jump loses 7.42, jump+hard = 6.000/10). The
+  residue moved into §2.15's refinement: the normalizer pack is the
+  last place completability is bought rather than owned, and its
+  deletion is the lex-family converter's (open, below).
+
+- **The lex-family converter (the named next front, s3.110/112).**
+  Per-line spill-aware brick-interval seating: aligned wires host
+  abutting bricks bar-for-bar; straddling wires need one-brick gaps
+  (the +1 spill); the even-lo required-hull poke is the boundary
+  case. Built and measured, it deletes the normalizer pack AND the
+  classed active-set DP — the last two-court seam in the pipeline.
+  Design discussion first; the abutment cases have real teeth.
 
 - **The extents object — mostly dissolved (s3.70).** The six blocked
   items needed extents only because the coarse level *summarized*;
@@ -281,9 +286,13 @@ Each entry: the principle, then the strongest single piece of evidence.
   only-mm 0 at n>1000) while Z12 keeps a +0.55 loss band at 101–300
   (2/4) — so the acceptance case is the Z12 band.
 
-- **Pegasus.** Everything stride-gated is inert there; dense Pegasus
-  still loses to minorminer. The exactness principle's generalization
-  test is coupler-aware claim aiming on incomplete (~56%) junctions.
+- **Pegasus — WRITTEN OFF (Max, s3.112: "weird and going
+  obsolete... if I never saw pegasus results again I don't think
+  I'd mind").** The lex engine runs there but regresses (its cover
+  arithmetic assumes junction completeness). PARKED, unblock
+  condition: an ELEGANT adapter — coupler-predicate cover
+  accounting shared with the Zephyr machinery, not a parallel
+  engine — should Pegasus ever matter again.
 
 - **Legalization is not one thing (Max, 2026-08-14).** With the
   infinite packer condensing layouts onto the chip, part of

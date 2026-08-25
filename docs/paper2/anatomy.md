@@ -19,18 +19,22 @@ fallback rebuild and the minorminer-analysis family).
    immediately discarded except for its per-axis ranks — the two orders
    (x and y) that are the algorithm's entire state, initially a
    permutation matrix.
-2. **Bootstrap readout**: from the orders, the books are derived —
-   stair contacts, arm hulls, and the infinite-crossbar DP pack per
-   axis — collapsing the rank gauge onto (virtual) lines with nobody
-   ever dropped.
-3. **Arrange**: one E-gated loop of order moves — alternating packs,
-   per-edge monotonize, insertion sweeps, cluster gathers with the
-   orientation bit (always on since consolidation 5) — judged by the one
-   gate (stair energy + overload census) with strict-descent
-   composites and full revert.
-4. **Final projection**: one forced bounded pack per axis lands the
-   ideal-plane layout inside the real 25-line window, reporting the
-   instance's ideal fabric demand (`final_width`) on the way.
+2. **Init projection** (`pack_project`): from the ranks, the books
+   are derived — stair contacts, arm hulls — and the
+   infinite-crossbar DP packs each axis (monotonize between them),
+   then one bounded pack per axis lands the layout in the real
+   window, nobody ever dropped.
+3. **Arrange** (the lex engine, `seat.py`, since consolidation 7):
+   strict descent on ONE lexicographic objective — capacity (brick
+   ruler, demand-honest arms, wire_map pools) ordered above stair
+   (junction ruler) — with the interleave jump as the unit move,
+   plus swaps, single re-seats, and rigid translations; proposer and
+   judge are the same evaluator.
+4. **Normalizer** (`pack_project` again): one more pack projects the
+   searched state into the packer-shaped family the converter and
+   completion were co-designed with (s3.110 — their measured
+   remaining job; capacity is already the search's invariant),
+   reporting the instance's ideal fabric demand (`final_width`).
 5. **Conversion**: the exact per-line converter claims actual wires —
    parity targets and corners chosen jointly per line — and completion
    runs as verifier and bridge, emitting the `certified` flag
@@ -77,16 +81,18 @@ fabrics.md):
 5. **Boundary lines have half capacity** on Zephyr (one parity only);
    the packer treats their pools as zero.
 
-## 1. The state: two orders
+## 1. The state: integer seats (carried), orders (induced)
 
-**What.** The algorithm's state is two total orders over the source
-variables: an x-order and a y-order. Nothing else is state.
+**What.** The algorithm's state is every variable's integer (col,
+row) seat, carried directly (the s3.102 seat paradigm). The two
+axis ORDERS — the v4 era's whole state — are now induced readouts
+of the seats: sorting by (coordinate, id) recovers them, and the
+interleave jump still operates in that order space (evict a unit,
+re-splice, hand the value multiset back by rank).
 
-**How.** In memory the orders are carried as a dict of positions
-`{v: (x, y)}`, but every value in it is a *derived* integer line index,
-recomputed from the orders by the readout (§3). No code writes a
-position except the readout and order-permuting moves; a test enforces
-that every post-arrange position is an integer.
+**How.** In memory: a dict of positions `{v: (x, y)}`, integers
+after every pack and every move; a test enforces that post-arrange
+positions are integer line indices.
 
 **Why.** Three failures traced to richer state: continuous coordinates
 made capacity invisible before packing (moves were judged on layouts
@@ -302,76 +308,37 @@ layout onto the chip. Part of what minorminer's legalizer used to do
 — making the embedding FIT — now happens here, before any embedding
 exists.
 
-## 4. The moves
+## 4. The moves (the lex engine, seat.py — since consolidation 7)
 
-All moves run inside `alternate_arrange`, all are judged by the same
-gate (stair energy + overload census, computed on the derived
-positions), and all revert by snapshot on rejection. Deterministic
-throughout; the deadline is checked between iterations.
+All moves run inside `seat_arrange`, all are judged by ONE evaluator
+(`seat_energy`: the lexicographic scalar pen·2^26 + stair — capacity
+at the brick ruler with demand-honest arms and wire_map pools, stair
+at the junction ruler), strict descent, deterministic; the deadline
+is checked between move batches. The packer (`pack_project`) runs
+once before the search (init projection) and once after (the family
+normalizer the converter stack requires — s3.110); edge_monotonize
+lives inside the pack, between its two unbounded per-axis passes.
 
-- **Iteration-0 projection.** The first per-axis DP pass is accepted
-  unconditionally — it is the feasibility projection that turns the
-  init's ranks into real line assignments.
-- **Per-axis packs.** Each later iteration re-runs the DP per axis and
-  accepts if the gate does not worsen. This is the readout refreshing
-  itself as the orders change.
-- **Edge monotonize.** For each source edge whose x-order disagrees
-  with its y-order, try swapping the two variables' x-values; keep the
-  swap if total h-arm length strictly drops. Leverage scales with edge
-  length, which is exactly the sparse/dense interpolation (s3.40).
-- **Insertion sweeps.** A best-insertion search over the long-arm
-  variables' order on one axis: repeatedly try moving one variable to
-  the slot that most reduces a span-sum proxy (priced at the actual
-  values the permutation would assign, with frozen non-participants as
-  fixed anchors), then apply the winning order as one composite:
-  permute the values, re-monotonize, re-pack both axes, and accept or
-  revert on the full gate. Up to two accepted composites per call.
-  This is the global relocation move that makes block structure emerge
-  from any init (s3.36).
-- **Cluster composites.** The same composite mechanism; since s3.100b
-  (default) the executor is the ALIGNMENT DP: the unit is removed from
-  the axis order and reinserted at the exact optimum over all
-  interleavings with the rest (forward and reversed block), with
-  induced-rule pricing on y (contacts re-derived per candidate) and
-  frozen-net pricing on x, plus an unchanged-context memo.
-  `align_moves=False` restores the old gather executor described next:
-  "gather this hierarchy unit into a contiguous block of
-  ranks" (both axes, coarsest units first). Units come from the
-  affinity coarsening (§4.5); members are moved as one proposal, on
-  real positions, judged by the ordinary gate with strict descent —
-  nothing is summarized, no sizes are guessed (ideas §2.10). Where the
-  coarse structure is real the gathers fire (turán's crystal); where
-  it is noise they are silently rejected (expanders). Since s3.89
-  every gather also offers its REVERSED block (`gather_orient`,
-  default on): the derived within-block order is a candidate, never a
-  commitment (ideas §2.11), and reversal is the fold's atom — the
-  otherwise translations-only move family cannot compose it under
-  strict descent. Shipped on ws −0.113 / grid −0.090 with zero
-  regressions or wall cost.
-- *(The fold composites (`fold_moves`, s3.89) were DELETED at
-  consolidation 5 after the s3.93 re-measure — this section previously
-  described them as a live default-OFF lever, which was stale; verdicts
-  in attraction.md.)*
+- **Interleave jump (`best_interleave`, the unit move, s3.111).**
+  Evict a hierarchy unit from one axis's coordinate order and
+  re-insert it at the exact optimum over ALL interleavings with the
+  rest (`align_reinsert`'s DP: induced-rule pricing on y, frozen
+  contacts on x, forward and reversed block), handing the same value
+  multiset back by rank; the DP's stair-optimal candidate is audited
+  by the reference evaluator. A JUMP: it lands on the final state
+  without traversing overloaded intermediates, so the hard capacity
+  key cannot path-block it — jump + hard key together reach the
+  turán crystal that either alone misses (s3.111b).
+- **Swap sweeps.** Pairwise seat swaps over source edges, three
+  variants (x/y/both) — including the y-swaps that flip contacts,
+  priced exactly.
+- **Single re-seats (`best_seat`).** One variable, every in-window
+  seat: fast prefix-array scan, exact audit of the top candidates.
+- **Rigid translations (`best_translate`).** One unit, every
+  in-window offset; cross-boundary contact flips priced in full.
 
-## 4.5 The hierarchy
-
-**What.** A multi-level clustering of the source graph, used twice: to
-propose cluster composites, and (on Zephyr) to build the init sketch.
-
-**How.** Round 0 collapses exact twins (variables with identical
-neighbourhoods) in one shot. Then rounds of greedy pair-merging by
-*per-member affinity* — compare the average members of two clusters:
-sum of min over sum of max of their per-member pull profiles, with the
-mutual pull counted and one body per member as regularizer — merging a
-pair only when it is at least one side's best available option
-(admissibility), iterated to a natural fixpoint. No thresholds.
-
-**Why.** The affinity score is the correct merge criterion (fragments
-of one family score 1 at any size ratio — s3.72, shipped by
-correctness decree); admissibility prevents forced marriages of
-leftovers without a constant. The hierarchy is a good detector of
-"who belongs together" and a measured-bad dictator of "in what order"
-(s3.77) — so it feeds moves and membership, never sequences.
+Ladder (s3.81): the coarse move (interleave, coarsest units first)
+runs to its own fixpoint before the fine moves are released.
 
 ## 5. Seeds, aiming, completion
 
@@ -483,89 +450,64 @@ cells, never harmful, first fabric-agnostic Pegasus wins (s3.75);
 bars+fallback beat both pure arms (s3.77). Not yet wired into the
 pipeline's tail — that replacement is a named open item.
 
-## 8. Knobs (complete list — 18) and diagnostics
+## 8. Knobs (complete list — 12) and diagnostics
 
-`round_frac=0.5` (budget fraction before the polish),
-`arrange_iters=8`, `insert_sweeps=8`, `kappa=None` (derived from the
-fabric), `span_floor=True`, `exact_seeds=True` (Zephyr gate),
-`snap_claims=True` (Zephyr gate), `overload_lam=1.0`, `vcycle=True`,
+`round_frac=0.5` (budget fraction before the polish), `kappa=None`
+(derived from the fabric), `span_floor=True`, `exact_seeds=True`
+(Zephyr gate), `snap_claims=True` (Zephyr gate), `vcycle=True`,
 `vcycle_agg=True`, `cluster_moves=True`, `cluster_units=True`,
 `init_mode="spectral"`, `tail="mm+ball"` ({"mm+ball", "ball+mm",
-"mm", "ball", "none"}), `ball_singles=False` (s3.91 lever),
-`align_moves=True` (s3.100b default — the alignment-DP gather
-executor), `arrange_mode="orders"` ("seats" = the s3.102 seat-engine
-research vehicle; "lex" = the s3.110 two-ruler lexicographic engine,
-section 9), `census_required=False` (s3.97/101,
-kept as the completability toolkit), `brick_plane=False` (s3.109 —
-the seat engine's along-axis ruler quantized to the parity period;
-seats-mode-only, stride-gated). Consolidation 5 (archive
-09467299) deleted strain_rank, submit_seeds, fold_moves, the ball-rng
-tails and the crossfinder driver; consolidation 6 (archive 5be76754)
-deleted orient_flips, align_insert and cap_pressure (verdicts in
-attraction.md). Unknown kwargs are ignored (old probe scripts degrade
-gracefully).
+"mm", "ball", "none"}), `ball_singles=False` (s3.91 lever).
+Consolidation 5 (archive 09467299) deleted strain_rank,
+submit_seeds, fold_moves, the ball-rng tails and the crossfinder
+driver; consolidation 6 (archive 5be76754) deleted orient_flips,
+align_insert and cap_pressure; consolidation 7 (archive 12fe484c,
+purge 37d3439c) shipped lex+interleave as THE engine and deleted
+arrange_mode, interleave_moves, brick_plane, align_moves,
+census_required, arrange_iters, insert_sweeps and overload_lam with
+the orders court (verdicts in attraction.md). Unknown kwargs are
+ignored (old probe scripts degrade gracefully).
 
-Diagnostics (`diag`): `assigned`/`assigned_rows`/`assigned_cols`
-(participants placed by the last packs), `insert_reverts`,
-`cluster_accepts`/`cluster_reverts`, `mono_time`, `extent_mean`/
-`extent_max` (bar widths), `stride` (2 = course-resolved Zephyr),
-`E_interp`/`E_contract` (stair energy at init; equal since
-consolidation 4 — the contraction phase no longer exists),
-`max_chain`, and on Zephyr `mm_skipped`, `deficit_edges`,
-`corner_deficit`, `extensions`, `ext_qubits`, `bridges`.
+Diagnostics (`diag`): `extent_mean`/`extent_max` (bar widths),
+`stride` (2 = course-resolved Zephyr), `E_interp`/`E_contract`
+(stair energy at init), `max_chain`, the walls, the engine counters
+(`seat_accepts`, `trans_accepts`, `swap_accepts`,
+`interleave_accepts`/`_declines`/`_noops`, `seat_passes`,
+`seat_fast_miss`, `accept_traj`, `seat_pen`/`seat_stair` — pen 0
+certifies the feasibility invariant held), the normalizer pack's
+fit observables (`final_width_x/y`, `projection_misses`,
+`unb_miss`), and on Zephyr `mm_skipped`, `deficit_edges`,
+`corner_deficit`, `extensions`, `ext_qubits`, `bridges`,
+`convert_miss`, `certified`.
 
-## 9. The seat engine (arrange_mode="seats" — the v5 research vehicle)
+## 9. Lineage of the engine (s3.102 → s3.112)
 
-**What.** A parallel arrange engine (s3.102-104, `seat.py`): state =
-every variable's integer (col, row) seat, carried, nothing derived;
-ONE objective (raw stair energy + per-tile cover hinge², capacity as a
-COUNT, never a claim) evaluated identically for proposer and judge;
-moves under the evict-S schema ("restrict the family, never the
-fidelity"): exhaustive single-variable re-seat, rigid unit
-translation, pairwise seat swaps (three variants), the native gather
-(contiguous splice with displacement by construction), and the packer
-as a gap-free global move. Init and the entire adapter/tail are shared
-with the default verbatim.
-
-**Status (s3.104).** Z12 board at parity-or-better with the default
-except the turán crystal family; the stopping point is measured and
-named: completability — two turán layouts tie under every
-line-resolution price yet convert to deficits 0 vs 73. The orders
-engine avoids the issue BY CONSTRUCTION (every state is packer
-output; the exactness stack was co-designed with that subfamily) —
-see ideas.md §2.15 and the §3 completability question.
-
-**The brick ruler (s3.107-109, `brick_plane=True`).** The same
-engine with the along-axis accounting quantized to the fabric parity
-period (one brick = stride junctions = one qubit-length): cover and
-stair spans in whole bricks (end-rounding — no phantom half-qubit
-savings), per-(line, brick) pools from wire_map, demand-honest arms
-(a contact-free side deposits nothing). Hulls, seats, and transverse
-line choices keep full junction resolution — only the ruler at the
-accounting boundary changes. Verdict: notes s3.109 and the
-brick_probe ledger row.
-
-**The two-ruler lexicographic engine (s3.110,
-`arrange_mode="lex"`).** The seat moves under lexicographic
-(capacity, stair) descent: capacity at the brick ruler (honest arms,
-wire_map pools — the leading key, never traded), stair at the
-junction ruler (the second key). One scalar `pen·2^26 + stair`
-carries the order exactly (integer-valued quantities). No pack
-moves, no λ. Pipeline: init → pack → search → pack → convert →
-verify — the second pack is the FAMILY NORMALIZER, not a capacity
-rescue (measured: a pen-0 lex state converts at 578 deficits raw, 0
-after one pack, pen preserved — the converter/completion stack is
-co-designed with packer-family states, ideas 2.15). The named
-deletion that finishes the design: a lex-family converter
-(spill-aware per-line brick seating) would remove the normalizer
-and the classed active-set DP. Verdict: notes s3.110/b.
+The lex engine descends from the s3.102 "seat engine" research
+vehicle through three measured rounds: the brick ruler (s3.107-109:
+capacity quantized to the fabric parity period — a brick holds one
+junction of each parity, so whole-brick promises cannot be
+parity-infeasible; demand-honest arms; wire_map pools), the
+lexicographic objective (s3.110: capacity ordered above stair, λ
+deleted; alone it was path-blocked out of the crystal basin), and
+the interleave jump (s3.111: the insertion DP resurrected where
+proposer == judge; jump + hard key are complements — s3.111b
+measured 6.000/10-seed turán, either alone loses it). Consolidation
+7 (s3.112) shipped the combination as the only engine and deleted
+the orders court. Two structural facts carried out of the era: the
+packer's remaining job is FAMILY NORMALIZATION, not capacity
+(s3.110: pen-0 states convert at 578 deficits raw, 0 after one
+pack, pen preserved — the converter/completion stack is co-designed
+with packer-family states), and its deletion belongs to a future
+lex-family converter (spill-aware per-line brick seating), which
+would also retire the classed active-set DP.
 
 ## 10. Known gaps
 
 See ideas.md §3 for the live list. The load-bearing ones: the polish
 is still minorminer (ball_polish is the replacement path); the
-in-arrange gate energy has a measured blind spot below capacity
-(parity/nesting costs the census cannot see — s3.73); expanders pay a
-small toll under the order state (the no-order regime); Pegasus
-exactness (coupler-aware aiming on incomplete junctions) remains the
-generalization test.
+normalizer pack and the converter's classed DP are the last
+two-court seam (the lex-family converter deletes both); Pegasus is
+WRITTEN OFF as of consolidation 7 (owner's call, s3.112 — the lex
+engine runs there but regresses; the elegant-adapter idea is parked
+in ideas.md, unblocked by coupler-predicate cover accounting if
+Pegasus ever matters again).

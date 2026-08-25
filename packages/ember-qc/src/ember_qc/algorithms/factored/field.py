@@ -216,7 +216,7 @@ class TileGrid:
 # (u, v) is covered at u's h-arm x v's v-arm iff (y_u, u) < (y_v, v) — the
 # y-lower variable reaches across columns, the y-upper reaches up rows. Arms
 # span only their ASSIGNED contacts. The rule is keyed on y-ORDER, so it is
-# invariant under the order-preserving packing in alternate_arrange.
+# invariant under the order-preserving packing in pack_project.
 # Cost accepted (measured, s3.34): single coverage forfeits the redundancy
 # that made double-covered seeds auto-legal; on Pegasus (~56% in-tile
 # coupler density) the router repairs the designated crossings that the
@@ -816,8 +816,7 @@ def line_pools(grid: TileGrid) -> Dict[Tuple[int, int], int]:
     """Per-(orientation, line) integer sub-lane pools from ``wire_map`` —
     the claim layer's own capacity census (absorbs the former
     ``_subs_count`` cache; s3.59): the number of physically claimable
-    wires on each line. Shared by the packer (``alternate_arrange._half``)
-    and ``claim_overload`` so the two keep ONE book — the s3.56 d729
+    wires on each line. The packer's ONE census book — the s3.56 d729
     defect class was the packer budgeting from a float cap-mean (7.68 on
     course Zephyr lines) while the claim layer colored onto 8 integer
     sub-lanes. Whole-dead runs are absent from wire_map by construction;
