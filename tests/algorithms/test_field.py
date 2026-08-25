@@ -16,16 +16,14 @@ import dwave_networkx as dnx
 from ember_qc.algorithms.factored.field import (
     TileGrid,
     _color_claim_bars,
-    claim_overload,
     complete_seeds,
     _stair_contacts,
     _target_kappa,
-    alternate_arrange,
+    pack_project,
     bar_domains,
     bar_widths,
     derive_bars_stair,
     edge_monotonize,
-    insertion_sweeps,
     line_depth,
     stair_energy,
     stair_step,
@@ -210,17 +208,13 @@ class TestArrangement:
         pos = {v: np.array([4.0 + 0.01 * v, 4.0 + 0.01 * v])
                for v in range(n)}
         adj = {v: [u for u in range(n) if u != v] for v in range(n)}
-        new, info = alternate_arrange(pos, adj, grid, iters=8, kappa=3.0)
-        assert info["assigned"] == n
-        assert claim_overload(new, adj, grid, kappa=3.0) == 0.0
+        new, info = pack_project(pos, adj, grid, kappa=3.0)
         # positions are derived line indices after the pack
         for v in range(n):
             assert float(new[v][0]).is_integer()
             assert float(new[v][1]).is_integer()
-        # monotone after the feasibility projection (iteration 0 = 2 entries)
-        tail = info["E"][3:]
-        assert all(b <= a + 1e-6 for a, b in zip(tail, tail[1:]))
-        again, _ = alternate_arrange(pos, adj, grid, iters=8, kappa=3.0)
+        assert info["unplaced"] == 0
+        again, _ = pack_project(pos, adj, grid, kappa=3.0)
         assert all(np.allclose(new[v], again[v]) for v in pos)
 
     def test_pack_lines_matches_brute_force(self):
@@ -285,7 +279,7 @@ class TestArrangement:
         grid = self._grid()
         pos = {v: np.array([0.5 * v, 3.7]) for v in range(8)}
         adj = {v: [u for u in (v - 1, v + 1) if 0 <= u < 8] for v in range(8)}
-        new, info = alternate_arrange(pos, adj, grid, kappa=13.0)
+        new, info = pack_project(pos, adj, grid, kappa=13.0)
         assert all(np.allclose(new[v], pos[v]) for v in pos)
 
 
@@ -548,131 +542,6 @@ class TestAlignReinsert:
             axis=1, other={v: 0.0 for v in order}, contacts=None)
         assert res is None and flip is False
 
-    def test_arrange_align_valid_monotone_deterministic(self):
-        # the composite path: two K4 blocks nominated as units, align
-        # executor on — arrange invariants must hold (the s3.76 set)
-        g = dnx.chimera_graph(8, 8, 1)
-        grid = TileGrid(g, target_layout(g))
-        n = 8
-        rng = np.random.default_rng(4)
-        pos = {v: np.array([float(rng.integers(0, 8)),
-                            float(rng.integers(0, 8))]) for v in range(n)}
-        adj = {v: sorted(u for u in range(n) if u != v
-                         and (u // 4 == v // 4)) for v in range(n)}
-        adj[0] = sorted(adj[0] + [4])
-        adj[4] = sorted(adj[4] + [0])
-        groups = [[[0, 1, 2, 3], [4, 5, 6, 7]]]
-        new, info = alternate_arrange(
-            pos, adj, grid, iters=6, kappa=3.0,
-            cluster_groups=groups, align_moves=True)
-        assert claim_overload(new, adj, grid, kappa=3.0) == 0.0
-        for v in range(n):
-            assert float(new[v][0]).is_integer()
-            assert float(new[v][1]).is_integer()
-        # NOTE: no raw E-tail monotonicity assertion here — with
-        # cluster_groups, mid-composite _half appends survive reverts
-        # and the forced final projection appends land in the tail
-        # (pre-existing accounting, measured identical on the gather
-        # control arm); acceptance itself stays strict-descent.
-        assert info["align_props"] + info["align_noops"] >= 1
-        again, _ = alternate_arrange(
-            pos, adj, grid, iters=6, kappa=3.0,
-            cluster_groups=groups, align_moves=True)
-        assert all(np.allclose(new[v], again[v]) for v in pos)
-
-    def test_explicit_on_matches_default(self):
-        # align_moves defaults ON since s3.100b: an explicit True must
-        # be byte-identical to the bare default; the False control arm
-        # must still run valid and deterministic
-        g = dnx.chimera_graph(8, 8, 1)
-        grid = TileGrid(g, target_layout(g))
-        n = 6
-        pos = {v: np.array([4.0 + 0.01 * v, 4.0 + 0.01 * v])
-               for v in range(n)}
-        adj = {v: [u for u in range(n) if u != v] for v in range(n)}
-        groups = [[[0, 1, 2], [3, 4, 5]]]
-        a, _ = alternate_arrange(pos, adj, grid, iters=6, kappa=3.0,
-                                 cluster_groups=groups)
-        b, _ = alternate_arrange(pos, adj, grid, iters=6, kappa=3.0,
-                                 cluster_groups=groups,
-                                 align_moves=True)
-        assert all(np.allclose(a[v], b[v]) for v in pos)
-        c1, _ = alternate_arrange(pos, adj, grid, iters=6, kappa=3.0,
-                                  cluster_groups=groups,
-                                  align_moves=False)
-        c2, _ = alternate_arrange(pos, adj, grid, iters=6, kappa=3.0,
-                                  cluster_groups=groups,
-                                  align_moves=False)
-        assert all(np.allclose(c1[v], c2[v]) for v in pos)
-
-
-class TestTruthRound:
-    """s3.101: the truth round — |S|=1 exact insertion, the restored
-    required-hull census, cap_pressure in the proposal DP, and the
-    revert-attribution counters."""
-
-    def _case(self, rng, n, p_edge=0.5):
-        import networkx as nx
-        g = nx.gnp_random_graph(n, p_edge, seed=int(rng.integers(9999)))
-        adj = {v: sorted(g.neighbors(v)) for v in g.nodes()}
-        order = list(rng.permutation(n))
-        values = sorted(float(x) for x in
-                        rng.choice(np.arange(0, 3 * n), n, replace=False))
-        other = {v: float(rng.integers(0, 5)) for v in range(n)}
-        return adj, order, values, other
-
-    @staticmethod
-    def _gt_y(merged, adj, values, other):
-        n = len(merged)
-        val = np.asarray(values, dtype=float) + 1e-4 * np.arange(n)
-        pos = {v: np.array([float(other[v]), float(val[r])])
-               for r, v in enumerate(merged)}
-        return stair_energy(pos, adj)
-
-    def test_required_census_monotone(self):
-        # restored s3.97 invariant: required mode never sees LESS —
-        # the parity/corner obligations only widen intervals
-        import dwave_networkx as dnx
-        import networkx as nx
-        from ember_qc.algorithms.factored.field import arm_books
-        z = dnx.zephyr_graph(3, 4)
-        grid = TileGrid(z, target_layout(z), courses=True)
-        rng = np.random.default_rng(9)
-        for _trial in range(6):
-            g = nx.gnp_random_graph(24, 0.25,
-                                    seed=int(rng.integers(999)))
-            adj = {v: sorted(g.neighbors(v)) for v in g.nodes()}
-            pos = {v: np.array([float(rng.integers(0, grid.W)),
-                                float(rng.integers(0, grid.H))])
-                   for v in g.nodes()}
-            books = arm_books(pos, adj, grid, kappa=7.7, snap=True,
-                              min_span=0.0)
-            ov_books = claim_overload(pos, adj, grid, kappa=7.7,
-                                      snap=True, books=books)
-            ov_req = claim_overload(pos, adj, grid, kappa=7.7,
-                                    snap=True, books=books,
-                                    required=True)
-            assert ov_req >= ov_books - 1e-9
-
-    def test_revert_counters_sum_to_reverts(self):
-        g = dnx.chimera_graph(8, 8, 1)
-        grid = TileGrid(g, target_layout(g))
-        n = 8
-        rng = np.random.default_rng(4)
-        pos = {v: np.array([float(rng.integers(0, 8)),
-                            float(rng.integers(0, 8))]) for v in range(n)}
-        adj = {v: sorted(u for u in range(n) if u != v
-                         and (u // 4 == v // 4)) for v in range(n)}
-        adj[0] = sorted(adj[0] + [4])
-        adj[4] = sorted(adj[4] + [0])
-        groups = [[[0, 1, 2, 3], [4, 5, 6, 7]]]
-        _, info = alternate_arrange(pos, adj, grid, iters=6, kappa=3.0,
-                                    cluster_groups=groups,
-                                    insert_sweeps=4)
-        assert (info["revert_ov"] + info["revert_e"]
-                == info["cluster_reverts"] + info["insert_reverts"])
-
-
 class TestArmLengthGating:
     """The min_span=1.0 participation gate lives on in ``arm_books``
     (the pipeline passes 0.0 — every variable participates with a
@@ -774,55 +643,6 @@ class TestCompleteSeeds:
         assert ch == snapshot  # input not mutated
 
 
-class TestClaimOverload:
-    """s3.57: the gate-energy hinge is the claim layer's own
-    uncolorability census, squared."""
-
-    def _grid(self, m=3):
-        g = dnx.zephyr_graph(m, 4)
-        return TileGrid(g, target_layout(g), courses=True)
-
-    def test_feasible_zero_overdeep_hinge(self):
-        grid = self._grid()
-        # 9 variables, all long h-arms on the SAME row line (8 sub-lanes)
-        n = 9
-        adj = {v: [] for v in range(n)}
-        pos = {v: np.array([3.0, 3.0]) for v in range(n)}
-        import ember_qc.algorithms.factored.field as F
-        bars9 = {v: (np.array([1.0, 5.0]), np.array([3.0, 3.0]))
-                 for v in range(n)}
-        orig = F.derive_bars_stair
-        F.derive_bars_stair = lambda *a, **k: bars9
-        try:
-            over = claim_overload(pos, adj, grid, kappa=3.0)
-        finally:
-            F.derive_bars_stair = orig
-        assert over == 1.0  # depth 9 vs 8 -> hinge 1^2
-        # drop one variable: feasible, hinge 0
-        pos8 = {v: pos[v] for v in range(8)}
-        bars8 = {v: bars9[v] for v in range(8)}
-        F.derive_bars_stair = lambda *a, **k: bars8
-        try:
-            assert claim_overload(pos8, adj, grid, kappa=3.0) == 0.0
-        finally:
-            F.derive_bars_stair = orig
-
-    def test_arrange_lam_zero_byte_identical(self):
-        grid = self._grid()
-        n = 12
-        adj = {v: [u for u in range(n) if u != v] for v in range(n)}
-        pos = {v: np.array([2.0 + 0.3 * v, 2.0 + 0.3 * v])
-               for v in range(n)}
-        a, _ = alternate_arrange(dict(pos), adj, grid, iters=4, kappa=3.0)
-        b, _ = alternate_arrange(dict(pos), adj, grid, iters=4, kappa=3.0,
-                                 overload_lam=0.0)
-        assert all(np.array_equal(a[v], b[v]) for v in a)
-        # lam > 0 runs and returns a full arrangement
-        c, ic = alternate_arrange(dict(pos), adj, grid, iters=4,
-                                  kappa=3.0, overload_lam=1.0)
-        assert set(c) == set(pos) and ic["E"]
-
-
 class TestSnapClaims:
     """s3.56 claim-time crossing alignment: aim, don't repair."""
 
@@ -867,88 +687,6 @@ class TestSnapClaims:
         c = wire_seeds_iv(folded, pos, bars)
         d = wire_seeds_iv(folded, pos, bars, src_adj=adjs, snap=False)
         assert c == d
-
-
-class TestInsertionSweeps:
-    def test_bipartite_blocks_emerge_from_interleaved(self):
-        # K5,5 with blocks maximally interleaved in the initial order:
-        # insertion must separate them (the biclique order)
-        a = list(range(5))          # block A: 0..4
-        b = list(range(5, 10))      # block B: 5..9
-        adj = {v: (b if v in a else a) for v in range(10)}
-        interleaved = [0, 5, 1, 6, 2, 7, 3, 8, 4, 9]
-        new_order, traj = insertion_sweeps(interleaved, adj, max_sweeps=8)
-        first_half = set(new_order[:5])
-        assert first_half == set(a) or first_half == set(b)
-        assert traj[-1] < traj[0]  # energy strictly improved
-        again, _ = insertion_sweeps(interleaved, adj, max_sweeps=8)
-        assert new_order == again  # deterministic
-
-    def test_clique_is_noop(self):
-        n = 8
-        adj = {v: [u for u in range(n) if u != v] for v in range(n)}
-        order = list(range(n))
-        new_order, traj = insertion_sweeps(order, adj, max_sweeps=8)
-        assert new_order == order          # permutation-symmetric: no move
-        assert len(traj) == 2              # one sweep, no improvement, exit
-
-    def test_monotone_energy(self):
-        # random-ish structured graph: energy trajectory never increases
-        g = nx.random_regular_graph(4, 12, seed=7)
-        adj = {v: sorted(g.neighbors(v)) for v in g}
-        order = sorted(g.nodes(), key=lambda v: (v * 7919) % 12)
-        _, traj = insertion_sweeps(order, adj, max_sweeps=8)
-        assert all(b <= a + 1e-9 for a, b in zip(traj, traj[1:]))
-
-    def test_arrange_insert_no_worse_and_deterministic(self):
-        g = nx.convert_node_labels_to_integers(nx.grid_2d_graph(20, 20))
-        grid = TileGrid(g, nx.spectral_layout(g), fallback_bins=20)
-        grid.cap[:, :, :] = 1.0
-        n = 16
-        pos = {v: np.array([10.0 + 0.01 * v, 10.0 + 0.01 * v])
-               for v in range(n)}
-        adj = {v: [u for u in range(n) if u != v] for v in range(n)}
-        base, ib = alternate_arrange(pos, adj, grid, iters=8, kappa=3.0)
-        ins, ii = alternate_arrange(pos, adj, grid, iters=8, kappa=3.0,
-                                    insert_sweeps=4)
-        assert ii["E"][-1] <= ib["E"][-1] + 1e-6  # composite E-gate holds
-        assert ii["insert_reverts"] in (0, 1)     # diagnostic surfaced
-        again, _ = alternate_arrange(pos, adj, grid, iters=8, kappa=3.0,
-                                     insert_sweeps=4)
-        assert all(np.allclose(ins[v], again[v]) for v in pos)
-
-    def test_value_pricing_respects_cluster_gaps(self):
-        # two 4-member clusters at y-values {0..3} and {20..23}; one edge
-        # from a low-cluster member to a high-cluster member. Rank pricing
-        # sees the gap as 1 slot; value pricing sees 17 tiles. The move it
-        # must NOT make: drag the whole low cluster across the gap for one
-        # edge. Proxy energies are checked directly via the trajectory.
-        members = list(range(8))
-        adj = {v: [u for u in ((0, 1, 2, 3) if v < 4 else (4, 5, 6, 7))
-                   if u != v] for v in members}
-        adj[3] = adj[3] + [4]
-        adj[4] = adj[4] + [3]
-        values = np.array([0.0, 1.0, 2.0, 3.0, 20.0, 21.0, 22.0, 23.0])
-        new_order, traj = insertion_sweeps(
-            members, adj, max_sweeps=8, values=values)
-        # both clusters must remain contiguous blocks in the final order
-        first = set(new_order[:4])
-        assert first == {0, 1, 2, 3} or first == {4, 5, 6, 7}
-        assert all(b <= a + 1e-9 for a, b in zip(traj, traj[1:]))
-
-    def test_anchor_pulls_member_toward_fixed_neighbour(self):
-        # 4 members, no member-member edges except a chain to keep 'has'
-        # true; member 0 has a non-member neighbour anchored at high y:
-        # with anchors it must relocate to the top slot
-        members = [0, 1, 2, 3]
-        adj = {0: [1, 99], 1: [0, 2], 2: [1, 3], 3: [2], 99: [0]}
-        values = np.array([0.0, 1.0, 2.0, 10.0])
-        lo = np.array([np.inf, np.inf, np.inf, np.inf])
-        hi = np.array([-np.inf, -np.inf, -np.inf, -np.inf])
-        lo[0], hi[0] = 9.5, 9.5  # anchor near the top value
-        new_order, _ = insertion_sweeps(members, adj, max_sweeps=8,
-                                        values=values, anchors=(lo, hi))
-        assert new_order[-1] == 0  # member 0 took the top slot
 
 
 class TestWireSeeds:
@@ -1067,7 +805,7 @@ class TestZephyrGrid:
         pos = {v: np.array([1.0 + 0.3 * v, 1.0 + 0.3 * v])
                for v in range(n)}
         pos = stair_step(pos, adj, eta=0.3)
-        pos, _ = alternate_arrange(pos, adj, grid, iters=8, kappa=3.0)
+        pos, _ = pack_project(pos, adj, grid, kappa=3.0)
         bars = derive_bars_stair(pos, adj, bounds=(grid.W, grid.H))
         seeds = wire_seeds_iv(grid, pos, bars)
         allq = [q for c in seeds.values() for q in c]
@@ -1180,7 +918,7 @@ class TestZephyrCourses:
     def test_line_pools_census(self):
         # s3.59 one-accounting: integer sub-lane pools from wire_map —
         # 8 per line on course-resolved Zephyr, 4 folded; the packer and
-        # claim_overload share this census
+        # the packer's census (one line_pools book)
         from ember_qc.algorithms.factored.field import line_pools
         g, folded, course = self._grids()
         lpc = line_pools(course)
@@ -1200,9 +938,17 @@ class TestZephyrCourses:
                for v in range(n)}
         for _ in range(8):
             pos = stair_step(pos, adj, eta=0.5)
-        new, info = alternate_arrange(pos, adj, course, iters=8,
-                                      kappa=3.0, overload_lam=1.0)
-        assert claim_overload(new, adj, course, kappa=3.0) == 0.0
+        new, info = pack_project(pos, adj, course, kappa=3.0)
+        from ember_qc.algorithms.factored.field import (arm_books,
+                                                        line_pools)
+        books = arm_books(new, adj, course, kappa=3.0, min_span=0.0)
+        lp = line_pools(course)
+        for o in (1, 0):
+            by_line = {}
+            for (line, a, b, v) in books[2][o]:
+                by_line.setdefault(int(line), []).append((a, b))
+            for line, ivs in by_line.items():
+                assert line_depth(ivs) <= lp.get((o, line), 0), (o, line)
 
     def test_boundary_half_pool_and_parity_coloring(self):
         # s3.61: stride-2 boundary lines pack at HALF pool (4), and the
@@ -1642,8 +1388,8 @@ class TestUnboundedPack:
             assert a["embedding"] == c["embedding"]  # deterministic
             assert c["embedding"], c["diag"]
             d = c["diag"]
-            assert d.get("unb_miss", 0) == 0  # the L_max lemma held
-            assert "final_width_x" in d and "final_width_y" in d
+            # the L_max lemma held in the normalizer pack
+            assert d.get("unb_miss", 0) == 0
 
 
 class TestCertificate:

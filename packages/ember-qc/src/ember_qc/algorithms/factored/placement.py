@@ -166,10 +166,6 @@ class AttractConfig:
                                # phase may use; the rest is reserved for the
                                # polish (where minorminer earns ~35% ACL,
                                # mm-internals §6).
-    arrange_iters: int = 8     # alternation iterations per arrange call
-    insert_sweeps: int = 8     # best-insertion order-search sweeps inside the
-                               # alternation (s3.36; the move that makes block
-                               # structure emerge from any init). 0 = off.
     kappa: Optional[float] = None  # contact capacity (usable couplers per
                                # chain qubit). None (default) = derived from
                                # the target: mean working-qubit degree - 2 on
@@ -196,14 +192,6 @@ class AttractConfig:
                                # don't repair. Extensions drop to ~0;
                                # completion becomes a verifier. Stride-2
                                # grids only; no-op elsewhere.
-    overload_lam: float = 1.0  # feasibility priced into the gate energy
-                               # (s3.57, Max's design): arrange gates score
-                               # stair-E + lam * hinge^2 of claim-layer
-                               # line-capacity violations. Evaluation only;
-                               # lam trades, never ranks (lam=1 repairs
-                               # turan's d729 for +0.2% E; lam>=4 measured
-                               # to over-trade). Fabric-agnostic since the
-                               # v4 order state. round_E stays raw stair-E.
     vcycle: bool = True        # source-side two-stage coarsening init
                                # (s3.62-3.64): twin-first + Jaccard
                                # matching, spectral-of-the-coarse-graph
@@ -277,87 +265,6 @@ class AttractConfig:
                                # exactly). With tail="ball" this is the
                                # grind-replacement stack. OFF = balls
                                # only (s3.75 selector).
-    align_moves: bool = True
-                               # s3.100 (alignment reinsertion): the
-                               # cluster pass's executor becomes the
-                               # interleaving DP — units are removed
-                               # from the axis order and reinserted at
-                               # the exact optimum over ALL merges with
-                               # the rest (forward and reversed), with
-                               # induced-rule pricing on the y-axis
-                               # (contacts re-derived per candidate)
-                               # and frozen-net pricing on x (exact
-                               # there). Same nominations and gate as
-                               # gathers; riffled placements (the
-                               # fold's atom) come out of the same DP
-                               # when optimal. DEFAULT ON (Max,
-                               # 2026-08-20: it wins and there are
-                               # reasons behind it winning — s3.100b
-                               # board: 6 cells won, nothing beyond
-                               # tol, turán exact 10/10). False = the
-                               # gather executor (the control arm).
-    arrange_mode: str = "orders"
-                               # s3.102 (the seat engine): "seats"
-                               # replaces the arrange step with the v5
-                               # prototype — state = carried integer
-                               # seats, moves = exhaustive exact
-                               # single-variable re-seat + rigid unit
-                               # translation + native gather + swaps,
-                               # strict descent on ONE objective with
-                               # proposer == judge. Init and the whole
-                               # adapter/tail are shared verbatim.
-                               # "lex" (s3.110, the two-ruler engine):
-                               # the seat moves under lexicographic
-                               # (capacity, stair) descent — capacity
-                               # at brick ruler (honest arms, wire_map
-                               # pools, near-hard), stair at junction
-                               # ruler; no pack move, no legalization
-                               # pack, feasibility is the search's
-                               # invariant; overload_lam unused.
-                               # "orders" = the shipped order-state
-                               # arrange.
-    census_required: bool = False
-                               # s3.97 required-hull census, RESTORED
-                               # s3.101 from archive 09467299: the gate
-                               # census prices the spans the converter
-                               # will actually claim (parity targets +
-                               # corner) instead of the books hulls —
-                               # the s3.73 blind spot made visible.
-                               # Validated small liquid wins vs the
-                               # align move set; KEPT at consolidation
-                               # 6 as the claim-arithmetic toolkit of
-                               # the completability question.
-                               # Stride-gated (parity is meaningless
-                               # at stride 1). OFF = books-hull census.
-    brick_plane: bool = False
-                               # s3.107/s3.109 (the brick plane): the
-                               # seat engine's along-axis RULER becomes
-                               # the fabric parity period (one brick =
-                               # stride junctions = one qubit-length).
-                               # Seats/lines keep junction resolution;
-                               # ACCOUNTING quantizes: cover + stair
-                               # spans in whole bricks (end-rounding —
-                               # no phantom half-qubit savings),
-                               # per-(line, brick) pools from wire_map,
-                               # demand-honest arms (a contact-free
-                               # side deposits nothing — the s3.108
-                               # phantom-arm lesson). Seats mode only;
-                               # stride-gated like the exactness stack
-                               # (Chimera is already brick-quantized).
-                               # Default stock (junction ruler).
-    interleave_moves: bool = False
-                               # s3.111 (the insertion DP as a
-                               # one-court move): the seat engines'
-                               # unit move becomes best_interleave —
-                               # align_reinsert's exact all-
-                               # interleavings DP (s3.100 machinery),
-                               # audited by the reference evaluator
-                               # (proposer == judge: declines are one
-                               # evaluation, never a rejection cycle).
-                               # A JUMP move: cannot be path-blocked
-                               # by the lex mode's hard capacity key.
-                               # OFF = best_gather (the contiguous
-                               # 6-candidate subset).
 
 
 def _auto_bins(n_qubits: int) -> int:
@@ -419,8 +326,8 @@ def attract_embed(
             cfg = replace(cfg, **picked)
 
         from ember_qc.algorithms.factored.field import (
-            TileGrid, _target_kappa, alternate_arrange, arm_books,
-            bar_widths, complete_seeds, stair_energy, wire_seeds_iv)
+            TileGrid, _target_kappa, arm_books, bar_widths,
+            complete_seeds, pack_project, stair_energy, wire_seeds_iv)
 
         adj = build_adjacency(target_graph)
         qubits = sorted(adj)
@@ -446,10 +353,8 @@ def attract_embed(
         # representation (v4 order state), fabric-agnostic; exactness/
         # snap stay stride-gated (junction completeness is physics).
         stride2 = grid.stride > 1
-        eff_lam = cfg.overload_lam
         eff_exact = cfg.exact_seeds and stride2
         eff_snap = cfg.snap_claims and stride2
-        eff_brick = cfg.brick_plane and stride2
         # vcycle activation is stride-gated (s3.66 guard probe): the
         # compact coarse init needs the contraction+DP machinery to
         # exploit it — on the P16 legacy path it regressed the dense
@@ -528,87 +433,30 @@ def attract_embed(
                         cluster_groups.append(_g)
                 cluster_groups = cluster_groups or None
         _t_arr = time.perf_counter()
-        if cfg.arrange_mode == "seats":
-            # s3.102 seat engine: the same init + ONE exact pack (the
-            # global skeleton that wins dense), then the seat search;
-            # everything downstream identical
-            from ember_qc.algorithms.factored.seat import seat_arrange
-            tpts, _proj_info = alternate_arrange(
-                tpts, src_adj, grid, iters=1, kappa=kappa,
-                floor=cfg.span_floor, insert_sweeps=0,
-                overload_lam=eff_lam, snap=eff_snap,
-                deadline=placement_deadline, cluster_groups=None)
-            def _pack_move(p):
-                # the blessed packer as a global move (s3.104: the
-                # borrowed order-engine iteration is gone — gathers are
-                # native now; NOTE for the purge round: a thin direct
-                # pack-only wrapper would shed this wrapper's internal
-                # monotonize)
-                out, _pi = alternate_arrange(
-                    p, src_adj, grid, iters=1, kappa=kappa,
-                    floor=cfg.span_floor, insert_sweeps=0,
-                    overload_lam=eff_lam, snap=eff_snap,
-                    deadline=placement_deadline, cluster_groups=None)
-                return out
-
-            tpts, last_info = seat_arrange(
-                tpts, src_adj, grid, cluster_groups,
-                lam=(eff_lam if eff_lam > 0 else 1.0),
-                deadline=placement_deadline, pack_move=_pack_move,
-                mode=("brick" if eff_brick else "stock"),
-                interleave=cfg.interleave_moves)
-            # the seat search's capacity is soft (hinge); the claim
-            # layer needs a hard-capacity state — one exact pack per
-            # axis legalizes the seat-discovered orders (the single
-            # remaining conversion, smoke-measured necessary: without
-            # it turán 6.0 -> 15.5 with mx 28)
-            tpts, _legal_info = alternate_arrange(
-                tpts, src_adj, grid, iters=1, kappa=kappa,
-                floor=cfg.span_floor, insert_sweeps=0,
-                overload_lam=eff_lam, snap=eff_snap,
-                deadline=placement_deadline, cluster_groups=None)
-        elif cfg.arrange_mode == "lex":
-            # s3.110 the two-ruler engine: init + ONE exact pack (init
-            # projection), ONE lexicographic search — capacity (brick
-            # ruler, honest arms, wire_map pools) is the leading key,
-            # stair (junction ruler) the second — then ONE pack as the
-            # FAMILY NORMALIZER before conversion. Measured (s3.110
-            # smoke): a pen-0 lex state converts at 578 deficits raw
-            # and 0 deficits after one pack, and the pack PRESERVES
-            # pen 0 — the packer's irreplaceable role is not capacity
-            # (the invariant owns that now) but normalizing the state
-            # into the family the converter/completion stack was
-            # co-designed with (ideas 2.15). No per-pass pack moves,
-            # no lam. The named open question: a lex-family converter
-            # (spill-aware per-line brick seating) would delete this
-            # normalizer too. Pipeline a person can follow:
-            # init -> pack -> search -> pack -> convert -> verify.
-            from ember_qc.algorithms.factored.seat import seat_arrange
-            tpts, _proj_info = alternate_arrange(
-                tpts, src_adj, grid, iters=1, kappa=kappa,
-                floor=cfg.span_floor, insert_sweeps=0,
-                overload_lam=eff_lam, snap=eff_snap,
-                deadline=placement_deadline, cluster_groups=None)
-            tpts, last_info = seat_arrange(
-                tpts, src_adj, grid, cluster_groups,
-                deadline=placement_deadline, mode="lex",
-                interleave=cfg.interleave_moves)
-            tpts, _legal_info = alternate_arrange(
-                tpts, src_adj, grid, iters=1, kappa=kappa,
-                floor=cfg.span_floor, insert_sweeps=0,
-                overload_lam=eff_lam, snap=eff_snap,
-                deadline=placement_deadline, cluster_groups=None)
-        else:
-            tpts, last_info = alternate_arrange(
-                tpts, src_adj, grid, iters=cfg.arrange_iters,
-                kappa=kappa, floor=cfg.span_floor,
-                insert_sweeps=cfg.insert_sweeps,
-                overload_lam=eff_lam, snap=eff_snap,
-                deadline=placement_deadline,
-                cluster_groups=cluster_groups,
-                align_moves=cfg.align_moves,
-                census_required=(cfg.census_required
-                                 and grid.stride > 1))
+        # THE arrange (consolidation 7, s3.112 — one path): the lex
+        # engine bracketed by the packer's two remaining jobs.
+        #
+        #   pack_project  — init projection (ranks -> packed lines)
+        #   seat_arrange  — lexicographic (capacity, stair) descent;
+        #                   moves: interleave-jump (the s3.111 exact
+        #                   all-interleavings DP), swaps, re-seats,
+        #                   translations
+        #   pack_project  — the FAMILY NORMALIZER (s3.110 measured: a
+        #                   pen-0 lex state converts at 578 deficits
+        #                   raw, 0 after one pack, pen preserved — the
+        #                   converter/completion stack is co-designed
+        #                   with packer-family states; a lex-family
+        #                   converter would delete this call too)
+        from ember_qc.algorithms.factored.seat import seat_arrange
+        tpts, _proj_info = pack_project(
+            tpts, src_adj, grid, kappa=kappa,
+            floor=cfg.span_floor, snap=eff_snap)
+        tpts, last_info = seat_arrange(
+            tpts, src_adj, grid, cluster_groups,
+            deadline=placement_deadline)
+        tpts, _legal_info = pack_project(
+            tpts, src_adj, grid, kappa=kappa,
+            floor=cfg.span_floor, snap=eff_snap)
         arrange_wall = time.perf_counter() - _t_arr
         cent = {v: grid.Minv @ (tpts[v] - grid.c) for v in cent}
 
@@ -720,14 +568,7 @@ def attract_embed(
         widths = bar_widths(books[1])
         sizes = (np.array([widths[v].sum() for v in widths])
                  if widths else np.zeros(1))
-        diag = {"assigned": int(last_info.get("assigned", 0)),
-                "assigned_rows": int(last_info.get("assigned_rows", 0)),
-                "assigned_cols": int(last_info.get("assigned_cols", 0)),
-                "insert_reverts": int(last_info.get("insert_reverts", 0)),
-                "cluster_accepts": int(last_info.get("cluster_accepts", 0)),
-                "cluster_reverts": int(last_info.get("cluster_reverts", 0)),
-                "mono_time": float(last_info.get("mono_time", 0.0)),
-                "extent_mean": round(float(sizes.mean()), 3),
+        diag = {"extent_mean": round(float(sizes.mean()), 3),
                 "extent_max": round(float(sizes.max()), 3),
                 "stride": int(grid.stride),
                 # Galerkin-defect fields (s3.69): init handoff vs
@@ -740,48 +581,32 @@ def attract_embed(
                 "max_chain": max(len(c) for c in finished.values())}
         diag["init_wall"] = round(init_wall, 2)
         diag["arrange_wall"] = round(arrange_wall, 2)
-        # s3.89 fold/orient/strain counters + the direct fold outcome
-        # metric: the worst post-arrange edge span in line units (the
-        # s3.87 statistic, now first-class)
-        diag["orient_accepts"] = int(last_info.get("orient_accepts", 0))
-        # s3.100 alignment-move counters
-        diag["align_props"] = int(last_info.get("align_props", 0))
-        diag["align_noops"] = int(last_info.get("align_noops", 0))
-        diag["align_memo"] = int(last_info.get("align_memo", 0))
-        # s3.101 revert attribution: which gate side refused (census
-        # rose = the level-1-vs-2 capacity gap's fingerprint)
-        diag["revert_ov"] = int(last_info.get("revert_ov", 0))
-        diag["revert_e"] = int(last_info.get("revert_e", 0))
-        # s3.102 seat-engine counters (s3.110: lex shares them)
-        if cfg.arrange_mode in ("seats", "lex"):
-            diag["seat_accepts"] = int(last_info.get("seat_accepts", 0))
-            diag["trans_accepts"] = int(
-                last_info.get("trans_accepts", 0))
-            diag["seat_passes"] = int(last_info.get("passes", 0))
-            diag["seat_fast_miss"] = int(
-                last_info.get("fast_miss", 0))
-            diag["pack_accepts"] = int(last_info.get("pack_accepts", 0))
-            diag["swap_accepts"] = int(last_info.get("swap_accepts", 0))
-            diag["gather_accepts"] = int(
-                last_info.get("gather_accepts", 0))
-            diag["interleave_accepts"] = int(
-                last_info.get("interleave_accepts", 0))
-            diag["interleave_declines"] = int(
-                last_info.get("interleave_declines", 0))
-            diag["interleave_noops"] = int(
-                last_info.get("interleave_noops", 0))
-            diag["accept_traj"] = list(
-                last_info.get("accept_traj", []))[:12]
-            # s3.110: capacity and length reported apart; in lex mode
-            # seat_pen == 0 certifies the feasibility invariant held
-            if last_info.get("seat_pen") is not None:
-                diag["seat_pen"] = last_info["seat_pen"]
-                diag["seat_stair"] = last_info["seat_stair"]
-        # s3.93 fit-vs-fabric observables + seed submission
+        # the lex engine's counters (s3.102/110/111)
+        diag["seat_accepts"] = int(last_info.get("seat_accepts", 0))
+        diag["trans_accepts"] = int(
+            last_info.get("trans_accepts", 0))
+        diag["seat_passes"] = int(last_info.get("passes", 0))
+        diag["seat_fast_miss"] = int(
+            last_info.get("fast_miss", 0))
+        diag["swap_accepts"] = int(last_info.get("swap_accepts", 0))
+        diag["interleave_accepts"] = int(
+            last_info.get("interleave_accepts", 0))
+        diag["interleave_declines"] = int(
+            last_info.get("interleave_declines", 0))
+        diag["interleave_noops"] = int(
+            last_info.get("interleave_noops", 0))
+        diag["accept_traj"] = list(
+            last_info.get("accept_traj", []))[:12]
+        # capacity and length reported apart: seat_pen == 0 certifies
+        # the feasibility invariant held
+        if last_info.get("seat_pen") is not None:
+            diag["seat_pen"] = last_info["seat_pen"]
+            diag["seat_stair"] = last_info["seat_stair"]
+        # s3.93 fit-vs-fabric observables (from the normalizer pack)
         for k in ("final_width_x", "final_width_y",
                   "projection_misses", "unb_miss"):
-            if k in last_info:
-                diag[k] = int(last_info[k])
+            if k in _legal_info:
+                diag[k] = int(_legal_info[k])
         if conv_info is not None:
             diag["convert_miss"] = int(conv_info["convert_miss"])
             # s3.97 certificate: the conditional theorem's premise —

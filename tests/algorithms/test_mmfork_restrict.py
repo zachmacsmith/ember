@@ -24,7 +24,7 @@ pytestmark = pytest.mark.skipif(_find_so() is None,
 def p16_setup():
     import dwave_networkx as dnx
     from ember_qc.algorithms.factored.field import (
-        TileGrid, alternate_arrange, bar_domains, derive_bars_stair,
+        TileGrid, pack_project, bar_domains, derive_bars_stair,
         stair_step, wire_seeds_iv)
     from ember_qc.algorithms.factored.placement import (
         target_layout, source_positions)
@@ -41,7 +41,7 @@ def p16_setup():
         tp = {v: grid.to_tile(p) for v, p in cent.items()}
         for _ in range(8):
             tp = stair_step(tp, adj, eta=0.5)
-        tp, _ = alternate_arrange(tp, adj, grid, iters=8, kappa=13.0)
+        tp, _ = pack_project(tp, adj, grid, kappa=13.0)
         bars = derive_bars_stair(tp, adj, kappa=13.0,
                                  bounds=(grid.W, grid.H))
         doms = bar_domains(grid, tp, bars, adj, kappa=13.0, margin=margin)

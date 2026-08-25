@@ -120,7 +120,6 @@ class TestAttractEmbed:
         res = attract_embed(k, chimera, timeout=60, seed=0, vcycle=False)
         assert res["embedding"]
         assert validate_embedding(res["embedding"], k, chimera)
-        assert res["diag"]["assigned"] == 16
         assert res["stair_E"] is not None
 
     def test_diag_reports_arm_gating_fields(self, chimera, source):
@@ -129,10 +128,10 @@ class TestAttractEmbed:
         # (TestArmLengthGating) — here just assert the diagnostics surface
         res = attract_embed(source, chimera, timeout=60, seed=0)
         d = res["diag"]
-        for key in ("assigned", "assigned_rows", "assigned_cols",
-                    "insert_reverts", "mono_time"):
+        for key in ("extent_mean", "extent_max", "stride",
+                    "seat_accepts", "interleave_accepts",
+                    "accept_traj"):
             assert key in d
-        assert d["assigned"] <= len(source)
 
     def test_registry_contract(self, chimera, source):
         algo = ALGORITHM_REGISTRY["attraction"]
@@ -252,7 +251,7 @@ class TestOrderState:
         # a fractional drift value) — the rank-pricing trap guard
         import dwave_networkx as dnx
         from ember_qc.algorithms.factored.field import (
-            TileGrid, alternate_arrange, _target_kappa)
+            TileGrid, pack_project, _target_kappa)
         from ember_qc.algorithms.factored.placement import target_layout
         target = dnx.zephyr_graph(3, 4)
         grid = TileGrid(target, target_layout(target), courses=True)
@@ -261,76 +260,10 @@ class TestOrderState:
         import numpy as np
         pos = {v: np.array([float(i), float(i)])
                for i, v in enumerate(sorted(source))}
-        out, _info = alternate_arrange(
-            pos, src_adj, grid, iters=4, kappa=_target_kappa(grid),
-            overload_lam=1.0, snap=True)
+        out, _info = pack_project(
+            pos, src_adj, grid, kappa=_target_kappa(grid), snap=True)
         for v, p in out.items():
             assert float(p[0]).is_integer(), (v, p)
             assert float(p[1]).is_integer(), (v, p)
 
 
-class TestAlignMoves:
-    """s3.100: the align_moves switch — known field, threaded end to
-    end; the on-arm stays valid and deterministic with counters."""
-
-    def test_knob_is_a_known_field(self):
-        from dataclasses import fields
-        from ember_qc.algorithms.factored.placement import AttractConfig
-        names = {f.name for f in fields(AttractConfig)}
-        assert "align_moves" in names
-        # DEFAULT ON since s3.100b (winners ship); False = control arm
-        assert AttractConfig().align_moves is True
-
-    def test_align_on_valid_deterministic_with_diag(self, chimera, source):
-        a = attract_embed(source, chimera, timeout=60, seed=0,
-                          align_moves=True)
-        b = attract_embed(source, chimera, timeout=60, seed=0,
-                          align_moves=True)
-        assert a["embedding"]
-        assert validate_embedding(a["embedding"], source, chimera)
-        assert a["embedding"] == b["embedding"]
-        assert "align_props" in a["diag"] and "align_noops" in a["diag"]
-
-    def test_align_on_zephyr_valid(self, source):
-        import dwave_networkx as dnx
-        z = dnx.zephyr_graph(3, 4)
-        r = attract_embed(source, z, timeout=60, seed=0,
-                          align_moves=True)
-        assert r["embedding"]
-        assert validate_embedding(r["embedding"], source, z)
-        assert r["diag"]["align_props"] + r["diag"]["align_noops"] >= 0
-
-
-class TestTruthRoundKnobs:
-    """s3.101: align_insert / census_required / cap_pressure — known
-    fields, default off, valid and deterministic when on, stride gate
-    on the census."""
-
-    def test_knobs_are_known_fields_default_off(self):
-        from dataclasses import fields
-        from ember_qc.algorithms.factored.placement import AttractConfig
-        names = {f.name for f in fields(AttractConfig)}
-        assert "census_required" in names
-        assert AttractConfig().census_required is False
-
-    def test_census_required_valid_deterministic_on_zephyr(self, source):
-        import dwave_networkx as dnx
-        z = dnx.zephyr_graph(3, 4)
-        a = attract_embed(source, z, timeout=60, seed=0,
-                          census_required=True)
-        b = attract_embed(source, z, timeout=60, seed=0,
-                          census_required=True)
-        assert a["embedding"]
-        assert validate_embedding(a["embedding"], source, z)
-        assert a["embedding"] == b["embedding"]
-        assert "revert_ov" in a["diag"] and "revert_e" in a["diag"]
-
-    def test_census_required_stride_gated_off_chimera(self, chimera,
-                                                      source):
-        # parity is meaningless at stride 1: the knob must be
-        # byte-identical to default off Zephyr
-        a = attract_embed(source, chimera, timeout=60, seed=0)
-        b = attract_embed(source, chimera, timeout=60, seed=0,
-                          census_required=True)
-        assert a["embedding"] == b["embedding"]
-        assert a["stair_E"] == b["stair_E"]
