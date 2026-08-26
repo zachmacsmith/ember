@@ -1765,6 +1765,74 @@ classed active-set DP — the last two-court seam), the P16 predicate
 (only if Pegasus ever matters again), max-chain's lexicographic
 slot (parked).
 
+**3.113 (the orders engine — round 1: state = two orders, pack as
+readout, accept-all).** Built per the 2026-08-26 design discussion
+(ideas fronts 1+2 together, plus the acceptance question): `engine`
+knob ("lex" default / "orders" / "orders-audit"), new `orders.py`
+(~170 lines). State is edited only through the induced orders;
+positions are re-derived after every adopted move by
+`pack_project(monotonize=False)` — the readout; units are contiguous
+dyadic intervals of the current order including singletons
+(`align_reinsert` guard lifted to |S|>=1; the hierarchy is not
+consumed); "orders" adopts every DP return (projected block-coordinate
+descent), "orders-audit" is the strict-descent control; the best-lex-E
+bookmark is what returns; no normalizer stage (states are packer
+output by construction). Default path byte-identical (K100/turán/grid
+fingerprints == the s3.112 hashes, re-verified twice; suite + 13 new
+tests green). Board (`data/orders_probe.csv`; LOAD CAVEAT: 100-122
+throughout): **turán 6.000/mx 6 on ALL 10 seeds in BOTH arms — the
+crystal as a structural property of the new engine, and load-robust:
+the default control collapsed to 12.4 mean (6/10 seeds at 14.5-17.6,
+mx to 56) under the same load, while quiet default = 6.0 — so the
+−6.4 delta is a robustness claim, not a quality claim.** ws 2.595 vs
+2.589 at 10 seeds (mx 8.2 vs 8.3) — parity while budget-bound at ONE
+pass (a readout costs ~0.3 s at n=486; perf is the named unlock).
+regular −0.058; K100/K140/spin_glass/honeycomb in-tol. Losses, the
+named residuals: **ER +0.84** (both arms; accept-all churned 700-900
+adopts to no effect) and **king +1.53/+0.60** — the regime the deleted
+fine moves (re-seats, swaps, translations) and/or the hierarchy's
+patch units served; **grid +0.50 in accept-all only** (audit parity,
++0.003) — the acceptance fork's first data: the projection-diffusion
+won nothing measurable on this board and costs on lattices, so audit
+is currently the safer arm. Discovery banked (the one-accounting
+principle firing again): **the readout enforces LINE capacity while
+seat_energy's pen counts BRICK capacity** — pack-legal lattice states
+carry pen 12-100 at the bookmark (boundary bricks pool below the
+line's 8); the lex engine descended that away, the orders engine
+cannot see it. Two books; resolution candidates: a brick-aware bounded
+pack, or pen in the acceptance rule. No default flip (losses beyond
+tol). Round-2 candidates in EV order: the readout perf unlock (ws
+parity at one pass suggests headroom), the brick/line accounting seam,
+fine-scale moves, king/ER diagnosis.
+
+**3.113b (work-to-answer — the acceptance fork decided, and the ws
+bookmark discovery).** Max's question: how long did each policy take
+to FIND its answer, not to stop. Instrumented (`bookmark_wall`/
+`bookmark_readouts` — when the returned state was last improved) and
+measured (`data/accept_work_probe.csv`, deep seeds turán/ws): **audit
+finds equal-or-better answers FASTER on turán (6.0 @ 11.0s/133
+readouts vs accept-all's 18.6s/189) and grid (1.1 @ 12s vs 1.54 @
+18.5s); ER is the one inversion (accept-all 5.62 @ 3s then ~1190
+readouts of pure churn; audit 5.53 @ 27s/1418) — slightly better
+answer, 9x the work.** Combined with the s3.113 board, audit is the
+better policy AS BUILT; the accept-all/SGD bet loses round 1 on the
+evidence (caveat: at current readout cost its diffusion never got
+cheap moves — re-measure after the perf unlock; accept-all stays as
+the control arm). The deeper finding: **ws bookmarks at readout 2 in
+BOTH arms** — nothing after the first adopt ever improved the lex
+bookmark, so the arrange phase currently contributes ~nothing on the
+liquid and the parity is inherited from init+pack+tail. Suspected
+mechanism = the s3.113 two-books seam: ws states carry brick-pen
+~56-67 the line-capacity pack can neither see nor fix, so pen
+dominates the lex bookmark and freezes it — later genuine stair
+improvements at wobbling pen cannot register. The brick/line
+unification is therefore not hygiene; it is plausibly the liquid's
+gate. Round-2 order sharpened: (1) readout perf, (2) brick/line
+unification (Max: "we need to unify the brick idea with everything
+else"), (3) hierarchy groups as EXTRA units on ER/king (Max's
+variance hypothesis: scattered similar nodes need joint gathers that
+interval accretion cannot express).
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).

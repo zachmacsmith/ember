@@ -20,10 +20,11 @@ behavior, measured one flip at a time against the stock corner — paired by (in
 never unpaired (survivor bias). Verify any claim about minorminer against its source, never
 its paper — the shipped program has repeatedly outgrown the 2014 description.
 
-**Read `docs/paper2/ideas.md` FIRST.** It holds the principles that survived
-measurement, the open questions, and the five-practice method — the notes
-were condensed 2026-08-06 because accumulated micro-verdicts and
-Claude-invented doctrine were poisoning later sessions. The only rule is to
+**Read `docs/paper2/ideas.md` FIRST.** One page: the algorithm, the
+constraints any redesign must respect, and the open fronts — the notes
+were condensed 2026-08-06 (and ideas.md re-condensed 2026-08-26) because
+accumulated micro-verdicts and Claude-invented doctrine were poisoning
+later sessions. The only rule is to
 find the correct algorithm from the principles of what makes it good.
 Supporting references: `docs/paper2/attraction.md` (condensed verdict ledger —
 check before proposing; prevents re-derivation), `docs/paper2/anatomy.md`

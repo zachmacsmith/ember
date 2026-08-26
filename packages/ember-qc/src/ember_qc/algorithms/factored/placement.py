@@ -163,7 +163,7 @@ SEED_STRIDE = 100        # router-seed derivation: seed*STRIDE (+99 fallback)
 @dataclass(frozen=True)
 class AttractConfig:
     """The attraction embedder's knobs (consolidation 7: 12 knobs,
-    one code path).
+    one code path; +1, ``engine``, for the orders-state round).
 
     Unknown keyword arguments to :func:`attract_embed` are ignored, so
     pre-consolidation knobs silently fall back to the single pipeline.
@@ -271,6 +271,20 @@ class AttractConfig:
                                # exactly). With tail="ball" this is the
                                # grind-replacement stack. OFF = balls
                                # only (s3.75 selector).
+    engine: str = "lex"
+                               # the arrange engine (round 1 of the
+                               # orders-state design, 2026-08-26).
+                               # "lex" (DEFAULT) = the consolidation-7
+                               # seat engine. "orders" = state is the
+                               # two axis orders, positions derived by
+                               # the pack readout after every move,
+                               # interval units, every DP proposal
+                               # accepted (projected block-coordinate
+                               # descent; lexicographic E survives only
+                               # in the best-state bookmark).
+                               # "orders-audit" = same engine, strict
+                               # post-readout descent (the control for
+                               # the acceptance rule).
 
 
 def _auto_bins(n_qubits: int) -> int:
@@ -330,6 +344,11 @@ def attract_embed(
         picked = {k: v for k, v in overrides.items() if k in known}
         if picked:
             cfg = replace(cfg, **picked)
+        if cfg.engine not in ("lex", "orders", "orders-audit"):
+            # loud FAILURE (with the message) rather than silently
+            # measuring the control arm — the probes' typo fence
+            # checks kwarg names, not values
+            raise ValueError(f"unknown engine {cfg.engine!r}")
 
         from ember_qc.algorithms.factored.field import (
             TileGrid, _target_kappa, arm_books, bar_widths,
@@ -371,9 +390,10 @@ def attract_embed(
         kappa = cfg.kappa if cfg.kappa is not None else _target_kappa(grid)
 
         # the units hierarchy is computed ONCE (the cluster moves
-        # consume it)
+        # consume it; the orders engine's units are intervals of the
+        # current order, so it never needs the hierarchy)
         _units_levels = None
-        if cfg.cluster_moves and cfg.cluster_units:
+        if cfg.engine == "lex" and cfg.cluster_moves and cfg.cluster_units:
             from ember_qc.algorithms.factored.coarsen import (
                 coarsen as _coarsen)
             _units_levels = _coarsen(src_adj, units=True)
@@ -417,7 +437,7 @@ def attract_embed(
         # FINE ids, one list per level (coarsest last). Position-free —
         # computed once from the source graph.
         cluster_groups = None
-        if cfg.cluster_moves:
+        if cfg.engine == "lex" and cfg.cluster_moves:
             from ember_qc.algorithms.factored.coarsen import (
                 coarsen as _coarsen)
             _levels = (_units_levels if (_units_levels is not None
@@ -453,16 +473,31 @@ def attract_embed(
         #                   converter/completion stack is co-designed
         #                   with packer-family states; a lex-family
         #                   converter would delete this call too)
-        from ember_qc.algorithms.factored.seat import seat_arrange
-        tpts, _proj_info = pack_project(
-            tpts, src_adj, grid, kappa=kappa,
-            floor=cfg.span_floor, snap=eff_snap)
-        tpts, last_info = seat_arrange(
-            tpts, src_adj, grid, cluster_groups,
-            deadline=placement_deadline)
-        tpts, _legal_info = pack_project(
-            tpts, src_adj, grid, kappa=kappa,
-            floor=cfg.span_floor, snap=eff_snap)
+        if cfg.engine == "lex":
+            from ember_qc.algorithms.factored.seat import seat_arrange
+            tpts, _proj_info = pack_project(
+                tpts, src_adj, grid, kappa=kappa,
+                floor=cfg.span_floor, snap=eff_snap)
+            tpts, last_info = seat_arrange(
+                tpts, src_adj, grid, cluster_groups,
+                deadline=placement_deadline)
+            tpts, _legal_info = pack_project(
+                tpts, src_adj, grid, kappa=kappa,
+                floor=cfg.span_floor, snap=eff_snap)
+        else:
+            # the orders engine (round 1): every state it occupies is
+            # readout output, so no family normalizer runs — the diag's
+            # fit observables come from the bookmark's own readout
+            from ember_qc.algorithms.factored.orders import order_arrange
+            tpts, _proj_info = pack_project(
+                tpts, src_adj, grid, kappa=kappa,
+                floor=cfg.span_floor, snap=eff_snap)
+            tpts, last_info = order_arrange(
+                tpts, src_adj, grid, kappa=kappa,
+                floor=cfg.span_floor, snap=eff_snap,
+                audit=(cfg.engine == "orders-audit"),
+                deadline=placement_deadline)
+            _legal_info = last_info.get("readout_info", {})
         arrange_wall = time.perf_counter() - _t_arr
         cent = {v: grid.Minv @ (tpts[v] - grid.c) for v in cent}
 
@@ -608,6 +643,12 @@ def attract_embed(
         if last_info.get("seat_pen") is not None:
             diag["seat_pen"] = last_info["seat_pen"]
             diag["seat_stair"] = last_info["seat_stair"]
+        if cfg.engine != "lex":
+            diag["readouts"] = int(last_info.get("readouts", 0))
+            diag["mono_swaps"] = int(last_info.get("mono_swaps", 0))
+            diag["bookmark_wall"] = last_info.get("bookmark_wall", 0.0)
+            diag["bookmark_readouts"] = int(
+                last_info.get("bookmark_readouts", 0))
         # s3.93 fit-vs-fabric observables (from the normalizer pack)
         for k in ("final_width_x", "final_width_y",
                   "projection_misses", "unb_miss"):

@@ -1460,7 +1460,7 @@ def align_reinsert(order: List[int], cluster,
             return None, False
     cset = set(cluster)
     S = [v for v in order if v in cset]
-    if len(S) < 2 or len(S) >= n:
+    if len(S) < 1 or len(S) >= n:
         return None, False
     R = [v for v in order if v not in cset]
     p, m = len(R), len(S)
@@ -1737,7 +1737,7 @@ def align_reinsert(order: List[int], cluster,
 
 def pack_project(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                  grid: TileGrid, *, kappa: float, floor: bool = True,
-                 snap: bool = False):
+                 snap: bool = False, monotonize: bool = True):
     """The packer, alone (consolidation 7, s3.112): the exact
     order-preserving DP projection extracted verbatim from the old
     arrange loop's iter-0 path — one forced unbounded pack per axis
@@ -1753,7 +1753,10 @@ def pack_project(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
     conversion (the s3.110 discovery: the packer's remaining job is
     normalizing states into the family the converter/completion stack
     was co-designed with — its deletion is the converter co-design
-    round's, not this one's). Returns (new_pos, info)."""
+    round's, not this one's). ``monotonize=False`` skips the
+    x-permutation step: the orders engine uses the packer as a pure
+    orders -> positions readout, which must not edit orders.
+    Returns (new_pos, info)."""
     min_span = 0.0
 
     def _books(p, contacts=None):
@@ -1853,7 +1856,8 @@ def pack_project(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
         info["unplaced"] = miss
 
     _half(axis=1)
-    _mono()
+    if monotonize:
+        _mono()
     _half(axis=0)
 
     if line_pools(grid):
