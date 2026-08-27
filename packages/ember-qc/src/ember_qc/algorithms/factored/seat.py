@@ -117,14 +117,16 @@ def _edge_arrays(pos, src_adj):
 
 
 def seat_energy(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
-                grid: TileGrid) -> float:
+                grid: TileGrid, yrank=None) -> float:
     """THE reference evaluator — the objective's definition.
 
     Vectorized (s3.109 perf round; verified == the per-edge original):
     the stair rule per edge is "the (y, id)-lower endpoint spends the
-    h-arm", hulls come from scatter-min/max, cover from the
-    diff-and-cumsum trick. All quantities are integer-valued, so sums
-    are exact in any order."""
+    h-arm" — or the carried y-order's rank when ``yrank`` is given
+    (s3.118: the carried-order engines read ONE orientation book) —
+    hulls come from scatter-min/max, cover from the diff-and-cumsum
+    trick. All quantities are integer-valued, so sums are exact in
+    any order."""
     s_cov = max(int(getattr(grid, "stride", 1)), 1)
     ids, A, B = _edge_arrays(pos, src_adj)
     n = len(ids)
@@ -132,7 +134,12 @@ def seat_energy(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                     dtype=np.int64, count=n)
     Y = np.fromiter((int(round(float(pos[v][1]))) for v in ids),
                     dtype=np.int64, count=n)
-    lower = (Y[A] < Y[B]) | ((Y[A] == Y[B]) & (A < B))
+    if yrank is not None:
+        R = np.fromiter((yrank[v] for v in ids), dtype=np.int64,
+                        count=n)
+        lower = R[A] < R[B]
+    else:
+        lower = (Y[A] < Y[B]) | ((Y[A] == Y[B]) & (A < B))
     L = np.where(lower, A, B)
     Hi = np.where(lower, B, A)
     hmin = X.copy()

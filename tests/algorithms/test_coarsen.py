@@ -374,9 +374,13 @@ class TestConsumptionSchedule:
         z = dnx.zephyr_graph(6, 4)
         er = nx.gnp_random_graph(80, 0.1, seed=7)
         t0 = time.perf_counter()
-        r1 = attract_embed(er, z, timeout=20, seed=1)
+        # engine pinned: this pins the LEX engine's cluster-move
+        # schedule (its subject); the plane default neither consumes
+        # cluster_moves nor bounds accepts this way (s3.117)
+        r1 = attract_embed(er, z, timeout=20, seed=1, engine="lex")
         wall = time.perf_counter() - t0
-        r0 = attract_embed(er, z, timeout=20, seed=1, cluster_moves=False)
+        r0 = attract_embed(er, z, timeout=20, seed=1, engine="lex",
+                           cluster_moves=False)
         assert r1["embedding"] and r0["embedding"]
         d = r1["diag"]
         assert d["interleave_accepts"] < 2000

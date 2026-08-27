@@ -218,12 +218,14 @@ class TestPipeline:
                           seed=0, engine="bogus")
         assert r["status"] == "FAILURE" and "engine" in r.get("error", "")
 
-    def test_default_is_lex_identity(self):
+    def test_default_is_plane_identity(self):
+        # s3.117: the plane engine is the default (Max's call on the
+        # s3.116 board); lex/orders remain as pinned arms
         from ember_qc.algorithms.factored import attract_embed
         src = nx.gnp_random_graph(10, 0.4, seed=3)
         tgt = dnx.zephyr_graph(2, 4)
         a = attract_embed(src, tgt, timeout=10, seed=0)
-        b = attract_embed(src, tgt, timeout=10, seed=0, engine="lex")
+        b = attract_embed(src, tgt, timeout=10, seed=0, engine="plane")
         assert a["embedding"] == b["embedding"]
 
 
@@ -296,3 +298,128 @@ class TestPlaneEngine:
                 assert r1["embedding"] == r2["embedding"]
                 assert "proj_pen" in r1["diag"]
                 assert "seat_pen" not in r1["diag"]
+
+
+class TestCenterShift:
+    """s3.117: the brick projection centers the layout — stair is
+    translation-invariant given the orders, so the shift is judged
+    purely by per-brick feasibility (s-aligned candidates only)."""
+
+    def test_fires_and_is_stair_neutral(self):
+        from ember_qc.algorithms.factored.field import stair_energy
+        grid = _zgrid()
+        rng = np.random.default_rng(13)
+        adj, pos = _case(rng, grid, 10, p_edge=0.3)
+        kappa = _target_kappa(grid)
+        out, info = pack_project(pos, adj, grid, kappa=kappa,
+                                 monotonize=False, brick_pools=True)
+        dx, dy = info.get("center_shift", (0, 0))
+        # translation invariance, checked directly: shifting back
+        # changes nothing in stair
+        back = {v: p - np.array([float(dx), float(dy)])
+                for v, p in out.items()}
+        assert stair_energy(out, adj) == stair_energy(back, adj)
+        for p in out.values():
+            assert 0 <= p[0] < grid.W and 0 <= p[1] < grid.H
+        out2, info2 = pack_project(pos, adj, grid, kappa=kappa,
+                                   monotonize=False, brick_pools=True)
+        assert info2.get("center_shift") == (dx, dy)
+        assert all(np.array_equal(out[v], out2[v]) for v in out)
+
+
+class TestCarriedOrders:
+    """s3.118: the id-fossil dies — the tie-break is the carried
+    order, every interleaver candidate is a real state."""
+
+    def test_rank_tie_contacts(self):
+        # two co-located variables: (y, id) says 1 below 2; the
+        # carried order can say the opposite — and rank rules
+        adj = {1: [2], 2: [1]}
+        pos = {1: np.array([0.0, 3.0]), 2: np.array([1.0, 3.0])}
+        legacy = _stair_contacts(pos, adj)
+        assert legacy[1] == ([2], []) and legacy[2] == ([], [1])
+        flipped = _stair_contacts(pos, adj, yrank={1: 1, 2: 0})
+        assert flipped[2] == ([1], []) and flipped[1] == ([], [2])
+        agree = _stair_contacts(pos, adj, yrank={1: 0, 2: 1})
+        assert agree == legacy
+
+    def test_realness_property(self):
+        # THE round's property: after a carried adopt + readout, the
+        # state's contacts are exactly the carried y-order's rank
+        # contacts (the DP's assumed book == the realized book), and
+        # values are non-decreasing along the carried orders
+        from ember_qc.algorithms.factored.orders import order_arrange
+        grid = _zgrid()
+        rng = np.random.default_rng(37)
+        # tied-heavy start: few distinct values, many co-located
+        g = nx.gnp_random_graph(16, 0.4, seed=11)
+        adj = {v: sorted(g.neighbors(v)) for v in g.nodes()}
+        pos = {v: np.array([float(rng.integers(0, 3)),
+                            float(rng.integers(0, 3))])
+               for v in g.nodes()}
+        kappa = _target_kappa(grid)
+        out, info = order_arrange(pos, adj, grid, kappa=kappa,
+                                  plane=True, carry=True)
+        ox, oy = info["_orders"]
+        yrank = {v: r for r, v in enumerate(oy)}
+        want = _stair_contacts(out, adj, yrank=yrank)
+        got = info["readout_info"]["_contacts"]
+        assert got == want
+        for ax, o in ((0, ox), (1, oy)):
+            vals = [float(out[v][ax]) for v in o]
+            assert all(a <= b for a, b in zip(vals, vals[1:]))
+
+    def test_e2e_carry_valid_deterministic(self):
+        from ember_qc.algorithms.factored import attract_embed
+        from ember_qc.registry import validate_embedding
+        src = nx.gnp_random_graph(12, 0.4, seed=7)
+        for tgt in (dnx.zephyr_graph(3, 4), dnx.chimera_graph(4, 4, 4)):
+            for kw in ({"carry_orders": True},
+                       {"engine": "plane-audit", "carry_orders": True}):
+                r1 = attract_embed(src, tgt, timeout=15, seed=0, **kw)
+                r2 = attract_embed(src, tgt, timeout=15, seed=0, **kw)
+                emb = r1["embedding"]
+                assert emb, (kw, r1.get("error"))
+                assert validate_embedding(emb, src, tgt)
+                assert r1["embedding"] == r2["embedding"]
+
+    def test_carry_off_is_default_identity(self):
+        from ember_qc.algorithms.factored import attract_embed
+        src = nx.gnp_random_graph(10, 0.4, seed=3)
+        tgt = dnx.zephyr_graph(2, 4)
+        a = attract_embed(src, tgt, timeout=10, seed=0)
+        b = attract_embed(src, tgt, timeout=10, seed=0,
+                          carry_orders=False)
+        assert a["embedding"] == b["embedding"]
+
+    def test_tied_values_interleaver_realness(self):
+        # the audit's missing oracle arm, now sound to write: with a
+        # carried order over TIED values, an accepted proposal must be
+        # a true improvement of the unramped rank-tie ground truth
+        rng = np.random.default_rng(53)
+        hits = 0
+        for _trial in range(30):
+            n = int(rng.integers(5, 9))
+            g = nx.gnp_random_graph(n, 0.5, seed=int(rng.integers(9999)))
+            adj = {v: sorted(g.neighbors(v)) for v in g.nodes()}
+            order = list(rng.permutation(n))
+            # heavy ties: values drawn from {0, 1, 2}, sorted
+            vals = sorted(float(rng.integers(0, 3)) for _ in range(n))
+            other = {v: float(rng.integers(0, 6)) for v in range(n)}
+
+            def gt(o):
+                pos = {v: np.array([other[v], vals[r]])
+                       for r, v in enumerate(o)}
+                yrank = {v: r for r, v in enumerate(o)}
+                return stair_energy(pos, adj,
+                                    contacts=_stair_contacts(
+                                        pos, adj, yrank=yrank))
+            k = int(rng.integers(1, 4))
+            S = sorted(rng.choice(n, size=k, replace=False).tolist())
+            res, _f = align_reinsert(order, set(S), adj, vals, None,
+                                     axis=1, other=other, contacts=None)
+            if res is not None:
+                hits += 1
+                assert gt(res) <= gt(order) + 1e-9, \
+                    "carried-order accept must not be a true regression"
+        assert hits >= 5  # the property must actually be exercised

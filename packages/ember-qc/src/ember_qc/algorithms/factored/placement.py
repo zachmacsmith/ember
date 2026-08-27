@@ -271,20 +271,22 @@ class AttractConfig:
                                # exactly). With tail="ball" this is the
                                # grind-replacement stack. OFF = balls
                                # only (s3.75 selector).
-    engine: str = "lex"
-                               # the arrange engine (round 1 of the
-                               # orders-state design, 2026-08-26).
-                               # "lex" (DEFAULT) = the consolidation-7
-                               # seat engine. "orders" = state is the
-                               # two axis orders, positions derived by
-                               # the pack readout after every move,
-                               # interval units, every DP proposal
-                               # accepted (projected block-coordinate
-                               # descent; lexicographic E survives only
-                               # in the best-state bookmark).
-                               # "orders-audit" = same engine, strict
-                               # post-readout descent (the control for
-                               # the acceptance rule).
+    engine: str = "plane"
+                               # the arrange engine. "plane" (DEFAULT
+                               # since s3.117; measured best arm at
+                               # s3.116, Max's call): the Infinite
+                               # Plane — search on the ideal unbounded
+                               # plane (readout = unbounded packs only,
+                               # judge = pure stair, capacity the
+                               # unbounded pack's invariant), every DP
+                               # proposal accepted, ONE brick-aware
+                               # annotated projection at the end.
+                               # "plane-audit" = strict post-readout
+                               # stair descent (acceptance control).
+                               # "orders"/"orders-audit" = the round-1
+                               # windowed engine (projection per adopt).
+                               # "lex" = the consolidation-7 seat
+                               # engine (the pre-orders default).
     hier_units: bool = False
                                # s3.115 (the ER variance test): offer
                                # the affinity hierarchy's groups as
@@ -293,6 +295,22 @@ class AttractConfig:
                                # jointly-judged weave, which interval
                                # accretion cannot express. Orders
                                # engines only; measurement switch.
+                               # s3.116: toxic on the plane crystal —
+                               # do not compose with plane pending
+                               # diagnosis.
+    carry_orders: bool = False
+                               # s3.118 (the id-fossil dies): the
+                               # engine state becomes the two axis
+                               # orders LITERALLY — the tie-break on
+                               # this path is rank in the carried
+                               # order (ids speak once, at entry);
+                               # every interleaver candidate is a
+                               # real state, the pack cannot
+                               # invalidate its own coefficients,
+                               # and per-edge pair units subsume
+                               # edge_monotonize. Non-lex engines
+                               # only; measurement switch, dissolves
+                               # at the flip.
 
 
 def _auto_bins(n_qubits: int) -> int:
@@ -510,7 +528,8 @@ def attract_embed(
                 audit=(cfg.engine == "orders-audit"),
                 deadline=placement_deadline,
                 extra_units=(cluster_groups if cfg.hier_units
-                             else None))
+                             else None),
+                carry=cfg.carry_orders)
             _legal_info = last_info.get("readout_info", {})
         else:
             # the plane engine (round 3, s3.116): the search lives on
@@ -527,11 +546,12 @@ def attract_embed(
                 deadline=placement_deadline,
                 extra_units=(cluster_groups if cfg.hier_units
                              else None),
-                plane=True)
+                plane=True, carry=cfg.carry_orders)
             tpts, _legal_info = pack_project(
                 tpts, src_adj, grid, kappa=kappa,
                 floor=cfg.span_floor, snap=eff_snap,
-                monotonize=False, brick_pools=True)
+                monotonize=False, brick_pools=True,
+                orders=last_info.get("_orders"))
         arrange_wall = time.perf_counter() - _t_arr
         cent = {v: grid.Minv @ (tpts[v] - grid.c) for v in cent}
 
@@ -539,9 +559,15 @@ def attract_embed(
         # (s3.99: the flag must reach this recomputation too, or the
         # seeds would be built under y-rule bits while the layout was
         # gated under flipped ones — the two-books bug)
+        # under carried orders (s3.118) the seeds must be built under
+        # the SAME orientation book the layout was optimized for — the
+        # projection's rank contacts — or it's the s3.65 two-books bug
+        _carry_cts = (_legal_info.get("_contacts")
+                      if (cfg.engine != "lex" and cfg.carry_orders)
+                      else None)
         books = arm_books(tpts, src_adj, grid, kappa=kappa,
                           floor=cfg.span_floor, snap=eff_snap,
-                          min_span=0.0)
+                          min_span=0.0, contacts=_carry_cts)
         # raw stair-E (recorded trajectory metric), priced on the same
         # contacts the seeds consume
         stair_E = round(stair_energy(tpts, src_adj, contacts=books[0]), 1)
@@ -684,14 +710,23 @@ def attract_embed(
             diag["bookmark_readouts"] = int(
                 last_info.get("bookmark_readouts", 0))
             diag["hier_accepts"] = int(last_info.get("hier_accepts", 0))
+            diag["pair_accepts"] = int(last_info.get("pair_accepts", 0))
             if cfg.engine.startswith("plane"):
                 # plane search is capacity-blind by design; the ONE
-                # projection's outcome is the real capacity report
+                # projection's outcome is the real capacity report.
+                # (typed grids only: on untyped targets positions stay
+                # at rank scale and the brick arrays don't exist)
                 if last_info.get("seat_stair") is not None:
                     diag["plane_stair"] = last_info["seat_stair"]
-                from ember_qc.algorithms.factored.seat import seat_energy
-                _pe = seat_energy(tpts, src_adj, grid)
-                diag["proj_pen"] = int(_pe // (2 ** 26))
+                from ember_qc.algorithms.factored.field import line_pools
+                if line_pools(grid):
+                    from ember_qc.algorithms.factored.seat import (
+                        seat_energy)
+                    _pe = seat_energy(
+                        tpts, src_adj, grid,
+                        yrank=(last_info.get("_yrank")
+                               if cfg.carry_orders else None))
+                    diag["proj_pen"] = int(_pe // (2 ** 26))
         # s3.93 fit-vs-fabric observables (from the normalizer pack)
         for k in ("final_width_x", "final_width_y",
                   "projection_misses", "unb_miss"):

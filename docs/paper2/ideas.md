@@ -108,9 +108,18 @@ Each of these was paid for; the receipts are in `attraction.md`.
    groups as extra units CONFIRMED the ER variance thesis (audit+h
    −0.40 on 21 gathers; gap to default now +0.12) and acquitted king
    of it (±0.05 — a different mechanism, likely the pen class or fine
-   moves). Named next: the brick-aware bounded projection (pen ≡ 0 by
-   construction; the ws-bookmark and possibly king/ER-residue unlock),
-   design agreed in discussion 2026-08-27.
+   moves). s3.116 (the Infinite Plane): search on the ideal plane +
+   ONE brick-aware annotated projection — king −1.25 (solved), ER
+   −0.53, grid −0.39, crystal in-tol, accept-all now BEATS audit on
+   the plane (Max's conviction measured right in its setting);
+   hier_units toxic on the plane crystal (do not compose, diagnose).
+   Plane accept-all is the recommended engine candidate; remaining ws
+   gap lives below the plane (claim/tail, the s3.95 map). s3.117:
+   plane IS the default (flip board: wins dense/regular/ws-mx, ER
+   +0.46 the one open residual); projection centering shipped
+   (stair-neutral); the DP audit (`dp-internals.md`) surfaced the
+   measured shortlist — the interleaver's unsound tie regime under
+   accept-all is round-5's named target (predicted on ER).
 2. **Units without the hierarchy.** Replace affinity-hierarchy units
    with contiguous runs of the current order, at all scales. Singleton
    insertions do the gathering (insertion sweeps built block structure

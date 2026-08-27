@@ -235,11 +235,31 @@ BarIntervals = Dict[int, Tuple[np.ndarray, np.ndarray]]
 
 
 def _stair_contacts(pos: Dict[int, Point],
-                    src_adj: Dict[int, List[int]]):
+                    src_adj: Dict[int, List[int]],
+                    yrank: Optional[Dict[int, int]] = None):
     """Assigned contacts per variable under the diagonal rule. Returns
     {v: (h_us, v_us)}: neighbour ids whose COLUMNS v's h-arm must reach,
-    and neighbour ids whose ROWS its v-arm must reach."""
+    and neighbour ids whose ROWS its v-arm must reach.
+
+    ``yrank`` (s3.118, the carried-order engines): who-is-below is the
+    CARRIED y-order's rank, not the (y, id) fossil — co-located
+    variables' relation is state, not convention. When None, the
+    legacy (y, id) tie-break applies (lex path, byte-identical)."""
     out = {}
+    if yrank is not None:
+        for v in pos:
+            h_us: List[int] = []
+            v_us: List[int] = []
+            rv = yrank[v]
+            for u in src_adj.get(v, []):
+                if u not in pos or u == v:
+                    continue
+                if rv < yrank[u]:
+                    h_us.append(u)
+                else:
+                    v_us.append(u)
+            out[v] = (h_us, v_us)
+        return out
     for v in pos:
         h_us: List[int] = []
         v_us: List[int] = []
@@ -813,7 +833,7 @@ def wire_seeds_exact(grid: TileGrid, pos: Dict[int, Point],
 def arm_books(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
               grid: TileGrid, *, kappa: float, floor: bool = True,
               snap: bool = False, min_span: float = 1.0,
-              contacts=None):
+              contacts=None, yrank=None):
     """THE one accounting (s3.66): the claim layer's books, computed once
     — contacts, bars, and per-orientation (line, interval, participant)
     tuples with snap's parity-agnostic hull widening applied when
@@ -826,12 +846,13 @@ def arm_books(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
     Returns (contacts, bars, tuples) where tuples[o] is a list of
     (line, a, b, v) for orientation o in (1, 0)."""
     if contacts is None:
-        contacts = _stair_contacts(pos, src_adj)
+        contacts = _stair_contacts(pos, src_adj, yrank=yrank)
     elif _VERIFY_CONTACTS:
         # staleness fence (s3.86, Max's question): any reused contacts
         # must equal a fresh recomputation — a mismatch here is the
-        # silent-proxy-drift bug class, caught mechanically
-        assert contacts == _stair_contacts(pos, src_adj), \
+        # silent-proxy-drift bug class, caught mechanically. The
+        # recomputation honours the caller's tie-break (s3.118).
+        assert contacts == _stair_contacts(pos, src_adj, yrank=yrank), \
             "stale contacts consumed by a gate evaluation"
     ids, arrs, edges = _bars_arrays(pos, src_adj, kappa=kappa,
                                     floor=floor, bounds=(grid.W, grid.H),
@@ -1245,7 +1266,8 @@ _MISS_COST = 1e6  # a skip must dominate any real displacement (|y-l| <= L)
 
 
 def _axis_coeffs(contacts, pos: Dict[int, Point],
-                 axis: int) -> Dict[int, int]:
+                 axis: int,
+                 ranks: Optional[Dict[int, int]] = None) -> Dict[int, int]:
     """Linear coefficients of the stair energy's ``axis`` term (v4 order
     state): given the orders, E_axis = sum over nets of (value of the
     net's order-max member - value of its order-min member), which is
@@ -1254,15 +1276,24 @@ def _axis_coeffs(contacts, pos: Dict[int, Point],
     can minimize the true objective instead of displacement. Nets on
     axis 1 (row assignment / y values) are the v-nets {v} + v_us(v);
     on axis 0 (column assignment / x values) the h-nets {v} + h_us(v).
-    Order-extremes are taken under (value, id) — the stair tie-break."""
+    Order-extremes are taken under (value, id) — the stair tie-break —
+    or under ``ranks`` (the carried axis order, s3.118) when given:
+    with rank keys the linearization is exact for ANY assignment
+    monotone in the carried order, which is exactly what the pack
+    produces, so the pack can no longer invalidate its own
+    coefficients."""
     side = 1 if axis == 1 else 0
     c: Dict[int, int] = {v: 0 for v in pos}
+    if ranks is not None:
+        key = lambda u: ranks[u]  # noqa: E731
+    else:
+        key = lambda u: (float(pos[u][axis]), u)  # noqa: E731
     for v, (h_us, v_us) in contacts.items():
         members = [v] + (v_us if side == 1 else h_us)
         if len(members) < 2:
             continue
-        hi = max(members, key=lambda u: (float(pos[u][axis]), u))
-        lo = min(members, key=lambda u: (float(pos[u][axis]), u))
+        hi = max(members, key=key)
+        lo = min(members, key=key)
         c[hi] += 1
         c[lo] -= 1
     return c
@@ -1473,7 +1504,15 @@ def pack_lines(intervals: List[Tuple[float, float]], values: List[float],
             key = prof.tobytes()
             if key not in seen:
                 caps64 = prof.astype(np.int64)
-                hi_c = np.minimum(hi_raw, caps64.shape[0])
+                # clamp to the last capacity-bearing brick, not the
+                # array edge: the pool table rounds the chip up to
+                # whole bricks, so its trailing column can be a
+                # PHANTOM brick (pool 0, half off the fabric) — s3.117
+                # audit: clamping into it made right-overhang
+                # infeasible while left-overhang was free. Off-chip
+                # extent is free on BOTH ends now.
+                nb_eff = int(np.max(np.nonzero(caps64 > 0)[0])) + 1
+                hi_c = np.minimum(hi_raw, nb_eff)
                 seen[key] = len(rows)
                 rows.append(_jstar_profile(lo_b, hi_c, caps64))
             cap_list.append(seen[key])
@@ -1940,10 +1979,85 @@ def align_reinsert(order: List[int], cluster,
     return None, False
 
 
+def _center_shift(pos: Dict[int, Point], books, grid: TileGrid
+                  ) -> Tuple[int, int]:
+    """Feasible centering translation for a brick-projected layout
+    (s3.117, Max's placement question). Stair is translation-invariant
+    given the orders (each net's coefficient pair telescopes), so the
+    shift is judged purely by per-(line, brick) feasibility on the
+    annotated pools: walk outward from the centered target until a
+    feasible (dx, dy) appears. (0, 0) — the layout as projected — is
+    feasible by construction and sits on the walk's last ring, so this
+    always terminates with a feasible answer."""
+    s = max(int(getattr(grid, "stride", 1) or 1), 1)
+    ph, pv = _brick_pool_arrays(grid, s)
+    pools = {1: ph.copy(), 0: pv.copy()}
+    for arr in pools.values():
+        if arr.shape[0] >= 2:
+            arr[0, :] = 0.0
+            arr[-1, :] = 0.0
+    xs = [float(p[0]) for p in pos.values()]
+    ys = [float(p[1]) for p in pos.values()]
+    if not xs:
+        return 0, 0
+    # s-ALIGNED shifts only: an off-parity shift moves hulls across
+    # brick boundaries (an interval can gain a brick), so at pool
+    # saturation only brick-aligned translations stay feasible — and
+    # half a qubit of centering precision is immaterial
+    tx = s * round(((grid.W - 1) - (min(xs) + max(xs))) / (2 * s))
+    ty = s * round(((grid.H - 1) - (min(ys) + max(ys))) / (2 * s))
+    if tx == 0 and ty == 0:
+        return 0, 0
+    data = {}
+    for o in (1, 0):
+        items = books[2].get(o, [])
+        data[o] = (np.array([t[0] for t in items], dtype=np.int64),
+                   np.array([t[1] for t in items]),
+                   np.array([t[2] for t in items]))
+
+    def _ok(dx: int, dy: int) -> bool:
+        if (min(xs) + dx < 0 or max(xs) + dx > grid.W - 1
+                or min(ys) + dy < 0 or max(ys) + dy > grid.H - 1):
+            return False
+        for o in (1, 0):
+            ln, a, b = data[o]
+            if ln.size == 0:
+                continue
+            dl = dy if o == 1 else dx
+            da = dx if o == 1 else dy
+            l2 = ln + dl
+            arr = pools[o]
+            if l2.min() < 0 or l2.max() >= arr.shape[0]:
+                return False
+            # same phantom-brick clamp as the projection: off-chip
+            # extent beyond the last capacity-bearing brick is free
+            col_any = np.nonzero(arr.max(axis=0) > 0)[0]
+            nb = int(col_any.max()) + 1 if col_any.size else 0
+            lo = np.maximum(0.0, np.floor((a + da) / s)).astype(np.int64)
+            hi = np.minimum(nb, (np.floor((b + da) / s) + 1.0)
+                            .astype(np.int64))
+            cov = np.zeros_like(arr)
+            for k in range(ln.size):
+                if lo[k] < hi[k]:
+                    cov[l2[k], lo[k]:hi[k]] += 1.0
+            if np.any(cov > arr):
+                return False
+        return True
+
+    for r in range(0, (abs(tx) + abs(ty)) // s + 1):
+        for ddx in range(-r, r + 1):
+            rem = r - abs(ddx)
+            for ddy in ((0,) if rem == 0 else (-rem, rem)):
+                if _ok(tx + ddx * s, ty + ddy * s):
+                    return tx + ddx * s, ty + ddy * s
+    return 0, 0
+
+
 def pack_project(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                  grid: TileGrid, *, kappa: float, floor: bool = True,
                  snap: bool = False, monotonize: bool = True,
-                 project: bool = True, brick_pools: bool = False):
+                 project: bool = True, brick_pools: bool = False,
+                 orders: Optional[Tuple[List[int], List[int]]] = None):
     """The packer, alone (consolidation 7, s3.112): the exact
     order-preserving DP projection extracted verbatim from the old
     arrange loop's iter-0 path — one forced unbounded pack per axis
@@ -1965,18 +2079,33 @@ def pack_project(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
     Returns (new_pos, info)."""
     min_span = 0.0
 
+    # s3.118 carried orders: when given, the tie-break IS the carried
+    # order — contacts become a pure function of the carried y-order,
+    # computed ONCE and reused across every half (the axis-1 recompute
+    # rule is unnecessary here: packing cannot flip a rank tie).
+    _xrank = _yrank = None
+    if orders is not None:
+        ox, oy = orders
+        _xrank = {v: r for r, v in enumerate(ox)}
+        _yrank = {v: r for r, v in enumerate(oy)}
+
     def _books(p, contacts=None):
         # contacts reuse: pass the previous bundle's contacts only when
         # the mutation provably preserved the y-ORDER (x-value
-        # permutations and order-preserving x-packs)
+        # permutations and order-preserving x-packs); under carried
+        # orders the fixed rank contacts are always safe
         return arm_books(p, src_adj, grid, kappa=kappa, floor=floor,
                          snap=snap, min_span=min_span,
-                         contacts=contacts)
+                         contacts=contacts, yrank=_yrank)
 
     new_pos = {v: np.asarray(p, dtype=float).copy()
                for v, p in pos.items()}
     info = {"unplaced": 0, "mono_swaps": 0, "mono_time": 0.0}
-    cur_books = _books(new_pos)
+    if orders is not None:
+        _fixed_contacts = _stair_contacts(new_pos, src_adj, yrank=_yrank)
+        cur_books = _books(new_pos, contacts=_fixed_contacts)
+    else:
+        cur_books = _books(new_pos)
 
     def _mono():
         nonlocal new_pos, cur_books
@@ -2002,7 +2131,16 @@ def pack_project(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
             return
         parts = [v for (_a, _b, v) in items]
         ivs = {v: (a, b) for (a, b, v) in items}
-        order = sorted(parts, key=lambda v: (float(new_pos[v][axis]), v))
+        if orders is not None:
+            # the carried order IS the sort — packing assigns lines to
+            # contiguous runs of it, so within-line relations (hence
+            # contacts and coefficients) survive the collapse exactly
+            pset = set(parts)
+            carried = orders[1] if axis == 1 else orders[0]
+            order = [v for v in carried if v in pset]
+        else:
+            order = sorted(parts,
+                           key=lambda v: (float(new_pos[v][axis]), v))
         trial = {v: new_pos[v].copy() for v in new_pos}
         miss = 0
         lp = line_pools(grid)
@@ -2023,6 +2161,17 @@ def pack_project(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
             ph, pv = _brick_pool_arrays(grid, s_b)
             arr = ph if o == 1 else pv
             profiles = [arr[ln] for ln in range(nlines)]
+            if nlines >= 2:
+                # the ANNOTATED boundary (s3.116 board, the validator's
+                # watch-item measured): boundary LINES host at count-4
+                # but carry one course parity only, so arms seated
+                # there are count-feasible yet parity-starved at claim
+                # time (turán/K100: pen-0 projections flooding 257+
+                # deficit edges). The avoid rule returns as profile
+                # data on the boundary lines alone; interior edge
+                # BRICKS keep their honest pools (the sparse wins).
+                profiles[0] = np.zeros_like(profiles[0])
+                profiles[nlines - 1] = np.zeros_like(profiles[-1])
             pool = [float(lp.get((o, ln), 0)) for ln in range(nlines)]
             brick_arg = (s_b, profiles)
         else:
@@ -2032,7 +2181,8 @@ def pack_project(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                 # (fabrics s4.3b); the avoid rule as pool data
                 pool[0] = 0.0
                 pool[nlines - 1] = 0.0
-        cmap = _axis_coeffs(cur_books[0], new_pos, axis)
+        cmap = _axis_coeffs(cur_books[0], new_pos, axis,
+                            ranks=(_yrank if axis == 1 else _xrank))
         cs = [float(cmap.get(v, 0)) for v in order]
         assign, _cost = pack_lines(
             [ivs[v] for v in order],
@@ -2066,16 +2216,21 @@ def pack_project(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                 trial[v][axis] = float(ln)
         # contacts reuse is safe ONLY for axis=0 (x untouched by
         # y-order); axis=1 must recompute (line collapse can flip
-        # (y, id) tie-breaks)
+        # (y, id) tie-breaks). Under carried orders (s3.118) no
+        # collapse can flip a rank tie, so the fixed contacts are
+        # reused on BOTH axes — the recompute rule deletes here.
         books_new = _books(trial,
-                           contacts=cur_books[0] if axis == 0 else None)
+                           contacts=(cur_books[0] if (axis == 0
+                                     or orders is not None) else None))
         for v in parts:
             new_pos[v] = trial[v]
         cur_books = books_new
         info["unplaced"] = miss
 
     _half(axis=1)
-    if monotonize:
+    if monotonize and orders is None:
+        # monotonize edits the x-ORDER — under carried orders the
+        # order is state and only moves may edit it
         _mono()
     _half(axis=0)
 
@@ -2094,6 +2249,19 @@ def pack_project(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
         m1 = info.get("unplaced", 0)
         _half(axis=0, bounded=True)
         info["projection_misses"] = m1 + info.get("unplaced", 0)
+        if brick_pools and not info["projection_misses"]:
+            # s3.117 (Max's placement question): the stair objective is
+            # translation-invariant given the orders (the coefficient
+            # sum telescopes to 0 per net), so the DP's carry tie-break
+            # left-justifies layouts by accident, pressing them against
+            # the small edge bricks. Center the layout in the window —
+            # free in stair, judged purely by per-brick feasibility.
+            dx, dy = _center_shift(new_pos, cur_books, grid)
+            if dx or dy:
+                off = np.array([float(dx), float(dy)])
+                for v in new_pos:
+                    new_pos[v] = new_pos[v] + off
+            info["center_shift"] = (dx, dy)
 
     # the final books' contacts describe the returned positions (the
     # axis-0 reuse invariant: x-packs preserve the y-order); callers

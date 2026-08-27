@@ -1893,6 +1893,114 @@ its audit arm). Verdict: `hier_units` is a validated candidate for the
 audit path pending the brick round (the remaining ER gap may be
 bookmark/pen-related); not a default flip on its own.
 
+**3.116 (the Infinite Plane — search on the ideal plane, ONE
+brick-aware projection; Max's two convictions vindicated together).**
+Built per the 2026-08-27 design: `engine="plane"/"plane-audit"` —
+readout = the two unbounded packs only (`pack_project(project=False)`),
+states live on the ideal plane where capacity is the unbounded pack's
+invariant, judge and bookmark are PURE STAIR (`stair_energy`; pen does
+not exist during search), and the finite chip enters exactly once: a
+final projection whose bounded packs check per-(line, brick) pools
+(`brick_pools=True` — `_jstar_profile` kernel, tree leaves initialized
+to −cap, feasible ⟺ root ≤ 0; `_brick_pool_arrays` moved to field.py —
+ONE capacity book at last). Diag: `plane_stair`, `proj_pen`. Suite 628;
+default/lex fingerprints byte-identical; orders-arm baseline recorded
+(022d42be/20afde38/c648d7d9).
+
+The first board (`plane_probe1.csv`) fired the validator's named
+watch-item exactly: with honest boundary-line pools the plane search
+FINDS the crystal (plane_stair 1693, proj_pen 0) and the claim layer
+then floods 257+ deficit edges — count-feasible, parity-starved
+boundary arms (turán 17.8, K100 18.8, K140/spin_glass unembedded with
+60→79s walls from the deficit-flood fallback). The ANNOTATED profile
+(boundary LINES zeroed inside the brick profile; interior edge bricks
+keep their honest pools) fixed it in one edit: turán 17.0→6.23 with 0
+deficits and the skip firing, K100 25.6→7.26.
+
+Clean board (`plane_probe.csv`, plane vs the round-2 orders control,
+load ~90-132): **plane (accept-all) wins or ties everywhere that
+matters — king −1.25 (the mystery loss SOLVED: it was the
+boundary-brick pen class), ER −0.53 (audit −0.81), grid −0.39, regular
+−0.17, K100 −0.14 (mx 9→8), K140 −0.10, ws −0.026 with the board's
+best max chain (8.0)** — at the cost of turán +0.137 (6.137/10, in-tol;
+the s3.109b abutment conservatism's echo) and spin_glass/honeycomb
++0.03-0.09 noise. **The acceptance verdict INVERTS on the plane:
+accept-all beats audit on the crystal (6.14 vs 6.49) — the projection
+distortions that made accept-all wander in rounds 1-2 are gone, and
+Max's conviction is measured right in the setting it was stated for.**
+One negative banked: `hier_units` is TOXIC on the plane crystal
+(turán 10.9/mx 24, one seed unembedded) and loses its ER edge —
+the gathers' value was specific to the windowed engine; do not compose
+them with plane pending a diagnosis. Vs the SHIPPED default engine:
+plane wins K100/K140/regular and max-chains, parity on
+turán/ws/spin_glass, trails in-tol on ER +0.30/king +0.26/grid
++0.08/honeycomb +0.12 — board-parity-class from ~200 lines of engine
+plus one projection. ws's bookmark is unfrozen (pure stair) yet the
+liquid holds its plateau — the remaining ws gap lives below the plane
+(the claim/tail layer, per the s3.95 map), not in the search. No
+default flip without Max; the plane arm is the recommended candidate.
+
+**3.117 (the default flip, projection centering, and the DP audit —
+the round the details surfaced).** THE FLIP: `engine="plane"` is the
+default (Max's call on the s3.116 board); lex and orders survive as
+pinned arms. Flip board (`data/default_probe.csv`, vs the old lex
+default): wins K100 −0.20, regular −0.20, K140 −0.12, ws −0.008 with
+mx 8.2→8.0, spin_glass parity; in-tol turán +0.21 (mx 6.9), grid
++0.07, honeycomb +0.12, king +0.25; ER +0.46 is the one beyond-tol
+residual (the round-5 target — see the audit). Found and fixed en
+route: the new `proj_pen` diag crashed the whole embed on untyped
+targets (rank-scale states indexing brick arrays — the untyped
+fallback returned FAILURE); guarded to typed grids. Fingerprint
+protocol for the new default: turán d346a65dd5cd7e16 / grid
+0ed7e9ab65c7af44 (stable, quiet); **K100 joins ws in the
+deadline-jitter class** (accept-all runs to the wall, so its endpoint
+is budget-sensitive — two quiet runs differ). spin_glass walls overrun
+the 60s budget (65→79s, both engines): the fallback grants
+FALLBACK_TIMEOUT when the deadline is already spent — a pre-existing
+budget-honesty defect, now on the shortlist.
+
+CENTERING (`_center_shift`, s-aligned, inside the brick projection):
+the stair objective is translation-invariant given the orders (the
+coefficient sum telescopes to 0 — verified), so the pack DP's
+carry-beats-run tie-break was LEFT-JUSTIFYING every layout against
+the small edge bricks; the projection now centers the layout, judged
+purely by per-brick feasibility (s-aligned candidates only — an
+off-parity shift can push a hull across a brick boundary). Measured
+stair-neutral and feasibility-safe; **near-inert on this board**
+(the deciders fill the window) — its value, if any, is on the
+smaller instances of the full library. Kept: free by construction.
+
+THE DP AUDIT (two independent fresh-eyes auditors; compiled into
+`dp-internals.md`, the mm-internals of our own DPs). Max's "10,000
+little details crawling beneath my notice" was right. Headlines,
+all MEASURED: (1) **the interleaver's tie regime is unsound under
+accept-all** — on tied values (the production regime) 142/400 accepts
+are not true improvements, 55/400 strictly worse (Δ to +9), 1.5% of
+noop certificates false; the docstring's correcting gate was deleted
+at consolidation 7; the ramp is NOT the cause (removing it quadruples
+false noops); the exactness oracle never sees a tie. Confounds the
+recorded ER/grid churn and possibly the s3.116 acceptance inversion.
+(2) **the boundary-line zeroing is un-gated across fabrics** —
+discards 12.5% of Chimera's and 7.4% of P16's lanes for a Zephyr-only
+reason, and its comments conflate hosting count (8, measured) with
+crossing count (4). (3) **the pack's linearization is invalidated by
+its own output** — line collapse re-splits (y,id) ties and flipped
+32/40 contact sets through one pack; the module docstring's
+"order-preserving = only permutes values" is false (collapse, not
+permutation). (4) **the phantom trailing brick** — `_brick_pool_arrays`
+emits a final zero-pool brick column and the brick clamp lands
+right-overhang into it: "out-of-fabric bricks are free" is false on
+the right; also silently disables centering exactly on crowded cells.
+(5) **monotonize is blind to ~30% of edges** (same-row pairs skipped
+by a raw-value test where the stair rule uses (y,id)). Plus: the
+1e-4 ramp is a second objective (+9..+11 at n=486), counters
+conflate events, _MISS_COST is sized for a retired objective, the
+kappa floor widens both axes regardless of contact sides, and a
+dozen docstrings are false. Full ranked shortlist in
+dp-internals.md §3; the top item (the interleaver view-gate — one
+O(E) unramped re-price of the returned order) is the named round-5
+candidate, predicted on ER.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).
