@@ -1353,7 +1353,30 @@ class TestPackLinesFeasibilityEquivalence:
             got = pack_lines(intervals, values, pools, coeffs=coeffs)
             want = self._reference_pack(intervals, values, pools, coeffs)
             assert got[0] == want[0], f"trial {trial}: assign differs"
-            assert abs(got[1] - want[1]) < 1e-6, f"trial {trial}: cost"
+            # exact, not approx: the s3.114 JIT port preserves op order
+            assert got[1] == want[1], f"trial {trial}: cost"
+
+    def test_zero_coeffs_tie_cascade_and_duplicates(self):
+        # all-zero coeffs make every line cost-equal (tie cascade), and
+        # duplicate values exercise the deque's largest-index-on-ties
+        # parent rule — the identity risks of the s3.114 JIT port
+        from ember_qc.algorithms.factored.field import pack_lines
+        import random
+        rng = random.Random(31)
+        for trial in range(40):
+            n = rng.randint(1, 25)
+            L = rng.randint(1, 6)
+            v0 = float(rng.randint(0, 3))
+            values = sorted(v0 if rng.random() < 0.5
+                            else float(rng.randint(0, 4))
+                            for _ in range(n))
+            intervals = [(v - 0.5, v + 0.5) for v in values]
+            pools = [float(rng.choice([0, 2, 8])) for _ in range(L)]
+            coeffs = ([0.0] * n if rng.random() < 0.5
+                      else [float(rng.randint(-2, 2)) for _ in range(n)])
+            got = pack_lines(intervals, values, pools, coeffs=coeffs)
+            want = self._reference_pack(intervals, values, pools, coeffs)
+            assert got[0] == want[0] and got[1] == want[1], f"t{trial}"
 
 
 class TestUnboundedPack:
@@ -1409,3 +1432,135 @@ class TestCertificate:
             if d.get("certified"):
                 assert r["embedding"]
                 assert validate_embedding(r["embedding"], g, z)
+
+
+class TestBooksEquivalence:
+    """s3.114 perf round: the vectorized books path must reproduce the
+    pre-vectorization contacts/bars/tuples EXACTLY — structure, order,
+    duplicates, rounding (Python half-to-even) and all. References are
+    verbatim copies of the pre-s3.114 implementations."""
+
+    @staticmethod
+    def _ref_contacts(pos, src_adj):
+        out = {}
+        for v in pos:
+            h_us, v_us = [], []
+            yv = float(pos[v][1])
+            for u in src_adj.get(v, []):
+                if u not in pos or u == v:
+                    continue
+                if (yv, v) < (float(pos[u][1]), u):
+                    h_us.append(u)
+                else:
+                    v_us.append(u)
+            out[v] = (h_us, v_us)
+        return out
+
+    @classmethod
+    def _ref_bars(cls, pos, src_adj, *, kappa=13.0, floor=True,
+                  bounds=None, contacts=None):
+        if contacts is None:
+            contacts = cls._ref_contacts(pos, src_adj)
+        out = {}
+        for v in sorted(pos):
+            h_us, v_us = contacts[v]
+            xs = [float(pos[u][0]) for u in h_us] + [float(pos[v][0])]
+            ys = [float(pos[u][1]) for u in v_us] + [float(pos[v][1])]
+            h_iv = np.array([min(xs), max(xs)])
+            v_iv = np.array([min(ys), max(ys)])
+            if floor:
+                deg = len([u for u in src_adj.get(v, []) if u in pos])
+                need = deg / kappa - 1.0
+                deficit = need - float((h_iv[1] - h_iv[0])
+                                       + (v_iv[1] - v_iv[0]))
+                if deficit > 0:
+                    h_iv = h_iv + np.array([-deficit / 4.0, deficit / 4.0])
+                    v_iv = v_iv + np.array([-deficit / 4.0, deficit / 4.0])
+            if bounds is not None:
+                h_iv = np.clip(h_iv, 0.0, bounds[0] - 1.0)
+                v_iv = np.clip(v_iv, 0.0, bounds[1] - 1.0)
+            out[v] = (h_iv, v_iv)
+        return out
+
+    @classmethod
+    def _ref_books(cls, pos, src_adj, grid, *, kappa, floor=True,
+                   snap=False, min_span=1.0, contacts=None):
+        if contacts is None:
+            contacts = cls._ref_contacts(pos, src_adj)
+        bars = cls._ref_bars(pos, src_adj, kappa=kappa, floor=floor,
+                             bounds=(grid.W, grid.H), contacts=contacts)
+        tuples = {}
+        for o in (1, 0):
+            ax = 0 if o == 1 else 1
+            out = []
+            for v in sorted(pos):
+                iv = bars[v][0] if o == 1 else bars[v][1]
+                if float(iv[1] - iv[0]) < min_span:
+                    continue
+                a, b = float(iv[0]), float(iv[1])
+                if snap:
+                    us = contacts[v][0] if o == 1 else contacts[v][1]
+                    lines = {int(round(float(pos[u][ax]))) for u in us}
+                    lines.add(int(round(float(pos[v][ax]))))
+                    a = min(a, float(min(lines) - 1))
+                    b = max(b, float(max(lines)))
+                if min_span < 1.0 and b - a < 1.0:
+                    b = a + 1.0
+                line = int(round(float(pos[v][1] if o == 1
+                                       else pos[v][0])))
+                out.append((line, a, b, v))
+            tuples[o] = out
+        return contacts, bars, tuples
+
+    def _grids(self):
+        import dwave_networkx as dnx
+        from ember_qc.algorithms.factored.field import TileGrid
+        from ember_qc.algorithms.factored.placement import target_layout
+        z = dnx.zephyr_graph(3, 4)
+        c = dnx.chimera_graph(4, 4, 4)
+        return [TileGrid(z, target_layout(z), courses=True),
+                TileGrid(c, target_layout(c))]
+
+    def test_randomized_equivalence(self):
+        import random
+        from ember_qc.algorithms.factored.field import arm_books
+        rng = random.Random(17)
+        for grid in self._grids():
+            for trial in range(40):
+                n = rng.randint(1, 30)
+                g = nx.gnp_random_graph(n, 0.4, seed=rng.randint(0, 9999))
+                adj = {v: sorted(g.neighbors(v)) for v in g.nodes()}
+                # integer positions (the production regime) with some
+                # duplicates; occasional non-integer floats
+                def _coord(hi):
+                    if rng.random() < 0.15:
+                        return rng.uniform(0, hi - 1)
+                    return float(rng.randint(0, hi - 1))
+                pos = {v: np.array([_coord(grid.W), _coord(grid.H)])
+                       for v in g.nodes()}
+                kappa = float(rng.choice([4.0, 7.7, 13.3]))
+                snap = rng.random() < 0.5
+                floor = rng.random() < 0.8
+                min_span = rng.choice([0.0, 1.0])
+                got = arm_books(pos, adj, grid, kappa=kappa, floor=floor,
+                                snap=snap, min_span=min_span)
+                want = self._ref_books(pos, adj, grid, kappa=kappa,
+                                       floor=floor, snap=snap,
+                                       min_span=min_span)
+                assert got[0] == want[0], "contacts differ"
+                assert set(got[1]) == set(want[1])
+                for v in want[1]:
+                    assert np.array_equal(got[1][v][0], want[1][v][0])
+                    assert np.array_equal(got[1][v][1], want[1][v][1])
+                assert got[2] == want[2], "tuples differ"
+
+    def test_contacts_passthrough_identity(self):
+        from ember_qc.algorithms.factored.field import arm_books
+        grid = self._grids()[0]
+        g = nx.gnp_random_graph(12, 0.5, seed=3)
+        adj = {v: sorted(g.neighbors(v)) for v in g.nodes()}
+        pos = {v: np.array([float(v % grid.W), float(v % grid.H)])
+               for v in g.nodes()}
+        c1 = arm_books(pos, adj, grid, kappa=7.7)[0]
+        got = arm_books(pos, adj, grid, kappa=7.7, contacts=c1)
+        assert got[0] is c1

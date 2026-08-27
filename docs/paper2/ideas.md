@@ -100,9 +100,17 @@ Each of these was paid for; the receipts are in `attraction.md`.
    the control arm, re-measurable after readout perf) and found the
    seam is plausibly the liquid's gate: ws bookmarks freeze at
    readout 2 in both arms because brick-pen the pack cannot fix
-   dominates the lex bookmark. Named next: readout perf, brick/line
-   unification, hierarchy groups as extra units (the ER variance
-   test).
+   dominates the lex bookmark. s3.114 (numba; readout 111→10 ms,
+   state-version memo) made the schedule cycle and NOTHING moved —
+   the residuals are capability, not compute: the interval family
+   cannot express ER/king (variance-cluster gathers), and the
+   brick/line seam still freezes the ws bookmark. s3.115: hierarchy
+   groups as extra units CONFIRMED the ER variance thesis (audit+h
+   −0.40 on 21 gathers; gap to default now +0.12) and acquitted king
+   of it (±0.05 — a different mechanism, likely the pen class or fine
+   moves). Named next: the brick-aware bounded projection (pen ≡ 0 by
+   construction; the ws-bookmark and possibly king/ER-residue unlock),
+   design agreed in discussion 2026-08-27.
 2. **Units without the hierarchy.** Replace affinity-hierarchy units
    with contiguous runs of the current order, at all scales. Singleton
    insertions do the gathering (insertion sweeps built block structure

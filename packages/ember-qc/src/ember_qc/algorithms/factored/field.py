@@ -43,6 +43,14 @@ from typing import Dict, List, Optional, Tuple
 import networkx as nx
 import numpy as np
 
+try:  # s3.114 perf round: JIT for the hot loops (Max's call)
+    from numba import njit as _njit
+except ImportError:  # pragma: no cover — degrade to pure Python
+    def _njit(*_a, **_k):
+        def _wrap(f):
+            return f
+        return _wrap
+
 Point = np.ndarray
 
 
@@ -263,27 +271,73 @@ def derive_bars_stair(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
     — contacts depend only on the y-ORDER, so any caller whose mutation
     preserved it may pass the previous bundle through.
     """
+    ids, arrs, _edges = _bars_arrays(pos, src_adj, kappa=kappa,
+                                     floor=floor, bounds=bounds,
+                                     contacts=contacts)
+    hmin, hmax, vmin, vmax = arrs
+    out: BarIntervals = {}
+    for k, v in enumerate(ids):
+        out[v] = (np.array([hmin[k], hmax[k]]),
+                  np.array([vmin[k], vmax[k]]))
+    return out
+
+
+def _bars_arrays(pos, src_adj, *, kappa, floor, bounds, contacts):
+    """Vectorized interior of ``derive_bars_stair`` (s3.114 perf round;
+    the per-vertex original survives as the oracle in
+    TestBooksEquivalence). Returns (ids, (hmin, hmax, vmin, vmax),
+    (h_vi, h_ui, v_vi, v_ui)) — the edge index arrays are reused by
+    ``arm_books``'s snap widening. Scatter min/max involves no
+    arithmetic, and the floor/clip arithmetic replicates the original's
+    op order exactly."""
     if contacts is None:
         contacts = _stair_contacts(pos, src_adj)
-    out: BarIntervals = {}
-    for v in sorted(pos):
+    ids = sorted(pos)
+    idx = {v: k for k, v in enumerate(ids)}
+    X = np.array([float(pos[v][0]) for v in ids])
+    Y = np.array([float(pos[v][1]) for v in ids])
+    hmin, hmax = X.copy(), X.copy()
+    vmin, vmax = Y.copy(), Y.copy()
+    h_vi: List[int] = []
+    h_ui: List[int] = []
+    v_vi: List[int] = []
+    v_ui: List[int] = []
+    for v in ids:
         h_us, v_us = contacts[v]
-        xs = [float(pos[u][0]) for u in h_us] + [float(pos[v][0])]
-        ys = [float(pos[u][1]) for u in v_us] + [float(pos[v][1])]
-        h_iv = np.array([min(xs), max(xs)])
-        v_iv = np.array([min(ys), max(ys)])
-        if floor:
-            deg = len([u for u in src_adj.get(v, []) if u in pos])
-            need = deg / kappa - 1.0
-            deficit = need - float((h_iv[1] - h_iv[0]) + (v_iv[1] - v_iv[0]))
-            if deficit > 0:
-                h_iv = h_iv + np.array([-deficit / 4.0, deficit / 4.0])
-                v_iv = v_iv + np.array([-deficit / 4.0, deficit / 4.0])
-        if bounds is not None:
-            h_iv = np.clip(h_iv, 0.0, bounds[0] - 1.0)
-            v_iv = np.clip(v_iv, 0.0, bounds[1] - 1.0)
-        out[v] = (h_iv, v_iv)
-    return out
+        k = idx[v]
+        for u in h_us:
+            h_vi.append(k)
+            h_ui.append(idx[u])
+        for u in v_us:
+            v_vi.append(k)
+            v_ui.append(idx[u])
+    hv = np.array(h_vi, dtype=np.intp)
+    hu = np.array(h_ui, dtype=np.intp)
+    vv = np.array(v_vi, dtype=np.intp)
+    vu = np.array(v_ui, dtype=np.intp)
+    if hv.size:
+        np.minimum.at(hmin, hv, X[hu])
+        np.maximum.at(hmax, hv, X[hu])
+    if vv.size:
+        np.minimum.at(vmin, vv, Y[vu])
+        np.maximum.at(vmax, vv, Y[vu])
+    if floor:
+        deg = np.array([float(len([u for u in src_adj.get(v, [])
+                                   if u in pos])) for v in ids])
+        need = deg / kappa - 1.0
+        deficit = need - ((hmax - hmin) + (vmax - vmin))
+        d4 = deficit / 4.0
+        grow = deficit > 0
+        hmin = np.where(grow, hmin + (-d4), hmin)
+        hmax = np.where(grow, hmax + d4, hmax)
+        vmin = np.where(grow, vmin + (-d4), vmin)
+        vmax = np.where(grow, vmax + d4, vmax)
+    if bounds is not None:
+        hmin = np.clip(hmin, 0.0, bounds[0] - 1.0)
+        hmax = np.clip(hmax, 0.0, bounds[0] - 1.0)
+        vmin = np.clip(vmin, 0.0, bounds[1] - 1.0)
+        vmax = np.clip(vmax, 0.0, bounds[1] - 1.0)
+    return ids, (hmin, hmax, vmin, vmax), (hv, hu, vv, vu)
 
 
 def stair_energy(pos: Dict[int, Point],
@@ -779,37 +833,86 @@ def arm_books(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
         # silent-proxy-drift bug class, caught mechanically
         assert contacts == _stair_contacts(pos, src_adj), \
             "stale contacts consumed by a gate evaluation"
-    bars = derive_bars_stair(pos, src_adj, kappa=kappa, floor=floor,
-                             bounds=(grid.W, grid.H), contacts=contacts)
+    ids, arrs, edges = _bars_arrays(pos, src_adj, kappa=kappa,
+                                    floor=floor, bounds=(grid.W, grid.H),
+                                    contacts=contacts)
+    hmin, hmax, vmin, vmax = arrs
+    hv, hu, vv, vu = edges
+    bars: BarIntervals = {}
+    for k, v in enumerate(ids):
+        bars[v] = (np.array([hmin[k], hmax[k]]),
+                   np.array([vmin[k], vmax[k]]))
+    # rounded coordinates: Python round is half-to-even, np.rint matches
+    RX = np.rint(np.array([float(pos[v][0]) for v in ids])).astype(np.int64)
+    RY = np.rint(np.array([float(pos[v][1]) for v in ids])).astype(np.int64)
     tuples = {}
     for o in (1, 0):
-        ax = 0 if o == 1 else 1
+        if o == 1:
+            lo_a, hi_a, R = hmin, hmax, RX
+            evi, eui = hv, hu
+            lines_arr = RY
+        else:
+            lo_a, hi_a, R = vmin, vmax, RY
+            evi, eui = vv, vu
+            lines_arr = RX
+        part = (hi_a - lo_a) >= min_span  # participation gate
+        A, B = lo_a, hi_a
+        if snap:
+            ln_min, ln_max = R.copy(), R.copy()
+            if evi.size:
+                np.minimum.at(ln_min, evi, R[eui])
+                np.maximum.at(ln_max, evi, R[eui])
+            A = np.minimum(A, (ln_min - 1).astype(float))
+            B = np.maximum(B, ln_max.astype(float))
+        if min_span < 1.0:
+            # occupancy footprint (order mode): a zero-width arm still
+            # occupies its tile. Without this the census is blind to
+            # point arms (line_depth treats touching endpoints as
+            # disjoint) and the true-objective DP packs every variable
+            # onto one line for free — the P16 collapse of order_probe
+            # (E=0.0, turan 7.9->13.1). No-op wherever snap widening
+            # already applies.
+            B = np.where(B - A < 1.0, A + 1.0, B)
         out = []
-        for v in sorted(pos):
-            iv = bars[v][0] if o == 1 else bars[v][1]
-            if float(iv[1] - iv[0]) < min_span:  # participation gate
+        for k, v in enumerate(ids):
+            if not part[k]:
                 continue
-            a, b = float(iv[0]), float(iv[1])
-            if snap:
-                us = contacts[v][0] if o == 1 else contacts[v][1]
-                lines = {int(round(float(pos[u][ax]))) for u in us}
-                lines.add(int(round(float(pos[v][ax]))))
-                a = min(a, float(min(lines) - 1))
-                b = max(b, float(max(lines)))
-            if min_span < 1.0 and b - a < 1.0:
-                # occupancy footprint (order mode): a zero-width arm
-                # still occupies its tile. Without this the census is
-                # blind to point arms (line_depth treats touching
-                # endpoints as disjoint) and the true-objective DP packs
-                # every variable onto one line for free — the P16
-                # collapse of order_probe (E=0.0, turan 7.9->13.1).
-                # No-op wherever snap widening already applies.
-                b = a + 1.0
-            line = int(round(float(pos[v][1] if o == 1
-                                   else pos[v][0])))
-            out.append((line, a, b, v))
+            out.append((int(lines_arr[k]), float(A[k]), float(B[k]), v))
         tuples[o] = out
     return contacts, bars, tuples
+
+
+def _brick_pool_arrays(grid: TileGrid, s: int):
+    """Per-(line, brick) pools from wire_map: one slot per (wire, bar
+    position) with the bar keyed to brick ``t // s``. Interior Zephyr
+    bricks count 8 (4 aligned + 4 straddling); dead qubits and the
+    over-allocated boundary column self-absorb to smaller pools (the
+    packer's own boundary treatment, one accounting). Memoized on the
+    grid (the line_pools pattern): the reference evaluator is called
+    per gather candidate."""
+    cache = getattr(grid, "_brick_pools", None)
+    if cache is not None and s in cache:
+        return cache[s]
+    Wb = (grid.W + s - 1) // s
+    Hb = (grid.H + s - 1) // s
+    ph = np.zeros((grid.H, Wb), dtype=float)
+    pv = np.zeros((grid.W, Hb), dtype=float)
+    for (o, ln, _sub), d in grid.wire_map.items():
+        A = ph if o == 1 else pv
+        if not (0 <= ln < A.shape[0]):
+            continue
+        for t in d:
+            tq = t // s
+            if 0 <= tq < A.shape[1]:
+                A[ln, tq] += 1.0
+    if cache is None:
+        cache = {}
+        try:
+            grid._brick_pools = cache
+        except AttributeError:
+            return ph, pv
+    cache[s] = (ph, pv)
+    return ph, pv
 
 
 def line_pools(grid: TileGrid) -> Dict[Tuple[int, int], int]:
@@ -1165,8 +1268,152 @@ def _axis_coeffs(contacts, pos: Dict[int, Point],
     return c
 
 
+@_njit(cache=True)
+def _seg_radd(mx, dz, N, lo, hi, v):
+    # iterative lazy range-add on [lo, hi), root max at mx[1]; exact
+    # integer arithmetic, so any correct max structure reproduces the
+    # old recursive _DepthTree's depths verbatim
+    a = lo + N
+    b = hi + N
+    ll, rr = a, b
+    while a < b:
+        if a & 1:
+            dz[a] += v
+            mx[a] += v
+            a += 1
+        if b & 1:
+            b -= 1
+            dz[b] += v
+            mx[b] += v
+        a >>= 1
+        b >>= 1
+    x = ll >> 1
+    while x >= 1:
+        l2, r2 = mx[2 * x], mx[2 * x + 1]
+        mx[x] = (l2 if l2 > r2 else r2) + dz[x]
+        x >>= 1
+    x = (rr - 1) >> 1
+    while x >= 1:
+        l2, r2 = mx[2 * x], mx[2 * x + 1]
+        mx[x] = (l2 if l2 > r2 else r2) + dz[x]
+        x >>= 1
+
+
+@_njit(cache=True)
+def _jstar_pass(lo, hi, nseg, c):
+    # two-pointer feasible-run-start pass for one capacity: js[i] =
+    # minimal j with depth(items j..i-1) <= c ("touching endpoints do
+    # not overlap" via the lo < hi zero-width guard)
+    n = lo.shape[0]
+    N = 1
+    while N < nseg:
+        N <<= 1
+    mx = np.zeros(2 * N, np.int64)
+    dz = np.zeros(2 * N, np.int64)
+    js = np.zeros(n + 1, np.int64)
+    j = 0
+    for i in range(1, n + 1):
+        if lo[i - 1] < hi[i - 1]:
+            _seg_radd(mx, dz, N, lo[i - 1], hi[i - 1], 1)
+        while mx[1] > c:
+            if lo[j] < hi[j]:
+                _seg_radd(mx, dz, N, lo[j], hi[j], -1)
+            j += 1
+        js[i] = j
+    return js
+
+
+@_njit(cache=True)
+def _jstar_profile(lo, hi, caps):
+    # per-line feasibility with per-brick caps (s3.116): leaves start
+    # at -cap[b] so the root tracks max(cover - cap) — feasible iff
+    # root <= 0. Termination is structural: every leaf <= 0, so once
+    # the window empties the root is <= 0 (js[i] = i at worst; the
+    # DP's empty-window guard handles it). Padding leaves sit at a
+    # sentinel no deposit can reach (endpoints are clamped to nb).
+    n = lo.shape[0]
+    nb = caps.shape[0]
+    N = 1
+    while N < nb:
+        N <<= 1
+    mx = np.empty(2 * N, np.int64)
+    dz = np.zeros(2 * N, np.int64)
+    for b in range(N):
+        mx[N + b] = -caps[b] if b < nb else -(2 ** 60)
+    for x in range(N - 1, 0, -1):
+        l2, r2 = mx[2 * x], mx[2 * x + 1]
+        mx[x] = l2 if l2 > r2 else r2
+    js = np.zeros(n + 1, np.int64)
+    j = 0
+    for i in range(1, n + 1):
+        if lo[i - 1] < hi[i - 1]:
+            _seg_radd(mx, dz, N, lo[i - 1], hi[i - 1], 1)
+        while mx[1] > 0:
+            if lo[j] < hi[j]:
+                _seg_radd(mx, dz, N, lo[j], hi[j], -1)
+            j += 1
+        js[i] = j
+    return js
+
+
+@_njit(cache=True)
+def _pack_dp(n, L, values, coeffs, use_coeffs, js2d, capidx, miss):
+    # the s3.59 DP, ported verbatim (s3.114): same op order, same
+    # epsilons, deque as ring arrays — bit-identical to the Python
+    # original by construction. parent codes: -2 carry, -1 skip,
+    # j >= 0 run start.
+    f_prev = np.empty(n + 1, np.float64)
+    for i in range(n + 1):
+        f_prev[i] = i * miss
+    f_cur = np.empty(n + 1, np.float64)
+    parent = np.full((L, n + 1), -2, np.int64)
+    Cp = np.empty(n + 1, np.float64)
+    dq_g = np.empty(n + 1, np.float64)
+    dq_j = np.empty(n + 1, np.int64)
+    for l in range(L):
+        Cp[0] = 0.0
+        if use_coeffs:
+            for k in range(n):
+                Cp[k + 1] = Cp[k] + coeffs[k] * l
+        else:
+            for k in range(n):
+                Cp[k + 1] = Cp[k] + abs(values[k] - l)
+        ci = capidx[l]
+        head = 0
+        tail = 0
+        f_cur[0] = 0.0
+        for i in range(1, n + 1):
+            best = f_prev[i]
+            par = -2
+            if ci >= 0:
+                jnew = i - 1
+                g = f_prev[jnew] - Cp[jnew]
+                while tail > head and dq_g[tail - 1] >= g:
+                    tail -= 1
+                dq_g[tail] = g
+                dq_j[tail] = jnew
+                tail += 1
+                while tail > head and dq_j[head] < js2d[ci, i]:
+                    head += 1
+                if tail > head:
+                    cand = dq_g[head] + Cp[i]
+                    if cand < best - 1e-12:
+                        best = cand
+                        par = dq_j[head]
+            scand = f_cur[i - 1] + miss
+            if scand < best - 1e-12:
+                best = scand
+                par = -1
+            f_cur[i] = best
+            parent[l, i] = par
+        for i in range(n + 1):
+            f_prev[i] = f_cur[i]
+    return parent, f_prev[n]
+
+
 def pack_lines(intervals: List[Tuple[float, float]], values: List[float],
-               pools: List[float], coeffs: Optional[List[float]] = None):
+               pools: List[float], coeffs: Optional[List[float]] = None,
+               brick: Optional[Tuple[int, list]] = None):
     """Exact order-preserving line packing (the s3.59 DP; replaces the
     greedy nearest-line-with-room loop). Items must be pre-sorted by
     (value, id); the assignment is NON-DECREASING in that order — the
@@ -1197,126 +1444,84 @@ def pack_lines(intervals: List[Tuple[float, float]], values: List[float],
     L = len(pools)
     if n == 0:
         return [], 0.0
-    from collections import deque
 
-    # Feasible run starts: js[i] = minimal j such that the run of items
-    # j..i-1 has depth <= c. Depth is monotone in window extension, so a
-    # two-pointer sweep is exact; one pass per distinct capacity value.
-    # s3.92: the window depth is maintained INCREMENTALLY with a lazy
-    # max segment tree over the compressed interval endpoints (range
-    # +1/-1 per insert/remove, root max = current depth) — the previous
-    # code re-sorted and re-swept the whole window at every pointer
-    # step (measured: 412k line_depth calls / 14M comparator lambdas
-    # per ws run; ~20 ms per pack call, one arrange iteration of eight
-    # ran). Same jstar arrays, byte-identical assignments.
-    caps = sorted({int(p) for p in pools if p >= 1.0})
-    coords = sorted({float(x) for a, b in intervals for x in (a, b)})
-    cidx = {x: k for k, x in enumerate(coords)}
-    m = max(1, len(coords) - 1)  # elementary segments between coords
+    # s3.114: the same algorithm, JIT-compiled — every decision lives
+    # in the kernels above (ported op-for-op from the Python original,
+    # which survives as the oracle in
+    # TestPackLinesFeasibilityEquivalence). This body is marshaling.
+    a_ends = np.array([float(a) for a, _b in intervals])
+    b_ends = np.array([float(b) for _a, b in intervals])
+    if brick is not None:
+        # s3.116: per-(line, brick) capacity profiles — the pen books
+        # as feasibility data. Inclusive hull [a, b] covers bricks
+        # [floor(a/s), floor(b/s)] = half-open [lo, hi); endpoints
+        # clamped into the fabric (out-of-fabric bricks are free,
+        # matching the uniform pack's ignorance of out-of-window
+        # extent; snap widening can produce a = -1 on line-0 contacts
+        # and ideal-plane states can overhang on the right).
+        s_b, profiles = brick
+        lo_b = np.maximum(0.0, np.floor(a_ends / s_b)).astype(np.int64)
+        hi_raw = (np.floor(b_ends / s_b) + 1.0).astype(np.int64)
+        rows: List[np.ndarray] = []
+        seen: dict = {}
+        cap_list: List[int] = []
+        for l in range(L):
+            prof = profiles[l] if l < len(profiles) else None
+            if prof is None or not np.any(prof > 0):
+                cap_list.append(-1)
+                continue
+            key = prof.tobytes()
+            if key not in seen:
+                caps64 = prof.astype(np.int64)
+                hi_c = np.minimum(hi_raw, caps64.shape[0])
+                seen[key] = len(rows)
+                rows.append(_jstar_profile(lo_b, hi_c, caps64))
+            cap_list.append(seen[key])
+        js2d = (np.vstack(rows) if rows
+                else np.zeros((1, n + 1), np.int64))
+        capidx = np.array(cap_list, np.int64)
+        lo = lo_b  # unused below, kept for symmetry
+    else:
+        caps = sorted({int(p) for p in pools if p >= 1.0})
+        coords = np.unique(np.concatenate((a_ends, b_ends)))
+        m = max(1, coords.shape[0] - 1)  # elementary segments
+        lo = np.searchsorted(coords, a_ends).astype(np.int64)
+        hi = np.searchsorted(coords, b_ends).astype(np.int64)
 
-    class _DepthTree:
-        # max over elementary segments, lazy range-add. "Touching
-        # endpoints do not overlap": interval (a, b) covers segments
-        # [cidx[a], cidx[b]) — an empty range when a == b, exactly the
-        # sweep's (x, -1)-before-(x, +1) tie rule.
-        __slots__ = ("mx", "add")
+        cap_of = {c: k for k, c in enumerate(caps)}
+        js2d = (np.vstack([_jstar_pass(lo, hi, m, c) for c in caps])
+                if caps else np.zeros((1, n + 1), np.int64))
+        # cl == 0 lines (pool < 1) get capidx -1: no run transitions,
+        # the old ``jstar.get(0) is None`` branch
+        capidx = np.array([cap_of.get(int(p), -1) if p >= 1.0 else -1
+                           for p in pools], np.int64)
+    vals_arr = np.array([float(v) for v in values])
+    if coeffs is None:
+        cf = np.zeros(1)
+        use_cf = False
+    else:
+        cf = np.array([float(c) for c in coeffs])
+        use_cf = True
+    parent, cost = _pack_dp(n, L, vals_arr, cf, use_cf, js2d, capidx,
+                            _MISS_COST)
 
-        def __init__(self):
-            self.mx = [0] * (4 * m)
-            self.add = [0] * (4 * m)
-
-        def _upd(self, node, nl, nr, lo, hi, d):
-            if hi <= nl or nr <= lo:
-                return
-            if lo <= nl and nr <= hi:
-                self.mx[node] += d
-                self.add[node] += d
-                return
-            mid = (nl + nr) // 2
-            self._upd(2 * node, nl, mid, lo, hi, d)
-            self._upd(2 * node + 1, mid, nr, lo, hi, d)
-            self.mx[node] = self.add[node] + max(self.mx[2 * node],
-                                                 self.mx[2 * node + 1])
-
-        def update(self, iv, d):
-            lo, hi = cidx[float(iv[0])], cidx[float(iv[1])]
-            if lo < hi:
-                self._upd(1, 0, m, lo, hi, d)
-
-        def depth(self):
-            return self.mx[1]
-
-    jstar = {}
-    for c in caps:
-        arr = [0] * (n + 1)
-        tree = _DepthTree()
-        j = 0
-        for i in range(1, n + 1):
-            tree.update(intervals[i - 1], 1)
-            while tree.depth() > c:
-                tree.update(intervals[j], -1)
-                j += 1
-            arr[i] = j
-        jstar[c] = arr
-
-    INF = float("inf")
-    # f_prev[i] = min cost of the first i items using lines < l (before
-    # any line: skips only).
-    f_prev = [i * _MISS_COST for i in range(n + 1)]
-    parent = [[None] * (n + 1) for _ in range(L)]
-    for l in range(L):
-        Cp = [0.0] * (n + 1)  # prefix sums of the per-item cost on line l
-        if coeffs is None:
-            for k in range(n):
-                Cp[k + 1] = Cp[k] + abs(float(values[k]) - float(l))
-        else:
-            for k in range(n):
-                Cp[k + 1] = Cp[k] + float(coeffs[k]) * float(l)
-        cl = int(pools[l]) if pools[l] >= 1.0 else 0
-        js = jstar.get(cl)
-        f_cur = [INF] * (n + 1)
-        f_cur[0] = 0.0
-        dq = deque()  # (g, j) with g = f_prev[j] - Cp[j], increasing
-        for i in range(1, n + 1):
-            best, par = f_prev[i], ("c",)          # carry: lines < l only
-            if js is not None:
-                jnew = i - 1
-                g = f_prev[jnew] - Cp[jnew]
-                while dq and dq[-1][0] >= g:
-                    dq.pop()
-                dq.append((g, jnew))
-                while dq and dq[0][1] < js[i]:
-                    dq.popleft()
-                if dq:
-                    cand = dq[0][0] + Cp[i]        # run dq[0][1]..i-1 on l
-                    if cand < best - 1e-12:
-                        best, par = cand, ("r", dq[0][1])
-            scand = f_cur[i - 1] + _MISS_COST      # skip item i-1
-            if scand < best - 1e-12:
-                best, par = scand, ("s",)
-            f_cur[i] = best
-            parent[l][i] = par
-        f_prev = f_cur
-
-    cost = f_prev[n]
     assign: List[Optional[int]] = [None] * n
     i, l = n, L - 1
     while i > 0:
         if l < 0:
             i -= 1                                  # pre-line skips
             continue
-        par = parent[l][i]
-        if par[0] == "c":
+        par = int(parent[l, i])
+        if par == -2:                               # carry
             l -= 1
-        elif par[0] == "s":
+        elif par == -1:                             # skip
             i -= 1
-        else:
-            j = par[1]
-            for k in range(j, i):
+        else:                                       # run par..i-1 on l
+            for k in range(par, i):
                 assign[k] = l
-            i = j
+            i = par
             l -= 1
-    return assign, cost
+    return assign, float(cost)
 
 
 def edge_monotonize(pos: Dict[int, Point], src_adj: Dict[int, List[int]], *,
@@ -1737,7 +1942,8 @@ def align_reinsert(order: List[int], cluster,
 
 def pack_project(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                  grid: TileGrid, *, kappa: float, floor: bool = True,
-                 snap: bool = False, monotonize: bool = True):
+                 snap: bool = False, monotonize: bool = True,
+                 project: bool = True, brick_pools: bool = False):
     """The packer, alone (consolidation 7, s3.112): the exact
     order-preserving DP projection extracted verbatim from the old
     arrange loop's iter-0 path — one forced unbounded pack per axis
@@ -1807,6 +2013,18 @@ def pack_project(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                               // max(1, int(pool_u)))
             pool = [pool_u] * L_max
             nlines = L_max
+        elif bounded and brick_pools:
+            # s3.116: the honest per-(line, brick) profile — the SAME
+            # truth pen reads — replaces both the uniform-along-line
+            # capacity and the boundary-line zeroing (boundary lines
+            # get their true half pools instead of 0; watch item:
+            # count-feasible but parity-starved boundary arms)
+            s_b = max(int(getattr(grid, "stride", 1) or 1), 1)
+            ph, pv = _brick_pool_arrays(grid, s_b)
+            arr = ph if o == 1 else pv
+            profiles = [arr[ln] for ln in range(nlines)]
+            pool = [float(lp.get((o, ln), 0)) for ln in range(nlines)]
+            brick_arg = (s_b, profiles)
         else:
             pool = [float(lp.get((o, ln), 0)) for ln in range(nlines)]
             if nlines >= 2:
@@ -1819,7 +2037,8 @@ def pack_project(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
         assign, _cost = pack_lines(
             [ivs[v] for v in order],
             [float(new_pos[v][axis]) for v in order], pool,
-            coeffs=cs)
+            coeffs=cs,
+            brick=(brick_arg if (bounded and brick_pools) else None))
         if unb:
             # canonical translation: anchor the layout at line 1 —
             # line 0 is a BOUNDARY line (halved real capacity;
@@ -1860,10 +2079,14 @@ def pack_project(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
         _mono()
     _half(axis=0)
 
-    if line_pools(grid):
+    if project and line_pools(grid):
         # s3.93 final projection to the real window: record the ideal
         # layout's occupied width, then one forced bounded pack per
-        # axis (real pools, boundary zeroing, clamp for residues)
+        # axis (real pools, boundary zeroing — or the honest brick
+        # profiles under ``brick_pools`` — clamp for residues).
+        # ``project=False`` (the plane engine's readout) stops here:
+        # states stay on the ideal plane, the ONE projection runs
+        # at the end of the search instead of inside every readout
         for ax, key in ((1, "final_width_y"), (0, "final_width_x")):
             vals = [float(p[ax]) for p in new_pos.values()]
             info[key] = int(max(vals) - min(vals)) + 1 if vals else 0
@@ -1872,5 +2095,9 @@ def pack_project(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
         _half(axis=0, bounded=True)
         info["projection_misses"] = m1 + info.get("unplaced", 0)
 
+    # the final books' contacts describe the returned positions (the
+    # axis-0 reuse invariant: x-packs preserve the y-order); callers
+    # that would recompute _stair_contacts may read them here instead
+    info["_contacts"] = cur_books[0]
     return new_pos, info
 

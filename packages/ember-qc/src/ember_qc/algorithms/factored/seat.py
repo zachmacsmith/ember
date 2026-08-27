@@ -60,6 +60,7 @@ import numpy as np
 
 from ember_qc.algorithms.factored.field import (
     TileGrid,
+    _brick_pool_arrays,
     _stair_contacts,
     align_reinsert,
     line_pools,
@@ -71,39 +72,6 @@ Point = np.ndarray
 # pen*M ~ 4e14 < 2^53) and M exceeds any reachable stair total (< 25k),
 # so scalar comparison IS (pen, stair) tuple comparison
 _LEX_M = float(2 ** 26)
-
-
-def _brick_pool_arrays(grid: TileGrid, s: int):
-    """Per-(line, brick) pools from wire_map: one slot per (wire, bar
-    position) with the bar keyed to brick ``t // s``. Interior Zephyr
-    bricks count 8 (4 aligned + 4 straddling); dead qubits and the
-    over-allocated boundary column self-absorb to smaller pools (the
-    packer's own boundary treatment, one accounting). Memoized on the
-    grid (the line_pools pattern): the reference evaluator is called
-    per gather candidate."""
-    cache = getattr(grid, "_brick_pools", None)
-    if cache is not None and s in cache:
-        return cache[s]
-    Wb = (grid.W + s - 1) // s
-    Hb = (grid.H + s - 1) // s
-    ph = np.zeros((grid.H, Wb), dtype=float)
-    pv = np.zeros((grid.W, Hb), dtype=float)
-    for (o, ln, _sub), d in grid.wire_map.items():
-        A = ph if o == 1 else pv
-        if not (0 <= ln < A.shape[0]):
-            continue
-        for t in d:
-            tq = t // s
-            if 0 <= tq < A.shape[1]:
-                A[ln, tq] += 1.0
-    if cache is None:
-        cache = {}
-        try:
-            grid._brick_pools = cache
-        except AttributeError:
-            return ph, pv
-    cache[s] = (ph, pv)
-    return ph, pv
 
 
 def _arms(pos: Dict[int, Point], contacts) -> Dict[int, tuple]:

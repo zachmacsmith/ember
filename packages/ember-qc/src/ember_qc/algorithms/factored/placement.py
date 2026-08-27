@@ -285,6 +285,14 @@ class AttractConfig:
                                # "orders-audit" = same engine, strict
                                # post-readout descent (the control for
                                # the acceptance rule).
+    hier_units: bool = False
+                               # s3.115 (the ER variance test): offer
+                               # the affinity hierarchy's groups as
+                               # EXTRA units to the orders engine —
+                               # scattered similar sets gathered as one
+                               # jointly-judged weave, which interval
+                               # accretion cannot express. Orders
+                               # engines only; measurement switch.
 
 
 def _auto_bins(n_qubits: int) -> int:
@@ -344,7 +352,8 @@ def attract_embed(
         picked = {k: v for k, v in overrides.items() if k in known}
         if picked:
             cfg = replace(cfg, **picked)
-        if cfg.engine not in ("lex", "orders", "orders-audit"):
+        if cfg.engine not in ("lex", "orders", "orders-audit",
+                              "plane", "plane-audit"):
             # loud FAILURE (with the message) rather than silently
             # measuring the control arm — the probes' typo fence
             # checks kwarg names, not values
@@ -393,7 +402,9 @@ def attract_embed(
         # consume it; the orders engine's units are intervals of the
         # current order, so it never needs the hierarchy)
         _units_levels = None
-        if cfg.engine == "lex" and cfg.cluster_moves and cfg.cluster_units:
+        if ((cfg.engine == "lex" and cfg.cluster_moves
+             and cfg.cluster_units)
+                or (cfg.engine != "lex" and cfg.hier_units)):
             from ember_qc.algorithms.factored.coarsen import (
                 coarsen as _coarsen)
             _units_levels = _coarsen(src_adj, units=True)
@@ -437,7 +448,8 @@ def attract_embed(
         # FINE ids, one list per level (coarsest last). Position-free —
         # computed once from the source graph.
         cluster_groups = None
-        if cfg.engine == "lex" and cfg.cluster_moves:
+        if ((cfg.engine == "lex" and cfg.cluster_moves)
+                or (cfg.engine != "lex" and cfg.hier_units)):
             from ember_qc.algorithms.factored.coarsen import (
                 coarsen as _coarsen)
             _levels = (_units_levels if (_units_levels is not None
@@ -484,7 +496,7 @@ def attract_embed(
             tpts, _legal_info = pack_project(
                 tpts, src_adj, grid, kappa=kappa,
                 floor=cfg.span_floor, snap=eff_snap)
-        else:
+        elif cfg.engine in ("orders", "orders-audit"):
             # the orders engine (round 1): every state it occupies is
             # readout output, so no family normalizer runs — the diag's
             # fit observables come from the bookmark's own readout
@@ -496,8 +508,30 @@ def attract_embed(
                 tpts, src_adj, grid, kappa=kappa,
                 floor=cfg.span_floor, snap=eff_snap,
                 audit=(cfg.engine == "orders-audit"),
-                deadline=placement_deadline)
+                deadline=placement_deadline,
+                extra_units=(cluster_groups if cfg.hier_units
+                             else None))
             _legal_info = last_info.get("readout_info", {})
+        else:
+            # the plane engine (round 3, s3.116): the search lives on
+            # the IDEAL plane (readout = unbounded packs only, judge =
+            # pure stair — capacity is the unbounded pack's invariant,
+            # not a price), and the finite chip enters exactly ONCE:
+            # the brick-aware projection below, whose per-(line, brick)
+            # profiles are the same truth pen reads
+            from ember_qc.algorithms.factored.orders import order_arrange
+            tpts, last_info = order_arrange(
+                tpts, src_adj, grid, kappa=kappa,
+                floor=cfg.span_floor, snap=eff_snap,
+                audit=(cfg.engine == "plane-audit"),
+                deadline=placement_deadline,
+                extra_units=(cluster_groups if cfg.hier_units
+                             else None),
+                plane=True)
+            tpts, _legal_info = pack_project(
+                tpts, src_adj, grid, kappa=kappa,
+                floor=cfg.span_floor, snap=eff_snap,
+                monotonize=False, brick_pools=True)
         arrange_wall = time.perf_counter() - _t_arr
         cent = {v: grid.Minv @ (tpts[v] - grid.c) for v in cent}
 
@@ -649,6 +683,15 @@ def attract_embed(
             diag["bookmark_wall"] = last_info.get("bookmark_wall", 0.0)
             diag["bookmark_readouts"] = int(
                 last_info.get("bookmark_readouts", 0))
+            diag["hier_accepts"] = int(last_info.get("hier_accepts", 0))
+            if cfg.engine.startswith("plane"):
+                # plane search is capacity-blind by design; the ONE
+                # projection's outcome is the real capacity report
+                if last_info.get("seat_stair") is not None:
+                    diag["plane_stair"] = last_info["seat_stair"]
+                from ember_qc.algorithms.factored.seat import seat_energy
+                _pe = seat_energy(tpts, src_adj, grid)
+                diag["proj_pen"] = int(_pe // (2 ** 26))
         # s3.93 fit-vs-fabric observables (from the normalizer pack)
         for k in ("final_width_x", "final_width_y",
                   "projection_misses", "unb_miss"):

@@ -43,6 +43,7 @@ dependencies = [
     "dwave-networkx>=0.8.0",
     "platformdirs>=3.0.0",
     "pyyaml>=6.0",
+    "numba>=0.67",
 ]
 
 [project.urls]

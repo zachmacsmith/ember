@@ -225,3 +225,74 @@ class TestPipeline:
         a = attract_embed(src, tgt, timeout=10, seed=0)
         b = attract_embed(src, tgt, timeout=10, seed=0, engine="lex")
         assert a["embedding"] == b["embedding"]
+
+
+class TestPlaneEngine:
+    """Round 3 (s3.116): ideal-plane search + one brick-aware
+    projection."""
+
+    def test_readout_project_false_stays_ideal(self):
+        grid = _zgrid()
+        rng = np.random.default_rng(7)
+        adj, pos = _case(rng, grid, 18)
+        kappa = _target_kappa(grid)
+        out, rinfo = pack_project(pos, adj, grid, kappa=kappa,
+                                  monotonize=False, project=False)
+        # no bounded-stage keys; contacts present; deterministic
+        assert "final_width_x" not in rinfo
+        assert "projection_misses" not in rinfo
+        assert rinfo["_contacts"]
+        out2, _ = pack_project(pos, adj, grid, kappa=kappa,
+                               monotonize=False, project=False)
+        assert all(np.array_equal(out[v], out2[v]) for v in out)
+        assert rinfo.get("unb_miss", 0) == 0
+
+    def test_brick_projection_v_pen_zero(self):
+        # the exactly-certified orientation: x is assigned last, so
+        # v-arm (column) cover vs pv pools must be within capacity on
+        # miss-free instances (h is only empirically clean — the
+        # final x-pack remaps h-footprints after their certificate)
+        from ember_qc.algorithms.factored.field import (
+            _brick_pool_arrays, _stair_contacts)
+        grid = _zgrid()
+        s = max(grid.stride, 1)
+        _ph, pv = _brick_pool_arrays(grid, s)
+        rng = np.random.default_rng(29)
+        checked = 0
+        for _trial in range(12):
+            adj, pos = _case(rng, grid, 16, p_edge=0.3)
+            kappa = _target_kappa(grid)
+            out, rinfo = pack_project(pos, adj, grid, kappa=kappa,
+                                      monotonize=False,
+                                      brick_pools=True)
+            if rinfo.get("projection_misses", 0):
+                continue
+            checked += 1
+            contacts = _stair_contacts(out, adj)
+            cov = np.zeros_like(pv)
+            for v, (h_us, v_us) in contacts.items():
+                if not v_us:
+                    continue
+                x = int(out[v][0])
+                ys = [int(out[u][1]) for u in v_us] + [int(out[v][1])]
+                for b in range(min(ys) // s, max(ys) // s + 1):
+                    cov[x, b] += 1
+            assert np.all(cov <= pv + 1e-9), "v-orientation pen leak"
+        assert checked >= 6  # the property must actually be exercised
+
+    def test_e2e_plane_valid_deterministic(self):
+        from ember_qc.algorithms.factored import attract_embed
+        from ember_qc.registry import validate_embedding
+        src = nx.gnp_random_graph(12, 0.4, seed=7)
+        for tgt in (dnx.zephyr_graph(3, 4), dnx.chimera_graph(4, 4, 4)):
+            for eng in ("plane", "plane-audit"):
+                r1 = attract_embed(src, tgt, timeout=15, seed=0,
+                                   engine=eng)
+                r2 = attract_embed(src, tgt, timeout=15, seed=0,
+                                   engine=eng)
+                emb = r1["embedding"]
+                assert emb, (eng, r1.get("error"))
+                assert validate_embedding(emb, src, tgt)
+                assert r1["embedding"] == r2["embedding"]
+                assert "proj_pen" in r1["diag"]
+                assert "seat_pen" not in r1["diag"]

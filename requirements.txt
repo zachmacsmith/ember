@@ -14,3 +14,6 @@ dwave-networkx>=0.8.0
 
 # Additional utilities
 tqdm>=4.62.0  # Progress bars (optional but nice)
+
+# JIT for the factored pipeline hot loops (s3.114 perf round)
+numba>=0.67

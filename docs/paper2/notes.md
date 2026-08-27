@@ -1833,6 +1833,66 @@ else"), (3) hierarchy groups as EXTRA units on ER/king (Max's
 variance hypothesis: scattered similar nodes need joint gathers that
 interval accretion cannot express).
 
+**3.114 (the perf round — numba, 11× readout; the budget excuse
+dies).** Max's call: numba (pinned in requirements + the ember-qc
+pyproject). The pack_lines DP + jstar segment tree ported op-for-op to
+`@njit` kernels — same operations, same order, bit-identical by
+construction (the Python original survives as the oracle in
+TestPackLinesFeasibilityEquivalence, tightened to exact cost equality
+plus tie-cascade/duplicate cases); derive_bars_stair/arm_books
+vectorized by scatter min/max (`_bars_arrays`; the per-vertex original
+frozen as TestBooksEquivalence's reference); pack_project exposes its
+final contacts (`info["_contacts"]` — sound by the axis-0 reuse
+invariant) and orders.py reuses them; unit probes memoized by state
+version (a unit re-probed on an unchanged state repeats its outcome
+exactly, so quiet regions cost nothing and the schedule can cycle).
+**Readout 111 → 10.1 ms** (ws, n=486). 625 tests green; default AND
+engine="lex" fingerprints byte-identical to the s3.112 hashes (one
+load-contaminated lex run re-verified quiet — the usual jitter class).
+Board re-run (`orders_probe.csv`; round 1 kept as `orders_probe1.csv`):
+**the engine now cycles (grid 2→5-6 passes, ER 4→7-12, turán 2→4;
+adopts 3-4×) and NOTHING moved — every round-1 delta reproduces
+(ER +0.83/+0.52, king +1.50/+0.56, grid +0.47 accept-all vs +0.07
+audit, ws +0.02/+0.05, crystal exact 6.000/10 both arms).** The budget
+excuse is dead: the residuals are capability, not compute. Sharpened
+readings: (1) ER accept-all makes 2,704 adopts across 10 passes and
+lands exactly where 800 adopts landed — the interval family cannot
+express what ER needs; Max's variance hypothesis (scattered similar
+nodes need joint gathers) is now the primary suspect, cleanly
+de-confounded from budget. (2) ws's first pass alone still exceeds
+30 s (~5,800 units) and its bookmark still freezes at ~1 s on
+pen-carrying states — the brick/line two-books seam remains the
+liquid's gate. (3) Late coarse recapture now demonstrably fires and
+does not rescue the losses — necessary, not sufficient. Acceptance
+under speed: accept-all is now the cheaper policy per unit of progress
+(readouts per adopt vs per candidate: ws 323 vs 758) but still buys
+grid +0.47 where audit pays +0.07 — the s3.113b verdict stands. Named
+next, unchanged in order and now unblocked: hierarchy groups as extra
+units (the ER/king discriminator), then the brick/line unification.
+
+**3.115 (hierarchy groups as extra units — the ER variance hypothesis
+CONFIRMED; king acquitted of it).** Built as `hier_units` (default
+off): the affinity hierarchy's groups offered to the orders engine as
+extra units, coarsest level first, each a single jointly-judged weave
+through the same `align_reinsert`/adopt path as the intervals (the
+`_probe` refactor). Probe (`data/hunits_probe.csv`, 6 cells × 4 arms,
+deep seeds turán/ws, load ~95-128): **ER is the confirmation — audit+h
+5.31 → 4.907 (−0.40, the largest ER movement any orders arm has
+produced; the gap to the default engine closes from +0.52 to +0.12) on
+just 21 accepted gathers; accept-all+h −0.18 on 1,217** — a few good
+joint gathers carry the win, consistent with the s3.113b acceptance
+verdict. Max's mechanism reading stands: variance makes some nodes
+measurably alike, and a scattered similar set needs a joint gather
+that interval accretion cannot express. **king is acquitted of the
+same charge**: ±0.05 in both arms — its +0.6 loss has a different
+mechanism (candidates: the boundary-brick pen class, or the deleted
+fine moves). Guards held: turán exact 6.000 on all arms (173 hier
+adopts in accept-all and the crystal still lands exactly — the E-gate
+filters), ws ±0.06, regular flat; grid accept-all −0.235 (still above
+its audit arm). Verdict: `hier_units` is a validated candidate for the
+audit path pending the brick round (the remaining ER gap may be
+bookmark/pen-related); not a default flip on its own.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).
