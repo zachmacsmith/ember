@@ -93,3 +93,4 @@ Z12 turan_n162         plane        seed 6: 6.0 mx=6 pen=None acc=279 ro=286 def
 Z12 turan_n162         plane        seed 7: 6.228 mx=7 pen=None acc=300 ro=302 def=0 skip=True (63.7s)
 Z12 turan_n162         plane        seed 8: 6.228 mx=7 pen=None acc=501 ro=505 def=0 skip=True (62.6s)
 Z12 turan_n162         plane        seed 9: 6.0 mx=6 pen=None acc=773 ro=841 def=0 skip=True (64.3s)
+Z12 turan_n162         carry        seed 0: 9.253 mx=12 pen=None acc=203 ro=204 def=0 skip=True (64.3s)
