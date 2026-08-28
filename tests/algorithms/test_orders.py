@@ -383,14 +383,34 @@ class TestCarriedOrders:
                 assert validate_embedding(emb, src, tgt)
                 assert r1["embedding"] == r2["embedding"]
 
-    def test_carry_off_is_default_identity(self):
+    def test_default_is_carry_identity(self):
+        # s3.120: carry is the default (Max's call — the compaction
+        # must not inherit id-tie behavior by inertia)
         from ember_qc.algorithms.factored import attract_embed
         src = nx.gnp_random_graph(10, 0.4, seed=3)
         tgt = dnx.zephyr_graph(2, 4)
         a = attract_embed(src, tgt, timeout=10, seed=0)
         b = attract_embed(src, tgt, timeout=10, seed=0,
-                          carry_orders=False)
+                          carry_orders=True)
         assert a["embedding"] == b["embedding"]
+
+    def test_landmark_and_random_inits(self):
+        from ember_qc.algorithms.factored import attract_embed
+        from ember_qc.registry import validate_embedding
+        src = nx.gnp_random_graph(14, 0.3, seed=6)
+        tgt = dnx.zephyr_graph(3, 4)
+        for im in ("landmark", "random"):
+            r1 = attract_embed(src, tgt, timeout=15, seed=0,
+                               init_mode=im)
+            r2 = attract_embed(src, tgt, timeout=15, seed=0,
+                               init_mode=im)
+            emb = r1["embedding"]
+            assert emb and validate_embedding(emb, src, tgt), im
+            assert r1["embedding"] == r2["embedding"]
+        r = attract_embed(src, tgt, timeout=5, seed=0,
+                          init_mode="bogus")
+        assert r["status"] == "FAILURE" and "init_mode" in r.get(
+            "error", "")
 
     def test_tied_values_interleaver_realness(self):
         # the audit's missing oracle arm, now sound to write: with a
@@ -423,3 +443,41 @@ class TestCarriedOrders:
                 assert gt(res) <= gt(order) + 1e-9, \
                     "carried-order accept must not be a true regression"
         assert hits >= 5  # the property must actually be exercised
+
+
+class TestTileMoves:
+    """s3.119: the 2-D-joint family — tiles x {shift, reversals}."""
+
+    def test_knob_pin_and_guard(self):
+        from dataclasses import fields
+        from ember_qc.algorithms.factored.placement import AttractConfig
+        assert {"tile_moves", "settle_projection"} <= {
+            f.name for f in fields(AttractConfig)}
+        from ember_qc.algorithms.factored import attract_embed
+        r = attract_embed(nx.path_graph(4), dnx.chimera_graph(2, 2, 4),
+                          timeout=5, seed=0, tile_moves=True,
+                          carry_orders=False)
+        assert r["status"] == "FAILURE" and "carry" in r.get("error", "")
+
+    def test_e2e_tiles_valid_deterministic(self):
+        from ember_qc.algorithms.factored import attract_embed
+        from ember_qc.registry import validate_embedding
+        src = nx.gnp_random_graph(14, 0.35, seed=9)
+        tgt = dnx.zephyr_graph(3, 4)
+        kw = dict(carry_orders=True, tile_moves=True,
+                  settle_projection=True)
+        r1 = attract_embed(src, tgt, timeout=15, seed=0, **kw)
+        r2 = attract_embed(src, tgt, timeout=15, seed=0, **kw)
+        emb = r1["embedding"]
+        assert emb and validate_embedding(emb, src, tgt)
+        assert r1["embedding"] == r2["embedding"]
+        assert r1["diag"].get("proj_iters", 0) >= 1
+
+    def test_settle_off_identity(self):
+        from ember_qc.algorithms.factored import attract_embed
+        src = nx.gnp_random_graph(10, 0.4, seed=3)
+        tgt = dnx.zephyr_graph(2, 4)
+        a = attract_embed(src, tgt, timeout=10, seed=0)
+        b = attract_embed(src, tgt, timeout=10, seed=0,
+                          tile_moves=False, settle_projection=False)
+        assert a["embedding"] == b["embedding"]

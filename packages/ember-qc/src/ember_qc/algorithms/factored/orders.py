@@ -61,6 +61,7 @@ def order_arrange(pos0: Dict[int, np.ndarray],
                   extra_units: Optional[List[List[List[int]]]] = None,
                   plane: bool = False,
                   carry: bool = False,
+                  tiles: bool = False,
                   ) -> Tuple[Dict[int, np.ndarray], dict]:
     info: dict = {
         "passes": 0, "accept_traj": [],
@@ -71,7 +72,7 @@ def order_arrange(pos0: Dict[int, np.ndarray],
         "seat_E": None, "seat_pen": None, "seat_stair": None,
         "readouts": 0, "mono_swaps": 0, "readout_info": {},
         "bookmark_wall": 0.0, "bookmark_readouts": 0,
-        "hier_accepts": 0, "pair_accepts": 0,
+        "hier_accepts": 0, "pair_accepts": 0, "tile_accepts": 0,
     }
     if not getattr(grid, "typed", False) or not line_pools(grid):
         return _copy(pos0), info
@@ -251,6 +252,114 @@ def order_arrange(pos0: Dict[int, np.ndarray],
         tried[key] = state_ver
         return 0
 
+
+    def _tile_delta(members, moved):
+        """Frozen-view delta-stair of moving ``members`` to the
+        positions in ``moved`` (the judge's own hull arithmetic,
+        restricted to affected variables — a screen, not a second
+        evaluator)."""
+        affected = set(members)
+        for v in members:
+            for u in src_adj.get(v, []):
+                if u in pos:
+                    affected.add(u)
+
+        def _spans(v, override):
+            h_us, v_us = contacts[v]
+            px = override.get(v)
+            x0 = px[0] if px is not None else float(pos[v][0])
+            y0 = px[1] if px is not None else float(pos[v][1])
+            xs_ = [x0]
+            for u in h_us:
+                pu = override.get(u)
+                xs_.append(pu[0] if pu is not None else float(pos[u][0]))
+            ys_ = [y0]
+            for u in v_us:
+                pu = override.get(u)
+                ys_.append(pu[1] if pu is not None else float(pos[u][1]))
+            return (max(xs_) - min(xs_)) + (max(ys_) - min(ys_))
+
+        d = 0.0
+        for v in affected:
+            d += _spans(v, moved) - _spans(v, {})
+        return d
+
+    def _tile_pass():
+        """The 2-D-joint family (s3.119): tiles = grid windows (order
+        -interval intersections under the monotone invariant), each
+        offered rigid displacements x internal reversals — the fold
+        atoms. Screened by _tile_delta; best candidate proposed iff it
+        strictly beats the current state in view; adopted per the
+        ordinary rule."""
+        nonlocal state_ver
+        got_any = 0
+        ids_arr = sorted(pos)
+        X = np.array([float(pos[v][0]) for v in ids_arr])
+        Y = np.array([float(pos[v][1]) for v in ids_arr])
+        x0, x1 = int(X.min()), int(X.max())
+        y0, y1 = int(Y.min()), int(Y.max())
+        for h in (8, 4, 2):
+            step = max(h // 2, 1)
+            for a in range(y0, y1 + 1, step):
+                for b in range(x0, x1 + 1, step):
+                    if _expired():
+                        return got_any
+                    key = ("t", h, a, b)
+                    if tried.get(key) == state_ver:
+                        continue
+                    mask = ((Y >= a) & (Y < a + h)
+                            & (X >= b) & (X < b + h))
+                    members = [ids_arr[i]
+                               for i in np.flatnonzero(mask)]
+                    if not (2 <= len(members) < n):
+                        tried[key] = state_ver
+                        continue
+                    best_d, best_mv = -1e-9, None
+                    for dx, dy in ((h, 0), (-h, 0), (0, h), (0, -h),
+                                   (h, h), (h, -h), (-h, h), (-h, -h)):
+                        for rx in (False, True):
+                            for ry in (False, True):
+                                mv = {}
+                                ok = True
+                                for v in members:
+                                    vx = float(pos[v][0])
+                                    vy = float(pos[v][1])
+                                    if rx:
+                                        vx = (2 * b + h - 1) - vx
+                                    if ry:
+                                        vy = (2 * a + h - 1) - vy
+                                    vx += dx
+                                    vy += dy
+                                    if vx < 0 or vy < 0:
+                                        ok = False
+                                        break
+                                    mv[v] = (vx, vy)
+                                if not ok:
+                                    continue
+                                d = _tile_delta(members, mv)
+                                if d < best_d:
+                                    best_d, best_mv = d, mv
+                    if best_mv is None:
+                        tried[key] = state_ver
+                        continue
+                    cand = _copy(pos)
+                    for v, (vx, vy) in best_mv.items():
+                        cand[v][0] = vx
+                        cand[v][1] = vy
+                    new_ords = {
+                        ax: sorted(ords[ax],
+                                   key=lambda v, _ax=ax:
+                                   float(cand[v][_ax]))
+                        for ax in (0, 1)}
+                    if _try_adopt(cand, new_ords):
+                        info["interleave_accepts"] += 1
+                        info["tile_accepts"] += 1
+                        state_ver += 1
+                        got_any += 1
+                    else:
+                        tried[key] = state_ver
+        return got_any
+
     while info["passes"] < _MAX_PASSES and not _expired():
         info["passes"] += 1
         changes = 0
@@ -273,6 +382,8 @@ def order_arrange(pos0: Dict[int, np.ndarray],
                         break
                 if _expired():
                     break
+        if tiles and carry:
+            changes += _tile_pass()
         for scale in scales:
             for axis in (1, 0):
                 for off in range(0, n, max(scale // 2, 1)):

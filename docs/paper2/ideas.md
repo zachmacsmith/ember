@@ -118,8 +118,26 @@ Each of these was paid for; the receipts are in `attraction.md`.
    plane IS the default (flip board: wins dense/regular/ws-mx, ER
    +0.46 the one open residual); projection centering shipped
    (stair-neutral); the DP audit (`dp-internals.md`) surfaced the
-   measured shortlist — the interleaver's unsound tie regime under
-   accept-all is round-5's named target (predicted on ER).
+   measured shortlist. s3.118 (carry the order): state = the two
+   orders literally, every move a real state — ER falls to 4.42 (the
+   confound confirmed), edge-pairs subsume monotonize, and the
+   crystal exposes the INIT front: carry+trivial = exact 6.000/10
+   while carry+spectral fails (the id-collapse had been laundering
+   the init's order all along). `carry_orders` off pending the init
+   question — which is now THE open front: init as one swappable
+   ordering function, its quality no longer launderable. s3.119:
+   tiles (the 2-D-joint family) refuted as built (partial crystal
+   rescue, K140 broken, seed-0 smoke did not replicate);
+   settle_projection quality-neutral but its proj_iters instrument
+   confirmed the fixpoint premise exactly (holds at slack/crystal,
+   fails at saturation/liquid). Both off. s3.120: CARRY IS THE
+   DEFAULT (the id fossil is dead by default); the init round:
+   landmark (double-BFS) holds the crystal at exact 6.000 label-
+   independently while trivial's win was proven label luck; no init
+   flip (regular +0.54 fails the bar); random init = best-ever ER
+   (4.383) and ≈spectral on turán — the init's whole value is
+   regular+ws, the joint-move front's own cells. One question, two
+   sides.
 2. **Units without the hierarchy.** Replace affinity-hierarchy units
    with contiguous runs of the current order, at all scales. Singleton
    insertions do the gathering (insertion sweeps built block structure

@@ -152,6 +152,64 @@ def snap(cent: Centroids, coords: np.ndarray, qubits: Sequence[int],
     return seeds
 
 
+
+def _landmark_cent(src_adj: Dict[int, List[int]]) -> Centroids:
+    """Order-native init (s3.120): BFS distances from a
+    pseudo-peripheral pair, composed into integer sort keys.
+    ox ~ (d0, d1, id), oy ~ (d1, d0, id) via the composites
+    d0*(n+1)+d1 and d1*(n+1)+d0 fed to the (value, id) rank sort.
+    Deterministic; disconnected components get separated bands."""
+    from collections import deque as _dq
+    nodes = sorted(src_adj)
+    n = len(nodes)
+    idx = {v: i for i, v in enumerate(nodes)}
+
+    def _bfs(root, comp_nodes):
+        dist = {v: None for v in comp_nodes}
+        dist[root] = 0
+        q = _dq([root])
+        while q:
+            u = q.popleft()
+            for w in src_adj.get(u, []):
+                if w in dist and dist[w] is None:
+                    dist[w] = dist[u] + 1
+                    q.append(w)
+        far = root
+        for v in sorted(comp_nodes):
+            if dist[v] is not None and dist[v] > dist[far]:
+                far = v
+        return dist, far
+
+    d0 = {}
+    d1 = {}
+    seen = set()
+    band = 0
+    for start in nodes:
+        if start in seen:
+            continue
+        comp = set()
+        q = _dq([start])
+        comp.add(start)
+        while q:
+            u = q.popleft()
+            for w in src_adj.get(u, []):
+                if w in idx and w not in comp:
+                    comp.add(w)
+                    q.append(w)
+        seen |= comp
+        _, p0 = _bfs(start, comp)
+        dist0, p1 = _bfs(p0, comp)
+        dist1, _ = _bfs(p1, comp)
+        off = band * (2 * n + 2)   # separate components into bands
+        for v in comp:
+            d0[v] = off + (dist0[v] if dist0[v] is not None else n + 1)
+            d1[v] = off + (dist1[v] if dist1[v] is not None else n + 1)
+        band += 1
+    m = n + 1
+    return {v: np.array([float(d0[v] * m + d1[v]),
+                         float(d1[v] * m + d0[v])]) for v in nodes}
+
+
 # ==============================================================================
 # DRIVER
 # ==============================================================================
@@ -298,7 +356,14 @@ class AttractConfig:
                                # s3.116: toxic on the plane crystal —
                                # do not compose with plane pending
                                # diagnosis.
-    carry_orders: bool = False
+    carry_orders: bool = True
+                               # DEFAULT since s3.120 (Max: the good
+                               # ideas blocked only by the init
+                               # question ship now — the coming
+                               # compaction must not preserve id-tie
+                               # behavior by inertia). Known open:
+                               # turán under the spectral init (the
+                               # init round is the unblock).
                                # s3.118 (the id-fossil dies): the
                                # engine state becomes the two axis
                                # orders LITERALLY — the tie-break on
@@ -311,6 +376,23 @@ class AttractConfig:
                                # edge_monotonize. Non-lex engines
                                # only; measurement switch, dissolves
                                # at the flip.
+    tile_moves: bool = False
+                               # s3.119: the 2-D-joint move family —
+                               # tiles (grid windows = order-interval
+                               # intersections under the carry
+                               # invariant) offered rigid
+                               # displacements x internal reversals
+                               # (the fold atoms), screened by the
+                               # judge's own delta arithmetic,
+                               # accept-all. Requires carry_orders.
+    settle_projection: bool = False
+                               # s3.119 (the alternation experiment):
+                               # loop the FINAL projection to its
+                               # assignment fixpoint (cap 4) instead
+                               # of one alternation; diag proj_iters
+                               # counts how often iteration 2+ still
+                               # changes anything — the per-run
+                               # measurement of the fixpoint premise.
 
 
 def _auto_bins(n_qubits: int) -> int:
@@ -376,6 +458,9 @@ def attract_embed(
             # measuring the control arm — the probes' typo fence
             # checks kwarg names, not values
             raise ValueError(f"unknown engine {cfg.engine!r}")
+        if cfg.tile_moves and not cfg.carry_orders:
+            # loud FAILURE, not a silent control-arm measurement
+            raise ValueError("tile_moves requires carry_orders")
 
         from ember_qc.algorithms.factored.field import (
             TileGrid, _target_kappa, arm_books, bar_widths,
@@ -427,11 +512,34 @@ def attract_embed(
                 coarsen as _coarsen)
             _units_levels = _coarsen(src_adj, units=True)
 
+        if cfg.init_mode not in ("spectral", "trivial",
+                                 "landmark", "random"):
+            raise ValueError(f"unknown init_mode {cfg.init_mode!r}")
         _t_init = time.perf_counter()
         if cfg.init_mode == "trivial":
             # s3.88 every-move-real: no summary physics — identity
             # ranks in; the real-judged moves do the layout
             cent = {v: np.zeros(2) for v in src_adj}
+        elif cfg.init_mode == "landmark":
+            # s3.120 order-native init: double-BFS landmark orders.
+            # No eigenstuff, no coordinates — the graph's own metric
+            # produces the sort keys, and structurally identical
+            # vertices tie on every key (TWIN-ADJACENCY by
+            # construction; id breaks the tie — the one place ids
+            # deserve a voice). Integer composites feed the existing
+            # (value, id) rank reduction unchanged.
+            cent = _landmark_cent(src_adj)
+        elif cfg.init_mode == "random":
+            # s3.120: the karma-free baseline — seeded per-axis
+            # permutations; the random-vs-best gap per cell is the
+            # init's measured contribution (the s3.35 standard,
+            # reinstated as an arm)
+            _rng = np.random.default_rng(seed)
+            _vs = sorted(src_adj)
+            _px = _rng.permutation(len(_vs))
+            _py = _rng.permutation(len(_vs))
+            cent = {v: np.array([float(_px[i]), float(_py[i])])
+                    for i, v in enumerate(_vs)}
         elif eff_vcycle:
             from ember_qc.algorithms.factored.coarsen import multilevel_init
             cent = multilevel_init(src_adj, lo, hi, seed=seed,
@@ -529,7 +637,8 @@ def attract_embed(
                 deadline=placement_deadline,
                 extra_units=(cluster_groups if cfg.hier_units
                              else None),
-                carry=cfg.carry_orders)
+                carry=cfg.carry_orders,
+                tiles=cfg.tile_moves)
             _legal_info = last_info.get("readout_info", {})
         else:
             # the plane engine (round 3, s3.116): the search lives on
@@ -546,12 +655,27 @@ def attract_embed(
                 deadline=placement_deadline,
                 extra_units=(cluster_groups if cfg.hier_units
                              else None),
-                plane=True, carry=cfg.carry_orders)
-            tpts, _legal_info = pack_project(
-                tpts, src_adj, grid, kappa=kappa,
-                floor=cfg.span_floor, snap=eff_snap,
-                monotonize=False, brick_pools=True,
-                orders=last_info.get("_orders"))
+                plane=True, carry=cfg.carry_orders,
+                tiles=cfg.tile_moves)
+            # THE one projection — optionally settled to its
+            # alternation fixpoint (s3.119: the per-run measurement of
+            # the fixpoint premise; iteration 2+ changing anything
+            # means the state wasn't done converging)
+            _proj_iters = 0
+            _prev = None
+            while True:
+                _proj_iters += 1
+                tpts, _legal_info = pack_project(
+                    tpts, src_adj, grid, kappa=kappa,
+                    floor=cfg.span_floor, snap=eff_snap,
+                    monotonize=False, brick_pools=True,
+                    orders=last_info.get("_orders"))
+                if not cfg.settle_projection or _proj_iters >= 4:
+                    break
+                if _prev is not None and all(
+                        np.array_equal(tpts[v], _prev[v]) for v in tpts):
+                    break
+                _prev = {v: p.copy() for v, p in tpts.items()}
         arrange_wall = time.perf_counter() - _t_arr
         cent = {v: grid.Minv @ (tpts[v] - grid.c) for v in cent}
 
@@ -711,6 +835,9 @@ def attract_embed(
                 last_info.get("bookmark_readouts", 0))
             diag["hier_accepts"] = int(last_info.get("hier_accepts", 0))
             diag["pair_accepts"] = int(last_info.get("pair_accepts", 0))
+            diag["tile_accepts"] = int(last_info.get("tile_accepts", 0))
+            if cfg.engine.startswith("plane"):
+                diag["proj_iters"] = _proj_iters
             if cfg.engine.startswith("plane"):
                 # plane search is capacity-blind by design; the ONE
                 # projection's outcome is the real capacity report.

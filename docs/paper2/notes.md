@@ -2001,6 +2001,123 @@ dp-internals.md §3; the top item (the interleaver view-gate — one
 O(E) unramped re-price of the returned order) is the named round-5
 candidate, predicted on ER.
 
+**3.118 (carry the order — the id-fossil dies; the init's poison
+surfaces).** Built per the round-5 design: `carry_orders` (default
+off) makes the engine state the two axis orders LITERALLY — tie-break
+= rank in the carried order everywhere on the path (`_stair_contacts`/
+`_axis_coeffs`/`seat_energy` gained optional rank carriers;
+`pack_project(orders=)` sorts by the carried order and computes
+contacts ONCE — the axis-1 recompute rule deletes here), ids speak
+once at entry, every interleaver candidate is a real state (the
+REALNESS property is a test now, plus the tied-values oracle the
+audit said was missing — both green), the bookmark carries its
+orders/contacts (the converter reads the same orientation book the
+layout was optimized for), and per-edge PAIR units subsume
+edge_monotonize (whose per-pass call is dropped on carry). 634 tests;
+all three engine-arm fingerprints pinned (one lex turán scare
+bisected to a load-collapse and exonerated — check uptime before
+believing a fingerprint mismatch).
+
+The measured arc, honestly: (1) First board: turán +2.7 — diagnosed
+in one CSV read as a SCHEDULE bug (pair units ran BEFORE the interval
+ladder and ate the crystal's whole budget; the s3.81 coarsest-first
+lesson re-learned the hard way); pairs moved after the ladder.
+(2) Second board (`carry_probe.csv`; first kept as `carry_probe1`):
+**ER 5.09 → 4.42 (accept-all −0.67; audit −0.41) — the best ER any
+engine has produced, below the old lex default: the audit's
+tie-fiction confound CONFIRMED as load-bearing.** spin_glass −0.26,
+ws-audit −0.05 with mx 8.1. **And turán +3.3 under the spectral init
+— but carry+trivial lands EXACTLY 6.000/mx 6.0 on ALL TEN seeds, the
+family's first perfect crystal** (24 adopts!). king/grid/honeycomb
+small losses; carry-triv loses geometry (king +0.80, regular +0.40,
+ws +0.17). (3) Diagnosis: the carried engine preserves the init
+order FAITHFULLY — and the id-collapse it replaced had been quietly
+RE-SORTING every line by id at every readout, which on the
+block-numbered crystal was a hidden global corrective force
+(laundering the spectral order's poison while doing real assembly
+work). Quantizing the sketch before ranking fails at BOTH scales
+(noise 1e-6: turán unmoved; cluster 2%: turán unmoved, ws +0.18 —
+the within-cluster order was never the issue); the crystal's repair
+under honest moves needs cross-line coordination the budget does not
+cover. **The residual is the INIT-ORDER front, exactly as ideas.md
+has long stated it: init wants to become one swappable ordering
+function, and carry has made its quality visible by refusing to
+launder it.** No flip: `carry_orders` stays off pending the owner's
+call on the init question. What stands regardless: the realness
+property, the ER/spin_glass wins, the machinery deletions on the
+carry path, and dp-internals items 1/3/D3 resolved-by-construction
+there.
+
+**3.119 (tiles + the alternation experiment — smoke refuted by the
+board, the premise instrument delivered).** Built per the round-6
+design: `tile_moves` (2-D-joint tile family: grid windows x rigid
+displacements x internal reversals — the fold atoms — screened by the
+judge's own delta arithmetic, accept-all, carry-only) and
+`settle_projection` (the final projection looped to its alternation
+fixpoint, cap 4; `proj_iters` diag = the per-run measurement of the
+fixpoint premise from the separability proof). 637 tests; both knobs
+default-off; default bytes untouched.
+
+Smoke (seed 0) said: tiles fix the crystal under the spectral init
+(turán carry 9.25 → 6.000) and settle gains ws ~0.2. **The 10-seed
+board says otherwise — the s3.74 lesson re-taught: seed-0 smoke is
+not a verdict.** `tile_probe.csv`: turán carry-tile 7.50 (a partial
+rescue of carry's 9.39, mx 12.4→8.8, but nowhere near 6.0 — seed 0
+was path luck); **K140 +2.0/+3.0 — tiles BREAK the dense complete
+graph** (suspect: the frozen-contacts tile screen mispricing at
+saturation, or budget displacement); ER carry-tile 4.69 worse than
+carry's 4.42 (tile+settle 4.41 ≈ parity); ws settle 2.65 at 10 seeds
+(the smoke's 2.455 did not replicate; plain carry 2.561 remains the
+best liquid arm, and tiles do move the fold tell: mes 26.4→24.1 with
+the board's best mx 8.0 — the hairpin family reaches SOMETHING, it
+just doesn't pay yet). Settle's instrument HALF delivered exactly as
+the theory predicted: proj_iters = 1-2 on the crystal (premise
+holds — slack), 4-cap on the liquid (premise fails — saturation);
+quality-neutral at 10 seeds. VERDICT: both knobs stay off; tiles as
+built are REFUTED (the family may return with an honest screen or
+per-candidate readouts once cheap); settle survives as the premise
+diagnostic. The carry arm's standing: ER −0.67 / spin −0.26 /
+ws −0.09 vs turán +3.25 (the init front) and small lattice losses —
+unchanged, still awaiting the init question.
+
+**3.120 (carry is the DEFAULT; the init round — landmark validated,
+label luck demonstrated, the optimizer-strength map drawn; no init
+flip by the pre-stated bar).** THE FLIP (Max: the good ideas blocked
+only by the init question ship now — the compaction must not inherit
+id-tie behavior): `carry_orders=True` default. 638 tests; new default
+fingerprints stable twice (K100 5266bb7849782d2c, turán
+e7d6fa4acc7044f9 — the 9.253 documents the known open
+crystal-under-spectral regression this round exists to unblock, grid
+136f5405e34987d0). NOT flipped: tiles (refuted), settle (neutral),
+hier (unmeasured under carry).
+
+THE INIT ROUND (`data/init_probe.csv`, four arms under the carry
+default + relabel jobs): **landmark (double-BFS, order-native, no
+eigenstuff) lands turán at EXACTLY 6.000/mx 6 on all 10 seeds — and
+the relabel harness delivers the theorem-vs-luck demonstration in one
+table: trivial-shuf collapses to 10.96 (the dataset's ids were a
+hidden generator-order oracle, now proven) while landmark-shuf holds
+6.000 exactly (twin-adjacency is a property of the graph, not the
+labeling; king landmark-shuf ≈ unshuffled certifies the geometry side
+too).** But the pre-stated flip bar FAILS on regular_n316 (+0.543 vs
+spectral; ws +0.187 marginal, king +0.190/grid +0.068 within tol) —
+so spectral STAYS the default init, honestly, and landmark is a
+validated candidate whose remaining gap is exactly {regular, ws}.
+
+THE OPTIMIZER-STRENGTH MAP (the random arm — the s3.35 standard
+reinstated): dense is perfectly init-independent (K100/K140
+byte-equal across ALL FOUR arms); **random ≈ spectral on turán (9.24
+vs 9.39: the spectral order carries ZERO crystal information — poison
+quantified)**; **random is the best ER ever recorded (4.383)** — the
+expander genuinely wants no imposed structure; grid random beats
+spectral (−0.08); the init's entire measured value on this board is
+regular (+0.52) and ws (+0.48), the two cells where its geometry is
+real — and those are precisely the joint-move front's cells, so the
+init question and the fold question remain one question approached
+from two sides. Named next for the init front: richer landmarks (a
+third landmark / secondary keys) for the regular+ws gap, or close it
+from the moves side and let random/landmark win by engine strength.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).
