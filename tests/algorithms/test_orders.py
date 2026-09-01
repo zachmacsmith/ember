@@ -16,7 +16,7 @@ import pytest
 
 from ember_qc.algorithms.factored.field import (
     TileGrid, _stair_contacts, _target_kappa, align_reinsert,
-    pack_project, stair_energy)
+    pack_project, stair_energy, xy_reinsert)
 from ember_qc.algorithms.factored.orders import order_arrange
 from ember_qc.algorithms.factored.placement import target_layout
 from ember_qc.algorithms.factored.seat import seat_energy
@@ -443,6 +443,318 @@ class TestCarriedOrders:
                 assert gt(res) <= gt(order) + 1e-9, \
                     "carried-order accept must not be a true regression"
         assert hits >= 5  # the property must actually be exercised
+
+
+class TestXYReinsert:
+    """s3.121: the joint two-axis singleton — exact optimum over ALL
+    (x-slot, y-slot) pairs, against brute force, in both value
+    regimes. Ground truth is the UNRAMPED rank-tie stair (the carry
+    regime's judge)."""
+
+    @staticmethod
+    def _gt(ox, oy, adj, vals_x, vals_y):
+        pos = {}
+        rx = {v: r for r, v in enumerate(ox)}
+        for r, v in enumerate(oy):
+            pos[v] = np.array([float(vals_x[rx[v]]), float(vals_y[r])])
+        yrank = {v: r for r, v in enumerate(oy)}
+        return stair_energy(pos, adj,
+                            contacts=_stair_contacts(pos, adj,
+                                                     yrank=yrank))
+
+    @staticmethod
+    def _insert(order, v, k):
+        R = [u for u in order if u != v]
+        return R[:k] + [v] + R[k:]
+
+    def _trial(self, rng, tie_heavy):
+        n = int(rng.integers(5, 9))
+        g = nx.gnp_random_graph(n, 0.5, seed=int(rng.integers(9999)))
+        adj = {v: sorted(g.neighbors(v)) for v in g.nodes()}
+        ox = list(rng.permutation(n))
+        oy = list(rng.permutation(n))
+        if tie_heavy:
+            vals_x = sorted(float(rng.integers(0, 3)) for _ in range(n))
+            vals_y = sorted(float(rng.integers(0, 3)) for _ in range(n))
+        else:
+            vals_x = sorted(float(x) for x in
+                            rng.choice(np.arange(0, 3 * n), n,
+                                       replace=False))
+            vals_y = sorted(float(x) for x in
+                            rng.choice(np.arange(0, 3 * n), n,
+                                       replace=False))
+        v = int(rng.integers(0, n))
+        # the engine's contacts bundle for the current carried state
+        rx = {u: r for r, u in enumerate(ox)}
+        pos = {u: np.array([float(vals_x[rx[u]]), float(vals_y[r])])
+               for r, u in enumerate(oy)}
+        yrank = {u: r for r, u in enumerate(oy)}
+        contacts = _stair_contacts(pos, adj, yrank=yrank)
+        e_cur = self._gt(ox, oy, adj, vals_x, vals_y)
+        brute = min(self._gt(self._insert(ox, v, i),
+                             self._insert(oy, v, j),
+                             adj, vals_x, vals_y)
+                    for i in range(n) for j in range(n))
+        res = xy_reinsert(v, ox, oy, adj, vals_x, vals_y, contacts)
+        if res is not None:
+            new_ox, new_oy = res
+            got = self._gt(new_ox, new_oy, adj, vals_x, vals_y)
+            assert abs(got - brute) < 1e-6, (got, brute)
+            assert got <= e_cur + 1e-9
+            # sanity: the returned orders are permutations
+            assert sorted(new_ox) == sorted(ox)
+            assert sorted(new_oy) == sorted(oy)
+            return 1
+        assert brute >= e_cur - 1e-6, (brute, e_cur)
+        return 0
+
+    def test_exact_vs_brute_force_distinct_values(self):
+        rng = np.random.default_rng(61)
+        hits = 0
+        for _trial in range(15):
+            hits += self._trial(rng, tie_heavy=False)
+        assert hits >= 5  # the property must actually be exercised
+
+    def test_exact_vs_brute_force_tied_values(self):
+        rng = np.random.default_rng(67)
+        hits = 0
+        for _trial in range(15):
+            hits += self._trial(rng, tie_heavy=True)
+        assert hits >= 5
+
+    def test_slot_costs_vector_pins(self):
+        # the closed-form per-slot vector: its identity entry equals
+        # the DP's e_path (the noop-certificate arithmetic), and its
+        # argmin agrees with the normal-mode accept/decline
+        rng = np.random.default_rng(71)
+        for axis in (1, 0):
+            for _trial in range(10):
+                n = int(rng.integers(5, 9))
+                g = nx.gnp_random_graph(n, 0.5,
+                                        seed=int(rng.integers(9999)))
+                adj = {v: sorted(g.neighbors(v)) for v in g.nodes()}
+                order = list(rng.permutation(n))
+                values = sorted(float(x) for x in
+                                rng.choice(np.arange(0, 3 * n), n,
+                                           replace=False))
+                other = {v: float(rng.integers(0, 10))
+                         for v in range(n)}
+                v = int(rng.integers(0, n))
+                contacts = None
+                if axis == 0:
+                    val = np.asarray(values, dtype=float) \
+                        + 1e-4 * np.arange(n)
+                    pos0 = {u: np.array([float(val[r]),
+                                         float(other[u])])
+                            for r, u in enumerate(order)}
+                    contacts = _stair_contacts(pos0, adj)
+                C = align_reinsert(order, {v}, adj, values, None,
+                                   axis=axis, other=other,
+                                   contacts=contacts, slot_costs=True)
+                assert C is not None and len(C) == n
+                j0 = order.index(v)
+                res, _f = align_reinsert(order, {v}, adj, values, None,
+                                         axis=axis, other=other,
+                                         contacts=contacts)
+                if res is None:
+                    assert C.min() >= C[j0] - 1e-9
+                else:
+                    assert C.min() < C[j0] - 1e-9
+
+    def test_slot_costs_declines_non_singleton(self):
+        adj = {0: [1], 1: [0, 2], 2: [1], 3: []}
+        C = align_reinsert([0, 1, 2, 3], {0, 1}, adj,
+                           [0.0, 1.0, 2.0, 3.0], None, axis=1,
+                           other={v: 0.0 for v in range(4)},
+                           contacts=None, slot_costs=True)
+        assert C is None
+
+
+class TestXYSingles:
+    """s3.121: the xy_singles pipeline knob — the joint sweep replaces
+    the ladder's scale-1 sweep on the carry path."""
+
+    def test_knob_pin_and_guard(self):
+        from dataclasses import fields
+        from ember_qc.algorithms.factored.placement import AttractConfig
+        assert "xy_singles" in {f.name for f in fields(AttractConfig)}
+        from ember_qc.algorithms.factored import attract_embed
+        r = attract_embed(nx.path_graph(4), dnx.chimera_graph(2, 2, 4),
+                          timeout=5, seed=0, xy_singles=True,
+                          carry_orders=False)
+        assert r["status"] == "FAILURE" and "carry" in r.get("error", "")
+
+    def test_move_fires_and_stays_real(self):
+        # the move must demonstrably fire, and the realness property
+        # (s3.118) must survive its both-axes adopts
+        grid = _zgrid()
+        kappa = _target_kappa(grid)
+        fired = 0
+        for seed in (37, 41, 43, 47, 53):
+            rng = np.random.default_rng(seed)
+            g = nx.gnp_random_graph(16, 0.4, seed=11)
+            adj = {v: sorted(g.neighbors(v)) for v in g.nodes()}
+            pos = {v: np.array([float(rng.integers(0, 3)),
+                                float(rng.integers(0, 3))])
+                   for v in g.nodes()}
+            out, info = order_arrange(pos, adj, grid, kappa=kappa,
+                                      plane=True, carry=True, xy=True)
+            fired += info["xy_accepts"]
+            ox, oy = info["_orders"]
+            yrank = {v: r for r, v in enumerate(oy)}
+            want = _stair_contacts(out, adj, yrank=yrank)
+            assert info["readout_info"]["_contacts"] == want
+            for ax, o in ((0, ox), (1, oy)):
+                vals = [float(out[v][ax]) for v in o]
+                assert all(a <= b for a, b in zip(vals, vals[1:]))
+        assert fired >= 1  # the joint sweep must actually be exercised
+
+    def test_e2e_xy_valid_deterministic(self):
+        from ember_qc.algorithms.factored import attract_embed
+        from ember_qc.registry import validate_embedding
+        src = nx.gnp_random_graph(14, 0.35, seed=9)
+        for tgt in (dnx.zephyr_graph(3, 4), dnx.chimera_graph(4, 4, 4)):
+            r1 = attract_embed(src, tgt, timeout=15, seed=0,
+                               xy_singles=True)
+            r2 = attract_embed(src, tgt, timeout=15, seed=0,
+                               xy_singles=True)
+            emb = r1["embedding"]
+            assert emb and validate_embedding(emb, src, tgt)
+            assert r1["embedding"] == r2["embedding"]
+            assert "xy_accepts" in r1["diag"]
+
+    def test_xy_off_identity(self):
+        from ember_qc.algorithms.factored import attract_embed
+        src = nx.gnp_random_graph(10, 0.4, seed=3)
+        tgt = dnx.zephyr_graph(2, 4)
+        a = attract_embed(src, tgt, timeout=10, seed=0)
+        b = attract_embed(src, tgt, timeout=10, seed=0,
+                          xy_singles=False)
+        assert a["embedding"] == b["embedding"]
+
+
+class TestWaveSchedule:
+    """s3.122: the disturbance-driven schedule — wave 0 coarse build,
+    dirty-restricted maintenance waves, empty-wave fixpoint stop."""
+
+    def test_span_vectors_vs_brute_force(self):
+        from ember_qc.algorithms.factored.seat import _span_vectors
+        rng = np.random.default_rng(83)
+        for _trial in range(12):
+            n = int(rng.integers(5, 12))
+            g = nx.gnp_random_graph(n, 0.5,
+                                    seed=int(rng.integers(9999)))
+            adj = {v: sorted(g.neighbors(v)) for v in g.nodes()}
+            pos = {v: np.array([float(rng.integers(0, 6)),
+                                float(rng.integers(0, 6))])
+                   for v in g.nodes()}
+            order = list(rng.permutation(n))
+            yrank = {v: r for r, v in enumerate(order)}
+            ids, hs, vs = _span_vectors(pos, adj, yrank)
+            contacts = _stair_contacts(pos, adj, yrank=yrank)
+            for k, v in enumerate(ids):
+                h_us, v_us = contacts[v]
+                xs = [float(pos[u][0]) for u in h_us] \
+                    + [float(pos[v][0])]
+                ys = [float(pos[u][1]) for u in v_us] \
+                    + [float(pos[v][1])]
+                assert abs(hs[k] - (max(xs) - min(xs))) < 1e-12
+                assert abs(vs[k] - (max(ys) - min(ys))) < 1e-12
+
+    def _converge(self, adj, pos, grid, wave, audit=False):
+        kappa = _target_kappa(grid)
+        return order_arrange(pos, adj, grid, kappa=kappa,
+                             plane=True, carry=True, wave=wave,
+                             audit=audit)
+
+    @staticmethod
+    def _rank_pos(info):
+        # faithful re-entry: positions = ranks in the returned carried
+        # orders — distinct integers, so the (value, id) order rebirth
+        # reproduces the carried state exactly (the s3.118 tie lesson:
+        # tied VALUES rebirth by id, not by the order that made them)
+        ox, oy = info["_orders"]
+        rx = {v: r for r, v in enumerate(ox)}
+        return {v: np.array([float(rx[v]), float(r)])
+                for r, v in enumerate(oy)}
+
+    def test_fixpoint_soundness(self):
+        # THE key property: the wave arm's early stop must be a
+        # fixpoint of the FULL blind family. Audit arms (strict
+        # descent) so the returned state IS the final state; re-entry
+        # via rank positions so the order rebirth is exact.
+        grid = _zgrid()
+        rng = np.random.default_rng(89)
+        g = nx.gnp_random_graph(14, 0.35, seed=17)
+        adj = {v: sorted(g.neighbors(v)) for v in g.nodes()}
+        pos = {v: np.array([float(x), float(y)])
+               for v, (x, y) in zip(
+                   g.nodes(),
+                   rng.uniform(0, 12, size=(14, 2)).round(3))}
+        # baseline sanity: the blind loop's own converged output,
+        # re-entered faithfully, must be quiet (guards the protocol)
+        _, info0 = self._converge(adj, pos, grid, wave=False,
+                                  audit=True)
+        _, info0b = self._converge(adj, self._rank_pos(info0), grid,
+                                   wave=False, audit=True)
+        assert info0b["interleave_accepts"] == 0
+        _, info1 = self._converge(adj, pos, grid, wave=True,
+                                  audit=True)
+        assert info1["wave_early_stop"] is True
+        _, info2 = self._converge(adj, self._rank_pos(info1), grid,
+                                  wave=False, audit=True)
+        assert info2["interleave_accepts"] == 0, \
+            "wave early stop is not a full-family fixpoint"
+
+    def test_early_stop_fires_and_deterministic(self):
+        grid = _zgrid()
+        g = nx.complete_graph(12)
+        adj = {v: sorted(g.neighbors(v)) for v in g.nodes()}
+        rng = np.random.default_rng(97)
+        pos = {v: np.array([float(x), float(y)])
+               for v, (x, y) in zip(
+                   g.nodes(),
+                   rng.uniform(0, 10, size=(12, 2)).round(3))}
+        out1, i1 = self._converge(adj, pos, grid, wave=True)
+        assert i1["wave_early_stop"] is True
+        assert i1["wave_count"] >= 1
+        out2, i2 = self._converge(adj, pos, grid, wave=True)
+        assert all(np.array_equal(out1[v], out2[v]) for v in out1)
+        assert i1["wave_questions"] == i2["wave_questions"]
+
+    def test_knob_pin_and_guard(self):
+        from dataclasses import fields
+        from ember_qc.algorithms.factored.placement import AttractConfig
+        assert "wave_schedule" in {f.name for f in
+                                   fields(AttractConfig)}
+        from ember_qc.algorithms.factored import attract_embed
+        r = attract_embed(nx.path_graph(4), dnx.chimera_graph(2, 2, 4),
+                          timeout=5, seed=0, wave_schedule=True,
+                          carry_orders=False)
+        assert r["status"] == "FAILURE" and "carry" in r.get("error", "")
+
+    def test_e2e_wave_valid_deterministic(self):
+        from ember_qc.algorithms.factored import attract_embed
+        from ember_qc.registry import validate_embedding
+        src = nx.gnp_random_graph(14, 0.35, seed=9)
+        for tgt in (dnx.zephyr_graph(3, 4), dnx.chimera_graph(4, 4, 4)):
+            r1 = attract_embed(src, tgt, timeout=15, seed=0,
+                               wave_schedule=True)
+            r2 = attract_embed(src, tgt, timeout=15, seed=0,
+                               wave_schedule=True)
+            emb = r1["embedding"]
+            assert emb and validate_embedding(emb, src, tgt)
+            assert r1["embedding"] == r2["embedding"]
+            assert "wave_count" in r1["diag"]
+
+    def test_wave_off_identity(self):
+        from ember_qc.algorithms.factored import attract_embed
+        src = nx.gnp_random_graph(10, 0.4, seed=3)
+        tgt = dnx.zephyr_graph(2, 4)
+        a = attract_embed(src, tgt, timeout=10, seed=0)
+        b = attract_embed(src, tgt, timeout=10, seed=0,
+                          wave_schedule=False)
+        assert a["embedding"] == b["embedding"]
 
 
 class TestTileMoves:

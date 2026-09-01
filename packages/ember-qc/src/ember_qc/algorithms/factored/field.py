@@ -1659,7 +1659,8 @@ def edge_monotonize(pos: Dict[int, Point], src_adj: Dict[int, List[int]], *,
 def align_reinsert(order: List[int], cluster,
                    src_adj: Dict[int, List[int]],
                    values, anchors, *, axis: int,
-                   other: Dict[int, float], contacts
+                   other: Dict[int, float], contacts,
+                   slot_costs: bool = False
                    ) -> Tuple[Optional[List[int]], bool]:
     """The alignment reinsertion move (s3.100): remove ``cluster``'s
     members from the order and reinsert them at the exact optimum over
@@ -1685,6 +1686,15 @@ def align_reinsert(order: List[int], cluster,
       spans decompose the same way (a net crosses a gap iff some member
       is placed and some is not); the v-term is constant and omitted.
 
+    ``slot_costs=True`` (s3.121, singletons only): instead of the
+    argmin order, return the FULL per-slot cost vector C (length p+1,
+    C[k] = the path cost with the single S-member inserted after k
+    rest-steps) — closed-form prefix/suffix cumsums of the transition
+    matrices, no DP min, no backtrack, no reversed arm (reversing one
+    element is the identity). Returns an ndarray, or None on the same
+    early declines. ``xy_reinsert`` combines two of these vectors into
+    the joint two-axis singleton move.
+
     Values are epsilon-ramped (value + 1e-4*slot, the s3.40 tie-plateau
     convention shared with ``_order_proxy``); since the view's order0 is
     sorted by (value, id), the ramp's tie-break on the CURRENT order
@@ -1695,17 +1705,20 @@ def align_reinsert(order: List[int], cluster,
     real-books gate. Anchored views (never produced by the pipeline,
     where every variable participates) are declined: (None, False)."""
     n = len(order)
+    _declined = None if slot_costs else (None, False)
     if n < 3:
-        return None, False
+        return _declined
     if anchors is not None:
         lo_fix = np.asarray(anchors[0], dtype=float)
         hi_fix = np.asarray(anchors[1], dtype=float)
         if (lo_fix < np.inf).any() or (hi_fix > -np.inf).any():
-            return None, False
+            return _declined
     cset = set(cluster)
     S = [v for v in order if v in cset]
     if len(S) < 1 or len(S) >= n:
-        return None, False
+        return _declined
+    if slot_costs and len(S) != 1:
+        return _declined
     R = [v for v in order if v not in cset]
     p, m = len(R), len(S)
     val = np.asarray(values, dtype=float) + 1e-4 * np.arange(n)
@@ -1803,10 +1816,12 @@ def align_reinsert(order: List[int], cluster,
                 rrow_max[t] = smaxs[pos]
                 rrow_min[t] = smins[pos]
 
-    def _arm(arm_flip, path_of=None):
+    def _arm(arm_flip, path_of=None, slot_mode=False):
         """One orientation arm (``arm_flip`` reverses S). Returns
         (best_cost, best_order[, e_path]) where e_path is the DP path
-        cost of ``path_of`` (a merge of R and forward S) if given."""
+        cost of ``path_of`` (a merge of R and forward S) if given.
+        ``slot_mode`` (m == 1 only): return the per-slot cost vector
+        instead — see the ``slot_costs`` contract above."""
         Q = S[::-1] if arm_flip else S
         qsl = q_slots[::-1] if arm_flip else q_slots  # slot of Q[j]
         minQv = (m - 1 - maxQf) if arm_flip else minQf
@@ -1920,6 +1935,16 @@ def align_reinsert(order: List[int], cluster,
         a[1:, :] = stepR[1:, :] + gapM[1:, :] * CG[:-1, :]
         b = np.full((p + 1, m + 1), np.inf)
         b[:, 1:] = stepQ[:, 1:] + gapM[:, 1:] * CG[:, :-1]
+        if slot_mode:
+            # m == 1 closed form: the path inserting the S-member after
+            # k rest-steps costs prefix(a[:,0])[k] + b[k,1] +
+            # suffix(a[:,1])[k]; C[j0] equals the identity e_path by
+            # the same accumulation (pinned in tests).
+            aR0 = a[1:, 0]
+            aR1 = a[1:, 1]
+            pre = np.concatenate(([0.0], np.cumsum(aR0)))
+            suf = np.concatenate((np.cumsum(aR1[::-1])[::-1], [0.0]))
+            return pre + b[:, 1] + suf
         T = np.empty((p + 1, m + 1))
         if p <= m:
             B = np.zeros((p + 1, m + 1))
@@ -1968,6 +1993,8 @@ def align_reinsert(order: List[int], cluster,
                     cj += 1
         return float(T[p, m]), merged, e_path
 
+    if slot_costs:
+        return _arm(False, slot_mode=True)
     bf, of, e0 = _arm(False, path_of=order)
     bb, ob, _ = _arm(True)
     if bb < bf - 1e-12:
@@ -1977,6 +2004,104 @@ def align_reinsert(order: List[int], cluster,
     if best < e0 - 1e-9 and border != order:
         return border, flip
     return None, False
+
+
+def xy_reinsert(v: int, order_x: List[int], order_y: List[int],
+                src_adj: Dict[int, List[int]],
+                values_x, values_y, contacts
+                ) -> Optional[Tuple[List[int], List[int]]]:
+    """The joint two-axis singleton reinsertion (s3.121): remove ``v``
+    from BOTH carried orders and re-insert at the exact optimum over
+    all (x-slot, y-slot) pairs — the fold's atom (s3.87): a 2-D
+    relocation whose two 1-D halves are individually net-negative, so
+    no sequence of per-axis moves can take the path under descent.
+
+    Tractability: the axes couple only through the stair rule on v's
+    own edges. v's below/above neighbour partition is a prefix of its
+    neighbours in y-side order — deg(v)+1 "splits", each valid on a
+    contiguous window of y-slots — and conditioned on a split the cost
+    separates exactly:
+
+        E(i, j | s) = Cy(j) + Ax_s(i) - Ax_s(i0)
+
+    where Cy is the axis-1 per-slot vector (its induced-rule pricing
+    derives split(j) automatically; x-terms priced at the CURRENT
+    x-order) and Ax_s is the axis-0 per-slot vector under contacts
+    overridden for split s. Both vectors come from
+    ``align_reinsert(slot_costs=True)`` — the same audited pricers, no
+    third court. O((deg+2) * (n+E)) per call.
+
+    Accepted approximation, on the record: Cy's embedded x-terms are
+    unramped (raw ``other`` values) while the Ax correction is ramped
+    (1e-4 x slot) — a differential bias bounded by 1e-4 x spans, the
+    same class as the documented interleaver ramp (dp-internals §2);
+    the adopt path judges the realized state regardless.
+
+    Returns (new_order_x, new_order_y), or None when nothing strictly
+    improves. Deterministic: first-argmin ties, splits scanned in
+    ascending below-count order."""
+    n = len(order_x)
+    if n < 3 or len(order_y) != n:
+        return None
+    ix = {u: r for r, u in enumerate(order_x)}
+    iy = {u: r for r, u in enumerate(order_y)}
+    if v not in ix or v not in iy:
+        return None
+    i0, j0 = ix[v], iy[v]
+    other_x = {u: float(values_x[r]) for r, u in enumerate(order_x)}
+    other_y = {u: float(values_y[r]) for r, u in enumerate(order_y)}
+    Cy = align_reinsert(order_y, {v}, src_adj, values_y, None,
+                        axis=1, other=other_x, contacts=contacts,
+                        slot_costs=True)
+    if Cy is None:
+        return None
+    p = n - 1
+    # v's neighbours as (y-side index, id), ascending — side index =
+    # slot in order_y-without-v, so "u below v at insertion slot k"
+    # is exactly "side(u) < k" and the below-count is a step function
+    # of k with these breakpoints
+    nbrs = sorted((iy[u] - 1 if iy[u] > j0 else iy[u], u)
+                  for u in src_adj.get(v, [])
+                  if u != v and u in iy)
+    d = len(nbrs)
+    base_h = {u: [w for w in contacts[u][0] if w != v]
+              for _, u in nbrs}
+    base_v = {u: [w for w in contacts[u][1] if w != v]
+              for _, u in nbrs}
+    e_cur = float(Cy[j0])
+    best_tot = np.inf
+    best_i = best_j = None
+    for s in range(d + 1):
+        lo = (nbrs[s - 1][0] + 1) if s > 0 else 0
+        hi = nbrs[s][0] if s < d else p
+        below = [u for _, u in nbrs[:s]]
+        above = [u for _, u in nbrs[s:]]
+        contacts_s = dict(contacts)
+        contacts_s[v] = (above, below)
+        for t, (_, u) in enumerate(nbrs):
+            if t < s:
+                contacts_s[u] = (base_h[u] + [v], base_v[u])
+            else:
+                contacts_s[u] = (base_h[u], base_v[u] + [v])
+        Ax = align_reinsert(order_x, {v}, src_adj, values_x, None,
+                            axis=0, other=other_y,
+                            contacts=contacts_s, slot_costs=True)
+        if Ax is None:
+            return None
+        i_s = int(np.argmin(Ax))
+        gain = float(Ax[i_s] - Ax[i0])
+        seg = Cy[lo:hi + 1]
+        j_s = lo + int(np.argmin(seg))
+        tot = float(Cy[j_s]) + gain
+        if tot < best_tot:
+            best_tot, best_i, best_j = tot, i_s, j_s
+    if (best_i is None or not (best_tot < e_cur - 1e-9)
+            or (best_i, best_j) == (i0, j0)):
+        return None
+    Rx = [u for u in order_x if u != v]
+    Ry = [u for u in order_y if u != v]
+    return (Rx[:best_i] + [v] + Rx[best_i:],
+            Ry[:best_j] + [v] + Ry[best_j:])
 
 
 def _center_shift(pos: Dict[int, Point], books, grid: TileGrid

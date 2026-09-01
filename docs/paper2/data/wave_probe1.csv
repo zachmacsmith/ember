@@ -1,0 +1,7 @@
+cell,fabric,gid,arm,seed,final_acl,max_chain,init_wall,arrange_wall,passes,traj,pen,int_acc,int_dec,int_noop,readouts,mono_swaps,bm_wall,bm_ro,hier_acc,pair_acc,xy_acc,wave_ct,wave_q,wave_stop,proj_pen,plane_stair,max_edge_span,mm_skipped,ball_acc,deficit,cmiss,cert,time
+K100,Z12,,plane,0,7.26,8,0.0,27.6,2,138|0,,138,0,20718,139,0,1.41,98,0,4,0,0,0,False,0,1153.0,21.0,True,0,0,0,True,64.0
+K100,Z12,,wave,0,7.26,8,0.0,27.3,2,138|0,,138,0,20718,139,0,1.37,98,0,4,0,2,20856,True,0,1153.0,21.0,True,0,0,0,True,64.8
+turan_n162,Z12,2647,plane,0,9.253,12,0.0,29.71,1,203,,203,0,8104,204,0,4.09,204,0,0,0,0,0,False,0,2598.0,28.0,True,0,0,0,True,56.8
+turan_n162,Z12,2647,wave,0,9.253,12,0.0,29.72,1,203,,203,0,8111,204,0,4.2,204,0,0,0,1,8314,False,0,2598.0,28.0,True,0,0,0,True,55.8
+ws_n486,Z12,17188,plane,0,2.523,8,1.19,28.52,1,1344,,1344,0,1964,1345,0,24.49,1242,0,124,0,0,0,False,494,2330.0,31.0,False,1,56,56,False,60.0
+ws_n486,Z12,17188,wave,0,2.523,8,1.24,28.45,1,1347,,1347,0,1976,1348,0,24.38,1242,0,127,0,1,3323,False,494,2330.0,31.0,False,1,56,56,False,60.0

@@ -1,0 +1,6 @@
+<stdin>:1: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+ws_n486 audit acl 2.572 mx 9 xy_acc 0 int_acc 123 int_dec 6755 mes 23.0
+ws_n486 audit-xy acl 2.572 mx 9 xy_acc 0 int_acc 123 int_dec 4398 mes 23.0
+turan_n162 audit acl 6.5 mx 7 xy_acc 0 int_acc 182 int_dec 4332 mes 25.0
+turan_n162 audit-xy acl 9.765 mx 14 xy_acc 1 int_acc 154 int_dec 2238 mes 34.0
+done-diag

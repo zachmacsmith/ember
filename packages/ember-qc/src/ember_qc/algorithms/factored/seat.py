@@ -177,6 +177,37 @@ def seat_energy(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
     return float(e + _LEX_M * ((oh * oh).sum() + (ov * ov).sum()))
 
 
+def _span_vectors(pos, src_adj, yrank):
+    """Per-variable stair spans (s3.122 — the wave scheduler's
+    disturbance ground truth): the (hspan, vspan) vectors whose sum
+    is the stair energy under the carried y-order. Same
+    one-direction-per-edge split as ``seat_energy``'s carried-rank
+    rule (== ``_stair_contacts(yrank=...)``), but float coordinates —
+    plane-mode states live at rank scale — and no cover terms.
+    Returns (ids, hspan, vspan) with ids sorted."""
+    ids, A, B = _edge_arrays(pos, src_adj)
+    n = len(ids)
+    X = np.fromiter((float(pos[v][0]) for v in ids),
+                    dtype=np.float64, count=n)
+    Y = np.fromiter((float(pos[v][1]) for v in ids),
+                    dtype=np.float64, count=n)
+    hmin = X.copy()
+    hmax = X.copy()
+    vmin = Y.copy()
+    vmax = Y.copy()
+    if len(A):
+        R = np.fromiter((yrank[v] for v in ids), dtype=np.int64,
+                        count=n)
+        lower = R[A] < R[B]
+        L = np.where(lower, A, B)
+        Hi = np.where(lower, B, A)
+        np.minimum.at(hmin, L, X[Hi])
+        np.maximum.at(hmax, L, X[Hi])
+        np.minimum.at(vmin, Hi, Y[L])
+        np.maximum.at(vmax, Hi, Y[L])
+    return ids, hmax - hmin, vmax - vmin
+
+
 def _ext4(vals: List[int]):
     """(min1, #min1, min2, max1, #max1, max2) for O(1) exclusion
     extremes; min2/max2 are +/-inf sentinels when absent."""

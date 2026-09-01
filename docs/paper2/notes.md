@@ -2118,6 +2118,159 @@ from two sides. Named next for the init front: richer landmarks (a
 third landmark / secondary keys) for the regular+ws gap, or close it
 from the moves side and let random/landmark win by engine strength.
 
+**3.121 (the joint 2-D singleton — built oracle-exact; the fine-end
+starvation discovery at 60s; REFUTED AS BUILT at 240s where the move
+actually runs).** Built per the 2026-08-28 design (Max: "build it and
+confirm it wins, or catch whatever bug makes it not win"):
+`xy_singles` (default off, requires carry) — evict one variable from
+BOTH carried orders, re-insert at the exact joint optimum over all
+(x-slot, y-slot) pairs. Tractable because the axes couple only through
+the stair rule on v's own edges: deg+1 prefix "splits" of v's
+neighbours in y-side order, and conditioned on a split the cost
+separates, E(i,j|s) = Cy(j) + Ax_s(i) − Ax_s(i0) — both vectors from
+the EXISTING interleaver in a new `slot_costs` mode (m=1 closed form:
+prefix/suffix cumsums of the transition matrices; no DP min, no
+backtrack, no reversed arm), the axis-0 contacts kwarg doubling as the
+split override with zero changes to `align_reinsert`. One knob, one
+probe closure, the ladder's scale-1 sweep REPLACED under the flag
+(subsumption: pinning either coordinate reproduces the per-axis
+singleton). 8 new tests incl. the all-(i,j) brute-force oracle in
+BOTH value regimes (distinct + tied) and the realness property under
+both-axes adopts — all green first run; suite 646.
+
+PROTOCOL CAVEAT: two sessions raced this round; an earlier board's
+figures (ER +0.48, turán −0.069, a ws smoke reaching 244 accepts)
+lost their artifacts to an overwrite and are excluded per the s3.74
+rule. The numbers below are the on-disk artifacts.
+
+The 60s board (`data/xy_probe.csv`, one flip vs default, deep seeds
+turán/ws/REGULAR, LOAD CAVEAT ~74-120 throughout): **the predicted
+movers never received the move** — on ws the arrange deadline cuts
+pass 1 mid-ladder on EVERY seed in BOTH arms (passes=1, xy=0, AND
+pair_acc=0: the shipped pair units are equally dead letters there),
+so the ws/regular "deltas" (−0.062/+0.025) are deadline jitter and
+the fold thesis is untested by this board. On regular the asymmetry
+is sharper: the CONTROL reaches pass 2 and fires 131-165 pair
+accepts while the xy arm's sweep cost holds it at pass 1 with
+pair_acc 0 — the sweep displaces the pairs. Where the move does run:
+turán −0.128/10 (xy 38-70/seed), king −0.024 (172-216/seed, mx
+4.0→3.7), K100/K140 EXACTLY 0.000 with the move firing (churn that
+converges to the same answer) — except **ER +0.307, the bar's one
+failure**: 102-314 xy-accepts feed the known accept-all churn cell
+(every accept bumps state_ver and re-arms the whole memo).
+
+The follow-ups close the question the 60s board could not ask. (1)
+ws at 240s (`data/xy_ws_diag.log`): the sweep IS reached — 425
+accepts — so the starvation is budget-vs-n, load-amplified (s3.114
+recorded "ws's first pass alone exceeds 30 s"). (2) The 240s
+mechanism probe (`data/xy_probe2.csv`, deciders + ER, 10 deep seeds):
+the sweep fires (ws 380, regular 323 adopts/seed) and **the thesis
+FAILS — ws +0.054, regular +0.059, and ws max_edge_span WORSENS
+29.0→32.3: the relocations stretch the shortcuts they were built to
+collapse** (sum-descent ratcheting at plane level; the s3.83 "asking
+is not answering" lesson one level up). turán +1.703 (the control at
+240s lands the EXACT 6.000 crystal on 10/10 — see the banked item);
+ER −0.087 at ~1,000 adopts (the 60s +0.307 was budget displacement,
+not fiction — ER likes any diffusion). (3) The audit discriminator
+(`data/xy_audit_diag.log`, seed 0, 240s): ws audit vs audit+xy land
+BYTE-EQUAL endpoints (2.572/mx 9/mes 23) with xy_acc 0 — under the
+real judge every joint proposal on ws is declined, so the accept-all
+adopts are view-fictions or real-neutral churn (the documented ramp
+seam is the suspect); on turán audit+xy still loses (6.5 → 9.765,
+xy_acc 1) — the damage there is COST, not accepts: deg+2 axis scans
+per variable (deg ≈ 81) halved probe throughput in equal wall
+(int_dec 2,238 vs 4,332).
+
+Verdict: lever stays OFF. The pricing is exonerated (oracle + the
+dense byte-ties); what fails is the THESIS — **the fold does not
+decompose into view-improving single-variable 2-D relocations at
+plane resolution.** mm's fold atoms improve mm's qubit objective,
+which carries slack dimensions (overlap, chain shape) the plane
+stair lacks; the plane fold therefore needs multi-variable joint
+units (front 7's discovered co-blocking clusters, or arc/hairpin
+composites) or a view with slack. The 60s half of the story is
+front 7's first measured motivation from the accept side: not just
+"rejections in bulk are expensive" but "blind sweeps are expensive
+in both currencies" — the coarse ladder starves the fine end on
+exactly the cells that need fine moves, and accept-all pays churn
+for a new move class on the cell where churn was already the
+disease. Banked: (a) **the 240s control lands turán at the exact
+6.000 crystal on 10/10 seeds under the SPECTRAL init
+(`xy_probe2.csv`) — the s3.120 open crystal regression is
+BUDGET-bound, not basin-lost**, re-scoping the init front as pure
+work-to-answer (the optimizer/init separation principle, Max
+2026-08-28: the best optimizer wins from random; the init's only
+job is speed); (b) the per-slot `slot_costs` vector is exactly the
+"score landscape" object front 7's delocalization detector wants —
+the ER variance instrument is now one cheap readout away; (c) the
+quiet-box re-run stays armed (`data/xy_quiet_wait.sh` → 
+`xy_probe_quiet.*` when load < 30). Named next: the
+schedule/nomination discussion (front 7) BEFORE any budget rule is
+invented (house warning: budget rules wearing physics clothes).
+
+ADDENDUM (2026-08-31, two late artifacts, both corroborating): the
+armed quiet re-run fired 08-30 01:04 (`data/xy_probe_quiet.csv`;
+launched at load 29.8, risen to 84 by end): turán −0.185, ER −0.033,
+king −0.024 vs regular +0.105 (sweep firing 106/seed — matches
+probe2's +0.059: where it runs on regular it does not help) and ws
+xy_acc 6.6/seed — STILL starved even quiet-launched; one honeycomb
+wall flag. And the 60s ER 4-arm discriminator
+(`data/xy_er_probe.csv`, load ~50): plane 4.42 / xy 4.387 / audit
+4.68 / audit-xy 4.80 — ER-likes-any-diffusion confirmed at 60s (the
+board-era ER regressions were budget displacement, not fiction);
+footnote: audit-xy passes 7 joint proposals on ER where ws passes 0
+— the all-declined pattern is ws-specific, consistent with the
+verdict's view-gap reading rather than a universal pricing defect.
+
+**3.122 (the wave schedule — front 7's first build; VALIDATED at
+parity with an honest terminator; lever off pending the owner).**
+Built per the 2026-09-01 design discussion (the disturbance-queue
+conversation): `wave_schedule` (default off, requires carry) —
+schedule ONLY, same moves/acceptance/readout/adopt path. Wave 0 asks
+EXACTLY the blind loop's first pass; maintenance waves re-ask any
+scale, coarse-first, but only blocks containing a variable the
+previous wave's adoptions actually disturbed — dirtiness is the
+ground-truth per-variable span/contacts diff computed in `_try_adopt`
+after the repair branch (`seat._span_vectors`, the vectorized
+per-variable stair spans). Probes read the frozen wave's dirty set;
+adoptions write the next wave's. A COMPLETED wave that disturbs
+nothing is a fixpoint certificate over the WHOLE move family: arrange
+returns early and the tail inherits the budget. Fine floods are
+prevented by dirtiness, not amputation. 6 new tests (suite 652) incl.
+THE property: the early stop is a full-family fixpoint — audit arms,
+re-entry via rank positions from the returned carried orders
+(protocol lesson banked: the blind loop's own output is NOT
+re-entry-stable through the (value,id) rebirth when values are tied —
+12 phantom accepts; rank re-entry is the faithful harness).
+
+Two measured detours died en route, each in one smoke: (1) ascending
+maintenance scales (the "settled material" bottom-up story) — crystal
++0.395: fine-first on a broadly-dirty state is the s3.81 hazard; the
+settled-children rationale belongs to a per-node-certificate tree
+this flat loop is not. (2) The wave-0 leaf floor (the pre-registered
+fork choice) — crystal +0.368 at 10 seeds with bookmark 3.7s→25.3s
+(`wave_probe1.csv`): deferring the fine scales out of wave 0 shifts
+the crystal basin. Both reversed; wave 0 = the blind pass exactly, so
+every delta is a pure waves-vs-passes effect.
+
+Round-2 board (`wave_probe.csv`, 10 cells, deep seeds
+turán/ws/regular, load 30→63): **BAR PASS. Seven cells land EXACTLY
++0.000 — including turán and regular at 10 seeds — grid −0.002,
+king +0.001, ws +0.049 (its noise band); no wall flags. Work-to-
+answer wins where the blind loop was re-confirming quiet: regular
+bmw 19.2→15.8, grid 15.7→13.2. The certificate fires 3/3 on ER,
+grid, AND honeycomb — the ER churn cell now TERMINATES with a proof
+instead of a deadline.** Residuals, named honestly: `wave_questions`
+stays large on dense cells (every churn accept dirties its whole
+cut, so waves ≈ passes there — the deeper economics need scoped
+invalidation or the acceptance question, both open); and the
+certificate's budget handoff has not yet bought ACL (the stopping
+cells tie rather than win — where the freed seconds go is the next
+instrument to read). Verdict: the schedule is behavior-preserving
+with a real terminator and small work-to-answer gains, at zero
+measured cost. Lever stays OFF; the default flip is the owner's
+call under the winners rule.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).

@@ -1,0 +1,45 @@
+12 jobs; load (53.40087890625, 47.03662109375, 39.91796875)
+/data/max/ember/docs/paper2/data/xy_er_probe.py:40: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/xy_er_probe.py:40: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/xy_er_probe.py:40: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/xy_er_probe.py:40: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/xy_er_probe.py:40: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/xy_er_probe.py:40: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/xy_er_probe.py:40: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/xy_er_probe.py:40: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/xy_er_probe.py:40: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/xy_er_probe.py:40: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/xy_er_probe.py:40: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/xy_er_probe.py:40: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+{'arm': 'plane', 'seed': 0, 'final_acl': 4.56, 'max_chain': 8, 'passes': 6, 'int_acc': 592, 'int_dec': 0, 'int_noop': 8708, 'xy_acc': 0, 'pair_acc': 202, 'readouts': 593, 'bm_wall': 5.26, 'arrange_wall': 14.84, 'traj': '375|103|39|71|4|0', 'time': 60.1}
+{'arm': 'plane', 'seed': 1, 'final_acl': 4.43, 'max_chain': 8, 'passes': 6, 'int_acc': 592, 'int_dec': 0, 'int_noop': 8708, 'xy_acc': 0, 'pair_acc': 202, 'readouts': 593, 'bm_wall': 5.11, 'arrange_wall': 13.7, 'traj': '375|103|39|71|4|0', 'time': 60.1}
+{'arm': 'plane', 'seed': 2, 'final_acl': 4.27, 'max_chain': 7, 'passes': 6, 'int_acc': 592, 'int_dec': 0, 'int_noop': 8708, 'xy_acc': 0, 'pair_acc': 202, 'readouts': 593, 'bm_wall': 4.92, 'arrange_wall': 13.51, 'traj': '375|103|39|71|4|0', 'time': 60.0}
+{'arm': 'xy', 'seed': 0, 'final_acl': 4.29, 'max_chain': 7, 'passes': 9, 'int_acc': 1274, 'int_dec': 0, 'int_noop': 10838, 'xy_acc': 342, 'pair_acc': 577, 'readouts': 1275, 'bm_wall': 24.97, 'arrange_wall': 29.58, 'traj': '389|86|127|167|148|65|91|139|62', 'time': 60.0}
+{'arm': 'xy', 'seed': 1, 'final_acl': 4.34, 'max_chain': 8, 'passes': 9, 'int_acc': 1255, 'int_dec': 0, 'int_noop': 10766, 'xy_acc': 341, 'pair_acc': 559, 'readouts': 1256, 'bm_wall': 25.15, 'arrange_wall': 29.55, 'traj': '389|86|127|167|148|65|91|139|43', 'time': 60.0}
+{'arm': 'xy', 'seed': 2, 'final_acl': 4.53, 'max_chain': 8, 'passes': 9, 'int_acc': 1249, 'int_dec': 0, 'int_noop': 10745, 'xy_acc': 335, 'pair_acc': 559, 'readouts': 1250, 'bm_wall': 25.56, 'arrange_wall': 29.6, 'traj': '389|86|127|167|148|65|91|139|37', 'time': 60.1}
+{'arm': 'audit', 'seed': 0, 'final_acl': 4.69, 'max_chain': 8, 'passes': 2, 'int_acc': 61, 'int_dec': 1687, 'int_noop': 1352, 'xy_acc': 0, 'pair_acc': 12, 'readouts': 1749, 'bm_wall': 2.64, 'arrange_wall': 7.52, 'traj': '61|0', 'time': 60.0}
+{'arm': 'audit', 'seed': 1, 'final_acl': 4.81, 'max_chain': 8, 'passes': 2, 'int_acc': 61, 'int_dec': 1687, 'int_noop': 1352, 'xy_acc': 0, 'pair_acc': 12, 'readouts': 1749, 'bm_wall': 2.61, 'arrange_wall': 6.65, 'traj': '61|0', 'time': 60.1}
+{'arm': 'audit', 'seed': 2, 'final_acl': 4.55, 'max_chain': 8, 'passes': 2, 'int_acc': 61, 'int_dec': 1687, 'int_noop': 1352, 'xy_acc': 0, 'pair_acc': 12, 'readouts': 1749, 'bm_wall': 2.63, 'arrange_wall': 8.01, 'traj': '61|0', 'time': 60.1}
+{'arm': 'audit-xy', 'seed': 0, 'final_acl': 4.6, 'max_chain': 8, 'passes': 4, 'int_acc': 80, 'int_dec': 4056, 'int_noop': 1664, 'xy_acc': 7, 'pair_acc': 28, 'readouts': 4137, 'bm_wall': 13.96, 'arrange_wall': 18.7, 'traj': '66|8|6|0', 'time': 60.1}
+{'arm': 'audit-xy', 'seed': 1, 'final_acl': 5.13, 'max_chain': 8, 'passes': 4, 'int_acc': 80, 'int_dec': 4056, 'int_noop': 1664, 'xy_acc': 7, 'pair_acc': 28, 'readouts': 4137, 'bm_wall': 14.33, 'arrange_wall': 19.16, 'traj': '66|8|6|0', 'time': 60.0}
+{'arm': 'audit-xy', 'seed': 2, 'final_acl': 4.67, 'max_chain': 8, 'passes': 4, 'int_acc': 80, 'int_dec': 4056, 'int_noop': 1664, 'xy_acc': 7, 'pair_acc': 28, 'readouts': 4137, 'bm_wall': 14.5, 'arrange_wall': 19.18, 'traj': '66|8|6|0', 'time': 60.0}
+
+ER100_d10/Z12 means:
+  plane     acl=4.42 mx=7.667 acc=592.0 dec=0.0 xy=0.0 aw=14.017
+  xy        acl=4.387 mx=7.667 acc=1259.333 dec=0.0 xy=339.333 aw=29.577
+  audit     acl=4.683 mx=8.0 acc=61.0 dec=1687.0 xy=0.0 aw=7.393
+  audit-xy  acl=4.8 mx=8.0 acc=80.0 dec=4056.0 xy=7.0 aw=19.013
+load at end: (61.90869140625, 50.34423828125, 41.4833984375)
+done-probe

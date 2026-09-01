@@ -216,3 +216,229 @@
   year      = {2006},
   note      = {Trust-region methods: model subproblems solved within a validity radius}
 }
+
+% ----------------------------------------------------------------------
+% Related-work candidates, added 2026-08-28 (not yet cited in notes.md).
+% The embedding literature for the paper's related-work section: the
+% incumbent, the constructive/template school, the placement school, the
+% structure-exploiting school, recent Zephyr-capable alternatives, and
+% hardness/topology references. One-line role in each note field.
+% ----------------------------------------------------------------------
+
+@article{choi2008minor,
+  author  = {Choi, Vicky},
+  title   = {Minor-Embedding in Adiabatic Quantum Computation: {I}. The Parameter Setting Problem},
+  journal = {Quantum Information Processing},
+  volume  = {7},
+  number  = {5},
+  pages   = {193--209},
+  year    = {2008},
+  note    = {Foundational: chains, chain strength, why chain length matters}
+}
+
+@article{choi2011minor,
+  author  = {Choi, Vicky},
+  title   = {Minor-Embedding in Adiabatic Quantum Computation: {II}. Minor-Universal Graph Design},
+  journal = {Quantum Information Processing},
+  volume  = {10},
+  number  = {3},
+  pages   = {343--353},
+  year    = {2011},
+  note    = {TRIAD; the original constructive clique embedding}
+}
+
+@article{boothby2016clique,
+  author  = {Boothby, Tomas and King, Andrew D. and Roy, Aidan},
+  title   = {Fast Clique Minor Generation in {Chimera} Qubit Connectivity Graphs},
+  journal = {Quantum Information Processing},
+  volume  = {15},
+  number  = {1},
+  pages   = {495--508},
+  year    = {2016},
+  note    = {busclique's ancestor: polynomial-time maximum native clique minors, defect-aware}
+}
+
+@misc{boothby2020pegasus,
+  author = {Boothby, Kelly and Bunyk, Paul and Raymond, Jack and Roy, Aidan},
+  title  = {Next-Generation Topology of {D-Wave} Quantum Processors},
+  year   = {2020},
+  eprint = {2003.00133},
+  archivePrefix = {arXiv},
+  primaryClass = {quant-ph},
+  note   = {The Pegasus topology report; fabric facts cross-checked in fabrics.md \S3}
+}
+
+@techreport{boothby2021zephyr,
+  author      = {Boothby, Kelly and King, Andrew D. and Raymond, Jack},
+  title       = {Zephyr Topology of {D-Wave} Quantum Processors},
+  institution = {D-Wave Systems},
+  number      = {14-1056A-A},
+  year        = {2021},
+  note        = {\url{https://www.dwavequantum.com/media/2uznec4s/14-1056a-a_zephyr_topology_of_d-wave_quantum_processors.pdf}; the Zephyr topology report; fabric facts cross-checked in fabrics.md \S4}
+}
+
+@inproceedings{zbinden2020embedding,
+  author    = {Zbinden, Stefanie and B{\"a}rtschi, Andreas and Djidjev, Hristo and Eidenbenz, Stephan},
+  title     = {Embedding Algorithms for Quantum Annealers with {Chimera} and {Pegasus} Connection Topologies},
+  booktitle = {High Performance Computing (ISC High Performance 2020)},
+  series    = {LNCS},
+  volume    = {12151},
+  pages     = {187--206},
+  year      = {2020},
+  note      = {Closest prior art: Spring-Based/Clique-Based MinorMiner — placement-first embedding; Chimera/Pegasus only, no capacity accounting, no certificates, templates seeded rather than emergent}
+}
+
+@article{serra2022template,
+  author  = {Serra, Thiago and Huang, Teng and Raghunathan, Arvind U. and Bergman, David},
+  title   = {Template-Based Minor Embedding for Adiabatic Quantum Optimization},
+  journal = {INFORMS Journal on Computing},
+  volume  = {34},
+  number  = {1},
+  pages   = {427--439},
+  year    = {2022},
+  note    = {ILP-searched template embeddings for structured problem classes; constructed templates vs our emergent ones}
+}
+
+@article{goodrich2018oct,
+  author  = {Goodrich, Timothy D. and Sullivan, Blair D. and Humble, Travis S.},
+  title   = {Optimizing Adiabatic Quantum Program Compilation Using a Graph-Theoretic Framework},
+  journal = {Quantum Information Processing},
+  volume  = {17},
+  number  = {5},
+  pages   = {118},
+  year    = {2018},
+  note    = {OCT-based embedding: exploits Chimera's near-bipartite product structure — the other algorithm that reads the hardware's algebra}
+}
+
+@inproceedings{bernal2020integer,
+  author    = {Bernal, David E. and Booth, Kyle E. C. and Dridi, Raouf and Alghassi, Hedayat and Tayur, Sridhar and Venturelli, Davide},
+  title     = {Integer Programming Techniques for Minor-Embedding in Quantum Annealers},
+  booktitle = {Integration of Constraint Programming, Artificial Intelligence, and Operations Research (CPAIOR)},
+  series    = {LNCS},
+  volume    = {12296},
+  year      = {2020},
+  note      = {Exact IP formulations; the small-instance exact baseline school}
+}
+
+@misc{ngo2023atom,
+  author = {Ngo, Hoang M. and Kahveci, Tamer and Thai, My T.},
+  title  = {{ATOM}: An Efficient Topology Adaptive Algorithm for Minor Embedding in Quantum Computing},
+  year   = {2023},
+  eprint = {2307.01843},
+  archivePrefix = {arXiv},
+  primaryClass = {quant-ph},
+  note   = {IEEE, 2023. Adaptive-topology greedy embedder; optimizes runtime and qubit count, not chain length}
+}
+
+@misc{ngo2025charme,
+  author = {Ngo, Hoang M. and others},
+  title  = {{CHARME}: A Chain-Based Reinforcement Learning Approach for the Minor Embedding Problem},
+  year   = {2025},
+  eprint = {2406.07124},
+  archivePrefix = {arXiv},
+  primaryClass = {quant-ph},
+  note   = {ACM Transactions on Quantum Computing; RL over chain construction}
+}
+
+@article{sugie2021pssa,
+  author  = {Sugie, Yuya and Yoshida, Yuki and Mertig, Normann and Takemoto, Takashi and Teramoto, Hiroshi and Nakamura, Atsuyoshi and Takigawa, Ichigaku and Minato, Shin-ichi and Yamaoka, Masanao and Komatsuzaki, Tamiki},
+  title   = {Minor-Embedding Heuristics for Large-Scale Annealing Processors with Sparse Hardware Graphs of up to 102,400 Nodes},
+  journal = {Soft Computing},
+  volume  = {25},
+  pages   = {1731--1749},
+  year    = {2021},
+  note    = {PSSA (probabilistic swap-shift annealing); the third arm in the gomez2025eval SOTA comparison, dominated by minorminer there}
+}
+
+@misc{nembrini2025rl,
+  author = {Nembrini, Riccardo and Ferrari Dacrema, Maurizio and Cremonesi, Paolo},
+  title  = {Minor Embedding for Quantum Annealing with Reinforcement Learning},
+  year   = {2025},
+  eprint = {2507.16004},
+  archivePrefix = {arXiv},
+  primaryClass = {quant-ph},
+  note   = {Quantum Machine Intelligence (2026). PPO agent, Zephyr-capable; valid embeddings, not chain-length-competitive with minorminer}
+}
+
+@article{lobe2021complete,
+  author  = {Lobe, Elisabeth and Sch{\"u}rmann, Lukas and Stollenwerk, Tobias},
+  title   = {Embedding of Complete Graphs in Broken {Chimera} Graphs},
+  journal = {Quantum Information Processing},
+  volume  = {20},
+  pages   = {224},
+  year    = {2021},
+  note    = {Defect-aware constructive clique embedding}
+}
+
+@article{lobe2024npcomplete,
+  author  = {Lobe, Elisabeth and Lutz, Annette},
+  title   = {Minor Embedding in Broken {Chimera} and Derived Graphs is {NP}-complete},
+  journal = {Theoretical Computer Science},
+  year    = {2024},
+  note    = {arXiv:2110.08325. The sharp hardness citation: embedding into broken hardware graphs specifically, not generic minor-testing}
+}
+
+@inproceedings{brandes2007pivotmds,
+  author    = {Brandes, Ulrik and Pich, Christian},
+  title     = {Eigensolver Methods for Progressive Multidimensional Scaling of Large Data},
+  booktitle = {Graph Drawing (GD 2006)},
+  series    = {LNCS},
+  volume    = {4372},
+  pages     = {42--53},
+  year      = {2007},
+  note      = {PivotMDS: few-landmark BFS + small MDS — the candidate upgrade path from the s3.120 double-BFS landmark init if the regular/ws gap survives the moves front}
+}
+
+% -- Method cites for the nomination direction (ideas.md front 7,
+%    recorded 2026-08-28): history-as-schedule precedents — conflict
+%    reason-sets, activity-guided search, destroy-set selection,
+%    residual-priority scheduling.
+
+@inproceedings{moskewicz2001chaff,
+  author    = {Moskewicz, Matthew W. and Madigan, Conor F. and Zhao, Ying and Zhang, Lintao and Malik, Sharad},
+  title     = {Chaff: Engineering an Efficient {SAT} Solver},
+  booktitle = {Proceedings of the 38th Design Automation Conference (DAC)},
+  pages     = {530--535},
+  year      = {2001},
+  note      = {VSIDS: per-variable activity bumped on conflict participation, decayed — search where recent failures concentrate}
+}
+
+@inproceedings{selman1994walksat,
+  author    = {Selman, Bart and Kautz, Henry A. and Cohen, Bram},
+  title     = {Noise Strategies for Improving Local Search},
+  booktitle = {Proceedings of the 12th National Conference on Artificial Intelligence (AAAI)},
+  pages     = {337--343},
+  year      = {1994},
+  note      = {WalkSAT: nomination by violation — pick an unsatisfied constraint, move a variable inside it}
+}
+
+@inproceedings{shaw1998lns,
+  author    = {Shaw, Paul},
+  title     = {Using Constraint Programming and Local Search Methods to Solve Vehicle Routing Problems},
+  booktitle = {Principles and Practice of Constraint Programming (CP)},
+  series    = {LNCS},
+  volume    = {1520},
+  pages     = {417--431},
+  year      = {1998},
+  note      = {Large neighborhood search; related-removal destroy sets — evict a RELATED subset and re-optimize it jointly}
+}
+
+@article{ropke2006alns,
+  author  = {Ropke, Stefan and Pisinger, David},
+  title   = {An Adaptive Large Neighborhood Search Heuristic for the Pickup and Delivery Problem with Time Windows},
+  journal = {Transportation Science},
+  volume  = {40},
+  number  = {4},
+  pages   = {455--472},
+  year    = {2006},
+  note    = {ALNS: destroy-heuristic selection weights adapted online from success statistics — set nomination as a learned schedule}
+}
+
+@inproceedings{elidan2006residual,
+  author    = {Elidan, Gal and McGraw, Ian and Koller, Daphne},
+  title     = {Residual Belief Propagation: Informed Scheduling for Asynchronous Message Passing},
+  booktitle = {Proceedings of the 22nd Conference on Uncertainty in Artificial Intelligence (UAI)},
+  pages     = {165--173},
+  year      = {2006},
+  note      = {Residual-priority scheduling: process where the last change made the most difference — the wavefront idea in message-passing form}
+}

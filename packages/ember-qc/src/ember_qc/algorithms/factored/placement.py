@@ -393,6 +393,38 @@ class AttractConfig:
                                # counts how often iteration 2+ still
                                # changes anything — the per-run
                                # measurement of the fixpoint premise.
+    xy_singles: bool = False
+                               # s3.121: the joint two-axis singleton
+                               # reinsertion — evict one variable from
+                               # BOTH carried orders, re-insert at the
+                               # exact optimum over all (x-slot,
+                               # y-slot) pairs. Separable per stair-
+                               # split (deg+1 prefix windows), priced
+                               # by the same audited interleaver in
+                               # slot_costs mode — no third court. The
+                               # fold's atom (s3.87): a 2-D relocation
+                               # whose 1-D halves are net-negative, so
+                               # per-axis moves cannot compose it.
+                               # Replaces the ladder's scale-1 sweep
+                               # (subsumption). Requires carry_orders;
+                               # measurement switch.
+    wave_schedule: bool = False
+                               # s3.122: the disturbance-driven
+                               # schedule (ideas front 7, first
+                               # build). Schedule ONLY — same moves,
+                               # same acceptance, same readout: wave 0
+                               # asks exactly the blind loop's first
+                               # pass; maintenance waves re-ask any
+                               # scale, coarse-first, restricted to
+                               # blocks containing a variable the
+                               # previous wave's adoptions disturbed
+                               # (per-variable span/contacts diff); a
+                               # completed wave disturbing nothing is
+                               # a fixpoint certificate over the whole
+                               # move family -> arrange returns early
+                               # and the tail inherits the budget.
+                               # Requires carry_orders; measurement
+                               # switch.
 
 
 def _auto_bins(n_qubits: int) -> int:
@@ -461,6 +493,12 @@ def attract_embed(
         if cfg.tile_moves and not cfg.carry_orders:
             # loud FAILURE, not a silent control-arm measurement
             raise ValueError("tile_moves requires carry_orders")
+        if cfg.xy_singles and not cfg.carry_orders:
+            # loud FAILURE, not a silent control-arm measurement
+            raise ValueError("xy_singles requires carry_orders")
+        if cfg.wave_schedule and not cfg.carry_orders:
+            # loud FAILURE, not a silent control-arm measurement
+            raise ValueError("wave_schedule requires carry_orders")
 
         from ember_qc.algorithms.factored.field import (
             TileGrid, _target_kappa, arm_books, bar_widths,
@@ -638,7 +676,9 @@ def attract_embed(
                 extra_units=(cluster_groups if cfg.hier_units
                              else None),
                 carry=cfg.carry_orders,
-                tiles=cfg.tile_moves)
+                tiles=cfg.tile_moves,
+                xy=cfg.xy_singles,
+                wave=cfg.wave_schedule)
             _legal_info = last_info.get("readout_info", {})
         else:
             # the plane engine (round 3, s3.116): the search lives on
@@ -656,7 +696,8 @@ def attract_embed(
                 extra_units=(cluster_groups if cfg.hier_units
                              else None),
                 plane=True, carry=cfg.carry_orders,
-                tiles=cfg.tile_moves)
+                tiles=cfg.tile_moves, xy=cfg.xy_singles,
+                wave=cfg.wave_schedule)
             # THE one projection — optionally settled to its
             # alternation fixpoint (s3.119: the per-run measurement of
             # the fixpoint premise; iteration 2+ changing anything
@@ -836,6 +877,12 @@ def attract_embed(
             diag["hier_accepts"] = int(last_info.get("hier_accepts", 0))
             diag["pair_accepts"] = int(last_info.get("pair_accepts", 0))
             diag["tile_accepts"] = int(last_info.get("tile_accepts", 0))
+            diag["xy_accepts"] = int(last_info.get("xy_accepts", 0))
+            diag["wave_count"] = int(last_info.get("wave_count", 0))
+            diag["wave_questions"] = int(
+                last_info.get("wave_questions", 0))
+            diag["wave_early_stop"] = bool(
+                last_info.get("wave_early_stop", False))
             if cfg.engine.startswith("plane"):
                 diag["proj_iters"] = _proj_iters
             if cfg.engine.startswith("plane"):

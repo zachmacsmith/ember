@@ -1,0 +1,33 @@
+3 cells, 6 jobs; load (72.77490234375, 75.322265625, 75.85009765625)
+/data/max/ember/docs/paper2/data/xy_probe.py:76: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/xy_probe.py:76: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/xy_probe.py:76: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/xy_probe.py:76: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/xy_probe.py:76: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/xy_probe.py:76: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+Z12 turan_n162         plane  seed 0: 9.253 mx=12 xy=0 acc=203 ro=204 mes=28.0 def=0 skip=True (63.0s)
+Z12 turan_n162         xy     seed 0: 9.16 mx=13 xy=38 acc=240 ro=241 mes=27.0 def=0 skip=True (61.1s)
+Z12 regular_n316       plane  seed 0: 2.87 mx=7 xy=0 acc=860 ro=861 mes=30.0 def=0 skip=True (60.0s)
+Z12 regular_n316       xy     seed 0: 2.832 mx=7 xy=107 acc=875 ro=876 mes=27.0 def=0 skip=True (60.0s)
+Z12 ws_n486            plane  seed 0: 2.527 mx=9 xy=0 acc=1051 ro=1052 mes=30.0 def=27 skip=False (60.0s)
+Z12 ws_n486            xy     seed 0: 2.488 mx=8 xy=0 acc=922 ro=923 mes=30.0 def=33 skip=False (60.0s)
+
+summary (mean ACL; d = arm - plane, negative = wins):
+Z12 turan_n162         plane=9.253(1) mx=12.0 | xy=9.16(1) mx=13.0 mes=27.0 xy=38.0 d=-0.093
+Z12 regular_n316       plane=2.87(1) mx=7.0 | xy=2.832(1) mx=7.0 mes=27.0 xy=107.0 d=-0.038
+Z12 ws_n486            plane=2.527(1) mx=9.0 | xy=2.488(1) mx=8.0 mes=30.0 xy=0.0 d=-0.039
+
+BAR turan_n162/Z12: acl {'plane': 9.253, 'xy': 9.16} mx {'plane': 12.0, 'xy': 13.0} mes {'plane': 28.0, 'xy': 27.0}
+
+BAR ws_n486/Z12: acl {'plane': 2.527, 'xy': 2.488} mx {'plane': 9.0, 'xy': 8.0} mes {'plane': 30.0, 'xy': 30.0}
+
+BAR regular_n316/Z12: acl {'plane': 2.87, 'xy': 2.832} mx {'plane': 7.0, 'xy': 7.0} mes {'plane': 30.0, 'xy': 27.0}
+BAR board: PASS
+load at end: (90.59375, 80.759765625, 77.7412109375)
+done-probe

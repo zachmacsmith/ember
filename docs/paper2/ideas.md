@@ -171,6 +171,43 @@ Each of these was paid for; the receipts are in `attraction.md`.
    coupler-predicate cover accounting shared with the Zephyr machinery,
    never a parallel engine); max-chain as a third lexicographic slot;
    king +0.24 and grid +0.04 residuals.
+7. **Nomination — pay for order, not for asks (DIRECTION: discuss
+   before build).** A rejection is cheap; bulk rejections are not. The
+   scheduling information is already computed and discarded: (a) the
+   state-version memo's invalidation set on every accept IS the
+   worklist (re-ask exactly what the accept disturbed); (b) a declined
+   DP carries its reason-set — the variables realizing the binding
+   hull extremes (what `_axis_coeffs` counts); (c) recurring
+   co-blocking clusters escalate into discovered joint units (subsumes
+   span-ranked edge nomination, and operationally detects ER variance
+   clusters: delocalized flat score landscapes with overlapping
+   near-minima — candidate replacement for hier_units without static
+   machinery). Bonus: an empty worklist is a fixpoint certificate over
+   the move family — the honest internal stopping rule s3.75 said
+   doesn't exist, and the structural kill for mm-style patience
+   sweeps. Distinction on the record: this is history-as-SCHEDULE
+   (judge untouched, misnomination costs one evaluation) — not the
+   twice-refuted history-as-cost. FIRST BUILD SHIPPED (s3.122,
+   `wave_schedule`, lever off pending the flip call): wave 0 = the
+   blind first pass, maintenance waves dirty-restricted by the
+   ground-truth span/contacts diff, empty completed wave =
+   full-family fixpoint certificate. Round-2 board: parity (7 exact
+   ties incl. deciders at 10 seeds), bmw wins on regular/grid,
+   certificate fires on ER/grid/honeycomb. Still open here: scoped/
+   per-node invalidation (the two-trees design — order tree x
+   affinity hierarchy, agreement as the progress meter),
+   non-contiguous discovered units (co-blocking clusters), and the
+   dense-cell economics (churn accepts dirty their whole cut, so
+   waves ≈ passes there — the acceptance question's new face).
+   FIRST MEASURED MOTIVATION (s3.121):
+   the blind coarse ladder deadline-cuts pass 1 before the fine end
+   on ws/regular in EVERY arm — the shipped pair units and the new
+   2-D singleton (`xy_singles`, built oracle-exact, lever off) never
+   run on exactly the cells that need them, and on ER the extra
+   sweep feeds accept-all churn (+0.48). Blind sweeps are expensive
+   in both currencies; the fold thesis awaits a schedule that can
+   reach its atom. The `slot_costs` per-slot vector is the
+   delocalization detector's instrument, already built.
 
 ## Method
 

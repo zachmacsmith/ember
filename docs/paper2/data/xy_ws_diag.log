@@ -1,0 +1,2 @@
+<string>:2: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+ws t=240 xy: 2.617 mx 9 xy_acc 425 int_acc 2648 passes 3 traj [1661, 779, 208] bm_wall 99.26 mes 33.0
