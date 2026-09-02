@@ -65,6 +65,8 @@ def order_arrange(pos0: Dict[int, np.ndarray],
                   tiles: bool = False,
                   xy: bool = False,
                   wave: bool = False,
+                  axis_inner: bool = False,
+                  widen: bool = False,
                   ) -> Tuple[Dict[int, np.ndarray], dict]:
     info: dict = {
         "passes": 0, "accept_traj": [],
@@ -78,6 +80,7 @@ def order_arrange(pos0: Dict[int, np.ndarray],
         "hier_accepts": 0, "pair_accepts": 0, "tile_accepts": 0,
         "xy_accepts": 0,
         "wave_count": 0, "wave_questions": 0, "wave_early_stop": False,
+        "widen_asked": 0, "widen_accepts": 0,
     }
     if not getattr(grid, "typed", False) or not line_pools(grid):
         return _copy(pos0), info
@@ -127,25 +130,30 @@ def order_arrange(pos0: Dict[int, np.ndarray],
                  if carry else None)
     n = len(pos)
 
-    # s3.122 wave-scheduler state. Dirtiness is per-VARIABLE (ids is
-    # the fixed index space for the whole run); cur_spans caches the
-    # current state's per-variable stair spans — the ground truth the
-    # disturbance diff in _try_adopt runs against. The leaf floor
-    # (wave 0 asks no scale below it) is the line pool width, clamped
-    # so tiny instances keep a non-empty build ladder.
+    # s3.122 wave-scheduler state + s3.123 widen register. Dirtiness
+    # is per-VARIABLE (ids is the fixed index space for the whole
+    # run); cur_spans caches the current state's per-variable stair
+    # spans — the ground truth the disturbance diff in _try_adopt runs
+    # against. ``last_diff`` (s3.123) is the most recent adoption's
+    # realized diff-set — the displaced variables the cross-axis
+    # widening carries to the unit's second-axis probe.
     wave = wave and carry
+    axis_inner = axis_inner and carry
+    widen = widen and axis_inner
     ids_w: List[int] = []
     ixw: Dict[int, int] = {}
     dirty = None
     dirty_next = None
     cur_spans = None
-    if wave:
+    last_diff: Optional[List[int]] = None
+    if wave or widen:
         ids_w = sorted(pos)
         ixw = {v: i for i, v in enumerate(ids_w)}
-        dirty = np.ones(n, dtype=bool)
-        dirty_next = np.zeros(n, dtype=bool)
         _, _sh, _sv = _span_vectors(pos, src_adj, rank[1])
         cur_spans = (_sh, _sv)
+    if wave:
+        dirty = np.ones(n, dtype=bool)
+        dirty_next = np.zeros(n, dtype=bool)
 
     def _resort_orders(p2):
         # the monotone-values invariant repair (validator, s3.118):
@@ -161,7 +169,7 @@ def order_arrange(pos0: Dict[int, np.ndarray],
         """Readout the materialized candidate; adopt per the acceptance
         rule; bookmark. Returns True iff the state changed."""
         nonlocal pos, e_cur, rinfo, contacts, best_e, best_pos, \
-            best_rinfo, best_ords, cur_spans, dirty_next
+            best_rinfo, best_ords, cur_spans, dirty_next, last_diff
         cand2, rinfo2 = _readout(cand, new_ords if carry else None)
         if carry:
             changed = (new_ords != ords) or not _same(cand2, pos)
@@ -187,7 +195,7 @@ def order_arrange(pos0: Dict[int, np.ndarray],
         if audit and not (e2 < e_cur - 1e-9):
             info["interleave_declines"] += 1
             return False
-        old_contacts = contacts if wave else None
+        old_contacts = contacts if (wave or widen) else None
         pos, e_cur, rinfo = cand2, e2, rinfo2
         contacts = cts2
         if carry:
@@ -200,17 +208,21 @@ def order_arrange(pos0: Dict[int, np.ndarray],
                 contacts = _stair_contacts(pos, src_adj,
                                            yrank=rank[1])
                 e_cur = _judge(pos, contacts, rank[1])
-        if wave:
+        if wave or widen:
             # s3.122 disturbance diff (ground truth): a variable whose
             # span or contacts entry changed in this adoption joins
-            # the NEXT wave. Runs after the carry/repair block so the
-            # diff reads the post-repair final state.
+            # the NEXT wave (s3.122) and/or the widen register
+            # (s3.123). Runs after the carry/repair block so the diff
+            # reads the post-repair final state.
             _, nh, nv = _span_vectors(pos, src_adj, rank[1])
             moved = (nh != cur_spans[0]) | (nv != cur_spans[1])
             for i, v in enumerate(ids_w):
                 if not moved[i] and old_contacts[v] != contacts[v]:
                     moved[i] = True
-            dirty_next = dirty_next | moved
+            if wave:
+                dirty_next = dirty_next | moved
+            if widen:
+                last_diff = [ids_w[i] for i in np.flatnonzero(moved)]
             cur_spans = (nh, nv)
         if e2 < best_e:
             best_e, best_pos, best_rinfo = e2, _copy(pos), rinfo2
@@ -321,6 +333,18 @@ def order_arrange(pos0: Dict[int, np.ndarray],
             return 1
         tried[key] = state_ver
         return 0
+
+    # s3.123 slot-paired widening state: when the FIRST sweep's probe
+    # at slot K is adopted (under ``widen``), the adoption's realized
+    # diff is recorded at K; when the SECOND sweep reaches the same
+    # slot, its unit widens by that diff — the cross-axis response
+    # (an x-squeeze is relieved by y-reordering via contact flips, a
+    # y-reorder is completed by x-re-placement) with the sweep
+    # structure itself untouched (the per-block adjacency reorder was
+    # convicted by its own smoke: crystal +0.99 at the quiet seed).
+    # Cleared each pass; the widened ask uses a ("w",)-prefixed memo
+    # key so its decline never suppresses a later plain ask.
+    ext: dict = {}
 
     def _tile_delta(members, moved):
         """Frozen-view delta-stair of moving ``members`` to the
@@ -450,15 +474,35 @@ def order_arrange(pos0: Dict[int, np.ndarray],
             info["passes"] += 1
             changes = 0
             first = info["passes"] == 1
+            # s3.123 axis_inner: per-pass sweep-direction alternation,
+            # so neither axis is systematically the recording sweep
+            axpair = ((0, 1) if axis_inner and info["passes"] % 2 == 0
+                      else (1, 0))
+            ext.clear()
             if first and extra_units:
                 for li, level in enumerate(reversed(extra_units)):
                     for gi, grp in enumerate(level):
-                        for axis in (1, 0):
+                        for axis in axpair:
                             if _expired():
                                 break
                             unit = [v for v in grp if v in pos]
-                            got = _probe(unit, axis,
-                                         ("h", li, gi, axis))
+                            wext = (ext.pop(("h", li, gi), None)
+                                    if widen and axis != axpair[0]
+                                    else None)
+                            if wext:
+                                info["widen_asked"] += 1
+                                got = _probe(
+                                    sorted(set(unit) | wext), axis,
+                                    ("w", "h", li, gi, axis))
+                                if got:
+                                    info["widen_accepts"] += 1
+                            else:
+                                got = _probe(unit, axis,
+                                             ("h", li, gi, axis))
+                                if (got and widen
+                                        and axis == axpair[0]):
+                                    ext[("h", li, gi)] = set(
+                                        last_diff or ())
                             if got:
                                 info["hier_accepts"] += 1
                             changes += got
@@ -481,7 +525,7 @@ def order_arrange(pos0: Dict[int, np.ndarray],
                     if _expired():
                         break
                     continue
-                for axis in (1, 0):
+                for axis in axpair:
                     for off in range(0, n, max(scale // 2, 1)):
                         if _expired():
                             break
@@ -490,8 +534,24 @@ def order_arrange(pos0: Dict[int, np.ndarray],
                                 dirty[ixw[v]] for v in block):
                             continue
                         info["wave_questions"] += 1
-                        changes += _probe(block, axis,
-                                          (axis, scale, off))
+                        wext = (ext.pop((scale, off), None)
+                                if widen and axis != axpair[0]
+                                else None)
+                        if wext:
+                            info["widen_asked"] += 1
+                            got = _probe(
+                                sorted(set(block) | wext), axis,
+                                ("w", scale, off, axis))
+                            if got:
+                                info["widen_accepts"] += 1
+                        else:
+                            got = _probe(block, axis,
+                                         (axis, scale, off))
+                            if (got and widen
+                                    and axis == axpair[0]):
+                                ext[(scale, off)] = set(
+                                    last_diff or ())
+                        changes += got
                     if _expired():
                         break
                 if _expired():
@@ -502,11 +562,23 @@ def order_arrange(pos0: Dict[int, np.ndarray],
                 if not first and not (dirty[ixw[u]]
                                       or dirty[ixw[w]]):
                     continue
-                for axis in (1, 0):
+                for axis in axpair:
                     if _expired():
                         break
                     info["wave_questions"] += 1
-                    got = _probe([u, w], axis, ("e", ei, axis))
+                    wext = (ext.pop(("e", ei), None)
+                            if widen and axis != axpair[0]
+                            else None)
+                    if wext:
+                        info["widen_asked"] += 1
+                        got = _probe(sorted({u, w} | wext), axis,
+                                     ("w", "e", ei, axis))
+                        if got:
+                            info["widen_accepts"] += 1
+                    else:
+                        got = _probe([u, w], axis, ("e", ei, axis))
+                        if got and widen and axis == axpair[0]:
+                            ext[("e", ei)] = set(last_diff or ())
                     if got:
                         info["pair_accepts"] += 1
                     changes += got
@@ -521,6 +593,10 @@ def order_arrange(pos0: Dict[int, np.ndarray],
     while not wave and info["passes"] < _MAX_PASSES and not _expired():
         info["passes"] += 1
         changes = 0
+        # s3.123 axis_inner: per-pass sweep-direction alternation
+        axpair = ((0, 1) if axis_inner and info["passes"] % 2 == 0
+                  else (1, 0))
+        ext.clear()
         if extra_units:
             # graph-derived groups (the affinity hierarchy) as EXTRA
             # units, coarsest level first: a scattered similar set is
@@ -528,11 +604,27 @@ def order_arrange(pos0: Dict[int, np.ndarray],
             # accretion cannot express (Max's ER variance hypothesis)
             for li, level in enumerate(reversed(extra_units)):
                 for gi, grp in enumerate(level):
-                    for axis in (1, 0):
+                    for axis in axpair:
                         if _expired():
                             break
                         unit = [v for v in grp if v in pos]
-                        got = _probe(unit, axis, ("h", li, gi, axis))
+                        wext = (ext.pop(("h", li, gi), None)
+                                if widen and axis != axpair[0]
+                                else None)
+                        if wext:
+                            info["widen_asked"] += 1
+                            got = _probe(sorted(set(unit) | wext),
+                                         axis, ("w", "h", li, gi,
+                                                axis))
+                            if got:
+                                info["widen_accepts"] += 1
+                        else:
+                            got = _probe(unit, axis,
+                                         ("h", li, gi, axis))
+                            if (got and widen
+                                    and axis == axpair[0]):
+                                ext[("h", li, gi)] = set(
+                                    last_diff or ())
                         if got:
                             info["hier_accepts"] += 1
                         changes += got
@@ -556,7 +648,7 @@ def order_arrange(pos0: Dict[int, np.ndarray],
                 if _expired():
                     break
                 continue
-            for axis in (1, 0):
+            for axis in axpair:
                 for off in range(0, n, max(scale // 2, 1)):
                     if _expired():
                         break
@@ -565,8 +657,22 @@ def order_arrange(pos0: Dict[int, np.ndarray],
                     else:
                         order = sorted(pos, key=lambda v:
                                        (float(pos[v][axis]), v))
-                    changes += _probe(order[off:off + scale], axis,
-                                      (axis, scale, off))
+                    block = order[off:off + scale]
+                    wext = (ext.pop((scale, off), None)
+                            if widen and axis != axpair[0]
+                            else None)
+                    if wext:
+                        info["widen_asked"] += 1
+                        got = _probe(sorted(set(block) | wext), axis,
+                                     ("w", scale, off, axis))
+                        if got:
+                            info["widen_accepts"] += 1
+                    else:
+                        got = _probe(block, axis,
+                                     (axis, scale, off))
+                        if got and widen and axis == axpair[0]:
+                            ext[(scale, off)] = set(last_diff or ())
+                    changes += got
                 if _expired():
                     break
             if _expired():
@@ -577,10 +683,22 @@ def order_arrange(pos0: Dict[int, np.ndarray],
             # hard way at s3.118: pairs-first ate turán's whole budget
             # before a single coarse weave ran)
             for ei, (u, w) in enumerate(edges):
-                for axis in (1, 0):
+                for axis in axpair:
                     if _expired():
                         break
-                    got = _probe([u, w], axis, ("e", ei, axis))
+                    wext = (ext.pop(("e", ei), None)
+                            if widen and axis != axpair[0]
+                            else None)
+                    if wext:
+                        info["widen_asked"] += 1
+                        got = _probe(sorted({u, w} | wext), axis,
+                                     ("w", "e", ei, axis))
+                        if got:
+                            info["widen_accepts"] += 1
+                    else:
+                        got = _probe([u, w], axis, ("e", ei, axis))
+                        if got and widen and axis == axpair[0]:
+                            ext[("e", ei)] = set(last_diff or ())
                     if got:
                         info["pair_accepts"] += 1
                     changes += got

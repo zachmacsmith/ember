@@ -425,6 +425,35 @@ class AttractConfig:
                                # and the tail inherits the budget.
                                # Requires carry_orders; measurement
                                # switch.
+    axis_inner: bool = False
+                               # s3.123 (schedule half of the cross-
+                               # widen round): the per-pass sweep
+                               # DIRECTION alternates (odd passes
+                               # (y,x), even (x,y)) so neither axis is
+                               # systematically the recording sweep.
+                               # The sweep structure itself is
+                               # untouched — the per-block adjacency
+                               # reorder was convicted by its own
+                               # smoke (crystal +0.99, quiet seed 0)
+                               # and replaced by slot-paired widening.
+                               # Deterministic — no rng. Requires
+                               # carry_orders; measurement switch.
+    cross_widen: bool = False
+                               # s3.123 (widening half): when a unit's
+                               # first-axis probe is ADOPTED, the same
+                               # unit's second-axis probe widens to
+                               # include the adoption's realized
+                               # diff-set — everyone the move and the
+                               # packer displaced. The cross-axis
+                               # response: an x-squeeze is relieved by
+                               # y-reordering (contact flips), a
+                               # y-reorder completed by x-re-placement
+                               # — a tractable two-step decomposition
+                               # of the intractable joint two-axis set
+                               # move (the fold's shape, s3.121). Zero
+                               # extra questions, zero extra packs.
+                               # Requires axis_inner; measurement
+                               # switch.
 
 
 def _auto_bins(n_qubits: int) -> int:
@@ -499,6 +528,12 @@ def attract_embed(
         if cfg.wave_schedule and not cfg.carry_orders:
             # loud FAILURE, not a silent control-arm measurement
             raise ValueError("wave_schedule requires carry_orders")
+        if cfg.axis_inner and not cfg.carry_orders:
+            # loud FAILURE, not a silent control-arm measurement
+            raise ValueError("axis_inner requires carry_orders")
+        if cfg.cross_widen and not cfg.axis_inner:
+            # loud FAILURE, not a silent control-arm measurement
+            raise ValueError("cross_widen requires axis_inner")
 
         from ember_qc.algorithms.factored.field import (
             TileGrid, _target_kappa, arm_books, bar_widths,
@@ -678,7 +713,9 @@ def attract_embed(
                 carry=cfg.carry_orders,
                 tiles=cfg.tile_moves,
                 xy=cfg.xy_singles,
-                wave=cfg.wave_schedule)
+                wave=cfg.wave_schedule,
+                axis_inner=cfg.axis_inner,
+                widen=cfg.cross_widen)
             _legal_info = last_info.get("readout_info", {})
         else:
             # the plane engine (round 3, s3.116): the search lives on
@@ -697,7 +734,9 @@ def attract_embed(
                              else None),
                 plane=True, carry=cfg.carry_orders,
                 tiles=cfg.tile_moves, xy=cfg.xy_singles,
-                wave=cfg.wave_schedule)
+                wave=cfg.wave_schedule,
+                axis_inner=cfg.axis_inner,
+                widen=cfg.cross_widen)
             # THE one projection — optionally settled to its
             # alternation fixpoint (s3.119: the per-run measurement of
             # the fixpoint premise; iteration 2+ changing anything
@@ -883,6 +922,9 @@ def attract_embed(
                 last_info.get("wave_questions", 0))
             diag["wave_early_stop"] = bool(
                 last_info.get("wave_early_stop", False))
+            diag["widen_asked"] = int(last_info.get("widen_asked", 0))
+            diag["widen_accepts"] = int(
+                last_info.get("widen_accepts", 0))
             if cfg.engine.startswith("plane"):
                 diag["proj_iters"] = _proj_iters
             if cfg.engine.startswith("plane"):

@@ -193,12 +193,22 @@ Each of these was paid for; the receipts are in `attraction.md`.
    ground-truth span/contacts diff, empty completed wave =
    full-family fixpoint certificate. Round-2 board: parity (7 exact
    ties incl. deciders at 10 seeds), bmw wins on regular/grid,
-   certificate fires on ER/grid/honeycomb. Still open here: scoped/
-   per-node invalidation (the two-trees design — order tree x
-   affinity hierarchy, agreement as the progress meter),
-   non-contiguous discovered units (co-blocking clusters), and the
-   dense-cell economics (churn accepts dirty their whole cut, so
-   waves ≈ passes there — the acceptance question's new face).
+   certificate fires on ER/grid/honeycomb. SECOND BUILD (s3.123,
+   `axis_inner`+`cross_widen`, levers off): the discovered-units
+   question answered by measurement — the capacity-coupled sets ARE
+   discoverable from adoption diffs and prolifically askable
+   (60-75% of widened questions adopt) but their joint adoptions
+   are plateau wanders under accept-all (crystal +0.552/10; movers
+   ~parity). The front's open question moves DOWN a level: not
+   "which sets" (the diffs know) but "under what judge/acceptance
+   do joint set-moves profit" — the slack-view-or-acceptance fork,
+   reached independently by s3.121b (ws audit declines 100% of
+   joint proposals), the 240s fold verdict, and the widening board.
+   Still open here: scoped/per-node invalidation (the two-trees
+   design — order tree x affinity hierarchy, agreement as the
+   progress meter), and the dense-cell economics (churn accepts
+   dirty their whole cut, so waves ≈ passes there — the acceptance
+   question's new face).
    FIRST MEASURED MOTIVATION (s3.121):
    the blind coarse ladder deadline-cuts pass 1 before the fine end
    on ws/regular in EVERY arm — the shipped pair units and the new

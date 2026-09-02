@@ -757,6 +757,93 @@ class TestWaveSchedule:
         assert a["embedding"] == b["embedding"]
 
 
+class TestCrossWiden:
+    """s3.123: axis_inner (per-unit axis adjacency + per-pass axis
+    alternation) and cross_widen (a first-axis adoption widens the
+    second-axis probe by the realized diff)."""
+
+    def _run(self, adj, pos, grid, **kw):
+        kappa = _target_kappa(grid)
+        return order_arrange(pos, adj, grid, kappa=kappa,
+                             plane=True, carry=True, **kw)
+
+    def _case(self, seed, n=16):
+        rng = np.random.default_rng(seed)
+        g = nx.gnp_random_graph(n, 0.4, seed=11)
+        adj = {v: sorted(g.neighbors(v)) for v in g.nodes()}
+        pos = {v: np.array([float(rng.integers(0, 3)),
+                            float(rng.integers(0, 3))])
+               for v in g.nodes()}
+        return adj, pos
+
+    def test_widen_fires_and_stays_real(self):
+        grid = _zgrid()
+        asked = 0
+        for seed in (37, 41, 43):
+            adj, pos = self._case(seed)
+            out, info = self._run(adj, pos, grid, axis_inner=True,
+                                  widen=True)
+            asked += info["widen_asked"]
+            # carry realness invariants survive widened adopts
+            ox, oy = info["_orders"]
+            yrank = {v: r for r, v in enumerate(oy)}
+            assert (info["readout_info"]["_contacts"]
+                    == _stair_contacts(out, adj, yrank=yrank))
+            for ax, o in ((0, ox), (1, oy)):
+                vals = [float(out[v][ax]) for v in o]
+                assert all(a <= b for a, b in zip(vals, vals[1:]))
+        assert asked >= 1  # the mechanism must actually be exercised
+
+    def test_deterministic_both_arms(self):
+        grid = _zgrid()
+        adj, pos = self._case(53)
+        for kw in ({"axis_inner": True},
+                   {"axis_inner": True, "widen": True}):
+            o1, i1 = self._run(adj, pos, grid, **kw)
+            o2, i2 = self._run(adj, pos, grid, **kw)
+            assert all(np.array_equal(o1[v], o2[v]) for v in o1)
+            assert i1["widen_asked"] == i2["widen_asked"]
+
+    def test_knob_pins_and_guards(self):
+        from dataclasses import fields
+        from ember_qc.algorithms.factored.placement import AttractConfig
+        names = {f.name for f in fields(AttractConfig)}
+        assert {"axis_inner", "cross_widen"} <= names
+        from ember_qc.algorithms.factored import attract_embed
+        r = attract_embed(nx.path_graph(4), dnx.chimera_graph(2, 2, 4),
+                          timeout=5, seed=0, axis_inner=True,
+                          carry_orders=False)
+        assert r["status"] == "FAILURE" and "carry" in r.get("error", "")
+        r = attract_embed(nx.path_graph(4), dnx.chimera_graph(2, 2, 4),
+                          timeout=5, seed=0, cross_widen=True,
+                          axis_inner=False)
+        assert r["status"] == "FAILURE" and "axis_inner" in r.get(
+            "error", "")
+
+    def test_e2e_valid_deterministic(self):
+        from ember_qc.algorithms.factored import attract_embed
+        from ember_qc.registry import validate_embedding
+        src = nx.gnp_random_graph(14, 0.35, seed=9)
+        for tgt in (dnx.zephyr_graph(3, 4), dnx.chimera_graph(4, 4, 4)):
+            for kw in ({"axis_inner": True},
+                       {"axis_inner": True, "cross_widen": True}):
+                r1 = attract_embed(src, tgt, timeout=15, seed=0, **kw)
+                r2 = attract_embed(src, tgt, timeout=15, seed=0, **kw)
+                emb = r1["embedding"]
+                assert emb and validate_embedding(emb, src, tgt), kw
+                assert r1["embedding"] == r2["embedding"]
+                assert "widen_asked" in r1["diag"]
+
+    def test_off_identity(self):
+        from ember_qc.algorithms.factored import attract_embed
+        src = nx.gnp_random_graph(10, 0.4, seed=3)
+        tgt = dnx.zephyr_graph(2, 4)
+        a = attract_embed(src, tgt, timeout=10, seed=0)
+        b = attract_embed(src, tgt, timeout=10, seed=0,
+                          axis_inner=False, cross_widen=False)
+        assert a["embedding"] == b["embedding"]
+
+
 class TestTileMoves:
     """s3.119: the 2-D-joint family — tiles x {shift, reversals}."""
 

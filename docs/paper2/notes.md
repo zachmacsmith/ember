@@ -2271,6 +2271,57 @@ with a real terminator and small work-to-answer gains, at zero
 measured cost. Lever stays OFF; the default flip is the owner's
 call under the winners rule.
 
+**3.123 (cross-axis widening — the co-movement thesis measured: the
+coupled sets are REAL and ASKABLE, their joint adoptions are not yet
+PROFITABLE; both levers off).** The design survived three prunings in
+discussion (follow-up chains: second-class questions; overlap riders:
+incoherent, no throughput; then Max's bundling: a first-axis adoption
+widens the SAME unit's second-axis probe by the adoption's realized
+diff — the displaced set, the packer's own testimony about capacity
+coupling; physics: an x-squeeze is relieved by y-reordering via
+contact flips, a y-reorder is completed by x-re-placement — a
+tractable two-step decomposition of the intractable joint two-axis
+set move). Two knobs for attribution: `axis_inner` (schedule half)
+and `cross_widen` (widening half, requires it). BUILD ARC, honestly:
+the first implementation created axis adjacency by reordering the
+ladder per-block — **convicted by its own smoke on the quiet box
+(crystal +0.99 at the byte-stable seed 0, the inner arm alone)** and
+replaced the same day by SLOT-PAIRED widening: sweeps untouched,
+diff recorded at slot key on the first sweep's adoption, consumed at
+the second sweep's same slot; `axis_inner` shrank to per-pass
+sweep-direction alternation. 5 new tests; suite 657.
+
+Board (`data/widen_probe.csv`, 3 arms, deep seeds turán/ws/regular/
+ER, load 24→52): **BAR FAIL — turán/widen +0.552/10 beyond tol**
+(the third independent confirmation that set-scale cross-axis
+meddling scrambles the forming crystal: tiles s3.119, xy@240
+s3.121b, widen here); honeycomb wall flags both arms (load-suspect —
+inner is ACL-byte-inert there). The mechanism reading that outranks
+the fail: **widened questions fire and ADOPT prolifically** (479
+asked / 348 accepted per ws seed; 60-75% acceptance everywhere) —
+the capacity-coupled sets exist, are discoverable from the diffs,
+and the DP finds view-improvements for them — **but adopted is not
+profitable**: ws +0.023 (mx 8.5→8.4), regular +0.063, ER −0.050
+(the smoke's −0.40 direction persists but shrinks; mx 7.8→8.6, a
+fatter tail), grid −0.023 / honeycomb −0.015 with better mx, king
++0.267. The inner arm is EXACTLY byte-inert on six cells (d=+0.000
+— per-pass alternation rarely changes fixpoints) with mild ER/ws
+costs. Verdict: both levers OFF. The co-movement thesis dies in its
+VALUE claim under accept-all while its EXISTENCE claim is
+confirmed — the joint moves of discovered sets are plateau wanders
+the plane judge cannot distinguish from progress, exactly consistent
+with the s3.121b audit fact (ws joint proposals 100% judge-declined:
+under audit these widenings would mostly decline; under accept-all
+they adopt and wander). The arc's residue is now one named fork,
+reached from three independent directions: **profit from joint
+set-moves requires either a slack-carrying view (the judge cannot
+see what fold steps buy) or acceptance discipline** — the same fork
+the 240s verdict named, now with the discovery machinery built and
+waiting on it. Banked: the smoke-first protocol earned its keep
+twice this round; the slot-pairing `ext` register is reusable; and
+`widen_accepts` at 60-75% is itself a measurement of how loose the
+plane view is on plateau cells.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).
