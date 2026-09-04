@@ -1,38 +1,39 @@
 # Ember — `factored` branch
 
-This branch changes **minorminer's algorithm itself** and measures each change. It contains,
-on top of `main`'s benchmarking framework, exactly two things:
+This branch holds the **attraction** embedder (`packages/ember-qc/src/ember_qc/algorithms/factored/`),
+a placement-first minor embedder for D-Wave fabrics, on top of `main`'s benchmarking framework.
+The s3.127 rewrite (2026-09-03) replaced the previous engine; the archived tree is commit
+`ea5d1cf2` and the archived probes live in `docs/paper2/archive/probes/`.
 
-1. **`ember_qc/algorithms/factored/`** — minorminer's search with its three separable
-   choices factored into independently swappable axes: qubit **cost** (history term; `alpha=0`
-   recovers MM's `diam^occ`), chain **tree** (SPH Steiner vs. MM's union-of-paths), vertex
-   **order** (Cuthill–McKee vs. random). Minorminer is one corner of the family; every claim
-   is one switch flipped against that corner.
-2. **The minorminer C++ fork** (`scripts/mm_fork.patch` + `build_mm_fork.sh`) — stock
-   minorminer 0.2.22 plus two switches, byte-identical to stock when both are unset:
-   `var_order=` (caller-supplied vertex order) and `history_alpha=` (the §3.5 history
-   cost inside MM's real dynamics; see notes.md §3.12). Registered as `mmfork` /
-   `mmfork-<order>` / `mmfork-history`. This is the gold standard for comparability:
-   the control arm is literally stock minorminer.
+**The algorithm in one breath.** A D-Wave fabric is a grid of lanes with a complete bipartite
+junction wherever lanes cross, so a variable's chain is one horizontal run and one vertical run
+whose reaches follow from two orders alone: the variable's rank on the x-axis and on the y-axis.
+The engine (`plane.py`, ~400 lines) optimizes those two orders. A packer DP derives positions
+under hard capacity; the stair rule derives every chain from the positions and the y-order; the
+objective is capacity overload first, then derived chain length (spans plus one bar per active
+arm); one move re-inserts a set of variables at its exact optimum over all weaves (an interleaver
+DP), where the sets are the contiguous runs of each order at every scale and every variable's
+neighbourhood; the schedule is a seeded bag; every proposal is adopted; the stop is a work budget
+or a pass with no accepts. The adapter (`field.py`) turns the layout into qubits — books,
+converter, completion, certificate — and on course-resolved Zephyr a zero-deficit completion is a
+proof of validity, so minorminer is skipped. Minorminer is an optional polisher (`tail="mm"`).
 
-**Ground rules.** Every change to minorminer must be a toggleable switch, defaulted to stock
-behavior, measured one flip at a time against the stock corner — paired by (instance, seed),
-never unpaired (survivor bias). Verify any claim about minorminer against its source, never
-its paper — the shipped program has repeatedly outgrown the 2014 description.
+**Ground rules.** Proposer and judge read one accounting (the books). No penalty methods, no λ:
+capacity is the leading lexicographic key and infeasible proposals are declined. No mechanism
+names a graph type. The init must not matter (it is two random permutations) and the question
+order must not matter (measure it with the bag seed). Budgets are counted in DP evaluations
+(`max_asks`), never in seconds, so a measurement never depends on the box's load. Fingerprints
+(`docs/paper2/data/plane_fingerprint.py`) are the acceptance test of any engine change: K8/K10 on
+Z3 certified at the template, path-60 ≈ 1.02, K100 = 7.26 at a fixpoint, turán n162 = 6.000 from
+every random init, grid_200 pre-tail ≤ 1.76. Measure paired by (instance, seed) against stock
+minorminer and against the archived default (a worktree at `ea5d1cf2`). Winners ship as defaults.
 
-**Read `docs/paper2/ideas.md` FIRST.** One page: the algorithm, the
-constraints any redesign must respect, and the open fronts — the notes
-were condensed 2026-08-06 (and ideas.md re-condensed 2026-08-26) because
-accumulated micro-verdicts and Claude-invented doctrine were poisoning
-later sessions. The only rule is to
-find the correct algorithm from the principles of what makes it good.
-Supporting references: `docs/paper2/attraction.md` (condensed verdict ledger —
-check before proposing; prevents re-derivation), `docs/paper2/anatomy.md`
-(the pipeline as-built), `docs/paper2/fabrics.md` (measured fabric anatomy),
-`docs/paper2/mm-internals.md` (what shipped minorminer actually does),
-`docs/paper2/notes.md` (condensed chronicle). `docs/paper2/archive/` holds
-the full uncondensed records — history, not instruction: do not resurrect
-its doctrine vocabulary or treat its micro-observations as binding.
+**Read `docs/paper2/ideas.md` first** (one page: the algorithm, the principles, the open fronts),
+then `docs/paper2/anatomy.md` (the pipeline as built), `docs/paper2/fabrics.md` (measured
+fabric facts), `docs/paper2/mm-internals.md` (what shipped minorminer actually does) and
+`docs/paper2/notes.md` (the chronicle; s3.127 is the rewrite entry). `docs/paper2/archive/` is
+history, not instruction.
 
-The abandoned prior work (Reweave wrapper, speculative embedders, learning line) lives only
-on the `new-algorithm` branch. Do not reintroduce it.
+The minorminer C++ fork (`scripts/mm_fork.patch`, `build_mm_fork.sh`; registered as `mmfork*`)
+is unchanged: stock 0.2.22 plus two switches, byte-identical to stock when unset. The paper-1
+Reweave line lives only on the `new-algorithm` branch; do not reintroduce it.

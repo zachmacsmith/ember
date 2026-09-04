@@ -1,92 +1,42 @@
 """
 ember_qc/algorithms/factored
 ============================
-Minorminer's search with its three separable choices factored into
-independently swappable axes —
+The **attraction** embedder: a placement-first minor embedder for
+D-Wave fabrics. The hardware graph is a product of a grid and complete
+bipartite junctions, so a variable's chain is a horizontal run and a
+vertical run whose reaches follow from two orders (x and y) alone. The
+plane engine (``plane.py``) optimizes the two orders — a packer DP
+derives positions under hard capacity, an interleaver DP re-weaves
+sets of variables at their exact optimum — and the hardware adapter
+(``field.py``: books, converter, completion, certificate) turns the
+layout into qubits. Minorminer is an optional polisher at the end.
 
-  * **cost**  (``costs.py``)  — what a qubit costs to route through; default
-    ``(1 + h) * beta^occ`` with a subgradient history update. ``alpha=0``
-    recovers minorminer's ``diam^occ`` exactly.
-  * **tree**  (``trees.py``)  — how a chain is assembled; default SPH Steiner
-    tree, with minorminer's union-of-paths as the ablation arm.
-  * **order** (``search_orders.py`` + ``"random"``) — the vertex placement /
-    rebuild order; default Cuthill–McKee.
-
-The minorminer corner of the family is ``order="random", tree="union",
-alpha=0.0``. Design rationale and citations: ``docs/paper2/notes.md``.
-
-This package supersedes the paper-1 Reweave line for new work and imports
-nothing from it; that code lives only on the ``new-algorithm`` branch.
+Modules: ``plane.py`` (the engine), ``field.py`` (fabric adapter and
+the exact kernels), ``placement.py`` (the pipeline and the registry
+entry), ``polish.py`` (spur pruning), ``ball.py`` (the ball pass of
+the tail), ``trees.py`` (the ball pass's Steiner rebuild).
 """
 
 from ember_qc.registry import EmbeddingAlgorithm, register_algorithm
-from ember_qc.algorithms.factored.costs import (   # noqa: F401 (public API)
-    COSTS,
-    LinearPathFinderCost,
-    NegotiatedCost,
-    estimate_diameter,
-)
-from ember_qc.algorithms.factored.trees import TREES  # noqa: F401
-from ember_qc.algorithms.factored.polish import (     # noqa: F401
-    polish,
-    shorten_chains,
-    spur_prune,
-)
-from ember_qc.algorithms.factored.loop import (       # noqa: F401
-    RouterConfig,
-    embed_factored,
-)
-from ember_qc.algorithms.factored.placement import (  # noqa: F401
-    AttractConfig,
-    attract_embed,
-)
+from ember_qc.algorithms.factored.polish import spur_prune  # noqa: F401
+from ember_qc.algorithms.factored.placement import attract_embed  # noqa: F401
 from ember_qc.algorithms.factored.ball import ball_polish  # noqa: F401
-
-
-@register_algorithm("factored")
-class Factored(EmbeddingAlgorithm):
-    """Factored minorminer (paper 2): Cuthill–McKee order, SPH
-    Steiner chains, and minorminer's exponential qubit cost extended with a
-    decaying (subgradient) history term. All three axes overridable per call
-    (``order=``, ``tree=``, ``cost=``, ``alpha=``, ``beta=``, ...);
-    see ``factored.RouterConfig``."""
-
-    @property
-    def version(self) -> str:
-        return "0.1.0"
-
-    def embed(self, source_graph, target_graph, timeout: float = 60.0, **kwargs) -> dict:
-        seed = kwargs.pop("seed", 0)
-        if seed is None:
-            seed = 0
-        return embed_factored(
-            source_graph, target_graph,
-            timeout=timeout, seed=int(seed), **kwargs,
-        )
 
 
 @register_algorithm("attraction")
 class Attraction(EmbeddingAlgorithm):
-    """Placement-first embedder (paper 2 attraction family, notes §3.18+;
-    one pipeline since 2026-07-29, one code path since consolidation 2,
-    2026-08-03 — the former ``attraction-stack`` preset IS the default now):
-    spectral init, contraction on the stair energy, alternating 1-D interval
-    arrangement of the capacity-forced variables (insertion order-search,
-    feasibility priced into the gates), snap-aimed wire-coherent seeds, and
-    on stride>1 fabrics the exactness completion — valid seeds skip
-    minorminer legalization entirely. Finish is the unconstrained
-    warm-started grind. Capacity gating makes the dense machinery inert on
-    sparse sources. See ``factored.AttractConfig``."""
+    """Placement-first embedder: two orders, packer + interleaver DPs,
+    exact conversion and completion on course-resolved Zephyr (valid
+    seeds skip minorminer legalization), optional minorminer tail."""
 
     @property
     def version(self) -> str:
-        return "0.2.0"
+        return "0.3.0"
 
-    def embed(self, source_graph, target_graph, timeout: float = 60.0, **kwargs) -> dict:
+    def embed(self, source_graph, target_graph, timeout: float = 60.0,
+              **kwargs) -> dict:
         seed = kwargs.pop("seed", 0)
         if seed is None:
             seed = 0
-        return attract_embed(
-            source_graph, target_graph,
-            timeout=timeout, seed=int(seed), **kwargs,
-        )
+        return attract_embed(source_graph, target_graph,
+                             timeout=timeout, seed=int(seed), **kwargs)

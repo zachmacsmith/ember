@@ -1,0 +1,237 @@
+board new-newmm-mm: arms ('new', 'new+mm', 'mm'), 174 jobs; load (154.6318359375, 152.685546875, 149.369140625)
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+K100             new     s0: acl=7.26 mx=8 lacl=7.26 stop=fixpoint bm=565/1555 pen=0 cert=True mmskip=True err=None (20.4s)
+K100             new     s1: acl=7.26 mx=8 lacl=7.26 stop=fixpoint bm=852/1895 pen=0 cert=True mmskip=True err=None (16.0s)
+K100             new     s2: acl=7.26 mx=8 lacl=7.26 stop=fixpoint bm=504/1337 pen=0 cert=True mmskip=True err=None (12.0s)
+K100             new+mm  s0: acl=7.26 mx=8 lacl=7.26 stop=fixpoint bm=565/1555 pen=0 cert=True mmskip=True err=None (62.8s)
+K100             new+mm  s1: acl=7.26 mx=8 lacl=7.26 stop=fixpoint bm=852/1895 pen=0 cert=True mmskip=True err=None (61.7s)
+K100             new+mm  s2: acl=7.26 mx=8 lacl=7.26 stop=fixpoint bm=504/1337 pen=0 cert=True mmskip=True err=None (61.3s)
+K100             mm      s0: acl=10.61 mx=15 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (61.0s)
+K100             mm      s1: acl=10.71 mx=16 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (61.1s)
+K100             mm      s2: acl=10.08 mx=14 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (62.8s)
+K140             new     s0: acl=9.757 mx=10 lacl=9.757 stop=fixpoint bm=859/2206 pen=0 cert=True mmskip=True err=None (31.1s)
+K140             new     s1: acl=9.771 mx=11 lacl=9.771 stop=fixpoint bm=555/2071 pen=0 cert=True mmskip=True err=None (33.2s)
+K140             new     s2: acl=9.771 mx=11 lacl=9.771 stop=fixpoint bm=650/2102 pen=0 cert=True mmskip=True err=None (33.2s)
+K140             new+mm  s0: acl=9.757 mx=10 lacl=9.757 stop=deadline bm=859/1961 pen=0 cert=True mmskip=True err=None (68.3s)
+K140             new+mm  s1: acl=9.771 mx=11 lacl=9.771 stop=deadline bm=555/1654 pen=0 cert=True mmskip=True err=None (65.7s)
+K140             new+mm  s2: acl=9.771 mx=11 lacl=9.771 stop=deadline bm=650/658 pen=0 cert=True mmskip=True err=None (69.7s)
+K140             mm      s0: acl=21.386 mx=41 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (61.3s)
+K140             mm      s1: acl=None mx=None lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (75.4s)
+K140             mm      s2: acl=19.186 mx=40 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (60.8s)
+ER100_d10        new     s0: acl=4.69 mx=7 lacl=4.69 stop=fixpoint bm=1091/2854 pen=0 cert=True mmskip=True err=None (14.4s)
+ER100_d10        new     s1: acl=4.63 mx=8 lacl=4.63 stop=fixpoint bm=2203/3147 pen=0 cert=True mmskip=True err=None (15.2s)
+ER100_d10        new     s2: acl=4.53 mx=7 lacl=4.53 stop=fixpoint bm=1167/2885 pen=0 cert=True mmskip=True err=None (15.7s)
+ER100_d10        new     s3: acl=4.63 mx=8 lacl=4.63 stop=fixpoint bm=2060/3135 pen=0 cert=True mmskip=True err=None (15.0s)
+ER100_d10        new     s4: acl=4.64 mx=9 lacl=4.64 stop=fixpoint bm=1644/3900 pen=0 cert=True mmskip=True err=None (21.5s)
+ER100_d10        new     s5: acl=4.77 mx=9 lacl=4.77 stop=fixpoint bm=3116/4201 pen=0 cert=True mmskip=True err=None (27.3s)
+ER100_d10        new     s6: acl=4.47 mx=8 lacl=4.47 stop=asks bm=6616/8000 pen=0 cert=True mmskip=True err=None (43.4s)
+ER100_d10        new     s7: acl=4.52 mx=8 lacl=4.52 stop=fixpoint bm=1818/4248 pen=0 cert=True mmskip=True err=None (27.1s)
+ER100_d10        new     s8: acl=4.69 mx=8 lacl=4.69 stop=fixpoint bm=1435/4092 pen=0 cert=True mmskip=True err=None (19.5s)
+ER100_d10        new     s9: acl=4.62 mx=8 lacl=4.62 stop=fixpoint bm=1250/2162 pen=0 cert=True mmskip=True err=None (11.7s)
+ER100_d10        new+mm  s0: acl=4.45 mx=7 lacl=4.69 stop=fixpoint bm=1091/2854 pen=0 cert=True mmskip=True err=None (60.2s)
+ER100_d10        new+mm  s1: acl=4.63 mx=8 lacl=4.63 stop=fixpoint bm=2203/3147 pen=0 cert=True mmskip=True err=None (60.1s)
+ER100_d10        new+mm  s2: acl=4.23 mx=7 lacl=4.53 stop=fixpoint bm=1167/2885 pen=0 cert=True mmskip=True err=None (60.1s)
+ER100_d10        new+mm  s3: acl=4.63 mx=8 lacl=4.63 stop=deadline bm=2060/2536 pen=0 cert=True mmskip=True err=None (60.1s)
+ER100_d10        new+mm  s4: acl=4.21 mx=7 lacl=4.64 stop=deadline bm=1644/3621 pen=0 cert=True mmskip=True err=None (60.1s)
+ER100_d10        new+mm  s5: acl=4.78 mx=8 lacl=4.77 stop=fixpoint bm=3116/4201 pen=0 cert=True mmskip=True err=None (60.1s)
+ER100_d10        new+mm  s6: acl=4.52 mx=8 lacl=4.52 stop=deadline bm=4195/4541 pen=0 cert=True mmskip=True err=None (60.0s)
+ER100_d10        new+mm  s7: acl=4.1 mx=7 lacl=4.52 stop=deadline bm=1818/2985 pen=0 cert=True mmskip=True err=None (60.1s)
+ER100_d10        new+mm  s8: acl=4.69 mx=8 lacl=4.69 stop=fixpoint bm=1435/4092 pen=0 cert=True mmskip=True err=None (60.1s)
+ER100_d10        new+mm  s9: acl=4.28 mx=7 lacl=4.62 stop=fixpoint bm=1250/2162 pen=0 cert=True mmskip=True err=None (60.1s)
+ER100_d10        mm      s0: acl=5.0 mx=9 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (6.2s)
+ER100_d10        mm      s1: acl=5.07 mx=10 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (3.0s)
+ER100_d10        mm      s2: acl=4.85 mx=9 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (3.4s)
+ER100_d10        mm      s3: acl=5.29 mx=9 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (3.8s)
+ER100_d10        mm      s4: acl=4.52 mx=8 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (6.1s)
+ER100_d10        mm      s5: acl=4.63 mx=8 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (8.5s)
+ER100_d10        mm      s6: acl=4.65 mx=8 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (10.5s)
+ER100_d10        mm      s7: acl=5.06 mx=9 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (5.9s)
+ER100_d10        mm      s8: acl=4.71 mx=9 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (5.8s)
+ER100_d10        mm      s9: acl=4.4 mx=9 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (7.8s)
+turan_n162       new     s0: acl=6.0 mx=6 lacl=6.0 stop=asks bm=4073/15000 pen=0 cert=True mmskip=True err=None (287.2s)
+turan_n162       new     s1: acl=6.0 mx=6 lacl=6.0 stop=asks bm=1563/15000 pen=0 cert=True mmskip=True err=None (214.8s)
+turan_n162       new     s2: acl=6.0 mx=6 lacl=6.0 stop=asks bm=2261/15000 pen=0 cert=True mmskip=True err=None (211.8s)
+turan_n162       new     s3: acl=6.0 mx=6 lacl=6.0 stop=asks bm=14848/15000 pen=0 cert=True mmskip=True err=None (216.8s)
+turan_n162       new     s4: acl=6.0 mx=6 lacl=6.0 stop=asks bm=4760/15000 pen=0 cert=True mmskip=True err=None (260.9s)
+turan_n162       new     s5: acl=6.0 mx=6 lacl=6.0 stop=asks bm=376/15000 pen=0 cert=True mmskip=True err=None (225.9s)
+turan_n162       new     s6: acl=6.0 mx=6 lacl=6.0 stop=asks bm=5563/15000 pen=0 cert=True mmskip=True err=None (228.4s)
+turan_n162       new     s7: acl=6.0 mx=6 lacl=6.0 stop=asks bm=12657/15000 pen=0 cert=True mmskip=True err=None (227.9s)
+turan_n162       new     s8: acl=6.0 mx=6 lacl=6.0 stop=asks bm=1830/15000 pen=0 cert=True mmskip=True err=None (219.2s)
+turan_n162       new     s9: acl=6.0 mx=6 lacl=6.0 stop=asks bm=1144/15000 pen=0 cert=True mmskip=True err=None (216.2s)
+turan_n162       new+mm  s0: acl=6.0 mx=6 lacl=6.0 stop=deadline bm=1408/1567 pen=0 cert=True mmskip=True err=None (63.2s)
+turan_n162       new+mm  s1: acl=6.0 mx=6 lacl=6.0 stop=deadline bm=1563/1953 pen=0 cert=True mmskip=True err=None (65.3s)
+turan_n162       new+mm  s2: acl=6.0 mx=6 lacl=6.0 stop=deadline bm=481/1919 pen=0 cert=True mmskip=True err=None (66.4s)
+turan_n162       new+mm  s3: acl=6.0 mx=6 lacl=6.0 stop=deadline bm=1637/1884 pen=0 cert=True mmskip=True err=None (65.7s)
+turan_n162       new+mm  s4: acl=6.0 mx=6 lacl=6.0 stop=deadline bm=656/1823 pen=0 cert=True mmskip=True err=None (62.5s)
+turan_n162       new+mm  s5: acl=6.0 mx=6 lacl=6.0 stop=deadline bm=376/1910 pen=0 cert=True mmskip=True err=None (67.0s)
+turan_n162       new+mm  s6: acl=6.0 mx=6 lacl=6.0 stop=deadline bm=1307/1828 pen=0 cert=True mmskip=True err=None (64.8s)
+turan_n162       new+mm  s7: acl=6.0 mx=6 lacl=6.0 stop=deadline bm=1109/1859 pen=0 cert=True mmskip=True err=None (64.3s)
+turan_n162       new+mm  s8: acl=6.0 mx=6 lacl=6.0 stop=deadline bm=1789/1798 pen=0 cert=True mmskip=True err=None (66.1s)
+turan_n162       new+mm  s9: acl=6.0 mx=6 lacl=6.0 stop=deadline bm=1144/1878 pen=0 cert=True mmskip=True err=None (64.0s)
+turan_n162       mm      s0: acl=10.543 mx=16 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (62.0s)
+turan_n162       mm      s1: acl=13.963 mx=25 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (62.1s)
+turan_n162       mm      s2: acl=11.877 mx=21 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (63.4s)
+turan_n162       mm      s3: acl=10.253 mx=16 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (63.2s)
+turan_n162       mm      s4: acl=11.031 mx=17 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (61.2s)
+turan_n162       mm      s5: acl=11.741 mx=23 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (63.8s)
+turan_n162       mm      s6: acl=11.907 mx=18 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (62.4s)
+turan_n162       mm      s7: acl=10.759 mx=17 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (62.6s)
+turan_n162       mm      s8: acl=10.654 mx=19 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (61.9s)
+turan_n162       mm      s9: acl=10.309 mx=17 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (60.3s)
+spin_glass_n163  new     s0: acl=10.828 mx=12 lacl=10.828 stop=fixpoint bm=529/2281 pen=0 cert=True mmskip=True err=None (27.8s)
+spin_glass_n163  new     s1: acl=10.859 mx=13 lacl=10.859 stop=fixpoint bm=3498/5009 pen=0 cert=True mmskip=True err=None (54.2s)
+spin_glass_n163  new     s2: acl=10.859 mx=12 lacl=10.859 stop=fixpoint bm=2159/3559 pen=0 cert=True mmskip=True err=None (39.6s)
+spin_glass_n163  new+mm  s0: acl=10.828 mx=12 lacl=10.828 stop=fixpoint bm=529/2281 pen=0 cert=True mmskip=True err=None (61.9s)
+spin_glass_n163  new+mm  s1: acl=10.84 mx=12 lacl=10.84 stop=deadline bm=1602/2410 pen=0 cert=True mmskip=True err=None (63.7s)
+spin_glass_n163  new+mm  s2: acl=10.859 mx=12 lacl=10.859 stop=deadline bm=2159/2592 pen=0 cert=True mmskip=True err=None (63.7s)
+spin_glass_n163  mm      s0: acl=20.558 mx=34 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (60.5s)
+spin_glass_n163  mm      s1: acl=21.791 mx=41 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (61.1s)
+spin_glass_n163  mm      s2: acl=19.344 mx=31 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (60.9s)
+regular_n316     new     s0: acl=6.009 mx=28 lacl=6.009 stop=fixpoint bm=0/2492 pen=12171 cert=False mmskip=False err=None (51.8s)
+regular_n316     new     s1: acl=6.244 mx=35 lacl=6.244 stop=fixpoint bm=0/2492 pen=12633 cert=False mmskip=False err=None (51.8s)
+regular_n316     new     s2: acl=5.835 mx=28 lacl=5.835 stop=fixpoint bm=0/2492 pen=12207 cert=False mmskip=False err=None (63.2s)
+regular_n316     new     s3: acl=5.598 mx=24 lacl=5.598 stop=fixpoint bm=0/2492 pen=12413 cert=False mmskip=False err=None (84.2s)
+regular_n316     new     s4: acl=6.066 mx=28 lacl=6.066 stop=fixpoint bm=0/2492 pen=12035 cert=False mmskip=False err=None (53.4s)
+regular_n316     new     s5: acl=6.313 mx=44 lacl=6.313 stop=fixpoint bm=0/2492 pen=10905 cert=False mmskip=False err=None (53.7s)
+regular_n316     new     s6: acl=5.889 mx=33 lacl=5.889 stop=fixpoint bm=0/2492 pen=13076 cert=False mmskip=False err=None (44.8s)
+regular_n316     new     s7: acl=6.199 mx=31 lacl=6.199 stop=fixpoint bm=0/2492 pen=13123 cert=False mmskip=False err=None (51.0s)
+regular_n316     new     s8: acl=5.826 mx=29 lacl=5.826 stop=fixpoint bm=0/2492 pen=13778 cert=False mmskip=False err=None (51.1s)
+regular_n316     new     s9: acl=5.953 mx=27 lacl=5.953 stop=fixpoint bm=0/2492 pen=12495 cert=False mmskip=False err=None (46.4s)
+regular_n316     new+mm  s0: acl=3.259 mx=8 lacl=5.133 stop=deadline bm=0/1481 pen=12171 cert=False mmskip=False err=None (60.0s)
+regular_n316     new+mm  s1: acl=3.763 mx=10 lacl=5.146 stop=deadline bm=0/1642 pen=12633 cert=False mmskip=False err=None (60.0s)
+regular_n316     new+mm  s2: acl=3.494 mx=9 lacl=5.661 stop=deadline bm=0/1678 pen=12207 cert=False mmskip=False err=None (60.0s)
+regular_n316     new+mm  s3: acl=3.835 mx=10 lacl=6.509 stop=deadline bm=0/1483 pen=12413 cert=False mmskip=False err=None (60.1s)
+regular_n316     new+mm  s4: acl=3.873 mx=10 lacl=6.513 stop=deadline bm=0/1370 pen=12035 cert=False mmskip=False err=None (60.0s)
+regular_n316     new+mm  s5: acl=4.073 mx=11 lacl=5.744 stop=deadline bm=0/1408 pen=10905 cert=False mmskip=False err=None (60.0s)
+regular_n316     new+mm  s6: acl=3.649 mx=9 lacl=5.883 stop=deadline bm=0/1670 pen=13076 cert=False mmskip=False err=None (60.1s)
+regular_n316     new+mm  s7: acl=3.943 mx=10 lacl=5.728 stop=deadline bm=0/1491 pen=13123 cert=False mmskip=False err=None (60.1s)
+regular_n316     new+mm  s8: acl=3.962 mx=10 lacl=6.241 stop=deadline bm=0/1548 pen=13778 cert=False mmskip=False err=None (60.1s)
+regular_n316     new+mm  s9: acl=3.968 mx=10 lacl=6.535 stop=deadline bm=0/1386 pen=12495 cert=False mmskip=False err=None (60.1s)
+regular_n316     mm      s0: acl=3.364 mx=9 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (4.5s)
+regular_n316     mm      s1: acl=3.411 mx=10 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (4.5s)
+regular_n316     mm      s2: acl=3.291 mx=9 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (6.1s)
+regular_n316     mm      s3: acl=3.304 mx=8 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (5.2s)
+regular_n316     mm      s4: acl=3.56 mx=10 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (5.9s)
+regular_n316     mm      s5: acl=3.275 mx=8 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (4.5s)
+regular_n316     mm      s6: acl=3.88 mx=10 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (3.8s)
+regular_n316     mm      s7: acl=4.139 mx=11 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (3.5s)
+regular_n316     mm      s8: acl=3.573 mx=10 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (7.4s)
+regular_n316     mm      s9: acl=4.108 mx=11 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (2.4s)
+ws_n486          new     s0: acl=4.549 mx=31 lacl=4.549 stop=fixpoint bm=0/3494 pen=19826 cert=False mmskip=False err=None (133.3s)
+ws_n486          new     s1: acl=5.035 mx=41 lacl=5.035 stop=fixpoint bm=0/3494 pen=18394 cert=False mmskip=False err=None (117.7s)
+ws_n486          new     s2: acl=5.025 mx=34 lacl=5.025 stop=fixpoint bm=0/3494 pen=18649 cert=False mmskip=False err=None (116.8s)
+ws_n486          new     s3: acl=4.66 mx=42 lacl=4.66 stop=fixpoint bm=0/3494 pen=18964 cert=False mmskip=False err=None (121.9s)
+ws_n486          new     s4: acl=5.084 mx=38 lacl=5.084 stop=fixpoint bm=0/3494 pen=20637 cert=False mmskip=False err=None (114.8s)
+ws_n486          new     s5: acl=4.782 mx=32 lacl=4.782 stop=fixpoint bm=0/3494 pen=19321 cert=False mmskip=False err=None (116.1s)
+ws_n486          new     s6: acl=5.002 mx=27 lacl=5.002 stop=fixpoint bm=0/3494 pen=17394 cert=False mmskip=False err=None (123.5s)
+ws_n486          new     s7: acl=4.73 mx=35 lacl=4.73 stop=fixpoint bm=0/3494 pen=20487 cert=False mmskip=False err=None (116.2s)
+ws_n486          new     s8: acl=5.097 mx=37 lacl=5.097 stop=fixpoint bm=0/3494 pen=17400 cert=False mmskip=False err=None (104.3s)
+ws_n486          new     s9: acl=5.031 mx=40 lacl=5.031 stop=fixpoint bm=0/3494 pen=17887 cert=False mmskip=False err=None (114.9s)
+ws_n486          new+mm  s0: acl=3.198 mx=12 lacl=4.932 stop=deadline bm=0/810 pen=19826 cert=False mmskip=False err=None (60.0s)
+ws_n486          new+mm  s1: acl=3.377 mx=12 lacl=5.148 stop=deadline bm=0/977 pen=18394 cert=False mmskip=False err=None (60.0s)
+ws_n486          new+mm  s2: acl=3.609 mx=13 lacl=5.191 stop=deadline bm=0/996 pen=18649 cert=False mmskip=False err=None (60.1s)
+ws_n486          new+mm  s3: acl=3.206 mx=12 lacl=5.381 stop=deadline bm=0/847 pen=18964 cert=False mmskip=False err=None (60.1s)
+ws_n486          new+mm  s4: acl=3.296 mx=13 lacl=4.936 stop=deadline bm=0/969 pen=20637 cert=False mmskip=False err=None (60.1s)
+ws_n486          new+mm  s5: acl=3.274 mx=13 lacl=4.934 stop=deadline bm=0/923 pen=19321 cert=False mmskip=False err=None (60.0s)
+ws_n486          new+mm  s6: acl=3.144 mx=12 lacl=5.237 stop=deadline bm=0/922 pen=17394 cert=False mmskip=False err=None (60.0s)
+ws_n486          new+mm  s7: acl=3.549 mx=12 lacl=5.502 stop=deadline bm=0/946 pen=20487 cert=False mmskip=False err=None (60.1s)
+ws_n486          new+mm  s8: acl=2.996 mx=11 lacl=5.426 stop=deadline bm=0/855 pen=17400 cert=False mmskip=False err=None (60.1s)
+ws_n486          new+mm  s9: acl=3.889 mx=13 lacl=5.64 stop=deadline bm=0/952 pen=17887 cert=False mmskip=False err=None (60.0s)
+ws_n486          mm      s0: acl=3.233 mx=11 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (6.6s)
+ws_n486          mm      s1: acl=3.173 mx=13 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (6.2s)
+ws_n486          mm      s2: acl=2.821 mx=11 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (9.0s)
+ws_n486          mm      s3: acl=3.105 mx=11 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (6.8s)
+ws_n486          mm      s4: acl=3.021 mx=10 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (8.4s)
+ws_n486          mm      s5: acl=3.07 mx=13 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (7.6s)
+ws_n486          mm      s6: acl=3.385 mx=12 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (7.0s)
+ws_n486          mm      s7: acl=3.383 mx=13 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (5.7s)
+ws_n486          mm      s8: acl=3.134 mx=12 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (10.5s)
+ws_n486          mm      s9: acl=3.117 mx=11 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (4.4s)
+grid_200         new     s0: acl=1.605 mx=6 lacl=1.605 stop=asks bm=5504/8000 pen=0 cert=True mmskip=True err=None (80.5s)
+grid_200         new     s1: acl=1.61 mx=6 lacl=1.61 stop=fixpoint bm=5031/7615 pen=0 cert=True mmskip=True err=None (57.0s)
+grid_200         new     s2: acl=1.505 mx=4 lacl=1.505 stop=fixpoint bm=3637/7662 pen=0 cert=True mmskip=True err=None (61.6s)
+grid_200         new+mm  s0: acl=1.215 mx=2 lacl=1.82 stop=deadline bm=2269/2822 pen=0 cert=True mmskip=True err=None (60.0s)
+grid_200         new+mm  s1: acl=1.365 mx=3 lacl=1.955 stop=deadline bm=1571/1587 pen=0 cert=True mmskip=True err=None (60.1s)
+grid_200         new+mm  s2: acl=1.31 mx=3 lacl=1.7 stop=deadline bm=2234/2240 pen=0 cert=True mmskip=True err=None (60.1s)
+grid_200         mm      s0: acl=1.04 mx=2 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (0.5s)
+grid_200         mm      s1: acl=1.155 mx=2 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (0.7s)
+grid_200         mm      s2: acl=1.05 mx=2 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (0.4s)
+honeycomb_200    new     s0: acl=1.79 mx=6 lacl=1.79 stop=asks bm=6479/8000 pen=0 cert=True mmskip=True err=None (53.2s)
+honeycomb_200    new     s1: acl=2.125 mx=11 lacl=2.125 stop=asks bm=4262/8000 pen=0 cert=True mmskip=True err=None (61.5s)
+honeycomb_200    new     s2: acl=1.84 mx=6 lacl=1.84 stop=asks bm=6279/8000 pen=0 cert=True mmskip=True err=None (56.9s)
+honeycomb_200    new+mm  s0: acl=1.225 mx=2 lacl=1.795 stop=deadline bm=3402/3409 pen=0 cert=True mmskip=True err=None (60.0s)
+honeycomb_200    new+mm  s1: acl=1.135 mx=2 lacl=2.105 stop=deadline bm=2941/3130 pen=0 cert=True mmskip=True err=None (60.1s)
+honeycomb_200    new+mm  s2: acl=1.185 mx=2 lacl=2.155 stop=deadline bm=2344/2548 pen=0 cert=True mmskip=True err=None (60.1s)
+honeycomb_200    mm      s0: acl=1.14 mx=2 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (0.6s)
+honeycomb_200    mm      s1: acl=1.11 mx=2 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (1.0s)
+honeycomb_200    mm      s2: acl=1.23 mx=3 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (0.5s)
+king_graph_196   new     s0: acl=2.704 mx=8 lacl=2.704 stop=asks bm=5766/8000 pen=0 cert=True mmskip=True err=None (62.9s)
+king_graph_196   new     s1: acl=2.893 mx=11 lacl=2.893 stop=asks bm=4867/8000 pen=0 cert=True mmskip=True err=None (68.5s)
+king_graph_196   new     s2: acl=2.469 mx=6 lacl=2.469 stop=asks bm=2943/8000 pen=0 cert=True mmskip=True err=None (60.3s)
+king_graph_196   new+mm  s0: acl=2.245 mx=5 lacl=2.694 stop=deadline bm=2107/3155 pen=0 cert=True mmskip=True err=None (60.0s)
+king_graph_196   new+mm  s1: acl=1.939 mx=4 lacl=2.872 stop=deadline bm=2936/2937 pen=0 cert=True mmskip=True err=None (60.1s)
+king_graph_196   new+mm  s2: acl=1.898 mx=4 lacl=2.526 stop=deadline bm=1718/1723 pen=0 cert=True mmskip=True err=None (60.1s)
+king_graph_196   mm      s0: acl=1.888 mx=4 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (1.2s)
+king_graph_196   mm      s1: acl=1.872 mx=4 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (2.3s)
+king_graph_196   mm      s2: acl=1.52 mx=3 lacl=None stop=None bm=None/None pen=None cert=None mmskip=None err=None (1.9s)
+wrote /data/max/ember/docs/paper2/data/rewrite_board_new-newmm-mm.csv
+paired board — mean ACL (successes) / mean max chain; d = arm − mm on the seeds both have
+K100             | mm=10.467(3/3) mx=15.0 | new=7.26(3/3) mx=8.0 d=-3.207 | new+mm=7.26(3/3) mx=8.0 d=-3.207
+K140             | mm=20.286(2/3) mx=40.5 | new=9.766(3/3) mx=10.667 d=-10.522 | new+mm=9.766(3/3) mx=10.667 d=-10.522
+ER100_d10        | mm=4.818(10/10) mx=8.8 | new=4.619(10/10) mx=8.0 d=-0.199 | new+mm=4.452(10/10) mx=7.5 d=-0.366
+turan_n162       | mm=11.304(10/10) mx=18.9 | new=6.0(10/10) mx=6.0 d=-5.304 | new+mm=6.0(10/10) mx=6.0 d=-5.304
+spin_glass_n163  | mm=20.564(3/3) mx=35.333 | new=10.849(3/3) mx=12.333 d=-9.716 | new+mm=10.842(3/3) mx=12.0 d=-9.722
+regular_n316     | mm=3.59(10/10) mx=9.6 | new=5.993(10/10) mx=30.7 d=+2.403 | new+mm=3.782(10/10) mx=9.7 d=+0.191
+ws_n486          | mm=3.144(10/10) mx=11.7 | new=4.9(10/10) mx=35.7 d=+1.755 | new+mm=3.354(10/10) mx=12.3 d=+0.210
+grid_200         | mm=1.082(3/3) mx=2.0 | new=1.573(3/3) mx=5.333 d=+0.492 | new+mm=1.297(3/3) mx=2.667 d=+0.215
+honeycomb_200    | mm=1.16(3/3) mx=2.333 | new=1.918(3/3) mx=7.667 d=+0.758 | new+mm=1.182(3/3) mx=2.0 d=+0.022
+king_graph_196   | mm=1.76(3/3) mx=3.667 | new=2.689(3/3) mx=8.333 d=+0.929 | new+mm=2.027(3/3) mx=4.333 d=+0.267
+load at end: (162.90087890625, 163.7001953125, 156.45458984375)
+done-board

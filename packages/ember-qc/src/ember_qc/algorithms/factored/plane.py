@@ -160,38 +160,45 @@ def judge(bk: Books, pos: Pos, src_adj, grid: TileGrid, *, bar: float
 # the packer: one axis, against the other axis held fixed
 
 
-def _line_profiles(axis: int, grid: TileGrid, items, s: int
-                   ) -> List[np.ndarray]:
-    """The packer's capacity table for ``axis``: the chip's real lines
-    (boundary lines zero), extended with the ideal pool so that every
-    order has a packing — columns (axis 0) are extended along their
-    bricks past the chip up to the tallest v-hull; rows (axis 1) gain
-    enough uniform rows to seat everyone at full pool (the L_max
-    lemma). The extension is the strip: real in x, ideal above."""
+def _line_profiles(axis: int, grid: TileGrid, items, s: int, *,
+                   bounded: bool = False) -> List[np.ndarray]:
+    """The packer's capacity table for ``axis``. Unbounded (the
+    search): the chip's real lines (boundary lines zero) extended with
+    the ideal pool on BOTH axes — extra lines shaped like an interior
+    line, enough to seat everyone at full pool (the L_max lemma), and
+    every line extended along its bricks past the chip up to the
+    farthest hull — so every order has a packing and nothing is ever
+    clamped; what hangs off the chip is the judge's to price. Bounded
+    (the final projection, only when the bookmark hangs off the chip):
+    the chip's real lines and bricks only."""
     ph, pv = profiles(grid)
+    table = ph if axis == 1 else pv
+    if bounded:
+        return [row for row in table]
     pool_u = ideal_pool(grid)
-    if axis == 0:
-        ymax = max((float(b) for (_a, b, _v) in items), default=0.0)
-        need_b = int(ymax // s) + 2
-        out = []
-        for pr in pv:
-            nz = np.flatnonzero(pr > 0)
-            if not nz.size:
-                out.append(np.zeros(max(need_b, pr.size)))
-                continue
-            ne = int(nz.max()) + 1
-            out.append(np.concatenate(
-                [pr[:ne], np.full(max(need_b - ne, 0), pool_u)]))
-        return out
+    far = max((float(b) for (_a, b, _v) in items), default=0.0)
+    need_b = int(far // s) + 2
     n = len(items)
     extra = int((n + max(int(pool_u), 1) - 1) // max(int(pool_u), 1)) + 1
-    shape = np.where(ph.max(axis=0) > 0, pool_u, 0.0)  # an interior row
-    return [row for row in ph] + [shape.copy() for _ in range(extra)]
+    out = []
+    for pr in table:
+        nz = np.flatnonzero(pr > 0)
+        if not nz.size:
+            out.append(np.zeros(max(need_b, pr.size)))
+            continue
+        ne = int(nz.max()) + 1
+        out.append(np.concatenate(
+            [pr[:ne], np.full(max(need_b - ne, 0), pool_u)]))
+    shape = np.where(table.max(axis=0) > 0, pool_u, 0.0)   # interior line
+    ne = int(np.flatnonzero(shape > 0).max()) + 1 if np.any(shape > 0) else 0
+    ext_line = np.concatenate([shape[:ne],
+                               np.full(max(need_b - ne, 0), pool_u)])
+    return out + [ext_line.copy() for _ in range(extra)]
 
 
 def pack_axis(axis: int, order: List[int], pos: Pos, bk: Books,
-              grid: TileGrid, ranks: Dict[int, Dict[int, int]]
-              ) -> Tuple[Dict[int, int], int]:
+              grid: TileGrid, ranks: Dict[int, Dict[int, int]], *,
+              bounded: bool = False) -> Tuple[Dict[int, int], int]:
     """One forced pack of ``axis``: each line takes a contiguous run of
     the carried order, feasible iff the run's claim intervals fit the
     line's per-brick pools; cost = the true stair objective linearized
@@ -206,7 +213,7 @@ def pack_axis(axis: int, order: List[int], pos: Pos, bk: Books,
     if not order:
         return {}, 0
     items = [(ivs_by_v[v][0], ivs_by_v[v][1], v) for v in order]
-    prof = _line_profiles(axis, grid, items, s)
+    prof = _line_profiles(axis, grid, items, s, bounded=bounded)
     L = len(prof)
     cmap = _axis_coeffs(bk[0], pos, axis, ranks=ranks[axis])
     cs = [float(cmap.get(v, 0)) for v in order]
@@ -227,14 +234,19 @@ def pack_axis(axis: int, order: List[int], pos: Pos, bk: Books,
 
 
 def readout(axis: int, orders: Dict[int, List[int]], pos: Pos, src_adj,
-            grid: TileGrid, *, snap: bool) -> Tuple[Pos, Books, int]:
+            grid: TileGrid, *, snap: bool, bounded: bool = False,
+            bk: Optional[Books] = None) -> Tuple[Pos, Books, int]:
     """Orders -> positions on ``axis``, the other axis held exactly as
-    it is. Books on the current positions, one pack, positions
-    rewritten as integer-valued floats, books again on the result (the
-    y-order is untouched by a pack, so contacts are the same)."""
+    it is. Books on the current positions (``bk`` if the caller already
+    holds them for exactly these positions and this y-order), one pack,
+    positions rewritten as integer-valued floats, books again on the
+    result (the y-order is untouched by a pack, so contacts are the
+    same)."""
     ranks = {ax: rank_of(orders[ax]) for ax in (0, 1)}
-    bk = books(pos, src_adj, grid, ranks[1], snap=snap)
-    lines, misses = pack_axis(axis, orders[axis], pos, bk, grid, ranks)
+    if bk is None:
+        bk = books(pos, src_adj, grid, ranks[1], snap=snap)
+    lines, misses = pack_axis(axis, orders[axis], pos, bk, grid, ranks,
+                              bounded=bounded)
     new = {v: p.copy() for v, p in pos.items()}
     for v, ln in lines.items():
         new[v][axis] = float(ln)
@@ -282,7 +294,8 @@ def units(orders: Dict[int, List[int]], src_adj,
 def arrange(src_adj: Dict[int, List[int]], grid: TileGrid, *,
             seed: int = 0, max_asks: Optional[int] = None,
             deadline: Optional[float] = None, snap: bool = False,
-            moves: bool = True, trace: bool = False
+            moves: bool = True, trace: bool = False,
+            sched_seed: Optional[int] = None
             ) -> Tuple[Pos, Books, dict]:
     """The engine. Init = two seeded permutations. Loop: for each unit
     in the pass's bag, ask the interleaver (strict improvement in the
@@ -301,9 +314,12 @@ def arrange(src_adj: Dict[int, List[int]], grid: TileGrid, *,
                   "bars": None, "misses": None, "accept_traj": [],
                   "adopt_worse": 0, "infeasible": 0,
                   "trace": [] if trace else None}
-    rng = np.random.default_rng(seed)
+    rng = np.random.default_rng(seed)          # the init
     px = rng.permutation(n)
     py = rng.permutation(n)
+    # the bag's own seed (the order-invariance instrument varies it
+    # independently of the init); defaults to the init's
+    rng = np.random.default_rng(seed if sched_seed is None else sched_seed)
     pos: Pos = {v: np.array([float(px[i]), float(py[i])])
                 for i, v in enumerate(ids)}
     typed = bool(getattr(grid, "typed", False)) and bool(line_pools(grid))
@@ -327,8 +343,10 @@ def arrange(src_adj: Dict[int, List[int]], grid: TileGrid, *,
         return deadline is not None and _time.perf_counter() > deadline
 
     # the first picture: rows, columns, rows against the packed columns
+    bk = None
     for ax in (1, 0, 1):
-        pos, bk, miss = readout(ax, orders, pos, src_adj, grid, snap=snap)
+        pos, bk, miss = readout(ax, orders, pos, src_adj, grid, snap=snap,
+                                bk=bk)
         info["readouts"] += 1
     e_cur = judge(bk, pos, src_adj, grid, bar=bar)
     best = (e_cur, {v: p.copy() for v, p in pos.items()}, bk, miss,
@@ -371,7 +389,7 @@ def arrange(src_adj: Dict[int, List[int]], grid: TileGrid, *,
             info["readouts"] += 1
             if miss == 0:
                 cand, bk2, miss = readout(1 - ax, new_orders, cand, src_adj,
-                                          grid, snap=snap)
+                                          grid, snap=snap, bk=bk2)
                 info["readouts"] += 1
             if miss > 0:
                 # the packer could not seat everyone: the proposal is
@@ -410,6 +428,30 @@ def arrange(src_adj: Dict[int, List[int]], grid: TileGrid, *,
     else:
         info["stopped_by"] = "moves-off" if not moves else "passes"
     (pen, stair), bpos, bbk, bmiss, bords = best
+    info["projected"] = False
+    info["proj_misses"] = 0
+    if pen > 0:
+        # the bookmark hangs off the chip: hand over its bounded
+        # projection — the same packer with the chip's real lines only,
+        # both axes, stragglers on their predecessor's line and COUNTED
+        # (the converter misses them; the router legalizes). What the
+        # search found stays reported as (pen, stair).
+        ppos = {v: p.copy() for v, p in bpos.items()}
+        pm = 0
+        # columns first: while x hangs off the chip, h-arms past the
+        # last real brick are free in the row pack (the packer's
+        # off-chip rule), and a y-pack before x would stack everyone
+        # on one row; then rows, then columns once more against the
+        # packed rows
+        pbk = None
+        for ax in (0, 1, 0):
+            ppos, pbk, m = readout(ax, bords, ppos, src_adj, grid,
+                                   snap=snap, bounded=True, bk=pbk)
+            pm = m
+        bbk = pbk
+        bpos = ppos
+        info["projected"] = True
+        info["proj_misses"] = int(pm)
     info["pen"] = int(pen)
     info["stair"] = float(stair)
     info["bars"] = int(sum((1 if h else 0) + (1 if v else 0)

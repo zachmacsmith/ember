@@ -6,7 +6,7 @@ Vehicle-agnostic **construction-order heuristics** for minor embedding — the
 its vertices in *placement order* (the vertex placed first comes first), so the
 same ordering can drive any MM-style embedder:
 
-  * the factored embedder (``factored.RouterConfig(order=...)``),
+  * (formerly) the factored embedder, deleted with the s3.127 rewrite,
   * a forked ``minorminer`` (passed as ``var_order=``),
   * CHARME's ATOM constructive embedder (its explicit order input).
 

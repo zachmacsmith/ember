@@ -294,35 +294,33 @@ class TestBarRebuild:
 
 
 class TestTail:
-    def test_tail_arms_valid_deterministic(self, source, zephyr):
+    def test_tail_mm_valid_deterministic(self, source, zephyr):
         from ember_qc.algorithms.factored import attract_embed
-        for tail in ("ball+mm", "ball"):
-            a = attract_embed(source, zephyr, timeout=45, seed=0, tail=tail)
-            b = attract_embed(source, zephyr, timeout=45, seed=0, tail=tail)
-            assert a["embedding"], tail
-            assert validate_embedding(a["embedding"], source, zephyr)
-            assert a["embedding"] == b["embedding"]
-            assert "ball_accepts" in a["diag"]
+        a = attract_embed(source, zephyr, timeout=45, seed=0, tail="mm")
+        b = attract_embed(source, zephyr, timeout=45, seed=0, tail="mm")
+        assert a["embedding"]
+        assert validate_embedding(a["embedding"], source, zephyr)
+        assert a["embedding"] == b["embedding"]
+        assert "ball_accepts" in a["diag"]
 
-    def test_ball_only_is_mm_free_when_gate_fires(self):
+    def test_tail_none_is_mm_free_when_gate_fires(self):
         import networkx as nx
         from ember_qc.algorithms.factored import attract_embed
         z = dnx.zephyr_graph(3, 4)
         k = nx.complete_graph(10)
-        r = attract_embed(k, z, timeout=45, seed=0, tail="ball")
+        r = attract_embed(k, z, timeout=45, seed=0, tail="none")
         assert r["embedding"]
         assert validate_embedding(r["embedding"], k, z)
         assert r["diag"].get("mm_skipped") is True
-        assert "ball_accepts" in r["diag"]
+        assert "ball_accepts" not in r["diag"]
 
-    def test_tail_default_is_mm_ball(self, source, zephyr):
+    def test_tail_default_is_mm(self, source, zephyr):
         from ember_qc.algorithms.factored import attract_embed
         a = attract_embed(source, zephyr, timeout=45, seed=0)
-        b = attract_embed(source, zephyr, timeout=45, seed=0,
-                          tail="mm+ball")
+        b = attract_embed(source, zephyr, timeout=45, seed=0, tail="mm")
         assert a["embedding"] == b["embedding"]
         assert "ball_accepts" in a["diag"]
-        c = attract_embed(source, zephyr, timeout=45, seed=0, tail="mm")
+        c = attract_embed(source, zephyr, timeout=45, seed=0, tail="none")
         assert c["embedding"]
         assert "ball_accepts" not in c["diag"]
 
@@ -335,13 +333,3 @@ class TestTail:
         assert total(a) <= total(finished)
         c, _ = ball_polish(finished, source, zephyr, rng_seed=6)
         assert validate_embedding(c, source, zephyr)
-
-    def test_init_mode_trivial_valid_deterministic(self, source, zephyr):
-        from ember_qc.algorithms.factored import attract_embed
-        a = attract_embed(source, zephyr, timeout=45, seed=0,
-                          init_mode="trivial")
-        b = attract_embed(source, zephyr, timeout=45, seed=0,
-                          init_mode="trivial")
-        assert a["embedding"] and a["embedding"] == b["embedding"]
-        assert validate_embedding(a["embedding"], source, zephyr)
-        assert a["diag"]["init_wall"] <= 0.05

@@ -1,50 +1,37 @@
 """
 ember_qc/algorithms/factored/placement.py
 ==========================================
-The **attraction** embedder (paper 2): placement-first embedding, one
-algorithm and one code path since the 2026-08-03 consolidation 2 (archive
-commit 9d99ebdd holds the deleted switch stack; 612ced3e holds the older
-point/cross/span-field variants; verdicts in docs/paper2/attraction.md).
+The **attraction** embedder: the plane engine (``plane.py``) decides
+where every variable lives — two orders, positions derived by the
+packer under hard capacity, chains derived by the stair rule — and the
+hardware adapter turns that layout into qubits:
 
-The placement layer decides *where* variables live — globally and jointly,
-the decision one-chain-at-a-time local search cannot revise — and the
-strongest available routing and polish then work from that placement,
-unconstrained. The placement earns its keep by improving the endpoint of an
-*unconstrained* polish (free-polish doctrine, notes §3.22); hobbling the
-polisher to protect the layout was tried and measured worse.
+1. **arrange** — ``plane.arrange``: random orders in, the bookmark's
+   positions and books out (see ``plane.py`` for the whole algorithm).
+2. **seeds** — the bookmark's books feed the converter
+   (``wire_seeds_exact`` on course-resolved fabrics, ``wire_seeds_iv``
+   elsewhere) and, on stride-2 fabrics, the exactness completion; a
+   completion with zero deficits and a passing validity check IS the
+   embedding and minorminer legalization is skipped (``mm_skipped``).
+3. **legalize** — otherwise stock minorminer, seeded with the chains.
+4. **fallback** — one nearest-qubit-seeded attempt if that failed.
+5. **tail** — ``tail="mm"``: minorminer's warm-started grind then the
+   ball pass; ``tail="none"``: the legal embedding as is.
 
-Pipeline per call (1-shot; consolidation 7, s3.112 — one path):
+Fabric policy is decided once, here: exactness and snap are gated to
+stride > 1 (junction completeness is what makes coverage = validity).
+``field.py`` and ``plane.py`` never inspect the fabric.
 
-1. **init** — the V-cycle two-stage coarsening init (``coarsen.py``).
-2. **geometry** — the init's points reduced to per-axis ranks, then
-   ``pack_project`` (the exact DP packer as init projection), the LEX
-   ENGINE (``seat.py``: lexicographic (capacity, stair) descent with
-   interleave jumps, swaps, re-seats, translations), and one more
-   ``pack_project`` as the family normalizer before conversion.
-3. **seeds** — one `arm_books` bundle feeds the snap-aimed coloring
-   and, on stride-2 fabrics, the exactness completion; deficit 0 =
-   the seeds ARE legal and minorminer legalization is skipped
-   (diagnostic: ``mm_skipped``).
-4. **routing** — otherwise stock minorminer seeded legalization,
-   capped at ``round_frac`` of the timeout.
-5. **feasibility fallback** — one uncapped snap-seeded attempt.
-6. **finish** — stock minorminer's full grind warm-started,
-   unconstrained; validity-guarded.
-
-Pegasus note (s3.112): the lex engine's capacity model assumes
-junction completeness; P16 runs but regresses vs the deleted orders
-engine (owner's call — Zephyr is the target; the elegant-adapter
-idea is parked in ideas.md).
-
-Deterministic per ``seed`` (and, under ``sched != "ladder"``, per ``sched_seed``).
+Parameters: ``timeout`` (a safety net; the engine's real stop is the
+work budget), ``seed``, ``max_asks`` (DP evaluations), ``sched_seed``
+(the bag's own seed; defaults to ``seed``), ``tail``. Deterministic
+per ``(seed, sched_seed)``.
 """
-
 from __future__ import annotations
 
 import logging
 import math
 import time
-from dataclasses import dataclass, fields, replace
 from typing import Dict, List, Optional, Sequence
 
 import networkx as nx
@@ -60,20 +47,15 @@ from ember_qc.algorithms.factored.polish import spur_prune
 logger = logging.getLogger(__name__)
 
 Point = np.ndarray  # shape (2,)
-Centroids = Dict[int, Point]
 
+FALLBACK_TIMEOUT = 60.0  # budget when the caller passes timeout=0/None
+SEED_STRIDE = 100        # router-seed derivation: seed*STRIDE (+99 fallback)
+TAIL_SPLIT = 0.5         # wall reserved for the tail when a timeout exists
 
-# ==============================================================================
-# GEOMETRY HELPERS
-# ==============================================================================
 
 def target_layout(target: nx.Graph) -> Dict[int, Point]:
-    """Drawing coordinates for the target's qubits.
-
-    D-Wave families get their native layouts (the coordinates the fabric was
-    designed in); anything else falls back to a spectral layout of the target
-    itself, which is deterministic and respects its coarse geometry.
-    """
+    """Drawing coordinates for the target's qubits: the native D-Wave
+    layouts, else a spectral layout of the target."""
     family = target.graph.get("family")
     if family in ("pegasus", "chimera", "zephyr"):
         import dwave_networkx as dnx
@@ -86,61 +68,10 @@ def target_layout(target: nx.Graph) -> Dict[int, Point]:
     return {q: np.asarray(p, dtype=float) for q, p in pos.items()}
 
 
-def source_positions(source: nx.Graph, lo: Point, hi: Point) -> Centroids:
-    """Initial centroids: spectral layout of the source scaled into the middle
-    80% of the target's bounding box. Degenerate spectra (complete graphs,
-    tiny graphs, disconnected sources with collapsing components) fall back to
-    a deterministic circle — the arrangement does the shaping from there.
-    """
-    nodes = sorted(source.nodes())
-    n = len(nodes)
-    arr: Optional[np.ndarray] = None
-    if n >= 3:
-        try:
-            if n > 300:
-                # sparse path (s3.67): networkx's spectral_layout fell
-                # through to DENSE O(n^3) BLAS on large suite graphs —
-                # 100 sweep workers stuck in dtrmm for minutes-to-hours
-                # each (gdb-confirmed). Sparse eigsh is seconds at
-                # n=17k. Small n keeps the exact legacy numerics.
-                import scipy.sparse as sp
-                import scipy.sparse.linalg as spl
-                idx = {v: i for i, v in enumerate(nodes)}
-                rows, cols = [], []
-                for u, w in source.edges():
-                    rows += [idx[u], idx[w]]
-                    cols += [idx[w], idx[u]]
-                data = np.ones(len(rows))
-                A = sp.coo_matrix((data, (rows, cols)), shape=(n, n))
-                L = (sp.diags(np.asarray(A.sum(axis=1)).ravel()) - A).tocsc()
-                vals, vecs = spl.eigsh(L, k=3, sigma=-1e-3, which="LM")
-                order = np.argsort(vals)
-                cand = vecs[:, order[1:3]].astype(float)
-            else:
-                pos = nx.spectral_layout(source)
-                cand = np.array([pos[v] for v in nodes], dtype=float)
-            span = cand.max(axis=0) - cand.min(axis=0)
-            if np.all(np.isfinite(cand)) and np.all(span > 1e-9):
-                arr = cand
-        except Exception:
-            arr = None
-    if arr is None:
-        angles = 2.0 * math.pi * np.arange(n) / max(n, 1)
-        arr = np.stack([np.cos(angles), np.sin(angles)], axis=1)
-    arr = (arr - arr.min(axis=0)) / np.maximum(arr.max(axis=0) - arr.min(axis=0), 1e-9)
-    # middle-80% span. The harness-style compact init (middle-30%) was probed
-    # at consolidation (consolidation_probe_init30.log): K100/K140 -0.15 but
-    # turan +2.0 / spin_glass +0.5 -- compact init interleaves blocks harder
-    # than insertion recovers (the s3.35 circle-init lesson again). Reverted.
-    margin = 0.1 * (hi - lo)
-    arr = lo + margin + arr * (hi - lo - 2.0 * margin)
-    return {v: arr[i] for i, v in enumerate(nodes)}
-
-
-def snap(cent: Centroids, coords: np.ndarray, qubits: Sequence[int],
+def snap(cent: Dict[int, Point], coords: np.ndarray, qubits: Sequence[int],
          degree_order: Sequence[int]) -> Dict[int, int]:
-    """Each variable (high degree first) claims the nearest unclaimed qubit.
-    Used by the feasibility fallback."""
+    """Each variable (high degree first) claims the nearest unclaimed
+    qubit. The feasibility fallback's seeds."""
     taken = np.zeros(len(qubits), dtype=bool)
     seeds: Dict[int, int] = {}
     for v in degree_order:
@@ -152,385 +83,6 @@ def snap(cent: Centroids, coords: np.ndarray, qubits: Sequence[int],
     return seeds
 
 
-
-def _landmark_cent(src_adj: Dict[int, List[int]]) -> Centroids:
-    """Order-native init (s3.120): BFS distances from a
-    pseudo-peripheral pair, composed into integer sort keys.
-    ox ~ (d0, d1, id), oy ~ (d1, d0, id) via the composites
-    d0*(n+1)+d1 and d1*(n+1)+d0 fed to the (value, id) rank sort.
-    Deterministic; disconnected components get separated bands."""
-    from collections import deque as _dq
-    nodes = sorted(src_adj)
-    n = len(nodes)
-    idx = {v: i for i, v in enumerate(nodes)}
-
-    def _bfs(root, comp_nodes):
-        dist = {v: None for v in comp_nodes}
-        dist[root] = 0
-        q = _dq([root])
-        while q:
-            u = q.popleft()
-            for w in src_adj.get(u, []):
-                if w in dist and dist[w] is None:
-                    dist[w] = dist[u] + 1
-                    q.append(w)
-        far = root
-        for v in sorted(comp_nodes):
-            if dist[v] is not None and dist[v] > dist[far]:
-                far = v
-        return dist, far
-
-    d0 = {}
-    d1 = {}
-    seen = set()
-    band = 0
-    for start in nodes:
-        if start in seen:
-            continue
-        comp = set()
-        q = _dq([start])
-        comp.add(start)
-        while q:
-            u = q.popleft()
-            for w in src_adj.get(u, []):
-                if w in idx and w not in comp:
-                    comp.add(w)
-                    q.append(w)
-        seen |= comp
-        _, p0 = _bfs(start, comp)
-        dist0, p1 = _bfs(p0, comp)
-        dist1, _ = _bfs(p1, comp)
-        off = band * (2 * n + 2)   # separate components into bands
-        for v in comp:
-            d0[v] = off + (dist0[v] if dist0[v] is not None else n + 1)
-            d1[v] = off + (dist1[v] if dist1[v] is not None else n + 1)
-        band += 1
-    m = n + 1
-    return {v: np.array([float(d0[v] * m + d1[v]),
-                         float(d1[v] * m + d0[v])]) for v in nodes}
-
-
-# ==============================================================================
-# DRIVER
-# ==============================================================================
-
-FALLBACK_TIMEOUT = 60.0  # budget when the caller passes timeout=0/None
-SEED_STRIDE = 100        # router-seed derivation: seed*STRIDE (+99 fallback)
-
-
-@dataclass(frozen=True)
-class AttractConfig:
-    """The attraction embedder's knobs (consolidation 7: 12 knobs,
-    one code path; +1, ``engine``, for the orders-state round).
-
-    Unknown keyword arguments to :func:`attract_embed` are ignored, so
-    pre-consolidation knobs silently fall back to the single pipeline.
-    """
-    round_frac: float = 0.5    # fraction of timeout the placement+legalize
-                               # phase may use; the rest is reserved for the
-                               # polish (where minorminer earns ~35% ACL,
-                               # mm-internals §6).
-    kappa: Optional[float] = None  # contact capacity (usable couplers per
-                               # chain qubit). None (default) = derived from
-                               # the target: mean working-qubit degree - 2 on
-                               # stride-1 fabrics; fresh contacts per tile on
-                               # course-resolved Zephyr (~7.7 on Z12). Floor
-                               # physics ONLY since s3.40 — participation is
-                               # by arm length.
-    span_floor: bool = True    # apply the contact-capacity floor to derived
-                               # bars (readout-side clamp, s3.30)
-    exact_seeds: bool = True   # exactness completion (s3.54): extend claims
-                               # along their wires until every source edge
-                               # has a physical coupler (corner + edge +
-                               # bridge passes); when the deficit hits 0 the
-                               # seeds ARE the legal embedding and MM
-                               # legalization is SKIPPED (the router-slack
-                               # tax abolished). Includes boundary-line
-                               # avoidance. Engages on stride>1 fabrics only
-                               # (junction completeness makes coverage =
-                               # validity there; Pegasus's 56% junctions do
-                               # not qualify — the open co-design problem).
-    snap_claims: bool = True   # claim-time crossing alignment (s3.56):
-                               # aim each arm's claim at its contacts'
-                               # lines, parity-exact at color time — aim,
-                               # don't repair. Extensions drop to ~0;
-                               # completion becomes a verifier. Stride-2
-                               # grids only; no-op elsewhere.
-    vcycle: bool = True        # source-side two-stage coarsening init
-                               # (s3.62-3.64): twin-first + Jaccard
-                               # matching, spectral-of-the-coarse-graph
-                               # placement (circle fallback), inherited
-                               # positions. DEFAULT ON since
-                               # consolidation 3 (s3.66): under
-                               # outcome-first scoring the vc arm
-                               # beats-or-ties the spectral init on all
-                               # measured cells and beats minorminer
-                               # everywhere, including the cells the
-                               # old default lost; confirmed by the
-                               # s3.66 guard probe. False = the legacy
-                               # spectral init.
-    vcycle_agg: bool = True    # s3.68/s3.69: leader-aggregation fixpoint
-                               # replaces {one pairwise matching round +
-                               # the no-fixpoint decree}; twin hash kept
-                               # at round 0; quotient protection emerges
-                               # from the weighted score. Probe-validated
-                               # at board parity twice (s3.68, s3.70);
-                               # DEFAULT ON (Max, 2026-08-06: winners
-                               # ship). Inert unless vcycle is active.
-    cluster_moves: bool = True
-                               # s3.70: coarsen the MOVES, not the state.
-                               # Clusters (aggregation-fixpoint groups)
-                               # are member sets gathered/relocated as
-                               # one E-gated composite inside arrange —
-                               # real bars through real gates, nothing
-                               # summarized, no sizes guessed. NOT
-                               # stride-gated: rides the ordinary gates
-                               # on every fabric. DEFAULT ON (Max,
-                               # 2026-08-06: obvious winners ship as
-                               # defaults — turan 8.12→6.52 at 3 seeds
-                               # with the tail killed (cmove_probe.csv;
-                               # s3.74 corrected the unartifacted 10-seed
-                               # figures), expanders at exact parity,
-                               # first Pegasus movement).
-    cluster_units: bool = True
-                               # s3.71: move units from THRESHOLD-FREE
-                               # mutual-preference coarsening (τ never
-                               # consulted; every graph gets its natural
-                               # log-depth hierarchy — lattices become
-                               # patch tilings, the gate filters).
-    init_mode: str = "spectral"
-                               # s3.88 (every move real): "trivial"
-                               # skips vcycle/spectral — identity ranks
-                               # in, the real-judged moves do the
-                               # layout. See ideas §3, the fold entry.
-    tail: str = "mm+ball"
-                               # the pipeline tail after a legal
-                               # embedding exists (s3.80): "mm" = warm
-                               # minorminer grind only (control);
-                               # "ball+mm" = ball_polish to its
-                               # fixpoint, then the grind with the
-                               # remaining wall (the move-scale ladder:
-                               # clusters teleport, balls re-lay
-                               # neighborhoods, mm polishes chains);
-                               # "ball" = no minorminer after the ball
-                               # (with the mm-skip gate fired this is a
-                               # minorminer-free Zephyr pipeline);
-                               # "mm+ball" (DEFAULT, s3.81: wins or
-                               # ties every board cell, max chain never
-                               # worse — the grind's basin stays free,
-                               # ball harvests what it cannot see).
-                               # False = s3.70's τ-aggregation units
-                               # (the measurement control arm).
-    ball_singles: bool = False
-                               # s3.91 (ball-prime): ball_polish also
-                               # asks the |S|=1 exact-cross question
-                               # (cross._place_cross — exhaustive
-                               # anchor audition, the grind's move done
-                               # exactly). With tail="ball" this is the
-                               # grind-replacement stack. OFF = balls
-                               # only (s3.75 selector).
-    engine: str = "plane"
-                               # the arrange engine. "plane" (DEFAULT
-                               # since s3.117; measured best arm at
-                               # s3.116, Max's call): the Infinite
-                               # Plane — search on the ideal unbounded
-                               # plane (readout = unbounded packs only,
-                               # judge = pure stair, capacity the
-                               # unbounded pack's invariant), every DP
-                               # proposal accepted, ONE brick-aware
-                               # annotated projection at the end.
-                               # "plane-audit" = strict post-readout
-                               # stair descent (acceptance control).
-                               # "orders"/"orders-audit" = the round-1
-                               # windowed engine (projection per adopt).
-                               # "lex" = the consolidation-7 seat
-                               # engine (the pre-orders default).
-    hier_units: bool = False
-                               # s3.115 (the ER variance test): offer
-                               # the affinity hierarchy's groups as
-                               # EXTRA units to the orders engine —
-                               # scattered similar sets gathered as one
-                               # jointly-judged weave, which interval
-                               # accretion cannot express. Orders
-                               # engines only; measurement switch.
-                               # s3.116: toxic on the plane crystal —
-                               # do not compose with plane pending
-                               # diagnosis.
-    carry_orders: bool = True
-                               # DEFAULT since s3.120 (Max: the good
-                               # ideas blocked only by the init
-                               # question ship now — the coming
-                               # compaction must not preserve id-tie
-                               # behavior by inertia). Known open:
-                               # turán under the spectral init (the
-                               # init round is the unblock).
-                               # s3.118 (the id-fossil dies): the
-                               # engine state becomes the two axis
-                               # orders LITERALLY — the tie-break on
-                               # this path is rank in the carried
-                               # order (ids speak once, at entry);
-                               # every interleaver candidate is a
-                               # real state, the pack cannot
-                               # invalidate its own coefficients,
-                               # and per-edge pair units subsume
-                               # edge_monotonize. Non-lex engines
-                               # only; measurement switch, dissolves
-                               # at the flip.
-    tile_moves: bool = False
-                               # s3.119: the 2-D-joint move family —
-                               # tiles (grid windows = order-interval
-                               # intersections under the carry
-                               # invariant) offered rigid
-                               # displacements x internal reversals
-                               # (the fold atoms), screened by the
-                               # judge's own delta arithmetic,
-                               # accept-all. Requires carry_orders.
-    settle_projection: bool = False
-                               # s3.119 (the alternation experiment):
-                               # loop the FINAL projection to its
-                               # assignment fixpoint (cap 4) instead
-                               # of one alternation; diag proj_iters
-                               # counts how often iteration 2+ still
-                               # changes anything — the per-run
-                               # measurement of the fixpoint premise.
-    xy_singles: bool = False
-                               # s3.121: the joint two-axis singleton
-                               # reinsertion — evict one variable from
-                               # BOTH carried orders, re-insert at the
-                               # exact optimum over all (x-slot,
-                               # y-slot) pairs. Separable per stair-
-                               # split (deg+1 prefix windows), priced
-                               # by the same audited interleaver in
-                               # slot_costs mode — no third court. The
-                               # fold's atom (s3.87): a 2-D relocation
-                               # whose 1-D halves are net-negative, so
-                               # per-axis moves cannot compose it.
-                               # Replaces the ladder's scale-1 sweep
-                               # (subsumption). Requires carry_orders;
-                               # measurement switch.
-    wave_schedule: bool = False
-                               # s3.122: the disturbance-driven
-                               # schedule (ideas front 7, first
-                               # build). Schedule ONLY — same moves,
-                               # same acceptance, same readout: wave 0
-                               # asks exactly the blind loop's first
-                               # pass; maintenance waves re-ask any
-                               # scale, coarse-first, restricted to
-                               # blocks containing a variable the
-                               # previous wave's adoptions disturbed
-                               # (per-variable span/contacts diff); a
-                               # completed wave disturbing nothing is
-                               # a fixpoint certificate over the whole
-                               # move family -> arrange returns early
-                               # and the tail inherits the budget.
-                               # Requires carry_orders; measurement
-                               # switch.
-    axis_inner: bool = False
-                               # s3.123 (schedule half of the cross-
-                               # widen round): the per-pass sweep
-                               # DIRECTION alternates (odd passes
-                               # (y,x), even (x,y)) so neither axis is
-                               # systematically the recording sweep.
-                               # The sweep structure itself is
-                               # untouched — the per-block adjacency
-                               # reorder was convicted by its own
-                               # smoke (crystal +0.99, quiet seed 0)
-                               # and replaced by slot-paired widening.
-                               # Deterministic — no rng. Requires
-                               # carry_orders; measurement switch.
-    cross_widen: bool = False
-                               # s3.123 (widening half): when a unit's
-                               # first-axis probe is ADOPTED, the same
-                               # unit's second-axis probe widens to
-                               # include the adoption's realized
-                               # diff-set — everyone the move and the
-                               # packer displaced. The cross-axis
-                               # response: an x-squeeze is relieved by
-                               # y-reordering (contact flips), a
-                               # y-reorder completed by x-re-placement
-                               # — a tractable two-step decomposition
-                               # of the intractable joint two-axis set
-                               # move (the fold's shape, s3.121). Zero
-                               # extra questions, zero extra packs.
-                               # Requires axis_inner; measurement
-                               # switch.
-    axis_single: bool = False
-                               # s3.124 (the sound plane, 1/3): a move
-                               # re-packs ONLY its own axis; the other
-                               # axis's positions are held exactly as
-                               # carried. The DP's frozen-other-axis
-                               # assumption becomes literally true and
-                               # the intra-readout alternation (the
-                               # tango) is gone. Requires carry_orders.
-    wrap_pack: bool = False
-                               # s3.124b (the sound plane, one
-                               # switch). The state stays on the ideal
-                               # plane; at every adopt it is ALSO
-                               # projected onto the chip by the
-                               # wrapped bounded pack — WRAPPING IS
-                               # THE PACKER'S OVERFLOW RULE: real
-                               # pools on a (k*W) x (R/k) virtual
-                               # chip, k the smallest strip count that
-                               # places everyone; when the columns run
-                               # out the pack continues into the next
-                               # strip instead of clamping stragglers
-                               # (compaction unchanged, only overflow
-                               # wraps). That physical layout is what
-                               # the judge scores (brick-ruler lex on
-                               # the converter's own claim intervals)
-                               # and what the pipeline hands on — no
-                               # second squeeze, no clamp. Plane
-                               # engine + carry only; refuses
-                               # xy_singles / tile_moves.
-    arm_cost: bool = False
-                               # s3.125: one bar (grid.stride
-                               # junctions) per ACTIVE arm in the
-                               # plane objective — judge and the
-                               # interleaver's own transitions alike.
-                               # A side with >= 1 contact needs a real
-                               # qubit even when its hull is one
-                               # junction; the span-only stair priced
-                               # it 0 (grid_200: stair 1.2/var vs real
-                               # 1.965). On turán/K_n the active-arm
-                               # count is fixed, so the term is a
-                               # constant there. Plane + carry only;
-                               # refuses wrap_pack (whose brick judge
-                               # carries its own +1).
-    strip: bool = False
-                               # s3.125: the half-infinite strip. The
-                               # plane is the chip's REAL columns x
-                               # unbounded rows: the x half of every
-                               # readout packs into the real per-column
-                               # profiles (boundary columns zeroed), the
-                               # y half stays ideal. A layout wider
-                               # than the chip cannot exist; column
-                               # pressure spreads rows. Rows the chip
-                               # does not have, and clamp misses, are
-                               # the capacity-first lexicographic key
-                               # (pool 0, hinge²) — the same key that
-                               # governs line capacity, no λ. Plane +
-                               # carry only; refuses wrap_pack.
-    sched: str = "ladder"
-                               # s3.126 instrument: the ORDER of the
-                               # blind pass's asks — "ladder" (today,
-                               # byte-identical), "rung" (random
-                               # within a scale, coarsest-first, pairs
-                               # last), "bag" (one flat random bag).
-                               # Never edits the ask SET. Plane + carry
-                               # only; refuses every accept-dependent
-                               # schedule feature.
-    sched_seed: int = 0
-                               # schedule RNG seed, independent of
-                               # `seed` (init + router); inert under
-                               # "ladder"
-    max_asks: Optional[int] = None
-                               # s3.126 WORK budget: stop after this
-                               # many DP evaluations (memo hits free;
-                               # the pass cap is lifted) — a
-                               # measurement that never depends on the
-                               # box's load. Plane + carry only.
-
-
 def _auto_bins(n_qubits: int) -> int:
     return max(4, min(16, int(math.sqrt(n_qubits) / 5)))
 
@@ -539,17 +91,12 @@ def _mm_route(source_graph: nx.Graph, target_graph: nx.Graph, *,
               chains: Optional[Dict[int, List[int]]] = None,
               warm: Optional[Embedding] = None,
               seed: int = 0, timeout: float = 60.0) -> Embedding:
-    """Stock minorminer, in one of two roles: seeded cheap legalization
-    (``chains``: derived seed chains, ``chainlength_patience=0``) or the full
-    warm-started polish (``warm``: a legal embedding, ``skip_initialization``).
-    Returns ``{}`` on failure.
-
-    The source is passed as a graph object, NOT an edge list: the edge-list
-    form silently drops isolated vertices, and minorminer then rejects
-    ``initial_chains`` entries for them ("labels that weren't referred to by
-    any edges" — 1,546 failures in the first full-Ember sweep before this
-    fix). The graph form preserves them with singleton chains.
-    """
+    """Stock minorminer in one of two roles: seeded cheap legalization
+    (``chains``, ``chainlength_patience=0``) or the warm-started polish
+    (``warm``, ``skip_initialization``). Returns ``{}`` on failure. The
+    source is passed as a graph object, not an edge list: the edge-list
+    form drops isolated vertices and minorminer then rejects their
+    ``initial_chains`` entries."""
     import minorminer
 
     kwargs: dict = {"random_seed": seed, "timeout": timeout}
@@ -567,14 +114,13 @@ def attract_embed(
     *,
     timeout: float = 300.0,
     seed: int = 0,
-    config: Optional[AttractConfig] = None,
-    **overrides,
+    max_asks: Optional[int] = None,
+    sched_seed: Optional[int] = None,
+    tail: str = "mm",
+    **ignored,
 ) -> dict:
-    """Functional entry point; returns an ember-qc result dict (never raises).
-
-    ``overrides`` matching :class:`AttractConfig` fields replace those fields;
-    unknown keyword arguments are ignored.
-    """
+    """Functional entry point; returns an ember-qc result dict (never
+    raises). Unknown keyword arguments are ignored."""
     start = time.perf_counter()
     deadline = start + timeout if timeout else None
 
@@ -583,72 +129,14 @@ def attract_embed(
                 "success": False, "status": "FAILURE", **extra}
 
     try:
-        cfg = config if config is not None else AttractConfig()
-        known = {f.name for f in fields(AttractConfig)}
-        picked = {k: v for k, v in overrides.items() if k in known}
-        if picked:
-            cfg = replace(cfg, **picked)
-        if cfg.engine not in ("lex", "orders", "orders-audit",
-                              "plane", "plane-audit", "plane2"):
-            # loud FAILURE (with the message) rather than silently
-            # measuring the control arm — the probes' typo fence
-            # checks kwarg names, not values
-            raise ValueError(f"unknown engine {cfg.engine!r}")
-        if cfg.tile_moves and not cfg.carry_orders:
-            # loud FAILURE, not a silent control-arm measurement
-            raise ValueError("tile_moves requires carry_orders")
-        if cfg.xy_singles and not cfg.carry_orders:
-            # loud FAILURE, not a silent control-arm measurement
-            raise ValueError("xy_singles requires carry_orders")
-        if cfg.wave_schedule and not cfg.carry_orders:
-            # loud FAILURE, not a silent control-arm measurement
-            raise ValueError("wave_schedule requires carry_orders")
-        if cfg.axis_inner and not cfg.carry_orders:
-            # loud FAILURE, not a silent control-arm measurement
-            raise ValueError("axis_inner requires carry_orders")
-        if cfg.cross_widen and not cfg.axis_inner:
-            # loud FAILURE, not a silent control-arm measurement
-            raise ValueError("cross_widen requires axis_inner")
-        if cfg.axis_single and not cfg.carry_orders:
-            raise ValueError("axis_single requires carry_orders")
-        if cfg.wrap_pack and not cfg.carry_orders:
-            raise ValueError("wrap_pack requires carry_orders")
-        if cfg.wrap_pack and not cfg.engine.startswith("plane"):
-            raise ValueError("wrap_pack requires the plane engine")
-        if cfg.wrap_pack and (cfg.xy_singles or cfg.tile_moves):
-            raise ValueError(
-                "wrap_pack does not compose with xy_singles/tile_moves")
-        if cfg.arm_cost and not cfg.carry_orders:
-            raise ValueError("arm_cost requires carry_orders")
-        if cfg.arm_cost and not cfg.engine.startswith("plane"):
-            raise ValueError("arm_cost requires the plane engine")
-        if cfg.arm_cost and cfg.wrap_pack:
-            raise ValueError("arm_cost does not compose with wrap_pack")
-        if cfg.strip and not cfg.carry_orders:
-            raise ValueError("strip requires carry_orders")
-        if cfg.strip and not cfg.engine.startswith("plane"):
-            raise ValueError("strip requires the plane engine")
-        if cfg.strip and cfg.wrap_pack:
-            raise ValueError("strip does not compose with wrap_pack")
-        if cfg.sched not in ("ladder", "rung", "bag"):
-            raise ValueError(f"unknown sched {cfg.sched!r}")
-        if cfg.sched != "ladder" or cfg.max_asks is not None:
-            if not cfg.carry_orders:
-                raise ValueError("sched/max_asks require carry_orders")
-            if not cfg.engine.startswith("plane"):
-                raise ValueError("sched/max_asks require the plane engine")
-        if cfg.sched != "ladder" and (
-                cfg.wave_schedule or cfg.axis_inner or cfg.cross_widen
-                or cfg.tile_moves or cfg.hier_units or cfg.xy_singles):
-            raise ValueError("sched does not compose with wave_schedule/"
-                             "axis_inner/cross_widen/tile_moves/"
-                             "hier_units/xy_singles")
-        if cfg.max_asks is not None and cfg.max_asks < 1:
+        if tail not in ("none", "mm"):
+            raise ValueError(f"unknown tail {tail!r}")
+        if max_asks is not None and max_asks < 1:
             raise ValueError("max_asks must be >= 1")
-
+        from ember_qc.algorithms.factored import plane
         from ember_qc.algorithms.factored.field import (
-            TileGrid, _target_kappa, arm_books, bar_widths,
-            complete_seeds, pack_project, stair_energy, wire_seeds_iv)
+            TileGrid, bar_widths, complete_seeds, stair_energy,
+            wire_seeds_exact, wire_seeds_iv)
 
         adj = build_adjacency(target_graph)
         qubits = sorted(adj)
@@ -660,275 +148,31 @@ def attract_embed(
 
         pos = target_layout(target_graph)
         coords = np.array([pos[q] for q in qubits], dtype=float)
-        lo, hi = coords.min(axis=0), coords.max(axis=0)
         grid = TileGrid(target_graph, pos,
                         fallback_bins=_auto_bins(len(qubits)),
                         courses=True)
-        # The stride gate (consolidation 2): the exactness path is
-        # measured on stride>1 (course-resolved Zephyr) only, where
-        # junction completeness makes coverage = validity. On stride-1
-        # fabrics it is inert.
-        # ---- EFFECTIVE CONFIG (s3.66): every fabric-policy decision,
-        # decided ONCE. field.py never inspects the fabric. The packer
-        # and the overload gate are properties of the state
-        # representation (v4 order state), fabric-agnostic; exactness/
-        # snap stay stride-gated (junction completeness is physics).
+        # fabric policy, decided once: the exactness path (completion,
+        # certificate, snap-aimed claims) needs junction completeness,
+        # which is a stride-2 fact
         stride2 = grid.stride > 1
-        eff_exact = cfg.exact_seeds and stride2
-        eff_snap = cfg.snap_claims and stride2
-        # vcycle activation is stride-gated (s3.66 guard probe): the
-        # compact coarse init needs the contraction+DP machinery to
-        # exploit it — on the P16 legacy path it regressed the dense
-        # cells (turan 8.45->9.47, K100 13.19->14.08, clean controls)
-        # while helping sparse (ws 3.79->3.60; recorded as
-        # restricted-polish-round evidence, s3.65 C).
-        eff_vcycle = cfg.vcycle and stride2
-        kappa = cfg.kappa if cfg.kappa is not None else _target_kappa(grid)
+        eff_exact = stride2
+        eff_snap = stride2
+        engine_deadline = ((start + TAIL_SPLIT * timeout)
+                           if (timeout and tail != "none") else deadline)
 
-        # the units hierarchy is computed ONCE (the cluster moves
-        # consume it; the orders engine's units are intervals of the
-        # current order, so it never needs the hierarchy)
-        _units_levels = None
-        if ((cfg.engine == "lex" and cfg.cluster_moves
-             and cfg.cluster_units)
-                or (cfg.engine != "lex" and cfg.hier_units)):
-            from ember_qc.algorithms.factored.coarsen import (
-                coarsen as _coarsen)
-            _units_levels = _coarsen(src_adj, units=True)
-
-        if cfg.init_mode not in ("spectral", "trivial",
-                                 "landmark", "random"):
-            raise ValueError(f"unknown init_mode {cfg.init_mode!r}")
-        _t_init = time.perf_counter()
-        if cfg.init_mode == "trivial":
-            # s3.88 every-move-real: no summary physics — identity
-            # ranks in; the real-judged moves do the layout
-            cent = {v: np.zeros(2) for v in src_adj}
-        elif cfg.init_mode == "landmark":
-            # s3.120 order-native init: double-BFS landmark orders.
-            # No eigenstuff, no coordinates — the graph's own metric
-            # produces the sort keys, and structurally identical
-            # vertices tie on every key (TWIN-ADJACENCY by
-            # construction; id breaks the tie — the one place ids
-            # deserve a voice). Integer composites feed the existing
-            # (value, id) rank reduction unchanged.
-            cent = _landmark_cent(src_adj)
-        elif cfg.init_mode == "random":
-            # s3.120: the karma-free baseline — seeded per-axis
-            # permutations; the random-vs-best gap per cell is the
-            # init's measured contribution (the s3.35 standard,
-            # reinstated as an arm)
-            _rng = np.random.default_rng(seed)
-            _vs = sorted(src_adj)
-            _px = _rng.permutation(len(_vs))
-            _py = _rng.permutation(len(_vs))
-            cent = {v: np.array([float(_px[i]), float(_py[i])])
-                    for i, v in enumerate(_vs)}
-        elif eff_vcycle:
-            from ember_qc.algorithms.factored.coarsen import multilevel_init
-            cent = multilevel_init(src_adj, lo, hi, seed=seed,
-                                   agg=cfg.vcycle_agg)
-        else:
-            cent = source_positions(source_graph, lo, hi)
-        init_wall = time.perf_counter() - _t_init
-        legal_emb: Optional[Embedding] = None
-        legal_acl = math.inf
-        legal_max_chain = None
-        mm_skipped = False
-        ex_info: Optional[dict] = None
-
-        placement_deadline = (start + cfg.round_frac * timeout) \
-            if timeout else None
-
-        # v4: the init's continuous points are reduced to their
-        # per-axis RANKS — sort keys for the first readout, nothing
-        # more. The first arrange projection replaces them with true
-        # line assignments; no continuous phase exists.
-        tpts = {v: np.zeros(2) for v in cent}
-        for axis in (0, 1):
-            ranked = sorted(cent, key=lambda v: (float(cent[v][axis]),
-                                                 v))
-            for r, v in enumerate(ranked):
-                tpts[v][axis] = float(r)
-        # Galerkin-defect instrumentation (s3.69): stair-E of the raw
-        # interpolated init — with the final stair_E below, attributes
-        # what the junction hands over vs what arrange must repair.
-        E_interp = round(stair_energy(tpts, src_adj), 1)
-        E_contract = E_interp
-        # s3.70 cluster moves: the aggregation hierarchy's groups, in
-        # FINE ids, one list per level (coarsest last). Position-free —
-        # computed once from the source graph.
-        cluster_groups = None
-        if ((cfg.engine == "lex" and cfg.cluster_moves)
-                or (cfg.engine != "lex" and cfg.hier_units)):
-            from ember_qc.algorithms.factored.coarsen import (
-                coarsen as _coarsen)
-            _levels = (_units_levels if (_units_levels is not None
-                                         and cfg.cluster_units)
-                       else _coarsen(src_adj, units=True)
-                       if cfg.cluster_units
-                       else _coarsen(src_adj, agg=True))
-            if len(_levels) > 1:
-                cluster_groups = []
-                _mem = {v: [v] for v in _levels[0].adj}
-                for _li in range(1, len(_levels)):
-                    _up: dict = {}
-                    for _c, _ms in _mem.items():
-                        _p = _levels[_li].parent_of[_c]
-                        _up.setdefault(_p, []).extend(_ms)
-                    _mem = _up
-                    _g = [sorted(ms) for ms in _mem.values() if len(ms) > 1]
-                    if _g:
-                        cluster_groups.append(_g)
-                cluster_groups = cluster_groups or None
-        _t_arr = time.perf_counter()
-        # THE arrange (consolidation 7, s3.112 — one path): the lex
-        # engine bracketed by the packer's two remaining jobs.
-        #
-        #   pack_project  — init projection (ranks -> packed lines)
-        #   seat_arrange  — lexicographic (capacity, stair) descent;
-        #                   moves: interleave-jump (the s3.111 exact
-        #                   all-interleavings DP), swaps, re-seats,
-        #                   translations
-        #   pack_project  — the FAMILY NORMALIZER (s3.110 measured: a
-        #                   pen-0 lex state converts at 578 deficits
-        #                   raw, 0 after one pack, pen preserved — the
-        #                   converter/completion stack is co-designed
-        #                   with packer-family states; a lex-family
-        #                   converter would delete this call too)
-        _plane_books = None
-        if cfg.engine == "plane2":
-            # s3.127: the rewrite's engine — state = two orders, readout
-            # on the strip, judge = (overload, spans + bar); its
-            # bookmark's books ARE the handoff's books (one accounting)
-            from ember_qc.algorithms.factored import plane as _plane
-            tpts, _plane_books, last_info = _plane.arrange(
-                src_adj, grid, seed=seed, max_asks=cfg.max_asks,
-                deadline=placement_deadline, snap=eff_snap)
-            _legal_info = {"_contacts": _plane_books[0],
-                           "_orders": last_info.get("orders")}
-            _proj_iters = 0
-            _proj_skipped = False
-        elif cfg.engine == "lex":
-            from ember_qc.algorithms.factored.seat import seat_arrange
-            tpts, _proj_info = pack_project(
-                tpts, src_adj, grid, kappa=kappa,
-                floor=cfg.span_floor, snap=eff_snap)
-            tpts, last_info = seat_arrange(
-                tpts, src_adj, grid, cluster_groups,
-                deadline=placement_deadline)
-            tpts, _legal_info = pack_project(
-                tpts, src_adj, grid, kappa=kappa,
-                floor=cfg.span_floor, snap=eff_snap)
-        elif cfg.engine in ("orders", "orders-audit"):
-            # the orders engine (round 1): every state it occupies is
-            # readout output, so no family normalizer runs — the diag's
-            # fit observables come from the bookmark's own readout
-            from ember_qc.algorithms.factored.orders import order_arrange
-            tpts, _proj_info = pack_project(
-                tpts, src_adj, grid, kappa=kappa,
-                floor=cfg.span_floor, snap=eff_snap)
-            tpts, last_info = order_arrange(
-                tpts, src_adj, grid, kappa=kappa,
-                floor=cfg.span_floor, snap=eff_snap,
-                audit=(cfg.engine == "orders-audit"),
-                deadline=placement_deadline,
-                extra_units=(cluster_groups if cfg.hier_units
-                             else None),
-                carry=cfg.carry_orders,
-                tiles=cfg.tile_moves,
-                xy=cfg.xy_singles,
-                wave=cfg.wave_schedule,
-                axis_inner=cfg.axis_inner,
-                widen=cfg.cross_widen,
-                axis_single=cfg.axis_single)
-            _legal_info = last_info.get("readout_info", {})
-        else:
-            # the plane engine (round 3, s3.116): the search lives on
-            # the IDEAL plane (readout = unbounded packs only, judge =
-            # pure stair — capacity is the unbounded pack's invariant,
-            # not a price), and the finite chip enters exactly ONCE:
-            # the brick-aware projection below, whose per-(line, brick)
-            # profiles are the same truth pen reads
-            from ember_qc.algorithms.factored.orders import order_arrange
-            tpts, last_info = order_arrange(
-                tpts, src_adj, grid, kappa=kappa,
-                floor=cfg.span_floor, snap=eff_snap,
-                audit=(cfg.engine == "plane-audit"),
-                deadline=placement_deadline,
-                extra_units=(cluster_groups if cfg.hier_units
-                             else None),
-                plane=True, carry=cfg.carry_orders,
-                tiles=cfg.tile_moves, xy=cfg.xy_singles,
-                wave=cfg.wave_schedule,
-                axis_inner=cfg.axis_inner,
-                widen=cfg.cross_widen,
-                axis_single=cfg.axis_single,
-                wrap=cfg.wrap_pack,
-                arm_cost=cfg.arm_cost,
-                strip=cfg.strip,
-                sched=cfg.sched,
-                sched_rng=(np.random.default_rng(cfg.sched_seed)
-                           if cfg.sched != "ladder" else None),
-                max_asks=cfg.max_asks)
-            # THE one projection — optionally settled to its
-            # alternation fixpoint (s3.119: the per-run measurement of
-            # the fixpoint premise; iteration 2+ changing anything
-            # means the state wasn't done converging)
-            _proj_iters = 0
-            _proj_skipped = False
-            if cfg.wrap_pack and "_phys_pos" in last_info:
-                # s3.124b: the readout already enforced real capacity
-                # on every move (the wrapped bounded pack); the final
-                # projection is just the strip map — no second squeeze.
-                # Residual overload is the judge's pen and the
-                # converter's misses, priced and counted, never clamped
-                tpts = last_info["_phys_pos"]
-                _legal_info = last_info.get("readout_info", {})
-                _proj_skipped = True
-            else:
-                _prev = None
-                while True:
-                    _proj_iters += 1
-                    tpts, _legal_info = pack_project(
-                        tpts, src_adj, grid, kappa=kappa,
-                        floor=cfg.span_floor, snap=eff_snap,
-                        monotonize=False, brick_pools=True,
-                        orders=last_info.get("_orders"),
-                        strip=cfg.strip)
-                    if not cfg.settle_projection or _proj_iters >= 4:
-                        break
-                    if _prev is not None and all(
-                            np.array_equal(tpts[v], _prev[v])
-                            for v in tpts):
-                        break
-                    _prev = {v: p.copy() for v, p in tpts.items()}
-        arrange_wall = time.perf_counter() - _t_arr
-        cent = {v: grid.Minv @ (tpts[v] - grid.c) for v in cent}
-
-        # one accounting: the seeds read the SAME books the gates used
-        # (s3.99: the flag must reach this recomputation too, or the
-        # seeds would be built under y-rule bits while the layout was
-        # gated under flipped ones — the two-books bug)
-        # under carried orders (s3.118) the seeds must be built under
-        # the SAME orientation book the layout was optimized for — the
-        # projection's rank contacts — or it's the s3.65 two-books bug
-        _carry_cts = (_legal_info.get("_contacts")
-                      if (cfg.engine != "lex" and cfg.carry_orders)
-                      else None)
-        if _plane_books is not None:
-            books = _plane_books
-        else:
-            books = arm_books(tpts, src_adj, grid, kappa=kappa,
-                              floor=cfg.span_floor, snap=eff_snap,
-                              min_span=0.0, contacts=_carry_cts)
-        # raw stair-E (recorded trajectory metric), priced on the same
-        # contacts the seeds consume
+        # ---- arrange
+        _t0 = time.perf_counter()
+        tpts, books, info = plane.arrange(
+            src_adj, grid, seed=seed, max_asks=max_asks,
+            deadline=engine_deadline, snap=eff_snap,
+            sched_seed=seed if sched_seed is None else sched_seed)
+        arrange_wall = time.perf_counter() - _t0
         stair_E = round(stair_energy(tpts, src_adj, contacts=books[0]), 1)
+
+        # ---- seeds: the bookmark's books ARE the converter's books
         conv_info = None
-        if grid.stride > 1 and grid.wire_map:
-            from ember_qc.algorithms.factored.field import (
-                wire_seeds_exact)
+        ex_info = None
+        if stride2 and grid.wire_map:
             seed_chains, conv_info = wire_seeds_exact(
                 grid, tpts, books[1], src_adj, books)
         else:
@@ -938,6 +182,9 @@ def attract_embed(
         if eff_exact:
             seed_chains, ex_info = complete_seeds(
                 grid, seed_chains, src_adj, adj)
+
+        # ---- legalize
+        mm_skipped = False
         emb: Embedding = {}
         if (ex_info is not None
                 and ex_info["deficit_edges"] == 0
@@ -947,209 +194,66 @@ def attract_embed(
             emb = {v: list(c) for v, c in seed_chains.items()}
             mm_skipped = True
         else:
-            cap = (placement_deadline - time.perf_counter()) \
-                if placement_deadline else FALLBACK_TIMEOUT
+            cap = ((engine_deadline - time.perf_counter())
+                   if engine_deadline else FALLBACK_TIMEOUT)
             if cap > 0:
                 emb = _mm_route(source_graph, target_graph,
                                 chains=seed_chains,
                                 seed=seed * SEED_STRIDE, timeout=cap)
-
         if not emb:
-            # feasibility fallback: one uncapped snap-seeded attempt
-            # (degradation mode = spectral-seeded stock MM, s3.23)
-            remaining = (deadline - time.perf_counter()) if deadline \
-                else FALLBACK_TIMEOUT
+            remaining = ((deadline - time.perf_counter()) if deadline
+                         else FALLBACK_TIMEOUT)
             if remaining > 0:
+                cent = {v: grid.Minv @ (tpts[v] - grid.c) for v in tpts}
                 fb = {v: [q] for v, q in
                       snap(cent, coords, qubits, degree_order).items()}
                 emb = _mm_route(source_graph, target_graph, chains=fb,
                                 seed=seed * SEED_STRIDE + 99,
                                 timeout=remaining)
-        if emb:
-            emb = spur_prune(emb, src_adj, adj, deadline=deadline)
-            legal_acl = sum(len(c) for c in emb.values()) / len(emb)
-            legal_max_chain = max(len(c) for c in emb.values())
-            legal_emb = emb
-
-        if legal_emb is None:
+        if not emb:
             return _failure(stair_E=stair_E)
+        emb = spur_prune(emb, src_adj, adj, deadline=deadline)
+        legal_acl = sum(len(c) for c in emb.values()) / len(emb)
+        legal_max_chain = max(len(c) for c in emb.values())
 
-        # the tail: the move-scale ladder's last two rungs (Max,
-        # 2026-08-10 — cluster moves teleport, ball polish re-lays
-        # neighborhoods, minorminer polishes single chains, if anything).
-        # ball_polish terminates at a fixpoint on its own (strict integer
-        # descent), so there is no split fraction: it runs under the
-        # overall deadline and the grind gets whatever wall remains.
+        # ---- tail
+        finished = emb
         ball_info = None
-        if cfg.tail in ("ball+mm", "ball"):
-            from ember_qc.algorithms.factored.ball import ball_polish
-            # ONE sweep (structural cap, not a constant): the smoke
-            # showed fixpoint-chasing starves the grind on lattices —
-            # most ball accepts land in sweep 1; the grind gets the rest
-            balled, ball_info = ball_polish(
-                legal_emb, source_graph, target_graph,
-                deadline=deadline, adj=adj, grid=grid,
-                max_sweeps=1 if cfg.tail == "ball+mm" else None,
-                singles=cfg.ball_singles)
-            if is_valid_embedding(balled, source_graph, target_graph,
-                                  adj=adj):
-                legal_emb = balled
-        remaining = (deadline - time.perf_counter()) if deadline \
-            else FALLBACK_TIMEOUT
-        if cfg.tail not in ("ball", "none") \
-                and remaining > 0:
-            finished = _mm_route(source_graph, target_graph,
-                                 warm=legal_emb, seed=seed,
-                                 timeout=remaining) or legal_emb
-        else:
-            finished = legal_emb
-        # a broken finishing pass must never corrupt a legal result
-        if not is_valid_embedding(finished, source_graph, target_graph,
-                                  adj=adj):
-            finished = legal_emb
-        if cfg.tail == "mm+ball":
-            # s3.80 reordering: the grind polishes chains first (its
-            # basin unconstrained, s3.22 doctrine), ball harvests LAST
-            # what the single-chain view cannot see (s3.75 protocol,
-            # now at equal total budget). Fixpoint under the deadline.
+        if tail == "mm":
+            remaining = ((deadline - time.perf_counter()) if deadline
+                         else FALLBACK_TIMEOUT)
+            if remaining > 0:
+                ground = _mm_route(source_graph, target_graph, warm=emb,
+                                   seed=seed, timeout=remaining) or emb
+                if is_valid_embedding(ground, source_graph, target_graph,
+                                      adj=adj):
+                    finished = ground
             from ember_qc.algorithms.factored.ball import ball_polish
             balled, ball_info = ball_polish(
                 finished, source_graph, target_graph,
-                deadline=deadline, adj=adj, grid=grid,
-                singles=cfg.ball_singles)
+                deadline=deadline, adj=adj, grid=grid)
             if is_valid_embedding(balled, source_graph, target_graph,
                                   adj=adj):
                 finished = balled
 
+        # ---- diagnostics
         widths = bar_widths(books[1])
         sizes = (np.array([widths[v].sum() for v in widths])
                  if widths else np.zeros(1))
-        diag = {"extent_mean": round(float(sizes.mean()), 3),
-                "extent_max": round(float(sizes.max()), 3),
-                "stride": int(grid.stride),
-                # Galerkin-defect fields (s3.69): init handoff vs
-                # arrange — junction-loss attribution (E_contract ==
-                # E_interp since the contraction arm's deletion)
-                "E_interp": E_interp,
-                "E_contract": E_contract,
-                # the hardware-relevant tail metric (s3.65): recorded
-                # from consolidation 3 onward, everywhere
-                "max_chain": max(len(c) for c in finished.values())}
-        diag["init_wall"] = round(init_wall, 2)
-        diag["arrange_wall"] = round(arrange_wall, 2)
-        # the lex engine's counters (s3.102/110/111)
-        diag["seat_accepts"] = int(last_info.get("seat_accepts", 0))
-        diag["trans_accepts"] = int(
-            last_info.get("trans_accepts", 0))
-        diag["seat_passes"] = int(last_info.get("passes", 0))
-        diag["seat_fast_miss"] = int(
-            last_info.get("fast_miss", 0))
-        diag["swap_accepts"] = int(last_info.get("swap_accepts", 0))
-        diag["interleave_accepts"] = int(
-            last_info.get("interleave_accepts", 0))
-        diag["interleave_declines"] = int(
-            last_info.get("interleave_declines", 0))
-        diag["interleave_noops"] = int(
-            last_info.get("interleave_noops", 0))
-        diag["accept_traj"] = list(
-            last_info.get("accept_traj", []))[:12]
-        # capacity and length reported apart: seat_pen == 0 certifies
-        # the feasibility invariant held
-        if last_info.get("seat_pen") is not None:
-            diag["seat_pen"] = last_info["seat_pen"]
-            diag["seat_stair"] = last_info["seat_stair"]
-        if cfg.engine != "lex":
-            diag["readouts"] = int(last_info.get("readouts", 0))
-            diag["mono_swaps"] = int(last_info.get("mono_swaps", 0))
-            diag["bookmark_wall"] = last_info.get("bookmark_wall", 0.0)
-            diag["bookmark_readouts"] = int(
-                last_info.get("bookmark_readouts", 0))
-            diag["asks"] = int(last_info.get("asks", 0))
-            if cfg.engine == "plane2":
-                for _k in ("pen", "stair", "bars", "misses", "accepts",
-                           "passes", "stopped_by", "bookmark_asks",
-                           "bookmark_wall"):
-                    diag[_k] = last_info.get(_k)
-                diag["plane_stair"] = last_info.get("stair")
-                diag["judge_pen"] = last_info.get("pen")
-                diag["plane_bars"] = last_info.get("bars")
-            diag["bookmark_asks"] = int(last_info.get("bookmark_asks", 0))
-            diag["stopped_by"] = last_info.get("stopped_by")
-            diag["sched"] = cfg.sched
-            diag["hier_accepts"] = int(last_info.get("hier_accepts", 0))
-            diag["pair_accepts"] = int(last_info.get("pair_accepts", 0))
-            diag["tile_accepts"] = int(last_info.get("tile_accepts", 0))
-            diag["xy_accepts"] = int(last_info.get("xy_accepts", 0))
-            diag["wave_count"] = int(last_info.get("wave_count", 0))
-            diag["wave_questions"] = int(
-                last_info.get("wave_questions", 0))
-            diag["wave_early_stop"] = bool(
-                last_info.get("wave_early_stop", False))
-            diag["widen_asked"] = int(last_info.get("widen_asked", 0))
-            diag["widen_accepts"] = int(
-                last_info.get("widen_accepts", 0))
-            diag["adopt_worse"] = int(last_info.get("adopt_worse", 0))
-            # the pre-tail seeds' quality — the breathing metric (s3.124):
-            # what the plane handed down before minorminer touched it
-            if legal_max_chain is not None:
-                diag["legal_acl"] = round(float(legal_acl), 3)
-                diag["legal_max_chain"] = int(legal_max_chain)
-            diag["judge"] = last_info.get("judge")
-            if last_info.get("seat_pen") is not None:
-                diag["judge_pen"] = int(last_info["seat_pen"])
-            diag["fold_strips"] = int(last_info.get("fold_strips", 0))
-            diag["fold_Hs"] = int(last_info.get("fold_Hs", 0))
-            if last_info.get("plane_bars") is not None:
-                # s3.125: the active-arm count the bookmark carries —
-                # plane_stair minus stride * plane_bars is the pure
-                # span part, cross-arm comparable
-                diag["plane_bars"] = int(last_info["plane_bars"])
-            for _k in ("strip_miss", "strip_iters"):
-                if last_info.get(_k) is not None:
-                    diag[_k] = int(last_info[_k])
-            if cfg.engine.startswith("plane"):
-                diag["proj_iters"] = _proj_iters
-            if cfg.engine.startswith("plane"):
-                # plane search is capacity-blind by design; the ONE
-                # projection's outcome is the real capacity report.
-                # (typed grids only: on untyped targets positions stay
-                # at rank scale and the brick arrays don't exist)
-                if last_info.get("seat_stair") is not None:
-                    diag["plane_stair"] = last_info["seat_stair"]
-                from ember_qc.algorithms.factored.field import line_pools
-                if line_pools(grid):
-                    from ember_qc.algorithms.factored.seat import (
-                        seat_energy)
-                    if cfg.wrap_pack:
-                        from ember_qc.algorithms.factored.seat import (
-                            brick_energy, judge_pools)
-                        _pe = brick_energy(
-                            tpts, src_adj, grid, last_info.get("_yrank"),
-                            pools=judge_pools(grid), kappa=kappa,
-                            floor=cfg.span_floor)
-                    else:
-                        _pe = seat_energy(
-                            tpts, src_adj, grid,
-                            yrank=(last_info.get("_yrank")
-                                   if cfg.carry_orders else None))
-                    diag["proj_pen"] = int(_pe // (2 ** 26))
-                    diag["proj_skipped"] = bool(_proj_skipped)
-        # s3.93 fit-vs-fabric observables (from the normalizer pack)
-        for k in ("final_width_x", "final_width_y",
-                  "projection_misses", "unb_miss"):
-            if k in _legal_info:
-                diag[k] = int(_legal_info[k])
-        if conv_info is not None:
-            diag["convert_miss"] = int(conv_info["convert_miss"])
-            # s3.97 certificate: the conditional theorem's premise —
-            # every arm seated its required hull AND completion closed.
-            # The validity verifier stays as the paranoia net; this is
-            # the pre-claims PREDICTION, checkable against it.
-            diag["certified"] = bool(
-                conv_info["convert_miss"] == 0
-                and ex_info is not None
-                and ex_info.get("deficit_edges", 1) == 0
-                and ex_info.get("corner_deficit", 1) == 0)
+        diag = {
+            "extent_mean": round(float(sizes.mean()), 3),
+            "extent_max": round(float(sizes.max()), 3),
+            "stride": int(grid.stride),
+            "max_chain": max(len(c) for c in finished.values()),
+            "arrange_wall": round(arrange_wall, 2),
+            "legal_acl": round(float(legal_acl), 3),
+            "legal_max_chain": int(legal_max_chain),
+        }
+        for k in ("asks", "accepts", "passes", "readouts", "bookmark_asks",
+                  "bookmark_wall", "stopped_by", "pen", "stair", "bars",
+                  "misses", "adopt_worse", "infeasible"):
+            diag[k] = info.get(k)
+        diag["accept_traj"] = list(info.get("accept_traj", []))[:12]
         _mes = 0.0
         for _u in src_adj:
             for _v in src_adj[_u]:
@@ -1158,22 +262,31 @@ def attract_embed(
                                abs(float(tpts[_u][0] - tpts[_v][0]))
                                + abs(float(tpts[_u][1] - tpts[_v][1])))
         diag["max_edge_span"] = round(_mes, 1)
-        if ball_info is not None:
-            diag["ball_accepts"] = ball_info["accepted"]
-            diag["ball_tried"] = ball_info["tried"]
-            diag["ball_wall"] = round(ball_info["wall"], 1)
-            diag["ball_questions"] = ball_info.get("questions", 0)
+        if conv_info is not None:
+            diag["convert_miss"] = int(conv_info["convert_miss"])
+            # the certificate: every arm seated its required hull AND
+            # completion closed — the prediction the validity check
+            # (the paranoia net) is checked against
+            diag["certified"] = bool(
+                conv_info["convert_miss"] == 0
+                and ex_info is not None
+                and ex_info.get("deficit_edges", 1) == 0
+                and ex_info.get("corner_deficit", 1) == 0)
         if eff_exact:
             diag["mm_skipped"] = mm_skipped
             if ex_info is not None:
                 for k in ("deficit_edges", "corner_deficit", "extensions",
                           "ext_qubits", "bridges"):
                     diag[k] = ex_info[k]
+        if ball_info is not None:
+            diag["ball_accepts"] = ball_info["accepted"]
+            diag["ball_tried"] = ball_info["tried"]
+            diag["ball_wall"] = round(ball_info["wall"], 1)
         return {"embedding": finished,
                 "time": time.perf_counter() - start,
                 "stair_E": stair_E,
                 "legal_acl": round(legal_acl, 3),
                 "diag": diag}
-    except Exception as exc:
-        logger.error("attraction embed error: %s", exc)
+    except Exception as exc:  # noqa: BLE001 — the contract: never raise
+        logger.exception("attraction embed error: %s", exc)
         return _failure(error=str(exc))

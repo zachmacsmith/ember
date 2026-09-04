@@ -2626,11 +2626,27 @@ budgets; `plane_fingerprint_step0-old.json` vs `step4-plane2.json`):
 | turán n162, seeds 0–9 | 6.000 on 3/10 | **6.000 on 10/10** (bookmark 1.9k–14.8k asks) |
 | grid_200 pre-tail | 1.87 | **1.40** (old polished: 1.33) |
 
-All certified, minorminer skipped, extensions 0. Suite green (202 in
-the engine + contract files). NOT done: step 5 (shrink placement.py,
-delete orders/seat/coarsen/costs/loop and the dead half of field.py —
-after the archive commit), the instrument on the new engine, the
-paired board vs stock minorminer and the archived default.
+All certified, minorminer skipped, extensions 0.
+
+*Step 5 (after the archive commit `ea5d1cf2`).* Deleted: orders.py,
+seat.py, coarsen.py, costs.py, loop.py, the dead half of field.py
+(`pack_project`, `edge_monotonize`, `xy_reinsert`, `_center_shift`,
+`stair_step`, `bar_domains`), `AttractConfig` and its 28 knobs, the
+`Factored` router registration; placement.py rewritten as the
+handoff (292 lines; `attract_embed(source, target, *, timeout, seed,
+max_asks, sched_seed, tail in {"none", "mm"}, **ignored)`); the 110
+probe scripts moved to `docs/paper2/archive/probes/` (records, not
+code; `test_mmfork_restrict.py` archived with them — its fixture was
+the deleted `bar_domains` handoff). Package 8,244 → 3,859 lines
+(plane 425, placement 292, field 1,901, ball 858, polish 185, trees
+156, init 42). Tests: test_orders/test_seat/test_coarsen/test_factored
+deleted; test_attraction, test_field, test_ball rewritten for the new
+surface; `test_plane.py` new. Suite: 505 passed. Docs: CLAUDE.md,
+ideas.md, anatomy.md rewritten for the new tree. Live harnesses:
+`plane_fingerprint.py`, `rewrite_board.py` (paired: new / new+mm /
+stock mm / the archived default from a worktree at `ea5d1cf2`),
+`invariance_probe.py` (order × init draws). Board and probe results:
+the next entry.
 
 ## 4. References
 

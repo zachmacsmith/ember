@@ -1,29 +1,17 @@
 """
 tests/algorithms/test_attraction.py
 =====================================
-Tests for the attraction embedder (ember_qc.algorithms.factored.placement),
-post-consolidation-2 (one code path: contraction + alternating arrangement
-+ snap-aimed wire seeds + exactness completion on stride>1 fabrics +
-minorminer legalize/polish): seeded routing via ``initial_chains``, the
-geometry primitives, and the end-to-end pipeline (validity, determinism,
-stride gating, registry contract).
+The attraction embedder end to end (s3.127): validity, determinism,
+the parameter surface, the stride gate, the fallback, the registry
+contract, and the fingerprints a rewrite is held to.
 """
 import networkx as nx
 import numpy as np
 import pytest
 
 from ember_qc.registry import ALGORITHM_REGISTRY, validate_embedding
-from ember_qc.embedding_backend import build_adjacency
-from ember_qc.algorithms.factored import (
-    AttractConfig,
-    attract_embed,
-    embed_factored,
-)
-from ember_qc.algorithms.factored.placement import (
-    snap,
-    source_positions,
-    target_layout,
-)
+from ember_qc.algorithms.factored import attract_embed
+from ember_qc.algorithms.factored.placement import snap, target_layout
 
 import dwave_networkx as dnx
 
@@ -38,56 +26,11 @@ def source():
     return nx.gnp_random_graph(12, 0.4, seed=7)
 
 
-class TestSeededRouting:
-    def test_initial_chains_produce_valid_embedding(self, chimera, source):
-        adj = build_adjacency(chimera)
-        qubits = sorted(adj)
-        seeds = {v: [qubits[i * 7]] for i, v in enumerate(sorted(source.nodes()))}
-        res = embed_factored(source, chimera, timeout=30, seed=0,
-                             initial_chains=seeds)
-        assert res["embedding"], "seeded routing failed to legalize"
-        assert validate_embedding(res["embedding"], source, chimera)
-
-    def test_bogus_seed_entries_are_ignored(self, chimera, source):
-        seeds = {99999: [0], 0: [-5]}  # unknown vertex; unknown qubit
-        res = embed_factored(source, chimera, timeout=30, seed=0,
-                             initial_chains=seeds)
-        assert res["embedding"]
-        assert validate_embedding(res["embedding"], source, chimera)
-
-    def test_seeding_is_deterministic(self, chimera, source):
-        adj = build_adjacency(chimera)
-        qubits = sorted(adj)
-        seeds = {v: [qubits[i * 5]] for i, v in enumerate(sorted(source.nodes()))}
-        a = embed_factored(source, chimera, timeout=30, seed=3,
-                           initial_chains=seeds)
-        b = embed_factored(source, chimera, timeout=30, seed=3,
-                           initial_chains=seeds)
-        assert a["embedding"] == b["embedding"]
-
-
 class TestGeometry:
-    def test_source_positions_inside_box(self):
-        g = nx.path_graph(10)
-        lo, hi = np.array([0.0, 0.0]), np.array([4.0, 2.0])
-        cent = source_positions(g, lo, hi)
-        for p in cent.values():
-            assert np.all(p >= lo) and np.all(p <= hi)
-
-    def test_source_positions_complete_graph_fallback(self):
-        # complete graphs have degenerate spectra; the circle fallback must
-        # still give distinct, in-box, finite positions
-        g = nx.complete_graph(8)
-        lo, hi = np.array([0.0, 0.0]), np.array([1.0, 1.0])
-        cent = source_positions(g, lo, hi)
-        pts = np.array(list(cent.values()))
-        assert np.all(np.isfinite(pts))
-        assert len({tuple(np.round(p, 9)) for p in pts}) == len(pts)
-
     def test_snap_distinct_qubits(self):
         coords = np.array([[float(i), 0.0] for i in range(10)])
         qubits = list(range(10))
-        cent = {v: np.array([0.0, 0.0]) for v in range(5)}  # all want qubit 0
+        cent = {v: np.array([0.0, 0.0]) for v in range(5)}
         seeds = snap(cent, coords.copy(), qubits, degree_order=list(range(5)))
         assert len(set(seeds.values())) == 5
 
@@ -108,30 +51,22 @@ class TestAttractEmbed:
         assert a["embedding"] == b["embedding"]
 
     def test_dense_source(self, chimera):
-        res = attract_embed(nx.complete_graph(8), chimera, timeout=60, seed=0)
-        assert res["embedding"]
-        assert validate_embedding(res["embedding"], nx.complete_graph(8), chimera)
-
-    def test_dense_source_engages_arrangement(self, chimera):
-        # deg > kappa forces participation: the dense machinery must engage
-        k = nx.complete_graph(16)
-        # vcycle=False: this test pins the ARRANGE engagement mechanism;
-        # the coarse init compacts K16 below full participation (s3.66)
-        res = attract_embed(k, chimera, timeout=60, seed=0, vcycle=False)
+        k = nx.complete_graph(8)
+        res = attract_embed(k, chimera, timeout=60, seed=0)
         assert res["embedding"]
         assert validate_embedding(res["embedding"], k, chimera)
         assert res["stair_E"] is not None
 
-    def test_diag_reports_arm_gating_fields(self, chimera, source):
-        # participation is arm-length (per axis) since the 2026-07-29
-        # refinement; the mechanism itself is unit-tested in test_field
-        # (TestArmLengthGating) — here just assert the diagnostics surface
+    def test_diag_surface(self, chimera, source):
         res = attract_embed(source, chimera, timeout=60, seed=0)
         d = res["diag"]
-        for key in ("extent_mean", "extent_max", "stride",
-                    "seat_accepts", "interleave_accepts",
-                    "accept_traj"):
-            assert key in d
+        for key in ("extent_mean", "extent_max", "stride", "max_chain",
+                    "asks", "accepts", "passes", "stopped_by", "pen",
+                    "stair", "bars", "accept_traj", "legal_acl",
+                    "legal_max_chain", "bookmark_asks"):
+            assert key in d, key
+        assert d["stopped_by"] in ("fixpoint", "asks", "deadline",
+                                   "passes", "trivial")
 
     def test_registry_contract(self, chimera, source):
         algo = ALGORITHM_REGISTRY["attraction"]
@@ -140,30 +75,26 @@ class TestAttractEmbed:
         assert "time" in res
         assert validate_embedding(res["embedding"], source, chimera)
 
-    def test_overrides_reach_config_and_unknowns_ignored(self, chimera, source):
-        # unknown kwargs (including pre-consolidation knobs) are ignored
+    def test_unknown_kwargs_ignored_and_bad_values_fail_loudly(
+            self, chimera, source):
         res = attract_embed(source, chimera, timeout=60, seed=0,
                             max_rounds=1, state="cross", gamma=0.0)
-        assert "stair_E" in res or res["embedding"]
-        if res["embedding"]:
-            assert validate_embedding(res["embedding"], source, chimera)
+        assert res["embedding"]
+        assert validate_embedding(res["embedding"], source, chimera)
+        bad = attract_embed(source, chimera, timeout=5, seed=0, tail="grind")
+        assert bad["status"] == "FAILURE" and "tail" in bad["error"]
+        bad = attract_embed(source, chimera, timeout=5, seed=0, max_asks=0)
+        assert bad["status"] == "FAILURE" and "max_asks" in bad["error"]
 
     def test_courses_default_on_zephyr(self):
-        # course-resolved wires (s3.49) are the only representation since
-        # consolidation 4 (the folded control arm was deleted)
-        import dwave_networkx as dnx
         z = dnx.zephyr_graph(3, 4)
         k = nx.complete_graph(10)
         res = attract_embed(k, z, timeout=60, seed=0)
-        assert res["embedding"], "default arm failed on K10/Z3"
+        assert res["embedding"], "default failed on K10/Z3"
         assert validate_embedding(res["embedding"], k, z)
         assert res["diag"]["stride"] == 2
 
     def test_exact_stack_default_diag_on_zephyr(self):
-        # the consolidation-2 default = the measured s3.57 ovl_nos arm:
-        # completion runs, deficit fields surface, snap zeroes extensions,
-        # deterministic, valid
-        import dwave_networkx as dnx
         z = dnx.zephyr_graph(3, 4)
         k = nx.complete_graph(10)
         a = attract_embed(k, z, timeout=60, seed=0)
@@ -172,57 +103,57 @@ class TestAttractEmbed:
         assert validate_embedding(a["embedding"], k, z)
         assert a["embedding"] == b["embedding"]
         for key in ("mm_skipped", "deficit_edges", "corner_deficit",
-                    "extensions", "ext_qubits", "bridges"):
+                    "extensions", "ext_qubits", "bridges", "certified"):
             assert key in a["diag"], key
-        assert a["diag"]["mm_skipped"] in (True, False)
-        assert a["diag"]["extensions"] == 0  # the snap fingerprint (s3.56)
+        assert a["diag"]["extensions"] == 0
         assert a["stair_E"] is not None
 
-    def test_stride_gate_byte_identity_off_zephyr(self, chimera, source):
-        # the exactness/snap machinery stays stride-gated (junction
-        # completeness is physics): on stride-1 fabrics the default must
-        # be byte-identical to the exactness-off configuration. NOTE
-        # (v4, s3.76): overload_lam is no longer in this list — under
-        # the order state the gate is live on every fabric by design.
+    def test_fingerprint_k10_z3_certified_template(self):
+        # the crystal fingerprint in miniature: K10 on Z3 converts
+        # certified with no router, at the template's chain length
+        z = dnx.zephyr_graph(3, 4)
+        k = nx.complete_graph(10)
+        r = attract_embed(k, z, timeout=60, seed=0, tail="none",
+                          max_asks=2000)
+        d = r["diag"]
+        assert d["certified"] and d["mm_skipped"]
+        assert d["pen"] == 0
+        assert r["legal_acl"] == pytest.approx(1.8)
+        assert d["max_chain"] == 2
+
+    def test_stride_gate_off_zephyr(self, chimera, source):
         a = attract_embed(source, chimera, timeout=60, seed=0)
-        b = attract_embed(source, chimera, timeout=60, seed=0,
-                          exact_seeds=False, snap_claims=False)
-        assert a["embedding"] and a["embedding"] == b["embedding"]
-        assert a["stair_E"] == b["stair_E"]
+        assert a["embedding"]
         assert "mm_skipped" not in a["diag"]
+        assert a["diag"]["stride"] == 1
 
-    def test_courses_noop_off_zephyr(self, chimera):
-        k = nx.complete_graph(8)
-        res = attract_embed(k, chimera, timeout=60, seed=0)
-        assert res["embedding"]
-        assert validate_embedding(res["embedding"], k, chimera)
-        assert res["diag"]["stride"] == 1
-
-    def test_feasibility_fallback(self, chimera, source):
-        # round_frac=0 exhausts the rounds budget instantly: the rounds loop
-        # never runs and the uncapped fallback must still legalize.
+    def test_work_budget_and_tail_none(self, chimera, source):
+        # a one-ask budget still legalizes (the router does the rest)
         res = attract_embed(source, chimera, timeout=60, seed=0,
-                            round_frac=0.0)
-        assert res["embedding"], "fallback did not legalize an easy instance"
+                            max_asks=1, tail="none")
+        assert res["embedding"], "budget-1 run did not legalize"
         assert validate_embedding(res["embedding"], source, chimera)
-        assert res["legal_acl"] is not None
+        assert res["diag"]["asks"] <= 1
+        assert res["diag"]["stopped_by"] == "asks"
 
-    def test_vcycle_stride_gated(self, chimera, source, monkeypatch):
-        # s3.66: the coarse init activates only where measured (stride-2);
-        # stride-1 fabrics keep the spectral init
-        import ember_qc.algorithms.factored.coarsen as C
-        called = []
-        real = C.multilevel_init
-        monkeypatch.setattr(C, "multilevel_init",
-                            lambda *a, **k: called.append(1) or real(*a, **k))
-        res = attract_embed(source, chimera, timeout=30, seed=0)
-        assert res["embedding"] and not called
+    def test_sched_seed_is_independent_of_seed(self):
+        z = dnx.zephyr_graph(3, 4)
+        g = nx.gnp_random_graph(14, 0.35, seed=9)
+        a = attract_embed(g, z, timeout=30, seed=0, tail="none",
+                          max_asks=300)
+        b = attract_embed(g, z, timeout=30, seed=0, tail="none",
+                          max_asks=300, sched_seed=0)
+        c = attract_embed(g, z, timeout=30, seed=0, tail="none",
+                          max_asks=300, sched_seed=5)
+        assert a["embedding"] == b["embedding"]
+        assert validate_embedding(c["embedding"], g, z)
 
     def test_untyped_target_fallback(self, source):
         target = nx.convert_node_labels_to_integers(nx.grid_2d_graph(12, 12))
         res = attract_embed(nx.random_regular_graph(3, 12, seed=2), target,
                             timeout=30, seed=0)
         assert res["embedding"], "untyped-grid fallback failed"
+        assert res["diag"]["stopped_by"] == "trivial"
 
     def test_isolated_vertices_survive(self, chimera):
         g = nx.gnp_random_graph(10, 0.4, seed=3)
@@ -232,38 +163,20 @@ class TestAttractEmbed:
         assert 100 in res["embedding"] and 101 in res["embedding"]
         assert validate_embedding(res["embedding"], g, chimera)
 
-
-class TestOrderState:
-    """v4 stage O1: state = two orders, positions = derived readout —
-    the only code path since consolidation 4. Validity/determinism on
-    chimera is covered by TestAttractEmbed.test_valid_and_deterministic."""
-
     def test_zephyr_and_pegasus_valid(self, source):
-        import dwave_networkx as dnx
         for target in (dnx.zephyr_graph(3, 4), dnx.pegasus_graph(4)):
             r = attract_embed(source, target, timeout=60, seed=0)
             assert r["embedding"], f"failed on {target.graph.get('family')}"
             assert validate_embedding(r["embedding"], source, target)
 
-    def test_positions_are_derived_line_indices(self, source):
-        # the derived-values invariant: after an order-mode arrange,
-        # every position is an integer line index (never a rank, never
-        # a fractional drift value) — the rank-pricing trap guard
-        import dwave_networkx as dnx
-        from ember_qc.algorithms.factored.field import (
-            TileGrid, pack_project, _target_kappa)
-        from ember_qc.algorithms.factored.placement import target_layout
+    def test_positions_are_integer_line_indices(self, source):
+        from ember_qc.algorithms.factored import plane
+        from ember_qc.algorithms.factored.field import TileGrid
         target = dnx.zephyr_graph(3, 4)
         grid = TileGrid(target, target_layout(target), courses=True)
         src_adj = {v: sorted(source.neighbors(v)) for v in source}
-        # rank-seeded start, as the driver builds it
-        import numpy as np
-        pos = {v: np.array([float(i), float(i)])
-               for i, v in enumerate(sorted(source))}
-        out, _info = pack_project(
-            pos, src_adj, grid, kappa=_target_kappa(grid), snap=True)
-        for v, p in out.items():
-            assert float(p[0]).is_integer(), (v, p)
-            assert float(p[1]).is_integer(), (v, p)
-
-
+        pos, bk, info = plane.arrange(src_adj, grid, seed=0, max_asks=200,
+                                      snap=True)
+        for v, p in pos.items():
+            assert float(p[0]).is_integer() and float(p[1]).is_integer()
+            assert 0 <= p[0] <= grid.W - 1

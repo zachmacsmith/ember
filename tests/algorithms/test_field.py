@@ -6,7 +6,7 @@ post-consolidation-2 (2026-08-03, one code path): typed tile capacities, the
 stair (single-coverage) readout and its subgradient dynamics, the alternating
 1-D arrangement with insertion order-search and feasibility-priced gates,
 wire-coherent seed derivation (snap-aimed greedy coloring), the exactness
-completion, and the parked ``bar_domains`` handoff.
+completion.
 """
 import networkx as nx
 import numpy as np
@@ -19,14 +19,10 @@ from ember_qc.algorithms.factored.field import (
     complete_seeds,
     _stair_contacts,
     _target_kappa,
-    pack_project,
-    bar_domains,
     bar_widths,
     derive_bars_stair,
-    edge_monotonize,
     line_depth,
     stair_energy,
-    stair_step,
     wire_seeds_iv,
 )
 from ember_qc.algorithms.factored.placement import target_layout
@@ -157,18 +153,6 @@ class TestStaircase:
         lw, lh = bar_widths(bars)[1]
         assert lw + lh == pytest.approx(0.0)
 
-    def test_stair_step_moves_extremes_and_descends(self):
-        pos = {0: np.array([0.0, 0.0]), 1: np.array([2.0, 0.0]),
-               2: np.array([4.0, 0.0])}
-        adj = {0: [1], 1: [0, 2], 2: [1]}
-        e0 = stair_energy(pos, adj)
-        new = stair_step(pos, adj, eta=0.5)
-        assert new[0][0] > 0.0 and new[2][0] < 4.0
-        assert np.allclose(new[1], pos[1])
-        assert stair_energy(new, adj) < e0
-        again = stair_step(pos, adj, eta=0.5)
-        assert all(np.allclose(new[v], again[v]) for v in pos)
-
     def test_orientation_assignment_order_invariant(self):
         rng_ys = [3.7, 1.2, 9.9, 5.5, 0.3, 7.1, 2.8, 6.6]
         pos = {v: np.array([float(v), rng_ys[v]]) for v in range(8)}
@@ -196,26 +180,6 @@ class TestArrangement:
         assert line_depth([(0, 2), (2, 4)]) == 1
         assert line_depth([(0, 2), (1, 3), (2, 4)]) == 2
         assert line_depth([(0, 4), (1, 3), (2, 5)]) == 3
-
-    def test_arrange_packs_within_pools_and_is_monotone(self):
-        # winner path (DP + integer line pools from wire_map): a typed
-        # grid whose lines hold one lane each — the packed state must
-        # census to zero overload (overlapping intervals on one line are
-        # impossible by construction), E monotone after the projection
-        g = dnx.chimera_graph(8, 8, 1)
-        grid = TileGrid(g, target_layout(g))
-        n = 5
-        pos = {v: np.array([4.0 + 0.01 * v, 4.0 + 0.01 * v])
-               for v in range(n)}
-        adj = {v: [u for u in range(n) if u != v] for v in range(n)}
-        new, info = pack_project(pos, adj, grid, kappa=3.0)
-        # positions are derived line indices after the pack
-        for v in range(n):
-            assert float(new[v][0]).is_integer()
-            assert float(new[v][1]).is_integer()
-        assert info["unplaced"] == 0
-        again, _ = pack_project(pos, adj, grid, kappa=3.0)
-        assert all(np.allclose(new[v], again[v]) for v in pos)
 
     def test_pack_lines_matches_brute_force(self):
         # the s3.59 DP must be exactly optimal over non-decreasing
@@ -271,138 +235,6 @@ class TestArrangement:
         placed = [a for a in assign if a is not None]
         assert placed == sorted(placed)
         assert all(placed.count(l) <= 2 for l in set(placed))
-
-    def test_untyped_grid_packs_nothing(self):
-        # untyped fallback grids have no wire_map, so the DP's integer
-        # line pools are empty: the packer proposes nothing and positions
-        # pass through unchanged (the router owns untyped targets)
-        grid = self._grid()
-        pos = {v: np.array([0.5 * v, 3.7]) for v in range(8)}
-        adj = {v: [u for u in (v - 1, v + 1) if 0 <= u < 8] for v in range(8)}
-        new, info = pack_project(pos, adj, grid, kappa=13.0)
-        assert all(np.allclose(new[v], pos[v]) for v in pos)
-
-
-class TestEdgeMonotonize:
-    def _k(self, n):
-        return {v: [u for u in range(n) if u != v] for v in range(n)}
-
-    def test_sorted_clique_is_fixpoint(self):
-        pos = {v: np.array([float(v), float(v)]) for v in range(8)}
-        new, info = edge_monotonize(pos, self._k(8))
-        assert info["swaps"] == 0
-        assert all(np.allclose(new[v], pos[v]) for v in pos)
-
-    def test_scrambled_clique_descends_to_monotone(self):
-        n = 10
-        xs = [3.0, 7.0, 1.0, 9.0, 0.0, 5.0, 8.0, 2.0, 6.0, 4.0]
-        pos = {v: np.array([xs[v], float(v)]) for v in range(n)}
-        e0 = stair_energy(pos, self._k(n))
-        new, info = edge_monotonize(pos, self._k(n))
-        assert stair_energy(new, self._k(n)) < e0
-        # converged state: no strictly-improving inverted edge remains, and
-        # the x multiset is preserved (transpositions only)
-        assert sorted(float(new[v][0]) for v in new) == sorted(xs)
-        again, _ = edge_monotonize(pos, self._k(n))
-        assert all(np.allclose(new[v], again[v]) for v in pos)
-
-    def test_contacts_invariant_under_swaps(self):
-        n = 8
-        xs = [5.0, 2.0, 7.0, 0.0, 6.0, 1.0, 4.0, 3.0]
-        pos = {v: np.array([xs[v], float(v)]) for v in range(n)}
-        before = _stair_contacts(pos, self._k(n))
-        new, _ = edge_monotonize(pos, self._k(n))
-        after = _stair_contacts(new, self._k(n))
-        for v in range(n):
-            assert before[v] == after[v]
-
-    def test_short_edges_self_neutralize(self):
-        # geometric path with sub-tile edges and one x/y sign disagreement:
-        # any accepted swap moves coordinates by < the edge length, so the
-        # layout is at most perturbed at edge scale — and typically the
-        # swap is not even strictly improving (spans unchanged on a path)
-        pos = {v: np.array([0.4 * v, 0.4 * v]) for v in range(6)}
-        pos[3] = np.array([0.85, 1.2])  # tiny local inversion vs node 2
-        adj = {v: [u for u in (v - 1, v + 1) if 0 <= u < 6] for v in range(6)}
-        new, _ = edge_monotonize(pos, adj)
-        for v in pos:
-            assert np.linalg.norm(new[v] - pos[v]) <= 0.5  # edge-scale only
-
-    def test_incremental_matches_full_reevaluation(self):
-        # s3.100b: the incremental per-net span accounting must make
-        # the same decisions as the original full h_total re-reduction
-        # (exact for integer line-index coordinates, the pipeline
-        # regime) — the reference below IS the pre-s3.100b evaluator
-        import networkx as nx
-
-        def reference(pos, src_adj, max_sweeps=16):
-            nodes = sorted(pos)
-            idx = {v: i for i, v in enumerate(nodes)}
-            x = np.array([float(pos[v][0]) for v in nodes])
-            y = np.array([float(pos[v][1]) for v in nodes])
-            contacts = _stair_contacts(pos, src_adj)
-            hnets = [[idx[w]] + [idx[u] for u in contacts[w][0]]
-                     for w in nodes]
-            width = max(len(h) for h in hnets)
-            H = np.array([h + [h[0]] * (width - len(h)) for h in hnets])
-
-            def h_total(xv):
-                vals = xv[H]
-                return float((vals.max(axis=1) - vals.min(axis=1)).sum())
-
-            edges = [(idx[v], idx[u]) for v in nodes
-                     for u in src_adj.get(v, []) if u in idx and u > v]
-            cur = h_total(x)
-            swaps = 0
-            for _ in range(max(max_sweeps, 1)):
-                improved = False
-                for iu, iv in edges:
-                    dx = x[iu] - x[iv]
-                    dy = y[iu] - y[iv]
-                    if abs(dx) < 1e-9 or abs(dy) < 1e-9 or dx * dy > 0:
-                        continue
-                    x[iu], x[iv] = x[iv], x[iu]
-                    new = h_total(x)
-                    if new < cur - 1e-9:
-                        cur = new
-                        swaps += 1
-                        improved = True
-                    else:
-                        x[iu], x[iv] = x[iv], x[iu]
-                if not improved:
-                    break
-            return ({v: np.array([x[idx[v]], float(pos[v][1])])
-                     for v in nodes}, swaps)
-
-        rng = np.random.default_rng(1)
-        for _trial in range(25):
-            n = int(rng.integers(6, 30))
-            g = nx.gnp_random_graph(n, 0.4, seed=int(rng.integers(9999)))
-            adj = {v: sorted(g.neighbors(v)) for v in g.nodes()}
-            pos = {v: np.array([float(rng.integers(0, 12)),
-                                float(rng.integers(0, 12))]) for v in g}
-            a, sa = reference({v: q.copy() for v, q in pos.items()}, adj)
-            b, ib = edge_monotonize(
-                {v: q.copy() for v, q in pos.items()}, adj)
-            assert ib["swaps"] == sa
-            assert all(np.array_equal(a[v], b[v]) for v in pos)
-
-    def test_no_cross_patch_pressure(self):
-        # two disjoint K6 patches, each internally inverted, placed in
-        # different column bands: monotonization sorts each internally but
-        # never exchanges x-values ACROSS patches (no edge, no proposal)
-        a, b = list(range(6)), list(range(6, 12))
-        pos = {}
-        for i, v in enumerate(a):
-            pos[v] = np.array([2.0 - 0.3 * i, float(i)])       # band [0.5, 2]
-        for i, v in enumerate(b):
-            pos[v] = np.array([12.0 - 0.3 * i, float(i)])      # band [10.5, 12]
-        adj = {v: [u for u in (a if v in a else b) if u != v]
-               for v in range(12)}
-        new, _ = edge_monotonize(pos, adj)
-        assert all(float(new[v][0]) <= 2.0 + 1e-9 for v in a)
-        assert all(float(new[v][0]) >= 10.5 - 1e-9 for v in b)
-
 
 class TestAlignReinsert:
     """s3.100: the alignment reinsertion move — exact optimum over all
@@ -829,27 +661,6 @@ class TestZephyrGrid:
         assert dz > dp + 0.2  # materially denser junctions than Pegasus
         assert dz > 0.85      # near-complete
 
-    def test_wire_seeds_on_zephyr(self):
-        g, grid = self._grid()
-        n = 12
-        adj = {v: [u for u in range(n) if u != v] for v in range(n)}
-        pos = {v: np.array([1.0 + 0.3 * v, 1.0 + 0.3 * v])
-               for v in range(n)}
-        pos = stair_step(pos, adj, eta=0.3)
-        pos, _ = pack_project(pos, adj, grid, kappa=3.0)
-        bars = derive_bars_stair(pos, adj, bounds=(grid.W, grid.H))
-        seeds = wire_seeds_iv(grid, pos, bars)
-        allq = [q for c in seeds.values() for q in c]
-        assert len(allq) == len(set(allq))
-        assert set(seeds) == set(range(n))
-        # multi-qubit runs are coupled paths
-        import networkx as nx2
-        for v, c in seeds.items():
-            if len(c) > 1 and nx2.is_connected(g.subgraph(c)):
-                break
-        else:
-            assert False, "no connected multi-qubit run found"
-
     def test_derived_kappa(self):
         g, grid = self._grid()
         import dwave_networkx as dnx2
@@ -959,28 +770,6 @@ class TestZephyrCourses:
         lpf = line_pools(folded)
         assert all(v == 4 for v in lpf.values())
 
-    def test_arrange_postpack_overload_zero(self):
-        # the structural identity the DP buys: a fresh packing censuses
-        # to zero overload (the d729 class is impossible by construction)
-        g, folded, course = self._grids()
-        n = 20
-        adj = {v: [u for u in range(n) if u != v] for v in range(n)}
-        pos = {v: np.array([2.0 + 0.15 * v, 2.0 + 0.15 * v])
-               for v in range(n)}
-        for _ in range(8):
-            pos = stair_step(pos, adj, eta=0.5)
-        new, info = pack_project(pos, adj, course, kappa=3.0)
-        from ember_qc.algorithms.factored.field import (arm_books,
-                                                        line_pools)
-        books = arm_books(new, adj, course, kappa=3.0, min_span=0.0)
-        lp = line_pools(course)
-        for o in (1, 0):
-            by_line = {}
-            for (line, a, b, v) in books[2][o]:
-                by_line.setdefault(int(line), []).append((a, b))
-            for line, ivs in by_line.items():
-                assert line_depth(ivs) <= lp.get((o, line), 0), (o, line)
-
     def test_boundary_half_pool_and_parity_coloring(self):
         # s3.61: stride-2 boundary lines pack at HALF pool (4), and the
         # parity-preferring lane choice steers claims onto lanes that can
@@ -1030,30 +819,6 @@ class TestZephyrCourses:
                 break
         else:
             assert False, "no connected multi-qubit course run found"
-
-
-class TestBarDomains:
-    def test_bar_domains_gating_and_bands(self):
-        g = dnx.chimera_graph(8, 8, 4)
-        grid = TileGrid(g, target_layout(g))
-        n = 15  # v0 has deg 14 > kappa; leaves have deg 1
-        pos = {0: np.array([4.0, 3.0])}
-        pos.update({v: np.array([2.0 + 0.2 * v, 3.0]) for v in range(1, n)})
-        adj = {0: list(range(1, n))}
-        adj.update({v: [0] for v in range(1, n)})
-        bars = {0: (np.array([2.0, 6.0]), np.array([1.0, 5.0]))}
-        bars.update({v: (np.array([pos[v][0]] * 2), np.array([3.0, 3.0]))
-                     for v in range(1, n)})
-        doms = bar_domains(grid, pos, bars, adj, margin=1)
-        assert set(doms) == {0}  # capacity-gated: only the hub
-        conv = dnx.chimera_coordinates(8, 8, 4)
-        assert len(doms[0]) > 0
-        for q in doms[0]:
-            i, j, u, k = conv.linear_to_chimera(q)
-            if u == 1:   # h-wire: row band around row 3, cols in [2-1, 6+1]
-                assert abs(i - 3) <= 1 and 1 <= j <= 7
-            else:        # v-wire: col band around col 4, rows in [1-1, 5+1]
-                assert abs(j - 4) <= 1 and 0 <= i <= 6
 
 
 class TestOrderMode:
