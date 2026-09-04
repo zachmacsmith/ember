@@ -355,16 +355,30 @@ def _bars_arrays(pos, src_adj, *, kappa, floor, bounds, contacts):
     if bounds is not None:
         hmin = np.clip(hmin, 0.0, bounds[0] - 1.0)
         hmax = np.clip(hmax, 0.0, bounds[0] - 1.0)
-        vmin = np.clip(vmin, 0.0, bounds[1] - 1.0)
-        vmax = np.clip(vmax, 0.0, bounds[1] - 1.0)
+        if bounds[1] is not None:
+            # s3.125 strip: ``bounds=(W, None)`` leaves the y axis
+            # unclipped (rows are unbounded there; a v-hull past the
+            # chip must stay honest in the column-depth books)
+            vmin = np.clip(vmin, 0.0, bounds[1] - 1.0)
+            vmax = np.clip(vmax, 0.0, bounds[1] - 1.0)
+        else:
+            vmin = np.maximum(vmin, 0.0)
+            vmax = np.maximum(vmax, 0.0)
     return ids, (hmin, hmax, vmin, vmax), (hv, hu, vv, vu)
 
 
 def stair_energy(pos: Dict[int, Point],
                  src_adj: Dict[int, List[int]],
-                 contacts=None) -> float:
+                 contacts=None, *, bar: float = 0.0) -> float:
     """Total arm length under the diagonal rule (un-floored) — the
-    single-coverage chain-length objective."""
+    single-coverage chain-length objective.
+
+    ``bar`` (s3.125, ``arm_cost``): one bar of ``bar`` junctions per
+    ACTIVE arm — a side with >= 1 contact needs a real qubit even when
+    its hull is a single junction (the converter must seat the crossing;
+    a point arm priced 0 is an underestimate, measured on grid_200:
+    stair 1.2/var vs real 1.965). ``bar=0`` is byte-identical to the
+    span-only objective."""
     if contacts is None:
         contacts = _stair_contacts(pos, src_adj)
     e = 0.0
@@ -373,6 +387,8 @@ def stair_energy(pos: Dict[int, Point],
         xs = [float(pos[u][0]) for u in h_us] + [float(pos[v][0])]
         ys = [float(pos[u][1]) for u in v_us] + [float(pos[v][1])]
         e += (max(xs) - min(xs)) + (max(ys) - min(ys))
+        if bar:
+            e += bar * ((1.0 if h_us else 0.0) + (1.0 if v_us else 0.0))
     return e
 
 
@@ -833,7 +849,7 @@ def wire_seeds_exact(grid: TileGrid, pos: Dict[int, Point],
 def arm_books(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
               grid: TileGrid, *, kappa: float, floor: bool = True,
               snap: bool = False, min_span: float = 1.0,
-              contacts=None, yrank=None):
+              contacts=None, yrank=None, ybound: bool = True):
     """THE one accounting (s3.66): the claim layer's books, computed once
     — contacts, bars, and per-orientation (line, interval, participant)
     tuples with snap's parity-agnostic hull widening applied when
@@ -855,7 +871,9 @@ def arm_books(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
         assert contacts == _stair_contacts(pos, src_adj, yrank=yrank), \
             "stale contacts consumed by a gate evaluation"
     ids, arrs, edges = _bars_arrays(pos, src_adj, kappa=kappa,
-                                    floor=floor, bounds=(grid.W, grid.H),
+                                    floor=floor,
+                                    bounds=(grid.W,
+                                            grid.H if ybound else None),
                                     contacts=contacts)
     hmin, hmax, vmin, vmax = arrs
     hv, hu, vv, vu = edges
@@ -1656,11 +1674,18 @@ def edge_monotonize(pos: Dict[int, Point], src_adj: Dict[int, List[int]], *,
                  "time": round(_time.perf_counter() - t0, 4)}
 
 
+def rank_scale(n: int) -> float:
+    """The lexicographic scale of ``align_reinsert``'s pricing: true
+    cost x rank_scale(n) + total rank span. 2n²+1 exceeds any total
+    rank span (each of <= 2n arms spans < n slots)."""
+    return float(2 * n * n + 1)
+
+
 def align_reinsert(order: List[int], cluster,
                    src_adj: Dict[int, List[int]],
                    values, anchors, *, axis: int,
                    other: Dict[int, float], contacts,
-                   slot_costs: bool = False
+                   slot_costs: bool = False, bar: float = 0.0
                    ) -> Tuple[Optional[List[int]], bool]:
     """The alignment reinsertion move (s3.100): remove ``cluster``'s
     members from the order and reinsert them at the exact optimum over
@@ -1695,15 +1720,28 @@ def align_reinsert(order: List[int], cluster,
     early declines. ``xy_reinsert`` combines two of these vectors into
     the joint two-axis singleton move.
 
-    Values are epsilon-ramped (value + 1e-4*slot, the s3.40 tie-plateau
-    convention shared with ``_order_proxy``); since the view's order0 is
-    sorted by (value, id), the ramp's tie-break on the CURRENT order
-    matches the stair rule's (y, id) exactly, so the current order's
-    path cost equals its true view energy. Candidate merges may break
-    same-value ties differently from the id rule — a documented h-side
-    mispricing on same-line edges only, corrected by the composite's
-    real-books gate. Anchored views (never produced by the pipeline,
-    where every variable participates) are declined: (None, False)."""
+    ``bar`` (s3.125, ``arm_cost``): the per-active-arm bar of
+    ``stair_energy``, priced inside the same transitions on axis 1 —
+    the h-arm is active iff >= 1 neighbour is still unplaced (the
+    suffix extrema are finite), the v-arm iff >= 1 neighbour is already
+    placed (the complement of the "no neighbour placed" rectangle at
+    v's own cell). On axis 0 contacts are frozen, so the term is a
+    path-independent constant and is omitted (it cancels in every
+    comparison this function makes).
+
+    Pricing is EXACTLY lexicographic (s3.127): the true objective
+    first (integer junction spans, integer bars), and on exact ties the
+    total rank span of the weave (compactness in slot space). Both live
+    in one number: values are scaled by ``rank_scale(n)`` = 2n²+1 (an
+    upper bound on any total rank span) and the slot index is added,
+    so a rank-span difference can never outweigh one unit of true
+    cost. The old 1e-4 ramp was this same tiebreak, but at n=486 its
+    weight reached ~20 true units (a second objective); with the ramp
+    removed outright, sparse graphs stall on plateaus (path-60: 1.017
+    -> 1.5 — the tie-moves ARE the drift that compacts a chain). The
+    induced rule "placed after = above" is the judge's rank rule, ties
+    included. Anchored views (never produced by the pipeline, where
+    every variable participates) are declined: (None, False)."""
     n = len(order)
     _declined = None if slot_costs else (None, False)
     if n < 3:
@@ -1721,7 +1759,8 @@ def align_reinsert(order: List[int], cluster,
         return _declined
     R = [v for v in order if v not in cset]
     p, m = len(R), len(S)
-    val = np.asarray(values, dtype=float) + 1e-4 * np.arange(n)
+    val = np.asarray(values, dtype=float) * rank_scale(n) + np.arange(n)
+    bar = float(bar) * rank_scale(n)   # the bar lives in true units too
     gapv = np.zeros(n)
     gapv[1:] = val[1:] - val[:-1]
     BIG = n + 1  # +inf proxy for index minima
@@ -1738,7 +1777,9 @@ def align_reinsert(order: List[int], cluster,
     qpos = np.cumsum(inS) - 1           # side-index, valid at S slots
     r_slots = np.flatnonzero(~inS)      # slot of R[i]
     q_slots = np.flatnonzero(inS)       # slot of S[j] (forward)
-    xs_slot = (np.array([float(other[v]) for v in order])
+    # the other axis's values feed the h-spans on axis 1: same scale as
+    # the gaps, so every true-cost term outweighs the rank tiebreak
+    xs_slot = (np.array([float(other[v]) for v in order]) * rank_scale(n)
                if axis == 1 else None)
 
     heads: List[int] = []
@@ -1860,9 +1901,20 @@ def align_reinsert(order: List[int], cluster,
                     lo = np.minimum(np.minimum(sufmin[posj], smin),
                                     xs_slot[t])
                     stepR[i, :] = hi - lo
+                    if bar:
+                        # h-arm active: a neighbour is still unplaced
+                        stepR[i, :] += bar * (
+                            np.maximum(sufmax[posj], smax) > -np.inf)
                 else:
                     stepR[i, :] = (max(smax, xs_slot[t])
                                    - min(smin, xs_slot[t]))
+                    if bar and smax > -np.inf:
+                        stepR[i, :] += bar
+                if bar:
+                    # v-arm active: a neighbour is already placed in
+                    # R[:i-1] or Q[:j] when R[i-1] lands in cell (i, j)
+                    stepR[i, :] += bar * np.logical_or(
+                        minRv[t] < i - 1, minQv[t] < jj_all)
             for j in range(1, m + 1):
                 t = qsl[j - 1]
                 qa, xq = _qview(t)
@@ -1875,9 +1927,19 @@ def align_reinsert(order: List[int], cluster,
                     lo = np.minimum(np.minimum(rrow_min[t], smin),
                                     xs_slot[t])
                     stepQ[:, j] = hi - lo
+                    if bar:
+                        stepQ[:, j] += bar * (
+                            np.maximum(rrow_max[t], smax) > -np.inf)
                 else:
                     stepQ[:, j] = (max(smax, xs_slot[t])
                                    - min(smin, xs_slot[t]))
+                    if bar and smax > -np.inf:
+                        stepQ[:, j] += bar
+                if bar:
+                    # v-arm active: a neighbour is already placed in
+                    # R[:i] or Q[:j-1] when Q[j-1] lands in cell (i, j)
+                    stepQ[:, j] += bar * np.logical_or(
+                        minRv[t] < ii_all, minQv[t] < j - 1)
 
         # count grid CG[i, j]: #arms (axis=1) / #open nets (axis=0)
         # crossing the next slot gap at cell (i, j) — a pure function of
@@ -2008,7 +2070,7 @@ def align_reinsert(order: List[int], cluster,
 
 def xy_reinsert(v: int, order_x: List[int], order_y: List[int],
                 src_adj: Dict[int, List[int]],
-                values_x, values_y, contacts
+                values_x, values_y, contacts, *, bar: float = 0.0
                 ) -> Optional[Tuple[List[int], List[int]]]:
     """The joint two-axis singleton reinsertion (s3.121): remove ``v``
     from BOTH carried orders and re-insert at the exact optimum over
@@ -2052,7 +2114,7 @@ def xy_reinsert(v: int, order_x: List[int], order_y: List[int],
     other_y = {u: float(values_y[r]) for r, u in enumerate(order_y)}
     Cy = align_reinsert(order_y, {v}, src_adj, values_y, None,
                         axis=1, other=other_x, contacts=contacts,
-                        slot_costs=True)
+                        slot_costs=True, bar=bar)
     if Cy is None:
         return None
     p = n - 1
@@ -2182,7 +2244,10 @@ def pack_project(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                  grid: TileGrid, *, kappa: float, floor: bool = True,
                  snap: bool = False, monotonize: bool = True,
                  project: bool = True, brick_pools: bool = False,
-                 orders: Optional[Tuple[List[int], List[int]]] = None):
+                 orders: Optional[Tuple[List[int], List[int]]] = None,
+                 axes: Tuple[int, ...] = (1, 0),
+                 strips: int = 1, rows: Optional[int] = None,
+                 strip: bool = False):
     """The packer, alone (consolidation 7, s3.112): the exact
     order-preserving DP projection extracted verbatim from the old
     arrange loop's iter-0 path — one forced unbounded pack per axis
@@ -2201,6 +2266,16 @@ def pack_project(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
     round's, not this one's). ``monotonize=False`` skips the
     x-permutation step: the orders engine uses the packer as a pure
     orders -> positions readout, which must not edit orders.
+
+    ``strip`` (s3.125): the half-infinite strip — the x half packs
+    into the chip's REAL columns (per-column brick profiles, boundary
+    columns zeroed) in every pass, the y half stays the ideal
+    unbounded pack. A layout wider than the chip cannot exist; column
+    pressure is what spreads rows. Stragglers the real columns cannot
+    seat are clamped as before and COUNTED (``strip_miss``) — they
+    are the judge's capacity key, never silent. When ``project`` is
+    off the (y, x) pass repeats while misses remain (cap 3), keeping
+    the fewest-miss iterate (``strip_iters``).
     Returns (new_pos, info)."""
     min_span = 0.0
 
@@ -2221,7 +2296,8 @@ def pack_project(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
         # orders the fixed rank contacts are always safe
         return arm_books(p, src_adj, grid, kappa=kappa, floor=floor,
                          snap=snap, min_span=min_span,
-                         contacts=contacts, yrank=_yrank)
+                         contacts=contacts, yrank=_yrank,
+                         ybound=not strip)
 
     new_pos = {v: np.asarray(p, dtype=float).copy()
                for v, p in pos.items()}
@@ -2250,6 +2326,10 @@ def pack_project(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
         construction) with the canonical line-1 anchor."""
         nonlocal cur_books
         nlines = grid.H if axis == 1 else grid.W
+        if bounded and axis == 1 and rows:
+            # s3.124b: the row budget of a wrapped projection — the
+            # chip's rows shared by ``strips`` strips
+            nlines = int(rows)
         o = axis  # orientation == axis by construction
         items = [(a, b, v) for (line, a, b, v) in cur_books[2][o]]
         if not items:
@@ -2269,14 +2349,16 @@ def pack_project(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
         trial = {v: new_pos[v].copy() for v in new_pos}
         miss = 0
         lp = line_pools(grid)
-        unb = (not bounded) and bool(lp)
+        # s3.125 strip: the x half is REAL in every pass
+        real_x = bool(strip) and axis == 0 and bool(lp)
+        unb = (not bounded) and bool(lp) and not real_x
         if unb:
             pool_u = float(max(lp.values()))
             L_max = nlines + ((len(items) + int(pool_u) - 1)
                               // max(1, int(pool_u)))
             pool = [pool_u] * L_max
             nlines = L_max
-        elif bounded and brick_pools:
+        elif (bounded and brick_pools) or real_x:
             # s3.116: the honest per-(line, brick) profile — the SAME
             # truth pen reads — replaces both the uniform-along-line
             # capacity and the boundary-line zeroing (boundary lines
@@ -2285,8 +2367,9 @@ def pack_project(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
             s_b = max(int(getattr(grid, "stride", 1) or 1), 1)
             ph, pv = _brick_pool_arrays(grid, s_b)
             arr = ph if o == 1 else pv
-            profiles = [arr[ln] for ln in range(nlines)]
-            if nlines >= 2:
+            nl0 = nlines
+            profiles = [arr[ln] for ln in range(nl0)]
+            if nl0 >= 2:
                 # the ANNOTATED boundary (s3.116 board, the validator's
                 # watch-item measured): boundary LINES host at count-4
                 # but carry one course parity only, so arms seated
@@ -2296,8 +2379,65 @@ def pack_project(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
                 # data on the boundary lines alone; interior edge
                 # BRICKS keep their honest pools (the sparse wins).
                 profiles[0] = np.zeros_like(profiles[0])
-                profiles[nlines - 1] = np.zeros_like(profiles[-1])
-            pool = [float(lp.get((o, ln), 0)) for ln in range(nlines)]
+                profiles[nl0 - 1] = np.zeros_like(profiles[-1])
+            pool = [float(lp.get((o, ln), 0)) for ln in range(nl0)]
+            if real_x:
+                # s3.125 strip: the columns are real on the chip and
+                # IDEAL above it — extend every column's brick profile
+                # past the last capacity-bearing brick with the uniform
+                # ideal pool, far enough to cover the tallest v-hull.
+                # Without this the packer's nb_eff clamp makes rows
+                # beyond the chip free (one column swallowed 161 of a
+                # 200-path); the judge's row_overflow prices those
+                # bricks at pool 0, so using them is visible, not free.
+                pool_u = float(max(lp.values()))
+                ymax = max(float(b) for (_a, b, _v) in items)
+                need_b = int(ymax // s_b) + 2
+                ext = []
+                for pr in profiles:
+                    nz = np.flatnonzero(pr > 0)
+                    if not nz.size:
+                        ext.append(np.zeros(max(need_b, pr.size)))
+                        continue
+                    ne = int(nz.max()) + 1
+                    extra = max(need_b - ne, 0)
+                    ext.append(np.concatenate(
+                        [pr[:ne], np.full(extra, pool_u)]))
+                profiles = ext
+            if strips > 1:
+                # s3.124b: WRAPPING IS THE PACKER'S OVERFLOW RULE. The
+                # projection packs the (strips * W) x (rows) virtual
+                # chip: when the columns run out the pack continues
+                # into the next strip — the real column profiles
+                # repeated, boustrophedon (the physical column of
+                # virtual column c is c % W on even strips and
+                # W-1-c % W on odd, so consecutive virtual columns stay
+                # adjacent across a cut) — instead of clamping
+                # stragglers onto the last column; the row profiles
+                # are tiled along their brick axis, since a row hosts
+                # every strip's arms and each strip lands on a
+                # different physical row (a fresh copy of the
+                # profile). Compaction is unchanged (the DP still uses
+                # as few lines as capacity allows); only overflow
+                # wraps. `orders._phys` maps the strips back onto the
+                # chip. Every strip's edge lines keep the measured
+                # zero pools.
+                if axis == 0:
+                    def _sl(ln):
+                        st, r = divmod(ln, nl0)
+                        return r if st % 2 == 0 else nl0 - 1 - r
+                    nlines = nl0 * strips
+                    profiles = [profiles[_sl(ln)] for ln in range(nlines)]
+                    pool = [pool[_sl(ln)] for ln in range(nlines)]
+                else:
+                    def _tile(prof):
+                        nz = np.flatnonzero(prof > 0)
+                        if not nz.size:
+                            return prof
+                        ne = int(nz.max()) + 1
+                        return np.concatenate(
+                            [np.tile(prof[:ne], strips), prof[ne:]])
+                    profiles = [_tile(pr) for pr in profiles]
             brick_arg = (s_b, profiles)
         else:
             pool = [float(lp.get((o, ln), 0)) for ln in range(nlines)]
@@ -2313,7 +2453,8 @@ def pack_project(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
             [ivs[v] for v in order],
             [float(new_pos[v][axis]) for v in order], pool,
             coeffs=cs,
-            brick=(brick_arg if (bounded and brick_pools) else None))
+            brick=(brick_arg if ((bounded and brick_pools) or real_x)
+                   else None))
         if unb:
             # canonical translation: anchor the layout at line 1 —
             # line 0 is a BOUNDARY line (halved real capacity;
@@ -2351,13 +2492,43 @@ def pack_project(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
             new_pos[v] = trial[v]
         cur_books = books_new
         info["unplaced"] = miss
+        if real_x and not bounded:
+            info["strip_miss"] = miss
 
-    _half(axis=1)
-    if monotonize and orders is None:
-        # monotonize edits the x-ORDER — under carried orders the
-        # order is state and only moves may edit it
-        _mono()
-    _half(axis=0)
+    # s3.124: an axes selector. (1, 0) is byte-identical to the
+    # historical y-then-x with monotonize between the halves; a single
+    # axis is the single-axis readout (`axis_single`): the moved axis
+    # is re-packed against the other axis's positions held exactly.
+    if not axes or any(_ax not in (0, 1) for _ax in axes):
+        raise ValueError("axes must be a non-empty subset of (0, 1)")
+    info["axes"] = tuple(int(_ax) for _ax in axes)
+    info["unplaced_by_axis"] = {}
+    for _i, _ax in enumerate(axes):
+        if _i > 0 and monotonize and orders is None:
+            # monotonize edits the x-ORDER — under carried orders the
+            # order is state and only moves may edit it
+            _mono()
+        _half(axis=_ax)
+        info["unplaced_by_axis"][int(_ax)] = info.get("unplaced", 0)
+
+    if strip and line_pools(grid):
+        # s3.125 strip readout fixpoint: x-compression stacks point
+        # footprints per row-brick, so a y re-pack can spread rows and
+        # let the real columns seat everyone. Repeat the (y, x) pass
+        # while stragglers remain (cap 3), keep the fewest-miss iterate.
+        info["strip_iters"] = 1
+        if (not project and 0 in axes and 1 in axes):
+            while info.get("strip_miss", 0) > 0 and info["strip_iters"] < 3:
+                snap_pos = {v: p.copy() for v, p in new_pos.items()}
+                snap_books, snap_miss = cur_books, info["strip_miss"]
+                for _ax in axes:
+                    _half(axis=_ax)
+                info["strip_iters"] += 1
+                if info["strip_miss"] >= snap_miss:
+                    new_pos, cur_books = snap_pos, snap_books
+                    info["strip_miss"] = snap_miss
+                    info["unplaced"] = snap_miss
+                    break
 
     if project and line_pools(grid):
         # s3.93 final projection to the real window: record the ideal
@@ -2370,10 +2541,11 @@ def pack_project(pos: Dict[int, Point], src_adj: Dict[int, List[int]],
         for ax, key in ((1, "final_width_y"), (0, "final_width_x")):
             vals = [float(p[ax]) for p in new_pos.values()]
             info[key] = int(max(vals) - min(vals)) + 1 if vals else 0
-        _half(axis=1, bounded=True)
-        m1 = info.get("unplaced", 0)
-        _half(axis=0, bounded=True)
-        info["projection_misses"] = m1 + info.get("unplaced", 0)
+        _pm = 0
+        for _ax in axes:
+            _half(axis=_ax, bounded=True)
+            _pm += info.get("unplaced", 0)
+        info["projection_misses"] = _pm
         if brick_pools and not info["projection_misses"]:
             # s3.117 (Max's placement question): the stair objective is
             # translation-invariant given the orders (the coefficient

@@ -1,0 +1,59 @@
+smoke: 3 cells, arms ('plane', 'arm', 'plane-nt', 'arm-nt'), 16 jobs; load (93.95458984375, 90.91162109375, 89.38818359375)
+/data/max/ember/docs/paper2/data/armstrip_probe.py:93: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/armstrip_probe.py:93: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/armstrip_probe.py:93: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/armstrip_probe.py:93: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/armstrip_probe.py:93: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/armstrip_probe.py:93: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/armstrip_probe.py:93: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/armstrip_probe.py:93: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/armstrip_probe.py:93: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/armstrip_probe.py:93: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/armstrip_probe.py:93: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/armstrip_probe.py:93: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/armstrip_probe.py:93: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/armstrip_probe.py:93: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/armstrip_probe.py:93: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/armstrip_probe.py:93: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+Z12 turan_n162       plane         seed 0 t=60: 9.253 mx=12 lacl=9.253 lmx=12 stair=2598.0 bars=None pen=None smiss=None sit=None fw=20x16 cmiss=0 cert=True mmskip=True err=None (62.2s)
+Z12 turan_n162       plane         seed 0 t=240: 6.0 mx=6 lacl=6.0 lmx=6 stair=1714.0 bars=None pen=None smiss=None sit=None fw=12x12 cmiss=0 cert=True mmskip=True err=None (241.1s)
+Z12 turan_n162       arm           seed 0 t=60: 9.401 mx=12 lacl=9.401 lmx=12 stair=3131.0 bars=259 pen=None smiss=None sit=None fw=18x18 cmiss=0 cert=True mmskip=True err=None (68.0s)
+Z12 turan_n162       arm           seed 0 t=240: 9.401 mx=12 lacl=9.401 lmx=12 stair=3131.0 bars=259 pen=None smiss=None sit=None fw=18x18 cmiss=0 cert=True mmskip=True err=None (240.2s)
+Z12 turan_n162       plane-nt      seed 0 t=60: 9.253 mx=12 lacl=9.253 lmx=12 stair=2598.0 bars=None pen=None smiss=None sit=None fw=20x16 cmiss=0 cert=True mmskip=True err=None (30.3s)
+Z12 turan_n162       plane-nt      seed 0 t=240: 6.0 mx=6 lacl=6.0 lmx=6 stair=1714.0 bars=None pen=None smiss=None sit=None fw=12x12 cmiss=0 cert=True mmskip=True err=None (120.2s)
+Z12 turan_n162       arm-nt        seed 0 t=60: 9.401 mx=12 lacl=9.401 lmx=12 stair=3131.0 bars=259 pen=None smiss=None sit=None fw=18x18 cmiss=0 cert=True mmskip=True err=None (30.3s)
+Z12 turan_n162       arm-nt        seed 0 t=240: 6.0 mx=6 lacl=6.0 lmx=6 stair=2008.0 bars=162 pen=None smiss=None sit=None fw=13x12 cmiss=0 cert=True mmskip=True err=None (120.2s)
+Z12 ws_n486          plane         seed 0 t=60: 2.508 mx=8 lacl=3.813 lmx=20 stair=2505.0 bars=None pen=None smiss=None sit=None fw=24x25 cmiss=43 cert=False mmskip=False err=None (60.0s)
+Z12 ws_n486          arm           seed 0 t=60: 2.547 mx=8 lacl=3.733 lmx=19 stair=3850.0 bars=686 pen=None smiss=None sit=None fw=24x22 cmiss=32 cert=False mmskip=False err=None (60.1s)
+Z12 ws_n486          plane-nt      seed 0 t=60: 3.733 mx=21 lacl=3.733 lmx=21 stair=2466.0 bars=None pen=None smiss=None sit=None fw=24x26 cmiss=46 cert=False mmskip=False err=None (31.5s)
+Z12 ws_n486          arm-nt        seed 0 t=60: 3.763 mx=18 lacl=3.763 lmx=18 stair=3909.0 bars=701 pen=None smiss=None sit=None fw=24x21 cmiss=28 cert=False mmskip=False err=None (31.5s)
+Z12 grid_200         plane         seed 0 t=60: 1.395 mx=3 lacl=2.03 lmx=9 stair=242.0 bars=None pen=None smiss=None sit=None fw=15x13 cmiss=0 cert=True mmskip=True err=None (60.1s)
+Z12 grid_200         arm           seed 0 t=60: 1.385 mx=3 lacl=1.76 lmx=8 stair=663.0 bars=211 pen=None smiss=None sit=None fw=14x13 cmiss=0 cert=True mmskip=True err=None (60.1s)
+Z12 grid_200         plane-nt      seed 0 t=60: 1.965 mx=5 lacl=1.965 lmx=5 stair=240.0 bars=None pen=None smiss=None sit=None fw=15x16 cmiss=0 cert=True mmskip=True err=None (30.1s)
+Z12 grid_200         arm-nt        seed 0 t=60: 1.77 mx=9 lacl=1.77 lmx=9 stair=653.0 bars=202 pen=None smiss=None sit=None fw=15x12 cmiss=0 cert=True mmskip=True err=None (30.1s)
+
+summary (mean over seeds at 60 s; d = arm - plane, negative = wins; lacl = pre-tail):
+Z12 turan_n162       plane=9.253(1) mx=12.0 lacl=9.253 lmx=12.0 | arm=9.401(1) mx=12.0 lacl=9.401 lmx=12.0 d=+0.148 | plane-nt=9.253(1) mx=12.0 lacl=9.253 lmx=12.0 d=+0.000 | arm-nt=9.401(1) mx=12.0 lacl=9.401 lmx=12.0 d=+0.148
+Z12 ws_n486          plane=2.508(1) mx=8.0 lacl=3.813 lmx=20.0 | arm=2.547(1) mx=8.0 lacl=3.733 lmx=19.0 d=+0.039 | plane-nt=3.733(1) mx=21.0 lacl=3.733 lmx=21.0 d=+1.225 | arm-nt=3.763(1) mx=18.0 lacl=3.763 lmx=18.0 d=+1.255
+Z12 grid_200         plane=1.395(1) mx=3.0 lacl=2.03 lmx=9.0 | arm=1.385(1) mx=3.0 lacl=1.76 lmx=8.0 d=-0.010 | plane-nt=1.965(1) mx=5.0 lacl=1.965 lmx=5.0 d=+0.570 | arm-nt=1.77(1) mx=9.0 lacl=1.77 lmx=9.0 d=+0.375
+
+turan_n162 at 240s: {'plane': (6.0, 6.0), 'arm': (9.401, 9.401), 'plane-nt': (6.0, 6.0), 'arm-nt': (6.0, 6.0)}
+BAR board: PASS
+load at end: (89.3876953125, 93.9013671875, 91.48681640625)
+done-probe

@@ -77,6 +77,62 @@ Each of these was paid for; the receipts are in `attraction.md`.
 
 ## Open fronts
 
+0. **THE SOUND PLANE — the front the others wait on (s3.124b,
+   built, one switch).** Principle: the plane must be a SUBSET of the
+   chip — every pen-0 plane state converts to a valid embedding with
+   real cost ≤ plane cost — so the plane's minima are real objects,
+   every improvement is real, and the lower level only improves (odd
+   couplers, bends: the slack the cross ignores). The three
+   refutations (xy, wave, widen) and the one gooey success
+   (lex+interleave's crystal) all sort under this: the old plane was
+   a superset (infinite, qubit-undercounting, count-only capacity),
+   so the schedule was smuggling ranking the energy lacked (the
+   order-invariance axiom: schedule sensitivity = judge/family bug).
+   Built as ONE switch, `wrap_pack` (lever off), with `axis_single`
+   an independent flip. The state stays on the ideal plane — the
+   freedom to move, the benefit of ignoring real hardware in the
+   optimization. **At every adopt the state is also projected onto
+   the chip by the wrapped bounded pack**, and wrapping is the
+   packer's overflow rule: real pools on a (k·W) × (R/k) virtual
+   chip, k the smallest strip count that places everyone — when the
+   columns run out the pack continues into the next strip instead
+   of clamping stragglers (compaction unchanged; only overflow
+   wraps); strips map back boustrophedon. That physical layout is
+   what the judge scores and what the pipeline hands on — no second
+   squeeze, no clamp. The wrap lives in the loop: the bookmark is
+   the best WRAPPED state and under audit the wrapped cost steers
+   every acceptance; proposals stay wrap-blind by design. The
+   judge's rule, measured into place: **it evaluates the layout the
+   pipeline will hand to the converter**, booking the converter's
+   own claim intervals (every cross, point-arm footprints, the kappa
+   floor) on the packer's own profiles (the boundary lines zeroed:
+   the measured s3.116 rule — count-4 boundary pools flooded
+   deficits; NOT the half-capacity "correction" the first build
+   made). Two earlier shapes were convicted by their own smokes and
+   deleted: the ideal-plane fold (never compresses; lost to the
+   squeeze by 3 ACL on the crystal) and the bounded-state readout
+   (loses the crystal, turán 10.5 vs 9.253 at one strip; strips need
+   rows cut to R/k). Smoke facts that survive: pen 0 ⇒ certified
+   (soundness holds); the packer's repack is load-bearing; accept-all
+   is judge-blind, so the sound judge under it only re-selects the
+   bookmark — the audit engine is where it steers; at seed 0 the wrap
+   holds the crystal (9.253), wins ER (−0.18) and shortens ws's legal
+   max chain (21 → 20; 16 with `axis_single`). NEXT, in order: (i)
+   read the board (`sound_probe.csv`, 7 arms incl. no-tail); (ii) the
+   gooeyness instrument — seeded question-order AND init shuffles →
+   endpoint variance per cell under the sound judge (the map of
+   where the landscape still fights); (iii) move-family ablation
+   guided by (ii) — delete what does not shrink the variance (the
+   fine end, pairs, and every schedule knob are candidates); (iv) the
+   packer question (transparent manifestation vs exact second court;
+   the packer under-books what the judge books — ws pen 213 at zero
+   misses) only after the judge is settled; (v) the consolidation
+   purge of measured-refuted levers (xy_singles, axis_inner,
+   cross_widen, tile_moves, settle_projection; hier_units toxic on
+   plane) — bloat is a cost. Fronts 1-7 below are deferred beneath
+   this one: they were answers to questions the superset judge had
+   made unanswerable.
+
 1. **One state, one family — the seam deletion.** The normalizer pack
    exists only because the converter and completion are co-designed
    with packer-shaped states. Preferred resolution: state = the two

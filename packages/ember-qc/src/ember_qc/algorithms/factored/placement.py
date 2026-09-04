@@ -36,7 +36,7 @@ junction completeness; P16 runs but regresses vs the deleted orders
 engine (owner's call — Zephyr is the target; the elegant-adapter
 idea is parked in ideas.md).
 
-Deterministic per ``seed``.
+Deterministic per ``seed`` (and, under ``sched != "ladder"``, per ``sched_seed``).
 """
 
 from __future__ import annotations
@@ -454,6 +454,81 @@ class AttractConfig:
                                # extra questions, zero extra packs.
                                # Requires axis_inner; measurement
                                # switch.
+    axis_single: bool = False
+                               # s3.124 (the sound plane, 1/3): a move
+                               # re-packs ONLY its own axis; the other
+                               # axis's positions are held exactly as
+                               # carried. The DP's frozen-other-axis
+                               # assumption becomes literally true and
+                               # the intra-readout alternation (the
+                               # tango) is gone. Requires carry_orders.
+    wrap_pack: bool = False
+                               # s3.124b (the sound plane, one
+                               # switch). The state stays on the ideal
+                               # plane; at every adopt it is ALSO
+                               # projected onto the chip by the
+                               # wrapped bounded pack — WRAPPING IS
+                               # THE PACKER'S OVERFLOW RULE: real
+                               # pools on a (k*W) x (R/k) virtual
+                               # chip, k the smallest strip count that
+                               # places everyone; when the columns run
+                               # out the pack continues into the next
+                               # strip instead of clamping stragglers
+                               # (compaction unchanged, only overflow
+                               # wraps). That physical layout is what
+                               # the judge scores (brick-ruler lex on
+                               # the converter's own claim intervals)
+                               # and what the pipeline hands on — no
+                               # second squeeze, no clamp. Plane
+                               # engine + carry only; refuses
+                               # xy_singles / tile_moves.
+    arm_cost: bool = False
+                               # s3.125: one bar (grid.stride
+                               # junctions) per ACTIVE arm in the
+                               # plane objective — judge and the
+                               # interleaver's own transitions alike.
+                               # A side with >= 1 contact needs a real
+                               # qubit even when its hull is one
+                               # junction; the span-only stair priced
+                               # it 0 (grid_200: stair 1.2/var vs real
+                               # 1.965). On turán/K_n the active-arm
+                               # count is fixed, so the term is a
+                               # constant there. Plane + carry only;
+                               # refuses wrap_pack (whose brick judge
+                               # carries its own +1).
+    strip: bool = False
+                               # s3.125: the half-infinite strip. The
+                               # plane is the chip's REAL columns x
+                               # unbounded rows: the x half of every
+                               # readout packs into the real per-column
+                               # profiles (boundary columns zeroed), the
+                               # y half stays ideal. A layout wider
+                               # than the chip cannot exist; column
+                               # pressure spreads rows. Rows the chip
+                               # does not have, and clamp misses, are
+                               # the capacity-first lexicographic key
+                               # (pool 0, hinge²) — the same key that
+                               # governs line capacity, no λ. Plane +
+                               # carry only; refuses wrap_pack.
+    sched: str = "ladder"
+                               # s3.126 instrument: the ORDER of the
+                               # blind pass's asks — "ladder" (today,
+                               # byte-identical), "rung" (random
+                               # within a scale, coarsest-first, pairs
+                               # last), "bag" (one flat random bag).
+                               # Never edits the ask SET. Plane + carry
+                               # only; refuses every accept-dependent
+                               # schedule feature.
+    sched_seed: int = 0
+                               # schedule RNG seed, independent of
+                               # `seed` (init + router); inert under
+                               # "ladder"
+    max_asks: Optional[int] = None
+                               # s3.126 WORK budget: stop after this
+                               # many DP evaluations (memo hits free;
+                               # the pass cap is lifted) — a
+                               # measurement that never depends on the
+                               # box's load. Plane + carry only.
 
 
 def _auto_bins(n_qubits: int) -> int:
@@ -514,7 +589,7 @@ def attract_embed(
         if picked:
             cfg = replace(cfg, **picked)
         if cfg.engine not in ("lex", "orders", "orders-audit",
-                              "plane", "plane-audit"):
+                              "plane", "plane-audit", "plane2"):
             # loud FAILURE (with the message) rather than silently
             # measuring the control arm — the probes' typo fence
             # checks kwarg names, not values
@@ -534,6 +609,42 @@ def attract_embed(
         if cfg.cross_widen and not cfg.axis_inner:
             # loud FAILURE, not a silent control-arm measurement
             raise ValueError("cross_widen requires axis_inner")
+        if cfg.axis_single and not cfg.carry_orders:
+            raise ValueError("axis_single requires carry_orders")
+        if cfg.wrap_pack and not cfg.carry_orders:
+            raise ValueError("wrap_pack requires carry_orders")
+        if cfg.wrap_pack and not cfg.engine.startswith("plane"):
+            raise ValueError("wrap_pack requires the plane engine")
+        if cfg.wrap_pack and (cfg.xy_singles or cfg.tile_moves):
+            raise ValueError(
+                "wrap_pack does not compose with xy_singles/tile_moves")
+        if cfg.arm_cost and not cfg.carry_orders:
+            raise ValueError("arm_cost requires carry_orders")
+        if cfg.arm_cost and not cfg.engine.startswith("plane"):
+            raise ValueError("arm_cost requires the plane engine")
+        if cfg.arm_cost and cfg.wrap_pack:
+            raise ValueError("arm_cost does not compose with wrap_pack")
+        if cfg.strip and not cfg.carry_orders:
+            raise ValueError("strip requires carry_orders")
+        if cfg.strip and not cfg.engine.startswith("plane"):
+            raise ValueError("strip requires the plane engine")
+        if cfg.strip and cfg.wrap_pack:
+            raise ValueError("strip does not compose with wrap_pack")
+        if cfg.sched not in ("ladder", "rung", "bag"):
+            raise ValueError(f"unknown sched {cfg.sched!r}")
+        if cfg.sched != "ladder" or cfg.max_asks is not None:
+            if not cfg.carry_orders:
+                raise ValueError("sched/max_asks require carry_orders")
+            if not cfg.engine.startswith("plane"):
+                raise ValueError("sched/max_asks require the plane engine")
+        if cfg.sched != "ladder" and (
+                cfg.wave_schedule or cfg.axis_inner or cfg.cross_widen
+                or cfg.tile_moves or cfg.hier_units or cfg.xy_singles):
+            raise ValueError("sched does not compose with wave_schedule/"
+                             "axis_inner/cross_widen/tile_moves/"
+                             "hier_units/xy_singles")
+        if cfg.max_asks is not None and cfg.max_asks < 1:
+            raise ValueError("max_asks must be >= 1")
 
         from ember_qc.algorithms.factored.field import (
             TileGrid, _target_kappa, arm_books, bar_widths,
@@ -622,6 +733,7 @@ def attract_embed(
         init_wall = time.perf_counter() - _t_init
         legal_emb: Optional[Embedding] = None
         legal_acl = math.inf
+        legal_max_chain = None
         mm_skipped = False
         ex_info: Optional[dict] = None
 
@@ -684,7 +796,20 @@ def attract_embed(
         #                   converter/completion stack is co-designed
         #                   with packer-family states; a lex-family
         #                   converter would delete this call too)
-        if cfg.engine == "lex":
+        _plane_books = None
+        if cfg.engine == "plane2":
+            # s3.127: the rewrite's engine — state = two orders, readout
+            # on the strip, judge = (overload, spans + bar); its
+            # bookmark's books ARE the handoff's books (one accounting)
+            from ember_qc.algorithms.factored import plane as _plane
+            tpts, _plane_books, last_info = _plane.arrange(
+                src_adj, grid, seed=seed, max_asks=cfg.max_asks,
+                deadline=placement_deadline, snap=eff_snap)
+            _legal_info = {"_contacts": _plane_books[0],
+                           "_orders": last_info.get("orders")}
+            _proj_iters = 0
+            _proj_skipped = False
+        elif cfg.engine == "lex":
             from ember_qc.algorithms.factored.seat import seat_arrange
             tpts, _proj_info = pack_project(
                 tpts, src_adj, grid, kappa=kappa,
@@ -715,7 +840,8 @@ def attract_embed(
                 xy=cfg.xy_singles,
                 wave=cfg.wave_schedule,
                 axis_inner=cfg.axis_inner,
-                widen=cfg.cross_widen)
+                widen=cfg.cross_widen,
+                axis_single=cfg.axis_single)
             _legal_info = last_info.get("readout_info", {})
         else:
             # the plane engine (round 3, s3.116): the search lives on
@@ -736,26 +862,47 @@ def attract_embed(
                 tiles=cfg.tile_moves, xy=cfg.xy_singles,
                 wave=cfg.wave_schedule,
                 axis_inner=cfg.axis_inner,
-                widen=cfg.cross_widen)
+                widen=cfg.cross_widen,
+                axis_single=cfg.axis_single,
+                wrap=cfg.wrap_pack,
+                arm_cost=cfg.arm_cost,
+                strip=cfg.strip,
+                sched=cfg.sched,
+                sched_rng=(np.random.default_rng(cfg.sched_seed)
+                           if cfg.sched != "ladder" else None),
+                max_asks=cfg.max_asks)
             # THE one projection — optionally settled to its
             # alternation fixpoint (s3.119: the per-run measurement of
             # the fixpoint premise; iteration 2+ changing anything
             # means the state wasn't done converging)
             _proj_iters = 0
-            _prev = None
-            while True:
-                _proj_iters += 1
-                tpts, _legal_info = pack_project(
-                    tpts, src_adj, grid, kappa=kappa,
-                    floor=cfg.span_floor, snap=eff_snap,
-                    monotonize=False, brick_pools=True,
-                    orders=last_info.get("_orders"))
-                if not cfg.settle_projection or _proj_iters >= 4:
-                    break
-                if _prev is not None and all(
-                        np.array_equal(tpts[v], _prev[v]) for v in tpts):
-                    break
-                _prev = {v: p.copy() for v, p in tpts.items()}
+            _proj_skipped = False
+            if cfg.wrap_pack and "_phys_pos" in last_info:
+                # s3.124b: the readout already enforced real capacity
+                # on every move (the wrapped bounded pack); the final
+                # projection is just the strip map — no second squeeze.
+                # Residual overload is the judge's pen and the
+                # converter's misses, priced and counted, never clamped
+                tpts = last_info["_phys_pos"]
+                _legal_info = last_info.get("readout_info", {})
+                _proj_skipped = True
+            else:
+                _prev = None
+                while True:
+                    _proj_iters += 1
+                    tpts, _legal_info = pack_project(
+                        tpts, src_adj, grid, kappa=kappa,
+                        floor=cfg.span_floor, snap=eff_snap,
+                        monotonize=False, brick_pools=True,
+                        orders=last_info.get("_orders"),
+                        strip=cfg.strip)
+                    if not cfg.settle_projection or _proj_iters >= 4:
+                        break
+                    if _prev is not None and all(
+                            np.array_equal(tpts[v], _prev[v])
+                            for v in tpts):
+                        break
+                    _prev = {v: p.copy() for v, p in tpts.items()}
         arrange_wall = time.perf_counter() - _t_arr
         cent = {v: grid.Minv @ (tpts[v] - grid.c) for v in cent}
 
@@ -769,9 +916,12 @@ def attract_embed(
         _carry_cts = (_legal_info.get("_contacts")
                       if (cfg.engine != "lex" and cfg.carry_orders)
                       else None)
-        books = arm_books(tpts, src_adj, grid, kappa=kappa,
-                          floor=cfg.span_floor, snap=eff_snap,
-                          min_span=0.0, contacts=_carry_cts)
+        if _plane_books is not None:
+            books = _plane_books
+        else:
+            books = arm_books(tpts, src_adj, grid, kappa=kappa,
+                              floor=cfg.span_floor, snap=eff_snap,
+                              min_span=0.0, contacts=_carry_cts)
         # raw stair-E (recorded trajectory metric), priced on the same
         # contacts the seeds consume
         stair_E = round(stair_energy(tpts, src_adj, contacts=books[0]), 1)
@@ -818,6 +968,7 @@ def attract_embed(
         if emb:
             emb = spur_prune(emb, src_adj, adj, deadline=deadline)
             legal_acl = sum(len(c) for c in emb.values()) / len(emb)
+            legal_max_chain = max(len(c) for c in emb.values())
             legal_emb = emb
 
         if legal_emb is None:
@@ -913,6 +1064,18 @@ def attract_embed(
             diag["bookmark_wall"] = last_info.get("bookmark_wall", 0.0)
             diag["bookmark_readouts"] = int(
                 last_info.get("bookmark_readouts", 0))
+            diag["asks"] = int(last_info.get("asks", 0))
+            if cfg.engine == "plane2":
+                for _k in ("pen", "stair", "bars", "misses", "accepts",
+                           "passes", "stopped_by", "bookmark_asks",
+                           "bookmark_wall"):
+                    diag[_k] = last_info.get(_k)
+                diag["plane_stair"] = last_info.get("stair")
+                diag["judge_pen"] = last_info.get("pen")
+                diag["plane_bars"] = last_info.get("bars")
+            diag["bookmark_asks"] = int(last_info.get("bookmark_asks", 0))
+            diag["stopped_by"] = last_info.get("stopped_by")
+            diag["sched"] = cfg.sched
             diag["hier_accepts"] = int(last_info.get("hier_accepts", 0))
             diag["pair_accepts"] = int(last_info.get("pair_accepts", 0))
             diag["tile_accepts"] = int(last_info.get("tile_accepts", 0))
@@ -925,6 +1088,25 @@ def attract_embed(
             diag["widen_asked"] = int(last_info.get("widen_asked", 0))
             diag["widen_accepts"] = int(
                 last_info.get("widen_accepts", 0))
+            diag["adopt_worse"] = int(last_info.get("adopt_worse", 0))
+            # the pre-tail seeds' quality — the breathing metric (s3.124):
+            # what the plane handed down before minorminer touched it
+            if legal_max_chain is not None:
+                diag["legal_acl"] = round(float(legal_acl), 3)
+                diag["legal_max_chain"] = int(legal_max_chain)
+            diag["judge"] = last_info.get("judge")
+            if last_info.get("seat_pen") is not None:
+                diag["judge_pen"] = int(last_info["seat_pen"])
+            diag["fold_strips"] = int(last_info.get("fold_strips", 0))
+            diag["fold_Hs"] = int(last_info.get("fold_Hs", 0))
+            if last_info.get("plane_bars") is not None:
+                # s3.125: the active-arm count the bookmark carries —
+                # plane_stair minus stride * plane_bars is the pure
+                # span part, cross-arm comparable
+                diag["plane_bars"] = int(last_info["plane_bars"])
+            for _k in ("strip_miss", "strip_iters"):
+                if last_info.get(_k) is not None:
+                    diag[_k] = int(last_info[_k])
             if cfg.engine.startswith("plane"):
                 diag["proj_iters"] = _proj_iters
             if cfg.engine.startswith("plane"):
@@ -938,11 +1120,20 @@ def attract_embed(
                 if line_pools(grid):
                     from ember_qc.algorithms.factored.seat import (
                         seat_energy)
-                    _pe = seat_energy(
-                        tpts, src_adj, grid,
-                        yrank=(last_info.get("_yrank")
-                               if cfg.carry_orders else None))
+                    if cfg.wrap_pack:
+                        from ember_qc.algorithms.factored.seat import (
+                            brick_energy, judge_pools)
+                        _pe = brick_energy(
+                            tpts, src_adj, grid, last_info.get("_yrank"),
+                            pools=judge_pools(grid), kappa=kappa,
+                            floor=cfg.span_floor)
+                    else:
+                        _pe = seat_energy(
+                            tpts, src_adj, grid,
+                            yrank=(last_info.get("_yrank")
+                                   if cfg.carry_orders else None))
                     diag["proj_pen"] = int(_pe // (2 ** 26))
+                    diag["proj_skipped"] = bool(_proj_skipped)
         # s3.93 fit-vs-fabric observables (from the normalizer pack)
         for k in ("final_width_x", "final_width_y",
                   "projection_misses", "unb_miss"):

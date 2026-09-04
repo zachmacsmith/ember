@@ -1,0 +1,11 @@
+waiting for load < 30 (every 10 min); started Wed Sep  2 03:14:13 PM CDT 2026
+09-02 15:14 load 203 — waiting
+09-02 15:24 load 63 — waiting
+09-02 15:34 load 69 — waiting
+waiting for load < 30 (every 10 min); started Wed Sep  2 04:13:33 PM CDT 2026
+09-02 16:13 load 49 — waiting
+09-02 16:23 load 75 — waiting
+09-02 16:33 load 103 — waiting
+09-02 16:43 load 51 — waiting
+quiet at Wed Sep  2 04:53:33 PM CDT 2026, load 23.05 46.25 59.33 19/5798 2070352; launching
+done at Wed Sep  2 05:06:55 PM CDT 2026; summary + sentinel in sound_probe.log

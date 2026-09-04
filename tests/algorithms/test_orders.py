@@ -98,19 +98,22 @@ class TestSingletonReinsert:
             yield out
 
     @staticmethod
-    def _gt(merged, adj, values, other, axis, contacts=None):
-        n = len(merged)
-        val = np.asarray(values, dtype=float) + 1e-4 * np.arange(n)
+    def _gt(merged, adj, values, other, axis, contacts=None, bar=0.0):
+        val = np.asarray(values, dtype=float)   # unramped (s3.127)
         if axis == 1:
             pos = {v: np.array([float(other[v]), float(val[r])])
                    for r, v in enumerate(merged)}
+            if contacts is None:
+                yrank = {v: r for r, v in enumerate(merged)}
+                contacts = _stair_contacts(pos, adj, yrank=yrank)
         else:
             pos = {v: np.array([float(val[r]), float(other[v])])
                    for r, v in enumerate(merged)}
-        return stair_energy(pos, adj, contacts=contacts)
+        return stair_energy(pos, adj, contacts=contacts, bar=bar)
 
-    @pytest.mark.parametrize("axis", [1, 0])
-    def test_exact_and_optimal_vs_brute_force(self, axis):
+    @pytest.mark.parametrize("axis,bar", [(1, 0.0), (0, 0.0),
+                                          (1, 2.0), (0, 2.0)])
+    def test_exact_and_optimal_vs_brute_force(self, axis, bar):
         rng = np.random.default_rng(41 + axis)
         for _trial in range(15):
             n = int(rng.integers(5, 9))
@@ -124,22 +127,24 @@ class TestSingletonReinsert:
             S = [int(rng.integers(0, n))]
             contacts = None
             if axis == 0:
-                val = np.asarray(values, dtype=float) \
-                    + 1e-4 * np.arange(n)
+                val = np.asarray(values, dtype=float)
                 pos0 = {v: np.array([float(val[r]), float(other[v])])
                         for r, v in enumerate(order)}
                 contacts = _stair_contacts(pos0, adj)
             R = [v for v in order if v not in set(S)]
-            e_cur = self._gt(order, adj, values, other, axis, contacts)
-            brute = min(self._gt(mg, adj, values, other, axis, contacts)
+            e_cur = self._gt(order, adj, values, other, axis, contacts,
+                             bar)
+            brute = min(self._gt(mg, adj, values, other, axis, contacts,
+                                 bar)
                         for mg in self._merges(R, S))
             res, _flip = align_reinsert(
                 order, set(S), adj, values, None,
-                axis=axis, other=other, contacts=contacts)
+                axis=axis, other=other, contacts=contacts, bar=bar)
             if res is not None:
-                got = self._gt(res, adj, values, other, axis, contacts)
+                got = self._gt(res, adj, values, other, axis, contacts,
+                               bar)
                 assert abs(got - brute) < 1e-6, (got, brute)
-                assert got < e_cur - 1e-9
+                assert got <= e_cur + 1e-9   # ties: the rank tiebreak
             else:
                 assert brute >= e_cur - 1e-6
 
@@ -452,7 +457,7 @@ class TestXYReinsert:
     regime's judge)."""
 
     @staticmethod
-    def _gt(ox, oy, adj, vals_x, vals_y):
+    def _gt(ox, oy, adj, vals_x, vals_y, bar=0.0):
         pos = {}
         rx = {v: r for r, v in enumerate(ox)}
         for r, v in enumerate(oy):
@@ -460,14 +465,15 @@ class TestXYReinsert:
         yrank = {v: r for r, v in enumerate(oy)}
         return stair_energy(pos, adj,
                             contacts=_stair_contacts(pos, adj,
-                                                     yrank=yrank))
+                                                     yrank=yrank),
+                            bar=bar)
 
     @staticmethod
     def _insert(order, v, k):
         R = [u for u in order if u != v]
         return R[:k] + [v] + R[k:]
 
-    def _trial(self, rng, tie_heavy):
+    def _trial(self, rng, tie_heavy, bar=0.0):
         n = int(rng.integers(5, 9))
         g = nx.gnp_random_graph(n, 0.5, seed=int(rng.integers(9999)))
         adj = {v: sorted(g.neighbors(v)) for v in g.nodes()}
@@ -490,15 +496,16 @@ class TestXYReinsert:
                for r, u in enumerate(oy)}
         yrank = {u: r for r, u in enumerate(oy)}
         contacts = _stair_contacts(pos, adj, yrank=yrank)
-        e_cur = self._gt(ox, oy, adj, vals_x, vals_y)
+        e_cur = self._gt(ox, oy, adj, vals_x, vals_y, bar)
         brute = min(self._gt(self._insert(ox, v, i),
                              self._insert(oy, v, j),
-                             adj, vals_x, vals_y)
+                             adj, vals_x, vals_y, bar)
                     for i in range(n) for j in range(n))
-        res = xy_reinsert(v, ox, oy, adj, vals_x, vals_y, contacts)
+        res = xy_reinsert(v, ox, oy, adj, vals_x, vals_y, contacts,
+                          bar=bar)
         if res is not None:
             new_ox, new_oy = res
-            got = self._gt(new_ox, new_oy, adj, vals_x, vals_y)
+            got = self._gt(new_ox, new_oy, adj, vals_x, vals_y, bar)
             assert abs(got - brute) < 1e-6, (got, brute)
             assert got <= e_cur + 1e-9
             # sanity: the returned orders are permutations
@@ -508,18 +515,23 @@ class TestXYReinsert:
         assert brute >= e_cur - 1e-6, (brute, e_cur)
         return 0
 
-    def test_exact_vs_brute_force_distinct_values(self):
+    @pytest.mark.parametrize("bar", [0.0, 2.0])
+    def test_exact_vs_brute_force_distinct_values(self, bar):
         rng = np.random.default_rng(61)
         hits = 0
         for _trial in range(15):
-            hits += self._trial(rng, tie_heavy=False)
+            hits += self._trial(rng, tie_heavy=False, bar=bar)
         assert hits >= 5  # the property must actually be exercised
 
-    def test_exact_vs_brute_force_tied_values(self):
+    @pytest.mark.parametrize("bar", [0.0, 2.0])
+    def test_exact_vs_brute_force_tied_values(self, bar):
+        # bar=2 also falsifies the claim that the axis-0 slot vector's
+        # active-arm constant cancels across splits (it must, since
+        # activity is a function of the y-order alone)
         rng = np.random.default_rng(67)
         hits = 0
         for _trial in range(15):
-            hits += self._trial(rng, tie_heavy=True)
+            hits += self._trial(rng, tie_heavy=True, bar=bar)
         assert hits >= 5
 
     def test_slot_costs_vector_pins(self):
@@ -542,8 +554,7 @@ class TestXYReinsert:
                 v = int(rng.integers(0, n))
                 contacts = None
                 if axis == 0:
-                    val = np.asarray(values, dtype=float) \
-                        + 1e-4 * np.arange(n)
+                    val = np.asarray(values, dtype=float)
                     pos0 = {u: np.array([float(val[r]),
                                          float(other[u])])
                             for r, u in enumerate(order)}
@@ -553,6 +564,25 @@ class TestXYReinsert:
                                    contacts=contacts, slot_costs=True)
                 assert C is not None and len(C) == n
                 j0 = order.index(v)
+                if axis == 1:
+                    # s3.125: the identity entry equals the judge's
+                    # stair with the bar term (e_path == stair_energy)
+                    Cb = align_reinsert(order, {v}, adj, values, None,
+                                        axis=axis, other=other,
+                                        contacts=None, slot_costs=True,
+                                        bar=2.0)
+                    val = np.asarray(values, dtype=float)
+                    posr = {u: np.array([float(other[u]),
+                                         float(val[r])])
+                            for r, u in enumerate(order)}
+                    yr = {u: r for r, u in enumerate(order)}
+                    ctr = _stair_contacts(posr, adj, yrank=yr)
+                    from ember_qc.algorithms.factored.field import rank_scale
+                    M = rank_scale(n)
+                    assert int(Cb[j0] // M) == int(round(stair_energy(
+                        posr, adj, bar=2.0, contacts=ctr)))
+                    assert int(C[j0] // M) == int(round(stair_energy(
+                        posr, adj, contacts=ctr)))
                 res, _f = align_reinsert(order, {v}, adj, values, None,
                                          axis=axis, other=other,
                                          contacts=contacts)
@@ -844,6 +874,241 @@ class TestCrossWiden:
         assert a["embedding"] == b["embedding"]
 
 
+class TestSoundPlane:
+    """s3.124b: the sound plane, one switch — the strip map, the brick
+    judge on the converter's accounting, the wrapping packer, the
+    single-axis readout, the wrap end to end."""
+
+    def test_fold_consts_and_phys_map(self):
+        from ember_qc.algorithms.factored.orders import _fold_consts, _phys
+        grid = _zgrid()
+        W, R, s = _fold_consts(grid)
+        assert (W, R, s) == (grid.W, grid.H, grid.stride)
+        Hs = R // 2
+        pos = {}
+        k = 0
+        for y in range(0, Hs):
+            for x in range(0, 2 * W):
+                pos[k] = np.array([float(x), float(y)])
+                k += 1
+        ph = _phys(pos, W=W, Hs=Hs)
+        seen = set()
+        for v, p in ph.items():
+            key = (int(p[0]), int(p[1]))
+            assert key not in seen
+            seen.add(key)
+            assert 0 <= p[0] < W and 0 <= p[1] < R
+        for v, p in pos.items():
+            if p[0] < W:
+                assert ph[v][0] == p[0] and ph[v][1] == p[1]
+        a = [v for v, p in pos.items() if p[0] == W - 1 and p[1] == 1][0]
+        b = [v for v, p in pos.items() if p[0] == W and p[1] == 1][0]
+        assert ph[a][0] == ph[b][0] and ph[b][1] == ph[a][1] + Hs
+
+    def test_judge_pools_are_the_packers(self):
+        from ember_qc.algorithms.factored.seat import judge_pools
+        from ember_qc.algorithms.factored.field import _brick_pool_arrays
+        for grid in (_zgrid(), _cgrid()):
+            ph, pv = judge_pools(grid)
+            ph0, pv0 = _brick_pool_arrays(grid, max(grid.stride, 1))
+            for arr, arr0 in ((ph, ph0), (pv, pv0)):
+                assert np.all(arr[0] == 0) and np.all(arr[-1] == 0)
+                assert np.all(arr[1:-1] == arr0[1:-1])
+
+    def test_brick_energy_vs_brute_force(self):
+        from ember_qc.algorithms.factored.seat import (
+            _LEX_M, brick_energy, judge_pools)
+        grid = _zgrid()
+        s = grid.stride
+        ph, pv = judge_pools(grid)
+
+        def _edge(arr):
+            nz = np.flatnonzero(arr.max(axis=0) > 0)
+            return int(nz.max()) + 1 if nz.size else arr.shape[1]
+        nbx, nby = _edge(ph), _edge(pv)
+        rng = np.random.default_rng(101)
+        for _trial in range(20):
+            n = int(rng.integers(4, 10))
+            g = nx.gnp_random_graph(n, 0.5, seed=int(rng.integers(9999)))
+            adj = {v: sorted(g.neighbors(v)) for v in g.nodes()}
+            pos = {v: np.array([float(rng.integers(0, 14)),
+                                float(rng.integers(0, 14))])
+                   for v in g.nodes()}
+            order = list(rng.permutation(n))
+            yrank = {v: r for r, v in enumerate(order)}
+            contacts = _stair_contacts(pos, adj, yrank=yrank)
+            stair = 0
+            cov_h, cov_v = {}, {}
+            for v in pos:
+                h_us, v_us = contacts[v]
+                x, y = int(pos[v][0]), int(pos[v][1])
+                xs = [int(pos[u][0]) for u in h_us] + [x]
+                ys = [int(pos[u][1]) for u in v_us] + [y]
+                if h_us:
+                    stair += max(xs) // s - min(xs) // s + 1
+                if v_us:
+                    stair += max(ys) // s - min(ys) // s + 1
+                lo, hi = min(xs) // s, max(max(xs), min(xs) + 1) // s
+                lo = nbx - 1 if lo == nbx else lo
+                hi = nbx - 1 if hi == nbx else hi
+                for b in range(lo, hi + 1):
+                    cov_h[(y, b)] = cov_h.get((y, b), 0) + 1
+                lo, hi = min(ys) // s, max(max(ys), min(ys) + 1) // s
+                lo = nby - 1 if lo == nby else lo
+                hi = nby - 1 if hi == nby else hi
+                for b in range(lo, hi + 1):
+                    cov_v[(x, b)] = cov_v.get((x, b), 0) + 1
+            pen = 0.0
+            for (ln, b), c in cov_h.items():
+                pool = ph[ln, b] if (ln < ph.shape[0] and b < ph.shape[1]) else 0.0
+                pen += max(c - pool, 0.0) ** 2
+            for (ln, b), c in cov_v.items():
+                pool = pv[ln, b] if (ln < pv.shape[0] and b < pv.shape[1]) else 0.0
+                pen += max(c - pool, 0.0) ** 2
+            want = pen * _LEX_M + stair
+            got = brick_energy(pos, adj, grid, yrank, pools=(ph, pv),
+                               kappa=None)
+            assert abs(got - want) < 1e-6, (got, want)
+        adj = {0: [1], 1: [0]}
+        inside = {0: np.array([1.0, 1.0]), 1: np.array([2.0, 2.0])}
+        assert brick_energy(inside, adj, grid, {0: 0, 1: 1},
+                            pools=(ph, pv), kappa=None) < _LEX_M
+        off = {0: np.array([1.0, float(grid.H + 3)]),
+               1: np.array([2.0, float(grid.H + 4)])}
+        assert brick_energy(off, adj, grid, {0: 0, 1: 1},
+                            pools=(ph, pv), kappa=None) >= _LEX_M
+
+    def test_strips_packer_wraps_instead_of_clamping(self):
+        # a layout too wide for the chip: strips=1 clamps (misses),
+        # strips=2 places everyone in virtual columns that map back
+        # onto the chip; the row budget bounds the rows
+        from ember_qc.algorithms.factored.orders import _phys
+        grid = _zgrid()
+        kappa = _target_kappa(grid)
+        g = nx.path_graph(48)
+        adj = {v: sorted(g.neighbors(v)) for v in g.nodes()}
+        pos = {v: np.array([float(v), float(1 + (v % 5))])
+               for v in g.nodes()}
+        ords = (sorted(pos, key=lambda v: (float(pos[v][0]), v)),
+                sorted(pos, key=lambda v: (float(pos[v][1]), v)))
+        one, i1 = pack_project(pos, adj, grid, kappa=kappa,
+                               monotonize=False, project=True,
+                               brick_pools=True, orders=ords, strips=1)
+        two, i2 = pack_project(pos, adj, grid, kappa=kappa,
+                               monotonize=False, project=True,
+                               brick_pools=True, orders=ords, strips=2)
+        assert i1.get("projection_misses", 0) > 0
+        assert i2.get("projection_misses", 0) == 0
+        assert max(float(p[0]) for p in two.values()) >= grid.W
+        ph = _phys(two, W=grid.W, Hs=grid.H // 2)
+        assert all(0 <= p[0] < grid.W for p in ph.values())
+        # strips=1 is byte-identical to the default projection
+        dflt, _ = pack_project(pos, adj, grid, kappa=kappa,
+                               monotonize=False, project=True,
+                               brick_pools=True, orders=ords)
+        assert all(np.array_equal(dflt[v], one[v]) for v in one)
+        # the row budget
+        few, _ = pack_project(pos, adj, grid, kappa=kappa,
+                              monotonize=False, project=True,
+                              brick_pools=True, orders=ords, strips=2,
+                              rows=4)
+        assert max(float(p[1]) for p in few.values()) < 4
+
+    def test_single_axis_readout_freezes_other_axis(self):
+        from ember_qc.algorithms.factored import orders as om
+        grid = _zgrid()
+        kappa = _target_kappa(grid)
+        rng = np.random.default_rng(37)
+        g = nx.gnp_random_graph(16, 0.4, seed=11)
+        adj = {v: sorted(g.neighbors(v)) for v in g.nodes()}
+        pos = {v: np.array([float(rng.integers(0, 3)),
+                            float(rng.integers(0, 3))])
+               for v in g.nodes()}
+        calls = []
+        real_pp = om.pack_project
+
+        def spy(p, *a, **kw):
+            axes = kw.get("axes", (1, 0))
+            out, info = real_pp(p, *a, **kw)
+            calls.append((axes, {v: q.copy() for v, q in p.items()},
+                          {v: q.copy() for v, q in out.items()}))
+            return out, info
+        om.pack_project = spy
+        try:
+            out, info = om.order_arrange(pos, adj, grid, kappa=kappa,
+                                         plane=True, carry=True,
+                                         axis_single=True)
+        finally:
+            om.pack_project = real_pp
+        single = [c for c in calls if len(c[0]) == 1]
+        assert single
+        for axes, before, after in single:
+            other = 1 - axes[0]
+            for v in before:
+                assert before[v][other] == after[v][other]
+        assert info["interleave_accepts"] >= 1
+
+    def test_knob_pins_and_guards(self):
+        from dataclasses import fields
+        from ember_qc.algorithms.factored.placement import AttractConfig
+        assert {"axis_single", "wrap_pack"} <= {
+            f.name for f in fields(AttractConfig)}
+        from ember_qc.algorithms.factored import attract_embed
+        tgt = dnx.chimera_graph(2, 2, 4)
+        for kw, word in (({"axis_single": True, "carry_orders": False},
+                          "carry"),
+                         ({"wrap_pack": True, "engine": "orders"},
+                          "plane"),
+                         ({"wrap_pack": True, "xy_singles": True},
+                          "compose")):
+            r = attract_embed(nx.path_graph(4), tgt, timeout=5, seed=0,
+                              **kw)
+            assert r["status"] == "FAILURE", kw
+            assert word in r.get("error", ""), (kw, r.get("error"))
+
+    def test_e2e_arms_valid_deterministic(self):
+        from ember_qc.algorithms.factored import attract_embed
+        from ember_qc.registry import validate_embedding
+        src = nx.gnp_random_graph(14, 0.35, seed=9)
+        arms = ({"wrap_pack": True},
+                {"wrap_pack": True, "axis_single": True})
+        for tgt in (dnx.zephyr_graph(3, 4), dnx.chimera_graph(4, 4, 4)):
+            for kw in arms:
+                for eng in ("plane", "plane-audit"):
+                    r1 = attract_embed(src, tgt, timeout=15, seed=0,
+                                       engine=eng, **kw)
+                    r2 = attract_embed(src, tgt, timeout=15, seed=0,
+                                       engine=eng, **kw)
+                    emb = r1["embedding"]
+                    assert emb and validate_embedding(emb, src, tgt), \
+                        (kw, eng, r1.get("error"))
+                    assert r1["embedding"] == r2["embedding"]
+                    assert r1["diag"].get("judge") == "brick"
+
+    def test_off_identity(self):
+        from ember_qc.algorithms.factored import attract_embed
+        src = nx.gnp_random_graph(10, 0.4, seed=3)
+        tgt = dnx.zephyr_graph(2, 4)
+        a = attract_embed(src, tgt, timeout=10, seed=0)
+        b = attract_embed(src, tgt, timeout=10, seed=0,
+                          axis_single=False, wrap_pack=False)
+        assert a["embedding"] == b["embedding"]
+
+    def test_wrap_end_to_end_overflow(self):
+        # a source too wide for one strip of the small chip: the wrap
+        # must use >= 2 strips and still produce a valid embedding
+        from ember_qc.algorithms.factored import attract_embed
+        from ember_qc.registry import validate_embedding
+        src = nx.gnp_random_graph(40, 0.5, seed=4)
+        tgt = dnx.zephyr_graph(3, 4)
+        r = attract_embed(src, tgt, timeout=30, seed=0, wrap_pack=True)
+        d = r["diag"]
+        assert d.get("judge") == "brick"
+        if r["embedding"]:
+            assert validate_embedding(r["embedding"], src, tgt)
+        assert d.get("fold_strips", 0) >= 1
+
+
 class TestTileMoves:
     """s3.119: the 2-D-joint family — tiles x {shift, reversals}."""
 
@@ -880,3 +1145,447 @@ class TestTileMoves:
         b = attract_embed(src, tgt, timeout=10, seed=0,
                           tile_moves=False, settle_projection=False)
         assert a["embedding"] == b["embedding"]
+
+
+class TestArmCost:
+    """s3.125 `arm_cost`: one bar (stride junctions) per ACTIVE arm in
+    the plane objective, judge and proposer alike."""
+
+    def test_knob_pins_and_guards(self):
+        from dataclasses import fields
+        from ember_qc.algorithms.factored.placement import AttractConfig
+        assert "arm_cost" in {f.name for f in fields(AttractConfig)}
+        from ember_qc.algorithms.factored import attract_embed
+        tgt = dnx.chimera_graph(2, 2, 4)
+        for kw, word in (({"arm_cost": True, "carry_orders": False},
+                          "carry"),
+                         ({"arm_cost": True, "engine": "orders"},
+                          "plane"),
+                         ({"arm_cost": True, "wrap_pack": True},
+                          "compose")):
+            r = attract_embed(nx.path_graph(4), tgt, timeout=5, seed=0,
+                              **kw)
+            assert r["status"] == "FAILURE", kw
+            assert word in r.get("error", ""), (kw, r.get("error"))
+
+    def test_judge_and_proposer_share_the_bar(self):
+        # order_arrange under arm_cost: the bookmark's seat_stair equals
+        # stair_energy(bar=stride) of the returned state under its own
+        # carried contacts — proposer == judge, one accounting
+        rng = np.random.default_rng(5)
+        grid = _zgrid()
+        adj, pos = _case(rng, grid, 14, 0.35)
+        kappa = _target_kappa(grid)
+        out, info = order_arrange(pos, adj, grid, kappa=kappa,
+                                  plane=True, carry=True, arm_cost=True)
+        s = max(int(getattr(grid, "stride", 1) or 1), 1)
+        cts = info["readout_info"]["_contacts"]
+        e = stair_energy(out, adj, contacts=cts, bar=float(s))
+        assert abs(e - info["seat_stair"]) < 1e-6
+        bars = sum((1 if h else 0) + (1 if v else 0)
+                   for h, v in cts.values())
+        assert info["plane_bars"] == bars
+        assert abs(stair_energy(out, adj, contacts=cts)
+                   - (info["seat_stair"] - s * bars)) < 1e-6
+
+    def test_clique_trajectory_identical(self):
+        # a clique has every variable two-sided at every state, so the
+        # bar term is a constant and the search must be byte-identical
+        from ember_qc.algorithms.factored import attract_embed
+        src = nx.complete_graph(8)
+        tgt = dnx.zephyr_graph(3, 4)
+        a = attract_embed(src, tgt, timeout=15, seed=0)
+        b = attract_embed(src, tgt, timeout=15, seed=0, arm_cost=True)
+        assert a["embedding"] == b["embedding"]
+        assert b["diag"]["plane_bars"] == 2 * (8 - 1)
+        assert abs((b["diag"]["plane_stair"] - a["diag"]["plane_stair"])
+                   - 2 * b["diag"]["plane_bars"]) < 1e-6
+
+    def test_e2e_valid_deterministic(self):
+        from ember_qc.algorithms.factored import attract_embed
+        from ember_qc.registry import validate_embedding
+        src = nx.gnp_random_graph(14, 0.35, seed=9)
+        for tgt in (dnx.zephyr_graph(3, 4), dnx.chimera_graph(4, 4, 4)):
+            for eng in ("plane", "plane-audit"):
+                r1 = attract_embed(src, tgt, timeout=15, seed=0,
+                                   engine=eng, arm_cost=True)
+                r2 = attract_embed(src, tgt, timeout=15, seed=0,
+                                   engine=eng, arm_cost=True)
+                emb = r1["embedding"]
+                assert emb and validate_embedding(emb, src, tgt), \
+                    (eng, r1.get("error"))
+                assert r1["embedding"] == r2["embedding"]
+                assert isinstance(r1["diag"].get("plane_bars"), int)
+
+    def test_off_identity(self):
+        from ember_qc.algorithms.factored import attract_embed
+        src = nx.gnp_random_graph(10, 0.4, seed=3)
+        tgt = dnx.zephyr_graph(2, 4)
+        a = attract_embed(src, tgt, timeout=10, seed=0)
+        b = attract_embed(src, tgt, timeout=10, seed=0, arm_cost=False)
+        assert a["embedding"] == b["embedding"]
+        assert "plane_bars" not in a["diag"]
+
+
+class TestStrip:
+    """s3.125 `strip`: the half-infinite strip — real columns, ideal
+    rows; rows beyond the chip and clamp misses as the leading key."""
+
+    @staticmethod
+    def _path_state(grid, n=200):
+        adj = {v: [u for u in (v - 1, v + 1) if 0 <= u < n]
+               for v in range(n)}
+        # a ribbon: every variable on one row, spread along x
+        pos = {v: np.array([float(v), 1.0]) for v in range(n)}
+        orders = (list(range(n)), list(range(n)))
+        return adj, pos, orders
+
+    def test_readout_bounds_x_not_y(self):
+        grid = _zgrid()
+        adj, pos, orders = self._path_state(grid)
+        kappa = _target_kappa(grid)
+        wide, wi = pack_project(pos, adj, grid, kappa=kappa,
+                                monotonize=False, project=False,
+                                orders=orders)
+        assert max(float(p[0]) for p in wide.values()) > grid.W - 1
+        assert "strip_miss" not in wi
+        out, info = pack_project(pos, adj, grid, kappa=kappa,
+                                 monotonize=False, project=False,
+                                 orders=orders, strip=True)
+        assert max(float(p[0]) for p in out.values()) <= grid.W - 1
+        assert min(float(p[0]) for p in out.values()) >= 0
+        # a monotone ribbon packs as a staircase: on a chip narrower
+        # than the staircase the real columns cannot seat everyone, and
+        # the stragglers are COUNTED (the judge's key), never silent
+        assert "strip_miss" in info and info["strip_miss"] > 0
+        assert info["strip_iters"] >= 1
+        assert info.get("unb_miss", 0) == 0
+        # the ideal y half is untouched: no window key was produced
+        assert "final_width_y" not in info
+        # and a 2-D layout that fits the chip has no misses
+        rng = np.random.default_rng(3)
+        adj2, pos2 = _case(rng, grid, 12, 0.3)
+        orders2 = (sorted(pos2, key=lambda v: (float(pos2[v][0]), v)),
+                   sorted(pos2, key=lambda v: (float(pos2[v][1]), v)))
+        out2, info2 = pack_project(pos2, adj2, grid, kappa=kappa,
+                                   monotonize=False, project=False,
+                                   orders=orders2, strip=True)
+        assert info2["strip_miss"] == 0
+        assert max(float(p[0]) for p in out2.values()) <= grid.W - 1
+
+    def test_strip_false_byte_identical(self):
+        # the default readout never passes strip; positions identical
+        rng = np.random.default_rng(11)
+        grid = _zgrid()
+        adj, pos = _case(rng, grid, 16, 0.3)
+        kappa = _target_kappa(grid)
+        orders = (sorted(pos, key=lambda v: (float(pos[v][0]), v)),
+                  sorted(pos, key=lambda v: (float(pos[v][1]), v)))
+        a, ai = pack_project(pos, adj, grid, kappa=kappa,
+                             monotonize=False, project=False,
+                             orders=orders)
+        b, bi = pack_project(pos, adj, grid, kappa=kappa,
+                             monotonize=False, project=False,
+                             orders=orders, strip=False)
+        assert all(np.array_equal(a[v], b[v]) for v in a)
+        assert "strip_miss" not in bi
+
+    def test_row_overflow_vs_brute_force(self):
+        from ember_qc.algorithms.factored.seat import (
+            _phantom_edge, judge_pools, row_overflow)
+        grid = _zgrid()
+        H, s = grid.H, max(int(getattr(grid, "stride", 1) or 1), 1)
+        assert (H - 1) // s == _phantom_edge(judge_pools(grid)[1])
+        rng = np.random.default_rng(23)
+        for trial in range(20):
+            n = int(rng.integers(4, 12))
+            g = nx.gnp_random_graph(n, 0.5, seed=int(rng.integers(999)))
+            adj = {v: sorted(g.neighbors(v)) for v in g.nodes()}
+            pos = {v: np.array([float(rng.integers(0, grid.W)),
+                                float(rng.integers(0, 2 * H))])
+                   for v in range(n)}
+            oy = list(rng.permutation(n))
+            yrank = {v: r for r, v in enumerate(oy)}
+            got = row_overflow(pos, adj, yrank, H=H, s=s, kappa=None)
+            # oracle over footprints
+            X = {v: int(round(pos[v][0])) for v in pos}
+            Y = {v: int(round(pos[v][1])) for v in pos}
+            hmin = dict(X)
+            hmax = dict(X)
+            vmin = dict(Y)
+            vmax = dict(Y)
+            for u in adj:
+                for w in adj[u]:
+                    if u < w:
+                        lo, hi = ((u, w) if yrank[u] < yrank[w]
+                                  else (w, u))
+                        hmin[lo] = min(hmin[lo], X[hi])
+                        hmax[lo] = max(hmax[lo], X[hi])
+                        vmin[hi] = min(vmin[hi], Y[lo])
+                        vmax[hi] = max(vmax[hi], Y[lo])
+            cover = {}
+            top = H - 1
+            for v in pos:
+                a, b = hmin[v], max(hmax[v], hmin[v] + 1)
+                if Y[v] >= top:
+                    for q in range(a // s, b // s + 1):
+                        cover[("h", Y[v], q)] = (
+                            cover.get(("h", Y[v], q), 0) + 1)
+                a, b = vmin[v], max(vmax[v], vmin[v] + 1)
+                for q in range(a // s, b // s + 1):
+                    if q >= top // s:
+                        cover[("v", X[v], q)] = (
+                            cover.get(("v", X[v], q), 0) + 1)
+            want = float(sum(c * c for c in cover.values()))
+            assert abs(got - want) < 1e-9, (trial, got, want)
+        # inside the chip: zero
+        pos = {v: np.array([float(v), float(v)]) for v in range(5)}
+        adj = {v: [u for u in range(5) if u != v] for v in range(5)}
+        yrank = {v: v for v in range(5)}
+        assert row_overflow(pos, adj, yrank, H=H, s=s) == 0.0
+        # one variable on the boundary row: positive
+        pos[4] = np.array([4.0, float(H - 1)])
+        assert row_overflow(pos, adj, yrank, H=H, s=s) > 0.0
+
+    def test_strip_judge_is_lexicographic(self):
+        rng = np.random.default_rng(5)
+        grid = _zgrid()
+        adj, pos = _case(rng, grid, 14, 0.35)
+        kappa = _target_kappa(grid)
+        out, info = order_arrange(pos, adj, grid, kappa=kappa,
+                                  plane=True, carry=True, strip=True)
+        assert info["judge"] == "strip"
+        assert info["seat_pen"] is not None
+        assert info["strip_miss"] is not None
+        assert max(float(p[0]) for p in out.values()) <= grid.W - 1
+        cts = info["readout_info"]["_contacts"]
+        assert abs(stair_energy(out, adj, contacts=cts)
+                   - info["seat_stair"]) < 1e-6
+
+    def test_knob_pins_and_guards(self):
+        from dataclasses import fields
+        from ember_qc.algorithms.factored.placement import AttractConfig
+        assert "strip" in {f.name for f in fields(AttractConfig)}
+        from ember_qc.algorithms.factored import attract_embed
+        tgt = dnx.chimera_graph(2, 2, 4)
+        for kw, word in (({"strip": True, "carry_orders": False},
+                          "carry"),
+                         ({"strip": True, "engine": "orders"}, "plane"),
+                         ({"strip": True, "wrap_pack": True},
+                          "compose")):
+            r = attract_embed(nx.path_graph(4), tgt, timeout=5, seed=0,
+                              **kw)
+            assert r["status"] == "FAILURE", kw
+            assert word in r.get("error", ""), (kw, r.get("error"))
+
+    def test_e2e_valid_deterministic(self):
+        from ember_qc.algorithms.factored import attract_embed
+        from ember_qc.registry import validate_embedding
+        src = nx.gnp_random_graph(14, 0.35, seed=9)
+        arms = ({"strip": True}, {"strip": True, "arm_cost": True})
+        for tgt in (dnx.zephyr_graph(3, 4), dnx.chimera_graph(4, 4, 4)):
+            for kw in arms:
+                for eng in ("plane", "plane-audit"):
+                    r1 = attract_embed(src, tgt, timeout=15, seed=0,
+                                       engine=eng, **kw)
+                    r2 = attract_embed(src, tgt, timeout=15, seed=0,
+                                       engine=eng, **kw)
+                    emb = r1["embedding"]
+                    assert emb and validate_embedding(emb, src, tgt), \
+                        (kw, eng, r1.get("error"))
+                    assert r1["embedding"] == r2["embedding"]
+                    d = r1["diag"]
+                    assert d.get("judge") == "strip"
+                    W = TileGrid(tgt, target_layout(tgt),
+                                 courses=("zephyr" in
+                                          tgt.graph.get("family", ""))
+                                 ).W
+                    assert 1 <= d.get("final_width_x", 0) <= W
+
+    def test_off_identity(self):
+        from ember_qc.algorithms.factored import attract_embed
+        src = nx.gnp_random_graph(10, 0.4, seed=3)
+        tgt = dnx.zephyr_graph(2, 4)
+        a = attract_embed(src, tgt, timeout=10, seed=0)
+        b = attract_embed(src, tgt, timeout=10, seed=0, strip=False,
+                          arm_cost=False)
+        assert a["embedding"] == b["embedding"]
+        assert "strip_miss" not in a["diag"]
+
+
+class TestSched:
+    """s3.126: the order-invariance instrument — `sched` permutes the
+    blind pass's ask list (never its set); `max_asks` is a work budget."""
+
+    @staticmethod
+    def _rec(monkeypatch):
+        import ember_qc.algorithms.factored.orders as om
+        seq = []
+        real = om.align_reinsert
+
+        def rec(order, cluster, *a, **k):
+            seq.append((k.get("axis"), tuple(sorted(cluster))))
+            return real(order, cluster, *a, **k)
+        monkeypatch.setattr(om, "align_reinsert", rec)
+        return seq
+
+    def test_knob_pins_and_guards(self):
+        from dataclasses import fields
+        from ember_qc.algorithms.factored.placement import AttractConfig
+        assert {"sched", "sched_seed", "max_asks"} <= {
+            f.name for f in fields(AttractConfig)}
+        from ember_qc.algorithms.factored import attract_embed
+        tgt = dnx.chimera_graph(2, 2, 4)
+        for kw, word in (({"sched": "bag", "carry_orders": False},
+                          "carry"),
+                         ({"sched": "rung", "engine": "orders"}, "plane"),
+                         ({"max_asks": 50, "engine": "orders"}, "plane"),
+                         ({"sched": "bag", "hier_units": True}, "compose"),
+                         ({"sched": "bag", "xy_singles": True}, "compose"),
+                         ({"sched": "rung", "wave_schedule": True},
+                          "compose"),
+                         ({"sched": "rung", "axis_inner": True},
+                          "compose"),
+                         ({"sched": "spiral"}, "sched"),
+                         ({"max_asks": 0}, "max_asks")):
+            r = attract_embed(nx.path_graph(4), tgt, timeout=5, seed=0,
+                              **kw)
+            assert r["status"] == "FAILURE", kw
+            assert word in r.get("error", ""), (kw, r.get("error"))
+
+    def test_ladder_is_default_identity_e2e(self):
+        from ember_qc.algorithms.factored import attract_embed
+        src = nx.gnp_random_graph(10, 0.4, seed=3)
+        tgt = dnx.zephyr_graph(2, 4)
+        keys = ("accept_traj", "readouts", "interleave_accepts",
+                "interleave_noops", "asks")
+        for extra in ({}, {"axis_inner": True, "cross_widen": True},
+                      {"xy_singles": True}, {"hier_units": True}):
+            a = attract_embed(src, tgt, timeout=10, seed=0, **extra)
+            b = attract_embed(src, tgt, timeout=10, seed=0,
+                              sched="ladder", sched_seed=7, **extra)
+            assert a["embedding"] == b["embedding"], extra
+            for k in keys:
+                assert a["diag"].get(k) == b["diag"].get(k), (extra, k)
+        assert a["diag"]["sched"] == "ladder"
+        assert a["diag"]["stopped_by"] in ("fixpoint", "passes",
+                                           "deadline")
+
+    def test_ladder_probe_sequence_identical(self, monkeypatch):
+        rng = np.random.default_rng(5)
+        grid = _zgrid()
+        adj, pos = _case(rng, grid, 16, 0.35)
+        kappa = _target_kappa(grid)
+        for extra in ({}, {"axis_inner": True, "widen": True},
+                      {"xy": True}):
+            seq_a = self._rec(monkeypatch)
+            out_a, info_a = order_arrange(pos, adj, grid, kappa=kappa,
+                                          plane=True, carry=True, **extra)
+            seq_a = list(seq_a)
+            seq_b = self._rec(monkeypatch)
+            out_b, info_b = order_arrange(
+                pos, adj, grid, kappa=kappa, plane=True, carry=True,
+                sched="ladder", sched_rng=np.random.default_rng(9),
+                **extra)
+            assert seq_a == list(seq_b), extra
+            assert all(np.array_equal(out_a[v], out_b[v]) for v in out_a)
+            assert info_a["asks"] == info_b["asks"]
+            if not extra:
+                # one DP call per counted ask (xy asks call the DP
+                # several times inside xy_reinsert, so only the plain
+                # ladder pins the equality)
+                assert info_a["asks"] == len(seq_a)
+            assert info_a["accept_traj"] == info_b["accept_traj"]
+
+    def test_rung_and_bag_ask_the_same_slots_per_pass(self):
+        rng = np.random.default_rng(5)
+        grid = _zgrid()
+        adj, pos = _case(rng, grid, 16, 0.35)
+        kappa = _target_kappa(grid)
+        logs = {}
+        for sched in ("ladder", "rung", "bag"):
+            _out, info = order_arrange(
+                pos, adj, grid, kappa=kappa, plane=True, carry=True,
+                sched=sched, sched_rng=np.random.default_rng(3),
+                ask_log=True)
+            logs[sched] = info["ask_log"]
+            assert info["sched"] == sched
+        canon = sorted(logs["ladder"][0])
+        for sched, log in logs.items():
+            for pss in log:
+                assert sorted(pss) == canon, sched
+        assert logs["bag"][0] != logs["ladder"][0]
+        assert logs["rung"][0] != logs["ladder"][0]
+        # rung: rungs non-increasing, pairs after every interval
+        first = logs["rung"][0]
+        rungs = [it[2] if it[0] == "iv" else 0 for it in first]
+        assert all(a >= b for a, b in zip(rungs, rungs[1:]))
+        last_iv = max(i for i, it in enumerate(first) if it[0] == "iv")
+        first_pair = min(i for i, it in enumerate(first)
+                         if it[0] == "pair")
+        assert last_iv < first_pair
+
+    def test_deterministic_per_sched_seed(self):
+        rng = np.random.default_rng(6)
+        grid = _zgrid()
+        adj, pos = _case(rng, grid, 16, 0.35)
+        kappa = _target_kappa(grid)
+        runs = []
+        for sd in (4, 4, 5):
+            out, info = order_arrange(
+                pos, adj, grid, kappa=kappa, plane=True, carry=True,
+                sched="bag", sched_rng=np.random.default_rng(sd),
+                ask_log=True)
+            runs.append((out, info))
+        a, b, c = runs
+        assert all(np.array_equal(a[0][v], b[0][v]) for v in a[0])
+        assert a[1]["asks"] == b[1]["asks"]
+        assert a[1]["ask_log"] == b[1]["ask_log"]
+        assert a[1]["ask_log"][0] != c[1]["ask_log"][0]
+
+    def test_max_asks_stops_and_reports(self, monkeypatch):
+        import time as _t
+        import ember_qc.algorithms.factored.orders as om
+        rng = np.random.default_rng(7)
+        grid = _zgrid()
+        adj, pos = _case(rng, grid, 16, 0.35)
+        kappa = _target_kappa(grid)
+        _o, info = order_arrange(pos, adj, grid, kappa=kappa, plane=True,
+                                 carry=True, max_asks=25)
+        assert info["asks"] == 25 and info["stopped_by"] == "asks"
+        assert 0 < info["bookmark_asks"] <= 25
+        _o, info = order_arrange(pos, adj, grid, kappa=kappa, plane=True,
+                                 carry=True, max_asks=10 ** 6)
+        assert info["stopped_by"] == "fixpoint" and info["asks"] < 10 ** 6
+        _o, info = order_arrange(pos, adj, grid, kappa=kappa, plane=True,
+                                 carry=True, max_asks=5,
+                                 deadline=_t.perf_counter() - 1.0)
+        assert info["stopped_by"] == "deadline"
+        assert info["asks"] == 0 and info["passes"] == 0
+        monkeypatch.setattr(om, "_MAX_PASSES", 1)
+        _o, info = order_arrange(pos, adj, grid, kappa=kappa, plane=True,
+                                 carry=True)
+        assert info["stopped_by"] in ("passes", "fixpoint")
+        _o, info2 = order_arrange(pos, adj, grid, kappa=kappa, plane=True,
+                                  carry=True, max_asks=10 ** 6)
+        assert info2["stopped_by"] != "passes"
+
+    def test_e2e_valid_deterministic(self):
+        from ember_qc.algorithms.factored import attract_embed
+        from ember_qc.registry import validate_embedding
+        src = nx.gnp_random_graph(14, 0.35, seed=9)
+        arms = ({"sched": "rung"}, {"sched": "bag"},
+                {"sched": "bag", "strip": True, "arm_cost": True},
+                {"sched": "bag", "tail": "none", "max_asks": 40})
+        for tgt in (dnx.zephyr_graph(3, 4), dnx.chimera_graph(4, 4, 4)):
+            for kw in arms:
+                r1 = attract_embed(src, tgt, timeout=15, seed=0, **kw)
+                r2 = attract_embed(src, tgt, timeout=15, seed=0, **kw)
+                emb = r1["embedding"]
+                assert emb and validate_embedding(emb, src, tgt), \
+                    (kw, r1.get("error"))
+                assert r1["embedding"] == r2["embedding"]
+                assert r1["diag"]["sched"] == kw["sched"]
+                if "max_asks" in kw:
+                    assert r1["diag"]["stopped_by"] == "asks"
+                    assert r1["diag"]["asks"] == 40

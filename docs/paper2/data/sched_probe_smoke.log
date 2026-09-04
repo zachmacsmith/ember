@@ -1,0 +1,46 @@
+smoke: 3 cells, groups ('ladder', 'bag', 'rinit'), draws 1, 9 jobs; load (126.267578125, 117.66796875, 98.5234375)
+/data/max/ember/docs/paper2/data/order_probe.py:102: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/order_probe.py:102: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/order_probe.py:102: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/order_probe.py:102: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/order_probe.py:102: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/order_probe.py:102: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/order_probe.py:102: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/order_probe.py:102: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/order_probe.py:102: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+Z12 turan_n162       ladder     d1: lacl=9.253 lmx=12 asks=3000 bm=726 stop=asks passes=1 aw=30.1 asks/s=99.7 stair=2598.0 cmiss=0 cert=True mmskip=True err=None (31.0s)
+Z12 turan_n162       bag        d1: lacl=9.383 lmx=13 asks=3000 bm=1478 stop=asks passes=1 aw=33.97 asks/s=88.3 stair=2630.0 cmiss=0 cert=True mmskip=True err=None (35.0s)
+Z12 turan_n162       rinit      d1: lacl=9.315 lmx=13 asks=3000 bm=433 stop=asks passes=1 aw=30.38 asks/s=98.7 stair=2603.0 cmiss=0 cert=True mmskip=True err=None (31.5s)
+Z12 ws_n486          ladder     d1: lacl=3.914 lmx=13 asks=3000 bm=2691 stop=asks passes=1 aw=66.63 asks/s=45.0 stair=2330.0 cmiss=56 cert=False mmskip=False err=None (69.9s)
+Z12 ws_n486          bag        d1: lacl=3.663 lmx=16 asks=3000 bm=2661 stop=asks passes=1 aw=77.85 asks/s=38.5 stair=2213.0 cmiss=28 cert=False mmskip=False err=None (81.8s)
+Z12 ws_n486          rinit      d1: lacl=4.335 lmx=17 asks=3000 bm=2943 stop=asks passes=1 aw=70.93 asks/s=42.3 stair=2895.0 cmiss=64 cert=False mmskip=False err=None (72.0s)
+Z12 grid_200         ladder     d1: lacl=2.045 lmx=8 asks=3000 bm=2125 stop=asks passes=2 aw=22.93 asks/s=130.8 stair=243.0 cmiss=0 cert=True mmskip=True err=None (24.0s)
+Z12 grid_200         bag        d1: lacl=2.07 lmx=9 asks=3000 bm=2026 stop=asks passes=2 aw=21.51 asks/s=139.5 stair=259.0 cmiss=0 cert=True mmskip=True err=None (22.2s)
+Z12 grid_200         rinit      d1: lacl=2.0 lmx=10 asks=3000 bm=2731 stop=asks passes=2 aw=25.3 asks/s=118.6 stair=257.0 cmiss=0 cert=True mmskip=True err=None (25.9s)
+
+summary per (cell, group): legal_acl mean/std/min/max, legal_max_chain mean/max, asks, bookmark_asks, stopped_by
+Z12 turan_n162       ladder lacl=9.253 lmx=12.0 asks=3000.0 stop=Counter({'asks': 1})
+    bag        n=1 lacl=9.383 sd=0.0 min=9.383 max=9.383 range=0.0 d=+0.130 lmx=13.0/13 asks=3000.0 bm=1478.0 stop={'asks': 1}
+    rinit      n=1 lacl=9.315 sd=0.0 min=9.315 max=9.315 range=0.0 d=+0.062 lmx=13.0/13 asks=3000.0 bm=433.0 stop={'asks': 1}
+Z12 ws_n486          ladder lacl=3.914 lmx=13.0 asks=3000.0 stop=Counter({'asks': 1})
+    bag        n=1 lacl=3.663 sd=0.0 min=3.663 max=3.663 range=0.0 d=-0.251 lmx=16.0/16 asks=3000.0 bm=2661.0 stop={'asks': 1}
+    rinit      n=1 lacl=4.335 sd=0.0 min=4.335 max=4.335 range=0.0 d=+0.421 lmx=17.0/17 asks=3000.0 bm=2943.0 stop={'asks': 1}
+Z12 grid_200         ladder lacl=2.045 lmx=8.0 asks=3000.0 stop=Counter({'asks': 1})
+    bag        n=1 lacl=2.07 sd=0.0 min=2.07 max=2.07 range=0.0 d=+0.025 lmx=9.0/9 asks=3000.0 bm=2026.0 stop={'asks': 1}
+    rinit      n=1 lacl=2.0 sd=0.0 min=2.0 max=2.0 range=0.0 d=-0.045 lmx=10.0/10 asks=3000.0 bm=2731.0 stop={'asks': 1}
+
+MAP — order-sensitive (bag/rung range or mean beyond tol):
+MAP — init-sensitive (rinit range or mean beyond tol):
+    ('ws_n486', 'rinit', 4.335, 0.0, 0.421)
+MAP — order- and init-free cells (every group within tol of ladder): ['turan_n162', 'grid_200']
+load at end: (129.068359375, 120.94921875, 101.28759765625)
+done-probe

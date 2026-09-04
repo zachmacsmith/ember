@@ -1,0 +1,331 @@
+board: 10 cells, groups ('ladder', 'rung', 'bag', 'rinit', 'rinit+bag'), draws 5, 210 jobs; load (151.09765625, 128.58447265625, 105.41845703125)
+/data/max/ember/docs/paper2/data/order_probe.py:111: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/order_probe.py:111: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/order_probe.py:111: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/order_probe.py:111: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/order_probe.py:111: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/order_probe.py:111: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/order_probe.py:111: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/order_probe.py:111: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/order_probe.py:111: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/order_probe.py:111: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/order_probe.py:111: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/order_probe.py:111: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/order_probe.py:111: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/order_probe.py:111: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/order_probe.py:111: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/order_probe.py:111: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/order_probe.py:111: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/order_probe.py:111: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/order_probe.py:111: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/order_probe.py:111: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/order_probe.py:111: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/order_probe.py:111: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/order_probe.py:111: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/order_probe.py:111: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+Z12 K100             ladder     d1: lacl=7.26 lmx=8 asks=10000 bm=213 stop=asks passes=1 aw=63.46 asks/s=157.6 stair=1153.0 cmiss=0 cert=True mmskip=True err=None (64.1s)
+Z12 K100             rung       d1: lacl=7.26 lmx=8 asks=10000 bm=301 stop=asks passes=1 aw=63.02 asks/s=158.7 stair=1152.0 cmiss=0 cert=True mmskip=True err=None (63.6s)
+Z12 K100             rung       d2: lacl=7.26 lmx=8 asks=10000 bm=240 stop=asks passes=1 aw=60.8 asks/s=164.5 stair=1152.0 cmiss=0 cert=True mmskip=True err=None (61.4s)
+Z12 K100             rung       d3: lacl=7.26 lmx=8 asks=10000 bm=399 stop=asks passes=1 aw=61.87 asks/s=161.6 stair=1152.0 cmiss=0 cert=True mmskip=True err=None (62.5s)
+Z12 K100             rung       d4: lacl=7.26 lmx=8 asks=10000 bm=511 stop=asks passes=1 aw=61.7 asks/s=162.1 stair=1152.0 cmiss=0 cert=True mmskip=True err=None (62.2s)
+Z12 K100             rung       d5: lacl=7.27 lmx=8 asks=10000 bm=528 stop=asks passes=1 aw=63.47 asks/s=157.6 stair=1154.0 cmiss=0 cert=True mmskip=True err=None (64.1s)
+Z12 K100             bag        d1: lacl=7.26 lmx=8 asks=10000 bm=609 stop=asks passes=1 aw=61.05 asks/s=163.8 stair=1153.0 cmiss=0 cert=True mmskip=True err=None (61.6s)
+Z12 K100             bag        d2: lacl=7.26 lmx=8 asks=10000 bm=618 stop=asks passes=1 aw=61.67 asks/s=162.2 stair=1152.0 cmiss=0 cert=True mmskip=True err=None (62.2s)
+Z12 K100             bag        d3: lacl=7.28 lmx=8 asks=10000 bm=314 stop=asks passes=1 aw=59.15 asks/s=169.1 stair=1154.0 cmiss=0 cert=True mmskip=True err=None (59.7s)
+Z12 K100             bag        d4: lacl=7.26 lmx=8 asks=10000 bm=330 stop=asks passes=1 aw=62.1 asks/s=161.0 stair=1153.0 cmiss=0 cert=True mmskip=True err=None (62.6s)
+Z12 K100             bag        d5: lacl=7.26 lmx=8 asks=10000 bm=271 stop=asks passes=1 aw=65.22 asks/s=153.3 stair=1152.0 cmiss=0 cert=True mmskip=True err=None (65.8s)
+Z12 K100             rinit      d1: lacl=7.26 lmx=8 asks=10000 bm=207 stop=asks passes=1 aw=60.86 asks/s=164.3 stair=1153.0 cmiss=0 cert=True mmskip=True err=None (61.5s)
+Z12 K100             rinit      d2: lacl=7.26 lmx=8 asks=10000 bm=214 stop=asks passes=1 aw=62.77 asks/s=159.3 stair=1153.0 cmiss=0 cert=True mmskip=True err=None (63.4s)
+Z12 K100             rinit      d3: lacl=7.26 lmx=8 asks=10000 bm=252 stop=asks passes=1 aw=60.87 asks/s=164.3 stair=1152.0 cmiss=0 cert=True mmskip=True err=None (61.4s)
+Z12 K100             rinit      d4: lacl=7.26 lmx=8 asks=10000 bm=199 stop=asks passes=1 aw=60.58 asks/s=165.1 stair=1152.0 cmiss=0 cert=True mmskip=True err=None (61.1s)
+Z12 K100             rinit      d5: lacl=7.26 lmx=8 asks=10000 bm=201 stop=asks passes=1 aw=62.13 asks/s=161.0 stair=1152.0 cmiss=0 cert=True mmskip=True err=None (62.8s)
+Z12 K100             rinit+bag  d1: lacl=7.26 lmx=8 asks=10000 bm=488 stop=asks passes=1 aw=62.52 asks/s=159.9 stair=1152.0 cmiss=0 cert=True mmskip=True err=None (63.0s)
+Z12 K100             rinit+bag  d2: lacl=7.26 lmx=8 asks=10000 bm=569 stop=asks passes=1 aw=61.66 asks/s=162.2 stair=1152.0 cmiss=0 cert=True mmskip=True err=None (62.2s)
+Z12 K100             rinit+bag  d3: lacl=7.26 lmx=8 asks=10000 bm=320 stop=asks passes=1 aw=62.15 asks/s=160.9 stair=1153.0 cmiss=0 cert=True mmskip=True err=None (63.0s)
+Z12 K100             rinit+bag  d4: lacl=7.26 lmx=8 asks=10000 bm=331 stop=asks passes=1 aw=62.49 asks/s=160.0 stair=1152.0 cmiss=0 cert=True mmskip=True err=None (63.2s)
+Z12 K100             rinit+bag  d5: lacl=7.26 lmx=8 asks=10000 bm=322 stop=asks passes=1 aw=61.3 asks/s=163.1 stair=1152.0 cmiss=0 cert=True mmskip=True err=None (61.9s)
+Z12 K140             ladder     d1: lacl=9.757 lmx=10 asks=12000 bm=335 stop=asks passes=1 aw=113.02 asks/s=106.2 stair=2312.0 cmiss=0 cert=True mmskip=True err=None (113.7s)
+Z12 K140             rung       d1: lacl=9.757 lmx=10 asks=12000 bm=549 stop=asks passes=1 aw=118.47 asks/s=101.3 stair=2312.0 cmiss=0 cert=True mmskip=True err=None (119.1s)
+Z12 K140             rung       d2: lacl=9.757 lmx=10 asks=12000 bm=462 stop=asks passes=1 aw=120.39 asks/s=99.7 stair=2312.0 cmiss=0 cert=True mmskip=True err=None (121.2s)
+Z12 K140             rung       d3: lacl=9.757 lmx=10 asks=12000 bm=702 stop=asks passes=1 aw=111.6 asks/s=107.5 stair=2312.0 cmiss=0 cert=True mmskip=True err=None (112.0s)
+Z12 K140             rung       d4: lacl=9.771 lmx=11 asks=12000 bm=414 stop=asks passes=1 aw=119.32 asks/s=100.6 stair=2314.0 cmiss=0 cert=True mmskip=True err=None (119.7s)
+Z12 K140             rung       d5: lacl=9.757 lmx=10 asks=12000 bm=503 stop=asks passes=1 aw=120.44 asks/s=99.6 stair=2312.0 cmiss=0 cert=True mmskip=True err=None (120.9s)
+Z12 K140             bag        d1: lacl=9.757 lmx=10 asks=12000 bm=7984 stop=asks passes=1 aw=123.78 asks/s=96.9 stair=2313.0 cmiss=0 cert=True mmskip=True err=None (124.2s)
+Z12 K140             bag        d2: lacl=9.757 lmx=10 asks=12000 bm=638 stop=asks passes=1 aw=122.69 asks/s=97.8 stair=2313.0 cmiss=0 cert=True mmskip=True err=None (123.2s)
+Z12 K140             bag        d3: lacl=9.757 lmx=10 asks=12000 bm=619 stop=asks passes=1 aw=116.3 asks/s=103.2 stair=2312.0 cmiss=0 cert=True mmskip=True err=None (116.8s)
+Z12 K140             bag        d4: lacl=9.757 lmx=10 asks=12000 bm=498 stop=asks passes=1 aw=118.58 asks/s=101.2 stair=2312.0 cmiss=0 cert=True mmskip=True err=None (119.0s)
+Z12 K140             bag        d5: lacl=9.757 lmx=10 asks=12000 bm=852 stop=asks passes=1 aw=121.15 asks/s=99.1 stair=2312.0 cmiss=0 cert=True mmskip=True err=None (121.6s)
+Z12 K140             rinit      d1: lacl=9.757 lmx=10 asks=12000 bm=353 stop=asks passes=1 aw=118.25 asks/s=101.5 stair=2313.0 cmiss=0 cert=True mmskip=True err=None (118.7s)
+Z12 K140             rinit      d2: lacl=9.757 lmx=10 asks=12000 bm=379 stop=asks passes=1 aw=121.55 asks/s=98.7 stair=2312.0 cmiss=0 cert=True mmskip=True err=None (122.1s)
+Z12 K140             rinit      d3: lacl=9.757 lmx=10 asks=12000 bm=357 stop=asks passes=1 aw=119.31 asks/s=100.6 stair=2313.0 cmiss=0 cert=True mmskip=True err=None (119.7s)
+Z12 K140             rinit      d4: lacl=9.757 lmx=10 asks=12000 bm=346 stop=asks passes=1 aw=116.23 asks/s=103.2 stair=2312.0 cmiss=0 cert=True mmskip=True err=None (116.7s)
+Z12 K140             rinit      d5: lacl=9.771 lmx=11 asks=12000 bm=370 stop=asks passes=1 aw=118.56 asks/s=101.2 stair=2314.0 cmiss=0 cert=True mmskip=True err=None (119.0s)
+Z12 K140             rinit+bag  d1: lacl=9.757 lmx=10 asks=12000 bm=692 stop=asks passes=1 aw=118.5 asks/s=101.3 stair=2312.0 cmiss=0 cert=True mmskip=True err=None (118.9s)
+Z12 K140             rinit+bag  d2: lacl=9.757 lmx=10 asks=12000 bm=927 stop=asks passes=1 aw=115.34 asks/s=104.0 stair=2312.0 cmiss=0 cert=True mmskip=True err=None (115.7s)
+Z12 K140             rinit+bag  d3: lacl=9.757 lmx=10 asks=12000 bm=783 stop=asks passes=1 aw=120.09 asks/s=99.9 stair=2312.0 cmiss=0 cert=True mmskip=True err=None (120.5s)
+Z12 K140             rinit+bag  d4: lacl=9.757 lmx=10 asks=12000 bm=759 stop=asks passes=1 aw=120.71 asks/s=99.4 stair=2312.0 cmiss=0 cert=True mmskip=True err=None (121.2s)
+Z12 K140             rinit+bag  d5: lacl=9.757 lmx=10 asks=12000 bm=1148 stop=asks passes=1 aw=119.32 asks/s=100.6 stair=2313.0 cmiss=0 cert=True mmskip=True err=None (119.8s)
+Z12 ER100_d10        ladder     d1: lacl=4.95 lmx=8 asks=8000 bm=2639 stop=asks passes=6 aw=29.68 asks/s=269.5 stair=651.0 cmiss=0 cert=True mmskip=True err=None (30.2s)
+Z12 ER100_d10        rung       d1: lacl=4.6 lmx=8 asks=8000 bm=6419 stop=asks passes=6 aw=30.6 asks/s=261.4 stair=640.0 cmiss=0 cert=True mmskip=True err=None (30.9s)
+Z12 ER100_d10        rung       d2: lacl=4.83 lmx=8 asks=7160 bm=5276 stop=fixpoint passes=5 aw=26.81 asks/s=267.1 stair=626.0 cmiss=0 cert=True mmskip=True err=None (27.1s)
+Z12 ER100_d10        rung       d3: lacl=4.67 lmx=8 asks=7326 bm=5568 stop=fixpoint passes=5 aw=28.46 asks/s=257.4 stair=628.0 cmiss=0 cert=True mmskip=True err=None (28.8s)
+Z12 ER100_d10        rung       d4: lacl=4.89 lmx=8 asks=3981 bm=1893 stop=fixpoint passes=3 aw=14.89 asks/s=267.4 stair=647.0 cmiss=0 cert=True mmskip=True err=None (15.2s)
+Z12 ER100_d10        rung       d5: lacl=5.03 lmx=8 asks=8000 bm=5223 stop=asks passes=6 aw=29.49 asks/s=271.3 stair=663.0 cmiss=0 cert=True mmskip=True err=None (29.8s)
+Z12 ER100_d10        bag        d1: lacl=5.04 lmx=9 asks=8000 bm=2285 stop=asks passes=6 aw=32.12 asks/s=249.1 stair=650.0 cmiss=0 cert=True mmskip=True err=None (32.5s)
+Z12 ER100_d10        bag        d2: lacl=4.61 lmx=7 asks=6883 bm=3070 stop=fixpoint passes=5 aw=26.52 asks/s=259.5 stair=599.0 cmiss=0 cert=True mmskip=True err=None (26.9s)
+Z12 ER100_d10        bag        d3: lacl=4.72 lmx=7 asks=8000 bm=5457 stop=asks passes=6 aw=29.26 asks/s=273.4 stair=627.0 cmiss=0 cert=True mmskip=True err=None (29.6s)
+Z12 ER100_d10        bag        d4: lacl=4.56 lmx=8 asks=3713 bm=1400 stop=fixpoint passes=3 aw=14.7 asks/s=252.6 stair=622.0 cmiss=0 cert=True mmskip=True err=None (15.0s)
+Z12 ER100_d10        bag        d5: lacl=4.91 lmx=8 asks=5087 bm=1608 stop=fixpoint passes=4 aw=19.0 asks/s=267.7 stair=656.0 cmiss=0 cert=True mmskip=True err=None (19.3s)
+Z12 ER100_d10        rinit      d1: lacl=4.62 lmx=8 asks=8000 bm=4910 stop=asks passes=6 aw=28.53 asks/s=280.4 stair=626.0 cmiss=0 cert=True mmskip=True err=None (28.7s)
+Z12 ER100_d10        rinit      d2: lacl=4.65 lmx=8 asks=7232 bm=5184 stop=fixpoint passes=5 aw=25.98 asks/s=278.4 stair=626.0 cmiss=0 cert=True mmskip=True err=None (26.2s)
+Z12 ER100_d10        rinit      d3: lacl=5.12 lmx=8 asks=8000 bm=3495 stop=asks passes=6 aw=29.53 asks/s=270.9 stair=649.0 cmiss=0 cert=True mmskip=True err=None (29.7s)
+Z12 ER100_d10        rinit      d4: lacl=4.94 lmx=9 asks=8000 bm=3476 stop=asks passes=6 aw=27.67 asks/s=289.1 stair=660.0 cmiss=0 cert=True mmskip=True err=None (28.0s)
+Z12 ER100_d10        rinit      d5: lacl=4.65 lmx=8 asks=8000 bm=5250 stop=asks passes=6 aw=30.15 asks/s=265.3 stair=607.0 cmiss=0 cert=True mmskip=True err=None (30.3s)
+Z12 ER100_d10        rinit+bag  d1: lacl=4.97 lmx=9 asks=8000 bm=3890 stop=asks passes=6 aw=30.36 asks/s=263.5 stair=664.0 cmiss=0 cert=True mmskip=True err=None (30.6s)
+Z12 ER100_d10        rinit+bag  d2: lacl=4.74 lmx=9 asks=8000 bm=6033 stop=asks passes=6 aw=34.13 asks/s=234.4 stair=621.0 cmiss=0 cert=True mmskip=True err=None (34.5s)
+Z12 ER100_d10        rinit+bag  d3: lacl=4.69 lmx=7 asks=4512 bm=1300 stop=fixpoint passes=3 aw=17.41 asks/s=259.2 stair=634.0 cmiss=0 cert=True mmskip=True err=None (17.6s)
+Z12 ER100_d10        rinit+bag  d4: lacl=4.92 lmx=9 asks=6331 bm=1399 stop=fixpoint passes=5 aw=22.19 asks/s=285.3 stair=643.0 cmiss=0 cert=True mmskip=True err=None (22.4s)
+Z12 ER100_d10        rinit+bag  d5: lacl=4.91 lmx=8 asks=5252 bm=2780 stop=fixpoint passes=4 aw=23.05 asks/s=227.9 stair=661.0 cmiss=0 cert=True mmskip=True err=None (23.3s)
+Z12 turan_n162       ladder     d1: lacl=6.265 lmx=7 asks=15000 bm=14554 stop=asks passes=2 aw=128.09 asks/s=117.1 stair=1801.0 cmiss=0 cert=True mmskip=True err=None (128.5s)
+Z12 turan_n162       rung       d1: lacl=7.895 lmx=9 asks=15000 bm=14565 stop=asks passes=2 aw=137.86 asks/s=108.8 stair=2243.0 cmiss=0 cert=True mmskip=True err=None (138.3s)
+Z12 turan_n162       rung       d2: lacl=9.352 lmx=13 asks=15000 bm=14218 stop=asks passes=2 aw=134.24 asks/s=111.7 stair=2589.0 cmiss=0 cert=True mmskip=True err=None (134.7s)
+Z12 turan_n162       rung       d3: lacl=6.864 lmx=8 asks=15000 bm=14104 stop=asks passes=2 aw=120.63 asks/s=124.3 stair=1931.0 cmiss=0 cert=True mmskip=True err=None (121.0s)
+Z12 turan_n162       rung       d4: lacl=6.0 lmx=6 asks=15000 bm=14304 stop=asks passes=2 aw=134.0 asks/s=111.9 stair=1688.0 cmiss=0 cert=True mmskip=True err=None (134.4s)
+Z12 turan_n162       rung       d5: lacl=7.364 lmx=9 asks=15000 bm=14421 stop=asks passes=2 aw=135.84 asks/s=110.4 stair=2105.0 cmiss=0 cert=True mmskip=True err=None (136.3s)
+Z12 turan_n162       bag        d1: lacl=6.63 lmx=9 asks=15000 bm=12475 stop=asks passes=2 aw=137.47 asks/s=109.1 stair=1863.0 cmiss=0 cert=True mmskip=True err=None (137.9s)
+Z12 turan_n162       bag        d2: lacl=6.0 lmx=6 asks=15000 bm=6983 stop=asks passes=2 aw=137.99 asks/s=108.7 stair=1650.0 cmiss=0 cert=True mmskip=True err=None (138.4s)
+Z12 turan_n162       bag        d3: lacl=6.0 lmx=6 asks=15000 bm=10997 stop=asks passes=2 aw=140.33 asks/s=106.9 stair=1655.0 cmiss=0 cert=True mmskip=True err=None (140.7s)
+Z12 turan_n162       bag        d4: lacl=6.0 lmx=6 asks=15000 bm=9118 stop=asks passes=2 aw=138.92 asks/s=108.0 stair=1657.0 cmiss=0 cert=True mmskip=True err=None (139.3s)
+Z12 turan_n162       bag        d5: lacl=8.691 lmx=14 asks=15000 bm=14946 stop=asks passes=2 aw=136.81 asks/s=109.6 stair=2424.0 cmiss=0 cert=True mmskip=True err=None (137.2s)
+Z12 turan_n162       rinit      d1: lacl=6.0 lmx=6 asks=15000 bm=14305 stop=asks passes=2 aw=130.91 asks/s=114.6 stair=1680.0 cmiss=0 cert=True mmskip=True err=None (131.4s)
+Z12 turan_n162       rinit      d2: lacl=6.0 lmx=6 asks=15000 bm=14283 stop=asks passes=2 aw=133.27 asks/s=112.6 stair=1687.0 cmiss=0 cert=True mmskip=True err=None (133.7s)
+Z12 turan_n162       rinit      d3: lacl=7.099 lmx=9 asks=15000 bm=14742 stop=asks passes=2 aw=129.72 asks/s=115.6 stair=2018.0 cmiss=0 cert=True mmskip=True err=None (130.1s)
+Z12 turan_n162       rinit      d4: lacl=8.358 lmx=11 asks=15000 bm=14423 stop=asks passes=2 aw=135.66 asks/s=110.6 stair=2338.0 cmiss=0 cert=True mmskip=True err=None (136.1s)
+Z12 turan_n162       rinit      d5: lacl=7.364 lmx=9 asks=15000 bm=14518 stop=asks passes=2 aw=136.97 asks/s=109.5 stair=2109.0 cmiss=1 cert=False mmskip=True err=None (137.4s)
+Z12 turan_n162       rinit+bag  d1: lacl=9.253 lmx=13 asks=15000 bm=13311 stop=asks passes=2 aw=138.87 asks/s=108.0 stair=2596.0 cmiss=0 cert=True mmskip=True err=None (139.3s)
+Z12 turan_n162       rinit+bag  d2: lacl=8.735 lmx=13 asks=15000 bm=8976 stop=asks passes=2 aw=152.28 asks/s=98.5 stair=2456.0 cmiss=0 cert=True mmskip=True err=None (152.7s)
+Z12 turan_n162       rinit+bag  d3: lacl=6.0 lmx=6 asks=15000 bm=14910 stop=asks passes=2 aw=142.77 asks/s=105.1 stair=1682.0 cmiss=0 cert=True mmskip=True err=None (143.2s)
+Z12 turan_n162       rinit+bag  d4: lacl=6.0 lmx=6 asks=15000 bm=14807 stop=asks passes=2 aw=142.16 asks/s=105.5 stair=1669.0 cmiss=0 cert=True mmskip=True err=None (142.6s)
+Z12 turan_n162       rinit+bag  d5: lacl=6.0 lmx=6 asks=15000 bm=13111 stop=asks passes=2 aw=144.94 asks/s=103.5 stair=1663.0 cmiss=0 cert=True mmskip=True err=None (145.3s)
+Z12 spin_glass_n163  ladder     d1: lacl=10.847 lmx=12 asks=12000 bm=10385 stop=asks passes=2 aw=94.36 asks/s=127.2 stair=3049.0 cmiss=0 cert=True mmskip=True err=None (96.6s)
+Z12 spin_glass_n163  rung       d1: lacl=10.865 lmx=12 asks=12000 bm=10620 stop=asks passes=2 aw=94.33 asks/s=127.2 stair=3060.0 cmiss=0 cert=True mmskip=True err=None (96.4s)
+Z12 spin_glass_n163  rung       d2: lacl=10.853 lmx=12 asks=12000 bm=11681 stop=asks passes=2 aw=97.41 asks/s=123.2 stair=3049.0 cmiss=0 cert=True mmskip=True err=None (99.5s)
+Z12 spin_glass_n163  rung       d3: lacl=10.89 lmx=12 asks=12000 bm=10962 stop=asks passes=2 aw=107.09 asks/s=112.1 stair=3050.0 cmiss=0 cert=True mmskip=True err=None (109.3s)
+Z12 spin_glass_n163  rung       d4: lacl=10.865 lmx=13 asks=12000 bm=10619 stop=asks passes=2 aw=107.84 asks/s=111.3 stair=3049.0 cmiss=0 cert=True mmskip=True err=None (110.2s)
+Z12 spin_glass_n163  rung       d5: lacl=10.859 lmx=12 asks=12000 bm=6860 stop=asks passes=2 aw=102.12 asks/s=117.5 stair=3050.0 cmiss=0 cert=True mmskip=True err=None (104.6s)
+Z12 spin_glass_n163  bag        d1: lacl=10.871 lmx=12 asks=12000 bm=4798 stop=asks passes=2 aw=99.7 asks/s=120.4 stair=3053.0 cmiss=0 cert=True mmskip=True err=None (101.9s)
+Z12 spin_glass_n163  bag        d2: lacl=10.877 lmx=12 asks=12000 bm=9768 stop=asks passes=2 aw=111.48 asks/s=107.6 stair=3055.0 cmiss=0 cert=True mmskip=True err=None (113.9s)
+Z12 spin_glass_n163  bag        d3: lacl=10.89 lmx=12 asks=12000 bm=9782 stop=asks passes=2 aw=119.1 asks/s=100.8 stair=3058.0 cmiss=0 cert=True mmskip=True err=None (121.4s)
+Z12 spin_glass_n163  bag        d4: lacl=10.877 lmx=13 asks=12000 bm=4633 stop=asks passes=2 aw=113.89 asks/s=105.4 stair=3061.0 cmiss=0 cert=True mmskip=True err=None (116.2s)
+Z12 spin_glass_n163  bag        d5: lacl=10.865 lmx=13 asks=12000 bm=11686 stop=asks passes=2 aw=105.88 asks/s=113.3 stair=3054.0 cmiss=0 cert=True mmskip=True err=None (108.4s)
+Z12 spin_glass_n163  rinit      d1: lacl=10.847 lmx=12 asks=12000 bm=11666 stop=asks passes=2 aw=96.84 asks/s=123.9 stair=3059.0 cmiss=0 cert=True mmskip=True err=None (97.2s)
+Z12 spin_glass_n163  rinit      d2: lacl=10.84 lmx=12 asks=12000 bm=10490 stop=asks passes=2 aw=106.4 asks/s=112.8 stair=3040.0 cmiss=0 cert=True mmskip=True err=None (106.8s)
+Z12 spin_glass_n163  rinit      d3: lacl=10.92 lmx=13 asks=12000 bm=11861 stop=asks passes=2 aw=106.11 asks/s=113.1 stair=3067.0 cmiss=0 cert=True mmskip=True err=None (106.5s)
+Z12 spin_glass_n163  rinit      d4: lacl=10.853 lmx=12 asks=12000 bm=8940 stop=asks passes=2 aw=104.28 asks/s=115.1 stair=3053.0 cmiss=0 cert=True mmskip=True err=None (104.7s)
+Z12 spin_glass_n163  rinit      d5: lacl=11.0 lmx=12 asks=12000 bm=9658 stop=asks passes=2 aw=109.31 asks/s=109.8 stair=3084.0 cmiss=0 cert=True mmskip=True err=None (109.9s)
+Z12 spin_glass_n163  rinit+bag  d1: lacl=10.945 lmx=12 asks=12000 bm=8940 stop=asks passes=2 aw=126.86 asks/s=94.6 stair=3066.0 cmiss=0 cert=True mmskip=True err=None (127.2s)
+Z12 spin_glass_n163  rinit+bag  d2: lacl=10.945 lmx=12 asks=12000 bm=4921 stop=asks passes=2 aw=97.28 asks/s=123.4 stair=3062.0 cmiss=0 cert=True mmskip=True err=None (97.6s)
+Z12 spin_glass_n163  rinit+bag  d3: lacl=10.939 lmx=12 asks=12000 bm=1592 stop=asks passes=2 aw=107.58 asks/s=111.5 stair=3072.0 cmiss=0 cert=True mmskip=True err=None (108.0s)
+Z12 spin_glass_n163  rinit+bag  d4: lacl=10.865 lmx=12 asks=12000 bm=8219 stop=asks passes=2 aw=117.71 asks/s=101.9 stair=3052.0 cmiss=0 cert=True mmskip=True err=None (118.0s)
+Z12 spin_glass_n163  rinit+bag  d5: lacl=10.816 lmx=13 asks=12000 bm=11616 stop=asks passes=2 aw=114.51 asks/s=104.8 stair=3035.0 cmiss=0 cert=True mmskip=True err=None (114.9s)
+Z12 regular_n316     ladder     d1: lacl=4.44 lmx=13 asks=8000 bm=7118 stop=asks passes=3 aw=102.48 asks/s=78.1 stair=1577.0 cmiss=0 cert=True mmskip=True err=None (104.8s)
+Z12 regular_n316     rung       d1: lacl=4.329 lmx=12 asks=8000 bm=3555 stop=asks passes=3 aw=95.19 asks/s=84.0 stair=1535.0 cmiss=0 cert=True mmskip=True err=None (99.4s)
+Z12 regular_n316     rung       d2: lacl=4.43 lmx=12 asks=8000 bm=3151 stop=asks passes=3 aw=107.43 asks/s=74.5 stair=1612.0 cmiss=1 cert=False mmskip=True err=None (113.9s)
+Z12 regular_n316     rung       d3: lacl=4.481 lmx=13 asks=8000 bm=1754 stop=asks passes=3 aw=97.11 asks/s=82.4 stair=1571.0 cmiss=5 cert=False mmskip=False err=None (105.2s)
+Z12 regular_n316     rung       d4: lacl=4.405 lmx=16 asks=8000 bm=3472 stop=asks passes=3 aw=113.62 asks/s=70.4 stair=1527.0 cmiss=4 cert=False mmskip=False err=None (118.5s)
+Z12 regular_n316     rung       d5: lacl=4.427 lmx=15 asks=8000 bm=3180 stop=asks passes=3 aw=97.45 asks/s=82.1 stair=1545.0 cmiss=2 cert=False mmskip=False err=None (100.9s)
+Z12 regular_n316     bag        d1: lacl=4.44 lmx=16 asks=8000 bm=1805 stop=asks passes=3 aw=113.24 asks/s=70.6 stair=1514.0 cmiss=0 cert=True mmskip=True err=None (116.0s)
+Z12 regular_n316     bag        d2: lacl=4.487 lmx=15 asks=8000 bm=1951 stop=asks passes=3 aw=101.31 asks/s=79.0 stair=1558.0 cmiss=1 cert=False mmskip=True err=None (105.3s)
+Z12 regular_n316     bag        d3: lacl=4.528 lmx=13 asks=8000 bm=1188 stop=asks passes=3 aw=108.35 asks/s=73.8 stair=1588.0 cmiss=7 cert=False mmskip=False err=None (113.8s)
+Z12 regular_n316     bag        d4: lacl=4.43 lmx=14 asks=8000 bm=1084 stop=asks passes=3 aw=97.75 asks/s=81.8 stair=1571.0 cmiss=1 cert=False mmskip=True err=None (101.8s)
+Z12 regular_n316     bag        d5: lacl=4.411 lmx=14 asks=8000 bm=4175 stop=asks passes=3 aw=104.87 asks/s=76.3 stair=1462.0 cmiss=0 cert=True mmskip=True err=None (108.3s)
+Z12 regular_n316     rinit      d1: lacl=4.826 lmx=16 asks=8000 bm=6484 stop=asks passes=3 aw=112.24 asks/s=71.3 stair=1803.0 cmiss=0 cert=True mmskip=True err=None (112.6s)
+Z12 regular_n316     rinit      d2: lacl=4.835 lmx=14 asks=8000 bm=6818 stop=asks passes=3 aw=107.6 asks/s=74.3 stair=1774.0 cmiss=3 cert=False mmskip=False err=None (108.0s)
+Z12 regular_n316     rinit      d3: lacl=4.835 lmx=19 asks=8000 bm=7230 stop=asks passes=3 aw=104.24 asks/s=76.7 stair=1784.0 cmiss=0 cert=True mmskip=True err=None (104.6s)
+Z12 regular_n316     rinit      d4: lacl=4.747 lmx=13 asks=8000 bm=6585 stop=asks passes=3 aw=105.67 asks/s=75.7 stair=1812.0 cmiss=2 cert=False mmskip=True err=None (106.2s)
+Z12 regular_n316     rinit      d5: lacl=5.063 lmx=18 asks=8000 bm=6774 stop=asks passes=3 aw=109.17 asks/s=73.3 stair=1928.0 cmiss=3 cert=False mmskip=False err=None (109.5s)
+Z12 regular_n316     rinit+bag  d1: lacl=4.734 lmx=16 asks=8000 bm=6496 stop=asks passes=3 aw=111.32 asks/s=71.9 stair=1822.0 cmiss=2 cert=False mmskip=False err=None (111.7s)
+Z12 regular_n316     rinit+bag  d2: lacl=4.712 lmx=14 asks=8000 bm=7583 stop=asks passes=3 aw=109.46 asks/s=73.1 stair=1730.0 cmiss=1 cert=False mmskip=True err=None (109.8s)
+Z12 regular_n316     rinit+bag  d3: lacl=4.665 lmx=17 asks=8000 bm=7490 stop=asks passes=3 aw=111.47 asks/s=71.8 stair=1707.0 cmiss=5 cert=False mmskip=False err=None (111.9s)
+Z12 regular_n316     rinit+bag  d4: lacl=4.68 lmx=14 asks=8000 bm=7004 stop=asks passes=3 aw=115.77 asks/s=69.1 stair=1672.0 cmiss=0 cert=True mmskip=True err=None (116.1s)
+Z12 regular_n316     rinit+bag  d5: lacl=4.75 lmx=14 asks=8000 bm=6773 stop=asks passes=3 aw=116.55 asks/s=68.6 stair=1810.0 cmiss=4 cert=False mmskip=False err=None (116.9s)
+Z12 ws_n486          ladder     d1: lacl=3.85 lmx=18 asks=6000 bm=5846 stop=asks passes=2 aw=134.16 asks/s=44.7 stair=2253.0 cmiss=43 cert=False mmskip=False err=None (138.1s)
+Z12 ws_n486          rung       d1: lacl=3.848 lmx=13 asks=6000 bm=1660 stop=asks passes=2 aw=135.46 asks/s=44.3 stair=2205.0 cmiss=48 cert=False mmskip=False err=None (138.9s)
+Z12 ws_n486          rung       d2: lacl=3.823 lmx=16 asks=6000 bm=4713 stop=asks passes=2 aw=146.32 asks/s=41.0 stair=2315.0 cmiss=59 cert=False mmskip=False err=None (150.3s)
+Z12 ws_n486          rung       d3: lacl=3.936 lmx=14 asks=6000 bm=5206 stop=asks passes=2 aw=133.81 asks/s=44.8 stair=2338.0 cmiss=39 cert=False mmskip=False err=None (139.8s)
+Z12 ws_n486          rung       d4: lacl=3.924 lmx=14 asks=6000 bm=1402 stop=asks passes=2 aw=126.2 asks/s=47.5 stair=2268.0 cmiss=46 cert=False mmskip=False err=None (133.4s)
+Z12 ws_n486          rung       d5: lacl=3.735 lmx=16 asks=6000 bm=5802 stop=asks passes=2 aw=130.24 asks/s=46.1 stair=2166.0 cmiss=40 cert=False mmskip=False err=None (137.3s)
+Z12 ws_n486          bag        d1: lacl=3.671 lmx=14 asks=6000 bm=4416 stop=asks passes=2 aw=141.41 asks/s=42.4 stair=2127.0 cmiss=39 cert=False mmskip=False err=None (145.7s)
+Z12 ws_n486          bag        d2: lacl=3.646 lmx=14 asks=6000 bm=2057 stop=asks passes=2 aw=119.81 asks/s=50.1 stair=2215.0 cmiss=31 cert=False mmskip=False err=None (123.9s)
+Z12 ws_n486          bag        d3: lacl=3.959 lmx=14 asks=6000 bm=2303 stop=asks passes=2 aw=129.15 asks/s=46.5 stair=2248.0 cmiss=37 cert=False mmskip=False err=None (132.5s)
+Z12 ws_n486          bag        d4: lacl=3.942 lmx=16 asks=6000 bm=1608 stop=asks passes=2 aw=132.74 asks/s=45.2 stair=2255.0 cmiss=43 cert=False mmskip=False err=None (137.8s)
+Z12 ws_n486          bag        d5: lacl=3.733 lmx=15 asks=6000 bm=4356 stop=asks passes=2 aw=129.42 asks/s=46.4 stair=2189.0 cmiss=51 cert=False mmskip=False err=None (135.4s)
+Z12 ws_n486          rinit      d1: lacl=4.138 lmx=19 asks=6000 bm=4806 stop=asks passes=2 aw=130.31 asks/s=46.0 stair=2618.0 cmiss=53 cert=False mmskip=False err=None (130.8s)
+Z12 ws_n486          rinit      d2: lacl=4.243 lmx=16 asks=6000 bm=4946 stop=asks passes=2 aw=137.14 asks/s=43.8 stair=2773.0 cmiss=36 cert=False mmskip=False err=None (138.0s)
+Z12 ws_n486          rinit      d3: lacl=4.146 lmx=16 asks=6000 bm=5157 stop=asks passes=2 aw=136.74 asks/s=43.9 stair=2616.0 cmiss=54 cert=False mmskip=False err=None (137.3s)
+Z12 ws_n486          rinit      d4: lacl=4.031 lmx=22 asks=6000 bm=5147 stop=asks passes=2 aw=124.67 asks/s=48.1 stair=2612.0 cmiss=47 cert=False mmskip=False err=None (125.7s)
+Z12 ws_n486          rinit      d5: lacl=4.34 lmx=19 asks=6000 bm=5756 stop=asks passes=2 aw=133.62 asks/s=44.9 stair=2652.0 cmiss=50 cert=False mmskip=False err=None (134.2s)
+Z12 ws_n486          rinit+bag  d1: lacl=4.173 lmx=18 asks=6000 bm=5646 stop=asks passes=2 aw=135.32 asks/s=44.3 stair=2625.0 cmiss=55 cert=False mmskip=False err=None (136.1s)
+Z12 ws_n486          rinit+bag  d2: lacl=4.023 lmx=15 asks=6000 bm=5535 stop=asks passes=2 aw=143.87 asks/s=41.7 stair=2488.0 cmiss=44 cert=False mmskip=False err=None (144.7s)
+Z12 ws_n486          rinit+bag  d3: lacl=4.095 lmx=20 asks=6000 bm=5790 stop=asks passes=2 aw=150.51 asks/s=39.9 stair=2538.0 cmiss=54 cert=False mmskip=False err=None (151.3s)
+Z12 ws_n486          rinit+bag  d4: lacl=4.146 lmx=18 asks=6000 bm=5813 stop=asks passes=2 aw=139.62 asks/s=43.0 stair=2774.0 cmiss=33 cert=False mmskip=False err=None (140.2s)
+Z12 ws_n486          rinit+bag  d5: lacl=4.352 lmx=22 asks=6000 bm=5749 stop=asks passes=2 aw=142.81 asks/s=42.0 stair=2850.0 cmiss=61 cert=False mmskip=False err=None (143.5s)
+Z12 grid_200         ladder     d1: lacl=1.965 lmx=5 asks=8000 bm=3665 stop=asks passes=5 aw=55.44 asks/s=144.3 stair=240.0 cmiss=0 cert=True mmskip=True err=None (55.7s)
+Z12 grid_200         rung       d1: lacl=2.04 lmx=8 asks=7690 bm=1312 stop=fixpoint passes=5 aw=55.9 asks/s=137.6 stair=259.0 cmiss=0 cert=True mmskip=True err=None (56.2s)
+Z12 grid_200         rung       d2: lacl=2.165 lmx=7 asks=8000 bm=483 stop=asks passes=5 aw=57.09 asks/s=140.1 stair=252.0 cmiss=0 cert=True mmskip=True err=None (57.6s)
+Z12 grid_200         rung       d3: lacl=2.185 lmx=7 asks=7857 bm=673 stop=fixpoint passes=5 aw=55.14 asks/s=142.5 stair=270.0 cmiss=0 cert=True mmskip=True err=None (55.5s)
+Z12 grid_200         rung       d4: lacl=2.165 lmx=6 asks=8000 bm=1142 stop=asks passes=5 aw=54.9 asks/s=145.7 stair=275.0 cmiss=0 cert=True mmskip=True err=None (55.2s)
+Z12 grid_200         rung       d5: lacl=2.135 lmx=6 asks=8000 bm=639 stop=asks passes=5 aw=55.99 asks/s=142.9 stair=274.0 cmiss=0 cert=True mmskip=True err=None (56.3s)
+Z12 grid_200         bag        d1: lacl=2.07 lmx=9 asks=8000 bm=2026 stop=asks passes=5 aw=50.86 asks/s=157.3 stair=259.0 cmiss=0 cert=True mmskip=True err=None (51.2s)
+Z12 grid_200         bag        d2: lacl=2.095 lmx=5 asks=6591 bm=3396 stop=fixpoint passes=4 aw=46.38 asks/s=142.1 stair=288.0 cmiss=0 cert=True mmskip=True err=None (46.7s)
+Z12 grid_200         bag        d3: lacl=2.15 lmx=6 asks=8000 bm=1101 stop=asks passes=5 aw=55.7 asks/s=143.6 stair=246.0 cmiss=0 cert=True mmskip=True err=None (56.0s)
+Z12 grid_200         bag        d4: lacl=1.975 lmx=7 asks=7356 bm=3304 stop=fixpoint passes=5 aw=50.93 asks/s=144.4 stair=261.0 cmiss=0 cert=True mmskip=True err=None (51.4s)
+Z12 grid_200         bag        d5: lacl=2.175 lmx=6 asks=6690 bm=3439 stop=fixpoint passes=4 aw=47.15 asks/s=141.9 stair=286.0 cmiss=1 cert=False mmskip=True err=None (47.5s)
+Z12 grid_200         rinit      d1: lacl=1.865 lmx=10 asks=8000 bm=3635 stop=asks passes=5 aw=59.99 asks/s=133.4 stair=245.0 cmiss=0 cert=True mmskip=True err=None (60.2s)
+Z12 grid_200         rinit      d2: lacl=1.985 lmx=7 asks=8000 bm=3779 stop=asks passes=5 aw=59.6 asks/s=134.2 stair=260.0 cmiss=0 cert=True mmskip=True err=None (59.8s)
+Z12 grid_200         rinit      d3: lacl=2.08 lmx=7 asks=8000 bm=5448 stop=asks passes=5 aw=60.36 asks/s=132.5 stair=291.0 cmiss=1 cert=False mmskip=True err=None (60.6s)
+Z12 grid_200         rinit      d4: lacl=1.96 lmx=8 asks=7136 bm=3606 stop=fixpoint passes=4 aw=53.23 asks/s=134.1 stair=271.0 cmiss=0 cert=True mmskip=True err=None (53.4s)
+Z12 grid_200         rinit      d5: lacl=2.08 lmx=5 asks=8000 bm=3758 stop=asks passes=5 aw=58.07 asks/s=137.8 stair=257.0 cmiss=0 cert=True mmskip=True err=None (58.2s)
+Z12 grid_200         rinit+bag  d1: lacl=1.98 lmx=6 asks=8000 bm=2304 stop=asks passes=5 aw=63.04 asks/s=126.9 stair=233.0 cmiss=0 cert=True mmskip=True err=None (63.2s)
+Z12 grid_200         rinit+bag  d2: lacl=2.15 lmx=6 asks=7587 bm=2512 stop=fixpoint passes=5 aw=59.77 asks/s=126.9 stair=290.0 cmiss=0 cert=True mmskip=True err=None (60.0s)
+Z12 grid_200         rinit+bag  d3: lacl=2.065 lmx=6 asks=8000 bm=4523 stop=asks passes=5 aw=62.27 asks/s=128.5 stair=290.0 cmiss=0 cert=True mmskip=True err=None (62.5s)
+Z12 grid_200         rinit+bag  d4: lacl=1.835 lmx=5 asks=7777 bm=1926 stop=fixpoint passes=5 aw=59.29 asks/s=131.2 stair=203.0 cmiss=0 cert=True mmskip=True err=None (59.5s)
+Z12 grid_200         rinit+bag  d5: lacl=1.865 lmx=7 asks=8000 bm=3606 stop=asks passes=5 aw=63.58 asks/s=125.8 stair=214.0 cmiss=0 cert=True mmskip=True err=None (63.8s)
+Z12 honeycomb_200    ladder     d1: lacl=2.165 lmx=6 asks=5260 bm=1545 stop=fixpoint passes=4 aw=38.87 asks/s=135.3 stair=249.0 cmiss=0 cert=True mmskip=True err=None (39.6s)
+Z12 honeycomb_200    rung       d1: lacl=2.16 lmx=5 asks=8000 bm=301 stop=asks passes=5 aw=57.91 asks/s=138.1 stair=268.0 cmiss=0 cert=True mmskip=True err=None (59.0s)
+Z12 honeycomb_200    rung       d2: lacl=2.2 lmx=6 asks=3916 bm=649 stop=fixpoint passes=3 aw=28.61 asks/s=136.9 stair=273.0 cmiss=0 cert=True mmskip=True err=None (29.9s)
+Z12 honeycomb_200    rung       d3: lacl=2.09 lmx=6 asks=8000 bm=1960 stop=asks passes=5 aw=54.64 asks/s=146.4 stair=237.0 cmiss=0 cert=True mmskip=True err=None (56.0s)
+Z12 honeycomb_200    rung       d4: lacl=2.14 lmx=8 asks=8000 bm=3585 stop=asks passes=5 aw=53.26 asks/s=150.2 stair=253.0 cmiss=0 cert=True mmskip=True err=None (54.2s)
+Z12 honeycomb_200    rung       d5: lacl=2.105 lmx=6 asks=8000 bm=4662 stop=asks passes=5 aw=48.67 asks/s=164.4 stair=252.0 cmiss=0 cert=True mmskip=True err=None (49.6s)
+Z12 honeycomb_200    bag        d1: lacl=2.12 lmx=6 asks=5220 bm=2326 stop=fixpoint passes=4 aw=34.75 asks/s=150.2 stair=251.0 cmiss=0 cert=True mmskip=True err=None (37.2s)
+Z12 honeycomb_200    bag        d2: lacl=2.06 lmx=7 asks=7223 bm=1924 stop=fixpoint passes=5 aw=45.16 asks/s=159.9 stair=234.0 cmiss=0 cert=True mmskip=True err=None (47.1s)
+Z12 honeycomb_200    bag        d3: lacl=2.075 lmx=6 asks=7453 bm=1874 stop=fixpoint passes=5 aw=47.25 asks/s=157.7 stair=241.0 cmiss=0 cert=True mmskip=True err=None (48.4s)
+Z12 honeycomb_200    bag        d4: lacl=2.265 lmx=8 asks=4940 bm=2696 stop=fixpoint passes=3 aw=33.34 asks/s=148.2 stair=251.0 cmiss=0 cert=True mmskip=True err=None (34.6s)
+Z12 honeycomb_200    bag        d5: lacl=2.095 lmx=7 asks=8000 bm=3953 stop=asks passes=5 aw=47.44 asks/s=168.6 stair=244.0 cmiss=0 cert=True mmskip=True err=None (49.4s)
+Z12 honeycomb_200    rinit      d1: lacl=2.47 lmx=11 asks=7290 bm=1978 stop=fixpoint passes=5 aw=49.42 asks/s=147.5 stair=356.0 cmiss=0 cert=True mmskip=True err=None (49.6s)
+Z12 honeycomb_200    rinit      d2: lacl=2.495 lmx=11 asks=8000 bm=6678 stop=asks passes=5 aw=49.94 asks/s=160.2 stair=351.0 cmiss=0 cert=True mmskip=True err=None (50.1s)
+Z12 honeycomb_200    rinit      d3: lacl=2.355 lmx=9 asks=8000 bm=3662 stop=asks passes=5 aw=50.38 asks/s=158.8 stair=351.0 cmiss=0 cert=True mmskip=True err=None (50.6s)
+Z12 honeycomb_200    rinit      d4: lacl=2.385 lmx=8 asks=7245 bm=1256 stop=fixpoint passes=5 aw=47.72 asks/s=151.8 stair=317.0 cmiss=0 cert=True mmskip=True err=None (47.9s)
+Z12 honeycomb_200    rinit      d5: lacl=2.295 lmx=8 asks=8000 bm=6873 stop=asks passes=5 aw=54.03 asks/s=148.1 stair=316.0 cmiss=0 cert=True mmskip=True err=None (54.2s)
+Z12 honeycomb_200    rinit+bag  d1: lacl=2.2 lmx=8 asks=8000 bm=1623 stop=asks passes=5 aw=53.13 asks/s=150.6 stair=272.0 cmiss=0 cert=True mmskip=True err=None (53.3s)
+Z12 honeycomb_200    rinit+bag  d2: lacl=2.395 lmx=8 asks=8000 bm=1394 stop=asks passes=5 aw=51.5 asks/s=155.3 stair=317.0 cmiss=0 cert=True mmskip=True err=None (51.7s)
+Z12 honeycomb_200    rinit+bag  d3: lacl=2.165 lmx=8 asks=8000 bm=3637 stop=asks passes=5 aw=54.24 asks/s=147.5 stair=289.0 cmiss=0 cert=True mmskip=True err=None (54.4s)
+Z12 honeycomb_200    rinit+bag  d4: lacl=2.145 lmx=8 asks=8000 bm=2459 stop=asks passes=5 aw=54.46 asks/s=146.9 stair=275.0 cmiss=0 cert=True mmskip=True err=None (54.6s)
+Z12 honeycomb_200    rinit+bag  d5: lacl=2.125 lmx=6 asks=8000 bm=5124 stop=asks passes=5 aw=55.65 asks/s=143.8 stair=266.0 cmiss=0 cert=True mmskip=True err=None (55.9s)
+Z12 king_graph_196   ladder     d1: lacl=2.388 lmx=6 asks=8000 bm=1638 stop=asks passes=4 aw=59.47 asks/s=134.5 stair=298.0 cmiss=0 cert=True mmskip=True err=None (59.7s)
+Z12 king_graph_196   rung       d1: lacl=2.439 lmx=6 asks=8000 bm=1852 stop=asks passes=4 aw=54.54 asks/s=146.7 stair=300.0 cmiss=0 cert=True mmskip=True err=None (54.8s)
+Z12 king_graph_196   rung       d2: lacl=2.383 lmx=5 asks=8000 bm=357 stop=asks passes=4 aw=56.69 asks/s=141.1 stair=300.0 cmiss=0 cert=True mmskip=True err=None (56.9s)
+Z12 king_graph_196   rung       d3: lacl=2.362 lmx=5 asks=8000 bm=1590 stop=asks passes=4 aw=57.73 asks/s=138.6 stair=290.0 cmiss=0 cert=True mmskip=True err=None (58.0s)
+Z12 king_graph_196   rung       d4: lacl=2.495 lmx=5 asks=8000 bm=946 stop=asks passes=4 aw=55.64 asks/s=143.8 stair=285.0 cmiss=0 cert=True mmskip=True err=None (55.9s)
+Z12 king_graph_196   rung       d5: lacl=2.439 lmx=5 asks=8000 bm=486 stop=asks passes=4 aw=58.27 asks/s=137.3 stair=298.0 cmiss=0 cert=True mmskip=True err=None (58.5s)
+Z12 king_graph_196   bag        d1: lacl=2.367 lmx=5 asks=8000 bm=1058 stop=asks passes=4 aw=61.8 asks/s=129.4 stair=277.0 cmiss=0 cert=True mmskip=True err=None (62.1s)
+Z12 king_graph_196   bag        d2: lacl=2.393 lmx=6 asks=8000 bm=1431 stop=asks passes=4 aw=58.44 asks/s=136.9 stair=311.0 cmiss=0 cert=True mmskip=True err=None (59.0s)
+Z12 king_graph_196   bag        d3: lacl=2.531 lmx=6 asks=8000 bm=1704 stop=asks passes=4 aw=59.9 asks/s=133.6 stair=282.0 cmiss=0 cert=True mmskip=True err=None (60.1s)
+Z12 king_graph_196   bag        d4: lacl=2.551 lmx=5 asks=8000 bm=957 stop=asks passes=4 aw=56.51 asks/s=141.6 stair=276.0 cmiss=0 cert=True mmskip=True err=None (56.7s)
+Z12 king_graph_196   bag        d5: lacl=2.515 lmx=6 asks=8000 bm=1373 stop=asks passes=4 aw=54.81 asks/s=146.0 stair=260.0 cmiss=0 cert=True mmskip=True err=None (55.1s)
+Z12 king_graph_196   rinit      d1: lacl=2.852 lmx=7 asks=8000 bm=4154 stop=asks passes=4 aw=57.41 asks/s=139.3 stair=452.0 cmiss=0 cert=True mmskip=True err=None (57.6s)
+Z12 king_graph_196   rinit      d2: lacl=2.638 lmx=8 asks=8000 bm=6428 stop=asks passes=4 aw=57.19 asks/s=139.9 stair=402.0 cmiss=0 cert=True mmskip=True err=None (57.4s)
+Z12 king_graph_196   rinit      d3: lacl=2.816 lmx=11 asks=8000 bm=2667 stop=asks passes=4 aw=58.32 asks/s=137.2 stair=441.0 cmiss=0 cert=True mmskip=True err=None (58.5s)
+Z12 king_graph_196   rinit      d4: lacl=2.587 lmx=7 asks=8000 bm=5003 stop=asks passes=4 aw=61.94 asks/s=129.2 stair=391.0 cmiss=0 cert=True mmskip=True err=None (62.2s)
+Z12 king_graph_196   rinit      d5: lacl=2.847 lmx=11 asks=8000 bm=4715 stop=asks passes=4 aw=56.53 asks/s=141.5 stair=412.0 cmiss=0 cert=True mmskip=True err=None (56.7s)
+Z12 king_graph_196   rinit+bag  d1: lacl=2.832 lmx=8 asks=8000 bm=3619 stop=asks passes=4 aw=59.43 asks/s=134.6 stair=425.0 cmiss=0 cert=True mmskip=True err=None (59.6s)
+Z12 king_graph_196   rinit+bag  d2: lacl=2.944 lmx=9 asks=8000 bm=1511 stop=asks passes=4 aw=59.94 asks/s=133.5 stair=452.0 cmiss=0 cert=True mmskip=True err=None (60.1s)
+Z12 king_graph_196   rinit+bag  d3: lacl=2.714 lmx=7 asks=8000 bm=7641 stop=asks passes=4 aw=61.41 asks/s=130.3 stair=423.0 cmiss=0 cert=True mmskip=True err=None (61.6s)
+Z12 king_graph_196   rinit+bag  d4: lacl=2.699 lmx=9 asks=8000 bm=3511 stop=asks passes=4 aw=63.1 asks/s=126.8 stair=373.0 cmiss=0 cert=True mmskip=True err=None (63.6s)
+Z12 king_graph_196   rinit+bag  d5: lacl=2.76 lmx=7 asks=8000 bm=3974 stop=asks passes=4 aw=63.36 asks/s=126.3 stair=445.0 cmiss=0 cert=True mmskip=True err=None (63.6s)
+
+summary per (cell, group): legal_acl mean/std/min/max, legal_max_chain mean/max, asks, bookmark_asks, stopped_by
+Z12 K100             ladder lacl=7.26 lmx=8.0 asks=10000.0 stop=Counter({'asks': 1})
+    rung       n=5 lacl=7.262 sd=0.004 min=7.26 max=7.27 range=0.01 d=+0.002 lmx=8.0/8 asks=10000.0 bm=395.8 stop={'asks': 5}
+    bag        n=5 lacl=7.264 sd=0.008 min=7.26 max=7.28 range=0.02 d=+0.004 lmx=8.0/8 asks=10000.0 bm=428.4 stop={'asks': 5}
+    rinit      n=5 lacl=7.26 sd=0.0 min=7.26 max=7.26 range=0.0 d=+0.000 lmx=8.0/8 asks=10000.0 bm=214.6 stop={'asks': 5}
+    rinit+bag  n=5 lacl=7.26 sd=0.0 min=7.26 max=7.26 range=0.0 d=+0.000 lmx=8.0/8 asks=10000.0 bm=406.0 stop={'asks': 5}
+Z12 K140             ladder lacl=9.757 lmx=10.0 asks=12000.0 stop=Counter({'asks': 1})
+    rung       n=5 lacl=9.76 sd=0.006 min=9.757 max=9.771 range=0.014 d=+0.003 lmx=10.2/11 asks=12000.0 bm=526.0 stop={'asks': 5}
+    bag        n=5 lacl=9.757 sd=0.0 min=9.757 max=9.757 range=0.0 d=+0.000 lmx=10.0/10 asks=12000.0 bm=2118.2 stop={'asks': 5}
+    rinit      n=5 lacl=9.76 sd=0.006 min=9.757 max=9.771 range=0.014 d=+0.003 lmx=10.2/11 asks=12000.0 bm=361.0 stop={'asks': 5}
+    rinit+bag  n=5 lacl=9.757 sd=0.0 min=9.757 max=9.757 range=0.0 d=+0.000 lmx=10.0/10 asks=12000.0 bm=861.8 stop={'asks': 5}
+Z12 ER100_d10        ladder lacl=4.95 lmx=8.0 asks=8000.0 stop=Counter({'asks': 1})
+    rung       n=5 lacl=4.804 sd=0.154 min=4.6 max=5.03 range=0.43 d=-0.146 lmx=8.0/8 asks=6893.4 bm=4875.8 stop={'asks': 2, 'fixpoint': 3}
+    bag        n=5 lacl=4.768 sd=0.181 min=4.56 max=5.04 range=0.48 d=-0.182 lmx=7.8/9 asks=6336.6 bm=2764.0 stop={'asks': 2, 'fixpoint': 3}
+    rinit      n=5 lacl=4.796 sd=0.2 min=4.62 max=5.12 range=0.5 d=-0.154 lmx=8.2/9 asks=7846.4 bm=4463.0 stop={'asks': 4, 'fixpoint': 1}
+    rinit+bag  n=5 lacl=4.846 sd=0.11 min=4.69 max=4.97 range=0.28 d=-0.104 lmx=8.4/9 asks=6419.0 bm=3080.4 stop={'asks': 2, 'fixpoint': 3}
+Z12 turan_n162       ladder lacl=6.265 lmx=7.0 asks=15000.0 stop=Counter({'asks': 1})
+    rung       n=5 lacl=7.495 sd=1.119 min=6.0 max=9.352 range=3.352 d=+1.230 lmx=9.0/13 asks=15000.0 bm=14322.4 stop={'asks': 5}
+    bag        n=5 lacl=6.664 sd=1.042 min=6.0 max=8.691 range=2.691 d=+0.399 lmx=8.2/14 asks=15000.0 bm=10903.8 stop={'asks': 5}
+    rinit      n=5 lacl=6.964 sd=0.892 min=6.0 max=8.358 range=2.358 d=+0.699 lmx=8.2/11 asks=15000.0 bm=14454.2 stop={'asks': 5}
+    rinit+bag  n=5 lacl=7.198 sd=1.476 min=6.0 max=9.253 range=3.253 d=+0.933 lmx=8.8/13 asks=15000.0 bm=13023.0 stop={'asks': 5}
+Z12 spin_glass_n163  ladder lacl=10.847 lmx=12.0 asks=12000.0 stop=Counter({'asks': 1})
+    rung       n=5 lacl=10.866 sd=0.013 min=10.853 max=10.89 range=0.037 d=+0.019 lmx=12.2/13 asks=12000.0 bm=10148.4 stop={'asks': 5}
+    bag        n=5 lacl=10.876 sd=0.008 min=10.865 max=10.89 range=0.025 d=+0.029 lmx=12.4/13 asks=12000.0 bm=8133.4 stop={'asks': 5}
+    rinit      n=5 lacl=10.892 sd=0.061 min=10.84 max=11.0 range=0.16 d=+0.045 lmx=12.2/13 asks=12000.0 bm=10523.0 stop={'asks': 5}
+    rinit+bag  n=5 lacl=10.902 sd=0.053 min=10.816 max=10.945 range=0.129 d=+0.055 lmx=12.2/13 asks=12000.0 bm=7057.6 stop={'asks': 5}
+Z12 regular_n316     ladder lacl=4.44 lmx=13.0 asks=8000.0 stop=Counter({'asks': 1})
+    rung       n=5 lacl=4.414 sd=0.049 min=4.329 max=4.481 range=0.152 d=-0.026 lmx=13.6/16 asks=8000.0 bm=3022.4 stop={'asks': 5}
+    bag        n=5 lacl=4.459 sd=0.043 min=4.411 max=4.528 range=0.117 d=+0.019 lmx=14.4/16 asks=8000.0 bm=2040.6 stop={'asks': 5}
+    rinit      n=5 lacl=4.861 sd=0.106 min=4.747 max=5.063 range=0.316 d=+0.421 lmx=16.0/19 asks=8000.0 bm=6778.2 stop={'asks': 5}
+    rinit+bag  n=5 lacl=4.708 sd=0.032 min=4.665 max=4.75 range=0.085 d=+0.268 lmx=15.0/17 asks=8000.0 bm=7069.2 stop={'asks': 5}
+Z12 ws_n486          ladder lacl=3.85 lmx=18.0 asks=6000.0 stop=Counter({'asks': 1})
+    rung       n=5 lacl=3.853 sd=0.073 min=3.735 max=3.936 range=0.201 d=+0.003 lmx=14.6/16 asks=6000.0 bm=3756.6 stop={'asks': 5}
+    bag        n=5 lacl=3.79 sd=0.134 min=3.646 max=3.959 range=0.313 d=-0.060 lmx=14.6/16 asks=6000.0 bm=2948.0 stop={'asks': 5}
+    rinit      n=5 lacl=4.18 sd=0.105 min=4.031 max=4.34 range=0.309 d=+0.330 lmx=18.4/22 asks=6000.0 bm=5162.4 stop={'asks': 5}
+    rinit+bag  n=5 lacl=4.158 sd=0.11 min=4.023 max=4.352 range=0.329 d=+0.308 lmx=18.6/22 asks=6000.0 bm=5706.6 stop={'asks': 5}
+Z12 grid_200         ladder lacl=1.965 lmx=5.0 asks=8000.0 stop=Counter({'asks': 1})
+    rung       n=5 lacl=2.138 sd=0.052 min=2.04 max=2.185 range=0.145 d=+0.173 lmx=6.8/8 asks=7909.4 bm=849.8 stop={'fixpoint': 2, 'asks': 3}
+    bag        n=5 lacl=2.093 sd=0.07 min=1.975 max=2.175 range=0.2 d=+0.128 lmx=6.6/9 asks=7327.4 bm=2653.2 stop={'asks': 2, 'fixpoint': 3}
+    rinit      n=5 lacl=1.994 sd=0.081 min=1.865 max=2.08 range=0.215 d=+0.029 lmx=7.4/10 asks=7827.2 bm=4045.2 stop={'asks': 4, 'fixpoint': 1}
+    rinit+bag  n=5 lacl=1.979 sd=0.119 min=1.835 max=2.15 range=0.315 d=+0.014 lmx=6.0/7 asks=7872.8 bm=2974.2 stop={'asks': 3, 'fixpoint': 2}
+Z12 honeycomb_200    ladder lacl=2.165 lmx=6.0 asks=5260.0 stop=Counter({'fixpoint': 1})
+    rung       n=5 lacl=2.139 sd=0.039 min=2.09 max=2.2 range=0.11 d=-0.026 lmx=6.2/8 asks=7183.2 bm=2231.4 stop={'asks': 4, 'fixpoint': 1}
+    bag        n=5 lacl=2.123 sd=0.074 min=2.06 max=2.265 range=0.205 d=-0.042 lmx=6.8/8 asks=6567.2 bm=2554.6 stop={'fixpoint': 4, 'asks': 1}
+    rinit      n=5 lacl=2.4 sd=0.074 min=2.295 max=2.495 range=0.2 d=+0.235 lmx=9.4/11 asks=7707.0 bm=4089.4 stop={'fixpoint': 2, 'asks': 3}
+    rinit+bag  n=5 lacl=2.206 sd=0.098 min=2.125 max=2.395 range=0.27 d=+0.041 lmx=7.6/8 asks=8000.0 bm=2847.4 stop={'asks': 5}
+Z12 king_graph_196   ladder lacl=2.388 lmx=6.0 asks=8000.0 stop=Counter({'asks': 1})
+    rung       n=5 lacl=2.424 sd=0.047 min=2.362 max=2.495 range=0.133 d=+0.036 lmx=5.2/6 asks=8000.0 bm=1046.2 stop={'asks': 5}
+    bag        n=5 lacl=2.471 sd=0.076 min=2.367 max=2.551 range=0.184 d=+0.083 lmx=5.6/6 asks=8000.0 bm=1304.6 stop={'asks': 5}
+    rinit      n=5 lacl=2.748 sd=0.112 min=2.587 max=2.852 range=0.265 d=+0.360 lmx=8.8/11 asks=8000.0 bm=4593.4 stop={'asks': 5}
+    rinit+bag  n=5 lacl=2.79 sd=0.09 min=2.699 max=2.944 range=0.245 d=+0.402 lmx=8.0/9 asks=8000.0 bm=4051.2 stop={'asks': 5}
+
+MAP — order-sensitive (bag/rung range or mean beyond tol):
+    ('ER100_d10', 'rung', 4.804, 0.43, -0.146)
+    ('ER100_d10', 'bag', 4.768, 0.48, -0.182)
+    ('turan_n162', 'rung', 7.495, 3.352, 1.23)
+    ('turan_n162', 'bag', 6.664, 2.691, 0.399)
+    ('turan_n162', 'rinit+bag', 7.198, 3.253, 0.933)
+    ('ws_n486', 'bag', 3.79, 0.313, -0.06)
+    ('ws_n486', 'rinit+bag', 4.158, 0.329, 0.308)
+    ('grid_200', 'rinit+bag', 1.979, 0.315, 0.014)
+    ('king_graph_196', 'rinit+bag', 2.79, 0.245, 0.402)
+MAP — init-sensitive (rinit range or mean beyond tol):
+    ('ER100_d10', 'rinit', 4.796, 0.5, -0.154)
+    ('turan_n162', 'rinit', 6.964, 2.358, 0.699)
+    ('regular_n316', 'rinit', 4.861, 0.316, 0.421)
+    ('ws_n486', 'rinit', 4.18, 0.309, 0.33)
+    ('king_graph_196', 'rinit', 2.748, 0.265, 0.36)
+MAP — order- and init-free cells (every group within tol of ladder): ['K100', 'K140', 'spin_glass_n163', 'honeycomb_200']
+load at end: (140.0849609375, 158.43359375, 139.8974609375)
+done-probe

@@ -2322,6 +2322,316 @@ twice this round; the slot-pairing `ext` register is reusable; and
 `widen_accepts` at 60-75% is itself a measurement of how loose the
 plane view is on plateau cells.
 
+**3.124 (the sound plane — BUILT TWICE; the first build convicted by
+its own smokes and deleted; one switch stands, board to arm).** First
+build (2026-09-02): three cumulative switches — `axis_single`,
+`brick_judge` (brick-ruler lex on physical coordinates with boundary
+lines at half capacity, "the dp-internals correction"), `fold_chip`
+(the packer keeps packing ideal virtual lines; a boustrophedon strip
+map reads them onto the chip; seam surcharges in the DP; a pen-0
+bookmark skips the final projection) — ~600 lines. Its smokes (seed 0,
+load 60→214; walls unreliable, structure not) banked three facts and
+one conviction. (1) **The judge was unsound by one book**: a pen-0
+folded turán state missed 10-24 arms at conversion; the diagnostic
+convicted the s3.108 demand-honest census — the converter seats EVERY
+variable's cross (point arms as one-tile footprints, the kappa floor),
+so the judge must book the books' intervals. Fixed (cover on the
+books' rule, stair on active arms); pen 0 ⇒ certified thereafter.
+(2) **The packer's repack is load-bearing, and the ideal-plane fold
+never compresses**: the raw physical judge scored the pipeline's
+9.253 turán states pen > 0 (they certify only AFTER the bounded pack
+compacts them against real pools), and the fold arms landed turán at
+12.438 — two strips plus seams where the bounded pack fits the layout
+in one. (3) **Accept-all is judge-blind by construction** (proposals
+never consult the judge), so under it a sound judge only re-selects
+the bookmark; the audit engine steers but descends slowly under budget.
+The conviction: the fold was built as a REPLACEMENT for the bounded
+pack ("pack ideally, then map"), but the bounded pack's only sin is
+the straggler CLAMP — the distortion that makes monster seeds — and
+"optimize then fold once" is wrong on principle (Max: a folded optimum
+of the infinite plane is not the finite optimum; the wrap must live in
+the loop and evolve jointly). Also retracted: the boundary-line
+"correction" (census 8 → 4). field.py's s3.116 annotation records that
+count-4 boundary profiles were MEASURED to flood 257+ deficits
+(boundary lines carry one course parity and are parity-starved at
+claim time); the packer's zeroing is the rule, and the judge now uses
+the packer's own profiles — one accounting.
+
+Second build (the same day): the per-move STATE became the bounded
+pack with real pools on a k×k tiling of the chip (wrap on overflow).
+Its smoke convicted it in one seed: turán 10.5 with a single strip
+(the bounded state changes the moves' geometry — the ideal plane's
+freedom is what found the crystal; Max's principle exactly: ignore
+real hardware in the optimization), ER 4.22 (−0.34), ws pen 14260
+with two strips (strips need rows cut to R/k, which the packer never
+learned). Deleted the same hour.
+
+Third build — what stands: ONE switch, `wrap_pack`. The state stays
+on the ideal plane (the plane's own readout, untouched). **At every
+adopt the state is ALSO projected onto the chip by the wrapped
+bounded pack** (`orders._project` → `pack_project(strips=k,
+rows=R//k)`): real pools and brick profiles on the (k·W) × (R//k)
+virtual chip, k the smallest strip count that places everyone — the
+packer's overflow rule: when the columns run out it continues into
+the next strip (column profiles repeated boustrophedon, row profiles
+tiled along their brick axis) instead of clamping stragglers;
+compaction unchanged, only overflow wraps. That physical layout
+(`orders._phys`, strip height R//k) is what the judge scores
+(`seat.brick_energy`: overload first on the converter's own claim
+intervals, whole-brick stair second; pools = the packer's
+zeroed-boundary profiles, one accounting) and what the pipeline hands
+on — the final projection is the bookmark's wrapped projection, no
+second squeeze, no clamp. The wrap lives in the loop: the bookmark is
+the best WRAPPED state, and under audit the wrapped cost steers every
+acceptance; the proposals themselves stay wrap-blind (the ideal
+plane's freedom), which is the design, not a gap. `axis_single`
+stays an independent flip. Deleted across the two rebuilds: the
+ideal-plane fold, the pen-0 skip, the DP seam surcharges
+(`gap_extra`), the bounded-state readout, two knobs (24 → 23).
+Tests: 9 in `TestSoundPlane` (strip-map bijection onto the chip,
+packer profiles = judge pools, brick-energy oracle, the wrapping
+packer: a 48-node path that clamps 8 at one strip places everyone at
+two and wraps past W while `strips=1` is byte-identical to the
+default projection and `rows=` bounds the rows; single-axis freeze;
+guards; e2e both fabrics × plane/plane-audit; off-identity; wrap end
+to end). Default fingerprints K100/turán byte-identical to pre-round;
+grid_200 is load-nondeterministic at its 60 s budget (two consecutive
+runs of the same code: 1.315 / 1.325) and dropped as a fingerprint
+cell. Smoke (seed 0, load ~85; walls unreliable): turán wrap 9.253
+(= plane, pen 0, certified, k = 1), wrap+single 8.815 (= single); ER
+wrap 4.38 (−0.18), wrap+single 4.56 (0); ws wrap 2.784 (+0.21, inside
+tol) with legal max chain 20 vs 21, wrap+single 2.671 with legal max
+chain 16 (the best seen), k = 1 in both — ws's disease at seed 0 is
+not column overflow but the judge's stricter books (pen 213 where the
+packer's raw hulls said feasible): the converter misses come from
+arms the packer under-books, a packer-side accounting question for
+the verdict. Cost: the per-adopt projection buys ws a third of the
+plane's adopts in 60 s (136 vs 419) — `_project` re-runs the
+unbounded halves it could reuse; an optimization for later. BAR PASS.
+Board: `data/sound_probe.py`, 7 arms; verdict entry to follow.
+
+**3.125 (two switches on the plane engine — `arm_cost` and `strip`;
+BUILT, smoked at seed 0, board NOT run; both levers off).** Session
+2026-09-03, from first principles before the notes were read, then
+checked against them. Two facts opened it. (1) The plane's stair
+prices an arm as its hull span, so a contact-bearing arm whose hull is
+one junction costs 0 — but the converter must seat a bar for it (the
+contact is a crossing). Measured: grid_200 plane stair 240 for 200
+variables vs real pre-tail ACL 1.965; minorminer's whole gain there
+(1.965 → 1.330) is turning 96 two-bar crosses into single-bar chains
+(single-orientation chains 104 → 171). A 60-node path embeds at 1.017
+off the plane with no tail, so the family already reaches single bars
+via orientation — only the accounting was missing. The deleted brick
+stair mode (archive `12fe484c`) priced `hmax//s − hmin//s`: brick
+STEPS, no bar term, point arms 0; its dense loss was rounding (an
+odd-course chain over junctions [1,12] priced one brick more than its
+even-course twin over [0,11]; a step function cannot hold a sharp
+optimum) — the "+1 per active arm" had never been measured as an
+objective. (2) The infinite plane's other hole is shape: a ribbon is
+short but wider than the chip and length cannot see it; the wrap
+(s3.124b) never wrapped on its board (one strip on every run) and its
+deltas were bookmark selection.
+
+`arm_cost`: one bar (`grid.stride` junctions) per ACTIVE arm, in
+`stair_energy(bar=)` AND inside the interleaver's own axis-1
+transitions (`align_reinsert(bar=)`: h-arm active iff the suffix
+extrema are finite, v-arm active iff a neighbour is already placed —
+the complement of the "no neighbour placed" rectangle at v's own
+cell; axis 0 is a path-independent constant). Proposer == judge;
+brute-force oracles pass at bar=2 for the interleaver, the singleton,
+and the joint xy move (the axis-0 constant cancels across splits, as
+argued, not assumed). `strip`: the readout's x half packs into the
+REAL columns (per-column brick profiles, boundary columns zeroed,
+profiles extended above the chip with the ideal pool — without that
+the packer's nb_eff clamp made rows beyond the chip free and one
+column swallowed 161 of a 200-path); the y half stays ideal; a
+(y, x) re-pack repeats while stragglers remain (cap 3, fewest-miss
+iterate kept); the judge is lexicographic `row_overflow + strip_miss`
+first (rows the chip does not have and clamped stragglers, at pool 0,
+hinge² — the capacity key the engine already runs on, no λ), stair
+second. Both plane + carry only; refuse `wrap_pack`. Knobs 23 → 25.
+Tests: `TestArmCost`, `TestStrip`, parametrized oracles; suite green
+(3-file + 525 others). Measured on a 200-path ribbon: the default
+readout is the predicted STAIRCASE (x to 21, y to 25 — both orders
+monotone); under strip x ≤ W−1 and 160 stragglers are counted, i.e.
+the too-tall-with-width-maxed state is now a number, not a clamp.
+
+Smoke (`data/armstrip_probe.py smoke`, seed 0, Z12, load ~90; turán
+also at 240 s; logs `armstrip_probe_smoke_{arm,strip}.log`):
+
+| cell | plane | arm | strip | arm+strip | pre-tail plane / arm / strip / arm+strip |
+|---|---|---|---|---|---|
+| grid_200 | 1.33–1.395 | 1.385 | **1.14** (mx 2) | 1.235 (mx 2) | 1.965 / **1.77** / 1.965 / **1.76** |
+| ws_n486 | 2.508–2.541 | 2.547 | 2.484 | 2.504 | 3.733–3.813 / 3.763 (lmx 18) / 3.708 (lmx 17) / 3.883 |
+| turán 60 s | 9.253 | 9.401 | 9.191 | **6.000** | same |
+| turán 240 s | 6.000 | 6.000 (nt) | 6.000 | 6.000 | same |
+
+Reads: (a) `arm_cost` moves the proposer on the lattice — grid
+pre-tail 1.965 → 1.77 with 202 active arms for 200 variables (the
+plane now hands minorminer one-sided variables); ws pre-tail max chain
+21 → 18; the crystal holds at 240 s. (b) `strip` alone: turán/grid
+pre-tail unchanged, post-tail grid 1.14 (max chain 2) — the strip's
+seeds fit the chip and the polisher finishes them; ws pre-tail max
+chain 21 → 17 with pen 110 (55 stragglers at the bookmark: accept-all
+is judge-blind, the key selects the bookmark but does not steer).
+(c) `arm+strip` reaches the EXACT turán crystal (6.000, mx 6) in 60 s
+where plane needs 240 s — one seed, under load, but the combination
+is what does it: the bar term makes one-sidedness (the biclique) cheap
+and the strip removes the width the ribbon-shaped intermediate states
+had to shed. Bar PASS, no feasibility loss. NOT done: the 10-cell
+board (owner's call, smoke-then-stop), the `strip` steering question
+(misses survive under accept-all; audit or a proposer that re-packs
+is the fork), a work budget instead of seconds for the crystal cell.
+
+**3.126 (the order-invariance instrument — BUILT, board RUN; the
+variance map; three instrument knobs, levers off).** Max's principle
+(question order must not matter; schedule sensitivity = family/judge
+bug, twin of init separation) had never been measured. Built as
+measurement only: `sched` permutes the blind pass's ASK LIST — a
+state-independent list of slot keys (every interval of every rung on
+both axes, then every edge pair); "ladder" is the identity, "rung"
+shuffles within each rung (coarsest-first kept, pairs last), "bag"
+shuffles the whole pass — and never edits the set; `sched_seed`;
+`max_asks` = a WORK budget in DP evaluations (memo hits free; pass cap
+lifted) so the box's load never enters the data; `stopped_by`,
+`bookmark_asks`. The blind loop was restructured into build → permute
+→ dispatch through the existing `_probe`; byte-identity of "ladder"
+was proved against a reconstructed pre-change module on 25 reference
+entries (DP-ask sequences under default / axis_inner+widen / xy /
+strip+arm / audit, and e2e embeddings under ten arms): zero diffs.
+Knobs 25 → 28; `TestSched` (7); suite green.
+
+Board (`data/sched_probe.py`, Z12, tail="none", 10 cells × {ladder
+(1), rung, bag, rinit (init_mode="random"), rinit+bag} × 5 draws = 210
+jobs, load ~140; budgets from the smoke: turán 15k asks, K140 /
+spin_glass 12k, K100 10k, ws 6k, others 8k; CSV `sched_probe_board.csv`,
+log `sched_probe.log`). Pre-tail ACL, mean over 5 draws (range) — tol =
+max(0.3, 0.05·ladder):
+
+| cell | ladder | rung | bag | rinit | rinit+bag |
+|---|---|---|---|---|---|
+| K100 | 7.260 | 7.262 (0.01) | 7.264 (0.02) | 7.260 (0) | 7.260 (0) |
+| K140 | 9.757 | 9.760 (0.01) | 9.757 (0) | 9.760 (0.01) | 9.757 (0) |
+| spin_glass | 10.847 | 10.866 (0.04) | 10.876 (0.03) | 10.892 (0.16) | 10.902 (0.13) |
+| honeycomb | 2.165 (fixpoint) | 2.139 (0.11) | 2.123 (0.21) | 2.400 (0.20) | 2.206 (0.27) |
+| grid | 1.965 | 2.138 (0.15) | 2.093 (0.20) | 1.994 (0.22) | 1.979 (0.32) |
+| regular | 4.440 | 4.414 (0.15) | 4.459 (0.12) | **4.861 (0.32)** | 4.708 (0.09) |
+| ws | 3.850 | 3.853 (0.20) | 3.790 (0.31) | **4.180 (0.31)** | 4.158 (0.33) |
+| king | 2.388 | 2.424 (0.13) | 2.471 (0.18) | **2.748 (0.27)** | 2.790 (0.25) |
+| ER100 | 4.950 | **4.804 (0.43)** | **4.768 (0.48)** | **4.796 (0.50)** | 4.846 (0.28) |
+| turán | 6.265 (mx 7) | **7.495 (3.35)** | **6.664 (2.69)** | **6.964 (2.36)** | **7.198 (3.25)** |
+
+MAP. Order- and init-free: K100, K140, spin_glass, honeycomb (dense
+cliques are byte-equal across everything; bookmark at 200–2000 of
+10–12k asks). Order-free but INIT-sensitive: regular (+0.42, the
+s3.120 +0.52 again), ws (+0.33), king (+0.36) — the spectral init's
+whole measured value, once more exactly {regular, ws, king}. ORDER-
+sensitive: ER (every randomized mean beats the ladder by 0.10–0.18;
+draws span 0.4–0.5; half the draws reach a fixpoint — a landscape of
+many near-minima, the ladder's endpoint merely one of them and the
+worst) and turán (the crystal 6.000 reached by 12 of 20 randomized
+draws — rung 1/5, bag 3/5, rinit 2/5, rinit+bag 3/5 — and NOT by the
+ladder control (6.265, mx 7) at 15k asks; endpoints 6.0–9.35; bag beat
+rung, so coarsest-first did not help here at equal work). grid:
+shuffles cost +0.13–0.17 (the one cell where the ladder's specific
+order earns something), init-free.
+
+Honest caveats: every turán / spin_glass / ws / regular / K run was
+budget-bound (`stopped_by=asks`, bookmark near the budget on turán
+and spin_glass), so part of turán's spread is unfinished descent — a
+2× budget re-run separates "gooey" from "unfinished"; ER, grid,
+honeycomb, ER reached fixpoints in ~half the draws. asks/s at load
+~140: turán ~110, ws ~40, grid ~130.
+
+What the map says for the rewrite: (i) the ladder's order is worth
+nothing on eight of ten cells and is actively the worst order on ER
+and turán — the schedule can be anything, so the rewrite needs no
+ladder, only a bag and a work budget; (ii) the init still carries
+{regular, ws, king} (+0.3–0.4) — an optimizer-strength gap, per the
+init-separation principle, not an init asset; (iii) ER and turán are
+the two cells where the endpoint depends on the path — the
+family/evaluator defects the rewrite must name (turán: the crystal is
+reachable from most paths but not held by descent — an acceptance or
+plateau question; ER: delocalized near-minima). Not done: the 2×
+budget re-run; the arm_cost+strip board under the instrument.
+
+**3.127 (the rewrite — `plane.py`; steps 0–4 of the plan built and
+checkpointed; step 5, the deletion, waits on the archive commit).**
+Max's direction after s3.126: stop measuring the old engine, find the
+philosophy deviations hidden in the code, count meat vs engineering,
+write a fresh engine a person can read. Three audits (all measured
+against source and by execution):
+
+*Census.* 8,244 lines: 29% comments, 20% live meat, 13% live
+engineering, 31% dead; of executable code 49% dead. The exact,
+oracle-tested logic is ~580 lines (interleaver 210, completion 130,
+converter 108, packer kernels 131). 28 knobs: 12 load-bearing, 13 read
+but inert, 3 never evaluated.
+
+*Deviations, ranked (the driver first).* (1) The default init
+(`multilevel_init`) collapses turán to a 2-node quotient, the n<3
+circle fallback puts both supernodes at the same y, the disc spread
+alternates the blocks 133 times along y, and `seed` reaches the init
+only as a shuffle of a 2-element list — two inits ever, mirror images:
+why 9.253 "recurred across seeds". Every init whose y-order is nearly
+block-separated (spectral, landmark, trivial) reaches 6.000 in 60 s.
+(2) The move family cannot un-interleave (a reinsert keeps both sides
+as subsequences); the one unit that gathers a scattered block
+(`hier_units`) was off and labelled toxic — measured best arm on
+turán. (3) A pass was 93% edge pairs (938 interval asks + 13,122 pair
+asks); the bookmark sat at ask 726 and 12,700 pair asks improved
+nothing; the clock was a parameter of the answer. (5) The judge was
+blind to one qubit per active arm: predicted vs realized qubit mass
+off by −76% on grid, −68% on ws; with the bar term −1% to −8%. My own
+s3.125 comment "the active-arm count is fixed on turán" was FALSE:
+crystal 162 active arms vs 322 interleaved. (6) Re-packing both axes
+after a one-axis move: adopt_worse 7% from the init, 40% AT the
+crystal. (7) The ramp: 0 bad accepts, 0 missed improvements under rank
+contacts — exonerated as a driver. (8) The kappa floor: exonerated on
+turán (0 deficits). The judge itself preferred the crystal all along
+(1768 vs 2598 vs 3906 at the init): turán was reachability + budget.
+
+*The engine* (`factored/plane.py`, ~430 lines with docstrings): state
+= two orders, init = two seeded permutations; readout = the packer on
+the strip (real columns with brick profiles, boundary lines zero on
+course fabrics, extended past the chip with the ideal pool; rows
+likewise), books = `arm_books(floor=False, min_span=0)`, one
+accounting for packer, judge and converter; judge = lexicographic
+(brick overload against `profiles(grid)`, pool 0 off-chip; spans + one
+bar per active arm); move = `align_reinsert`; units per pass = every
+contiguous run of each order at scales n/2…1 on both axes PLUS every
+N(v) (the order-independent gather: for a biclique the other block,
+so the bipartition is one move — measured on K_{81,81}: one ask,
+5219 → 3134); no pairs; one shuffled bag per pass; accept-all; stop =
+fixpoint | max_asks | deadline (reported). Three things measurement
+changed during the build: (a) the ramp removed outright stalls sparse
+graphs (path-60: 1.017 → 1.5 — the tie-moves ARE the drift that
+compacts a chain); restored as an EXACT lexicographic tiebreak
+(`rank_scale(n) = 2n²+1`; values, other-axis values and the bar all
+scaled) — the old engine reproduces 1.017; (b) re-packing only the
+moved axis leaves the other axis overloaded and accept-all wanders in
+overloaded states (turán bookmark frozen at the init for 15,000 asks
+on 3/10 seeds) — the readout re-packs the moved axis then the other;
+(c) a proposal the packer cannot seat is declined (outside the valid
+set).
+
+*Checkpoints* (`data/plane_fingerprint.py`, tail="none", WORK
+budgets; `plane_fingerprint_step0-old.json` vs `step4-plane2.json`):
+
+| cell | old engine (random init) | new engine |
+|---|---|---|
+| K8 / K10 on Z3 | 1.5 / 1.8 certified | 1.5 / 1.8 certified |
+| path-60 | 1.017 | 1.033 |
+| K100 | 7.26 (budget-bound at 10k asks) | 7.26 at a FIXPOINT, 1,370 asks |
+| turán n162, seeds 0–9 | 6.000 on 3/10 | **6.000 on 10/10** (bookmark 1.9k–14.8k asks) |
+| grid_200 pre-tail | 1.87 | **1.40** (old polished: 1.33) |
+
+All certified, minorminer skipped, extensions 0. Suite green (202 in
+the engine + contract files). NOT done: step 5 (shrink placement.py,
+delete orders/seat/coarsen/costs/loop and the dead half of field.py —
+after the archive commit), the instrument on the new engine, the
+paired board vs stock minorminer and the archived default.
+
 ## 4. References
 
 Numbered here; BibTeX in `refs.bib` (keys in brackets).

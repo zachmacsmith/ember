@@ -58,3 +58,25 @@ algorithm in his head. it certainly seems that some kind of order-permuting step
 is a necessary backbone to a minor-miner-like local search if you want to be good at dense graphs. 
 But what sort of movement laws make us good at everything else as well? give it a read and let me 
 know what you think
+
+how the algorithm works: 
+The algorithm leans heavily on the fact that d-wave hardware graphs are a product topology
+between a grid and a complete bipartite graph. It leverages this geometric regularity
+to approach this problem in a way minor miner can't. Essentially what the geometry
+tells us is that variables basically ought to have a straignt horizontal and vertical run 
+that connects to all their graph neighbors, since that is how cliques and dense stuff tends
+to be embedded, and sparse stuff has short enough chains that this simplification ought not
+really hurt us. it makes it really easy to keep a minimal state for each variable, its order on the
+x-axis, and its order on the y-axis. from that we can just derive logically where the horizontal 
+and vertical bars need to stretch. we optimize the sum of the derived chain length over an 
+idealized version of the graph (but one that is strictly weaker than the hardware). our 
+optimization process uses two claude-derived dynamic programs that go back and forth, 
+an interleaver and a packer. the packer takes the x and y orders and figures out how to optimally
+give each variable a position while using the derived reaches of the chains to enforce capacity.
+the interleaver (using a frozen mapping of order -> positions from the packer) splits an order 
+into two subsets, and optimally weaves them back together. Although there is some staleness
+between the two, we accept all the moves and hope that our algorithm is fundamentally attractive
+near the solution it ought not be that far off, and at the solution the freezing is exact.
+This is essentially the bulk of the algorithm, trying to make as impactful of moves as possible,
+as quickly as possible, so that we can quickly and attractively attract to solutions minor miner
+has to stumble towards incrementally. minor miner runs at the end, we hope to remove it one day.

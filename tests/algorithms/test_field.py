@@ -429,86 +429,117 @@ class TestAlignReinsert:
             yield out
 
     @staticmethod
-    def _gt_y(merged, adj, values, other):
-        # ground truth: apply values by rank on y (epsilon-ramped, the
-        # DP's own units), keep x static, re-derive contacts fresh
-        n = len(merged)
-        val = np.asarray(values, dtype=float) + 1e-4 * np.arange(n)
+    def _gt_y(merged, adj, values, other, bar=0.0):
+        # ground truth: values by slot, UNRAMPED (s3.127), x static,
+        # contacts by the merged order's RANK (the carry judge's rule;
+        # ties included)
+        val = np.asarray(values, dtype=float)
         pos = {v: np.array([float(other[v]), float(val[r])])
                for r, v in enumerate(merged)}
-        return stair_energy(pos, adj)
+        yrank = {v: r for r, v in enumerate(merged)}
+        return stair_energy(pos, adj, bar=bar,
+                            contacts=_stair_contacts(pos, adj, yrank=yrank))
 
     @staticmethod
-    def _gt_x(merged, adj, values, other, contacts):
-        n = len(merged)
-        val = np.asarray(values, dtype=float) + 1e-4 * np.arange(n)
+    def _gt_x(merged, adj, values, other, contacts, bar=0.0):
+        val = np.asarray(values, dtype=float)
         pos = {v: np.array([float(val[r]), float(other[v])])
                for r, v in enumerate(merged)}
-        return stair_energy(pos, adj, contacts=contacts)
+        return stair_energy(pos, adj, contacts=contacts, bar=bar)
 
-    def _case(self, rng, n):
+    def _case(self, rng, n, tied=False):
         import networkx as nx
         g = nx.gnp_random_graph(n, 0.5, seed=int(rng.integers(10000)))
         adj = {v: sorted(g.neighbors(v)) for v in g.nodes()}
         order = list(rng.permutation(n))
-        values = sorted(float(x) for x in
-                        rng.choice(np.arange(0, 3 * n), n, replace=False))
-        other = {v: float(rng.integers(0, 12)) for v in range(n)}
+        if tied:
+            # the production regime: packed line indices, many ties
+            values = sorted(float(x) for x in
+                            rng.integers(0, n // 3 + 1, n))
+            other = {v: float(rng.integers(0, 4)) for v in range(n)}
+        else:
+            values = sorted(float(x) for x in
+                            rng.choice(np.arange(0, 3 * n), n,
+                                       replace=False))
+            other = {v: float(rng.integers(0, 12)) for v in range(n)}
         k = int(rng.integers(2, 5))
         S = sorted(rng.choice(n, size=k, replace=False).tolist())
         return adj, order, values, other, S
 
-    def test_axis1_exact_and_optimal_vs_brute_force(self):
+    @pytest.mark.parametrize("bar,tied", [(0.0, False), (2.0, False),
+                                          (0.0, True), (2.0, True)])
+    def test_axis1_exact_and_optimal_vs_brute_force(self, bar, tied):
+        # bar=2: the s3.125 arm_cost term (one bar per ACTIVE arm) is
+        # priced inside the DP's transitions — exact against the
+        # judge's stair_energy(bar=bar) over every weave x orientation.
+        # tied=True: the production regime (packed line indices) graded
+        # against the UNRAMPED rank-contact truth (s3.127)
         from ember_qc.algorithms.factored.field import align_reinsert
-        rng = np.random.default_rng(7)
+        rng = np.random.default_rng(7 if not tied else 77)
         for _trial in range(15):
             adj, order, values, other, S = self._case(
-                rng, int(rng.integers(6, 10)))
+                rng, int(rng.integers(6, 10)), tied=tied)
             Sseq = [v for v in order if v in set(S)]
             R = [v for v in order if v not in set(S)]
-            e_cur = self._gt_y(order, adj, values, other)
+            e_cur = self._gt_y(order, adj, values, other, bar)
             brute = min(
-                self._gt_y(mg, adj, values, other)
+                self._gt_y(mg, adj, values, other, bar)
                 for Q in (Sseq, Sseq[::-1])
                 for mg in self._merges(R, Q))
             res, _flip = align_reinsert(
                 order, set(S), adj, values, None,
-                axis=1, other=other, contacts=None)
+                axis=1, other=other, contacts=None, bar=bar)
             if res is not None:
-                got = self._gt_y(res, adj, values, other)
+                got = self._gt_y(res, adj, values, other, bar)
                 assert abs(got - brute) < 1e-6, (got, brute)
-                assert got < e_cur - 1e-9
+                # a tie in true cost may be accepted for a smaller rank
+                # span (the lexicographic tiebreak); never a worsening
+                assert got <= e_cur + 1e-9
             else:
                 assert brute >= e_cur - 1e-6
 
-    def test_axis0_exact_and_optimal_vs_brute_force(self):
+    @pytest.mark.parametrize("bar,tied", [(0.0, False), (2.0, False),
+                                          (0.0, True), (2.0, True)])
+    def test_axis0_exact_and_optimal_vs_brute_force(self, bar, tied):
         from ember_qc.algorithms.factored.field import align_reinsert
-        rng = np.random.default_rng(19)
+        rng = np.random.default_rng(19 if not tied else 91)
         for _trial in range(15):
             adj, order, values, other, S = self._case(
-                rng, int(rng.integers(6, 10)))
-            n = len(order)
+                rng, int(rng.integers(6, 10)), tied=tied)
             # contacts frozen from the CURRENT state (y = other, static)
-            val = np.asarray(values, dtype=float) + 1e-4 * np.arange(n)
+            val = np.asarray(values, dtype=float)
             pos0 = {v: np.array([float(val[r]), float(other[v])])
                     for r, v in enumerate(order)}
             contacts = _stair_contacts(pos0, adj)
             Sseq = [v for v in order if v in set(S)]
             R = [v for v in order if v not in set(S)]
-            e_cur = self._gt_x(order, adj, values, other, contacts)
+            e_cur = self._gt_x(order, adj, values, other, contacts, bar)
             brute = min(
-                self._gt_x(mg, adj, values, other, contacts)
+                self._gt_x(mg, adj, values, other, contacts, bar)
                 for Q in (Sseq, Sseq[::-1])
                 for mg in self._merges(R, Q))
             res, _flip = align_reinsert(
                 order, set(S), adj, values, None,
-                axis=0, other=other, contacts=contacts)
+                axis=0, other=other, contacts=contacts, bar=bar)
             if res is not None:
-                got = self._gt_x(res, adj, values, other, contacts)
+                got = self._gt_x(res, adj, values, other, contacts, bar)
                 assert abs(got - brute) < 1e-6, (got, brute)
-                assert got < e_cur - 1e-9
+                assert got <= e_cur + 1e-9
             else:
                 assert brute >= e_cur - 1e-6
+
+    def test_stair_energy_bar_closed_form_on_clique(self):
+        # diagonal K_n: every variable but the extremes has both arms
+        # active; the top has only a v... under the (y, id) rule the
+        # lowest reaches sideways only (no v-contacts) and the highest
+        # reaches down only, so active arms = 2(n-1)
+        n = 7
+        adj = {v: [u for u in range(n) if u != v] for v in range(n)}
+        pos = {v: np.array([float(v), float(v)]) for v in range(n)}
+        e0 = stair_energy(pos, adj)
+        for bar in (0.0, 1.0, 2.0):
+            assert stair_energy(pos, adj, bar=bar) == pytest.approx(
+                e0 + bar * 2 * (n - 1))
 
     def test_deterministic_and_noop_on_optimal(self):
         from ember_qc.algorithms.factored.field import align_reinsert

@@ -31,10 +31,12 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 
 from ember_qc.algorithms.factored.field import (
-    TileGrid, _stair_contacts, align_reinsert, edge_monotonize,
-    line_pools, pack_project, stair_energy, xy_reinsert)
+    TileGrid, _brick_pool_arrays, _stair_contacts, align_reinsert,
+    edge_monotonize, line_pools, pack_project, stair_energy,
+    xy_reinsert)
 from ember_qc.algorithms.factored.seat import (_LEX_M, _span_vectors,
-                                               seat_energy)
+                                               brick_energy, judge_pools,
+                                               row_overflow, seat_energy)
 
 # belt-and-braces pass cap: accept-all descends on the DP's view, not on
 # E, so no internal energy signal is guaranteed to terminate it — the
@@ -48,6 +50,37 @@ def _copy(pos: Dict[int, np.ndarray]) -> Dict[int, np.ndarray]:
 
 def _same(a: Dict[int, np.ndarray], b: Dict[int, np.ndarray]) -> bool:
     return all(np.array_equal(a[v], b[v]) for v in a)
+
+
+def _fold_consts(grid) -> Tuple[int, int, int]:
+    """s3.124b strip geometry from the fabric alone: (W, R, s) — the
+    strip width in LINE indices (the packer's own space; the
+    along-position phantom is absorbed by the judge and by the
+    packer's nb_eff clamp), the h-line count R = grid.H, the stride."""
+    s = max(int(getattr(grid, "stride", 1) or 1), 1)
+    return int(grid.W), int(grid.H), s
+
+
+def _phys(pos, *, W: int, Hs: int) -> Dict[int, np.ndarray]:
+    """The strip map (s3.124b): a wrapped projection's virtual
+    coordinates -> physical chip coordinates. Virtual column c lies in
+    strip st = c // W, at physical column c % W on even strips and
+    W-1-(c % W) on odd strips (boustrophedon: consecutive virtual
+    columns stay adjacent across a cut); physical row = virtual row +
+    st * Hs, Hs the strip height (the chip's rows shared by the
+    strips). A bijection onto the chip; capacity is inherited (strips
+    occupy distinct physical rows and distinct brick ranges of each
+    column) except at seams, which the judge prices. Nothing is
+    clamped here."""
+    out: Dict[int, np.ndarray] = {}
+    for v, p in pos.items():
+        c = int(round(float(p[0])))
+        y = int(round(float(p[1])))
+        assert c >= 0 and y >= 0, "virtual coordinates < 0"
+        st, r = divmod(c, W)
+        xp = r if st % 2 == 0 else (W - 1) - r
+        out[v] = np.array([float(xp), float(y + st * Hs)])
+    return out
 
 
 def order_arrange(pos0: Dict[int, np.ndarray],
@@ -67,6 +100,14 @@ def order_arrange(pos0: Dict[int, np.ndarray],
                   wave: bool = False,
                   axis_inner: bool = False,
                   widen: bool = False,
+                  axis_single: bool = False,
+                  wrap: bool = False,
+                  arm_cost: bool = False,
+                  strip: bool = False,
+                  sched: str = "ladder",
+                  sched_rng: Optional[np.random.Generator] = None,
+                  max_asks: Optional[int] = None,
+                  ask_log: bool = False,
                   ) -> Tuple[Dict[int, np.ndarray], dict]:
     info: dict = {
         "passes": 0, "accept_traj": [],
@@ -81,7 +122,36 @@ def order_arrange(pos0: Dict[int, np.ndarray],
         "xy_accepts": 0,
         "wave_count": 0, "wave_questions": 0, "wave_early_stop": False,
         "widen_asked": 0, "widen_accepts": 0,
+        "adopt_worse": 0, "judge": "seat", "fold_Hs": 0,
+        "fold_strips": 0, "plane_bars": None,
+        "strip_miss": None, "strip_iters": None,
+        "asks": 0, "bookmark_asks": 0, "stopped_by": None,
+        "sched": sched,
     }
+    # s3.126 — the order-invariance instrument. `sched` permutes the
+    # blind pass's ASK LIST (a state-independent list of slot keys:
+    # every interval of every rung on both axes, then every edge pair)
+    # and never edits it: "ladder" is the identity (byte-identical to
+    # the nested loops it replaced), "rung" shuffles within each rung
+    # (coarsest-first kept, pairs last), "bag" shuffles the whole pass.
+    # `max_asks` is a WORK budget: stop after that many DP evaluations
+    # (memo hits are free), so a measurement never depends on the
+    # box's load. Both refuse every schedule feature whose ask set
+    # depends on earlier accepts or on axis order.
+    if sched not in ("ladder", "rung", "bag"):
+        raise ValueError(f"unknown sched {sched!r}")
+    if (sched != "ladder" or max_asks is not None) and not (plane and carry):
+        raise ValueError("sched/max_asks require the plane engine + carry")
+    if sched != "ladder" and (wave or axis_inner or widen or tiles or xy
+                              or extra_units):
+        raise ValueError("sched does not compose with wave/axis_inner/"
+                         "widen/tiles/xy/extra_units")
+    if max_asks is not None and max_asks < 1:
+        raise ValueError("max_asks must be >= 1")
+    if sched != "ladder" and sched_rng is None:
+        sched_rng = np.random.default_rng(0)
+    if ask_log:
+        info["ask_log"] = []
     if not getattr(grid, "typed", False) or not line_pools(grid):
         return _copy(pos0), info
     t0 = _time.perf_counter()
@@ -98,24 +168,117 @@ def order_arrange(pos0: Dict[int, np.ndarray],
                 for ax in (0, 1)}
 
     def _expired() -> bool:
+        # monotone in both clauses — the flattened dispatch relies on it
+        if max_asks is not None and info["asks"] >= max_asks:
+            return True
         return deadline is not None and _time.perf_counter() > deadline
 
-    def _readout(p, o=None):
+    # the pass cap is a backstop for deadline=None; under a work budget
+    # the budget is the bound (a cell that keeps accepting must not be
+    # cut by the backstop before its asks run out)
+    pass_cap = _MAX_PASSES if max_asks is None else float("inf")
+
+    def _stop_reason(fix: bool) -> str:
+        if fix:
+            return "fixpoint"
+        if max_asks is not None and info["asks"] >= max_asks:
+            return "asks"
+        if deadline is not None and _time.perf_counter() > deadline:
+            return "deadline"
+        return "passes"
+
+    # s3.124b — the sound plane, one switch. `wrap`: the state stays
+    # on the ideal plane (the freedom to move); every adopted state is
+    # ALSO projected onto the chip by the wrapped bounded pack
+    # (`_project`: real pools, strips on overflow — the packer's
+    # overflow rule, never a clamp), and that physical layout is what
+    # the judge scores (brick-ruler lex, the converter's own claim
+    # intervals) and what the pipeline hands on. The wrap lives in the
+    # loop: the bookmark is the best WRAPPED state, and under audit the
+    # wrapped cost steers every acceptance. `axis_single` (independent):
+    # a move re-packs only its own axis.
+    axis_single = axis_single and carry
+    wrap = wrap and carry and plane
+    # s3.125 `arm_cost`: one bar (stride junctions) per ACTIVE arm, in
+    # the judge and in the interleaver's own transitions alike
+    arm_cost = arm_cost and carry and plane
+    bar = float(_fold_consts(grid)[2]) if arm_cost else 0.0
+    # s3.125 `strip`: the readout packs x into the REAL columns (y stays
+    # ideal); rows beyond the chip and clamp misses are the leading
+    # lexicographic key (row_overflow), stair the second
+    strip = strip and carry and plane
+    jp = judge_pools(grid) if wrap else None
+    fold_c = _fold_consts(grid) if (wrap or strip) else None
+    strips_k = 1
+    if wrap:
+        # enough strips to always fit (the L_max lemma + one of slack
+        # for the zeroed edge columns); the DP uses as few as it can
+        pool_u = max(1, int(max(line_pools(grid).values())))
+        base = max(1, min(fold_c[0], fold_c[1]))
+        need = base + (len(pos0) + pool_u - 1) // pool_u
+        strips_k = (need + base - 1) // base + 1
+
+    def _project(p, o):
+        """s3.124b: the wrapped projection of a state — the bounded
+        pack with real pools on the (k*W) x (R//k) virtual chip, k the
+        smallest strip count that places everyone (the packer's
+        overflow rule: wrap, never clamp; the fewest misses if none
+        does). This is the layout the judge scores and the pipeline
+        hands on; the state itself stays on the ideal plane."""
+        if not wrap:
+            return 1, None
+        W, R, _s = fold_c
+        best = None
+        for k in range(1, strips_k + 1):
+            pj, ri = pack_project(p, src_adj, grid, kappa=kappa,
+                                  floor=floor, snap=snap,
+                                  monotonize=False, project=True,
+                                  brick_pools=True,
+                                  orders=((o[0], o[1]) if o is not None
+                                          else None),
+                                  strips=k, rows=max(2, R // k))
+            miss = int(ri.get("projection_misses", 0))
+            if miss == 0:
+                return k, pj
+            if best is None or miss < best[0]:
+                best = (miss, k, pj)
+        return best[1], best[2]
+
+    def _readout(p, o=None, axes=(1, 0)):
         info["readouts"] += 1
         return pack_project(p, src_adj, grid, kappa=kappa, floor=floor,
                             snap=snap, monotonize=False,
                             project=not plane,
                             orders=((o[0], o[1]) if o is not None
-                                    else None))
+                                    else None),
+                            axes=axes, strip=strip)
 
-    def _judge(p, cts, yr=None):
+    def _judge(p, cts, yr=None, pj=None, k=1, miss=0):
         # plane mode: states live on the ideal plane — pure stair (the
         # brick arrays would index out of bounds there, and capacity
         # is the unbounded pack's invariant, not a price). Windowed
         # mode: the full lexicographic evaluator, reading the SAME
         # orientation book as the state's contacts.
         if plane:
-            return stair_energy(p, src_adj, contacts=cts)
+            if wrap:
+                # the judge evaluates the layout the pipeline hands to
+                # the converter: the wrapped projection's physical
+                # layout, booked on the converter's own claim intervals
+                W, R, _s = fold_c
+                return brick_energy(_phys(pj, W=W, Hs=max(1, R // k)),
+                                    src_adj, grid, yr, pools=jp,
+                                    kappa=kappa, floor=floor)
+            e = stair_energy(p, src_adj, contacts=cts, bar=bar)
+            if strip:
+                # rows the chip does not have + clamped stragglers:
+                # the capacity-first key; on-chip capacity is the
+                # readout's own hard invariant
+                pen = row_overflow(p, src_adj, yr, H=fold_c[1],
+                                   s=fold_c[2], kappa=kappa,
+                                   floor=floor) + float(miss)
+                assert e < _LEX_M, "stair exceeds the lex weight"
+                return pen * _LEX_M + e
+            return e
         return seat_energy(p, src_adj, grid, yrank=yr)
 
     pos, rinfo = _readout(pos0, ords)
@@ -124,8 +287,11 @@ def order_arrange(pos0: Dict[int, np.ndarray],
     else:
         contacts = (rinfo.get("_contacts")
                     or _stair_contacts(pos, src_adj))
-    e_cur = _judge(pos, contacts, rank[1] if carry else None)
+    pk, pj = _project(pos, ords)
+    e_cur = _judge(pos, contacts, rank[1] if carry else None, pj, pk,
+                   miss=int(rinfo.get("strip_miss", 0) or 0))
     best_e, best_pos, best_rinfo = e_cur, _copy(pos), rinfo
+    best_proj, best_k = pj, pk
     best_ords = ({ax: list(ords[ax]) for ax in (0, 1)}
                  if carry else None)
     n = len(pos)
@@ -165,12 +331,15 @@ def order_arrange(pos0: Dict[int, np.ndarray],
             ords[ax] = sorted(ords[ax], key=lambda v: float(p2[v][ax]))
             rank[ax] = {v: r for r, v in enumerate(ords[ax])}
 
-    def _try_adopt(cand, new_ords=None) -> bool:
+    def _try_adopt(cand, new_ords=None, axes=None) -> bool:
         """Readout the materialized candidate; adopt per the acceptance
         rule; bookmark. Returns True iff the state changed."""
         nonlocal pos, e_cur, rinfo, contacts, best_e, best_pos, \
-            best_rinfo, best_ords, cur_spans, dirty_next, last_diff
-        cand2, rinfo2 = _readout(cand, new_ords if carry else None)
+            best_rinfo, best_ords, cur_spans, dirty_next, last_diff, \
+            best_proj, best_k
+        cand2, rinfo2 = _readout(
+            cand, new_ords if carry else None,
+            axes=(tuple(axes) if (axis_single and axes) else (1, 0)))
         if carry:
             changed = (new_ords != ords) or not _same(cand2, pos)
         else:
@@ -191,10 +360,14 @@ def order_arrange(pos0: Dict[int, np.ndarray],
             cts2 = (rinfo2.get("_contacts")
                     or _stair_contacts(cand2, src_adj))
             yr2 = None
-        e2 = _judge(cand2, cts2, yr2)
+        pk2, pj2 = _project(cand2, new_ords if carry else None)
+        miss2 = int(rinfo2.get("strip_miss", 0) or 0)
+        e2 = _judge(cand2, cts2, yr2, pj2, pk2, miss=miss2)
         if audit and not (e2 < e_cur - 1e-9):
             info["interleave_declines"] += 1
             return False
+        if e2 > e_cur + 1e-9:
+            info["adopt_worse"] += 1
         old_contacts = contacts if (wave or widen) else None
         pos, e_cur, rinfo = cand2, e2, rinfo2
         contacts = cts2
@@ -207,7 +380,9 @@ def order_arrange(pos0: Dict[int, np.ndarray],
                 _resort_orders(pos)
                 contacts = _stair_contacts(pos, src_adj,
                                            yrank=rank[1])
-                e_cur = _judge(pos, contacts, rank[1])
+                pk2, pj2 = _project(pos, ords)
+                e_cur = _judge(pos, contacts, rank[1], pj2, pk2,
+                               miss=miss2)
         if wave or widen:
             # s3.122 disturbance diff (ground truth): a variable whose
             # span or contacts entry changed in this adoption joins
@@ -226,12 +401,14 @@ def order_arrange(pos0: Dict[int, np.ndarray],
             cur_spans = (nh, nv)
         if e2 < best_e:
             best_e, best_pos, best_rinfo = e2, _copy(pos), rinfo2
+            best_proj, best_k = pj2, pk2
             if carry:
                 best_ords = {ax: list(ords[ax]) for ax in (0, 1)}
             # when the returned answer was actually found — the
             # work-to-answer metric; later churn is harvestable budget
             info["bookmark_wall"] = round(_time.perf_counter() - t0, 2)
             info["bookmark_readouts"] = info["readouts"]
+            info["bookmark_asks"] = info["asks"]
         return True
 
     scales: List[int] = []
@@ -275,6 +452,7 @@ def order_arrange(pos0: Dict[int, np.ndarray],
             return 0
         if not (1 <= len(unit) < n):
             return 0
+        info["asks"] += 1
         if carry:
             order = ords[axis]
         else:
@@ -283,7 +461,7 @@ def order_arrange(pos0: Dict[int, np.ndarray],
         other = {v: float(pos[v][1 - axis]) for v in pos}
         new_order, _flip = align_reinsert(
             order, set(unit), src_adj, vals, None,
-            axis=axis, other=other, contacts=contacts)
+            axis=axis, other=other, contacts=contacts, bar=bar)
         if new_order is None:
             info["interleave_noops"] += 1
             tried[key] = state_ver
@@ -295,7 +473,7 @@ def order_arrange(pos0: Dict[int, np.ndarray],
         if carry:
             new_ords = {ax: (new_order if ax == axis else ords[ax])
                         for ax in (0, 1)}
-        if _try_adopt(cand, new_ords):
+        if _try_adopt(cand, new_ords, axes=(axis,)):
             info["interleave_accepts"] += 1
             state_ver += 1
             return 1
@@ -312,10 +490,11 @@ def order_arrange(pos0: Dict[int, np.ndarray],
         if tried.get(key) == state_ver:
             info["interleave_noops"] += 1
             return 0
+        info["asks"] += 1
         vals_x = sorted(float(pos[u][0]) for u in ords[0])
         vals_y = sorted(float(pos[u][1]) for u in ords[1])
         res = xy_reinsert(v, ords[0], ords[1], src_adj,
-                          vals_x, vals_y, contacts)
+                          vals_x, vals_y, contacts, bar=bar)
         if res is None:
             info["interleave_noops"] += 1
             tried[key] = state_ver
@@ -470,7 +649,7 @@ def order_arrange(pos0: Dict[int, np.ndarray],
     # COMPLETED wave that disturbs nothing is a fixpoint certificate
     # over the whole move family -> return early, budget to the tail.
     if wave:
-        while info["passes"] < _MAX_PASSES and not _expired():
+        while info["passes"] < pass_cap and not _expired():
             info["passes"] += 1
             changes = 0
             first = info["passes"] == 1
@@ -590,7 +769,105 @@ def order_arrange(pos0: Dict[int, np.ndarray],
                     info["wave_early_stop"] = True
                 break
 
-    while not wave and info["passes"] < _MAX_PASSES and not _expired():
+    # s3.126 build -> permute -> dispatch. A blind pass's ask LIST is
+    # state-independent (slot keys from n, scales, axpair and the fixed
+    # edge list); only the block CONTENTS are read at dispatch, exactly
+    # as the nested loops did. "ladder" reproduces them byte for byte:
+    # same _probe calls, same keys, same order, one _expired() before
+    # every ask (identical executed prefix because _expired is
+    # monotone). Hierarchy units and tiles stay outside the list — they
+    # precede the ladder in ladder mode and are refused otherwise.
+    def _ask_list() -> list:
+        asks: list = []
+        for scale in scales:
+            if xy and carry and scale == 1:
+                asks.extend(("xy", off) for off in range(n))
+                continue
+            for axis in axpair:
+                for off in range(0, n, max(scale // 2, 1)):
+                    asks.append(("iv", axis, scale, off))
+        if carry:
+            for ei in range(len(edges)):
+                for axis in axpair:
+                    asks.append(("pair", axis, ei))
+        return asks
+
+    def _rung_of(item) -> int:
+        if item[0] == "iv":
+            return item[2]
+        return 1 if item[0] == "xy" else 0
+
+    def _permute(asks: list) -> list:
+        if sched == "ladder":
+            return asks
+
+        def _shuf(items):
+            return [items[i] for i in sched_rng.permutation(len(items))]
+        if sched == "bag":
+            return _shuf(asks)
+        out: list = []
+        for r in list(scales) + [0]:      # rung: coarsest-first kept,
+            grp = [a for a in asks if _rung_of(a) == r]   # pairs last
+            if grp:
+                out.extend(_shuf(grp))
+        return out
+
+    def _dispatch(item) -> int:
+        kind = item[0]
+        if kind == "xy":
+            # s3.121: the joint 2-D singleton sweep REPLACES the
+            # per-axis scale-1 sweep (subsumption: pinning either
+            # coordinate reproduces the per-axis singleton) — the
+            # fold's atom at the ladder's fine end, before pairs
+            vv = ords[1][item[1]]
+            return _xy_probe(vv, ("s", vv))
+        if kind == "iv":
+            _, axis, scale, off = item
+            if carry:
+                order = ords[axis]
+            else:
+                order = sorted(pos, key=lambda v:
+                               (float(pos[v][axis]), v))
+            block = order[off:off + scale]
+            wext = (ext.pop((scale, off), None)
+                    if widen and axis != axpair[0]
+                    else None)
+            if wext:
+                info["widen_asked"] += 1
+                got = _probe(sorted(set(block) | wext), axis,
+                             ("w", scale, off, axis))
+                if got:
+                    info["widen_accepts"] += 1
+            else:
+                got = _probe(block, axis, (axis, scale, off))
+                if got and widen and axis == axpair[0]:
+                    ext[(scale, off)] = set(last_diff or ())
+            return got
+        # pairs are FINE moves: they run AFTER the interval ladder
+        # (coarsest-first, the s3.81 ladder lesson — measured the
+        # hard way at s3.118: pairs-first ate turán's whole budget
+        # before a single coarse weave ran)
+        _, axis, ei = item
+        u, w = edges[ei]
+        wext = (ext.pop(("e", ei), None)
+                if widen and axis != axpair[0]
+                else None)
+        if wext:
+            info["widen_asked"] += 1
+            got = _probe(sorted({u, w} | wext), axis,
+                         ("w", "e", ei, axis))
+            if got:
+                info["widen_accepts"] += 1
+        else:
+            got = _probe([u, w], axis, ("e", ei, axis))
+            if got and widen and axis == axpair[0]:
+                ext[("e", ei)] = set(last_diff or ())
+        if got:
+            info["pair_accepts"] += 1
+        return got
+
+    fix = False
+    while not wave and info["passes"] < pass_cap and not _expired():
         info["passes"] += 1
         changes = 0
         # s3.123 axis_inner: per-pass sweep-direction alternation
@@ -634,76 +911,13 @@ def order_arrange(pos0: Dict[int, np.ndarray],
                     break
         if tiles and carry:
             changes += _tile_pass()
-        for scale in scales:
-            if xy and carry and scale == 1:
-                # s3.121: the joint 2-D singleton sweep REPLACES the
-                # per-axis scale-1 sweep (subsumption: pinning either
-                # coordinate reproduces the per-axis singleton) — the
-                # fold's atom at the ladder's fine end, before pairs
-                for off in range(n):
-                    if _expired():
-                        break
-                    vv = ords[1][off]
-                    changes += _xy_probe(vv, ("s", vv))
-                if _expired():
-                    break
-                continue
-            for axis in axpair:
-                for off in range(0, n, max(scale // 2, 1)):
-                    if _expired():
-                        break
-                    if carry:
-                        order = ords[axis]
-                    else:
-                        order = sorted(pos, key=lambda v:
-                                       (float(pos[v][axis]), v))
-                    block = order[off:off + scale]
-                    wext = (ext.pop((scale, off), None)
-                            if widen and axis != axpair[0]
-                            else None)
-                    if wext:
-                        info["widen_asked"] += 1
-                        got = _probe(sorted(set(block) | wext), axis,
-                                     ("w", scale, off, axis))
-                        if got:
-                            info["widen_accepts"] += 1
-                    else:
-                        got = _probe(block, axis,
-                                     (axis, scale, off))
-                        if got and widen and axis == axpair[0]:
-                            ext[(scale, off)] = set(last_diff or ())
-                    changes += got
-                if _expired():
-                    break
+        asks = _permute(_ask_list())
+        if ask_log:
+            info["ask_log"].append(list(asks))
+        for item in asks:
             if _expired():
                 break
-        if carry:
-            # pairs are FINE moves: they run AFTER the interval ladder
-            # (coarsest-first, the s3.81 ladder lesson — measured the
-            # hard way at s3.118: pairs-first ate turán's whole budget
-            # before a single coarse weave ran)
-            for ei, (u, w) in enumerate(edges):
-                for axis in axpair:
-                    if _expired():
-                        break
-                    wext = (ext.pop(("e", ei), None)
-                            if widen and axis != axpair[0]
-                            else None)
-                    if wext:
-                        info["widen_asked"] += 1
-                        got = _probe(sorted({u, w} | wext), axis,
-                                     ("w", "e", ei, axis))
-                        if got:
-                            info["widen_accepts"] += 1
-                    else:
-                        got = _probe([u, w], axis, ("e", ei, axis))
-                        if got and widen and axis == axpair[0]:
-                            ext[("e", ei)] = set(last_diff or ())
-                    if got:
-                        info["pair_accepts"] += 1
-                    changes += got
-                if _expired():
-                    break
+            changes += _dispatch(item)
         if not carry and not _expired():
             mpos, mi = edge_monotonize(pos, src_adj, contacts=contacts)
             if mi["swaps"]:
@@ -713,10 +927,14 @@ def order_arrange(pos0: Dict[int, np.ndarray],
                     state_ver += 1
         info["accept_traj"].append(changes)
         if changes == 0:
+            # a pass cut short at zero accepts is no certificate
+            fix = not _expired()
             break
 
+    info["stopped_by"] = _stop_reason(
+        bool(info["wave_early_stop"]) if wave else fix)
     info["seat_E"] = best_e
-    if plane:
+    if plane and not wrap and not strip:
         # pure-stair judge: pen does not exist during plane search —
         # reporting 0 here would fake a feasibility certificate, so
         # the keys stay None (the projection's proj_pen is the real
@@ -726,6 +944,21 @@ def order_arrange(pos0: Dict[int, np.ndarray],
         pen = int(best_e // _LEX_M)
         info["seat_pen"] = pen
         info["seat_stair"] = best_e - pen * _LEX_M
+    info["judge"] = ("brick" if wrap
+                     else ("strip" if strip
+                           else ("stair" if plane else "seat")))
+    if strip:
+        info["strip_miss"] = best_rinfo.get("strip_miss")
+        info["strip_iters"] = best_rinfo.get("strip_iters")
+    if wrap:
+        _Hs = max(1, fold_c[1] // best_k)
+        info["fold_Hs"] = int(_Hs)
+        info["fold_strips"] = int(best_k)
+        info["_phys_pos"] = _phys(best_proj, W=fold_c[0], Hs=_Hs)
+    if arm_cost and "_contacts" in best_rinfo:
+        info["plane_bars"] = int(sum(
+            (1 if h else 0) + (1 if v else 0)
+            for h, v in best_rinfo["_contacts"].values()))
     info["readout_info"] = best_rinfo
     if carry and best_ords is not None:
         # the bookmark's ORDERS travel with it: the final projection

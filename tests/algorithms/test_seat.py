@@ -333,7 +333,7 @@ class TestSeatArrange:
 
 
 class TestPipeline:
-    def test_config_is_twentyone_knobs(self):
+    def test_config_is_twentyeight_knobs(self):
         from dataclasses import fields
         from ember_qc.algorithms.factored.placement import AttractConfig
         names = {f.name for f in fields(AttractConfig)}
@@ -345,7 +345,9 @@ class TestPipeline:
                          "carry_orders", "tile_moves",
                          "settle_projection", "xy_singles",
                          "wave_schedule", "axis_inner",
-                         "cross_widen"}
+                         "cross_widen", "axis_single", "wrap_pack",
+                         "arm_cost", "strip", "sched", "sched_seed",
+                         "max_asks"}
 
     def test_e2e_valid_deterministic_both_fabrics(self):
         from ember_qc.algorithms.factored import attract_embed

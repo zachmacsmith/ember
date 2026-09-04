@@ -208,6 +208,238 @@ def _span_vectors(pos, src_adj, yrank):
     return ids, hmax - hmin, vmax - vmin
 
 
+def judge_pools(grid):
+    """s3.124: the sound judge's per-(line, brick) pools — EXACTLY the
+    packer's profiles (one accounting): the `_brick_pool_arrays` census
+    with the two boundary lines zeroed on both orientations, the
+    measured s3.116 rule (count-4 boundary pools flooded 257+ deficits:
+    boundary lines carry one course parity and are parity-starved at
+    claim time). The phantom trailing brick stays 0. Memoized on the
+    grid (the line_pools pattern). Returns (ph, pv): ph indexed
+    [h-line (row), brick along x], pv indexed [v-line (col), brick
+    along y]."""
+    s = max(int(getattr(grid, "stride", 1) or 1), 1)
+    cache = getattr(grid, "_judge_pools", None)
+    if cache is not None and cache[0] == s:
+        return cache[1]
+    ph, pv = _brick_pool_arrays(grid, s)
+    ph = np.array(ph, dtype=float, copy=True)
+    pv = np.array(pv, dtype=float, copy=True)
+    for arr in (ph, pv):
+        if arr.shape[0] >= 2:
+            arr[0, :] = 0.0
+            arr[-1, :] = 0.0
+    grid._judge_pools = (s, (ph, pv))
+    return ph, pv
+
+
+def _phantom_edge(arr) -> int:
+    """Index of the first along-brick with zero pool on every line (the
+    phantom trailing brick), or the array width when there is none."""
+    nz = np.flatnonzero(arr.max(axis=0) > 0)
+    return int(nz.max()) + 1 if nz.size else int(arr.shape[1])
+
+
+def brick_energy(pos, src_adj, grid, yrank, *, pools, kappa=None,
+                 floor=True) -> float:
+    """s3.124 — the sound judge: brick-ruler lex energy on PHYSICAL
+    coordinates, `pen * _LEX_M + stair`, where stair counts each
+    active arm's span in WHOLE BRICKS (qubits — an upper bound on the
+    real chain, the s3.107 ruler) and pen is the hinge² overload of
+    per-(line, brick) cover against ``pools`` (`judge_pools`). Cover
+    arrays are sized to the occupied extent: lines and bricks beyond
+    the chip have pool 0, so an off-chip arm is PRICED, never clamped
+    or wrapped (negative coordinates are asserted away — virtual
+    coordinates are >= 0 and strips are >= 0). An endpoint landing in
+    the phantom trailing brick is booked in the last real brick (the
+    same legality `pack_lines`' nb_eff clamp grants — projection and
+    judge agree there); endpoints beyond it are not clamped. Same
+    one-direction-per-edge split as `seat_energy` (carried rank).
+
+    ONE ACCOUNTING (measured, s3.124 smoke): the cover is booked on
+    the CONVERTER's claim intervals — the `arm_books` rule: every
+    variable's cross, a contact-free side as a one-tile footprint
+    (b = a + 1), the kappa contact floor widening both axes — because
+    that is what the converter seats; the s3.108 demand-honest census
+    booked nothing for point arms and a pen-0 state then missed 10
+    arms at conversion. Stair stays on ACTIVE arms only: a point arm
+    is spur-pruned in the real chain, so it is capacity, not cost."""
+    s = max(int(getattr(grid, "stride", 1) or 1), 1)
+    ph, pv = pools
+    ids, A, B = _edge_arrays(pos, src_adj)
+    n = len(ids)
+    if n == 0:
+        return 0.0
+    X = np.fromiter((int(round(float(pos[v][0]))) for v in ids),
+                    dtype=np.int64, count=n)
+    Y = np.fromiter((int(round(float(pos[v][1]))) for v in ids),
+                    dtype=np.int64, count=n)
+    assert X.min() >= 0 and Y.min() >= 0, "physical coordinates < 0"
+    hmin = X.copy()
+    hmax = X.copy()
+    vmin = Y.copy()
+    vmax = Y.copy()
+    hcnt = np.zeros(n, dtype=np.int64)
+    vcnt = np.zeros(n, dtype=np.int64)
+    if len(A):
+        R = np.fromiter((yrank[v] for v in ids), dtype=np.int64,
+                        count=n)
+        lower = R[A] < R[B]
+        L = np.where(lower, A, B)
+        Hi = np.where(lower, B, A)
+        np.minimum.at(hmin, L, X[Hi])
+        np.maximum.at(hmax, L, X[Hi])
+        np.minimum.at(vmin, Hi, Y[L])
+        np.maximum.at(vmax, Hi, Y[L])
+        np.add.at(hcnt, L, 1)
+        np.add.at(vcnt, Hi, 1)
+    hm = hcnt > 0
+    vm = vcnt > 0
+    qhmin, qhmax = hmin // s, hmax // s
+    qvmin, qvmax = vmin // s, vmax // s
+    stair = float((qhmax[hm] - qhmin[hm] + 1).sum()
+                  + (qvmax[vm] - qvmin[vm] + 1).sum())
+    # cover on the books' claim intervals (the converter's truth):
+    # kappa floor on the raw widths, then the one-tile footprint
+    ah = hmin.astype(float)
+    bh = hmax.astype(float)
+    av = vmin.astype(float)
+    bv = vmax.astype(float)
+    if floor and kappa:
+        deg = np.zeros(n)
+        if len(A):
+            np.add.at(deg, A, 1.0)
+            np.add.at(deg, B, 1.0)
+        need = deg / float(kappa) - 1.0
+        deficit = need - ((bh - ah) + (bv - av))
+        d4 = np.where(deficit > 0, deficit / 4.0, 0.0)
+        ah = ah - d4
+        bh = bh + d4
+        av = av - d4
+        bv = bv + d4
+    bh = np.maximum(bh, ah + 1.0)
+    bv = np.maximum(bv, av + 1.0)
+    cqhmin = (np.maximum(np.floor(ah), 0.0).astype(np.int64)) // s
+    cqhmax = (np.ceil(bh).astype(np.int64)) // s
+    cqvmin = (np.maximum(np.floor(av), 0.0).astype(np.int64)) // s
+    cqvmax = (np.ceil(bv).astype(np.int64)) // s
+    # phantom absorption (both along axes)
+    nbx = _phantom_edge(ph)
+    nby = _phantom_edge(pv)
+    cqhmin = np.where(cqhmin == nbx, nbx - 1, cqhmin)
+    cqhmax = np.where(cqhmax == nbx, nbx - 1, cqhmax)
+    cqvmin = np.where(cqvmin == nby, nby - 1, cqvmin)
+    cqvmax = np.where(cqvmax == nby, nby - 1, cqvmax)
+    pen = 0.0
+    Hn, Wb = ph.shape
+    Hpad = max(Hn, int(Y.max()) + 1)
+    Wpad = max(Wb, int(cqhmax.max()) + 1)
+    Dh = np.zeros((Hpad, Wpad + 1))
+    np.add.at(Dh, (Y, cqhmin), 1.0)
+    np.add.at(Dh, (Y, cqhmax + 1), -1.0)
+    Ch = np.cumsum(Dh, axis=1)[:, :Wpad]
+    PH = np.zeros((Hpad, Wpad))
+    PH[:Hn, :Wb] = ph
+    oh = np.maximum(Ch - PH, 0.0)
+    pen += float((oh * oh).sum())
+    Wn, Hb = pv.shape
+    Wpad2 = max(Wn, int(X.max()) + 1)
+    Hpad2 = max(Hb, int(cqvmax.max()) + 1)
+    Dv = np.zeros((Wpad2, Hpad2 + 1))
+    np.add.at(Dv, (X, cqvmin), 1.0)
+    np.add.at(Dv, (X, cqvmax + 1), -1.0)
+    Cv = np.cumsum(Dv, axis=1)[:, :Hpad2]
+    PV = np.zeros((Wpad2, Hpad2))
+    PV[:Wn, :Hb] = pv
+    ov = np.maximum(Cv - PV, 0.0)
+    pen += float((ov * ov).sum())
+    return float(pen * _LEX_M + stair)
+
+
+def row_overflow(pos, src_adj, yrank, *, H: int, s: int, kappa=None,
+                 floor=True) -> float:
+    """s3.125 strip — the capacity-first key beyond the chip's rows.
+    hinge² cover per (line, brick) at pool 0 for every footprint that
+    reaches a row the chip does not have: h-footprints on rows
+    ``y >= H-1`` (the zeroed boundary row and everything above it,
+    re-indexed from H-1) and v-footprints on bricks ``>= (H-1)//s``.
+    Same claim intervals as `brick_energy` (rank split, kappa floor,
+    one-tile footprint: a point arm still occupies its tile) and NO
+    phantom absorption — an endpoint on the boundary row IS overflow.
+    On-chip rows are deliberately not priced: the strip's y-pack is
+    the uniform junction-depth pack and its own certificate."""
+    ids, A, B = _edge_arrays(pos, src_adj)
+    n = len(ids)
+    if n == 0:
+        return 0.0
+    X = np.fromiter((int(round(float(pos[v][0]))) for v in ids),
+                    dtype=np.int64, count=n)
+    Y = np.fromiter((int(round(float(pos[v][1]))) for v in ids),
+                    dtype=np.int64, count=n)
+    assert X.min() >= 0 and Y.min() >= 0, "strip coordinates < 0"
+    hmin = X.copy()
+    hmax = X.copy()
+    vmin = Y.copy()
+    vmax = Y.copy()
+    if len(A):
+        R = np.fromiter((yrank[v] for v in ids), dtype=np.int64,
+                        count=n)
+        lower = R[A] < R[B]
+        L = np.where(lower, A, B)
+        Hi = np.where(lower, B, A)
+        np.minimum.at(hmin, L, X[Hi])
+        np.maximum.at(hmax, L, X[Hi])
+        np.minimum.at(vmin, Hi, Y[L])
+        np.maximum.at(vmax, Hi, Y[L])
+    ah = hmin.astype(float)
+    bh = hmax.astype(float)
+    av = vmin.astype(float)
+    bv = vmax.astype(float)
+    if floor and kappa:
+        deg = np.zeros(n)
+        if len(A):
+            np.add.at(deg, A, 1.0)
+            np.add.at(deg, B, 1.0)
+        need = deg / float(kappa) - 1.0
+        deficit = need - ((bh - ah) + (bv - av))
+        d4 = np.where(deficit > 0, deficit / 4.0, 0.0)
+        ah = ah - d4
+        bh = bh + d4
+        av = av - d4
+        bv = bv + d4
+    bh = np.maximum(bh, ah + 1.0)
+    bv = np.maximum(bv, av + 1.0)
+    cqhmin = (np.maximum(np.floor(ah), 0.0).astype(np.int64)) // s
+    cqhmax = (np.ceil(bh).astype(np.int64)) // s
+    cqvmin = (np.maximum(np.floor(av), 0.0).astype(np.int64)) // s
+    cqvmax = (np.ceil(bv).astype(np.int64)) // s
+    pen = 0.0
+    top = int(H) - 1
+    hm = Y >= top
+    if hm.any():
+        rows = Y[hm] - top
+        Wpad = int(cqhmax[hm].max()) + 1
+        Dh = np.zeros((int(rows.max()) + 1, Wpad + 1))
+        np.add.at(Dh, (rows, cqhmin[hm]), 1.0)
+        np.add.at(Dh, (rows, cqhmax[hm] + 1), -1.0)
+        Ch = np.cumsum(Dh, axis=1)[:, :Wpad]
+        pen += float((Ch * Ch).sum())
+    nby = top // s
+    lo = np.maximum(cqvmin, nby)
+    vm = cqvmax >= lo
+    if vm.any():
+        cols = X[vm]
+        b0 = lo[vm] - nby
+        b1 = cqvmax[vm] - nby
+        Hpad = int(b1.max()) + 1
+        Dv = np.zeros((int(cols.max()) + 1, Hpad + 1))
+        np.add.at(Dv, (cols, b0), 1.0)
+        np.add.at(Dv, (cols, b1 + 1), -1.0)
+        Cv = np.cumsum(Dv, axis=1)[:, :Hpad]
+        pen += float((Cv * Cv).sum())
+    return float(pen)
+
+
 def _ext4(vals: List[int]):
     """(min1, #min1, min2, max1, #max1, max2) for O(1) exclusion
     extremes; min2/max2 are +/-inf sentinels when absent."""
