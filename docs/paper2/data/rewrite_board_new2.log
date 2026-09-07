@@ -1,0 +1,81 @@
+board new-newmm: arms ('new', 'new+mm'), 116 jobs; load (112.0498046875, 111.59619140625, 109.85595703125)
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/rewrite_board.py:69: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+K100             new     s0: acl=7.26 mx=8 lacl=7.26 stop=fixpoint bm=565/1555 pen=0 cert=True mmskip=True err=None (19.9s)
+K100             new     s1: acl=7.26 mx=8 lacl=7.26 stop=fixpoint bm=852/1895 pen=0 cert=True mmskip=True err=None (24.1s)
+K100             new     s2: acl=7.26 mx=8 lacl=7.26 stop=fixpoint bm=504/1337 pen=0 cert=True mmskip=True err=None (19.9s)
+K100             new+mm  s0: acl=7.26 mx=8 lacl=7.26 stop=fixpoint bm=565/1555 pen=0 cert=True mmskip=True err=None (63.5s)
+K100             new+mm  s1: acl=7.26 mx=8 lacl=7.26 stop=fixpoint bm=852/1895 pen=0 cert=True mmskip=True err=None (64.1s)
+K100             new+mm  s2: acl=7.26 mx=8 lacl=7.26 stop=fixpoint bm=504/1337 pen=0 cert=True mmskip=True err=None (58.8s)
+K140             new     s0: acl=9.757 mx=10 lacl=9.757 stop=fixpoint bm=859/2206 pen=0 cert=True mmskip=True err=None (40.0s)
+K140             new     s1: acl=9.771 mx=11 lacl=9.771 stop=fixpoint bm=555/2071 pen=0 cert=True mmskip=True err=None (37.6s)
+K140             new     s2: acl=9.771 mx=11 lacl=9.771 stop=fixpoint bm=650/2102 pen=0 cert=True mmskip=True err=None (35.7s)
+K140             new+mm  s0: acl=9.757 mx=10 lacl=9.757 stop=deadline bm=859/1663 pen=0 cert=True mmskip=True err=None (64.8s)
+K140             new+mm  s1: acl=9.771 mx=11 lacl=9.771 stop=deadline bm=555/1584 pen=0 cert=True mmskip=True err=None (67.6s)
+K140             new+mm  s2: acl=9.771 mx=11 lacl=9.771 stop=deadline bm=650/1604 pen=0 cert=True mmskip=True err=None (72.7s)
+ER100_d10        new     s0: acl=4.62 mx=8 lacl=4.62 stop=fixpoint bm=4682/5434 pen=0 cert=True mmskip=True err=None (32.8s)
+ER100_d10        new     s1: acl=4.63 mx=8 lacl=4.63 stop=fixpoint bm=2203/3147 pen=0 cert=True mmskip=True err=None (23.7s)
+ER100_d10        new     s2: acl=4.53 mx=7 lacl=4.53 stop=fixpoint bm=1167/2885 pen=0 cert=True mmskip=True err=None (21.1s)
+ER100_d10        new     s3: acl=4.63 mx=8 lacl=4.63 stop=fixpoint bm=2060/3135 pen=0 cert=True mmskip=True err=None (21.7s)
+ER100_d10        new     s4: acl=4.64 mx=9 lacl=4.64 stop=fixpoint bm=1644/3900 pen=0 cert=True mmskip=True err=None (26.1s)
+ER100_d10        new     s5: acl=4.77 mx=9 lacl=4.77 stop=fixpoint bm=3116/4201 pen=0 cert=True mmskip=True err=None (26.9s)
+ER100_d10        new     s6: acl=4.47 mx=8 lacl=4.47 stop=asks bm=6616/8000 pen=0 cert=True mmskip=True err=None (42.7s)
+ER100_d10        new     s7: acl=4.43 mx=8 lacl=4.43 stop=fixpoint bm=2582/5989 pen=0 cert=True mmskip=True err=None (36.1s)
+ER100_d10        new     s8: acl=4.69 mx=8 lacl=4.69 stop=fixpoint bm=1435/4092 pen=0 cert=True mmskip=True err=None (28.1s)
+ER100_d10        new     s9: acl=4.58 mx=8 lacl=4.58 stop=fixpoint bm=877/2740 pen=0 cert=True mmskip=True err=None (21.1s)
+ER100_d10        new+mm  s0: acl=4.27 mx=7 lacl=4.62 stop=deadline bm=4682/5191 pen=0 cert=True mmskip=True err=None (62.0s)
+ER100_d10        new+mm  s1: acl=4.63 mx=8 lacl=4.63 stop=fixpoint bm=2203/3147 pen=0 cert=True mmskip=True err=None (62.1s)
+ER100_d10        new+mm  s2: acl=4.23 mx=7 lacl=4.53 stop=fixpoint bm=1167/2885 pen=0 cert=True mmskip=True err=None (60.0s)
+ER100_d10        new+mm  s3: acl=4.63 mx=8 lacl=4.63 stop=fixpoint bm=2060/3135 pen=0 cert=True mmskip=True err=None (60.2s)
+ER100_d10        new+mm  s4: acl=4.21 mx=7 lacl=4.64 stop=fixpoint bm=1644/3900 pen=0 cert=True mmskip=True err=None (60.0s)
+ER100_d10        new+mm  s5: acl=4.78 mx=8 lacl=4.77 stop=fixpoint bm=3116/4201 pen=0 cert=True mmskip=True err=None (60.1s)
+ER100_d10        new+mm  s6: acl=4.08 mx=7 lacl=4.51 stop=deadline bm=6090/6516 pen=0 cert=True mmskip=True err=None (60.1s)
+ER100_d10        new+mm  s7: acl=4.42 mx=7 lacl=4.43 stop=fixpoint bm=2582/5989 pen=0 cert=True mmskip=True err=None (60.0s)
+ER100_d10        new+mm  s8: acl=4.69 mx=8 lacl=4.69 stop=fixpoint bm=1435/4092 pen=0 cert=True mmskip=True err=None (60.1s)
+ER100_d10        new+mm  s9: acl=4.58 mx=8 lacl=4.58 stop=fixpoint bm=877/2740 pen=0 cert=True mmskip=True err=None (60.1s)

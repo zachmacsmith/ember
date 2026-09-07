@@ -45,7 +45,7 @@ BOARD = [
 DEEP_CELLS = ("turan_n162", "ws_n486", "regular_n316", "ER100_d10")
 BUDGET = {"K100": 10000, "K140": 12000, "ER100_d10": 8000,
           "turan_n162": 15000, "spin_glass_n163": 12000,
-          "regular_n316": 8000, "ws_n486": 6000, "grid_200": 8000,
+          "regular_n316": 10000, "ws_n486": 15000, "grid_200": 8000,
           "honeycomb_200": 8000, "king_graph_196": 8000}
 ARMS = ("new", "new+mm", "mm")
 
