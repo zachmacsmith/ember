@@ -24,11 +24,11 @@ names a graph type. The init must not matter (it is two random permutations) and
 order must not matter (measure it with the bag seed). Budgets are counted in DP evaluations
 (`max_asks`), never in seconds, so a measurement never depends on the box's load. Fingerprints
 (`docs/paper2/data/plane_fingerprint.py`) are the acceptance test of any engine change: K8/K10 on
-Z3 certified at the template, path-60 ≈ 1.02, K100 = 7.26 at a fixpoint, turán n162 = 6.000 from
+Z3 certified at the template, path-60 ≈ 1.07, K100 = 7.26 at a fixpoint, turán n162 = 6.000 from
 every random init, grid_200 pre-tail ≤ 1.76. Measure paired by (instance, seed) against stock
 minorminer and against the archived default (a worktree at `ea5d1cf2`). Winners ship as defaults.
 
-**Read `docs/paper2/ideas.md` first** (one page: the algorithm, the principles, the open fronts),
+**New here? Start at `docs/handoff/README.md`** (the hand-off: algorithm with diagrams, code map, how experiments are run, the frozen baseline and `compare_baseline.py`, the history of refuted ideas, the open fronts). Then **read `docs/paper2/ideas.md`** (one page: the algorithm, the principles, the open fronts),
 then `docs/paper2/anatomy.md` (the pipeline as built), `docs/paper2/fabrics.md` (measured
 fabric facts), `docs/paper2/mm-internals.md` (what shipped minorminer actually does) and
 `docs/paper2/notes.md` (the chronicle; s3.127 is the rewrite entry). `docs/paper2/archive/` is

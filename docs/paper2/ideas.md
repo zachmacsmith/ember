@@ -75,23 +75,26 @@ Parameters: `timeout`, `seed`, `sched_seed`, `max_asks`, `tail`.
   answer (turán needed the third pass).
 - **No mechanism names a graph type.** Winners ship as defaults.
 
-## Open fronts
+## Open fronts (2026-09-07; the paired board and the instrument are done — `docs/handoff/baseline/RESULTS.md`)
 
-1. **The paired board.** The rewrite vs stock minorminer and vs the
-   archived default (worktree at `ea5d1cf2`), 10 cells, paired by
-   (instance, seed), `tail="none"` and `tail="mm"`. Fingerprints so far
-   (tail none, work budgets): K100 7.26 at a fixpoint, turán 6.000 on
-   10/10 random inits, grid_200 pre-tail 1.40 (old 1.87), path-60 1.033.
-2. **The instrument on the new engine**: bag draws (`sched_seed`) ×
-   random inits (`seed`) per cell; the claim is order-free and
-   init-free within tolerance. ER's delocalized near-minima are the
-   cell to watch.
-3. **The sparse ceiling.** The plane's family is one cross per
-   variable; lattices reach ~1.4 pre-tail where minorminer polishes to
-   ~1.3. Candidates: abutment (two chains meeting end to end on a lane,
-   the grid half of the product topology) and junction packing.
-4. **Performance.** The interleaver's per-ask Python loop is O(p) at
-   n≈500 (~35 ms); vectorize if ws is budget-bound.
-5. **Parked**: Pegasus (junctions ~56% complete: converter/completion/
+1. **Per-ask cost.** A new-engine DP evaluation costs ~5× an old one
+   (two packs + books per adoption; the `stepR`/`stepQ` Python loops in
+   `align_reinsert._arm`), so the 60-second arm finishes a fraction of
+   a pass on ws and hands minorminer poor seeds. Vectorize; one books
+   computation per pack; measure asks/s on ws_n486 before and after
+   (`arrange_wall`, `asks` in diag). The fingerprints must not move.
+2. **The sparse reach.** At a full work budget the engine's own answer
+   on ws is 4.40 with chains up to 27; regular 4.75; king 2.56 — worse
+   than the old engine's from its spectral init (the +0.4 the init
+   carried on exactly these cells; the optimizer must replace it). The
+   invariance map: regular order-sensitive (range 0.54), ws order- and
+   init-sensitive (0.39 / 1.01), king init-sensitive (0.32), all
+   budget-bound — first discriminate unfinished descent from a family
+   ceiling with a 2× budget. Candidates: abutment (two chains meeting
+   end to end on a lane — the grid half of the product topology, unused
+   by the cross model), junction packing, richer unit families.
+3. **The wall-clock arm.** `TAIL_SPLIT` gives the engine half the wall;
+   with (1) fixed, re-measure `new+mm` at 60 s on the sparse cells.
+4. **Parked**: Pegasus (junctions ~56% complete: converter/completion/
    certificate gated to stride 2; the engine runs), max chain as a
    third lexicographic slot.

@@ -1,0 +1,50 @@
+fingerprint step6-dedupe: 15 jobs; load (116.67919921875, 117.5869140625, 120.43310546875)
+/data/max/ember/docs/paper2/data/plane_fingerprint.py:57: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/plane_fingerprint.py:57: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/plane_fingerprint.py:57: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/plane_fingerprint.py:57: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/plane_fingerprint.py:57: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/plane_fingerprint.py:57: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/plane_fingerprint.py:57: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/plane_fingerprint.py:57: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/plane_fingerprint.py:57: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/plane_fingerprint.py:57: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/plane_fingerprint.py:57: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/plane_fingerprint.py:57: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/plane_fingerprint.py:57: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/plane_fingerprint.py:57: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+/data/max/ember/docs/paper2/data/plane_fingerprint.py:57: DeprecationWarning: dwave-networkx is deprecated and will be replaced by dwave-graphs in Ocean 10. Most functionality previously provided by dwave-networkx is now available as part of dwave-graphs under the 'dwave.graphs' namespace.
+  import dwave_networkx as dnx
+K8           s0: acl=1.5 mx=2 cert=True mmskip=True ext=0 asks=71 bm=0 stop=fixpoint pen=0 stair=28.0 err=None (0.8s)
+K10          s0: acl=1.8 mx=2 cert=True mmskip=True ext=0 asks=108 bm=11 stop=fixpoint pen=0 stair=40.0 err=None (1.1s)
+path60       s0: acl=1.067 mx=2 cert=True mmskip=True ext=0 asks=2100 bm=1492 stop=fixpoint pen=0 stair=139.0 err=None (4.9s)
+K100         s0: acl=7.26 mx=8 cert=True mmskip=True ext=0 asks=1555 bm=565 stop=fixpoint pen=0 stair=1548.0 err=None (14.0s)
+turan_n162   s0: acl=6.0 mx=6 cert=True mmskip=True ext=0 asks=15000 bm=3066 stop=asks pen=0 stair=2112.0 err=None (166.7s)
+turan_n162   s1: acl=6.0 mx=6 cert=True mmskip=True ext=0 asks=15000 bm=5480 stop=asks pen=0 stair=2110.0 err=None (166.9s)
+turan_n162   s2: acl=6.0 mx=6 cert=True mmskip=True ext=0 asks=15000 bm=7584 stop=asks pen=0 stair=2106.0 err=None (162.2s)
+turan_n162   s3: acl=6.0 mx=6 cert=True mmskip=True ext=0 asks=15000 bm=6317 stop=asks pen=0 stair=2117.0 err=None (162.7s)
+turan_n162   s4: acl=6.0 mx=6 cert=True mmskip=True ext=0 asks=15000 bm=5674 stop=asks pen=0 stair=2109.0 err=None (142.7s)
+turan_n162   s5: acl=6.0 mx=6 cert=True mmskip=True ext=0 asks=15000 bm=9415 stop=asks pen=0 stair=2119.0 err=None (173.4s)
+turan_n162   s6: acl=6.0 mx=6 cert=True mmskip=True ext=0 asks=15000 bm=12029 stop=asks pen=0 stair=2114.0 err=None (162.8s)
+turan_n162   s7: acl=6.0 mx=6 cert=True mmskip=True ext=0 asks=15000 bm=1677 stop=asks pen=0 stair=2115.0 err=None (154.4s)
+turan_n162   s8: acl=6.0 mx=6 cert=True mmskip=True ext=0 asks=15000 bm=7254 stop=asks pen=0 stair=2111.0 err=None (165.9s)
+turan_n162   s9: acl=6.0 mx=6 cert=True mmskip=True ext=0 asks=15000 bm=9265 stop=asks pen=0 stair=2127.0 err=None (158.4s)
+grid_200     s0: acl=1.605 mx=6 cert=True mmskip=True ext=0 asks=8000 bm=5504 stop=asks pen=0 stair=770.0 err=None (65.7s)
+
+turán crystal hits: 10/10
+wrote /data/max/ember/docs/paper2/data/plane_fingerprint_step6-dedupe.json
+done-fingerprint

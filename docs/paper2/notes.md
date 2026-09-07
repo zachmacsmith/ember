@@ -2626,7 +2626,7 @@ budgets; `plane_fingerprint_step0-old.json` vs `step4-plane2.json`):
 | turán n162, seeds 0–9 | 6.000 on 3/10 | **6.000 on 10/10** (bookmark 1.9k–14.8k asks) |
 | grid_200 pre-tail | 1.87 | **1.40** (old polished: 1.33) |
 
-All certified, minorminer skipped, extensions 0.
+All certified, minorminer skipped, extensions 0. (Those are the step-4 numbers; the shipped engine after the both-axes extension fix, `plane_fingerprint_step5-default.json`, reads grid_200 1.605 and path-60 1.067 with everything else unchanged — the frozen baseline in `docs/handoff/baseline/`.)
 
 *Step 5 (after the archive commit `ea5d1cf2`).* Deleted: orders.py,
 seat.py, coarsen.py, costs.py, loop.py, the dead half of field.py

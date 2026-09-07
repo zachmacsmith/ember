@@ -283,9 +283,14 @@ def units(orders: Dict[int, List[int]], src_adj,
                 blk = tuple(order[off:off + sc])
                 if blk:
                     out.append((ax, blk))
+        # one ask per distinct neighbourhood: twins share N(v) (turán's
+        # two blocks give 81 identical units each), and a duplicate is
+        # re-asked after every accept for nothing
+        seen = set()
         for v in sorted(src_adj):
             nb = tuple(sorted(u for u in src_adj[v] if u != v))
-            if 1 <= len(nb) < n:
+            if 1 <= len(nb) < n and nb not in seen:
+                seen.add(nb)
                 out.append((ax, nb))
     perm = rng.permutation(len(out))
     return [out[i] for i in perm]

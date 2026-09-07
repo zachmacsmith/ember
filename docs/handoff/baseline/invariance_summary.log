@@ -1,0 +1,13 @@
+MAP — per cell: order draws | init draws (mean, sd, range)
+K100             | order: 7.26 sd=0.0 range=0.0 lmx=8.0 stop={'fixpoint': 5} | init: 7.262 sd=0.004 range=0.01 lmx=8.0 stop={'fixpoint': 5}
+K140             | order: 9.757 sd=0.0 range=0.0 lmx=10.0 stop={'fixpoint': 5} | init: 9.757 sd=0.0 range=0.0 lmx=10.0 stop={'fixpoint': 5}
+ER100_d10        | order: 4.662 sd=0.079 range=0.24 lmx=7.8 stop={'fixpoint': 5} | init: 4.76 sd=0.086 range=0.25 lmx=8.0 stop={'fixpoint': 5}
+turan_n162       | order: 6.0 sd=0.0 range=0.0 lmx=6.0 stop={'asks': 5} | init: 6.0 sd=0.0 range=0.0 lmx=6.0 stop={'asks': 5}
+spin_glass_n163  | order: 10.855 sd=0.045 range=0.128 lmx=12.0 stop={'fixpoint': 5} | init: 10.849 sd=0.046 range=0.117 lmx=12.2 stop={'fixpoint': 5}
+regular_n316     | order: 4.483 sd=0.192 range=0.541 lmx=14.0 stop={'asks': 5} SENSITIVE | init: 4.604 sd=0.037 range=0.108 lmx=13.2 stop={'asks': 5}
+ws_n486          | order: 4.283 sd=0.15 range=0.391 lmx=29.2 stop={'asks': 5} SENSITIVE | init: 4.277 sd=0.349 range=1.006 lmx=29.4 stop={'asks': 5} SENSITIVE
+grid_200         | order: 1.585 sd=0.083 range=0.225 lmx=5.2 stop={'asks': 4, 'fixpoint': 1} | init: 1.619 sd=0.078 range=0.195 lmx=6.2 stop={'asks': 5}
+honeycomb_200    | order: 1.984 sd=0.055 range=0.165 lmx=7.8 stop={'asks': 5} | init: 1.942 sd=0.066 range=0.15 lmx=6.8 stop={'asks': 4, 'fixpoint': 1}
+king_graph_196   | order: 2.513 sd=0.081 range=0.219 lmx=7.0 stop={'asks': 4, 'fixpoint': 1} | init: 2.555 sd=0.109 range=0.321 lmx=6.6 stop={'asks': 5} SENSITIVE
+sensitive: [('regular_n316', 'order', 4.483, 0.541), ('ws_n486', 'order', 4.283, 0.391), ('ws_n486', 'init', 4.277, 1.006), ('king_graph_196', 'init', 2.555, 0.321)]
+done-probe
