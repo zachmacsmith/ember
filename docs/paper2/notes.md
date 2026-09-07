@@ -2645,8 +2645,72 @@ surface; `test_plane.py` new. Suite: 505 passed. Docs: CLAUDE.md,
 ideas.md, anatomy.md rewritten for the new tree. Live harnesses:
 `plane_fingerprint.py`, `rewrite_board.py` (paired: new / new+mm /
 stock mm / the archived default from a worktree at `ea5d1cf2`),
-`invariance_probe.py` (order × init draws). Board and probe results:
-the next entry.
+`invariance_probe.py` (order × init draws).
+
+*The strip was wrong as a start condition.* First board pass: on
+regular/ws the new engine made ZERO accepts — a random start cannot be
+packed into the chip's 23 usable columns, every proposal was declined
+as infeasible, the initial state went to minorminer. Fix (committed):
+the packer extends BOTH axes past the chip with the ideal pool during
+the search (no state is ever unpackable), the judge prices anything
+off the chip, and a bounded projection (columns first — h-arms past
+the last real brick are free in a row pack, so rows before columns
+stacked everyone on row 1) hands over a counted layout only when the
+bookmark still hangs off the chip. Readouts reuse the books of the
+previous half. The pre-fix sparse rows are archived
+(`archive/probes/rewrite_board_strip_*.csv`).
+
+*Paired board* (`rewrite_board.py`; mm = stock minorminer 60 s; old =
+the archived default 60 s with its tail; new = the rewrite at a WORK
+budget, tail none; new+mm = the rewrite with the tail at 60 s wall;
+deep cells 10 seeds, others 3; ACL / mean max chain):
+
+| cell | mm | old (+tail) | new (no tail) | new+mm |
+|---|---|---|---|---|
+| K100 | 10.47 / 15 | 7.26 / 8 | 7.26 / 8 | 7.26 / 8 |
+| K140 | 20.29 / 40 (2/3) | 9.76 / 10 | 9.77 / 10.7 | 9.77 / 10.7 |
+| spin_glass | 20.56 / 35 | 11.04 / 12.7 | 10.85 / 12.3 | 10.84 / 12 |
+| turán | 11.30 / 18.9 | 9.46 / 12.5 | **6.000 / 6** | **6.000 / 6** |
+| ER100 | 4.82 / 8.8 | 4.65 / 7.8 | 4.60 / 8.1 | **4.45 / 7.5** |
+| regular | 3.59 / 9.6 | **2.78 / 6.5** | 4.75 / 13.6 | 3.61 / 9.3 |
+| ws | 3.14 / 11.7 | **2.56 / 8.0** | 4.40 / 27.4 | 3.34 / 12.1 |
+| grid | 1.08 / 2 | 1.27 / 3 | 1.59 / 5.7 | 1.29 / 2.7 |
+| honeycomb | 1.16 / 2.3 | 1.33 / 2.7 | 1.89 / 6 | 1.24 / 2.7 |
+| king | 1.76 / 3.7 | 1.83 / 4 | 2.56 / 7.7 | 2.11 / 4.7 |
+
+Reads. Dense and ER: the rewrite wins outright — every dense cell at
+the template, turán exact on 10/10 (old 9.46, minorminer 11.3), ER
+the best ever recorded with the tail (4.45). Sparse: the rewrite
+LOSES to the old engine on regular (+0.83), ws (+0.78) and king
+(+0.28) with the tail, ties on grid, wins on honeycomb. Two causes,
+both measured: (a) the wall-clock arm is budget-starved — a
+new-engine ask costs ~5× an old one (two packs + two books per adopt,
+the N(v) units, the `stepR` Python loop), so at 30 s the engine
+finishes a fraction of a pass on ws (~40 asks/s) and hands minorminer
+worse seeds than the old engine did in the same wall; (b) at a full
+work budget the engine's own pre-tail on ws (4.40, max chain 27) is
+still worse than the old engine's from its spectral init (3.76) and
+comparable to the old engine from a random init (4.18): the
+optimizer has not yet replaced the +0.4 the init carried on exactly
+{regular, ws, king} (the s3.120 finding, again), and long chains
+survive on ws.
+
+*Invariance* (`invariance_probe.py`, 5 order draws × 5 init draws per
+cell, tail none, work budgets; range of pre-tail ACL, tol = max(0.3,
+0.05·mean)): order- AND init-free: K100, K140, spin_glass, turán
+(exact, range 0), ER (0.24 / 0.25), grid (0.23 / 0.20), honeycomb
+(0.17 / 0.15). SENSITIVE: regular (order range 0.54; init 0.11), ws
+(order 0.39; init **1.01**), king (init 0.32). Every regular/ws run
+stopped by the ask budget (15k asks ≈ 4 passes on ws), so part of
+that spread is unfinished descent; the rest is the engine.
+
+*Where this leaves the rewrite.* A 3,900-line tree that a person can
+read; the dense half of the problem solved to the template from
+random starts; ER better than anything before; the sparse half open
+with two named causes — per-ask cost (vectorize the interleaver's
+transition loop, one books computation per pack) and the sparse
+family's reach on ws/regular/king (long chains, order-sensitivity,
+the init's lost +0.4). Both are fronts in ideas.md.
 
 ## 4. References
 
