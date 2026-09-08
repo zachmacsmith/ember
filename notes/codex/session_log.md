@@ -1403,3 +1403,45 @@ sealed-edge queries per supplied input, fixed depth/beam/proposal limits and
 previous source contacts, then tests a new free path. Tiny positive, unique
 contact obstruction and private-state checks precede the four saved states.
 No full C007 construction run is authorized by this diagnostic.
+
+## 2026-09-08 20:25 UTC: coverage repair succeeds; two cheap policies rejected
+
+A050 completes34/34 versus049's32/34. Both previously blocked lifts recover
+through one-owner repair; all32 common Q totals are exact ties. Repair itself
+costs0.138s, whereas the full paired solver totals179.16→185.53s also include
+newly completed work. Historical048 quality is still slightly better overall
+(14,858 versus14,866Q). Keep048 as the overall baseline and retain050 only
+within the reduced-core research line. All68 calls, original validation,
+repair accounting and455-file archive reviewed without rerunning candidates.
+Archivec5c20efd6fe9e054d88c12429fd4fc3005c8ccd447477cb2af799fc6d4c44823;
+sourcef000a676d3fb9915aca2d0be53141e11655078b06537e2c2bf9983b64fcb5817.
+
+A049's saved excess decomposition separates core and lift costs: five of
+seven regressed cores already exceed the complete baseline's excess Q.
+This motivates, but does not causally establish, reducing synthetic physical
+requirements. LiteralA051 passes five correctness groups then fails its fixed
+reach gate. StarQ138 ties; wheelQ218 and subdivisionQ20 worsen; cycle uses
+20M scans and stops at119vertices/Q266. All complete and partial outputs are
+independently original-valid. All18 manifest-bound files and eight source
+bindings pass root readback. No corpus launch or candidate registration.
+A separate soft-guidance hypothesis is requested before further code.
+
+B011's18 calls on02 are terminal and independently checked. Candidate6/9,
+all six successful Q totals exactlyB009; ER reaches one extra placement then
+blocks, and dense partial coverage worsens. Reject promotion. B012's exact
+blocked-only reconstruction policy is read before implementation: pool≤6,
+release≤2, frozen outside ownership,1M/query and5M total inside20M global,
+unchanged matching/growth rules. Two fixed local-helper calls precede any
+nine-input panel decision. No extra run ofB011 is requested.
+
+C's exact replacement-domain diagnostic improves2→3/25 local certificates
+but completes no full source. Root reviews the22-file bound evidence. Saved
+access classification checks all2,747 pairs across51 states: no failed query
+has a necessary-positive one-exchange pair. Root reviews its13-file bound
+record. The subsequent strict component-distance policy produces only the
+same three repaired edges;217 other proposals make no strict progress. Its
+actual two-move tiny witness passes, but supplied-state reach falsifies this
+policy. Equal-distance preparation now needs a separate bounded diagnostic;
+no fullC007 pipeline run follows these local results.
+
+All results remain exposed development evidence. Current goal remains unmet.

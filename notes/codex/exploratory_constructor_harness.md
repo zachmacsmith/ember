@@ -215,3 +215,12 @@ configuration. Its one affected synthetic worker check passed in 0.22 seconds
 `propagating_matching_manifest.json`. B009 froze pilot
 `e9b401c4c5699e92d0d7b48953da7f447dfcb4374948793ab0072f80d43f923a`
 before subsequent changes. No real constructor was invoked by this registry check.
+
+A050 adds `native-reduced-core-repair` →
+`factored/reduced_reinsertion_construction.py:reduced_core_embed`, configuration
+`{}`. The 049 method/config remains intact. B011 separately adds
+`propagating-tree-ports` → `factored/propagating_port_construction.py:frontier_embed`,
+also `{}`. Both reuse the existing absolute deadline and original-graph worker
+validator. Two isolated synthetic worker adapter checks passed; logs and exact
+source identities are bound in `a050-blocked-reinsertion/manifest.json`. Neither
+adapter test called a real constructor.

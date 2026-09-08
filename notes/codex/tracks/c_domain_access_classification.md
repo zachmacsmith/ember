@@ -1,0 +1,9 @@
+# Saved-domain endpoint-access classification
+
+Before another ownership search, classify every saved admissible replacement in the exact-domain diagnostic, including untested pairs. Reconstruct each recorded private state from its immutable C006b entry and relocation trace. No donor proposals, paths or constructor runs are repeated.
+
+For the currently sealed endpoint A and the other endpoint B, compute connected components of the current unused target subgraph and the components adjacent to B. For each saved donor replacement q→p, require q to touch A, then check whether q touches B directly or has an unused neighbor r other than consumed p in a component accessible from B. This is necessary for one exchange plus free-path addition to create A–B. It is not sufficient: removing p can separate r from B or consume B's only entry to that component.
+
+Report released sites that do not open A, opened pockets with no such connection, and necessary-positive pairs. Separate attempted and untested pairs; retain known attempted path failures even if the necessary test passes. Count component/target-adjacency work and all reconstruction/certificate cost under a 10-second total diagnostic cap, recording any unprocessed suffix. Tiny enumeration must find no false negative for actual free-path reach, and an articulation-consumption fixture must demonstrate a possible false positive.
+
+If untested necessary-positive pairs exist, a separately specified component-aware ranking remains a testable hypothesis, with exact path validation still required. If the complete query has none, its saved domains cannot supply a one-exchange path repair; next consider continued directed transport between the relevant unused components. Do not infer impossibility outside the saved donor/release scope, nor count these necessary tests as certified repairs. All four inputs are included; no automatic cap increase or full C007 run is authorized by this classification.
