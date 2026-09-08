@@ -1,0 +1,15 @@
+# B010 saved obstruction and alternative path
+
+The saved B009 ER failure is a greedy routing trap, not absence of an admissible next insertion. Vertex 35 needs contacts to placed chains 31, 54, 64 and 72, with vertices 5 and 74 still pending. The saved minor has 63 chains occupying 203 qubits. Its free graph has a component touching every required chain.
+
+Initially, chains 31 and 72 each have one free port and still need vertex 66 after inserting 35. Removing those ports falsely suggests an unavoidable obstruction unless preparation is considered. The actual preparation grows 31 through site 2001 and 72 through 4642. The resulting 205-qubit partial minor is valid; chain 72 can now be contacted through 1991 or 4654.
+
+The four unpromoted pending vertices are 3, 23, 61 and 76. Their direct free-boundary domain sizes are 8, 10, 7 and 1 before preparation, and 8, 10, 6 and 1 afterward. These are exact boundary intersections; this diagnostic does not run propagation again.
+
+Preparation also leaves unrelated chains 53 and 55 sharing sole free port 1991. The one authorized insertion trace inspects three branches before reaching its predeclared 500,000-unit limit. Each chooses the last contact through 1991, and every ownership cut strands both chains. This is a **limited trace**, not a complete replay of the original insertion failure. It takes 0.399 seconds including 0.0011 seconds of recording; the original entry remains unchanged.
+
+An offline path witness from the first recorded branch avoids 1991 and unrelated chain 49's sole port 2037. It reaches chain 72 through `[4283, 2217, 2218, 2219, 4655, 4654]`. Assigning that connector to chain 35 gives a valid 64-chain, 218-qubit partial minor, with every pending chain retaining a free frontier. The existing original-graph validator confirms all required contacts, connectivity and disjointness. This witness takes 35,362 scans and 0.292 seconds; it calls no candidate routine. It establishes local reach, not a short final embedding or compatibility of all future demands.
+
+The next candidate should reject connector sites that no possible two-ended ownership cut can use, before choosing a shortest path. An unrelated pending owner's sole free port is such a site. A unique protected owner that is an eligible terminal needs an exemption because the cut may extend that owner's chain through the port. Multiple protected owners cannot both receive the connector under one two-ended cut.
+
+Details: [predeclared diagnostic](b_blocked_frontier_diagnostic.md), [saved entry sets](../../../results/codex/track-b010-frontier/attempt001/observations.json), [limited insertion trace](../../../results/codex/track-b010-frontier/attempt002-insert/trace.json), [post-preparation sets](../../../results/codex/track-b010-frontier/attempt003-prepared/observations.json), [independently validated path witness](../../../results/codex/track-b010-frontier/attempt004-path-witness/witness.json). Adjacent scripts reproduce these bounded operations; only `trace_insert.py` calls the supplied-state insertion primitive, once.
