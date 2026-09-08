@@ -980,3 +980,23 @@ its controller launched once and was observed running. The full objective is
 unchanged and unmet. The exact new prompt is appended toPROMPTS_CODEX.md.
 Continue the existing run and the separate general endpoint-support design;
 no no-progress or blocked condition is present.
+
+040 completed all 34 inputs and 68 phases at07:57:57.603 UTC. Root verified
+quiescence and retrieved all2,654 inventory files with exact map digest
+13d0e1782fa2679efe4943d7d8b846816b5a7694a5e868c83041eec4b21ac3e1.
+The read-only frozen report finds1,122 complete valid raw states,1,088 updates,
+24.8823s incremental conversion versus34.6920s full conversion and10.7990s
+captured adopted-transition work. Thus its predeclared per-proposal gate fails,
+pending the independent original-graph/provenance/accounting audit. No final
+ACL conclusion is drawn and no experiment was rerun.
+
+Root accepted endpoint implementation specification03cd87e0 after reading it
+fully. Implementation is bounded to a labeled experimental ordinary-group
+objective, with the legacy control preserved, common-deadline scoring, strict-Q
+priority, exact both-direction support and nullable signed diagnostics. Its
+actualZ12 counterexample now explicitly distinguishes deletion-only minima
+from unrestricted relocation; original records are preserved. A separate
+read-only diagnostic will enumerate individually safe deletions in all34
+frozen039 control outputs. Native source has pruning before contact refinement
+but no final pruning afterward; this is a hypothesis worth checking, not yet
+an implemented policy or a performance claim.

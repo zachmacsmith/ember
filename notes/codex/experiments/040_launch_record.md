@@ -79,3 +79,22 @@ The remote start operation independently requires that saved pass before launch.
 Root saved `root-prelaunch-acceptance.json`, invoked start once, observed exit
 zero, and verified the live controller through a new SSH connection. No outcome
 has been selected and no competitor embedding enters this diagnostic.
+
+## Completion and retrieval
+
+The original controller finished at 2026-09-08 07:57:57.603 UTC
+(`1788854277.6030006`), with all 34 inputs and 68 phases recorded, zero exits
+and no phase overruns. Fresh status and terminal-inventory observations verified
+no matching processes, a free lock, stopped tmux and supervisor exit zero.
+The terminal inventory contains 2,654 files, artifact-map digest
+`13d0e1782fa2679efe4943d7d8b846816b5a7694a5e868c83041eec4b21ac3e1`.
+
+Root retrieved only this inventory into
+`results/codex/retrieved/hyde03/040-physical-locality` and verified the complete
+local file map before writing `retrieval.json` at Unix time
+`1788854592.912711`. Transfer exited zero and preserved the original controller
+record. The inventory-file SHA256 is
+`6c79615a3a8ac90b757ec41f23f87127e47a5c6b55b03aaf692562c08e16ecb1`.
+No experiment restart occurred. These lifecycle and transfer facts do not by
+themselves establish physical correctness or a speed benefit; those require
+the saved-data results audit.

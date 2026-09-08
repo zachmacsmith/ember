@@ -6,19 +6,31 @@ or busclique inside it, ideal Z12, quality and success retained, roughly MM's
 runtime range. The pending user question about optimal ACL-1 ties has no answer;
 do not interpret silence as a change in the success criterion.
 
-**Running diagnostic:** 040 on hyde03, controller 143531, started at
-07:37:00.001 UTC. Remote preflight and all 23 final focused checks passed.
-The latest fresh observation found 3 of 34 inputs through both phases with
-zero exits and no phase overruns; input ember_1584 was active in geometry.
-The inherited lock was busy and detached tmux present. These are lifecycle
-observations, not independently audited scientific results. Never restart it
-after an observer failure.
+**Latest completed diagnostic:** 040 on hyde03, controller 143531, ran from
+07:37:00.001 to 07:57:57.603 UTC. All 34 inputs and 68 phases finished with
+zero exits and no phase overruns. Fresh observation verified no matching run
+process, free lock, stopped tmux and supervisor exit zero. Retrieval verified
+all 2,654 files, digest
+`13d0e1782fa2679efe4943d7d8b846816b5a7694a5e868c83041eec4b21ac3e1`.
+Never restart the completed run. The independent results audit is active.
 Execution manifest is
 `3f6155277ba866f376427b105371bb7b8a8abc70cefe961542f5a139534e096d`;
 transport is `9dfba5ece5e210c9ca932c5b4fa277e807ceafb3b67d083239c61590fdbe8865`.
-See `experiments/040_launch_record.md`. No result conclusion is available yet.
+See `experiments/040_launch_record.md`. The frozen report preliminarily finds
+1,122 complete valid raw states and 1,088 updates: incremental conversion
+24.8823 seconds versus full conversion 34.6920 seconds, but captured adopted
+transitions total only 10.7990 seconds. Its predeclared per-proposal cost gate
+fails. Independent provenance, raw validity and accounting checks are pending;
+this is not final ACL or end-to-end timing evidence.
 
-**Latest completed run:** 039 on hyde03, controller 139008, finished at
+**Current implementation:** root accepted the endpoint-support specification
+`03cd87e074c8632c1361b7320e2d7942e5482d00505b138909b57d510501b8eb`.
+The algorithm agent implements one experimental objective while preserving
+legacy behavior, with no corpus launch yet. Its proxy counterexample and prior
+art limits remain explicit. A separate read-only audit will check the frozen
+039 control outputs for individually removable qubits after refinement.
+
+**Latest completed candidate comparison:** 039 on hyde03, controller 139008, finished at
 06:24:51.479 UTC with all 68 records finalized SUCCESS. Root verified the
 controller and last worker absent, no matching run process, free lock, stopped
 tmux and supervisor exit zero. The 433-file retrieved archive has digest
@@ -332,7 +344,7 @@ snapshot `63a0aed1a880cbf008aa68ae7201aed7a4da635dea9362e5d296b1d13a91a473`.
 All independent local/remote gates passed and root launched once; current run
 details and identities are in `experiments/039_launch_record.md`.
 
-040 is under isolated diagnostic implementation. Root copied the exact 039 source (48 files), audited
+040 preparation history: root copied the exact 039 source (48 files), audited
 evaluator inputs (103 files), and both selection ledgers into
 `results/codex/040-physical-locality/prepared/`. Its 153-file map digest is
 `a5ddbd44613f37ebfa63c2e4232920573775fd3727e647dedce0b968b945bdcf`.
@@ -343,7 +355,7 @@ live capture trajectory. The design and independent input review are accepted.
 Workers consume the canonical expected-normalized graph, preserving Ember's
 source order; original JSON insertion order differs on ember_37761. Geometry
 and offline phases have separate absolute 150/60-second process allowances.
-Focused synthetic/tiny Z2 checks have run; no corpus run has occurred. Root has
+Focused synthetic/tiny Z2 checks preceded the corpus run. Root
 accepted the final independent geometry/offline reviews and verified all review
 hashes. Diagnostic digest is
 `0c68ab814eb76aea5876ec79386d1cbabd59f8a37197c688e1d12d447c412733`.
@@ -370,9 +382,9 @@ owned-site Hall-counting caveat; none is a novelty or superiority claim.
    The controller and all workers have terminated; never restart them.
 3. Preserve 039's independently verified negative full-pipeline outcome and all
    unsuccessful work. Local improvements did not imply a final quality gain.
-4. Observe the running physical-locality diagnostic through fresh connections,
-   retrieve only after quiescence, and audit all saved outputs and costs. Its
-   question is whether exact raw line updates are cheap; raw counts are not ACL.
+4. Complete the independent audit of the retrieved physical-locality diagnostic.
+   Its question is whether exact raw line updates are cheap; raw counts are not
+   ACL. Review the experimental endpoint implementation before any new screen.
 5. Continue one general constructor/refinement pipeline. No MM or busclique
    dependency, cached competitor input, hidden fallback, per-family dispatch,
    selected seed or best-of result is allowed. Broader replication and fresh
