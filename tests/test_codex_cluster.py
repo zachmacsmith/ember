@@ -66,6 +66,28 @@ def test_bundle_roundtrip_and_remote_verification(frozen, tmp_path, helper):
     assert json.loads((destination / 'manifest.json').read_text()) == manifest
 
 
+def test_bundle_preserves_and_verifies_corpus_sidecars(frozen, tmp_path, helper):
+    run, manifest, _ = frozen
+    identity = {'missing_families': ['missing'], 'solver_inputs': []}
+    selection = {'identity': identity, 'selection_id': cluster.digest(identity)}
+    original = {'selection_id': 'parent', 'input_errors': ['missing_input']}
+    manifest['corpus'] = {
+        'selection_id': selection['selection_id'],
+        'selection_digest': cluster.digest(selection),
+        'original_selection_digest': cluster.digest(original)}
+    write_json(run / 'manifest.json', manifest)
+    write_json(run / 'corpus_selection.json', selection)
+    write_json(run / 'original_corpus_selection.json', original)
+    destination = tmp_path / 'bundle'
+    transport = cluster.build_bundle(run, destination)
+    assert helper['verify'](destination) == transport
+    assert len(transport['files']) == 7
+    assert json.loads((destination / 'original_corpus_selection.json').read_text()) == original
+    write_json(run / 'original_corpus_selection.json', {'selection_id': 'parent', 'input_errors': []})
+    with pytest.raises(ValueError, match='Corpus'):
+        cluster.build_bundle(run, tmp_path / 'damaged')
+
+
 @pytest.mark.parametrize('relative', [
     'source/scripts/codex/pilot.py', 'target.json', 'graphs/fixture.json', 'TASK'])
 def test_bundle_rejects_changed_inputs(frozen, tmp_path, relative):

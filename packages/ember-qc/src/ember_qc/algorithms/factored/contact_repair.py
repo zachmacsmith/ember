@@ -121,6 +121,68 @@ def _region(ctx, embedding, selected, halo, max_region, budget):
     return region
 
 
+def _add_boundary_sites(ctx, embedding, selected, region, max_region,
+                        site_limit, budget, info):
+    """Add bounded singleton sites satisfying each vertex's frozen contacts.
+
+    Keep the original region intact. These sites may still need contacts to
+    selected neighbors; the normal reconstruction and validity checks enforce
+    those obligations. Scanned physical vertices consume the same work budget
+    as routing expansions. No coordinates or graph-family metadata are used.
+    """
+    if not site_limit or len(region) >= max_region:
+        return region
+    frozen = {q for v, chain in embedding.items() if v not in selected for q in chain}
+    selected_owner = {q: v for v in selected for q in embedding[v]}
+    pools = []
+    for v in _ordered(selected):
+        known = [w for w in ctx.src_adj[v] if w not in selected]
+        if not known:
+            continue
+        sites = None
+        for w in known:
+            boundary = set()
+            for q in embedding[w]:
+                if not budget.pop():
+                    return region
+                info['boundary_expansions'] += 1
+                boundary.update(r for r in ctx.adj[q] if r not in frozen)
+            sites = boundary if sites is None else sites & boundary
+            if not sites:
+                break
+        pending = selected.intersection(ctx.src_adj[v])
+        ranked = []
+        for q in sites or ():
+            if q in region:
+                continue
+            if not budget.pop():
+                return region
+            info['boundary_expansions'] += 1
+            old_contacts = {selected_owner[r] for r in ctx.adj[q]
+                            if r in selected_owner and selected_owner[r] in pending}
+            free_degree = sum(r not in frozen for r in ctx.adj[q])
+            ranked.append((-len(old_contacts), -free_degree, ctx.rank[q], q))
+        pools.append(iter(item[-1] for item in sorted(ranked)[:site_limit]))
+    added = 0
+    while pools and added < site_limit and len(region) < max_region:
+        active = []
+        for pool in pools:
+            if not budget.check():
+                return region
+            q = next(pool, None)
+            if q is None:
+                continue
+            active.append(pool)
+            if q not in region:
+                region.add(q)
+                added += 1
+                info['boundary_sites_added'] += 1
+            if added >= site_limit or len(region) >= max_region:
+                break
+        pools = active
+    return region
+
+
 def _grow(root, available, masks, required, ctx, budget, size_cap,
           reverse=False):
     """Connect a root to contact sets by shortest free paths to the tree."""
@@ -226,11 +288,12 @@ def _diagnostics():
             "expansions": 0, "region_size": 0, "tree_attempts": 0,
             "beam_expansions": 0, "beam_pruned": 0,
             "unreachable_contacts": 0, "complete_proposals": 0,
-            "orders_tried": 0, "stopped_by": None}
+            "orders_tried": 0, "boundary_sites_added": 0,
+            "boundary_expansions": 0, "stopped_by": None}
 
 
 def _repair(embedding, ctx, group, *, beam_width, alternatives, halo,
-            max_region, max_expansions, max_orders, deadline):
+            max_region, max_expansions, max_orders, deadline, boundary_sites=0):
     start = time.perf_counter()
     info = _diagnostics()
     selected = set(group)
@@ -240,9 +303,14 @@ def _repair(embedding, ctx, group, *, beam_width, alternatives, halo,
     best_size = old_size
 
     def finish(reason):
+        ended = time.perf_counter()
         info["expansions"] = budget.expansions
         info["stopped_by"] = budget.stopped_by or reason
-        info["wall"] = time.perf_counter() - start
+        if deadline is not None:
+            info['deadline_overrun'] = max(0.0, ended - deadline)
+            if ended >= deadline:
+                info['stopped_by'] = 'deadline'
+        info["wall"] = ended - start
         if best is not embedding:
             info["accepted"] = 1
             info["qubits_saved"] = old_size - best_size
@@ -257,6 +325,8 @@ def _repair(embedding, ctx, group, *, beam_width, alternatives, halo,
     region = _region(ctx, embedding, selected, halo, max_region, budget)
     if region is None:
         return finish("region_limit")
+    region = _add_boundary_sites(ctx, embedding, selected, region, max_region,
+                                 boundary_sites, budget, info)
     info["region_size"] = len(region)
     # Both pair orders; bounded cyclic/reversed orders for larger groups.
     orders = []
@@ -311,19 +381,20 @@ def _repair(embedding, ctx, group, *, beam_width, alternatives, halo,
 
 
 def _parameters(beam_width, alternatives, halo, max_region,
-                max_expansions, max_orders):
+                max_expansions, max_orders, boundary_sites=0):
     values = {"beam_width": beam_width, "alternatives": alternatives,
               "halo": halo, "max_region": max_region,
-              "max_expansions": max_expansions, "max_orders": max_orders}
+              "max_expansions": max_expansions, "max_orders": max_orders,
+              "boundary_sites": boundary_sites}
     for name, value in values.items():
-        minimum = 0 if name in ("halo", "max_expansions") else 1
+        minimum = 0 if name in ("halo", "max_expansions", "boundary_sites") else 1
         if not isinstance(value, int) or isinstance(value, bool) or value < minimum:
             raise ValueError(f"{name} must be an integer >= {minimum}")
 
 
 def repair_group(embedding, source_graph, target_graph, group, *,
                  beam_width=4, alternatives=3, halo=2, max_region=512,
-                 max_expansions=50000, max_orders=2, deadline=None):
+                 max_expansions=50000, max_orders=2, deadline=None, boundary_sites=0):
     """Try a strictly shorter replacement of 1–4 selected chains.
 
     ``deadline`` is an absolute ``time.perf_counter()`` timestamp.
@@ -334,7 +405,8 @@ def repair_group(embedding, source_graph, target_graph, group, *,
     improvement already found; otherwise the original embedding is returned.
     """
     start = time.perf_counter()
-    _parameters(beam_width, alternatives, halo, max_region, max_expansions, max_orders)
+    _parameters(beam_width, alternatives, halo, max_region, max_expansions, max_orders,
+                boundary_sites)
     group = tuple(dict.fromkeys(group))
     if not 1 <= len(group) <= 4:
         raise ValueError("group must contain 1–4 distinct source vertices")
@@ -348,8 +420,13 @@ def repair_group(embedding, source_graph, target_graph, group, *,
     result, info = _repair(
         embedding, ctx, group, beam_width=beam_width, alternatives=alternatives,
         halo=halo, max_region=max_region, max_expansions=max_expansions,
-        max_orders=max_orders, deadline=deadline)
-    info["wall"] = time.perf_counter() - start
+        max_orders=max_orders, deadline=deadline, boundary_sites=boundary_sites)
+    ended = time.perf_counter()
+    info["wall"] = ended - start
+    if deadline is not None:
+        info['deadline_overrun'] = max(0.0, ended - deadline)
+        if ended >= deadline:
+            info['stopped_by'] = 'deadline'
     return result, info
 
 
@@ -386,7 +463,8 @@ def contact_polish(embedding, source_graph, target_graph, *, timeout=None,
                    deadline=None, max_passes=2, max_groups=128,
                    group_sizes=(2, 3, 4), beam_width=4, alternatives=3, halo=2,
                    max_region=512, max_expansions=500000,
-                   group_expansions=50000, max_orders=2):
+                   group_expansions=50000, max_orders=2, boundary_sites=0,
+                   group_policy="legacy"):
     """Apply bounded group reconstruction to one valid evolving incumbent.
 
     Global work limits include every attempted group. ``max_groups`` is total,
@@ -395,7 +473,10 @@ def contact_polish(embedding, source_graph, target_graph, *, timeout=None,
     family names are never used. Outside chains remain fixed for each move.
     """
     start = time.perf_counter()
-    _parameters(beam_width, alternatives, halo, max_region, max_expansions, max_orders)
+    _parameters(beam_width, alternatives, halo, max_region, max_expansions, max_orders,
+                boundary_sites)
+    if group_policy not in ('legacy', 'round_robin'):
+        raise ValueError('unknown group policy')
     for name, value in (("max_passes", max_passes), ("max_groups", max_groups),
                         ("group_expansions", group_expansions)):
         if not isinstance(value, int) or isinstance(value, bool) or value < 0:
@@ -415,8 +496,13 @@ def contact_polish(embedding, source_graph, target_graph, *, timeout=None,
     work = embedding
 
     def finish(reason):
+        ended = time.perf_counter()
+        if deadline is not None:
+            info['deadline_overrun'] = max(0.0, ended - deadline)
+            if ended >= deadline and reason != 'invalid_input':
+                reason = 'deadline'
         info["stopped_by"] = reason
-        info["wall"] = time.perf_counter() - start
+        info["wall"] = ended - start
         return work, info
 
     if not ctx.valid(work):
@@ -435,7 +521,11 @@ def contact_polish(embedding, source_graph, target_graph, *, timeout=None,
             return finish("work_limit")
         info["passes"] += 1
         changed = False
-        groups = _groups(work, ctx, group_sizes, max_groups - info["groups_tried"])
+        if group_policy == 'round_robin':
+            from ember_qc.algorithms.factored.contact_groups import round_robin_groups
+            groups = round_robin_groups(work, ctx, group_sizes, max_groups - info['groups_tried'])
+        else:
+            groups = _groups(work, ctx, group_sizes, max_groups - info["groups_tried"])
         for group in groups:
             if deadline is not None and time.perf_counter() >= deadline:
                 return finish("deadline")
@@ -448,11 +538,12 @@ def contact_polish(embedding, source_graph, target_graph, *, timeout=None,
                 work, ctx, group, beam_width=beam_width, alternatives=alternatives,
                 halo=halo, max_region=max_region,
                 max_expansions=min(group_expansions, remaining),
-                max_orders=max_orders, deadline=deadline)
+                max_orders=max_orders, deadline=deadline, boundary_sites=boundary_sites)
             info["groups_tried"] += 1
             for key in ("accepted", "qubits_saved", "member_growth", "expansions",
                         "tree_attempts", "beam_expansions", "beam_pruned",
-                        "unreachable_contacts", "complete_proposals", "orders_tried"):
+                        "unreachable_contacts", "complete_proposals", "orders_tried",
+                        "boundary_sites_added", "boundary_expansions"):
                 info[key] += move[key]
             info["max_region_size"] = max(info["max_region_size"], move["region_size"])
             if move["accepted"]:
@@ -463,6 +554,10 @@ def contact_polish(embedding, source_graph, target_graph, *, timeout=None,
                     "member_growth": move["member_growth"],
                     "total_qubits": sum(map(len, work.values())),
                     "expansions": info["expansions"]})
+        if info['groups_tried'] >= max_groups:
+            return finish('group_limit')
+        if info['expansions'] >= max_expansions:
+            return finish('work_limit')
         if not changed:
             return finish("no_improvement")
     return finish("pass_limit")

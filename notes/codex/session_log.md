@@ -160,3 +160,35 @@ experiment's question, pre-run prediction, revision hash, config, graph/target h
 seeds, machine, environment, wall/CPU/memory budgets, raw artifacts, validation, result,
 interpretation, and next decision under `notes/codex/experiments/`. Preserve failures
 and negative results. Record agent instructions and reports here or in linked notes.
+
+## Completed ablation and revision 016
+
+Experiment 011 is now complete, quiescent, retrieved, and independently audited.
+The 90 observations contain 88 timely successes and two late MM K100 results.
+All returned embeddings are valid. Width-one joint reconstruction is the globally
+fixed reference; increasing beam width worsened aggregate quality and increased
+repair work. The reference still loses to MM on the six sparse inputs. Detailed
+evidence is in `experiments/011_results_review.md` and the retrieved run's analysis.
+
+Experiments 012–014 produced an outcome-independent Ember corpus selection,
+bounded contact-search diagnostics, and a cold/warm runtime profile. The diagnostics
+identify omitted neighboring groups and complete boundary-contact sites outside
+the current free-space halo. Revision 016 records both proposed changes and their
+self-critiques before implementation. New defaults preserve the old search;
+separate explicit configurations test each change and their combination.
+The 48 focused algorithm tests pass, including independent validity checks for
+relocation beyond the old region, work/cap rollback, and omitted group coverage.
+
+Delegated next work: literature agent runs the frozen 72-case refinement ablation
+from all 18 independent native-search incumbents (requiring old-reference replay
+first); algorithm auditor independently reviews revision 016; benchmark auditor
+specifies an honest generalization protocol after inspecting actual generators.
+Root integrates the predetermined 017 readiness selection into the pilot.
+The adapter keeps all family provenance in sidecars, provides only unweighted
+integer graph structure to solvers, shares tasks for exact duplicates, and checks
+input/selection identity before execution and analysis. Its focused harness and
+corpus suite passes 39 tests. No actual 017 corpus comparison has run yet.
+
+A fresh goal-status read confirms `active`. The UI pause report was answered from
+that backend observation; no resume command is currently needed, and no UI or
+goal scheduler internals were edited. The research objective remains incomplete.

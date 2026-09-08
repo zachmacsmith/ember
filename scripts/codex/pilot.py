@@ -19,6 +19,7 @@ import os
 from pathlib import Path
 import platform
 import random
+import re
 import resource
 import shutil
 import signal
@@ -266,12 +267,121 @@ CONFIGS = {
     'native-search-joint4': {'construction': 'search', 'max_asks': 1000, 'polish_passes': 4,
                             'beam_width': 4, 'max_groups': 512, 'polish_group_sizes': [1, 2, 3, 4]},
 }
+for _suffix, _sites, _policy in (
+        ('sites', 16, 'legacy'), ('groups', 0, 'round_robin'),
+        ('sites-groups', 16, 'round_robin')):
+    CONFIGS['native-search-joint1-' + _suffix] = dict(
+        CONFIGS['native-search-joint1'], polish_boundary_sites=_sites,
+        polish_group_policy=_policy)
+
+
+def load_readiness_selection(path):
+    """Load frozen, deduplicated corpus inputs; keep family data outside graphs."""
+    selection = json.loads(Path(path).read_text())
+    identity = selection['identity']
+    if digest(identity) != selection['selection_id']:
+        raise ValueError('Corpus selection identity mismatch')
+    records, seen_topologies = {}, set()
+    originals = {}
+    memberships = set()
+    for entry in identity['solver_inputs']:
+        name = entry['graph_key']
+        if not re.fullmatch(r'[A-Za-z0-9_-]+', name) or name in records:
+            raise ValueError('Duplicate or unsafe corpus graph key')
+        original_path = (ROOT / entry['graph_record_path']).resolve()
+        if not original_path.is_relative_to(ROOT.resolve()):
+            raise ValueError('Corpus graph path is outside repository')
+        record = json.loads(original_path.read_text())
+        if digest(record) != entry['source_hash']:
+            raise ValueError(f'Corpus graph hash mismatch: {name}')
+        graph = graph_from_record(record)
+        if (graph_record(graph) != record or list(graph) != list(range(len(graph)))
+                or graph.number_of_nodes() != entry['nodes']
+                or graph.number_of_edges() != entry['edges']
+                or any(a == b for a, b in graph.edges())):
+            raise ValueError(f'Corpus graph structure mismatch: {name}')
+        if (record['metadata'] or any(attrs for _, attrs in record['node_attributes'])
+                or any(attrs for _, _, attrs in record['edge_attributes'])):
+            raise ValueError(f'Corpus graph contains solver-visible metadata: {name}')
+        topology = digest({'nodes': record['nodes'], 'edges': record['edges']})
+        if topology != entry['normalized_topology_hash'] or topology in seen_topologies:
+            raise ValueError(f'Corpus topology mismatch or duplicate: {name}')
+        if entry['aggregate_structure_weight'] != 1 or not entry['family_memberships']:
+            raise ValueError(f'Invalid corpus memberships or weight: {name}')
+        for member in entry['family_memberships']:
+            key = (member['family'], member['graph_id'])
+            if key in memberships:
+                raise ValueError('Duplicate corpus family membership')
+            memberships.add(key)
+        seen_topologies.add(topology)
+        records[name] = record
+        ledger_path = original_path.parent.parent / 'selection.json'
+        originals[ledger_path] = hashlib.sha256(ledger_path.read_bytes()).hexdigest()
+    if not records or len(originals) != 1:
+        raise ValueError('Corpus requires one original selection and nonempty inputs')
+    original_path, original_hash = next(iter(originals.items()))
+    original = json.loads(original_path.read_text())
+    if (original_hash != identity['original_selection_file_sha256']
+            or original['selection_id'] != identity['original_selection_id']):
+        raise ValueError('Original corpus selection identity mismatch')
+    expected = {(entry['family'], entry['graph_id'])
+                for entry in identity['family_selections']}
+    if memberships != expected:
+        raise ValueError('Corpus selected families and solver memberships disagree')
+    return selection, original, records
+
+
+def check_corpus_provenance(run, manifest):
+    """Verify shipped sidecars without consulting mutable external corpus files."""
+    corpus = manifest.get('corpus')
+    if corpus is None:
+        return None
+    selection = json.loads((Path(run) / 'corpus_selection.json').read_text())
+    original = json.loads((Path(run) / 'original_corpus_selection.json').read_text())
+    if (digest(selection) != corpus['selection_digest']
+            or digest(selection['identity']) != corpus['selection_id']
+            or selection['selection_id'] != corpus['selection_id']
+            or digest(original) != corpus['original_selection_digest']
+            or original['selection_id'] != selection['identity']['original_selection_id']):
+        raise ValueError('Frozen corpus provenance mismatch')
+    entries = {entry['graph_key']: entry for entry in selection['identity']['solver_inputs']}
+    names = corpus['included_graphs']
+    if len(set(names)) != len(names) or not set(names) <= set(entries):
+        raise ValueError('Frozen corpus input list mismatch')
+    for name in names:
+        record = json.loads((Path(run) / 'graphs' / (name + '.json')).read_text())
+        if digest(record) != entries[name]['source_hash']:
+            raise ValueError(f'Frozen corpus graph mismatch: {name}')
+    task_names = set()
+    for task_id in manifest['tasks']:
+        task = json.loads((Path(run) / 'tasks' / (task_id + '.json')).read_text())
+        name = task['graph']
+        if name not in names or task['source_hash'] != entries[name]['source_hash']:
+            raise ValueError('Frozen corpus task mismatch')
+        task_names.add(name)
+    if task_names != set(names):
+        raise ValueError('Frozen corpus has unattempted included graphs')
+    return selection
 
 
 def initialize(args):
     import dwave_networkx as dnx
     if not math.isfinite(args.timeout) or args.timeout <= 0 or args.seeds < 1:
         raise ValueError('timeout must be finite and positive; seeds must be positive')
+    corpus_path = getattr(args, 'corpus_selection', None)
+    if corpus_path:
+        selection, original_selection, records = load_readiness_selection(corpus_path)
+    else:
+        selection = None
+        records = {name: graph_record(graph) for name, graph in make_graphs().items()}
+    names = args.graphs.split(',') if args.graphs else list(records)
+    methods = args.methods.split(',')
+    if (not names or len(set(names)) != len(names)
+            or any(name not in records for name in names)):
+        raise ValueError('Unknown or duplicate graph names')
+    if (not methods or len(set(methods)) != len(methods)
+            or any(method not in CONFIGS for method in methods)):
+        raise ValueError('Unknown or duplicate methods')
     run = Path(args.run).resolve()
     run.mkdir(parents=True, exist_ok=False)
     for name in ('graphs', 'tasks', 'results', 'worker_results', 'claims', 'logs', 'source', 'jit_cache'):
@@ -299,15 +409,9 @@ def initialize(args):
     target = graph_record(dnx.zephyr_graph(12, 4))
     target_hash = digest(target)
     write_json(run / 'target.json', target)
-    graphs = make_graphs()
-    names = args.graphs.split(',') if args.graphs else list(graphs)
-    methods = args.methods.split(',')
-    for method in methods:
-        if method not in CONFIGS:
-            raise ValueError(method)
     tasks = []
     for name in names:
-        record = graph_record(graphs[name])
+        record = records[name]
         source_hash = digest(record)
         write_json(run / 'graphs' / (name + '.json'), record)
         for seed in range(args.seeds):
@@ -330,6 +434,15 @@ def initialize(args):
                 'candidate_python': str(Path(args.candidate_python).absolute()),
                 'mm_python': str(Path(args.mm_python).absolute()),
                 'threads': 1, 'timing': 'fresh processes; empty per-task JIT cache; solver and whole-process wall times'}
+    if selection:
+        write_json(run / 'corpus_selection.json', selection)
+        write_json(run / 'original_corpus_selection.json', original_selection)
+        manifest['corpus'] = {
+            'selection_id': selection['selection_id'],
+            'selection_digest': digest(selection),
+            'original_selection_digest': digest(original_selection),
+            'included_graphs': names,
+            'claim_scope': 'inherited development data; no holdout or family-level claim'}
     write_json(run / 'manifest.json', manifest)
     print(f'Created {len(tasks)} tasks in {run}', flush=True)
 
@@ -350,6 +463,7 @@ def execute(args):
     for relative, expected in manifest['source_files'].items():
         if hashlib.sha256((run / 'source' / relative).read_bytes()).hexdigest() != expected:
             raise RuntimeError(f'Source changed: {relative}')
+    check_corpus_provenance(run, manifest)
     write_json(run / 'controller.json', {'pid': os.getpid(), 'host': platform.node(),
                                        'started': time.time(), 'status': 'running'})
     env = os.environ.copy()
@@ -432,6 +546,7 @@ def main():
     init = sub.add_parser('init')
     init.add_argument('run')
     init.add_argument('--graphs')
+    init.add_argument('--corpus-selection', help='Frozen deduplicated corpus readiness selection')
     init.add_argument('--methods', default='mm,native-search,native-packed')
     init.add_argument('--seeds', type=int, default=1)
     init.add_argument('--timeout', type=float, default=30)

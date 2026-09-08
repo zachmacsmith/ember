@@ -244,6 +244,15 @@ def build_bundle(run, destination):
         raise ValueError('Duplicate task IDs')
     if digest(manifest['source_files']) != manifest['source_snapshot']:
         raise ValueError('Source snapshot identity mismatch')
+    corpus = manifest.get('corpus')
+    if corpus is not None:
+        selection = json.loads(read_input('corpus_selection.json'))
+        original = json.loads(read_input('original_corpus_selection.json'))
+        if (digest(selection) != corpus['selection_digest']
+                or digest(original) != corpus['original_selection_digest']
+                or digest(selection['identity']) != corpus['selection_id']
+                or selection['selection_id'] != corpus['selection_id']):
+            raise ValueError('Corpus selection provenance mismatch')
     if any((run / name).exists() and any((run / name).iterdir())
            for name in ('results', 'worker_results', 'claims')):
         raise ValueError('Stage a fresh run; do not silently repeat an already attempted local experiment')

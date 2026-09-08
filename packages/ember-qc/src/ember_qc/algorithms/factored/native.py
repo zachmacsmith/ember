@@ -88,7 +88,8 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
                  construction="search", order_strategy="random", packing_passes=2,
                  max_asks=10000, sched_seed=None, polish_passes=0,
                  beam_width=4, max_groups=64, polish_group_sizes=(2, 3, 4),
-                 polish_expansions=500000):
+                 polish_expansions=500000, polish_boundary_sites=0,
+                 polish_group_policy="legacy"):
     """Return a validated independent result or an explicit construction failure.
 
     Deadline overruns are reported and never counted as timely success. Conversion
@@ -100,7 +101,9 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
     diag = {"construction": construction, "order_strategy": order_strategy,
             "polish_passes": polish_passes, "beam_width": beam_width,
             "polish_group_sizes": list(polish_group_sizes),
-            "polish_expansions": polish_expansions}
+            "polish_expansions": polish_expansions,
+            "polish_boundary_sites": polish_boundary_sites,
+            "polish_group_policy": polish_group_policy}
 
     def result(embedding, status, **extra):
         elapsed = time.perf_counter() - started
@@ -179,7 +182,8 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
             chains, polish_info = contact_polish(
                 chains, source, target_graph, deadline=deadline,
                 max_passes=polish_passes, beam_width=beam_width, max_groups=max_groups,
-                group_sizes=polish_group_sizes, max_expansions=polish_expansions)
+                group_sizes=polish_group_sizes, max_expansions=polish_expansions,
+                boundary_sites=polish_boundary_sites, group_policy=polish_group_policy)
             diag["contact_repair"] = polish_info
         embedding = {labels[v]: list(c) for v, c in chains.items()}
         if not is_valid_embedding(embedding, source_graph, target_graph):
