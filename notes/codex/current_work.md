@@ -8,8 +8,11 @@ do not interpret silence as a change in the success criterion.
 
 **Running diagnostic:** 040 on hyde03, controller 143531, started at
 07:37:00.001 UTC. Remote preflight and all 23 final focused checks passed.
-A fresh observation found its first geometry worker active, inherited lock
-busy and detached tmux present. Never restart it after an observer failure.
+The latest fresh observation found 3 of 34 inputs through both phases with
+zero exits and no phase overruns; input ember_1584 was active in geometry.
+The inherited lock was busy and detached tmux present. These are lifecycle
+observations, not independently audited scientific results. Never restart it
+after an observer failure.
 Execution manifest is
 `3f6155277ba866f376427b105371bb7b8a8abc70cefe961542f5a139534e096d`;
 transport is `9dfba5ece5e210c9ca932c5b4fa277e807ceafb3b67d083239c61590fdbe8865`.
@@ -234,20 +237,24 @@ in commit `75860aea`, with all six effective SSH routes checked.
   and frozen. The agent now owns a design-only review of separate ordinary and
   auxiliary work allocation, including conditional replay and counterexamples.
   That review is accepted and committed. Its physical-line locality design is
-  independently reviewed and accepted. The agent now owns isolated 040
-  diagnostic implementation and synthetic checks; no corpus run or production
-  algorithm edit is authorized before final review and preflight.
+  independently reviewed and accepted. The isolated 040 implementation and
+  synthetic checks are frozen. It now owns a separate design-only critique of
+  distinct endpoint support as an equal-Q refinement potential; no algorithm
+  implementation or solver run belongs to that task.
 - `literature` completed the connected core and its focused witnesses, integration
   critique and independent 039 local/remote preflight. Both preflight records
   pass and its final report is accepted. Its 039 connected-diagnostics helper
   is frozen and used in the completed audit. It independently verified all 153
-  prepared 040 files and input mappings. It now reviews the offline line cache
-  and book reconstruction, with no corpus calls or author-code edits.
+  prepared 040 files and input mappings. Its offline line-cache review is
+  complete. It now checks prior art for endpoint support/contact flexibility,
+  without solver calls or implementation changes.
 - `benchmark_audit` completed 037's report, the connected implementation-policy
   review and final 038 preflight. It now owns 038's complete independent results
   audit, which passes and has been root-repeated. Its report and artifact
   manifest are frozen. The independent 039 results auditor, narrative and final
-  121-file review manifest are also complete, root-reviewed and frozen.
+  121-file review manifest are also complete, root-reviewed and frozen. Its 040
+  geometry/lifecycle review is accepted. It now prepares the independent saved-
+  data 040 results auditor, waiting for root's quiescent verified archive.
 - Root owns protocol decisions, current work/session notes, source commits,
   connected implementation specification and any future launches/integration.
 

@@ -964,3 +964,10 @@ qubit from contacts distributed across deletable chain sites; connectivity and
 singleton saturation are explicit limitations. No policy implementation, family
 selection or source change is authorized by that design task. Benchmark audit
 prepares the independent040 saved-data auditor; root retains lifecycle ownership.
+
+The fresh040 status-progress-001 observation shows three inputs through both
+phases with zero exits, no kernel alarms and no phase overruns. Controller143531
+continues on ember_1584 geometry, worker143916, lock busy and tmux present.
+These are provisional lifecycle facts, not an independent raw-cost audit.
+The backend again reports the research goal active at07:40:30 UTC; the broader
+objective remains unmet. No goal/UI state was mutated.
