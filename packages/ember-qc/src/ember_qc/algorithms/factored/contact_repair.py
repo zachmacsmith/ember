@@ -523,6 +523,8 @@ def contact_polish(embedding, source_graph, target_graph, *, timeout=None,
     proposals, charging their cache and scans to the original work/group limits.
     ``star_policy='matching'`` attaches a joint singleton-star attempt to a failed
     ordinary visit, within that visit's remaining work and the same global limits.
+    ``star_policy='connected'`` uses the same schedule for one connected-center
+    search instead. Each call constructs exactly one selected star search policy.
     """
     start = time.perf_counter()
     _parameters(beam_width, alternatives, halo, max_region, max_expansions, max_orders,
@@ -535,20 +537,20 @@ def contact_polish(embedding, source_graph, target_graph, *, timeout=None,
         raise ValueError('unknown tree policy')
     if singleton_policy not in ('legacy', 'direct'):
         raise ValueError('unknown singleton policy')
-    if star_policy not in ('off', 'matching'):
+    if star_policy not in ('off', 'matching', 'connected'):
         raise ValueError('unknown star policy')
     if star_policy != 'off' and singleton_policy != 'legacy':
-        raise ValueError('matching star and direct singleton policies are mutually exclusive')
+        raise ValueError(f'{star_policy} star and direct singleton policies are mutually exclusive')
     if singleton_policy == 'direct':
         for graph in (source_graph, target_graph):
             if (graph.is_directed() or graph.is_multigraph()
                     or any(v in graph[v] for v in graph)):
                 raise ValueError('direct singleton search requires simple undirected loopless graphs')
-    if star_policy == 'matching':
+    if star_policy != 'off':
         for graph in (source_graph, target_graph):
             if (graph.is_directed() or graph.is_multigraph()
                     or any(v in graph[v] for v in graph)):
-                raise ValueError('matching star search requires simple undirected loopless graphs')
+                raise ValueError(f'{star_policy} star search requires simple undirected loopless graphs')
     for name, value in (("max_passes", max_passes), ("max_groups", max_groups),
                         ("group_expansions", group_expansions)):
         if not isinstance(value, int) or isinstance(value, bool) or value < 0:
@@ -584,12 +586,12 @@ def contact_polish(embedding, source_graph, target_graph, *, timeout=None,
         return finish("group_limit")
     if max_expansions == 0:
         return finish("work_limit")
-    if star_policy == 'matching':
+    if star_policy != 'off':
         work, reason = _polish_with_stars(
             work, ctx, info, deadline=deadline, max_passes=max_passes,
             max_groups=max_groups, group_sizes=group_sizes,
             max_expansions=max_expansions, group_expansions=group_expansions,
-            group_policy=group_policy,
+            group_policy=group_policy, star_policy=star_policy,
             repair_kwargs=dict(beam_width=beam_width, alternatives=alternatives,
                                halo=halo, max_region=max_region,
                                max_orders=max_orders, boundary_sites=boundary_sites,
@@ -668,17 +670,23 @@ def contact_polish(embedding, source_graph, target_graph, *, timeout=None,
 
 def _polish_with_stars(work, ctx, info, *, deadline, max_passes, max_groups,
                        group_sizes, max_expansions, group_expansions,
-                       group_policy, repair_kwargs):
+                       group_policy, repair_kwargs, star_policy='matching'):
     """Attach a bounded star proposal to existing failed group visits.
 
     Ordinary scheduling is unchanged. Every query and cache update consumes the
     same active visit, and all auxiliary work also consumes its fixed global share.
     The off path retains its original loop and diagnostic structure.
     """
-    from ember_qc.algorithms.factored.induced_star_relocation import StarSearch
-
-    search = StarSearch(ctx, max_expansions // 20)
-    info['star_search'] = search.info
+    connected = star_policy == 'connected'
+    if connected:
+        from ember_qc.algorithms.factored.connected_star_relocation import ConnectedStarSearch
+        search = ConnectedStarSearch(ctx, max_expansions // 20)
+        info['connected_star_search'] = search.info
+        search.info.update(policy='connected', member_growth=0)
+    else:
+        from ember_qc.algorithms.factored.induced_star_relocation import StarSearch
+        search = StarSearch(ctx, max_expansions // 20)
+        info['star_search'] = search.info
     search.info.update(accepted=0, qubits_saved=0, contact_redundancy_gain=0,
                        ordinary_groups_tried=0, visit_work_peak=0,
                        attempts=[], maintenance=[], visits=[])
@@ -726,6 +734,8 @@ def _polish_with_stars(work, ctx, info, *, deadline, max_passes, max_groups,
                 proposal_work = proposal['expansions']
                 attempt = dict(proposal, center=group[0], group_index=group_index,
                                committed=False, commit_rejection=None)
+                if connected:
+                    attempt['policy'] = 'connected'
                 attempt['pass'] = info['passes']
                 search.info['attempts'].append(attempt)
                 move['complete_proposals'] += proposal['complete_proposals']
@@ -737,9 +747,13 @@ def _polish_with_stars(work, ctx, info, *, deadline, max_passes, max_groups,
                     else:
                         # The core has certified all original constraints touching
                         # this block. Outside chains remain the same objects.
-                        result, selected, operator = trial, proposal['group'], 'star'
+                        result, selected = trial, proposal['group']
+                        operator = 'connected_star' if connected else 'star'
                         attempt['committed'] = True
-                        for key in ('accepted', 'qubits_saved', 'contact_redundancy_gain'):
+                        counters = ('accepted', 'qubits_saved', 'contact_redundancy_gain')
+                        if connected:
+                            counters += ('member_growth',)
+                        for key in counters:
                             move[key] += proposal[key]
                             search.info[key] += proposal[key]
             if move['accepted']:

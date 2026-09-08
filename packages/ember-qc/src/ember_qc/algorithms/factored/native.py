@@ -99,8 +99,8 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
     an external watchdog. This limitation is recorded rather than hidden.
     Direct singleton relocation is an optional proposal rule inside the one
     contact-refinement call and shares that call's work and deadline limits.
-    Matching-star relocation is a separate experimental proposal policy within
-    the same refinement call; it requires the legacy singleton policy.
+    Matching-star or connected-center relocation selects one experimental
+    proposal policy in that same call; either requires the legacy singleton policy.
     """
     started = time.perf_counter()
     deadline = started + timeout if timeout is not None and timeout > 0 else None
@@ -136,18 +136,18 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
         return result({}, 'ERROR', error='spectral initialization requires search construction')
     if polish_singleton_policy not in ('legacy', 'direct'):
         return result({}, 'ERROR', error='unknown singleton policy')
-    if polish_star_policy not in ('off', 'matching'):
+    if polish_star_policy not in ('off', 'matching', 'connected'):
         return result({}, 'ERROR', error='unknown star policy')
     if polish_star_policy != 'off' and polish_singleton_policy != 'legacy':
-        return result({}, 'ERROR', error='matching star and direct singleton policies are mutually exclusive')
+        return result({}, 'ERROR', error=f'{polish_star_policy} star and direct singleton policies are mutually exclusive')
     if polish_singleton_policy == 'direct' and (
             target_graph.is_directed() or target_graph.is_multigraph()
             or nx.number_of_selfloops(target_graph)):
         return result({}, 'ERROR', error='direct singleton target must be simple and undirected')
-    if polish_star_policy == 'matching' and (
+    if polish_star_policy != 'off' and (
             target_graph.is_directed() or target_graph.is_multigraph()
             or nx.number_of_selfloops(target_graph)):
-        return result({}, 'ERROR', error='matching star target must be simple and undirected')
+        return result({}, 'ERROR', error=f'{polish_star_policy} star target must be simple and undirected')
     if packing_passes < 1 or max_asks < 1 or polish_passes < 0:
         return result({}, "ERROR", error="invalid work limit")
     if (source_graph.is_directed() or source_graph.is_multigraph()

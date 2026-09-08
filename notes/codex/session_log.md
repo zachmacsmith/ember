@@ -802,3 +802,19 @@ ember-codex-039-input-order and retained the pilot's per-input arm shuffle.
 An evaluator-only103-file original/label/expected-normalized/target freeze was
 copied byte-for-byte from audited038records; literature is independently
 checking it and preparing039preflight. No final039source/taskfreeze or launch.
+
+Root repeated the complete independent 038 results auditor after its freeze.
+All six JSON tables are byte-identical to the author's final tables; no audit
+errors or certificates appeared. The predeclared initial-prefix policy is
+rejected, with all overloaded skips retained and no feasibility conclusion
+drawn from them. The final narrative report is being completed separately.
+
+The connected integration author completed 36 focused and 160 combined tests.
+Root read the full production diff and new tests, accepted the static review,
+and independently repeated the 36-test suite: PASS, hashes unchanged, no
+prohibited imports. Tests cover actual native/Z12 output and eight exact
+historical off/matching replays with active matching queries and commits.
+Root's integration review and six-file hash map are saved for 039 preflight.
+The goal backend was rechecked at06:05:31UTC and reports active. The user was
+told that `/goal resume` is unnecessary and the UI indicator cannot be repaired
+through the available goal controls. No goal state was mutated.

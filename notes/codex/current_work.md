@@ -244,10 +244,14 @@ Root's frozen analyzer completed with zero audit errors or nonbinding replay
 mismatches: 26 VALID_NONATTAINING observations and 42 SKIPPED_OVERLOAD, zero
 timely certificates. All 34 cold/second captures are comparable and agree in
 saved geometry, RNG, orders and structural-state hashes; physical chain maps
-exist for only the 13 eligible pairs. The independent complete audit is still
-pending. If it confirms this result, reject the fixed initial-checkpoint policy
-including its overload throttle; do not tune later checkpoint indices or infer
-that every skipped initial state is physically infeasible.
+exist for only the 13 eligible pairs. The independent complete audit confirms
+these outcomes with zero errors and independently reconstructs four graph/
+adjacency hash categories from frozen inputs. Root repeated that second auditor:
+all six deterministic JSON tables are byte-identical. The final report remains.
+The fixed initial-checkpoint policy
+including its overload throttle is rejected; do not tune later checkpoint
+indices or infer that skipped initial states are physically infeasible. The
+termination design records this negative lesson.
 
 The prerequisite read-only certificate audit is complete and root-repeated:
 all 170 saved candidate outputs validate. Only path/cycle attain the degree
@@ -255,7 +259,7 @@ bound (two outputs in 036, eight in 032). Every degree gate passes all 34 inputs
 3,680 maximum-degree target sites make these particular relaxations vacuous
 when L<=1,440. This supplies no evidence of early attainment or saved runtime.
 
-The connected-center core is implemented and frozen, without scheduler integration.
+The connected-center core is implemented, frozen and independently reviewed.
 Core SHA `d58b16bdee4024e5f40d066165c17fec1e7a5193c97d31a63fa871d0b80d9473`,
 test SHA `67763d5a9822c5f6d3bcd61cebae35a647602a7c0ae32bb2f65d42a5bb6f28a8`.
 Root independently repeated all 43 focused tests with prohibited imports blocked;
@@ -271,7 +275,14 @@ certificates and 2,315 query/shared/cache interruption checks. Root read the
 complete review and reran its verifier; summary matches except audit wall and
 six deterministic JSON files match byte-for-byte. The accepted review SHA is
 `18abd36b638fcb376058132a3252e6366600298df48aec7d8106fd6f1930e33d`.
-Root has now authorized integration and focused checks, without a corpus run.
+Integration is now complete and root-reviewed. The author's new 36-test suite
+and combined 160-test regression suite pass. Root independently repeated all
+36 integration tests; hashes were unchanged and prohibited imports absent.
+Eight historical off/matching replays agree exactly apart from wall fields.
+The experimental mode retains one search object, the existing failed-visit
+schedule, shared budgets, signed R and actual committed member-growth counts.
+No default changed. The accepted review is
+`notes/codex/connected_star_integration_review.md`.
 
 The draft 039 complete-pipeline protocol compares only the global control with
 the connected policy under the same work/deadline limits. Its input order is
@@ -298,12 +309,11 @@ owned-site Hall-counting caveat; none is a novelty or superiority claim.
 
 1. Preserve 037's narrow, concentrated gain and four regressions. Its complete
    report and all-input table are reviewed and committed as `a658ce00`.
-2. Complete, freeze and independently review 038 before root launches its
-   bounded mechanism screen. Independently audit all skips/failures/late outputs,
-   state equality, original graph validity and call/deadline accounting.
-3. Complete the connected core and focused correctness witnesses, then obtain
-   independent code/oracle/interrupt review. Scheduler integration and a new
-   complete-pipeline experiment follow that review; no default is changed.
+2. Finalize 038's independently verified negative report and preserve its
+   lesson. The controller and all workers have terminated; never restart them.
+3. Commit the reviewed connected integration, freeze 039's all-input pipeline
+   comparison, and complete independent local/remote preflight before root's
+   single launch. No default or shared work-allocation rule changes.
 4. Continue one general constructor/refinement pipeline. No MM or busclique
    dependency, cached competitor input, hidden fallback, per-family dispatch,
    selected seed or best-of result is allowed. Broader replication and fresh

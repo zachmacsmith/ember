@@ -325,6 +325,34 @@ nonattaining overhead, binding-deadline failures, all Q differences and full
 non-time replay checks; do not run it only on the certified subset. Historical
 032 times cannot establish a speed improvement for a later implementation.
 
-Status: stable design only. No proposed check changes 037, and no performance
-gain, early certificate, or source/target gate rejection has been measured for
-this proposal.
+## Recorded outcome of the fixed initial-checkpoint screen
+
+Experiment 038 completed all 34 input workers and saved both recorded
+invocations per input. The frozen analyzer and separate original-data audit
+agree: no timely certificate, no missing observation, no timeout and no audit
+error. Thirteen input pairs produced valid but nonattaining embeddings; the
+other 21 pairs were skipped by the fixed positive-overload throttle. All degree
+capacity conditions passed every input. Both invocations agree in saved
+geometry, RNG, orders and structural-state hashes; their physical outputs agree
+where evaluated. Full grid arrays were hashed by the worker but not retained,
+so independent reviewers can compare those hashes without reconstructing the
+entire original grid state.
+
+The predeclared negative-result rule therefore rejects this initial-checkpoint
+policy. No later checkpoint index, looser overload threshold or selected subset
+is substituted. A skipped input is not proved physically infeasible, and this
+screen does not disprove the general Q=L theorem or every possible stopping
+schedule. The practical lesson is narrower: these inexpensive degree conditions
+provide no useful exclusion on the current ideal Z12 development inputs, and
+the one evaluated schedule supplied no certificate. It should add no physical
+evaluation cost to the production constructor. Retain the existing layout search
+and refinement in the current pipeline while the separate connected-center rule
+is evaluated. Neither 038 nor the earlier costly
+checkpoint study establishes a net speed improvement.
+
+The immutable 038 manifest is
+`09bd7718cec3456ef5861c79f86065a582694902692c068b47240a7996f3aa3c`.
+Raw records and root's frozen analysis are under
+`results/codex/038-initial-prefix-certificates/`; the separate complete audit is
+under `results/codex/038-results-review/`. The initial planning text above is
+retained to make this decision and its original stop condition reviewable.
