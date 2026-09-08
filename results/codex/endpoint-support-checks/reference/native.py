@@ -138,13 +138,6 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
         return result({}, 'ERROR', error='unknown singleton policy')
     if polish_star_policy not in ('off', 'matching', 'connected'):
         return result({}, 'ERROR', error='unknown star policy')
-    if polish_objective == 'qubits_endpoint_support':
-        if (polish_tree_policy != 'greedy' or polish_singleton_policy != 'legacy'
-                or polish_star_policy != 'off'):
-            return result({}, 'ERROR', error='endpoint support requires greedy trees, legacy singletons and stars off')
-        for graph in (source_graph, target_graph):
-            if graph.is_directed() or graph.is_multigraph() or nx.number_of_selfloops(graph):
-                return result({}, 'ERROR', error='endpoint support requires simple undirected loopless graphs')
     if polish_star_policy != 'off' and polish_singleton_policy != 'legacy':
         return result({}, 'ERROR', error=f'{polish_star_policy} star and direct singleton policies are mutually exclusive')
     if polish_singleton_policy == 'direct' and (

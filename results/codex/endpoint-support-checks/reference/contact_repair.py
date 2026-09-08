@@ -21,7 +21,6 @@ from typing import Optional
 
 
 _popcount = getattr(int, "bit_count", lambda value: bin(value).count("1"))
-_ENDPOINT_OBJECTIVE = 'qubits_endpoint_support'
 
 
 def _ordered(nodes):
@@ -331,30 +330,11 @@ def _repair(embedding, ctx, group, *, beam_width, alternatives, halo,
     budget = _Budget(max_expansions, deadline)
     best = embedding
     best_size = old_size
-    endpoint = objective == _ENDPOINT_OBJECTIVE
-    rearrange = objective in ('qubits_contacts', _ENDPOINT_OBJECTIVE)
-    old_redundancy = (_contact_redundancy(embedding, selected, ctx)
-                      if objective == 'qubits_contacts' else 0)
+    rearrange = objective == 'qubits_contacts'
+    old_redundancy = _contact_redundancy(embedding, selected, ctx) if rearrange else 0
     best_redundancy = old_redundancy
-    if endpoint:
-        from .endpoint_support import (EndpointScorer, ScoreDeadline,
-                                       diagnostics, histogram_difference)
-        scorer = EndpointScorer(embedding, ctx, group, deadline)
-        support = info['endpoint_support'] = diagnostics()
-        support['score'] = scorer.info
-        entry_score = best_score = None
 
     def finish(reason):
-        if endpoint and best is not embedding:
-            known = entry_score is not None and best_score is not None
-            support['histogram_complete'] = known
-            support['unknown_moves'] = int(not known)
-            support['histogram_delta'] = (histogram_difference(
-                entry_score['histogram'], best_score['histogram']) if known else None)
-            if known:
-                support['known_histogram_delta'] = dict(support['histogram_delta'])
-                support['known_contact_redundancy_gain'] = (
-                    best_score['redundancy'] - entry_score['redundancy'])
         ended = time.perf_counter()
         info["expansions"] = budget.expansions
         info["stopped_by"] = budget.stopped_by or reason
@@ -368,10 +348,6 @@ def _repair(embedding, ctx, group, *, beam_width, alternatives, halo,
             info["qubits_saved"] = old_size - best_size
             info['equal_size_moves'] = int(old_size == best_size)
             info['contact_redundancy_gain'] = best_redundancy - old_redundancy
-            if endpoint:
-                info['contact_redundancy_gain'] = (
-                    support['known_contact_redundancy_gain']
-                    if support['histogram_complete'] else None)
             info["member_growth"] = sum(
                 len(best[v]) > len(embedding[v]) for v in group)
         return best, info
@@ -432,36 +408,6 @@ def _repair(embedding, ctx, group, *, beam_width, alternatives, halo,
             trial = dict(embedding)
             for v, chain in prefix.items():
                 trial[v] = sorted(chain, key=ctx.rank.__getitem__)
-            if endpoint:
-                if deadline is not None and time.perf_counter() >= deadline:
-                    return finish('deadline')
-                trial_score = None
-                if size == best_size:
-                    try:
-                        if best_score is None:
-                            best_score = scorer.score(best)
-                            if best is embedding:
-                                entry_score = best_score
-                        else:
-                            scorer.info['cache_hits'] += 1
-                        if best_score is None:
-                            raise RuntimeError('endpoint score rejected a validated incumbent')
-                        trial_score = scorer.score(trial)
-                        if trial_score is None or not scorer.improves(best_score, trial_score):
-                            continue
-                    except ScoreDeadline:
-                        return finish('deadline')
-                validation_start = time.perf_counter()
-                valid = ctx.valid(trial)
-                support['validation_wall'] += time.perf_counter() - validation_start
-                if not valid:
-                    continue
-                if deadline is not None and time.perf_counter() >= deadline:
-                    return finish('deadline')
-                support['best_equal_updates' if size == best_size else
-                        'best_qubit_updates'] += 1
-                best, best_size, best_score = trial, size, trial_score
-                continue
             redundancy = _contact_redundancy(trial, selected, ctx) if rearrange else 0
             if size == best_size and redundancy <= best_redundancy:
                 continue
@@ -483,39 +429,6 @@ def _parameters(beam_width, alternatives, halo, max_region,
             raise ValueError(f"{name} must be an integer >= {minimum}")
 
 
-def _endpoint_parameters(source, target, tree_policy, singleton_policy='legacy',
-                         star_policy='off'):
-    if tree_policy != 'greedy' or singleton_policy != 'legacy' or star_policy != 'off':
-        raise ValueError('endpoint support requires greedy trees, legacy singletons and stars off')
-    for graph in (source, target):
-        if (graph.is_directed() or graph.is_multigraph()
-                or any(v in graph[v] for v in graph)):
-            raise ValueError('endpoint support requires simple undirected loopless graphs')
-
-
-def _merge_endpoint_diagnostics(info, move):
-    """New-objective aggregation only; unknown signed deltas stay unknown."""
-    total, part = info['endpoint_support'], move['endpoint_support']
-    for key, value in part['score'].items():
-        if key == 'interrupted_stage':
-            if value is not None:
-                total['score'][key] = value
-        else:
-            total['score'][key] += value
-    for key in ('validation_wall', 'best_qubit_updates', 'best_equal_updates',
-                'unknown_moves', 'known_contact_redundancy_gain'):
-        total[key] += part[key]
-    known = total['known_histogram_delta']
-    for key, value in part['known_histogram_delta'].items():
-        known[key] = known.get(key, 0) + value
-        if not known[key]:
-            del known[key]
-    total['histogram_complete'] = total['unknown_moves'] == 0
-    total['histogram_delta'] = dict(known) if total['histogram_complete'] else None
-    info['contact_redundancy_gain'] = (total['known_contact_redundancy_gain']
-                                      if total['histogram_complete'] else None)
-
-
 def repair_group(embedding, source_graph, target_graph, group, *,
                  beam_width=4, alternatives=3, halo=2, max_region=512,
                  max_expansions=50000, max_orders=2, deadline=None, boundary_sites=0,
@@ -530,18 +443,14 @@ def repair_group(embedding, source_graph, target_graph, group, *,
     improvement already found; otherwise the original embedding is returned.
     The default objective requires fewer qubits. ``qubits_contacts`` additionally
     permits equal size with strictly greater redundancy on logical-edge couplers.
-    ``qubits_endpoint_support`` instead minimizes the directed endpoint-support
-    histogram at equal size; unmeasured secondary deltas are explicitly null.
     """
     start = time.perf_counter()
     _parameters(beam_width, alternatives, halo, max_region, max_expansions, max_orders,
                 boundary_sites)
-    if objective not in ('qubits', 'qubits_contacts', _ENDPOINT_OBJECTIVE):
+    if objective not in ('qubits', 'qubits_contacts'):
         raise ValueError('unknown contact objective')
     if tree_policy not in ('greedy', 'distance'):
         raise ValueError('unknown tree policy')
-    if objective == _ENDPOINT_OBJECTIVE:
-        _endpoint_parameters(source_graph, target_graph, tree_policy)
     group = tuple(dict.fromkeys(group))
     if not 1 <= len(group) <= 4:
         raise ValueError("group must contain 1–4 distinct source vertices")
@@ -549,17 +458,9 @@ def repair_group(embedding, source_graph, target_graph, group, *,
     if not set(group) <= set(ctx.nodes):
         raise ValueError("group contains an unknown source vertex")
     if not ctx.valid(embedding):
-        invalid = {**_diagnostics(), "invalid_input": True,
-                   "stopped_by": "invalid_input",
-                   "wall": time.perf_counter() - start}
-        if objective == _ENDPOINT_OBJECTIVE:
-            from .endpoint_support import diagnostics
-            invalid['endpoint_support'] = diagnostics()
-            ended = time.perf_counter()
-            invalid['wall'] = ended - start
-            if deadline is not None:
-                invalid['deadline_overrun'] = max(0.0, ended - deadline)
-        return embedding, invalid
+        return embedding, {**_diagnostics(), "invalid_input": True,
+                           "stopped_by": "invalid_input",
+                           "wall": time.perf_counter() - start}
     result, info = _repair(
         embedding, ctx, group, beam_width=beam_width, alternatives=alternatives,
         halo=halo, max_region=max_region, max_expansions=max_expansions,
@@ -618,8 +519,6 @@ def contact_polish(embedding, source_graph, target_graph, *, timeout=None,
     family names are never used. Outside chains remain fixed for each move.
     With ``objective='qubits_contacts'``, equal-size moves must strictly increase
     actual logical-edge coupler redundancy; the default accepts only shortening.
-    ``qubits_endpoint_support`` uses a lazy directed support histogram instead,
-    with separately measured scans and nullable signed secondary diagnostics.
     ``singleton_policy='direct'`` enables bounded common-boundary singleton
     proposals, charging their cache and scans to the original work/group limits.
     ``star_policy='matching'`` attaches a joint singleton-star attempt to a failed
@@ -632,7 +531,7 @@ def contact_polish(embedding, source_graph, target_graph, *, timeout=None,
                 boundary_sites)
     if group_policy not in ('legacy', 'round_robin'):
         raise ValueError('unknown group policy')
-    if objective not in ('qubits', 'qubits_contacts', _ENDPOINT_OBJECTIVE):
+    if objective not in ('qubits', 'qubits_contacts'):
         raise ValueError('unknown contact objective')
     if tree_policy not in ('greedy', 'distance'):
         raise ValueError('unknown tree policy')
@@ -640,9 +539,6 @@ def contact_polish(embedding, source_graph, target_graph, *, timeout=None,
         raise ValueError('unknown singleton policy')
     if star_policy not in ('off', 'matching', 'connected'):
         raise ValueError('unknown star policy')
-    if objective == _ENDPOINT_OBJECTIVE:
-        _endpoint_parameters(source_graph, target_graph, tree_policy,
-                             singleton_policy, star_policy)
     if star_policy != 'off' and singleton_policy != 'legacy':
         raise ValueError(f'{star_policy} star and direct singleton policies are mutually exclusive')
     if singleton_policy == 'direct':
@@ -671,9 +567,6 @@ def contact_polish(embedding, source_graph, target_graph, *, timeout=None,
     ctx = _Context(source_graph, target_graph)
     info = {**_diagnostics(), "groups_tried": 0, "passes": 0,
             "trajectory": [], "max_region_size": 0}
-    if objective == _ENDPOINT_OBJECTIVE:
-        from .endpoint_support import diagnostics
-        info['endpoint_support'] = diagnostics()
     work = embedding
 
     def finish(reason):
@@ -749,11 +642,7 @@ def contact_polish(embedding, source_graph, target_graph, *, timeout=None,
                         "unreachable_contacts", "complete_proposals", "orders_tried",
                         "boundary_sites_added", "boundary_expansions",
                         "equal_size_moves", "contact_redundancy_gain"):
-                if objective == _ENDPOINT_OBJECTIVE and key == 'contact_redundancy_gain':
-                    continue
                 info[key] += move[key]
-            if objective == _ENDPOINT_OBJECTIVE:
-                _merge_endpoint_diagnostics(info, move)
             for key, value in move['tree_search'].items():
                 if key == 'initial_bound':
                     continue  # A per-root value is not an aggregate counter.
@@ -770,11 +659,6 @@ def contact_polish(embedding, source_graph, target_graph, *, timeout=None,
                     "contact_redundancy_gain": move['contact_redundancy_gain'],
                     "total_qubits": sum(map(len, work.values())),
                     "expansions": info["expansions"]})
-                if objective == _ENDPOINT_OBJECTIVE:
-                    info['trajectory'][-1].update(
-                        objective=objective,
-                        support_histogram_delta=move['endpoint_support']['histogram_delta'],
-                        secondary_complete=move['endpoint_support']['histogram_complete'])
         if info['groups_tried'] >= max_groups:
             return finish('group_limit')
         if info['expansions'] >= max_expansions:

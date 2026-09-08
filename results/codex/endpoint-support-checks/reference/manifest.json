@@ -1,0 +1,5 @@
+{
+  "packages/ember-qc/src/ember_qc/algorithms/factored/contact_repair.py": "0ce3c2e7f7287a173294190e476a47901d606043970eb46d6ff3f48ba9ec5f97",
+  "packages/ember-qc/src/ember_qc/algorithms/factored/native.py": "1455154dcc31718b669c8deb75a68656dde5ef695b31bec00df7517adc4f1971",
+  "scripts/codex/pilot.py": "10f74368859fc4e14f16bc921d1a0c4295b6df754cea153b4d67ec3a8c70f8ad"
+}
