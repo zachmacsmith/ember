@@ -174,6 +174,24 @@ class-wide improvement.
 
 No benchmark controller is running. The goal remains active and unmet.
 
+Hyde02 environment preparation completed normally at approximately 05:29:58 UTC
+(exec session `43604`, started 05:26:55 UTC, exit zero). The pinned preparation
+used verified `/usr/bin/python3.10`. Logs are
+`results/codex/cluster-readiness-20260908-0524/prepare.{stdout,stderr}`.
+Independent remote readback verifies all five environment records, pinned
+versions and native/MM separation. Full environment fingerprint is
+`4e1fb892db12754ee8e3ea68781af5cc7d2aa62d74f20e8914eb6de8f5fd81c3`.
+A single 20-second detached persistence probe completed after its launch SSH
+connection closed. It used a 35-second timeout and five-second kill grace under
+`/home/dabh/ember-codex/readiness/20260908-hyde02` at 05:35:08 UTC. Fresh SSH
+readback found PID 167120's completion record, elapsed 20.020704 seconds, exit
+zero, empty stderr and stopped tmux. This checks normal disconnect/reconnect,
+not an actual Wi-Fi network switch. Do not relaunch that identity. No benchmark
+is staged on hyde02.
+Fresh inventory/routing evidence is
+in `notes/codex/cluster_readiness_refresh.md`; only cluster host routing changed
+in commit `75860aea`, with all six effective SSH routes checked.
+
 - `algorithm_audit` owns implementation of the frozen-protocol 038 initial-prefix
   diagnostic, including native/AST capture, worker, input/source/environment
   freeze and focused checks. It may run small synthetic correctness checks, but

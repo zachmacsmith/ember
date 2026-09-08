@@ -708,3 +708,27 @@ could retain its original quota with an explicitly additional bounded auxiliary
 allowance, under the same wall deadline. This responds to037's no-commit
 regressions and makes a conditional replay property testable. It is design only,
 not a change to the current connected core or a newly authorized benchmark.
+
+Hyde02 preparation completed normally (session 43604, exit zero). Root then
+independently retrieved all five environment records and checked their hashes,
+live pinned versions, spec fingerprint and candidate/MM separation. A single
+bounded tmux probe at 05:35:08 UTC survived closure of its launch SSH connection;
+fresh SSH readback found its completion marker, PID 167120, 20.020704 seconds
+monotonic elapsed, exit zero and stopped tmux. This verifies ordinary SSH
+disconnect/reconnect, not an actual network switch or benchmark timing. No
+benchmark was staged on the additional node. Raw evidence and exact scripts are
+under results/codex/cluster-readiness-20260908-0524.
+
+At 05:33:43 UTC the backend goal still reported active. Root confirmed to the user
+that no resume command was needed and that this session cannot repair the UI
+indicator. Official goal documentation was opened to confirm status/resume
+commands; no UI or scheduler state was modified. The original user prompt is
+already preserved in PROMPTS_CODEX.md and was not duplicated.
+
+Root read the complete mutable connected-center core through its propose/refresh
+wrapper. No concrete static correctness defect was identified; this is not a
+test or integration approval. The author is completing independent expanded
+matching checks, interruption checks and a Z12 high-degree witness. The initial
+prefix diagnostic's author reports focused instrumentation, failure-aware
+analysis, kernel-alarm and supervision checks passing; final source freeze and
+independent preflight remain required before any corpus observation.
