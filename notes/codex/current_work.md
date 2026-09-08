@@ -18,9 +18,9 @@ independent audit reports matching original-graph validity and complete endpoint
 accounting. Root accepts the corrected final report after reading the complete
 auditor and verifying all 38 review files and 14 references; see
 `experiments/041_root_results_acceptance.md`. This small development result
-does not meet the broad goal. All project benchmark controllers are terminal.
+does not meet the broad goal. All earlier project benchmark controllers are terminal.
 
-**Current preparation:** 042 final-deletion comparison is frozen at `c789e5bc`,
+**Current running experiment:** 042 final-deletion comparison is frozen at `c789e5bc`,
 with 50 source files, snapshot
 `14d2d4b8fec918e06b08ce3404ed194e5bbe745adf37eb6c9658813140c62063`.
 All 34 development structures and 68 calls use the same 60-second native and
@@ -29,8 +29,12 @@ off in both arms. Independent local preflight passes, runtime transport is
 staged on hyde03 with digest
 `d6510eab6afcf1d203f0eaf8f512f3a770c652cd1c55fe2e979845eec8a9407d`,
 and the actual target-environment 12-group synthetic suite passes once.
-Target evidence retrieval and the final remote preflight remain pending before
-the single detached start. There have been no 042 benchmark calls.
+All ten synthetic evidence files are retrieved and the final remote preflight
+passes. Root verified all 84 review files and 35 references, then launched once
+at 15:28:00.073 UTC under controller 165387. Fresh SSH confirmed the controller
+and worker alive, lock held and tmux running. See `experiments/042_launch_record.md`.
+The independent saved-data auditor is being prepared before outcome reads.
+Observe this run after any connection failure; never start a replacement.
 
 **Latest completed diagnostic:** 040 on hyde03, controller 143531, ran from
 07:37:00.001 to 07:57:57.603 UTC. All 34 inputs and 68 phases finished with

@@ -1129,3 +1129,14 @@ Root accepts the final corrected041 report and saves a concise acceptance note.
 All38 review files and14 references match, and its results agree with root’s
 separate68-output structural recount. Six regressions and the small mean gain
 remain explicit. No additional041 computation is needed.
+
+At 15:28:00.073 UTC root launches 042 once under controller 165387, after all
+independent gates pass and all 84 review files plus 35 references are verified.
+The 68-call run is detached on hyde03; fresh SSH confirms the controller and
+worker 165408 alive, inherited lock held and tmux running. The final preflight
+and complete launch identities are recorded in experiments/042_launch_record.md.
+The ten target-suite evidence files are complete and hash-verified. A saved-data
+finalizer's overly strict empty-stderr assertion was corrected to retain the
+known deprecation warning; no test or embedding call was repeated. The result
+auditor is assigned before outcome reads, with explicit reconstruction and
+forward original-graph validation of the final-cleanup trace. Outcomes pending.
