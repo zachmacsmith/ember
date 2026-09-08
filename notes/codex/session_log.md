@@ -1445,3 +1445,46 @@ policy. Equal-distance preparation now needs a separate bounded diagnostic;
 no fullC007 pipeline run follows these local results.
 
 All results remain exposed development evidence. Current goal remains unmet.
+
+## 2026-09-08 20:39 UTC: neutral transport gains reach; soft guidance reaches a screen
+
+A052's fixed four-case gate passes: cycle126 Q143, star128 Q138, wheel128
+Q228 and subdivision Q18. Six focused groups pass after one preserved
+pre-reach extraction error (unqualified pinned constants); each reach call
+ran once. Guidance consumes roughly half the cycle/wheel work and worsens
+wheel quality. Root reads the full source/tests and checks all28 bound
+artifacts. One affected pilot adapter passes. Source/registry/protocol are
+committed in eacdf574 before freezing the paired34-input experiment.
+
+052 stages once and starts once on03. Source14a02333fd3a19e8cc5f0b5ed8714102f75255ea9a8dd4ec5e4e1dbf359a2f67;
+manifest37b37635bd4b6eb8599556de5d633e1700181f4a2d80b428b3a052758db4fa6a;
+transport34ab5e251d027e42724ac3a501e4d61d5317ed9422731d4dc1a8e2a3d7d282a5.
+All inputs/target/selection bytes exactly match042. Control fixedA050 versus
+A052, both60s/seed0, noMM. Controller194488 starts1788899944.821897;
+fresh SSH confirms active worker/lock/tmux and five SUCCESS calls out of68.
+Root owns lifecycle and retrieval, literature the minimal output screen.
+
+B012's frozen reconstruction consumes all1M units in its first ER release,
+while its tiny four-Q witness passes. No corpus run follows. Root reviews
+full ancestor diff and six tests, commits source/failure lesson in b8ba182e.
+The next independent B013 predicate recomputes boundaries after each whole
+release. All21 blocks survive; block0 gains unprotected site1990. Thus the
+original apparent sole-port contention cannot justify skipping that block.
+All five tiny cases pass,261277 operations/0.125s total; no constructor call.
+A connected-component obstruction requires a separate pre-code diagnostic.
+
+C's neutral amendment certifies10/25 versus3/25, adding seven two-move repairs.
+Independent review checks775 query-scoped states; all original contacts,
+fixed ownership, conserved pre-path Q and actual region transitions pass.
+The complete state's repaired edge adds7Q but leaves two other contacts.
+Diagnostic33.789s plus separate replay25.576s; all costs/failures preserved.
+Root reads the result and verifies39 artifact/reference bindings. A metadata
+failure precedes any input reading/diagnostic; there is only one actual run.
+The next approved test applies repairs sequentially to one incumbent on each
+of the same four states, then deletes only after full original validity.
+There is no assembly of independently computed query outputs.
+
+A reserved connected-access construction proposal is also saved, with its
+own hypothesis/pseudocode/critique and initialization-only falsifier. It is
+unimplemented and deferred within track C, not a fourth active track. The
+research goal remains unmet; no novelty or broad quality claim is made.

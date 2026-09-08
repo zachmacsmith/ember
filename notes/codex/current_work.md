@@ -1,51 +1,48 @@
 # Current research checkpoint
 
-Updated 2026-09-08 20:25 UTC. Branch `codex`. Goal active and unmet: one
+Updated 2026-09-08 20:39 UTC. Branch `codex`. Goal active and unmet: one
 general non-portfolio algorithm, no MM/busclique, ideal Z12, competitive mean
 ACL and roughly MM-scale runtime. No new final-test inputs have been exposed.
 
-- **A / literature / hyde03:** Keep048 cyclic continuation as the overall
-  development baseline. A050's blocked-only reconstruction restores34/34
-  coverage from049's32/34, with exact Q ties on all32 common successes.
-  The two successful repairs consume0.138s; total solver wall increases
-  179.16→185.53s, including the two completed expansions. Historical quality
-  against048 still slightly trails:14,866 versus14,858Q, macroACL3.298135
-  versus3.290160. [Results](experiments/050_results_screen.md).
-  Literal original-only physical requirements (A051) pass five correctness
-  groups but fail the fixed four-case reach gate: cycle stops at119/126
-  vertices with20M scans. Star ties, wheel/subdivision worsen. Reject this
-  policy before a corpus run. [Lesson](original_requirements_implementation.md).
-  A052 is a separate soft spatial-guidance design, not implemented yet.
-- **B / algorithm_audit / hyde02:** B011 port-aware paths recover one saved
-  ER step but still complete6/9, with all six Q totals exactly matchingB009.
-  ER blocks at the next vertex; both dense partial prefixes worsen.
-  Reject promotion. [Results](tracks/b_011_results.md). B012 now implements
-  blocked-only release/reconstruction from the fixedB011 ancestor: at most
-  two released owners, every outside chain frozen, unchanged global and
-  nested limits. Two fixed local reach calls precede any panel decision.
-  [Pre-code policy](tracks/b_blocked_reconstruction.md).
-- **C / benchmark_audit / hyde04:** Exact donor replacement domains repair
-  3/25 supplied missing-edge queries versus2 previously, with no whole-source
-  completion. [Results](tracks/c_directed_vacancy_domain_results.md).
-  Classification of all2,747 saved admissible pairs rules out an overlooked
-  one-exchange repair in the failed queries' recorded domains.
-  [Evidence](tracks/c_domain_access_results.md). Strict component-separation
-  descent still repairs only the same3/25. None of its217 noncertifying
-  proposals progress, so no second-depth state is entered. Positive gap1 is
-  impossible under this region definition; gap2 usually demands immediate
-  connection. Reject this policy. A separate bounded neutral-continuation
-  design is next; no full C007 constructor or MM run has been requested.
+- **A / literature and root / hyde03:** A052 soft guidance passes all four
+  fixed reach cases: cycle Q143, star Q138, wheel Q228, subdivision Q18.
+  Guidance restores cycle completion but worsens the wheel and accounts for
+  roughly half its work. [Results](soft_fill_guidance_implementation.md).
+  One paired 34-input screen against fixed A050 is now running on03, with
+  unchanged seed0/60s/042 inputs. [Protocol](experiments/052_soft_guidance_screen.md).
+  Root owns lifecycle; literature prepares the minimal saved-result screen.
+  Keep048 as the overall development baseline. A050 restores 34/34 coverage
+  within the reduced-core line but still slightly trails048 in historical
+  total Q/macro ACL. [A050 results](experiments/050_results_screen.md).
+- **B / algorithm_audit / hyde02 available:** B012 reconstructs its tiny
+  witness but spends its entire 1M allowance in ER's first release block;
+  no panel follows. [Results](tracks/b_012_results.md). B013's sound singleton
+  port test rejects none of the 21 blocks: releasing an owner opens an
+  unprotected alternative contact. [Negative diagnostic](tracks/b_013_results.md).
+  A separate connected-component obstruction design is next. B011 and the
+  registry remain unchanged; no new B constructor/MM run has been requested.
+- **C / benchmark_audit / hyde04 available:** Equal-distance transport
+  certifies 10/25 supplied missing-edge queries versus3 under strict descent,
+  including the complete graph's sealed edge. All seven new certificates use
+  two moves. Independent original-label replay passes; every independent
+  query output remains incomplete. [Results](tracks/c_component_transport_neutral_results.md).
+  Now test one evolving incumbent on the same four hard states, with fixed
+  free-path/neutral scheduling, all gained contacts protected and cleanup
+  only after full validity. [Policy](tracks/c_sequential_repair_diagnostic.md).
+  No full C007 constructor/MM run yet. The reserved-access construction
+  proposal is saved but deferred while this positive mechanism is tested.
 
-All preceding cluster runs, including050 andB011, are terminal, quiescent and
-retrieved. Observe existing runs after network loss; never restart because
-SSH disconnected. Candidate outputs are evaluated separately. Local proposals
-operate within one algorithm; complete outputs are never pooled.
+052 controller194488 started1788899944.821897. Fresh SSH confirms live worker,
+occupied lock, active tmux and five completed SUCCESS calls out of68. Stage
+and start each occurred once; every preceding run is terminal and retrieved.
+After network loss, observe the same run; never restart because SSH disconnected.
+Candidate outputs are evaluated separately and never pooled.
 
 The [workflow amendment](tracks/workflow.md) requires pre-code hypotheses,
 pseudocode, self-critique and cheap falsifiers. Exploration retains isolated
 libraries, targeted checks, independent original-edge validation, and every
 failure/time. Exhaustive publication audits remain deferred. All findings here
-are exploratory; novelty, seed variance and fresh-instance superiority remain
-unresolved. The latest fresh-MM baseline screen has11wins,19losses and2ties
-on32 common timely inputs; its lower macro ACL does not establish all-class
-superiority, and the median solver ratio is10.33.
+are exploratory. The latest fresh-MM baseline screen has11 wins,19 losses and
+2 ties on32 common timely inputs; its lower macro ACL does not establish
+all-class superiority, and the median solver ratio is10.33. Novelty, seed
+variance and fresh-instance superiority remain unresolved.
