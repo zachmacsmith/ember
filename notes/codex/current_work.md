@@ -131,83 +131,107 @@ at seed zero, kept separate from the readiness corpus. Root reran both artifact
 analyzers successfully. The result archive supplies valid feasibility witnesses
 without changing the frozen input sidecars.
 
-## Newly frozen experiment
+## Latest completed experiment: 037
 
-037 is frozen as commit `13876c22b0576c3d41d54bffe5ec429e37f5d08c`, source
-`5dfc63cfb5bb2a674cb3e556e13d2b4d18a1857c7a8f296ba27cc2dd5075abc9`, with 68
-tasks and 47 source files. Its corrected input bundle is staged on hyde03 at
-`/home/dabh/ember-codex/runs/037-induced-star-pipeline`; transport identity
-`55064e25db44189b2ddd0f77d0285f17ae4de3292656b7b55e624ceffd24e2e9`.
-The initial staging guard rejected local interpreter paths before publication;
-original manifest/stderr and the exact two-field correction are saved under
-`037-launch`. No trial ran during that failed staging attempt. The source and
-task identities did not change. Combined local/remote independent preflight passed. Root started the detached
-supervisor at 04:45:37 UTC and verified controller 134553, active worker 134596,
-held lock and live tmux through a fresh connection. That status had 3 of 68
-finalized, all SUCCESS. The outer watchdog is 6,420 seconds. The benchmark
-reviewer owns monitoring, quiescent retrieval and full results audit. No root
-launch/status tool session remains running.
+037 is complete and independently audited. The fixed singleton-center matching
+revision has 6 lower-ACL, 4 higher-ACL and 24 tied outputs against its own control.
+All 68 calls are timely and independently valid. Total Q is 15059 to 15052;
+mean per-input ACL is 3.335135306 to 3.333413590 (about -0.052%). Twenty-five
+committed star moves save 38 Q, but ordinary savings fall 617 to 586. Net saving
+is seven Q, all equaled by the kagome improvement; the other 33 inputs sum to
+zero Q change. Do not remove any outcomes or claim a general advantage.
 
-## Current implementation and ownership
+The original source is commit `13876c22b0576c3d41d54bffe5ec429e37f5d08c`, snapshot
+`5dfc63cfb5bb2a674cb3e556e13d2b4d18a1857c7a8f296ba27cc2dd5075abc9`.
+Transport `55064e25db44189b2ddd0f77d0285f17ae4de3292656b7b55e624ceffd24e2e9`.
+Controller 134553 finished at 2026-09-08 05:00:08.650611 UTC; independent fresh
+status verified lock free, stopped tmux and supervisor exit zero. Do not restart.
+The quiescent archive is `results/codex/retrieved/hyde03/037-induced-star-pipeline`,
+432 files, retrieval digest
+`84aac4c4a530e3c07f78366eb35407e139d5f85fde5bcdf6b697f26d94379a25`.
 
-The induced-star core, optional scheduler, native adapter and pilot arm are
-implemented and independently reviewed. The disabled policy preserves the
-original behavior; direct singleton relocation remains disabled globally.
-Core source SHA256 is
-`785a1ab9f88d8ec6454029fe648b5d62213063f17d4933bdadbef336602c965a`.
-Root passed 85 focused core tests, repeated the standalone 96-case / 89,280-
-assignment oracle and its 4,494 interruption checks, and verified 12 exact
-pre-integration off-path replays. Root's final integration/native/contact/pilot
-regression passed 110 tests, with no forbidden import attempts. This includes
-27 new integration tests and one prespecified small native correctness smoke.
-These are correctness checks, not evidence of benchmark improvement.
+Root independently reran the complete auditor. Summary, pairs, details,
+initializations and historical replay are byte-identical; summary SHA256
+`7199873aa92ae9c9057fa593c9e925fb586cf749d290222c8082dc68c36146df`.
+All contact/cache/shared-work trace checks pass. Unsaved intermediate physical
+states remain unverified; final embeddings are checked against original graphs.
+Within each of all 34 pairs, saved initialization/layout/constructed/pruned
+summaries match. The historical local-036 replay is cross-platform only:
+33 Q ties and one lower Q, 28 exact embeddings. No historical timing ratio.
 
-- `benchmark_audit`: 032 is complete, retrieved and fully audited; root repeated
-  its independent report exactly. The 037 protocol review found no blocker.
-  The committed source/run is now frozen and staged. Complete independent
-  preflight for hyde03 passed. Monitor controller 134553, retrieve only when
-  quiescent, and audit all 68 results; root owns any necessary SSH fallback.
-- `algorithm_audit`: the certificate design and read-only readiness audit are
-  complete. Root independently repeated all 170 saved candidate validations:
-  all pass, and only path/cycle attain the bound. All 34 degree gates pass;
-  3,680 maximum-degree target sites make them vacuous for these L values. Now
-  specify an exact initial-prefix diagnostic using existing source, with no
-  production edits or embedding calls. The connected-center design remains
-  unimplemented until 037 is audited.
-- `literature`: targeted connected-center prior art is complete; polymatroid
-  Steiner, LAD, RANGI and existing minor-embedding moves prevent a broad novelty
-  claim for combining matching and routing. Its independent saved-diagnostic
-  helper for 037 passed 19 synthetic checks and all 34 historical 036 controls.
-  No additional implementation is running. The separate hyde04 environment is
-  prepared, but its supervisor remains deferred.
+Same-run solver time ratio median is 1.000984, mean 1.031677, range
+0.564246--1.698551. These broad variations include unchanged upstream work;
+no speedup is established. Auxiliary search disables on 23 inputs, including
+21 auxiliary-limit and two refresh-limit cases. There are 1,034 root queries,
+25 certified/committed proposals, 930 exhausted no-match queries and 56 query
+limits. The full report preserves every selection and scheduling outcome.
+Single-seed development data do not establish across-seed or unseen-input gains.
+Keep the non-star spectral/legacy-singleton configuration as the current lead;
+the singleton-center operation remains an experimental mechanism, not a promoted
+class-wide improvement.
 
-Root owns launch, monitoring coordination, current work and session notes.
-Preserve unrelated `.claude/` and graph-library `.verified.json` files. Do not
-restart any completed controller or fetch a run before verified quiescence.
+## Current work and ownership
+
+No benchmark controller is running. The goal remains active and unmet.
+
+- `algorithm_audit` owns implementation of the frozen-protocol 038 initial-prefix
+  diagnostic, including native/AST capture, worker, input/source/environment
+  freeze and focused checks. It may run small synthetic correctness checks, but
+  no corpus observations before root reviews the freeze and preflight. There
+  are no production edits in this task.
+- `literature` owns only the 038 supervision helper and its synthetic checks,
+  delegated by algorithm_audit. The connected prior-art and adversarial notes
+  are complete. Root owns any later connected-core implementation assignment.
+- `benchmark_audit` is finalizing 037's complete report and tables; its auditor
+  and helpers are stable and root-repeated. Its next bounded task is independent
+  review of the proposed connected implementation policy, without code/runs.
+- Root owns protocol decisions, current work/session notes, source commits,
+  connected implementation specification and any future launches/integration.
+
+038 is specified in `notes/codex/experiments/038_initial_prefix_certificates.md`.
+It freezes the 037 production bytes and all 34 inputs, seed zero. Each fresh
+worker takes exactly the actual initial native prefix, before any search
+proposal, then one eligible physical evaluation. One cold and one second
+invocation share that worker's cache; no result selection, later checkpoint or
+contact refinement occurs. Every invocation has a common 60-second deadline;
+the worker watchdog is 150 seconds plus at most five seconds of kill grace.
+The root has authorized implementation and focused checks only. No corpus
+observation has occurred. If no timely initial certificate exists, reject this
+checkpoint position instead of tuning a later index.
+
+The prerequisite read-only certificate audit is complete and root-repeated:
+all 170 saved candidate outputs validate. Only path/cycle attain the degree
+bound (two outputs in 036, eight in 032). Every degree gate passes all 34 inputs;
+3,680 maximum-degree target sites make these particular relaxations vacuous
+when L<=1,440. This supplies no evidence of early attainment or saved runtime.
+
+The connected-center extension is still unimplemented. The reviewed theory
+allows several center qubits and exact singleton-leaf assignment at a fixed
+footprint. The proposed implementation groups exactly identical leaf obligations
+into demand classes, uses charged compact speculative-state copies and fixed
+one-root/four-successor/BFS growth, and shares the existing auxiliary/visit
+allowances without the singleton core's 2,048-unit per-query cap. Root's
+implementation specification is awaiting independent review. It includes the
+known root failure, nonmonotone matching, distinct-site boundary bound and
+owned-site Hall-counting caveat; none is a novelty or superiority claim.
 
 ## Next actions
 
-1. Monitor the running frozen 037 comparison under its protocol: all 34 original readiness inputs, seed zero, 60 seconds, one fixed
-   control and one matching treatment. Independent preflight passed before
-   launch. Both arms use hyde03 and its existing isolated native environment. No MM outputs are
-   candidate inputs and no per-input selection occurs.
-2. Independently audit all 68 final records, original embeddings, Q/R, limits,
-   query/cache/ordinary work and all failures. Compare within-run upstream
-   diagnostics. The historical local-036 replay is a cross-platform quality
-   check; exact replay is not required and no timing is pooled with it.
-3. Keep 033's negative result and legacy singleton policy. A matching move's
-   local savings do not establish cumulative benefit. Retain all zero-gain,
-   truncated and regressing inputs. The matching reduction has conventional
-   LAD prior art; novelty and generalization remain unproved.
-4. Review the connected-center extension only after this bounded diagnostic.
-   Continue general revisions from failure mechanisms; no family dispatcher,
-   seed selection, hidden fallback or broad superiority claim is justified.
+1. Finish review and commit 037's all-results report and preserve its narrow,
+   concentrated gain and four regressions. No class-specific selection.
+2. Complete, freeze and independently review 038 before root launches its
+   bounded mechanism screen. Independently audit all skips/failures/late outputs,
+   state equality, original graph validity and call/deadline accounting.
+3. Review the connected implementation policy before coding. If accepted,
+   implement only the core and focused independent correctness witnesses first;
+   scheduler integration and a new complete-pipeline experiment follow review.
+4. Continue one general constructor/refinement pipeline. No MM or busclique
+   dependency, cached competitor input, hidden fallback, per-family dispatch,
+   selected seed or best-of result is allowed. Broader replication and fresh
+   source instances remain necessary for any publication claim.
 
-The backend goal was checked again at 04:46 UTC and reports `active`; the user was
-told `/goal resume` is currently unnecessary. No UI internals or goal scheduler
-state were modified. The full research objective remains unmet.
-
-At approximately 04:57 UTC, fresh reviewer status reports 48/68 finalized
-SUCCESS in 037, controller 134553 unchanged, worker 135643 active, lock held and
-tmux live. This is progress only; no partial-output quality selection is made.
-Root also rechecked the backend during this continuation: it remains active.
+The backend has repeatedly reported `active`; automated continuations are
+working. The user was told `/goal resume` is unnecessary. No UI internals or
+goal scheduler state were modified. Preserve unrelated `.claude/` and
+`packages/ember-qc/src/ember_qc/graphs/library/.verified.json`. Do not restart
+completed controllers or retrieve an archive before verified quiescence.

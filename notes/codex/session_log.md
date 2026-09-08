@@ -632,3 +632,37 @@ Fresh 037 reviewer status advanced to 48/68 SUCCESS, same live controller,
 worker and held lock. No running archive was retrieved or controller restarted.
 Root checked goal status again and told the user it is active, continuation is
 working, and `/goal resume` is unnecessary despite the reported UI indicator.
+
+037 completed at 05:00:08.650611 UTC with all 68 calls timely and valid. Fresh
+terminal status verified the controller complete, lock free, tmux stopped and
+supervisor exit zero before the 432-file archive was fetched. Independent
+provenance, original-graph and shared-work audits passed. A first audit attempt
+failed on relative versus absolute historical paths; the faulty audit script
+and error are preserved, and only CLI path normalization changed for the
+successful repeat. Root reran the complete final auditor and reproduced all
+five principal JSON outputs byte-for-byte, summary SHA7199873aa92ae9c9057fa593c9e925fb586cf749d290222c8082dc68c36146df.
+
+The singleton-center treatment improves six inputs, worsens four and ties 24;
+Q15059 to15052 and mean ACL3.335135306 to3.333413590. Its25commits save38Q,
+while ordinary savings fall617to586, leaving7Qnet. That total equals the
+kagome improvement; all other33sum tozeroQchange. The operation is not promoted
+as a general improvement. The source, deadline and all outcomes remain fixed.
+
+Root reviewed the initial-prefix instrumentation specification, then saved
+038's protocol before implementation. Algorithm audit owns the isolated
+diagnostic worker/freeze and delegates supervision-only synthetic checks to
+literature. No corpus observation is authorized until root reviews the frozen
+diagnostic. The operation captures the actual initial native state exactly
+once, performs at most one eligible physical check, and never resumes layout.
+
+Root proposed and reviewed exact leaf-obligation compression and a distinct-site
+capacity bound for connected-center refinement. Literature supplied independent
+proof/cost review and explicit root-failure/capacity counterexamples. Root then
+saved a fixed implementation policy using charged compact state copies, demand
+classes, direct new-site fill followed by complete augmentation, and the same
+one-root growth rule. The known heuristic failure is retained. Benchmark audit
+will review the policy before any connected-core code is assigned. Existing
+production files are unchanged.
+
+The latest environment-context update was appended verbatim to PROMPTS_CODEX.md
+(423characters, SHA2729d4d2ad2cd36cb6ea71486e9c24692cfcbb1584db83a33d336944af4ab903).
