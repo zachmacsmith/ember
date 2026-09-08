@@ -581,3 +581,23 @@ Final root integration/native/contact/pilot regression passed 110 tests in
 integration tests and the fixed real native correctness smoke. The source
 review requested no code change. Core, scheduler and adapter are ready for a
 committed 037 freeze and independent preflight; no benchmark outcome exists yet.
+
+Commit 13876c22 freezes the reviewed induced-star implementation and all final
+checks. 037 was initialized with 68 tasks. Initial cluster staging and the
+independent preflight both caught local interpreter paths in the manifest;
+staging rejected publication and no trial started. Root preserved the original
+manifest/stderr, corrected exactly the two interpreter fields, and successfully
+staged the unchanged source/task bundle on hyde03. Corrected transport identity
+is 55064e25db44189b2ddd0f77d0285f17ae4de3292656b7b55e624ceffd24e2e9.
+The remote independent preflight must pass before root starts the controller.
+Parallel future work is design/prior-art only: certificate-based termination
+cost and connected-center matching/routing overlap. Neither changes 037.
+
+037's combined preflight passed after preserving and correcting an audit-script
+metadata-name lookup error; package versions were correct and no environment
+changed. Root inspected the final local/remote evidence and launched the exact
+frozen run at 04:45:37 UTC. Fresh status verifies controller 134553 and worker
+134596, held lock, live tmux and 3/68 finalized SUCCESS. Detached supervision
+has a 6,420-second outer watchdog. The benchmark auditor owns monitoring and
+retrieval only after quiescence, followed by all-results and diagnostic audits.
+The backend goal was checked again at 04:46 UTC and remains active and unmet.

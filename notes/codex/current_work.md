@@ -131,6 +131,23 @@ at seed zero, kept separate from the readiness corpus. Root reran both artifact
 analyzers successfully. The result archive supplies valid feasibility witnesses
 without changing the frozen input sidecars.
 
+## Newly frozen experiment
+
+037 is frozen as commit `13876c22b0576c3d41d54bffe5ec429e37f5d08c`, source
+`5dfc63cfb5bb2a674cb3e556e13d2b4d18a1857c7a8f296ba27cc2dd5075abc9`, with 68
+tasks and 47 source files. Its corrected input bundle is staged on hyde03 at
+`/home/dabh/ember-codex/runs/037-induced-star-pipeline`; transport identity
+`55064e25db44189b2ddd0f77d0285f17ae4de3292656b7b55e624ceffd24e2e9`.
+The initial staging guard rejected local interpreter paths before publication;
+original manifest/stderr and the exact two-field correction are saved under
+`037-launch`. No trial ran during that failed staging attempt. The source and
+task identities did not change. Combined local/remote independent preflight passed. Root started the detached
+supervisor at 04:45:37 UTC and verified controller 134553, active worker 134596,
+held lock and live tmux through a fresh connection. That status had 3 of 68
+finalized, all SUCCESS. The outer watchdog is 6,420 seconds. The benchmark
+reviewer owns monitoring, quiescent retrieval and full results audit. No root
+launch/status tool session remains running.
+
 ## Current implementation and ownership
 
 The induced-star core, optional scheduler, native adapter and pilot arm are
@@ -147,14 +164,17 @@ These are correctness checks, not evidence of benchmark improvement.
 
 - `benchmark_audit`: 032 is complete, retrieved and fully audited; root repeated
   its independent report exactly. The 037 protocol review found no blocker.
-  Await root's committed source/run freeze, then perform independent preflight
-  for hyde03. No 037 task has run yet.
+  The committed source/run is now frozen and staged. Complete independent
+  preflight for hyde03 passed. Monitor controller 134553, retrieve only when
+  quiescent, and audit all 68 results; root owns any necessary SSH fallback.
 - `algorithm_audit`: core and scheduler reviews are complete, with no source
   changes requested. The connected multi-qubit center specification is stable
-  and reviewed, but remains design only. Update the final integration-test hash
-  in the review note before root commits it; no further tests are needed.
+  and reviewed, but remains design only. Final integration-test hash review is
+  complete and committed. Now assess a future general certificate-based early
+  termination rule, including the rejected 030 conversion-cost evidence; no code.
 - `literature`: isolated core, 85 new core tests and 27 integration tests are
-  complete and stable. No source or test edits remain assigned. The separate
+  complete and committed. Now investigate focused primary prior art for the
+  connected-center matching/routing design; no implementation. The separate
   hyde04 environment is prepared, but its supervisor remains deferred.
 
 Root owns launch, monitoring coordination, current work and session notes.
@@ -163,10 +183,9 @@ restart any completed controller or fetch a run before verified quiescence.
 
 ## Next actions
 
-1. Freeze the tested source and initialize 037 using its saved full-pipeline
-   protocol: all 34 original readiness inputs, seed zero, 60 seconds, one fixed
-   control and one matching treatment. Independent preflight precedes launch.
-   Use hyde03 and its existing isolated native environment. No MM outputs are
+1. Monitor the running frozen 037 comparison under its protocol: all 34 original readiness inputs, seed zero, 60 seconds, one fixed
+   control and one matching treatment. Independent preflight passed before
+   launch. Both arms use hyde03 and its existing isolated native environment. No MM outputs are
    candidate inputs and no per-input selection occurs.
 2. Independently audit all 68 final records, original embeddings, Q/R, limits,
    query/cache/ordinary work and all failures. Compare within-run upstream
@@ -180,6 +199,6 @@ restart any completed controller or fetch a run before verified quiescence.
    Continue general revisions from failure mechanisms; no family dispatcher,
    seed selection, hidden fallback or broad superiority claim is justified.
 
-The backend goal was checked at 04:24:25 UTC and reports `active`; the user was
+The backend goal was checked again at 04:46 UTC and reports `active`; the user was
 told `/goal resume` is currently unnecessary. No UI internals or goal scheduler
 state were modified. The full research objective remains unmet.

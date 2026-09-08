@@ -105,3 +105,44 @@ The within-037 comparison retains the original fixed protocol.
 
 Status at this checkpoint: implementation and required checks are complete;
 committed source freeze, independent preflight and launch remain outstanding.
+
+## Frozen source and staging
+
+Committed implementation: `13876c22b0576c3d41d54bffe5ec429e37f5d08c`.
+Source snapshot: `5dfc63cfb5bb2a674cb3e556e13d2b4d18a1857c7a8f296ba27cc2dd5075abc9`
+(47 source files). Target:
+`38cde794d3c1461054a45b5a660d157737b019c19cb9a7b38e2027730e3d5938`.
+The 68 tasks are frozen in `results/codex/037-induced-star-pipeline`.
+
+The first staging attempt correctly failed before run publication because the
+manifest still contained local interpreter paths. No solver attempt occurred.
+The original manifest and stderr are saved in `results/codex/037-launch`.
+Only `candidate_python` and `mm_python` were corrected to the prepared hyde03
+interpreters under `/home/dabh/ember-codex/envs/4e1fb892db12754e/`; source,
+target, graph, task and configuration bytes remain unchanged. Original manifest
+SHA256: `fcfc453835ae0e5289d569416f22ef2d6438b92157bd0463c1c0afac04ff8b43`;
+corrected manifest: `4adea4d37bbb419bc82c1d86505ca4bca7b38668dec87600fc57c2efd8c1001e`.
+
+Corrected staging completed successfully to
+`/home/dabh/ember-codex/runs/037-induced-star-pipeline`, transport identity
+`55064e25db44189b2ddd0f77d0285f17ae4de3292656b7b55e624ceffd24e2e9`.
+Independent remote preflight remains required before root starts the controller.
+
+## Verified launch
+
+Combined independent preflight passed; see [its review](037_preflight_review.md).
+Root inspected the local audit and successful remote probe. The initial probe's
+metadata-display-name error is preserved separately; the corrected check uses
+`importlib.metadata.version` and changes no environment. It confirms all frozen
+bytes, exact pins, no forbidden candidate packages/imports, no prior attempts,
+and the prior 032 run quiescent. Empty import-created cache directories contain
+no compiled files and do not supply a warmed per-task JIT cache.
+
+Root launched at 2026-09-08 04:45:37 UTC. Controller 134553 records start
+`1788842737.938521`; the detached tmux supervisor has a 6,420-second outer
+watchdog. A fresh status connection confirms controller running, worker 134596,
+held run lock, live tmux and three of 68 finalized SUCCESS. This is launch
+verification, not a complete result or quality comparison. Raw start/status
+outputs are under `results/codex/037-launch`. The independent benchmark reviewer
+owns monitoring, quiescent retrieval and the complete artifact audit. Do not
+restart the run after a transient observer connection failure.
