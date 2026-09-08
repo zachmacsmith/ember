@@ -1,55 +1,57 @@
 # Current research checkpoint
 
-Updated 2026-09-08 21:45 UTC. Branch `codex`. Goal active and unmet: one
+Updated 2026-09-08 22:11 UTC. Branch `codex`. Goal active and unmet: one
 general non-portfolio algorithm, no MM/busclique, ideal Z12, competitive mean
 ACL and roughly MM-scale runtime. No new final-test inputs have been exposed.
 
-- **A / literature / hyde03 available:** Retain053 within the reduced-core
-  research line. All68 paired outputs validate; against050,10 improvements,
-  two regressions,22 ties, Q14866→14797 and macro ACL3.298135→3.278605.
-  Solver totals185.646→186.012s. Historical048 quality alone has10 wins,
-  seven losses,17 ties; its cubic/cycle/kagome deficits remain substantial.
-  [Results](experiments/053_results_screen.md). Next054 changes only the
-  reduction threshold3→2, keeping053 transfer/native/repair policies fixed.
-  Its source-only34 comparison (5s/2M operations each), focused contraction
-  checks and eight fixed paired20s reach calls are authorized sequentially.
-  No registration or full054 screen follows automatically.
-  [Pre-code policy](experiments/054_degree_two_reduction_hypothesis.md).
-- **B / algorithm_audit / hyde02 available:** B017 fails both saved recovery
-  states and does not advance. Broad B009/B011 evidence also shows quality
-  losses on four of six successful panel inputs, so release/cap tweaks stop.
-  [Replacement design](tracks/b_construction_replacement_review.md) selects
-  explicit movable hardware-coupler contacts and joint endpoint-tree updates.
-  B018 is only one bounded neighborhood primitive, with temporary conflicts
-  never credited as embeddings. Its path/star/impossible-cycle tests use
-  fixed pools, lambda1,5s/100k units; exact pre-code note precedes implementation.
-  No full constructor, registry or panel is approved yet.
-  [Primitive policy](tracks/b_018_contact_primitive.md).
-- **C / benchmark_audit / hyde04 available:** Reserved initialization gives
-  all8 starts common unused access, at the cost of more missing contacts.
-  [Initializer](tracks/c_reserved_access_initialization_results.md). The
-  subsequent fixed one-pass routing test completes only the tree; six inputs
-  stall, complete reaches1024 visits. All631 commits/639 generations validate
-  their original contact subsets; incomplete assignments are not valid minors.
-  Complete ends with31 unused components and1170 inaccessible missing edges,
-  plus29 remaining edges with shared access. No cap increase or full constructor.
-  [Routing results](tracks/c_reserved_access_routing_results.md). Next is a
-  design-only invariant-preserving routing hypothesis, addressing loss of
-  shared access during whole-path consumption. No new path call yet.
+- **A / literature / hyde03 available:** Retain A053 within the reduced-core
+  line. Its broad comparison against A050 has 10 wins, two losses and 22 ties;
+  [results](experiments/053_results_screen.md). A054 restricts elimination to
+  degree two, making every reduction a minor operation. Its source-only gate,
+  focused checks and eight reach calls pass. The subsequent preselected screen
+  covers 13 structurally changed inputs and three unchanged controls: all 32
+  paired outputs validate, but Q rises 5093→5123, with six wins, seven losses
+  and three exact ties. Solver totals 79.164→80.565 seconds. The mathematical
+  reduction property did not establish better heuristic quality. Do not adopt
+  A054 over A053. Eighteen omitted inputs receive no new quality inference.
+  [Protocol](experiments/054_degree_two_focused_screen.md). The next design
+  review considers a general local criterion for degree-three elimination,
+  with no new implementation or calls yet.
+- **B / algorithm_audit / hyde02 available:** B018's movable-contact primitive
+  passes its bounded gate, including Q5→3 on a path and rejection of an
+  overlapping triangle-on-path state. This is not constructor evidence.
+  [Results](tracks/b_018_results.md). Root read and approved the exact
+  [B019 constructor policy](tracks/b_019_constructor_policy.md): one BFS
+  initialization, changing coupler witnesses and connected owner trees,
+  temporary overlap with explicit prices, and one evolving incumbent.
+  Prepared state amortizes setup without excluding it from the work budget.
+  Implementation, focused checks and four fixed five-second full-constructor
+  falsifiers are authorized. No panel or registry edit yet.
+- **C / benchmark_audit / hyde04 available:** Reject the access-preserving
+  shortest-path/cut policy: zero of eight supplied starts completes, six
+  exhaust their pass and two time out. Missing-contact counts are worse on
+  every input than the previous unrestricted diagnostic, with different
+  censoring retained. All 446 commits preserve unused connectivity and
+  required free ports, so the invariant is verified but insufficient.
+  [Results](tracks/c_preserved_access_routing_results.md). Stop routing-only
+  adjustments. A bounded constructor review now considers variable occupied
+  size and ownership changes before feasibility, distinct from both other
+  tracks. No new code or calls yet.
 
-053 is terminal/retrieved:68SUCCESS, controller197491 finished, free lock,
-absent tmux and supervisor exit0;462 archive files verified. Its minimal
-saved-result screen passes once, with no candidate rerun. Root reads the
-screen/new receipt checker, report and all24 bound artifacts. C's final
-routing report/code and72 artifact/reference bindings are checked. Every
-cluster run is now quiescent. Observe existing handles after network loss;
-never restart because SSH disconnected. Candidate outputs are never pooled.
+054 is terminal and retrieved: 32 SUCCESS, controller 200969 finished,
+free lock, absent tmux and supervisor exit 0; 266 archive files verified.
+Its prepared saved-result screen passes once; all original-label embeddings
+validate and no control replay discrepancies occur. Root read the checker
+changes before execution. C's final routing report/source and all 71 bound
+artifacts/references are checked without rerunning. Every cluster run is
+quiescent. Observe existing handles after network loss; never restart because
+SSH disconnected. Candidate outputs are never pooled.
 
 The [workflow amendment](tracks/workflow.md) requires pre-code hypotheses,
 pseudocode, self-critique and cheap falsifiers. Exploration retains isolated
-libraries, targeted checks, independent original-edge validation, and every
-failure/time. Exhaustive publication audits remain deferred. All findings here
-are exploratory. The latest fresh-MM baseline screen has11 wins,19 losses and
-2 ties on32 common timely inputs; its lower macro ACL does not establish
-all-class superiority, and the median solver ratio is10.33. Novelty, seed
+libraries, targeted checks, independent original-edge validation and every
+failure/time. Extensive publication audits remain deferred. All findings here
+are exploratory. The latest fresh-MM baseline screen has 11 wins, 19 losses
+and two ties on 32 common timely inputs; its lower macro ACL does not establish
+all-class superiority, and the median solver ratio is 10.33. Novelty, seed
 variance and fresh-instance superiority remain unresolved.

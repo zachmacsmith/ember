@@ -1,0 +1,41 @@
+# B019: one movable-contact construction trajectory
+
+2026-09-08. **Pre-code policy only.** The [B018 gate](b_018_results.md) recovered Q5→3 by changing one witness; it did not establish that two simultaneous witness changes are necessary. Its full-constructor hypothesis, congestion behavior and Z12 cost remain untested. No constructor, registry edit or solver call accompanies this note.
+
+Proposed standalone entrypoint: `movable_contact_construction.py:contact_embed(source,target,timeout,deadline,seed)`, returning the existing `{embedding,status,diag}` response. It imports no other constructor or external embedder. The supplied absolute deadline includes the pilot's prior graph-copy cost and can only be shortened.
+
+## Initialization and finite schedule
+
+Use simple integer-labelled source G and connected hardware H, with |G|≤|H|. Unsupported/disconnected hardware returns an explicit failure in this first ideal-Z12 experiment. Source rank is ascending integer order. Physical rank is `Random(seed).shuffle(sorted(H))`, exactly B018's order at seed 0. A separate `Random(seed)` shuffles the sorted canonical source-edge list once for the sweep order and edge ties; neither generator shares state with the other.
+
+Normalize adjacency, ranks and sorted per-owner incident-edge lists once. Build the source BFS forest by choosing each unseen root by descending degree/source rank, visiting neighbors in that same order. Build one hardware BFS tree rooted by descending degree/physical rank, visiting neighbors by physical rank. Pair the source traversal with the first |G| hardware traversal sites.
+
+For each canonical edge `(u,v)`, find its unique hardware-tree path between these provisional sites using parent/depth pointers. For vertex-list path P, witness edge index is `floor((len(P)-2)/2)`, oriented u→v. Give each endpoint its corresponding half-path, including its witness endpoint. All halves for one owner share its provisional site, so their union is connected. Prune nonterminal leaves; an isolate retains its provisional singleton. Record every original edge's witness, duplicate terminal counts, explicit owner trees and site→owner sets. Validate this complete private contact/tree state and compute Q/O before search. Provisional sites are then free to move.
+
+Run at most eight sweeps. Before each sweep, move each conflicted isolate, in source-rank order, to the first unoccupied site in physical order if one exists; this strictly reduces overlap without changing Q. Visit every primary edge once in the fixed shuffled order. Pair it with the incident edge having greatest `(h_u+h_v, |C_u|+|C_v|)`, ties by shuffled edge rank, where `h_u=sum(q in C_u)(owner_count(q)-1)`. If no other incident edge exists, use the primary edge alone. Scan this finite incident-edge union explicitly; no pairs are chosen by family or observed output quality.
+
+Each query uses B018's old-plus-three coupler pools, oriented ties, owner/terminal rebuilding order and at most 16 Cartesian combinations. The scope is one/two changed witnesses and at most three reconstructed owners. Other chains and witness obligations remain fixed for that query. A complete proposal commits atomically; interrupted queries discard even an earlier private best. There are at most `8|E(G)|` queries, with one evolving state and no restarts or alternate outputs.
+
+## Prices, exact acceptance and shared costs
+
+Initially every integer price lambda(q)=1. A new site costs 1 plus lambda(q) if another owner occupies it; own retained/growing sites cost zero. Candidate ranking is approximate, but actual union energy is exact:
+
+`E = Q + sum_q lambda(q) * max(0, owner_count(q)-1)`.
+
+While O>0, accept only strictly lower E at the current prices, with B018's `(E,O,Q,witness-rank-vector)` ties among eligible proposals. After a **complete** infeasible sweep, increase each price by its current excess owner count and recompute E. Energy across different price vectors is not a descent measure. Once O=0, permanently require O=0 and strict Q reduction; retain this one incumbent. A complete feasible sweep with all queries complete and no commit terminates, since repeating its unchanged state/order/prices cannot expose another proposal. Limited queries do not establish that condition.
+
+The standalone B018 setup cannot simply be called repeatedly: on Z12 its target normalization alone scans at least 183,456 directed entries, already exceeding the 100,000-unit query limit. B019 therefore keeps immutable graph/rank data and mutable ownership/terminal/tree state in one constructor context. This is an explicit amortization change: setup is charged once globally, not exempted. Query work prefixes need not match B018.
+
+For exact pool ranking, Dijkstra may stop when every candidate-region endpoint has settled. Paths still use the full hardware graph; only unnecessary continuation is removed. Empty retained trees need singleton estimates only at those endpoints. Reuse unchanged outside state instead of copying the full graph per combination. Certify all changed trees and every original witness incident to them. With outside geometry fixed, update exact Q/O/E using only sites in the old/new selected-tree union and the global owner counts. Commit updates those counts, terminal obligations and affected owner conflict totals together. At lambda=1 and nonbinding limits, pool ordering, candidate choices and acceptance must match the frozen B018 observations; no equivalent timing/work-prefix claim follows.
+
+Use one cumulative 20-million-unit meter and one absolute deadline D, set from caller start/timeout with no extension. Search ends at `D-min(1 second, 0.05*timeout)` and at 19 million units, retaining at most one million units for finalization. Each query records offsets in that **same** meter and clock: at most 100,000 additional units and deadline `min(search_deadline, query_start+5 seconds)`, beginning before preparation. There is no new global counter or restarted overall timer. Normalization, initial paths, scheduling, price updates, cache maintenance, failed proposals and final validation are all included. Sort/heap administration remains in wall time; no large candidate region is silently enumerated outside the allowance.
+
+At stop, only an O=0 incumbent proceeds to the full original-graph validator, including connectivity/disjointness and actual original-edge contacts independently of stored witnesses. Count its work and output materialization, then check the actual outer-return deadline. A failed, incomplete or late final check returns no credited embedding. Search limits can still return the earlier valid incumbent if this final gate completes; an overlapping state returns failure with its final Q/O and stop reason. Cache/partial-query failures never publish mixed state.
+
+## Critique and cheap constructor falsifier
+
+The common BFS tree can concentrate many terminals around a physical bottleneck. Prices and small local contact pools may never undo that geometry; expensive exact distances can exhaust a query even after early stopping. The 100k query limit is deliberately not raised. Local certification preserves correctness, not convergence, and the fixed feasible phase can miss useful equal-Q or temporary-growth moves. No novelty or MM-scale speed claim follows from the representation.
+
+Before any panel, targeted checks should cover B018 nonbinding equivalence at lambda=1, weighted exact deltas, shared query/global limits, atomic cache updates and the final reserve. Then make one full-constructor call on each fixed small graph: path3→path5, star K1,3→the same physical star, triangle→triangle, and triangle→path3. The first two should reach their Q=n lower bounds. Under the specified BFS orders the triangle→triangle start has overlap; it must actually resolve that conflict and return Q3. The last must receive no embedding credit. Use seed 0 and five-second call deadlines, without tuning failed pools or orders. These are hypotheses, not observed constructor outcomes.
+
+Only after that gate and root review should one fixed B019 method enter the already exposed nine-input, seed-0, fresh paired-MM screen on hyde02. Retain all failures, query limits, initialization cost and ACL regressions; neither successful tiny routing nor another larger allowance substitutes for that evidence.

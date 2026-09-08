@@ -1635,3 +1635,37 @@ identified log heading. A054 source-only checks passed on34 inputs and its
 already authorized narrow implementation/reach gate is underway; B018 tiny
 contact primitive implementation is underway; C's access-preserving routing
 proposal awaits root review. No remote job needs restart or observation.
+
+## 2026-09-08 22:11 UTC: degree-two restriction and access guards do not improve outcomes
+
+A054's source-only comparison and bounded reach gate pass. Root reads the
+minimal source diff and targeted checks, then authorizes a focused 16-input
+paired screen: all 13 source-structurally changed inputs plus three fixed
+unchanged controls, selected before A054 corpus outcomes. One detached launch
+on hyde03 completes all 32 calls. Fetch001 verifies 266 files, digest
+cf4c6d6d9bac230faa98331ace719619855639e88933d76005880ae1923eb2d6.
+The prepared saved-result screen passes once, with independent original-label
+validation and exact A053/control replays. Six wins, seven losses, three ties;
+Q5093→5123 and solver79.164→80.565s. Retain A053, with no quality inference for
+18 excluded inputs. A minor-preserving reduction alone does not guarantee
+better heuristic construction or lifting. Next is a design-only review of
+general degree-three elimination criteria, not a per-input output selection.
+
+B018's fixed primitive gate passes, including the path Q5→3 result. The
+winning proposal changes one witness, so two-witness necessity is unproved.
+B019's exact pre-code policy is read and approved for implementation, focused
+checks and four five-second full-constructor cases. It normalizes Z12 once
+within a shared 20M-unit meter, nests 100k/5s queries, reserves finalization
+work/time, and uses one priced-overlap trajectory. No registry or B9 screen
+is yet authorized. Actual constructor feasibility remains untested.
+
+C's preserved-access routing finishes with zero complete outputs: six pass
+exhaustions, two timeouts. Independent replay validates all 446 commits and
+471 original-label gates; unused connectivity and required free ports hold.
+Root reads the wrapper/report and checks 71 file/reference bindings. Every
+final missing-contact count exceeds the unrestricted diagnostic's count,
+with different censoring explicitly retained. Reject the fixed shortest-path
+policy and stop routing-only adjustments. Review at most two constructor
+alternatives that change occupied size/ownership before feasibility; no new
+calls yet. All cluster jobs are quiescent, all tracks remain separate, and
+the active research goal is unmet.
