@@ -91,7 +91,7 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
                  polish_expansions=500000, polish_boundary_sites=0,
                  polish_group_policy="legacy", polish_objective='qubits',
                  polish_tree_policy='greedy', initialization='random',
-                 polish_singleton_policy='legacy'):
+                 polish_singleton_policy='legacy', polish_star_policy='off'):
     """Return a validated independent result or an explicit construction failure.
 
     Deadline overruns are reported and never counted as timely success. Conversion
@@ -99,6 +99,8 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
     an external watchdog. This limitation is recorded rather than hidden.
     Direct singleton relocation is an optional proposal rule inside the one
     contact-refinement call and shares that call's work and deadline limits.
+    Matching-star relocation is a separate experimental proposal policy within
+    the same refinement call; it requires the legacy singleton policy.
     """
     started = time.perf_counter()
     deadline = started + timeout if timeout is not None and timeout > 0 else None
@@ -113,6 +115,8 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
             'initialization': initialization}
     if polish_singleton_policy != 'legacy':
         diag['polish_singleton_policy'] = polish_singleton_policy
+    if polish_star_policy != 'off':
+        diag['polish_star_policy'] = polish_star_policy
 
     def result(embedding, status, **extra):
         elapsed = time.perf_counter() - started
@@ -132,10 +136,18 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
         return result({}, 'ERROR', error='spectral initialization requires search construction')
     if polish_singleton_policy not in ('legacy', 'direct'):
         return result({}, 'ERROR', error='unknown singleton policy')
+    if polish_star_policy not in ('off', 'matching'):
+        return result({}, 'ERROR', error='unknown star policy')
+    if polish_star_policy != 'off' and polish_singleton_policy != 'legacy':
+        return result({}, 'ERROR', error='matching star and direct singleton policies are mutually exclusive')
     if polish_singleton_policy == 'direct' and (
             target_graph.is_directed() or target_graph.is_multigraph()
             or nx.number_of_selfloops(target_graph)):
         return result({}, 'ERROR', error='direct singleton target must be simple and undirected')
+    if polish_star_policy == 'matching' and (
+            target_graph.is_directed() or target_graph.is_multigraph()
+            or nx.number_of_selfloops(target_graph)):
+        return result({}, 'ERROR', error='matching star target must be simple and undirected')
     if packing_passes < 1 or max_asks < 1 or polish_passes < 0:
         return result({}, "ERROR", error="invalid work limit")
     if (source_graph.is_directed() or source_graph.is_multigraph()
@@ -216,13 +228,15 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
             from ember_qc.algorithms.factored.contact_repair import contact_polish
             singleton_options = ({'singleton_policy': polish_singleton_policy}
                                  if polish_singleton_policy != 'legacy' else {})
+            star_options = ({'star_policy': polish_star_policy}
+                            if polish_star_policy != 'off' else {})
             chains, polish_info = contact_polish(
                 chains, source, target_graph, deadline=deadline,
                 max_passes=polish_passes, beam_width=beam_width, max_groups=max_groups,
                 group_sizes=polish_group_sizes, max_expansions=polish_expansions,
                 boundary_sites=polish_boundary_sites, group_policy=polish_group_policy,
                 objective=polish_objective, tree_policy=polish_tree_policy,
-                **singleton_options)
+                **singleton_options, **star_options)
             diag["contact_repair"] = polish_info
         embedding = {labels[v]: list(c) for v, c in chains.items()}
         if not is_valid_embedding(embedding, source_graph, target_graph):

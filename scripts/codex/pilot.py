@@ -290,6 +290,8 @@ CONFIGS['native-search-joint1-contacts-spectral'] = dict(
     CONFIGS['native-search-joint1-contacts'], initialization='spectral')
 CONFIGS['native-search-joint1-contacts-spectral-singletons'] = dict(
     CONFIGS['native-search-joint1-contacts-spectral'], polish_singleton_policy='direct')
+CONFIGS['native-search-joint1-contacts-spectral-stars'] = dict(
+    CONFIGS['native-search-joint1-contacts-spectral'], polish_star_policy='matching')
 
 
 def load_readiness_selection(path):

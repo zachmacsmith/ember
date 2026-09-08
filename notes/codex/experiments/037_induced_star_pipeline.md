@@ -85,3 +85,23 @@ family, source identity or favorable seed, and do not publish a best-of score.
 
 Status: protocol only. Implementation review, integration, source freeze,
 independent preflight and launch remain outstanding.
+
+## Completed implementation gate
+
+The specified core and scheduler were reviewed independently before source
+freeze. Root passed 85 core tests, repeated 96 independent tiny-minor oracle
+cases (89,280 assignments) and 4,494 interruption checks, and verified 12 exact
+old-source off-path replays. Final contact/native/pilot regression passed
+110 tests, including 27 new integration tests and one fixed small native
+correctness smoke, with no MM/busclique import attempts. The treatment method
+name is `native-search-joint1-contacts-spectral-stars`; its only configuration
+difference is `polish_star_policy='matching'`.
+
+Use hyde03's prepared native environment for both arms. The historical 036
+control ran on local macOS/Python 3.10.19, whereas hyde03 uses Linux/Python
+3.10.12. Its replay is therefore a cross-platform provenance/quality diagnostic:
+do not require exact output equality or form timing ratios from those runs.
+The within-037 comparison retains the original fixed protocol.
+
+Status at this checkpoint: implementation and required checks are complete;
+committed source freeze, independent preflight and launch remain outstanding.

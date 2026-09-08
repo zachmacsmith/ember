@@ -533,3 +533,51 @@ audited pilot. This avoids creating another controller and gives direct
 cumulative pipeline evidence. The treatment policy/constants did not change.
 Core correctness review still precedes scheduler integration, source freeze,
 independent preflight and launch.
+
+At 04:24:25 UTC root checked the goal backend again: status is active. The user
+was told no `/goal resume` is needed and that the UI indicator cannot be repaired
+with the available tools. The prompt was already saved verbatim; it was not
+appended a second time.
+
+032 completed all 272 calls and was retrieved only after verified quiescence.
+The auditor reports 136 candidate successes and 122 MM successes plus 14 MM
+timeouts. Both complete and partially observed comparison populations will be
+retained; the 28 complete four-seed cases have 7 mean-ACL wins, 19 losses and two
+optimal ties. Root awaits the stable report and independent analyzer for repeat.
+No broad quality or speed success is established.
+
+Root reviewed the connected-center star design's exact fixed-footprint
+certificate, strict net qubit ceiling, degree/boundary bounds and matching loss
+when growth consumes a leaf site. It remains a design for a later diagnostic,
+with no implementation authorized yet. The separate singleton-star core is
+implemented and under two independent reviews before scheduler integration.
+
+Root independently repeated 032's complete auditor into a separate output
+folder and reproduced its report byte-for-byte: SHA256
+`ebbe63b6ce53e75083e863a93e8a2d80f6699466f403dce094638e86f0e65feb`.
+The entire report, including unsuccessful calls, exact lower-bound witnesses,
+variance, initialization limits and both conditional aggregate populations,
+was reviewed. All 34 candidate seed-zero embeddings replay 026 exactly.
+
+The singleton-star core passed root's 85 focused tests plus the second review's
+96 expanded cases, 89,280 exhaustive assignments and 4,494 interruption checks.
+Root reran the standalone independent verifier successfully. Only after those
+checks, root integrated the fixed failed-ordinary-visit policy into contact
+refinement and added the native option and one frozen pilot configuration.
+Queries and cache maintenance share the active visit; the original global
+allowance is charged once. Diagnostics distinguish matching completion,
+certified returned proposals and actual commits. No default policy changed.
+
+Root also compared the explicit off path with the saved pre-integration contact
+source on six tiny minors and both scheduling policies. All 12 embeddings and
+all non-time diagnostics match exactly. New scheduler/adapter tests and an
+actual small native correctness smoke are being finalized before source freeze.
+037 will run on hyde03, so its control-versus-local-036 replay remains a
+cross-platform provenance/quality check; no timing ratio or exact replay
+requirement is imposed on that historical comparison.
+
+Final root integration/native/contact/pilot regression passed 110 tests in
+4.78 seconds with zero forbidden import attempts. This includes all 27 new
+integration tests and the fixed real native correctness smoke. The source
+review requested no code change. Core, scheduler and adapter are ready for a
+committed 037 freeze and independent preflight; no benchmark outcome exists yet.
