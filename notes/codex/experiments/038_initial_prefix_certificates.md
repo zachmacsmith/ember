@@ -58,6 +58,14 @@ termination grace. Preserve partial atomic observation files and raw logs on
 failure. Each native/physical operation still shares its own 60-second common
 deadline; the worker watchdog grants no extra time for timely success.
 
+Pre-freeze supervision review also requires one default-fatal kernel `SIGALRM`
+in each worker. Immediately before launch, the controller fixes an absolute
+monotonic deadline 150 seconds ahead; worker startup arms only its remaining
+allowance. This alarm is never reset between cold and second invocations and
+remains effective if the controller dies. Record both the launch deadline and
+alarm metadata. Retain the external timeout and process-group cleanup; an alarm
+exit may leave an observation missing and must not manufacture a successful row.
+
 The diagnostic controller must refuse existing results and hold a run lock,
 publish its PID/status and per-input progress atomically, and wait for each
 worker to exit before advancing. An observer disconnect is not permission to
@@ -73,6 +81,16 @@ physical stage. Preserve the original capture before/after hashing, scheduler
 state, original-label mapping, full stage timestamps, CPU time and output chains.
 Report import/setup/serialization costs separately and retain them in process
 wall. Never subtract diagnostic overhead to relabel a late certificate timely.
+
+The before/after capture audit hashes the complete grid state (including its
+graph), source adjacency, target adjacency, and caller source/target graphs,
+preserving node/neighbor iteration order, attributes and numeric array bits.
+Hashing begins after capture and remains within common solver wall. Retain
+native's scalar timeout and original deadlines received by spectral/arrange
+before clamping. Incomplete or failed capture records remain audit failures;
+they cannot count as cold/second replay evidence. Synthetic checks must cover
+state mutation, late final validation, partial record analysis, and the worker
+alarm after its controller exits, before any corpus invocation.
 
 Independently validate all physical outputs, input/source hashes, call counts,
 deadline classifications and cold/second-invocation state/output agreement

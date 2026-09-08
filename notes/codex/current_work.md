@@ -215,9 +215,17 @@ proposal, then one eligible physical evaluation. One cold and one second
 invocation share that worker's cache; no result selection, later checkpoint or
 contact refinement occurs. Every invocation has a common 60-second deadline;
 the worker watchdog is 150 seconds plus at most five seconds of kill grace.
-The root has authorized implementation and focused checks only. No corpus
-observation has occurred. If no timely initial certificate exists, reject this
-checkpoint position instead of tuning a later index.
+The final diagnostic freeze passed independent source/input/environment/AST
+review, seven instrumentation checks, two analyzer groups and root repeats of
+eight supervision and three kernel-alarm groups. Root read the completed review
+and final implementation and accepts one launch of this exact diagnostic.
+Manifest `09bd7718cec3456ef5861c79f86065a582694902692c068b47240a7996f3aa3c`,
+diagnostic `ec34d4e18e0fb72870e473b92669959f968288cec95bf62e2deb28bce85e9d78`.
+The final prelaunch observation found all five output directories empty and no
+controller attempt. Root's `results/codex/038-initial-prefix-certificates/launch.py`
+will start the frozen controller in a detached local session and record its PID.
+No corpus observation has occurred yet. If no timely initial certificate exists,
+reject this checkpoint position instead of tuning a later index.
 
 The prerequisite read-only certificate audit is complete and root-repeated:
 all 170 saved candidate outputs validate. Only path/cycle attain the degree

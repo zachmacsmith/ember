@@ -732,3 +732,26 @@ matching checks, interruption checks and a Z12 high-degree witness. The initial
 prefix diagnostic's author reports focused instrumentation, failure-aware
 analysis, kernel-alarm and supervision checks passing; final source freeze and
 independent preflight remain required before any corpus observation.
+
+038 final independent preflight passed, with exact manifest
+09bd7718cec3456ef5861c79f86065a582694902692c068b47240a7996f3aa3c and
+diagnostic ec34d4e18e0fb72870e473b92669959f968288cec95bf62e2deb28bce85e9d78.
+Root reviewed the final frozen worker, transform, controller, analyzer and
+watchdog. Its frozen preflight also passed. The reviewer independently repeated
+seven instrumentation and two analyzer checks. Two process-inspection checks
+hit that agent's sandbox restriction; root repeated the exact manifest-bound
+bytes successfully (eight supervision groups and three kernel-alarm groups),
+retaining all failed observer artifacts. Root confirmed failed-observer orphan
+PID 59347 absent. Final independent review SHA
+92c1abd6aa8e1d6d4ac69571174eaad6791a52dbdc1540364401b2d250b899bf
+clears one exact frozen launch; all corpus output directories were empty.
+
+Root accepts the final review and will launch the local detached controller
+once. It uses the isolated native virtual environment with frozen diagnostic
+helpers and the recorded 60/150-second limits. During static launch review root
+removed an unexecuted isolated-mode flag that would hide the script's sibling
+helpers; the final command uses -B and the native environment's import checks.
+There was no failed corpus launch. No production embedding source changes for
+this diagnostic. The connected-core integration plan is separately saved,
+including the actual member-growth accounting needed for connected centers;
+production integration still awaits independent core review.

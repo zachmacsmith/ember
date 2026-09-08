@@ -195,6 +195,24 @@ mutation; the geometric workspace is copied, and grid/source/target data used by
 conversion must remain read-only. Preserve these checks even if they add measured
 diagnostic overhead.
 
+Pre-freeze review clarified this check: hash `grid.__dict__`, separately
+serialized graph structure/attributes, integer source adjacency, captured target
+adjacency, and both caller graphs. Preserve graph/node/neighbor iteration order,
+numeric array dtype/shape/strides/bits, and cache contents. Compare before and
+after physical evaluation, including failure paths, and compare initial hashes
+between complete cold/second captures. An incomplete capture remains a recorded
+audit failure rather than aborting analysis or claiming replay.
+
+The approved bounded worker safeguard is an external 150-second timeout with
+five seconds of termination grace plus one default-fatal kernel `SIGALRM`.
+The controller fixes its absolute monotonic deadline immediately before launch;
+worker startup arms only the remaining allowance. It never resets for the second
+invocation and survives controller death. Record the launch deadline, alarm
+timestamp/remaining allowance, signal exits and missing records. Each invocation
+still has its original 60-second common budget. A synthetic orphan check must
+verify the alarm without a corpus call; no graceful final observation is assumed
+after a fatal signal.
+
 This first-prefix policy can miss every useful stopping point. The zero-overload
 throttle can skip an initial state that projection would rescue; that limitation
 is deliberate and must be visible. If no timely initial certificate appears,
@@ -202,5 +220,7 @@ retain that negative finding and stop the hypothesis at this schedule, rather
 than selecting later checkpoints from these observations. Even a positive result
 does not authorize deployment or imply net speed improvement across the corpus.
 
-Status: ready for review only. No worker, frozen screen or implementation of
-this instrumentation has been created or executed.
+Status: the original planning-only specification was reviewed and diagnostic
+implementation authorized under experiment 038. The clarifications above were
+approved before its diagnostic freeze. No production change or corpus invocation
+is authorized until that freeze and its focused checks pass independent review.
