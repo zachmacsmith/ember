@@ -436,3 +436,20 @@ the miss. This is converter-only evidence: no upstream occurrence frequency or
 full-pipeline ACL effect is yet established. The proposed correction and its
 runtime/proof limitations are being documented before implementation;033's
 frozen source remains unchanged.
+
+At03:50UTC the backend again reported the research goal active. Root told the
+user that `/goal resume` is unnecessary and that this session cannot alter the
+UI's paused label. No scheduler or UI state was modified.
+
+033completed at03:49:17UTC. Root verified controller/final-worker absence,
+launch-session exit zero and68finalized SUCCESS records, then assigned the
+complete independent audit. No comparison is promoted before that audit.
+032remains active onhyde03; its latest121finalized records include10timeouts.
+
+Root reviewed034and the physical cost model, and reran034's saved-artifact
+verifier with an additive output filename. All source/runner hashes and the
+explicit feasible nine-arm Z12 placement pass. The035correction specification
+was saved and reviewed before source implementation review: a common monotone
+frontier plus a complete closed-interval overlap check replaces unsafe expiration.
+Its exactness claim is limited to class intervals, and state growth/runtime must
+be measured against exhaustive tiny oracles before a full embedding ablation.

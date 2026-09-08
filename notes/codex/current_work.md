@@ -24,11 +24,12 @@ tmux. The benchmark auditor monitors this exact supervisor. Source
 transport `f02da9b1a88d747f8ba37e5e834395194cc084bd79ae3b47df73d09e13d83618`.
 It contains no direct singleton relocation and no physical checkpoint policy.
 
-`033-singleton-relocation-ablation` is also running, on the local host in the
-isolated native environment. Root owns exec session **94745** and controller
-PID **33003**; a fresh OS check also verified worker 33065. Start time was
-2026-09-08 03:40:02.619 UTC, with two finalized results at the first detailed
-check. Do not restart this run after an observation timeout. It contains all
+`033-singleton-relocation-ablation` completed locally in the isolated native
+environment. At 03:51:01 UTC root verified complete controller status, absent
+controller33003/final worker34600, launch session94745 exit zero, and all68
+finalized records reporting SUCCESS. Independent original-embedding and metric
+audit is underway; reported success is not yet the independent audit result.
+Start time was 2026-09-08 03:40:02.619 UTC. Do not restart this run. It contains all
 34 readiness sources and two fixed spectral arms, differing only by direct
 singleton relocation, seed zero and 60 seconds. Frozen commit
 `684a95d5f00c4b36ffaab1e23983aca5d58ee0c3`, source
@@ -84,25 +85,31 @@ without changing the frozen input sidecars.
 
 ## Parallel work and ownership
 
-- `benchmark_audit`: 026 and 029 reviews are complete and reviewed. Now
-  independently preflight and launch 032, then monitor its exact supervisor.
+- `benchmark_audit`: 026 and 029 reviews are complete and reviewed. 032 preflight
+  and launch are verified; now monitor its exact supervisor, then retrieve and
+  independently audit all272 observations after quiescence. Latest03:50 update:
+  121 finalized,111SUCCESS/10TIMEOUT, same controller125964/heldlock/livetmux.
 - `algorithm_audit`: 028 performance change is complete and independently reviewed;
   55 proposal tests plus 38 root integration tests pass. All 12 outputs and
   trajectories match exactly, with small observed speed gains and timing caveats.
   The singleton implementation is complete and committed, with independent
   review and 172 root-run focused tests passing. A separate exhaustive oracle
-  checks 240 proposer cases across 24 small minors. Now derive an honest physical
-  cost model from conversion/packing and030 evidence; own `physical_cost_model.md`.
-  No geometry/converter implementation changes or full solver calls in that task.
+  checks 240 proposer cases across 24 small minors. The physical cost model is
+  complete. Now own the narrowly specified035converter correction, field.py,
+  converter tests and tiny diagnostic artifacts. Root read the saved specification
+  and critique before implementation review. No other pipeline change or full
+  solver call is part of035.
 - `literature`: 029 adapter is complete; root reviewed it, reran 103 tests and
-  committed `4cad1d67`. The six-trial run completed on hyde03. Now prepare the
+  committed `4cad1d67`. The six-trial run completed on hyde03.
   031 is complete to environment preparation/readback: Python3.12.3, pinned
   native/MM environments under `/home/dabh/ember-codex/envs/1111b11934b4524b`.
   All five records and versions were independently verified. Linger=no and no
   tmux: supervisor work remains deferred, so no benchmark runs on hyde04.
-  The independent singleton core review found no blocker. Now audit converter
-  capacity using tiny source-frozen diagnostics under034; own
-  `conversion_capacity_review.md`. No source edits or full embedding runs.
+  The independent singleton core review found no blocker. The034capacity audit
+  is complete and root reran its saved-hash/physical-witness verifier successfully.
+  Now own the full033independent artifact audit and033_results_review.md. Root
+  supplied verified completion before full-run analysis. No source edits or new
+  solver runs.
 
 Review agent-owned edits before committing. The current cluster run uses its
 frozen source and is unaffected by these working-tree edits. Root owns README,
@@ -114,10 +121,11 @@ Preserve unrelated `.claude/` and graph-library `.verified.json` files.
 1. Follow complete033 outcomes through independent validation and cumulative
    quality/work/runtime analysis, keeping all regressions and comparing one fixed
    policy globally. The legacy control's old traversal remains byte-identical.
-2. Review034's reproduced converter DP capacity defect and the physical-cost
-   model before any correction. Tiny feasible assignments are missed by the DP
-   while physical seating remains disjoint; no full-pipeline effect is established.
-   A narrowly scoped correction needs its own critique, oracle and frozen ablation.
+2. Review035's converter correction against the exhaustive class-assignment and
+   actual-seating oracles, plus measured state growth. Root reviewed034 and the
+   physical-cost model: feasible assignments are missed by the old DP while
+   physical seating remains disjoint; no full-pipeline effect is established.
+   A later full-pipeline correction ablation requires its own frozen specification.
    Keep028; no physical-checkpoint production callback is promoted.
 3. Follow 032 through repeated-seed quality and timing analysis, preserving all
    failures and the distinction between solver seeds and source instances.
