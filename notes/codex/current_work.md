@@ -6,6 +6,12 @@ or busclique inside it, ideal Z12, quality and success retained, roughly MM's
 runtime range. The pending user question about optimal ACL-1 ties has no answer;
 do not interpret silence as a change in the success criterion.
 
+**Active cluster run:** 041 on hyde03, controller 150200, started at
+09:07:16.175 UTC. Fresh SSH observation confirmed live controller/worker 150212,
+busy inherited lock and detached tmux session, initially 0/68 finalized. See
+`experiments/041_launch_record.md`. Never restart this run after an observer
+failure; inspect its existing identity. All older recorded runs are terminal.
+
 **Latest completed diagnostic:** 040 on hyde03, controller 143531, ran from
 07:37:00.001 to 07:57:57.603 UTC. All 34 inputs and 68 phases finished with
 zero exits and no phase overruns. Fresh observation verified no matching run
@@ -28,12 +34,22 @@ checks pass; this is not final ACL or end-to-end timing evidence. Report
 Root verified its 43 review files and four references against manifest
 `f3870a7dae599e70c3c02ac55d8e30453fc3678e578dbae0043bb88cc5a93bef`.
 
-**Current implementation:** root accepted the endpoint-support specification
-`03cd87e074c8632c1361b7320e2d7942e5482d00505b138909b57d510501b8eb`.
-The algorithm agent implements one experimental objective while preserving
-legacy behavior, with no corpus launch yet. Its proxy counterexample and prior
-art limits remain explicit. The benchmark agent prepares the independent
-endpoint implementation review; the algorithm agent owns its integration.
+**Current endpoint comparison:** implementation and independent review are
+complete, committed in `4ceb543f`. Experiment 041 is frozen at `9d262fd4`, with
+50 source files, snapshot
+`ecd67cbed55a96a616d1aca018eb132d39c58e828394a2b2e5caad83859ed893`.
+All 34 original development structures and 68 serial control/treatment calls
+use seed zero, ideal Z12 and the fixed 60-second native allowance. Only the
+endpoint-support scoring policy differs; no final deletion cleanup is enabled.
+The local, remote and target-environment synthetic gates pass. Root verified
+all 72 independent preflight files and 13 references. The target suite passes
+nine groups, including 121,800 oracle score comparisons, without prohibited
+imports. Source and input bytes match, caches were empty and the detached tmux
+route was verified. See `experiments/041_preflight_review.md` and
+`results/codex/041-launch`. Root owns the single start and subsequent lifecycle;
+after any observer interruption, inspect the same run before doing anything
+else. Its proxy counterexample and prior-art limits remain explicit; no 041
+quality outcome is yet claimed.
 
 The separate read-only deletion audit is complete and root-repeated: all 34
 frozen 039 control outputs are valid, and 43 individual deletions on 43 chains
@@ -43,10 +59,16 @@ report/code and reproduced every non-time per-input check and summary. It
 verified all 43 manifest-bound artifacts. The report is
 `final_deletion_audit_results.md`, SHA256
 `857fb5e59c420450a4a79e1c257d33952eb54e334df6e62a72cb3eb08288454b`.
-The independently reviewed deletion-closure design now has bounded isolated
-module/test implementation authorized to the literature agent. It does not
-change native or the endpoint comparison; integration and a full-pipeline
-experiment remain separate review steps.
+The isolated deletion-closure module is implemented and committed in
+`9d262fd4`. Independent review passes 7,464 exhaustive calls, 190 interruption
+prefixes and two additional multiple-neighbor fixtures, with exact reference
+deletion order and list agreement. Root verified all author/reviewer evidence
+and accepted the default-off integration specification and draft 042 protocol;
+see `deletion_closure_root_acceptance.md`. The literature agent owns integration
+and focused checks in the current workspace. This does not alter frozen 041.
+Independent integration review and a full-pipeline comparison remain pending.
+The algorithm agent separately reviews at most two substantive, general next
+mechanisms, accounting for prior rejected policies and explicit self-critique.
 
 **Latest completed candidate comparison:** 039 on hyde03, controller 139008, finished at
 06:24:51.479 UTC with all 68 records finalized SUCCESS. Root verified the

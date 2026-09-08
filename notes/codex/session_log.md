@@ -1030,3 +1030,41 @@ separate bounded cleanup experiment. Reports/designs are committed6d58a247.
 Endpoint implementation, its independent review and isolated cleanup coding
 are active with distinct ownership. No scientific success or blocking condition
 is claimed. The exact continuation prompt is appended toPROMPTS_CODEX.md.
+
+Endpoint implementation and its independent review completed and were committed
+in 4ceb543f. The isolated deletion-closure core and focused author checks were
+committed in 9d262fd4. Root accepted the independent endpoint evidence and read
+the production diffs before freezing 041 at 9d262fd4: 50 source files, snapshot
+ecd67cbed55a96a616d1aca018eb132d39c58e828394a2b2e5caad83859ed893.
+The 34 development structures, 35 memberships and 68 seed-zero tasks retain the
+predeclared 60-second native allowance and 90-second process watchdog.
+
+The focused endpoint suite passed once on hyde03 at 08:51:50.758–08:51:53.638 UTC
+against every frozen runtime source byte: nine groups, zero errors/failures,
+no prohibited package import, bundle unchanged. Its six output files were
+retrieved and exactly verified; map digest
+1a6e127b22dd2241fa3a7892dac8454d101fc3c34f6787fab19caefe540e61d4.
+Runtime staging exited zero with the expected 156-file transport identity.
+At 09:02:09.489 UTC the read-only remote preflight passed exact bytes, pinned
+environment metadata, zero attempts/empty caches and a logout-persistent tmux
+route. These are correctness and lifecycle checks, not benchmark results.
+
+The deletion-closure independent review passed 7,464 exhaustive calls, 190
+interruption prefixes and two additional degree-two fixtures on unchanged core
+66a2bc21. Root verified all ten author and 22 independent manifest files and
+accepted the integration specification and draft 042 protocol. Integration is
+owned separately by literature; the frozen 041 source is unchanged. The next
+scientific design review is bounded to general mechanisms supported by prior
+failures, with explicit self-critique and no implementation authorization.
+
+A fresh goal query at 09:00:09 UTC confirms status active. The historical paused
+UI prompt is already preserved verbatim in PROMPTS_CODEX.md; no duplicate prompt
+was appended. The goal remains unmet; no status mutation or resume was needed.
+
+041 launched once at 09:07:16.175 UTC, controller150200. Fresh SSH confirms
+controller and worker150212 live with exact run arguments, busy inherited lock
+and detached tmux, initially0/68finalized. All72preflight files/13references
+pass root hash checks. A local manifest-base error was preserved and corrected
+before any remote start; no benchmark repetition occurred. The run remains
+pending; root owns observation/retrieval, benchmark audit prepares its independent
+result checks, and separate cleanup integration continues in the workspace.
