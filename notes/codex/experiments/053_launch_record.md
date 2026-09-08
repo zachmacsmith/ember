@@ -21,4 +21,4 @@ All invocations use `results/codex/053-launch/cli.py`, recording exact argv,
 stdout, stderr and exit code under unique invocation directories. Root owns
 observation/retrieval; track A owns the minimal saved-result screen. Observe
 this same handle after an SSH interruption. Do not infer failure or restart
-from a lost connection. Terminal status and retrieval remain pending.
+from a lost connection. Status004 is terminal:68/68SUCCESS, controller197491 finished at Unix1788902985.1875544, free lock, absent tmux and supervisor exit0. The last active-record PID198629 is historical; it is not evidence of a live worker. Fetch001 succeeds:462 files verified, archive digest `fc533127acc57d0dba5e804c2646066e2a6b6a0a09e4cbc0f49936c825ecaf23`, destination `results/codex/retrieved/hyde03/053-site-transfer-pipeline`. The prepared saved-result screen passes on its first execution; all68 outputs are independently original-valid. No candidate rerun.

@@ -1591,3 +1591,35 @@ of the original graphs. The exact next one-pass free-path diagnostic is
 reviewed and approved on all8 saved states,30s/1024visits/256commits, fullZ12,
 no ownership moves or cleanup. This tests reserve consumption, not constructor
 runtime or final ACL. All three tracks remain separate and exploratory.
+
+## 2026-09-08 21:45 UTC: transfer improvement retained; routing-access hypothesis rejected
+
+053 completes68/68SUCCESS, controller197491 terminal at1788902985.1875544,
+lockfree/tmuxoff/supervisor0. Fetch001 verifies462 files, digestfc533127acc57d0dba5e804c2646066e2a6b6a0a09e4cbc0f49936c825ecaf23.
+Its one saved-result screen passes; root reads full screen/new transfer checker,
+old-checker diffs and report, then verifies24 manifest bindings. Fresh050→053:
+10wins2loss22tie,14866→14797Q,macro3.298135→3.278605,solver185.646→186.012s.
+All134 transfers certify/return/commit at rawconstantQ; cleanup removes12,
+which is not a134-or146Q net saving. No blocked repairs in053. Planted+2Q,
+wheel+4Q remain; historical048 seven losses include cubic+42 andcycle+22.
+Retain053 within this research line, with no all-class/seed/novelty/MM claim.
+
+Root reviews054 exact pre-code threshold-only policy. Add5s/2M source-only
+limits before the34-input reduction comparison; if consistent and relevant,
+proceed through the handful of checks and exactlyeight fixed paired20s reach
+calls. No full054 screen/registration. B replacement review identifies broad
+quality deficits beyond reach and chooses movable edge contacts. B018 exact
+small primitive specification is read; fixedpath/star/impossible-cycle calls
+are authorized with5s/100k and no full constructor. All prior failures retained.
+
+C routing completes onlytree Q456; six inputs stall andcomplete is visit-capped.
+Every631 committedpath/639 generation/655 original-label gate passes;986
+contacts added,355 incidental. Complete has1199 missing,1170 without shared
+free-component access,29 still accessible and393 unattempted schedule entries.
+The latter remain censored, while inaccessible contacts independently preclude
+addition-only completion from that final state. Total diagnostic60.295s plus
+28.063s saved-data replay, no constructor timing claim. Root reads wrapper and
+report and checks all72 final artifact/reference bindings. Reject only this
+fixed reserve-then-greedy-addition policy; C next designs maintained unused
+connectivity/future-access conditions, with no new paths yet. All remote jobs
+are quiescent and the research goal remains active and unmet.
