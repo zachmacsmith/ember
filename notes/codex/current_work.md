@@ -12,23 +12,41 @@ zero exits and no phase overruns. Fresh observation verified no matching run
 process, free lock, stopped tmux and supervisor exit zero. Retrieval verified
 all 2,654 files, digest
 `13d0e1782fa2679efe4943d7d8b846816b5a7694a5e868c83041eec4b21ac3e1`.
-Never restart the completed run. The independent results audit is active.
+Never restart the completed run. The independent results audit passes, and
+root's repeat reproduces all nine JSON and two CSV outputs byte for byte.
 Execution manifest is
 `3f6155277ba866f376427b105371bb7b8a8abc70cefe961542f5a139534e096d`;
 transport is `9dfba5ece5e210c9ca932c5b4fa277e807ceafb3b67d083239c61590fdbe8865`.
-See `experiments/040_launch_record.md`. The frozen report preliminarily finds
+See `experiments/040_launch_record.md`. The accepted results review finds
 1,122 complete valid raw states and 1,088 updates: incremental conversion
 24.8823 seconds versus full conversion 34.6920 seconds, but captured adopted
 transitions total only 10.7990 seconds. Its predeclared per-proposal cost gate
-fails. Independent provenance, raw validity and accounting checks are pending;
-this is not final ACL or end-to-end timing evidence.
+fails on every input. All original-graph validity, provenance and accounting
+checks pass; this is not final ACL or end-to-end timing evidence. Report
+`experiments/040_results_review.md` has SHA256
+`e3cddb1ffe4cdb29345626b03a4a4b8389807b824ffd6f0e0a7b237a414d59d5`.
+Root verified its 43 review files and four references against manifest
+`f3870a7dae599e70c3c02ac55d8e30453fc3678e578dbae0043bb88cc5a93bef`.
 
 **Current implementation:** root accepted the endpoint-support specification
 `03cd87e074c8632c1361b7320e2d7942e5482d00505b138909b57d510501b8eb`.
 The algorithm agent implements one experimental objective while preserving
 legacy behavior, with no corpus launch yet. Its proxy counterexample and prior
-art limits remain explicit. A separate read-only audit will check the frozen
-039 control outputs for individually removable qubits after refinement.
+art limits remain explicit. The benchmark agent prepares the independent
+endpoint implementation review; the algorithm agent owns its integration.
+
+The separate read-only deletion audit is complete and root-repeated: all 34
+frozen 039 control outputs are valid, and 43 individual deletions on 43 chains
+are safe across 13 inputs; 21 inputs have none. Every site was checked against
+the unchanged embedding; these are not 43 composed savings. Root read the full
+report/code and reproduced every non-time per-input check and summary. It
+verified all 43 manifest-bound artifacts. The report is
+`final_deletion_audit_results.md`, SHA256
+`857fb5e59c420450a4a79e1c257d33952eb54e334df6e62a72cb3eb08288454b`.
+The independently reviewed deletion-closure design now has bounded isolated
+module/test implementation authorized to the literature agent. It does not
+change native or the endpoint comparison; integration and a full-pipeline
+experiment remain separate review steps.
 
 **Latest completed candidate comparison:** 039 on hyde03, controller 139008, finished at
 06:24:51.479 UTC with all 68 records finalized SUCCESS. Root verified the
@@ -382,9 +400,9 @@ owned-site Hall-counting caveat; none is a novelty or superiority claim.
    The controller and all workers have terminated; never restart them.
 3. Preserve 039's independently verified negative full-pipeline outcome and all
    unsuccessful work. Local improvements did not imply a final quality gain.
-4. Complete the independent audit of the retrieved physical-locality diagnostic.
-   Its question is whether exact raw line updates are cheap; raw counts are not
-   ACL. Review the experimental endpoint implementation before any new screen.
+4. Preserve the accepted 040 outcome: exact saved-cache agreement, but update
+   cost fails the per-proposal criterion on all inputs. Review the experimental
+   endpoint implementation and isolated deletion closure before new screens.
 5. Continue one general constructor/refinement pipeline. No MM or busclique
    dependency, cached competitor input, hidden fallback, per-family dispatch,
    selected seed or best-of result is allowed. Broader replication and fresh

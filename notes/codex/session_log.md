@@ -1000,3 +1000,24 @@ read-only diagnostic will enumerate individually safe deletions in all34
 frozen039 control outputs. Native source has pruning before contact refinement
 but no final pruning afterward; this is a hypothesis worth checking, not yet
 an implemented policy or a performance claim.
+
+The final040 independent audit passes all inputs, phases and1,122 raw states.
+Root read its complete main auditor, helper review and final report; one repeat
+produces all nineJSON and twoCSV files byte-identically. Both declared cost
+conclusions are preserved: summed cached updates are0.717234 of full conversion,
+but2.304120 of captured transition time; all34 fail the0.10per-proposal criterion.
+Root verified43reviewfiles/fourreferences, manifestf3870a7d. The accepted report
+SHA ise3cddb1ffe4cdb29345626b03a4a4b8389807b824ffd6f0e0a7b237a414d59d5.
+No further solver or converter execution is needed for this result.
+
+The independent final-deletion audit completes all34 frozen039controls, finds
+43individual safe sites on43chains across13inputs and21zero cases. Root reads
+full code/report and repeats the read-only enumeration: all non-time per-input
+records and summary agree; provenance differs only in Python executable/version.
+All43manifest-bound review artifacts pass, manifesta16adcbbe3a6929b03aebf2cd80e69b138c248402f93c581c4886dafb2a847a7.
+Distinct chains do not imply composable savings. The monotonicity argument for
+skipping unchanged chains during deletion-only closure passes independent review.
+Root authorizes an isolated deadline-aware closure module and focused tests to
+literature, with no native/pilot or endpoint-arm modification. Algorithm audit
+continues endpoint integration; benchmark audit prepares its independent review.
+The broad goal remains active and unmet; all project cluster runs are terminal.

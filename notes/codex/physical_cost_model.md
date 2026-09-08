@@ -446,7 +446,7 @@ physical quality can itself be expensive. This design must pass both equivalence
 and useful-cost tests before changing the geometric search. No family-specific
 exception or per-input selector is proposed.
 
-## Falsifiable bounded next diagnostic, not yet authorized or run
+## Historical three-input diagnostic proposal, superseded by 040
 
 First finish reviewing the independently authorized tiny converter-capacity evidence. Any
 calculator must then target a clearly frozen converter revision and its actual
@@ -489,6 +489,29 @@ Passing these checks would establish only an exact, bounded raw-cost observation
 not a better search policy or final embedding quality. Such a policy would still
 need a separate globally fixed full-pipeline experiment.
 
-Status: this note contains source-derived equations, saved-data analysis and a
-future diagnostic design. No field/plane/native code was edited, no calculator
-implemented, and no new embedding run performed by this task.
+At the time of this proposal, this note contained source-derived equations,
+saved-data analysis and a future diagnostic design. Subsequent design review
+expanded the coverage and separated capture from offline conversion, as below.
+
+## Subsequent all-input diagnostic: 040
+
+The [accepted 040 report](experiments/040_results_review.md) supersedes the
+three-input execution proposal above. It uses the corrected converter, all 34
+development structures, ideal Z12 and spectral seed-zero initialization. It
+captures each initial state plus the first 32 adoptions while the full geometry
+search continues. Original graphs, carried orders and physical lanes are bound
+independently; no physical conversion runs inside geometry capture.
+
+All 1,122 raw states are independently valid and reconstruct exactly from the
+saved cache fragments. The 1,088 incremental updates take 24.8823 seconds versus
+34.6920 seconds for full raw conversion, but corresponding captured geometric
+transitions take only 10.7990 seconds. Thus reuse lowers aggregate conversion
+cost by 28.28%, yet update/transition is 2.30412, exceeding the declared 0.10
+criterion on every input. Five inputs have slower cached conversion than full
+conversion. Dirty old/new line incidences account for 63.49% of their union and
+66.64% of full-line conversion time. Initial cache cost is retained separately.
+
+The independent audit passes and root reproduces all nine JSON and two CSV
+files byte for byte. Keep this cache out of per-proposal pricing under the
+tested design. No later or rejected proposals, final ACL improvement, MM timing,
+end-to-end speedup or out-of-sample generalization follows from this diagnostic.
