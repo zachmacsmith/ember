@@ -14,7 +14,7 @@ import json
 from pathlib import Path
 import statistics
 
-from pilot import (check_corpus_provenance, check_result, check_task, digest,
+from pilot import (check_corpus_provenance, check_supplement_provenance, check_result, check_task, digest,
                    graph_from_record, verify_embedding, write_json)
 
 
@@ -31,6 +31,7 @@ def checked_run(run):
         if hashlib.sha256((run / 'source' / relative).read_bytes()).hexdigest() != expected:
             raise ValueError(f'Source hash mismatch: {relative}')
     check_corpus_provenance(run, manifest)
+    check_supplement_provenance(run, manifest)
     target_record = json.loads((run / 'target.json').read_text())
     if digest(target_record) != manifest['target_hash']:
         raise ValueError('Target hash mismatch')
@@ -149,6 +150,12 @@ def report(run, destination):
     manifest, records = checked_run(run)
     summary = summarize(records)
     destination.mkdir(parents=True, exist_ok=True)
+    if manifest.get('input_supplement') is not None:
+        checked = check_supplement_provenance(run, manifest)
+        provenance = dict(manifest['input_supplement'],
+                          sources={entry['graph_key']: entry['provenance'] for entry in checked['entries']})
+        summary['input_supplement'] = provenance
+        write_json(destination / 'input_provenance.json', provenance)
     write_json(destination / 'summary.json', dict(summary, source_snapshot=manifest['source_snapshot'],
                                                   planned=len(manifest['tasks']),
                                                   statuses=dict(Counter(r['status'] for r in records))))

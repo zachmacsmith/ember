@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -260,6 +261,15 @@ def build_bundle(run, destination):
         path = Path('source') / relative_path(relative)
         if hashlib.sha256(read_input(str(path))).hexdigest() != expected:
             raise ValueError(f'Source changed: {relative}')
+    if manifest.get('input_supplement') is not None:
+        spec = importlib.util.spec_from_file_location('_codex_transport_pilot', HERE / 'pilot.py')
+        pilot = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(pilot)
+        pilot.check_supplement_provenance(run, manifest)
+        for relative, expected in manifest['input_supplement']['bundle_files'].items():
+            path = str(Path('input_supplement') / relative_path(relative))
+            if hashlib.sha256(read_input(path)).hexdigest() != expected:
+                raise ValueError('Supplement changed while preparing transfer: ' + relative)
     target = json.loads(read_input('target.json'))
     if digest(target) != manifest['target_hash']:
         raise ValueError('Target changed')

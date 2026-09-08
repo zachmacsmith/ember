@@ -80,6 +80,14 @@ def check_task(task, task_id, manifest):
     if (task['source_snapshot'] != manifest['source_snapshot']
             or task['target_hash'] != manifest['target_hash']):
         raise RuntimeError(f'Task provenance mismatch: {task_id}')
+    supplement = manifest.get('input_supplement')
+    if supplement is not None:
+        source = supplement['inputs'].get(task['graph'])
+        if (source is None or task.get('input_supplement_id') != supplement['supplement_id']
+                or task.get('input_supplement_plan_id') != supplement['comparison_plan_id']
+                or task.get('supplement_graph_id') != source['id']
+                or task['source_hash'] != source['source_hash']):
+            raise RuntimeError(f'Task supplement provenance mismatch: {task_id}')
 
 
 def check_result(outcome, task):
@@ -154,6 +162,9 @@ def worker(task_path):
               'machine': platform.uname()._asdict(),
               'jit_cache_policy': 'empty per-task cache; compilation charged to solver',
               'numba_cache_dir': os.environ.get('NUMBA_CACHE_DIR')}
+    for key in ('input_supplement_id', 'input_supplement_plan_id', 'supplement_graph_id'):
+        if key in task:
+            output[key] = task[key]
     try:
         if method != 'mm':
             if any(importlib.util.find_spec(name) is not None
@@ -368,21 +379,136 @@ def check_corpus_provenance(run, manifest):
     return selection
 
 
+def _supplement_module(path, expected_hash=None):
+    """Load reviewed source explicitly, without writing into a frozen bundle."""
+    path = Path(path)
+    if path.is_symlink():
+        raise ValueError('Supplement loader must not be a symlink')
+    raw = path.read_bytes()
+    if expected_hash is not None and hashlib.sha256(raw).hexdigest() != expected_hash:
+        raise ValueError('Supplement loader source hash mismatch')
+    spec = importlib.util.spec_from_file_location('_codex_frozen_supplement', path)
+    module = importlib.util.module_from_spec(spec)
+    exec(compile(raw, str(path), 'exec'), module.__dict__)
+    return module
+
+
+def load_input_supplement(path):
+    """Read a complete supplement; keep sidecars separate from solver records."""
+    path = Path(path)
+    module = _supplement_module(Path(__file__).with_name('sudoku_supplement.py'))
+    entries = module.load_supplement(path)
+    manifest_raw = (path / 'manifest.json').read_bytes()
+    manifest = json.loads(manifest_raw)
+    files = {'manifest.json': manifest_raw}
+    for name, expected in manifest['files'].items():
+        files[name] = (path / name).read_bytes()
+        if hashlib.sha256(files[name]).hexdigest() != expected:
+            raise ValueError('Supplement changed while loading: ' + name)
+    records = {entry['graph_key']: entry['record'] for entry in entries}
+    inputs = {entry['graph_key']: {'id': entry['id'], 'source_hash': digest(entry['record'])}
+              for entry in entries}
+    return manifest, files, records, inputs
+
+
+def _supplement_plan_id(supplement):
+    return digest({key: supplement[key] for key in
+                   ('supplement_id', 'included_graphs', 'inputs', 'methods',
+                    'seeds', 'timeout', 'configurations')})
+
+
+def check_supplement_provenance(run, manifest):
+    """Validate the shipped bundle and complete planned trial matrix locally."""
+    supplement = manifest.get('input_supplement')
+    if supplement is None:
+        return None
+    if manifest.get('corpus') is not None:
+        raise ValueError('Corpus selection and input supplement are mutually exclusive')
+    if _supplement_plan_id(supplement) != supplement['comparison_plan_id']:
+        raise ValueError('Supplement comparison plan identity mismatch')
+    run = Path(run)
+    if supplement.get('bundle_path') != 'input_supplement':
+        raise ValueError('Unexpected supplement bundle path')
+    bundle = run / 'input_supplement'
+    if bundle.is_symlink():
+        raise ValueError('Supplement bundle must not be a symlink')
+    raw = (bundle / 'manifest.json').read_bytes()
+    frozen = json.loads(raw)
+    expected_files = dict(frozen['files'], **{'manifest.json': hashlib.sha256(raw).hexdigest()})
+    if (supplement['bundle_files'] != expected_files
+            or frozen['supplement_id'] != supplement['supplement_id']):
+        raise ValueError('Frozen supplement manifest or file identity mismatch')
+    loader_relative = 'scripts/codex/sudoku_supplement.py'
+    if (digest(manifest['source_files']) != manifest['source_snapshot']
+            or loader_relative not in manifest['source_files']):
+        raise ValueError('Supplement loader is absent from the frozen source identity')
+    loader_path = run / 'source' / loader_relative
+    if any(parent.is_symlink() for parent in (run / 'source', loader_path.parent.parent,
+                                             loader_path.parent)):
+        raise ValueError('Supplement loader ancestry must not contain symlinks')
+    module = _supplement_module(loader_path, manifest['source_files'][loader_relative])
+    entries = module.load_supplement(bundle)
+    inputs = {entry['graph_key']: {'id': entry['id'], 'source_hash': digest(entry['record'])}
+              for entry in entries}
+    names = [entry['graph_key'] for entry in entries]
+    if supplement['inputs'] != inputs or supplement['included_graphs'] != names:
+        raise ValueError('Frozen supplement input coverage or identity mismatch')
+    for entry in entries:
+        name = entry['graph_key']
+        path = run / 'graphs' / (name + '.json')
+        if path.is_symlink() or path.parent.is_symlink():
+            raise ValueError('Supplement solver graph must not be a symlink')
+        if digest(json.loads(path.read_bytes())) != inputs[name]['source_hash']:
+            raise ValueError('Frozen supplement solver graph mismatch: ' + name)
+    methods, seeds = supplement['methods'], supplement['seeds']
+    if (not methods or len(set(methods)) != len(methods)
+            or not seeds or any(type(seed) is not int or seed < 0 for seed in seeds)
+            or seeds != list(range(len(seeds)))
+            or set(supplement['configurations']) != set(methods)
+            or not math.isfinite(supplement['timeout']) or supplement['timeout'] <= 0):
+        raise ValueError('Invalid supplement trial plan')
+    wanted = {(name, method, seed) for name in names for method in methods for seed in seeds}
+    observed = set()
+    if len(set(manifest['tasks'])) != len(manifest['tasks']):
+        raise ValueError('Duplicate supplement task IDs')
+    for task_id in manifest['tasks']:
+        if not re.fullmatch(r'[0-9a-f]{24}', task_id):
+            raise ValueError('Invalid supplement task ID')
+        task = json.loads((run / 'tasks' / (task_id + '.json')).read_bytes())
+        check_task(task, task_id, manifest)
+        key = (task['graph'], task['method'], task['seed'])
+        if (key not in wanted or key in observed
+                or task['config'] != supplement['configurations'][task['method']]
+                or task['timeout'] != supplement['timeout']):
+            raise ValueError('Supplement task differs from the complete fixed trial plan')
+        observed.add(key)
+    if observed != wanted:
+        raise ValueError('Supplement trial plan has missing source/method/seed observations')
+    return {'manifest': frozen, 'entries': entries}
+
+
 def initialize(args):
     import dwave_networkx as dnx
     if not math.isfinite(args.timeout) or args.timeout <= 0 or args.seeds < 1:
         raise ValueError('timeout must be finite and positive; seeds must be positive')
     corpus_path = getattr(args, 'corpus_selection', None)
+    supplement_path = getattr(args, 'input_supplement', None)
+    if corpus_path and supplement_path:
+        raise ValueError('Corpus selection and input supplement are mutually exclusive')
+    selection = None
     if corpus_path:
         selection, original_selection, records = load_readiness_selection(corpus_path)
+    elif supplement_path:
+        supplement_manifest, supplement_files, records, supplement_inputs = load_input_supplement(supplement_path)
     else:
-        selection = None
         records = {name: graph_record(graph) for name, graph in make_graphs().items()}
     names = args.graphs.split(',') if args.graphs else list(records)
     methods = args.methods.split(',')
     if (not names or len(set(names)) != len(names)
             or any(name not in records for name in names)):
         raise ValueError('Unknown or duplicate graph names')
+    if supplement_path and names != list(records):
+        raise ValueError('A supplement run must retain all declared sources in their frozen order')
     if (not methods or len(set(methods)) != len(methods)
             or any(method not in CONFIGS for method in methods)):
         raise ValueError('Unknown or duplicate methods')
@@ -392,6 +518,8 @@ def initialize(args):
         (run / name).mkdir()
     files = sorted((ROOT / 'packages/ember-qc/src/ember_qc').rglob('*.py'))
     files += [Path(__file__).resolve()]
+    if supplement_path:
+        files.append(Path(__file__).resolve().with_name('sudoku_supplement.py'))
     hashes = {}
     for original in files:
         relative = original.relative_to(ROOT)
@@ -413,6 +541,15 @@ def initialize(args):
     target = graph_record(dnx.zephyr_graph(12, 4))
     target_hash = digest(target)
     write_json(run / 'target.json', target)
+    if supplement_path:
+        supplement_metadata = {
+            'supplement_id': supplement_manifest['supplement_id'], 'bundle_path': 'input_supplement',
+            'bundle_files': {name: hashlib.sha256(raw).hexdigest() for name, raw in supplement_files.items()},
+            'included_graphs': names, 'inputs': supplement_inputs,
+            'methods': methods, 'seeds': list(range(args.seeds)), 'timeout': args.timeout,
+            'configurations': {method: CONFIGS[method] for method in methods},
+            'claim_scope': 'corrected Sudoku development supplement; original corpus unchanged; no holdout claim'}
+        supplement_metadata['comparison_plan_id'] = _supplement_plan_id(supplement_metadata)
     tasks = []
     for name in names:
         record = records[name]
@@ -425,6 +562,10 @@ def initialize(args):
                 task = {'graph': name, 'source_hash': source_hash, 'target_hash': target_hash,
                         'source_snapshot': snapshot, 'seed': seed, 'method': method,
                         'config': CONFIGS[method], 'timeout': args.timeout}
+                if supplement_path:
+                    task.update(input_supplement_id=supplement_manifest['supplement_id'],
+                                input_supplement_plan_id=supplement_metadata['comparison_plan_id'],
+                                supplement_graph_id=supplement_inputs[name]['id'])
                 task['task_id'] = digest(task)[:24]
                 tasks.append(task['task_id'])
                 write_json(run / 'tasks' / (task['task_id'] + '.json'), task)
@@ -447,6 +588,13 @@ def initialize(args):
             'original_selection_digest': digest(original_selection),
             'included_graphs': names,
             'claim_scope': 'inherited development data; no holdout or family-level claim'}
+    if supplement_path:
+        for name, raw in supplement_files.items():
+            path = run / 'input_supplement' / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(raw)
+        manifest['input_supplement'] = supplement_metadata
+        check_supplement_provenance(run, manifest)
     write_json(run / 'manifest.json', manifest)
     print(f'Created {len(tasks)} tasks in {run}', flush=True)
 
@@ -468,6 +616,7 @@ def execute(args):
         if hashlib.sha256((run / 'source' / relative).read_bytes()).hexdigest() != expected:
             raise RuntimeError(f'Source changed: {relative}')
     check_corpus_provenance(run, manifest)
+    check_supplement_provenance(run, manifest)
     write_json(run / 'controller.json', {'pid': os.getpid(), 'host': platform.node(),
                                        'started': time.time(), 'status': 'running'})
     env = os.environ.copy()
@@ -550,7 +699,9 @@ def main():
     init = sub.add_parser('init')
     init.add_argument('run')
     init.add_argument('--graphs')
-    init.add_argument('--corpus-selection', help='Frozen deduplicated corpus readiness selection')
+    source_inputs = init.add_mutually_exclusive_group()
+    source_inputs.add_argument('--corpus-selection', help='Frozen deduplicated corpus readiness selection')
+    source_inputs.add_argument('--input-supplement', help='Complete immutable Sudoku development supplement directory')
     init.add_argument('--methods', default='mm,native-search,native-packed')
     init.add_argument('--seeds', type=int, default=1)
     init.add_argument('--timeout', type=float, default=30)
