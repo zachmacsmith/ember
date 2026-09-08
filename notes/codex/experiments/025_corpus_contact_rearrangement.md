@@ -54,3 +54,9 @@ PID 120218 and worker PID 120414, a busy inherited lock, a live tmux session and
 17 finalized successes out of 68 planned trials. This is an intermediate status,
 not evidence about complete-run performance. Continue this exact run without
 restarting it after a connection interruption; retrieve after verified quiescence.
+
+A later fresh check confirms terminal quiescence: all 68 tasks finalized SUCCESS,
+controller complete, inherited lock free, tmux stopped and supervisor exit 0.
+The benchmark auditor is retrieving and hash-verifying the archive. Full
+quality and timing interpretation remains pending independent analysis; the
+all-success count alone does not establish an ACL improvement.

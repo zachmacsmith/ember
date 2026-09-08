@@ -312,3 +312,31 @@ Two independent bounded tasks proceed meanwhile: prepare the explicitly planned
 Sudoku development supplement at box orders 2 and 3, preserving original IDs and
 reserved larger orders; and specify one semantics-preserving geometric-search
 speed improvement from the saved profiling evidence, before implementing it.
+
+Experiment 025 has now completed all 68 calls with timely valid embeddings. Its
+independent review finds 17 improvements, 10 regressions and seven ties for contact
+rearrangements versus the fixed strict control, saving 65 total qubits. The strict
+control exactly reproduces all 34 corresponding 019 embeddings. Against historical
+MM quality, the candidate still has eight wins and 23 losses on 31 common timely
+inputs. Root independently reran the ordinary analyzer successfully. This remains
+a modest general improvement, not the requested all-class result.
+
+After 025 quiescence and hash-verified retrieval, the benchmark auditor started
+the exact staged 026 run. Fresh status confirms controller 122275, worker 122287,
+the held inherited lock and live tmux supervisor. Source and protocol remain the
+already frozen `f93f889f` snapshot. Later working-tree edits cannot change this run.
+
+The Sudoku input task is complete: separate IDs 1000002 and 1000003 contain the
+correct 16-vertex and 81-vertex development cell-conflict graphs. Root reran all
+34 focused tests and verified the frozen bundle with the isolated interpreter.
+Original manifest entries are unchanged; reserved box orders 4 and 5 remain
+ungenerated. Embeddability remains unproved because no solver has run on these
+supplementary inputs. Their later pilot adapter and six-trial comparison protocol
+are being prepared separately, with no replacement of prior corpus records.
+
+The geometric performance diagnosis identifies horizontal neighbor preparation
+that is never used in horizontal scoring. Its measured removal ceiling is only
+about 5.4% of warm layout time in the diagnostic case, so it cannot explain away
+the large MM runtime gap. The algorithm auditor saved a self-critique, then began
+the restricted code change and full-trajectory differential checks against a
+frozen pre-edit reference. No search objective or arithmetic changes are intended.
