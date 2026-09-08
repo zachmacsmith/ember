@@ -1,48 +1,39 @@
 # Current research checkpoint
 
-Updated 2026-09-08 17:50 UTC. Branch `codex`. Goal active and unmet: one
-general embedding heuristic, no MM/busclique or portfolio, ideal Z12 first,
-competitive mean ACL and roughly MM-scale runtime.
+Updated 2026-09-08 18:11 UTC. Branch `codex`. Goal active and unmet: one
+general non-portfolio algorithm, no MM/busclique, ideal Z12, competitive mean
+ACL and roughly MM-scale runtime. No new final-test inputs have been exposed.
 
-The [workflow amendment](tracks/workflow.md) prioritizes informative experiments
-across three independent tracks. Hypotheses, pseudocode, self-critiques and
-cheap falsifiers precede implementation. Screens retain dependency isolation,
-targeted checks, independent validity checks and complete failure/time records.
+- **A / root / hyde03:** 046 is positive and independently validated: all68
+  timely valid,25improvements/9ties/0regressions,89Q saved, macroACL
+  3.325937→3.305570, solver total+3.9%.
+  [Results](experiments/046_results_screen.md).
+  The unchanged candidate is running against freshMM in047: same34inputs,
+  seed0,60seconds,68paired calls; controller182328.
+  [Launch](experiments/047_launch_record.md).
+  048 tests continuing seed traversal after a contraction; literature owns
+  implementation and targeted checks, root owns eventual freeze/lifecycle.
+  [Pre-code hypothesis](experiments/048_cyclic_vacancy_hypothesis.md).
+- **B / algorithm_audit / hyde02:** B004 completes7/9 but loses all7ACLpairs
+  toMM. Bipartite improves strongly; three other outputs regress and repair
+  cost is excessive. Reject the fixed schedule. B005 investigates propagated
+  placement domains with explicit relaxation to connected chains.
+  [Results](tracks/b_local_reinsertion.md),
+  [design options](tracks/b_feasibility_options.md).
+- **C / benchmark_audit / hyde04:** C003 completes4/8 but chains remain much
+  longer thanMM. C004 is running the same8inputpanel with one compact connected
+  target allocation; no restart ladder or per-input output choice.
+  [Results](tracks/c_003_results.md).
 
-- **A, root, hyde03:** 045 vacancy repair finds 25 first contractions versus
-  ordinary reconstruction's 17, including eight additional inputs. All 42
-  credited outputs are original-valid; root independently replayed the eight
-  additional traces. [Results](experiments/045_results_screen.md). The bounded
-  cumulative pipeline stage passed 20 focused checks. 046 is staged and its
-  detached start is requested: 34 unchanged readiness inputs, seed zero, fresh
-  control/treatment pairs, 60 seconds, one stage allowance of min(1 second,
-  20% of preceding pipeline time), 50,000 proposals, at most 20 contractions.
-  [Hypothesis](experiments/046_vacancy_pipeline_hypothesis.md).
-- **B, algorithm_audit, hyde02:** B003 completes 7/9, but loses ACL to MM on all
-  seven timely pairs. B002/B003's six common outputs have unchanged summed Q.
-  Bounded costs improve construction progress but leave committed placements
-  difficult to repair. B004 will test bounded release and reinsertion of a small
-  connected block within one evolving partial embedding.
-  [Results](tracks/b_bounded_cost.md).
-- **C, benchmark_audit, hyde04:** C001 and C002 both fail on all eight inputs.
-  Six C002 partial allocations have too few target couplers between fixed
-  regions to represent their source-edge requirements. Fixed-parent splitting
-  is rejected. C003 investigates target coarsening followed by connected-region
-  and label reconfiguration with movable boundaries.
-  [Results](tracks/c_002_results.md).
+The [workflow amendment](tracks/workflow.md) requires pre-code hypotheses,
+pseudocode, self-critique and cheap falsifiers. Exploration retains isolated
+libraries, meaningful targeted checks, independent original-edge validation,
+and every failure/time. Exhaustive publication audits remain deferred.
 
-Latest accepted full pipeline comparison is 042: 68/68 timely valid outputs,
-13 ACL improvements and 21 ties after safe deletion; Q 15059 to 15016, macro
-ACL 3.3351353061 to 3.3259371863, solver time +2.3%. These development gains
-do not establish superiority to MM. No new final-test instances are exposed.
+047 snapshotfcda1fc0 / manifestaa932046 / transport3b34ed93. Frozen inputs and
+lifecycle records: `results/codex/047-current-pipeline-mm`,
+`results/codex/047-launch`. All prior A controllers are terminal. Observe the
+existing run after network loss; never restart because SSH disconnected.
 
-046 frozen snapshot:
-`5dadefe9e1c9099282701cc45c060a810e355a92d4128dc537c443f7e50b9dd7`;
-manifest:
-`79bc699bd2da6de320d9b2499bd733420199585086c19afa7afb0ba8ea9e5936`.
-Transport: `ec5c8b3826598391c3439274999b1b40a1b7018af00c53f9b7837d59a3b1c6b5`.
-Lifecycle evidence is in `results/codex/046-launch`; frozen inputs in
-`results/codex/046-vacancy-pipeline`. All prior A controllers are terminal.
-Observe an existing run after connection loss; never restart because SSH
-disconnected. Each fresh construction track manages its own host and immutable
-run. Literature owns new pilot registrations and the minimal 046 result screen.
+All findings remain exploratory. Local-move prior art is established; novelty,
+seed variance and fresh-instance superiority remain unresolved.
