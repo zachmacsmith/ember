@@ -58,7 +58,7 @@ def execute(run, task, prohibited=()):
     return row
 
 
-@pytest.mark.parametrize('method',('native-reduced-core','native-reduced-core-repair','native-original-soft-guide','native-site-transfer','native-degree-two','demand-tree','frontier-tree','frontier-tree-bounded','frontier-tree-reinsert','propagating-tree','propagating-tree-reuse','propagating-tree-growth','propagating-tree-matching','propagating-tree-ports','multilevel-regions','multilevel-regions-v2','quotient-reconfiguration','quotient-compact','quotient-vacancy','quotient-distinct'))
+@pytest.mark.parametrize('method',('native-reduced-core','native-reduced-core-repair','native-original-soft-guide','native-site-transfer','native-degree-two','native-supported-degree-three','demand-tree','frontier-tree','frontier-tree-bounded','frontier-tree-reinsert','propagating-tree','propagating-tree-reuse','propagating-tree-growth','propagating-tree-matching','propagating-tree-ports','multilevel-regions','multilevel-regions-v2','quotient-reconfiguration','quotient-compact','quotient-vacancy','quotient-distinct'))
 def test_constructor_worker_deadline_and_output(tmp_path,method):
     if method == 'native-site-transfer':
         assert pilot.CONSTRUCTORS[method] == (
@@ -68,6 +68,11 @@ def test_constructor_worker_deadline_and_output(tmp_path,method):
     if method == 'native-degree-two':
         assert pilot.CONSTRUCTORS[method] == (
             'packages/ember-qc/src/ember_qc/algorithms/factored/degree_two_construction.py',
+            'reduced_core_embed')
+        assert pilot.method_config(method) == {}
+    if method == 'native-supported-degree-three':
+        assert pilot.CONSTRUCTORS[method] == (
+            'packages/ember-qc/src/ember_qc/algorithms/factored/supported_degree_three_construction.py',
             'reduced_core_embed')
         assert pilot.method_config(method) == {}
     run,task,manifest,path = bundle(tmp_path,method,

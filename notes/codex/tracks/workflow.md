@@ -37,3 +37,33 @@ Self-critique 2: concurrency can cause shared-code races and consume effort in
 infrastructure. Assign distinct module/host ownership, one pilot owner, and
 reuse existing checks. A failed hypothesis should promptly lead to a recorded
 lesson and a revised or replacement candidate, not an unlimited audit.
+
+## Mechanism decisions — user amendment, 2026-09-08
+
+The initial track names above are historical. Current independent lines are
+A055's reduced-source representation, B019's movable-contact constructor and
+C's variable-size disjoint-region constructor. The user now explicitly accepts
+optimal ACL-one ties; a tie above one needs its own optimality evidence and is
+not automatically a resolved quality deficit.
+
+Before another refinement, identify the target failure and distinguish four
+explanations: the representation cannot express the desired state; the move
+neighborhood cannot reach it from the current state; the acceptance rule rejects
+the necessary available moves; or computation stops useful search. State the
+observation that would distinguish them and which remain confounded. Optional
+bounded exact neighborhood solves are diagnostic only, never the global
+constructor. A better partial metric alone does not justify another local repair.
+
+Move promising mechanisms into diverse small complete-constructor screens.
+Use spare capacity for fixed instances, seeds and controlled ablations while
+keeping each candidate independent and timing pairs on the same host. Preserve
+the audited harness, isolation, original validation and every failure/time;
+add checks only for specific new correctness risks.
+
+Each milestone reports the resolved hypothesis, complete-constructor results,
+evidence of generalization (including its absence), and a continue/redesign/
+retire decision. Maintain a class-by-class MM gap table with success, mean ACL,
+across-seed variability and runtime separated. Do not merge algorithm versions,
+censored populations or different-host times. Prioritize a general mechanism
+that addresses several structurally related deficits; dense aggregate gains
+must never conceal a class regression.

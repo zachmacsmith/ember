@@ -251,3 +251,10 @@ Gate source/tests/evidence remain unchanged; registration evidence is under
 `results/codex/a054-degree-two/registration`. The authorized next screen is
 16 selected structures (13 changed reductions plus three fixed controls),
 not an all-34 quality estimate.
+
+A055 adds only `native-supported-degree-three` →
+`factored/supported_degree_three_construction.py:reduced_core_embed`, `{}`.
+The single isolated stub adapter check passes; the existing worker deadline,
+original validator and all other registry entries remain unchanged. Source
+reduction checks are separate; no new native/corpus/reach call was run.
+Registration evidence is in `a055-supported-degree-three/registration`.

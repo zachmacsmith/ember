@@ -1021,3 +1021,18 @@ Blocked audit:
 Do not call update_goal unless the goal is complete or the strict blocked audit above is satisfied. Do not mark a goal complete merely because the budget is nearly exhausted or because you are stopping work.
 
 </codex_internal_context>
+
+
+## User prompt — 2026-09-08, mechanism decisions and class gaps
+
+For the next research cycle, optimize for decisions about algorithm mechanisms. Keep three independent tracks and all existing constraints. Before another refinement, identify whether its target failure comes from the representation, the move neighborhood, the acceptance rule, or computational cost. State what observation would distinguish those explanations.
+
+Use bounded exact neighborhood solves only as optional diagnostic instruments, never as the global constructor. Move promising mechanisms promptly into small complete-constructor screens on diverse development instances. Do not continue a chain of local repairs solely because intermediate metrics improve.
+
+Preserve the audited harness, dependency isolation, independent validation, and complete failure/time accounting. Reuse existing correctness infrastructure; add checks only for specific new risks. Use spare cluster capacity for instances, seeds, and controlled ablations, with paired timing on the same host.
+
+At each milestone, report the hypothesis resolved, end-to-end results, evidence of generalization, and the reason to continue, redesign, or retire the mechanism.
+
+Produce a gap analysis against MM by graph class, separating success, mean ACL, variability, and runtime. Identify which deficits share a plausible structural cause. Prioritize hypotheses that address several deficits through one general mechanism. Allow optimal ties where MM already achieves ACL 1; retain the goal of improvement across classes without allowing aggregate dense-graph gains to hide regressions.
+
+When evaluating a new algorithm or idea, consider what prevents the current search from reaching good embeddings, then design experiments that distinguish those causes.
