@@ -65,3 +65,21 @@ I think we should just use Z12 for now since that is what Ember uses.  We can re
 ```text
 Just a note - while I think it's ok to have algorithm that is slower than MM, just doing integer programming and explicitly solving the optimization problem is going to be infeasibly slow, especially at scale.  So while maybe some exact solves could be a subroutine of some small clusters of nodes in the graph, just using an IP solver is not the right approach we are going for here.  We need to be at least roughly on the order of magnitude as the performance of MM.
 ```
+
+## User prompt 5 — plan review before implementation (verbatim)
+
+```text
+Are you still preparing the plan?  I have not seen the plan presented to me yet for approval or editing.  It seems like you are already doing work.
+```
+
+## User prompt 6 — approval and generality constraint (verbatim)
+
+```text
+Sounds good, please proceed.  I just want to also warn you to not overfit to specific graphs - we don't want our algorithm to overfit so it wins on a particular graph or class of graphs.  The algorithm should look like a general, principled heuristic.
+```
+
+## User prompt 7 — goal UI status (verbatim)
+
+```text
+Btw, the Codex UI here says the goal is paused and suggests I resume it, but you are actively working towards the goal now, right?  Can you fix that UI quirk/bug, or let me know if I actually need to type /goal resume?
+```

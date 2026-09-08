@@ -1,0 +1,17 @@
+# Audited candidate environment: no embedding solver package is permitted.
+# Captured from the isolated Python 3.10 environment, 2026-09-08 UTC.
+dimod==0.12.22
+dwave_networkx==0.8.19
+llvmlite==0.47.0
+networkx==3.4.2
+numba==0.65.1
+numpy==2.2.6
+pandas==2.3.3
+platformdirs==4.4.0
+python-dateutil==2.9.0.post0
+pytz==2026.3.post1
+PyYAML==6.0.2
+scipy==1.15.3
+six==1.17.0
+tqdm==4.67.1
+tzdata==2026.3

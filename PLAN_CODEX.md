@@ -1,10 +1,17 @@
 # Codex research plan
 
-Status: finalized planning phase, 2026-09-07, after two self-critique rounds and
-two further checks of the runtime-focused revision requested in user prompt 4.
+Status: approved in user prompt 6; implementation may proceed. The user additionally
+requires a general, principled heuristic with no graph- or family-specific fitting.
+Prepared after two self-critique rounds and two further checks of the runtime-focused
+revision requested in user prompt 4.
 Research branch: `codex`, starting at `81074562`. Critiques and resulting revisions:
 [`notes/codex/plan_self_critique.md`](notes/codex/plan_self_critique.md).
-No new embedding algorithm has been implemented or claimed to outperform MM.
+The original planning checkpoint contained no new algorithm implementation. A
+subsequent automated continuation prematurely began uncommitted validation fixes,
+an independent constructor, a local reconstruction prototype and a pilot harness.
+Those changes were preserved during review and are now being checked under the
+approved plan; they are not established research results.
+No algorithm is claimed to outperform MM.
 
 ## 1. Independent brainstorm, before the repository audit
 

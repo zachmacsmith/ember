@@ -64,6 +64,89 @@
 
 ## Logging convention for continued work
 
+## User prompt 5 — implementation paused for plan review
+
+An automated goal continuation began implementation after the planning checkpoint:
+validation/backend fixes, an explicit native constructor, bounded contact-repair
+code, regression tests and a development pilot harness. These implementation
+changes remain uncommitted. The previous planning turn constituted progress, but
+moving into implementation before presenting the plan for user review was premature.
+
+The user clarified that the plan must be presented for approval or editing first.
+All three implementation agents were interrupted. The local pilot controller
+(PID 98936) had already completed and no longer existed; its last worker (98982)
+was also checked. The pilot log reports errors rather than usable performance
+results. No cluster benchmark jobs had been launched. Preserve the existing
+worktree and artifacts; do not resume implementation or experiments until the
+user approves or revises the plan.
+
+The current plan is presented in the assistant response and linked in
+`PLAN_CODEX.md`. This user-requested review pause supersedes autonomous continuation
+of the research objective.
+
+## Logging convention for continued work (continued)
+
+## User prompts 6–7 — approved continuation
+
+The user approved the presented plan and emphasized generality: the algorithm must
+be a principled heuristic, not fitted to specific graphs or families. Implementation
+agents resumed their bounded tasks. General graph structure and current search
+state may guide moves; graph names, family labels, instance IDs and cached answers
+may not choose a runtime algorithm or supply embeddings. Development comparisons
+will use multiple scales and varied structures, plus separate confirmation data.
+
+The user asked why the goal UI still showed paused. `get_goal` confirmed the actual
+goal record had status `paused`. The current approved conversational work is active,
+but automatic goal continuation requires the user's Resume action or `/goal resume`.
+Available goal tools cannot change paused/active status; no internal UI state was
+edited. OpenAI Docs skill consulted for this product question.
+
+The failed local pilot was traced to resolving virtual-environment Python symlinks
+to their base interpreter; every worker then lacked NetworkX. The harness now
+preserves the executable's absolute symlink path. Original failed artifacts remain
+in `results/codex/003-native-screen` and are not embedding-performance evidence.
+
+## Logging convention for continued work (current)
+
+After the UI question, another authoritative `get_goal` read returned `active`.
+The user-facing status was corrected: no further resume command is needed. The
+assistant did not change the paused/active state itself.
+
+The second harness smoke (005) preserved virtual-environment paths but exposed
+another input bug: graph serialization dropped node attributes while preserving
+Zephyr `data=True` metadata. Native layout then lacked `zephyr_index`. The harness
+now round-trips node/edge attributes, with a regression comparing reconstructed
+Zephyr topology and coordinates. This failure is a harness error, not evidence of
+algorithm success or failure. Its raw artifacts remain preserved.
+
+Agent follow-ups: the algorithm auditor checks label/metadata/insertion-order
+generality without changing the algorithm; the benchmark auditor reviews the
+isolated pilot harness; the literature agent repairs remaining plot identity
+grouping after completing the statistics/summary fixes.
+
+Validation and analysis repairs were committed as `efc49090` after a combined
+205-test focused suite passed. This includes strict original-target validation,
+late-result accounting, graph/target/batch identity, absent-trial handling, and a
+confirmed Pareto-direction correction. Existing unrelated legacy fixture failures
+are documented in the respective experiment notes; no whole-suite pass is claimed.
+
+Experiment009 completed all45 trials. Every returned embedding passed independent
+structural revalidation;44 were timely, and the K100 MM result was valid but late.
+Native candidates made no forbidden import attempts and loaded no external embedding
+libraries. On the eight common timely comparisons, native search won ACL on two
+inputs and lost on six. This is development evidence, not a class-level conclusion.
+Width-four refinement of packed construction showed only small gains over width
+one while using more work. See the dedicated results review for exact metrics.
+
+Next decision: retain one globally fixed native-search constructor and compare
+singleton reconstruction with narrow/wider joint reconstruction. Expose existing
+contact group-size/work bounds through the native adapter; add no family dispatcher.
+The prespecified011 ablation uses the same nine development inputs, two seeds and
+60-second allowances, with exact frozen source and separate candidate/MM processes.
+Partial-construction design is saved but deferred until the valid-Z12 quality
+question is resolved. The novelty review identifies close prior art; no publication
+claim is justified by the present implementation or data.
+
 Append every new user prompt/answer verbatim to `PROMPTS_CODEX.md`. Record each
 experiment's question, pre-run prediction, revision hash, config, graph/target hashes,
 seeds, machine, environment, wall/CPU/memory budgets, raw artifacts, validation, result,
