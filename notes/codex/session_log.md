@@ -1335,3 +1335,19 @@ success is a gate before any34inputscreen. Root's source review requested
 retaining failed core partial evidence and pruning endpoints of released fill
 requirements. These are being documented before adjustment. The existing
 freeze script is prepared in049-preparation but has not run; hyde03 is idle.
+
+## 2026-09-08 19:07 UTC: three independent cluster experiments active
+
+A049 passes11focusedchecks and three positive Z12 reach cases. Root's
+released-fill endpoint cleanup changes wheel235→189Q and subdivision18→17Q;
+star remains138Q, all original-valid. These are diagnostic fixtures, not MM
+benchmarks. Sourceb0f3f6dd and unchangednative496b5422 are committed0e52a5ca.
+The68call34input049screen froze73564a80/manifestf34b975a, staged once and
+started once on03. Controller187555 started1788894349.7950585; freshSSH
+confirmed live worker/lock/tmux with6SUCCESS/68. No quality rows read yet.
+
+B007 started once on02 at1788894238.3043, snapshotc23a2ac2,18tasks.
+C006b started once on04, controller170867, exactpriorC006snapshota8142195,
+16uniform60secondtasks. Both retain independent freshMM comparisons.
+Literature prepares049minimaloriginal-output/requirement/work screen while
+root owns its lifecycle. No new final-test data or shared-validator change.
