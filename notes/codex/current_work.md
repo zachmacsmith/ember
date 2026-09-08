@@ -24,21 +24,21 @@ tmux. The benchmark auditor monitors this exact supervisor. Source
 transport `f02da9b1a88d747f8ba37e5e834395194cc084bd79ae3b47df73d09e13d83618`.
 It contains no direct singleton relocation and no physical checkpoint policy.
 
-Latest032 status at approximately04:04UTC:189/272 finalized,177SUCCESS and
-12TIMEOUT, original controller healthy. Do not fetch until quiescent.
+Latest032 status:247/272 finalized,233SUCCESS and14TIMEOUT, original
+controller healthy with a live worker. Do not fetch until quiescent.
 
-036 is **running locally** as of04:05:48UTC. Its34 tasks use only the
+036 is **complete and independently audited**. Its34 tasks use only the
 fixed spectral/legacy-singleton candidate with the corrected converter. Commit
 `18ab7590e1267c6281e4c8c4443fa00b73887228`, source
 `56338bafc7038d75001fe9fd36b067f246dc13ab796a2fdd29ded59b3226f243`.
 Root and independent preflight confirm only field.py differs from033's frozen
 source, with identical target and34 source graph bytes. Preflight passed all46
 source hashes per run,37 input files,34 task configurations and package absence.
-The algorithm auditor owns subsequent results review; root owns exec session
-**16497**, controller **38178**, and launch/process monitoring. Fresh OS checks
-verified controller38178 and isolated worker38191 alive. Start timestamp is
-1788840341.556109 (2026-09-08T04:05:41.556109Z). Do not restart after an
-observation timeout. Raw launch evidence is under `results/codex/036-launch`.
+Root verified completion at04:10:39UTC: controller38178 and finalworker39628
+absent, session16497 exited zero, all34results finalized SUCCESS. The controller
+finished at1788840602.8600562. Independent original-graph audit passed and root
+reran it successfully in `036-independent-review/root_repeat`. Do not restart.
+Raw launch/completion evidence is under `results/codex/036-launch`.
 Run path: `results/codex/036-converter-correction-pipeline`.
 
 `033-singleton-relocation-ablation` completed locally in the isolated native
@@ -58,6 +58,15 @@ matrix, and absence of MM/busclique in the native interpreter. No timing is
 pooled between 032 and 033.
 
 ## Most recent complete evidence
+
+036:9wins,17ties,8losses versus033control; total Q remains15060, while mean
+per-input ACL worsens3.334421to3.335319. All34new and34old controls independently
+valid/timely. All stored non-time upstream diagnostics match, but only3final
+chain sets match. Constructed18509to18506, pruned15675to15680, final15060to15060;
+intermediate counts are recorded diagnostics, final embeddings are validated.
+Every converter/completion deficit counter is zero. Keep corrected recurrence
+globally for capacity correctness, not quality or speed claims. Timing remains
+across-run and materially affected even in the unchanged layout stage.
 
 033: all68outputs independently valid/timely. Direct singleton relocation has
 7wins,22ties,5losses versus its contemporaneous control, and net+1Q
@@ -125,8 +134,10 @@ without changing the frozen input sidecars.
   checks 240 proposer cases across 24 small minors. The physical cost model is
   complete. The035correction and converter tests are committed as18ab7590;
   root reviewed all physical/state/runtime evidence and reran the saved auditor.
-  Now independently preflight036, then audit its completed outputs. No source
-  edits or controller action in this task.
+  The036audit is complete and root reran it. Now derive a connected multi-qubit
+  center version of the induced-star move, with singleton independent leaves,
+  matching feasibility, bounded connected-region growth and critique. Own
+  `connected_star_relocation_spec.md`; no implementation or solver calls.
 - `literature`: 029 adapter is complete; root reviewed it, reran 103 tests and
   committed `4cad1d67`. The six-trial run completed on hyde03.
   031 is complete to environment preparation/readback: Python3.12.3, pinned
@@ -136,9 +147,12 @@ without changing the frozen input sidecars.
   The independent singleton core review found no blocker. The034capacity audit
   is complete and root reran its saved-hash/physical-witness verifier successfully.
   The033independent review is complete and root reran its analyzer successfully.
-  Now own the bounded induced-star relocation review: tiny exhaustively checked
-  witness and targeted primary-source prior art. Root saved the new specification
-  and self-critique before this task. No source edits or full embedding calls.
+  The induced-star mathematical, prior-art and integration reviews are complete.
+  Root exactly reran the Z12witness and independently checked generic8to7output,
+  Rgain1 and16five-qubit assignments within its region. Now implement only the
+  new `induced_star_relocation.py` core and focused tests under the saved
+  implementation specification. No native/contact scheduler/pilot edits or
+  full-pipeline calls. Root owns integration after core review.
 
 Review agent-owned edits before committing. The current cluster run uses its
 frozen source and is unaffected by these working-tree edits. Root owns README,
@@ -147,17 +161,17 @@ Preserve unrelated `.claude/` and graph-library `.verified.json` files.
 
 ## Next actions
 
-1. Keep033's negative cumulative result and unchanged legacy singleton policy.
-   Review the induced-star joint relocation hypothesis before implementation.
-   Matching decides a restricted all-singleton block problem; usefulness and
-   novelty remain unproved, and scheduling/budgets are not yet implemented.
-2. Follow the frozen036run through verified completion and independent analysis.
-   Root owns session16497; the algorithm auditor owns its results review and must
-   receive a completion signal before full-run conclusions. The035correction fixes all
-   feasible diagnostic seatings; the hard nine-arm witness becomes6.21times
-   slower (0.293to1.816ms), explicitly retained. The absolute observed cost
-   supports bounded full-pipeline measurement, not a runtime guarantee.
-   Its quality reference is033control; across-run timing is explicitly limited.
+1. Keep033's negative cumulative result and legacy singleton policy. Review the
+   new induced-star core against exhaustive injective assignments, actual target
+   edges, all budget/certificate interruptions and cache refresh after ordinary
+   moves. Then integrate the frozen failed-ordinary-visit schedule with no new
+   groups,5% shared auxiliary share and2048query units. The matching reduction is
+   conventional LAD prior art; cumulative usefulness/novelty remain unproved.
+2. Use037's saved full-pipeline protocol for all34inputs and both fixed arms.
+   The unexecuted saved-incumbent draft is superseded before any outcome; the
+   existing pilot gives stronger pipeline evidence without a new controller.
+   Core review, integration/tests, committed freeze and independent preflight
+   must precede launch. No numeric settings changed in this planning revision.
    Keep028; no physical-checkpoint production callback is promoted.
 3. Follow 032 through repeated-seed quality and timing analysis, preserving all
    failures and the distinction between solver seeds and source instances.

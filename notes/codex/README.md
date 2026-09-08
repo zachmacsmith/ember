@@ -6,11 +6,12 @@ execution, ideal Z12, primary mean ACL, runtime roughly within MM's order of mag
 An independent native constructor and bounded joint contact reconstruction are
 implemented and tested in an environment without MM. No algorithm has yet
 demonstrated the requested superiority across graph families. The current
-research candidate uses one bounded spectral initialization, structural group
+research candidate uses corrected class-capacity conversion, one bounded spectral initialization, structural group
 coverage, and equal-size contact rearrangements only when an exact secondary
 objective improves. It still loses to MM on 21 of 31 common timely inputs in
 the latest development screen; broader results remain necessary, and novelty
-is unproved.
+is unproved. The corrected converter fixes a verified defect but produced no
+total-qubit gain in036; direct singleton relocation was not promoted after033.
 
 - [Final research plan](../../PLAN_CODEX.md)
 - [Append-only user prompts](../../PROMPTS_CODEX.md)
@@ -51,6 +52,11 @@ is unproved.
 - [Physical wire-cost model and limits of local pricing](physical_cost_model.md)
 - [Induced-star joint relocation hypothesis and self-critique](induced_star_relocation_spec.md)
 - [Corrected-converter full-pipeline comparison protocol](experiments/036_converter_correction_pipeline.md)
+- [Corrected-converter results: correctness retained, no aggregate quality gain](experiments/036_results_review.md)
+- [Induced-star witness, generic-proposer comparison and primary prior art](induced_star_relocation_review.md)
+- [Bounded induced-star scheduling and cache design review](induced_star_integration_review.md)
+- [Fixed induced-star implementation policy and critique](induced_star_implementation_spec.md)
+- [Next full-pipeline matching comparison protocol](experiments/037_induced_star_pipeline.md)
 - [Second-node environment preparation and supervisor prerequisite](experiments/031_second_node_preparation.md)
 - [Generalization and final confirmation protocol](generalization_protocol.md)
 

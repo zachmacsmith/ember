@@ -500,3 +500,36 @@ to unilateral singleton reductions, but its group size3 does not establish
 an advantage over the existing generic2–4-chain operation. The independent
 review is checking that comparison on the same fixed witness without a full
 embedding call or new operator implementation.
+
+Automated goal continuation4 was appended verbatim to PROMPTS_CODEX.md. The
+previous goal turn was progress: it committed the independently checked035
+capacity correction, retained the negative033result and launched frozen036.
+There is no repeated external blocker, and the broader goal remains unmet.
+
+036 is complete. Root verified controller/final-worker absence and session
+exit zero, then reran its full independent original-graph audit. All34new calls
+succeed. Final Qties15060overall, with9wins,17ties,8losses and slightly worse
+mean per-input ACL. Corrected conversion is retained globally for its proved
+capacity correction, not a benchmark quality gain. All regressions and the
+limits of across-run timing attribution remain in the full report.
+
+Root reran the induced-star Z12witness exactly and independently checked the
+existing generic proposer artifact:8to7Q,Rgain1,16five-qubit assignments at12
+centers inside its actual final region. The corresponding matching optimum is
+5Q; neither witness establishes general superiority. Root read Solnon's archived
+Definition1 and accepted the prior-art overlap explicitly.
+
+After the saved design and critiques, the literature agent was assigned only
+the induced-star core and focused tests. Its fixed schedule attaches to failed
+ordinary visits without added groups; the query ceiling is2048units and all
+setup/maintenance/search share5% of the original global allowance. A separate
+design task investigates connected multi-qubit centers, because all-singleton
+blocks cannot address high-degree centers. No generalized implementation is
+authorized yet.
+
+Before any new benchmark outcome,037's unexecuted saved-incumbent draft was
+superseded by a complete34-by-two native pipeline comparison using the existing
+audited pilot. This avoids creating another controller and gives direct
+cumulative pipeline evidence. The treatment policy/constants did not change.
+Core correctness review still precedes scheduler integration, source freeze,
+independent preflight and launch.
