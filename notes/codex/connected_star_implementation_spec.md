@@ -42,6 +42,11 @@ within the query, against fixed outside ownership, and is discarded afterward.
 Use explicit sets/lists and charged scans; do not rely on an uncharged bit mask
 whose width increases with source degree.
 
+Publish a class/site eligibility cache entry only after its boolean result is
+established. A failed required contact may establish false early; true requires
+all contacts. An interrupted evaluation is unknown and must not become a cached
+false value or an incomplete eligibility list used for an exact matching score.
+
 A local state contains the connected footprint, its distinct unfiltered
 available boundary, frozen-center contact counts, a physical-site-to-class
 assignment and class occupancy counts. Immutable query-local eligibility data
@@ -58,6 +63,16 @@ score/tie rule, and discard other states. Retaining that already charged state
 needs no hidden replay or uncharged full copy. No interrupted successor may
 supply an exact score or a selectable state. If the common budget expires,
 return no proposal; do not publish a previously incomplete computation.
+
+Resolve the first-result rule explicitly: if a fully evaluated successor has
+zero deficit, stop that shortlist immediately and attempt its full local
+certificate. Do not evaluate remaining successors to seek another complete
+placement; certificate failure or interruption ends this query with no proposal.
+Traverse the shortlist in its prescribed optimistic-score order.
+If every completed successor has nonzero deficit, finish the fixed shortlist
+while allowance remains and use the stated exact-deficit/matching-size/physical-
+rank comparison. This resolves an ambiguity between the earlier design's
+shortlist scoring and immediate zero-deficit termination statements.
 
 Build the root boundary and process new boundary sites in stable order. For
 each new site, assign it directly to the first eligible underfilled class, if
@@ -129,6 +144,14 @@ old selected owners before adding new ones. An interrupted refresh disables
 future auxiliary attempts for that call and retains the already accepted valid
 embedding. No partial cache, domain or speculative state survives a query.
 Distinguish returned certified proposals from eventual scheduler commits.
+
+Diagnostics must distinguish a completed maximum assignment for one fixed
+footprint from exhaustion of the heuristic growth query. The latter is
+`heuristic_no_proposal`, never exhaustive block infeasibility. Retain counts
+for leaves and demand classes, root candidates, fixed-footprint assignment
+checks, examined class/site edges, successor trials, steering searches, peak
+footprint/boundary sizes and all interruption reasons. Count a complete
+assignment, returned certificate and eventual commit as separate events.
 
 ## Required focused checks and limitations
 

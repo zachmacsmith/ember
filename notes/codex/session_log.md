@@ -666,3 +666,15 @@ production files are unchanged.
 
 The latest environment-context update was appended verbatim to PROMPTS_CODEX.md
 (423characters, SHA2729d4d2ad2cd36cb6ea71486e9c24692cfcbb1584db83a33d336944af4ab903).
+
+At 05:13 UTC root read the completed independent connected-policy review in
+full and authorized only the new core, focused tests and an independently
+constructed Z12 mechanism witness. The final reviewed specification hash is
+41e7b0bc31d7fa44a8c2f326d0a143315b6e5f178a5e7164cc530a32919f1e99.
+It resolves first-zero shortlist termination, interrupted eligibility caching,
+actual member growth and the query-wide memo cost. Literature owns the new
+module; no scheduler/native/pilot integration or corpus run is authorized yet.
+Benchmark audit now owns 038's independent preflight after its diagnostic
+freeze is stable. Algorithm audit reports five focused instrumentation checks
+and literature's eight supervision checks passing, with no corpus observations.
+Root rechecked the backend at05:13:29UTC: goal active and unmet.

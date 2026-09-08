@@ -179,12 +179,14 @@ No benchmark controller is running. The goal remains active and unmet.
   freeze and focused checks. It may run small synthetic correctness checks, but
   no corpus observations before root reviews the freeze and preflight. There
   are no production edits in this task.
-- `literature` owns only the 038 supervision helper and its synthetic checks,
-  delegated by algorithm_audit. The connected prior-art and adversarial notes
-  are complete. Root owns any later connected-core implementation assignment.
-- `benchmark_audit` is finalizing 037's complete report and tables; its auditor
-  and helpers are stable and root-repeated. Its next bounded task is independent
-  review of the proposed connected implementation policy, without code/runs.
+- `literature` completed the 038 supervision helper and eight synthetic check
+  groups, then received root's connected-core-only implementation task. It owns
+  the new `connected_star_relocation.py`, focused new tests, a Z12 witness and
+  one implementation note. No existing production modules, 038 files, scheduler
+  integration or corpus benchmark may change in that task.
+- `benchmark_audit` completed 037's report and the connected implementation-
+  policy review. It now owns independent 038 preflight after algorithm audit
+  declares the diagnostic freeze stable. Root owns any corpus launch.
 - Root owns protocol decisions, current work/session notes, source commits,
   connected implementation specification and any future launches/integration.
 
@@ -205,26 +207,28 @@ bound (two outputs in 036, eight in 032). Every degree gate passes all 34 inputs
 3,680 maximum-degree target sites make these particular relaxations vacuous
 when L<=1,440. This supplies no evidence of early attainment or saved runtime.
 
-The connected-center extension is still unimplemented. The reviewed theory
+The connected-center core is now authorized for implementation. The reviewed theory
 allows several center qubits and exact singleton-leaf assignment at a fixed
 footprint. The proposed implementation groups exactly identical leaf obligations
 into demand classes, uses charged compact speculative-state copies and fixed
 one-root/four-successor/BFS growth, and shares the existing auxiliary/visit
 allowances without the singleton core's 2,048-unit per-query cap. Root's
-implementation specification is awaiting independent review. It includes the
+implementation specification passed independent review, which root read in full.
+The reviewed policy hash is
+`41e7b0bc31d7fa44a8c2f326d0a143315b6e5f178a5e7164cc530a32919f1e99`. It includes the
 known root failure, nonmonotone matching, distinct-site boundary bound and
 owned-site Hall-counting caveat; none is a novelty or superiority claim.
 
 ## Next actions
 
-1. Finish review and commit 037's all-results report and preserve its narrow,
-   concentrated gain and four regressions. No class-specific selection.
+1. Preserve 037's narrow, concentrated gain and four regressions. Its complete
+   report and all-input table are reviewed and committed as `a658ce00`.
 2. Complete, freeze and independently review 038 before root launches its
    bounded mechanism screen. Independently audit all skips/failures/late outputs,
    state equality, original graph validity and call/deadline accounting.
-3. Review the connected implementation policy before coding. If accepted,
-   implement only the core and focused independent correctness witnesses first;
-   scheduler integration and a new complete-pipeline experiment follow review.
+3. Complete the connected core and focused correctness witnesses, then obtain
+   independent code/oracle/interrupt review. Scheduler integration and a new
+   complete-pipeline experiment follow that review; no default is changed.
 4. Continue one general constructor/refinement pipeline. No MM or busclique
    dependency, cached competitor input, hidden fallback, per-family dispatch,
    selected seed or best-of result is allowed. Broader replication and fresh
