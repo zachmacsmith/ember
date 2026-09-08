@@ -172,7 +172,14 @@ class-wide improvement.
 
 ## Current work and ownership
 
-No benchmark controller is running. The goal remains active and unmet.
+The 038 diagnostic controller is running locally as PID `60678`, detached
+session/process group `60678`, started 05:42:33 UTC. Its launcher exited zero
+and the first independent observer found the inherited lock busy, two completed
+inputs and five atomic observations. The exact handle is
+`results/codex/038-initial-prefix-certificates/controller.json`, with
+`launch.json`, `controller.stdout`, `controller.stderr` and per-input progress
+beside it. Do not rerun launch after a Wi-Fi or observer interruption. The goal
+remains active and unmet; no other benchmark controller is running.
 
 Hyde02 environment preparation completed normally at approximately 05:29:58 UTC
 (exec session `43604`, started 05:26:55 UTC, exit zero). The pinned preparation
@@ -195,16 +202,18 @@ in commit `75860aea`, with all six effective SSH routes checked.
 - `algorithm_audit` owns implementation of the frozen-protocol 038 initial-prefix
   diagnostic, including native/AST capture, worker, input/source/environment
   freeze and focused checks. It may run small synthetic correctness checks, but
-  no corpus observations before root reviews the freeze and preflight. There
-  are no production edits in this task.
+  no production edits. That implementation is now frozen and reviewed. The agent
+  is now independently auditing the connected core and creating separate
+  expanded-assignment, original-graph and interruption checks.
 - `literature` completed the 038 supervision helper and eight synthetic check
   groups, then received root's connected-core-only implementation task. It owns
   the new `connected_star_relocation.py`, focused new tests, a Z12 witness and
   one implementation note. No existing production modules, 038 files, scheduler
   integration or corpus benchmark may change in that task.
-- `benchmark_audit` completed 037's report and the connected implementation-
-  policy review. It now owns independent 038 preflight after algorithm audit
-  declares the diagnostic freeze stable. Root owns any corpus launch.
+- `benchmark_audit` completed 037's report, the connected implementation-policy
+  review and final 038 preflight. It now owns 038's complete independent results
+  audit after verified controller termination and a free inherited lock. Root
+  owns lifecycle checks and launches.
 - Root owns protocol decisions, current work/session notes, source commits,
   connected implementation specification and any future launches/integration.
 
@@ -223,9 +232,10 @@ Manifest `09bd7718cec3456ef5861c79f86065a582694902692c068b47240a7996f3aa3c`,
 diagnostic `ec34d4e18e0fb72870e473b92669959f968288cec95bf62e2deb28bce85e9d78`.
 The final prelaunch observation found all five output directories empty and no
 controller attempt. Root's `results/codex/038-initial-prefix-certificates/launch.py`
-will start the frozen controller in a detached local session and record its PID.
-No corpus observation has occurred yet. If no timely initial certificate exists,
-reject this checkpoint position instead of tuning a later index.
+started the frozen controller once at 05:42:32 UTC and recorded PID 60678;
+controller startup was 05:42:33 UTC. All results remain provisional until the
+complete terminal audit. If no timely initial certificate exists, reject this
+checkpoint position instead of tuning a later index.
 
 The prerequisite read-only certificate audit is complete and root-repeated:
 all 170 saved candidate outputs validate. Only path/cycle attain the degree
@@ -233,7 +243,20 @@ bound (two outputs in 036, eight in 032). Every degree gate passes all 34 inputs
 3,680 maximum-degree target sites make these particular relaxations vacuous
 when L<=1,440. This supplies no evidence of early attainment or saved runtime.
 
-The connected-center core is now authorized for implementation. The reviewed theory
+The connected-center core is implemented and frozen, without scheduler integration.
+Core SHA `d58b16bdee4024e5f40d066165c17fec1e7a5193c97d31a63fa871d0b80d9473`,
+test SHA `67763d5a9822c5f6d3bcd61cebae35a647602a7c0ae32bb2f65d42a5bb6f28a8`.
+Root independently repeated all 43 focused tests with prohibited imports blocked;
+they passed in 1.14 seconds and both hashes were unchanged. The initial root
+harness failed before test collection because pytest's timeout plugin had been
+disabled; its raw logs remain, and only the harness was corrected. Four separate
+native-environment witnesses include actual ideal Z12, degree-22 source center,
+Q 25 to 24 and center length 3 to 2 using 1,808 total units. A saved alternative
+valid embedding accompanies the known one-root failure. These are mechanism
+checks, not corpus quality or speed evidence. The independent oracle review is
+running and remains necessary before integration.
+
+The reviewed theory
 allows several center qubits and exact singleton-leaf assignment at a fixed
 footprint. The proposed implementation groups exactly identical leaf obligations
 into demand classes, uses charged compact speculative-state copies and fixed

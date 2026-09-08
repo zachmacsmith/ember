@@ -755,3 +755,25 @@ There was no failed corpus launch. No production embedding source changes for
 this diagnostic. The connected-core integration plan is separately saved,
 including the actual member-growth accounting needed for connected centers;
 production integration still awaits independent core review.
+
+038 launched once at 05:42:32 UTC; launcher PID 60664 exited zero and recorded
+detached controller PID/process group 60678. The controller started at05:42:33.
+The first fresh observer found it running with the inherited lock busy, two
+finished input workers and five atomic observations; stderr was empty. A later
+observation found ten finished inputs and twenty observations. All output is
+provisional until verified terminal state and the full independent audit.
+Benchmark audit owns that read-only report; root owns lifecycle checks.
+
+The connected core and focused tests froze at source SHA
+d58b16bdee4024e5f40d066165c17fec1e7a5193c97d31a63fa871d0b80d9473 and
+test SHA67763d5a9822c5f6d3bcd61cebae35a647602a7c0ae32bb2f65d42a5bb6f28a8.
+Root read the completed implementation note and independently repeated all43
+focused tests: passed in1.14seconds, hashes unchanged, prohibited embedding
+imports absent. The first root harness failed before collection because plugin
+auto-loading was disabled while pytest.ini requires the timeout plugin; that
+raw failure is preserved, and only the harness added the explicit plugin.
+No candidate or test code was changed. Both small-core checking processes and
+the initial-prefix diagnostic ran on this local machine for part of their
+execution; diagnostic timings are not MM comparisons or reserved-host timings.
+Algorithm audit is performing separate expanded-assignment/original-graph and
+interruption checks. No scheduler integration has occurred.
