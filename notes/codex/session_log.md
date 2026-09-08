@@ -1488,3 +1488,64 @@ A reserved connected-access construction proposal is also saved, with its
 own hypothesis/pseudocode/critique and initialization-only falsifier. It is
 unimplemented and deferred within track C, not a fourth active track. The
 research goal remains unmet; no novelty or broad quality claim is made.
+
+## 2026-09-08 20:54 UTC: broader guidance failure; sequential quotient reach remains costly
+
+052 is terminal/quiescent at1788900384.682528. Status003 and fetch001 agree:
+all68 calls complete,67SUCCESS/oneFAILURE, free lock, absent tmux, supervisor0.
+The458-file archive digest is053a3e42e31ba881ec4528660bcb4ba1068519cfdad0f5769589bac2a19e3192.
+Its one independent screen passes all records and original validity. A052
+completes33/34 versus050's34/34; six wins/six losses/21ties on common successes,
++212Q and meanACL3.359004→3.412648. Honeycomb exhausts20M at139/190vertices;
+its14 guide owners are distinct, so the exact per-owner cache has no possible
+hit before failure. Petersen's+216Q loss uses no guide BFS. Cache remains
+unimplemented. Root reads the full report/summary and checks17 bound files.
+All attempted solver time185.731→208.621s; no deadline or internal error.
+
+A053 returns to fixed050 for a new hypothesis: transfer an existing physical
+site into a newly inserted source chain while preserving the active reduced
+requirements and future-port guards. The design must distinguish removal of
+created fill from original required contacts and validate donor connectivity.
+No code or new reach run is authorized before the exact pre-code policy.
+
+B014's full component classification rejects exactly the first two of21
+fixed ER blocks; released free contacts lie in isolated small regions. B015
+implements only this skip, with an equivalent smallest-boundary traversal
+and unchanged B012 pool/order/limits. Eight checks pass. Local ER repair
+skips both blocks, but exhausts1M while restoring31 after inserting66 privately.
+No extension commits. Filter cost20400units/0.01417s overlaps repair work.
+Root reads source/test diffs and result, commits the failed prototype in
+de33cf6e. No B panel or registry change follows. Next design investigates a
+general conflict-directed release priority, with explicit protection against
+outcome-specific ordering and further overfitting to one ER prefix.
+
+C's four sequential supplied-state diagnostics finish without deadline/error.
+Complete uses three real commits, Q3556+16=3572, then676 validated deletions
+leave2896Q (ACL22.8031). Cleanup15.215s dominates its17.149s call. ER/regular/
+SBM remain at122/150/56 missing contacts; no cleanup on those states. All four
+cost48.996s plus6.301s independent replay; no constructor/MM/cluster call.
+Every one of141 commits,15 donor exchanges and676 deletions passes original
+validation. Root reads the sequential wrapper and full report, checks36 bound
+artifact/reference files. No full C007 run follows this poor quality/coverage.
+The next proposed C experiment concerns connected unused access at initialization,
+using the same eight exposed inputs and fixed selected target sets.
+
+All three tracks have concrete next hypotheses. No new final-test data,
+portfolio selection, hardware scope change, novelty claim or goal completion.
+
+## 2026-09-08 21:00 UTC: next three fixed tests approved
+
+Root reads all three exact pre-code policies before new work. A053 preserves
+fixed050 requirements, tries a first certified one-site ownership transfer
+under64-site/50k-query/1M-total limits, then uses unchanged ordinary/repair
+work. Bounded targeted checks and exactly eight paired reach calls are
+authorized; no registration or34-input screen. B016 is static classification
+only on both saved ER and K40 blocked states, with genuine post-block future
+demands separated from selected-chain contacts. Add a fixed5s/2M diagnostic
+bound before code; no reconstruction call. C's reserved-access initializer
+uses exactly eight saved target selections and five seconds/input, unchanged
+coarsening/assignment, and tiny oracle enumeration limited to at most four
+vertices. No source-edge search/repair/cleanup/MM or allocation change.
+
+These are distinct general hypotheses with fixed falsifiers, not a portfolio.
+The052 and sequentialC reports are final, and all cluster runs are quiescent.
