@@ -188,3 +188,20 @@ The one affected synthetic worker check passed in 0.22 seconds
 Each addition changes only the explicit registry and its parameterized adapter
 case. No candidate constructor, corpus call, or shared validator modification
 was needed for these integrations; the 048 snapshot remains unchanged.
+
+## Track B007 and A049 adapters
+
+`propagating-tree-growth` adds the standalone B007 `frontier_embed` entrypoint,
+with empty configuration. Its affected synthetic worker case passed in 0.23
+seconds (`attempt014-propagating-growth`); identities are in
+`propagating_growth_manifest.json`. B007 froze pilot `6bed70e3` before A049.
+
+`native-reduced-core` adds `factored/reduced_core_construction.py:reduced_core_embed`,
+also with empty configuration and the existing absolute-deadline interface.
+Its affected worker case passed in 0.22 seconds (`attempt015-reduced-core`).
+A separate static comparison confirms its fixed `CORE_CONFIG` exactly equals
+the current cyclic baseline configuration. Evidence is
+`reduced_core_manifest.json`; pilot is
+`8eeb7b4be1f6d3dc9f6c34638049d2908f9b8b1b0f9fef527e919f1b137299a0`.
+The registry checks call no real constructor. A049's separate targeted reach
+checks are documented in `reduced_core_implementation.md`; native is unchanged.
