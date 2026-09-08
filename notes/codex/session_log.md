@@ -1238,3 +1238,21 @@ v1/results66a31191. B002 jointendpointconstructor running02; C002 revision
 inpreparation04. Root new free-site relocation hypothesis savedbeforecode;
 sixfocusedchecksPASS, singlefinalclockreviewcleanupapplied, boundedindependent
 reviewpendingbefore045. No new holdout or across-classclaim.
+
+## 2026-09-08 17:48 UTC: relocation reach and construction failures
+
+045 is complete: vacancy 25 first contractions versus ordinary 17; eight
+vacancy-only inputs, no ordinary-only inputs. All 42 credited outputs validate
+against original graphs. Root replayed all eight new traces (13 moves), PASS.
+The 046 cumulative stage was specified before implementation, passed 20 focused
+checks, and is now frozen for 68 fresh control/treatment calls on hyde03. Exact
+34 source, target and corpus-selection bytes match 042. The stage shares one
+deadline and 50,000-proposal budget, capped at 20 accepted contractions.
+
+B003 completes 7/9, all seven timely ACL pairs lose to MM. Bounded costs improve
+dense progress but not common-output summed Q; further scalar changes are not
+the next hypothesis. B004 will reconsider small committed connected blocks.
+C002 remains 0/8; six fixed region allocations have insufficient inter-region
+couplers for original source edges. Stop that formulation. C003 will allow
+target boundaries to move. Both construction tracks continue independently;
+no outputs are combined and no new final-test graphs are used.

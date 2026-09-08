@@ -1,0 +1,23 @@
+# Bounded cumulative vacancy integration
+
+Implemented the predeclared [046 hypothesis](experiments/046_vacancy_pipeline_hypothesis.md), 2026-09-08. This is an experimental local refinement of one evolving embedding, with no constructor replacement or alternative-output selection.
+
+`native_embed(..., vacancy_refinement='bounded')` requires the existing `final_cleanup='deletion'` configuration. The default `'off'` adds neither imports nor diagnostic fields. The new stage follows completed deletion cleanup and precedes the unchanged original-label final validator. Incomplete or skipped deletion cleanup skips vacancy; an empty source also skips it. Existing initial pruning and whole-pipeline timing rules remain.
+
+At stage entry, elapsed time `t` includes all preceding pipeline work. One immutable stage deadline is `min(original_deadline, stage_start + min(1.0, 0.2*t))`, omitting the first term only when no original deadline exists. One live `_VacancyBudget` permits 50,000 attempted relocation proposals across all calls. At most 20 successful Q-minus-one candidates are adopted; the first nonproposal, exhausted work, or deadline stops the stage. Neither budget nor deadline renews between calls. The reviewed core receives the current embedding and an empty ignored group tuple; no saved embedding or comparator output is used.
+
+Each returned candidate must have a completed core certificate, the actual Q-minus-one size, and pass the existing `is_valid_embedding` predicate on the canonical source and original target. This independent pre-adoption validation consumes the same stage allowance, with an immediate deadline check before assignment. A late candidate is rejected while previous valid improvements remain. Core input/internal errors, exceptions, and invalid candidates produce explicit pipeline errors with the last valid mapping retained as uncredited `partial_embedding`. A late full-pipeline return retains the existing TIMEOUT behavior.
+
+`diag.vacancy_refinement` records entry/final Q, accepted count, query count, the fixed limits and deadlines, proposal use, query wall, validation wall, total stage wall and deadline overrun. Each call preserves complete raw core diagnostics (including deletion seed and relocation trace), budget start/end, validation outcome, committed status and rejection reason. Certified proposals and committed candidates are distinct. The helper's final clock observation also records an interruption if bookkeeping crosses the stage deadline; it does not discard already valid commits. Setup, sorting, repeated entry/certificate validation and copying are bounded by elapsed time rather than by the proposal counter.
+
+**Checks.** `results/codex/vacancy-pipeline-checks/attempt001` preserves the first 18-check PASS. A final wrapper-clock classification correction and two corresponding checks produced **20/20 PASS** in `attempt002`, with no prohibited imports and unchanged tested source hashes. Coverage includes two successes followed by a failed query, shared 50,000-proposal exhaustion, the 20-success limit, query/validation/final-clock interruptions, prior-result retention, explicit core and pipeline failures, mixed original labels, default-off replay, and unchanged deletion integration. A real constructor-free five-cycle witness closes Q=4 to Q=3 and then exhausts the seed list; every initial single deletion fails the original contacts. No corpus, native constructor, MM, busclique, remote call or benchmark was executed.
+
+```sh
+.venv/bin/python -I -B results/codex/vacancy-pipeline-checks/run_checks.py results/codex/vacancy-pipeline-checks/NEW_ATTEMPT
+```
+
+The runner refuses to overwrite an attempt. It reuses the existing deletion integration fixtures and structural validator; no new validity framework was introduced. The only warning was the installed `dwave_networkx` deprecation warning.
+
+Frozen native SHA256: `d8bf466e09ca7578a30b98f21f6fdd59631cda8877bd86715bbba08d90a29e9e`. New test SHA256: `4ad65e3e3dbf4f3b16cf77c396e3a6bcbb2dcc127971fdfd6670764f3cbbdb46`. The underlying vacancy core remains `6f990653299e418e878188466f61d4e2ddb0490262c6406075f9c50c2c595093`.
+
+**Limits.** The independent gate can dominate the short allowance; 046 must measure that cost before optimization. Cancellation is cooperative, so a graph scan may cross the stage deadline before its result is rejected. The proposal count is not comparable with ordinary routing pops and does not price repeated setup. The fixed first-success ordering and 20-success ceiling can miss useful cumulative paths. These correctness checks establish no quality or runtime advantage on the development corpus.

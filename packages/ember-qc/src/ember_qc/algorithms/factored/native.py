@@ -138,6 +138,127 @@ def _final_deletion_cleanup(chains, source, target, src_adj, adjacency, *,
         info['wall'] = time.perf_counter() - started
 
 
+class _VacancyBudget:
+    """One stage's relocation-proposal allowance; other costs consume wall time."""
+    def __init__(self, deadline):
+        self.limit = 50000
+        self.expansions = 0
+        self.deadline = deadline
+
+    def pop(self):
+        if self.expansions >= self.limit or time.perf_counter() >= self.deadline:
+            return False
+        self.expansions += 1
+        return True
+
+
+def _bounded_vacancy_refinement(chains, source, target, src_adj, adjacency, *,
+                                started, deadline, cleanup_info, info):
+    """Evolve one valid incumbent; unsuccessful queries never replace it."""
+    stage_start = time.perf_counter()
+    elapsed = max(0.0, stage_start - started)
+    allowance = min(1.0, 0.2 * elapsed)
+    stage_deadline = stage_start + allowance
+    if deadline is not None:
+        stage_deadline = min(deadline, stage_deadline)
+    budget = _VacancyBudget(stage_deadline)
+    info.update(status='skipped', reason=None, elapsed_before_stage=elapsed,
+                allowance=allowance, deadline=stage_deadline,
+                original_deadline=deadline, before_qubits=sum(map(len, chains.values())),
+                after_qubits=sum(map(len, chains.values())), qubits_saved=0,
+                accepted=0, query_calls=0, proposal_limit=budget.limit,
+                successful_call_limit=20, proposals_used=0, calls=[],
+                module_call_wall=0.0, validation_wall=0.0)
+    try:
+        if cleanup_info['status'] != 'completed':
+            info['reason'] = 'cleanup_not_completed'
+            return chains, None
+        if time.perf_counter() >= stage_deadline:
+            info['reason'] = 'deadline_before_vacancy'
+            return chains, None
+        from ember_qc.algorithms.factored.vacancy_repair import vacancy_repair
+        info['status'] = 'completed'
+        for index in range(1, 21):
+            if time.perf_counter() >= stage_deadline:
+                info.update(status='interrupted', reason='deadline')
+                break
+            if budget.expansions >= budget.limit:
+                info.update(status='interrupted', reason='work')
+                break
+            call = dict(index=index, before_qubits=info['after_qubits'],
+                        after_qubits=info['after_qubits'], committed=False,
+                        commit_rejection=None, budget_start=budget.expansions,
+                        budget_end=None, module_call_wall=None, validation_wall=None,
+                        candidate_validated=None, core=None)
+            info['calls'].append(call)
+            info['query_calls'] += 1
+            calling = time.perf_counter()
+            try:
+                candidate, core_info = vacancy_repair(
+                    chains, src_adj, adjacency, (), budget=budget, deadline=stage_deadline)
+                call['core'] = core_info
+            finally:
+                call['module_call_wall'] = time.perf_counter() - calling
+                call['budget_end'] = budget.expansions
+                info['module_call_wall'] += call['module_call_wall']
+            if (core_info.get('error') is not None
+                    or core_info.get('stopped_reason') in ('invalid_input', 'internal_error')):
+                call['commit_rejection'] = 'core_error'
+                info.update(status='error', reason='core_error', error=core_info.get('error'))
+                return chains, 'ERROR'
+            if candidate is None:
+                info['reason'] = core_info.get('stopped_reason', 'no_proposal')
+                if info['reason'] in ('deadline', 'work'):
+                    info['status'] = 'interrupted'
+                break
+            if (not core_info.get('candidate_returned')
+                    or not core_info.get('certificate_complete')
+                    or sum(map(len, candidate.values())) != call['before_qubits'] - 1):
+                call['commit_rejection'] = 'invalid_candidate_contract'
+                info.update(status='error', reason='invalid_candidate_contract')
+                return chains, 'INVALID_OUTPUT'
+            if time.perf_counter() >= stage_deadline:
+                call['commit_rejection'] = 'deadline'
+                info.update(status='interrupted', reason='deadline')
+                break
+            checking = time.perf_counter()
+            try:
+                call['candidate_validated'] = is_valid_embedding(candidate, source, target)
+            finally:
+                call['validation_wall'] = time.perf_counter() - checking
+                info['validation_wall'] += call['validation_wall']
+            if not call['candidate_validated']:
+                call['commit_rejection'] = 'invalid_candidate'
+                info.update(status='error', reason='invalid_candidate')
+                return chains, 'INVALID_OUTPUT'
+            # The full candidate and its accounting exist before the admission gate.
+            if time.perf_counter() >= stage_deadline:
+                call['commit_rejection'] = 'deadline'
+                info.update(status='interrupted', reason='deadline')
+                break
+            chains = candidate
+            call['committed'] = True
+            call['after_qubits'] -= 1
+            info['accepted'] += 1
+            info['after_qubits'] -= 1
+            info['qubits_saved'] += 1
+        else:
+            info['reason'] = 'successful_call_limit'
+        return chains, None
+    except Exception as exc:
+        info.update(status='error', reason='exception', error=f'{type(exc).__name__}: {exc}')
+        if info['calls'] and not info['calls'][-1]['committed']:
+            info['calls'][-1]['commit_rejection'] = 'exception'
+        return chains, 'ERROR'
+    finally:
+        ended = time.perf_counter()
+        info['proposals_used'] = budget.expansions
+        info['wall'] = ended - stage_start
+        info['deadline_overrun'] = max(0.0, ended - stage_deadline)
+        if ended >= stage_deadline and info['status'] == 'completed':
+            info.update(status='interrupted', reason='deadline')
+
+
 def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
                  construction="search", order_strategy="random", packing_passes=2,
                  max_asks=10000, sched_seed=None, polish_passes=0,
@@ -146,7 +267,7 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
                  polish_group_policy="legacy", polish_objective='qubits',
                  polish_tree_policy='greedy', initialization='random',
                  polish_singleton_policy='legacy', polish_star_policy='off',
-                 final_cleanup='off'):
+                 final_cleanup='off', vacancy_refinement='off'):
     """Return a validated independent result or an explicit construction failure.
 
     Deadline overruns are reported and never counted as timely success. Conversion
@@ -160,6 +281,9 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
     legacy contact refinement, within the original deadline and before final
     validation. It is currently supported only with greedy contact scoring,
     legacy singletons and stars off; disabled refinement causes a recorded skip.
+    ``vacancy_refinement='bounded'`` adds at most 20 Q-minus-one contractions
+    after completed deletion cleanup, sharing 50,000 relocation proposals and
+    at most one second or 20% of the preceding pipeline time, whichever is less.
     """
     started = time.perf_counter()
     deadline = started + timeout if timeout is not None and timeout > 0 else None
@@ -188,6 +312,13 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
             'module_call_wall': None, 'module_calls': 0, 'module_returned': False,
         }
         diag['final_cleanup'] = cleanup_info
+    if vacancy_refinement == 'bounded':
+        diag['vacancy_refinement_policy'] = vacancy_refinement
+        vacancy_info = {'status': 'not_reached', 'reason': 'pipeline_not_reached',
+                        'pipeline_status': None, 'wall': None, 'calls': [],
+                        'before_qubits': None, 'after_qubits': None,
+                        'qubits_saved': None, 'query_calls': 0, 'accepted': 0}
+        diag['vacancy_refinement'] = vacancy_info
 
     def result(embedding, status, **extra):
         elapsed = time.perf_counter() - started
@@ -198,6 +329,10 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
             cleanup_info['pipeline_status'] = status
             if cleanup_info['status'] == 'not_reached':
                 cleanup_info['status'] = 'skipped'
+        if vacancy_refinement == 'bounded':
+            vacancy_info['pipeline_status'] = status
+            if vacancy_info['status'] == 'not_reached':
+                vacancy_info['status'] = 'skipped'
         return {"embedding": embedding, "success": status == "SUCCESS",
                 "status": status, "time": elapsed, "diag": diag, **extra}
 
@@ -205,6 +340,10 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
         return result({}, "ERROR", error="timeout must be finite and positive, or None")
     if final_cleanup not in ('off', 'deletion'):
         return result({}, 'ERROR', error='unknown final cleanup policy')
+    if vacancy_refinement not in ('off', 'bounded'):
+        return result({}, 'ERROR', error='unknown vacancy refinement policy')
+    if vacancy_refinement == 'bounded' and final_cleanup != 'deletion':
+        return result({}, 'ERROR', error='bounded vacancy refinement requires final deletion cleanup')
     if final_cleanup == 'deletion':
         if (polish_objective != 'qubits_contacts' or polish_tree_policy != 'greedy'
                 or polish_singleton_policy != 'legacy' or polish_star_policy != 'off'):
@@ -267,6 +406,9 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
             cleanup_info.update(status='skipped', reason='empty_source',
                                 before_qubits=0, after_qubits=0, qubits_saved=0)
             cleanup_info['wall'] = time.perf_counter() - skipping
+        if vacancy_refinement == 'bounded':
+            vacancy_info.update(status='skipped', reason='empty_source',
+                                before_qubits=0, after_qubits=0, qubits_saved=0)
         return result({}, "SUCCESS")
 
     # Existing geometric primitives require integer source labels. Keep an explicit
@@ -364,6 +506,13 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
             if cleanup_error:
                 return result({}, cleanup_error)
             cleanup_info['pipeline_stage'] = 'final_validation'
+        if vacancy_refinement == 'bounded':
+            chains, vacancy_error = _bounded_vacancy_refinement(
+                chains, source, target_graph, src_adj, adjacency,
+                started=started, deadline=deadline, cleanup_info=cleanup_info, info=vacancy_info)
+            if vacancy_error:
+                return result({}, vacancy_error, error=vacancy_info.get('error', vacancy_info['reason']),
+                              partial_embedding={labels[v]: list(c) for v, c in chains.items()})
         embedding = {labels[v]: list(c) for v, c in chains.items()}
         if not is_valid_embedding(embedding, source_graph, target_graph):
             return result({}, "INVALID_OUTPUT")
