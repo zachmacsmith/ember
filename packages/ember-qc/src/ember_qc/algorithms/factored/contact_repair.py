@@ -223,7 +223,7 @@ def _grow(root, available, masks, required, ctx, budget, size_cap,
 
 
 def _alternatives(v, prefix, occupied, selected, region, embedding, ctx,
-                  alternatives, size_cap, budget, info):
+                  alternatives, size_cap, budget, info, tree_policy='greedy'):
     available = region - occupied
     if not available or size_cap < ctx.lower_bound(v) or not budget.check():
         return []
@@ -275,8 +275,15 @@ def _alternatives(v, prefix, occupied, selected, region, embedding, ctx,
         if generated >= alternatives or not budget.check():
             break
         info["tree_attempts"] += 1
-        chain = _grow(root, available, masks, required, ctx, budget,
-                      size_cap, reverse=bool(attempt % 2))
+        if tree_policy == 'distance':
+            from ember_qc.algorithms.factored.contact_trees import grow_contact_tree
+            chain = grow_contact_tree(
+                root, available, masks, required, ctx, budget, size_cap,
+                reverse=bool(attempt % 2), frontier_width=1,
+                witnesses_per_contact=2, diagnostics=info['tree_search'])
+        else:
+            chain = _grow(root, available, masks, required, ctx, budget,
+                          size_cap, reverse=bool(attempt % 2))
         if chain is not None and chain not in seen:
             add(chain)
             generated += 1
@@ -290,7 +297,7 @@ def _diagnostics():
             "unreachable_contacts": 0, "complete_proposals": 0,
             "orders_tried": 0, "boundary_sites_added": 0,
             "boundary_expansions": 0, "equal_size_moves": 0,
-            "contact_redundancy_gain": 0, "stopped_by": None}
+            "contact_redundancy_gain": 0, "tree_search": {}, "stopped_by": None}
 
 
 def _contact_redundancy(embedding, selected, ctx):
@@ -315,7 +322,7 @@ def _contact_redundancy(embedding, selected, ctx):
 
 def _repair(embedding, ctx, group, *, beam_width, alternatives, halo,
             max_region, max_expansions, max_orders, deadline, boundary_sites=0,
-            objective='qubits'):
+            objective='qubits', tree_policy='greedy'):
     start = time.perf_counter()
     info = _diagnostics()
     selected = set(group)
@@ -378,7 +385,7 @@ def _repair(embedding, ctx, group, *, beam_width, alternatives, halo,
                 size_cap = best_size - (0 if rearrange else 1) - size - remaining_bound
                 choices = _alternatives(
                     v, prefix, occupied, selected, region, embedding, ctx,
-                    alternatives, size_cap, budget, info)
+                    alternatives, size_cap, budget, info, tree_policy)
                 for chain in choices:
                     candidate = dict(prefix)
                     candidate[v] = chain
@@ -401,11 +408,12 @@ def _repair(embedding, ctx, group, *, beam_width, alternatives, halo,
             trial = dict(embedding)
             for v, chain in prefix.items():
                 trial[v] = sorted(chain, key=ctx.rank.__getitem__)
+            redundancy = _contact_redundancy(trial, selected, ctx) if rearrange else 0
+            if size == best_size and redundancy <= best_redundancy:
+                continue
             # Validate against all original graph obligations before commit.
             if ctx.valid(trial):
-                redundancy = _contact_redundancy(trial, selected, ctx) if rearrange else 0
-                if size < best_size or (size == best_size and redundancy > best_redundancy):
-                    best, best_size, best_redundancy = trial, size, redundancy
+                best, best_size, best_redundancy = trial, size, redundancy
     return finish("searched")
 
 
@@ -424,7 +432,7 @@ def _parameters(beam_width, alternatives, halo, max_region,
 def repair_group(embedding, source_graph, target_graph, group, *,
                  beam_width=4, alternatives=3, halo=2, max_region=512,
                  max_expansions=50000, max_orders=2, deadline=None, boundary_sites=0,
-                 objective='qubits'):
+                 objective='qubits', tree_policy='greedy'):
     """Try an improving replacement of 1–4 selected chains.
 
     ``deadline`` is an absolute ``time.perf_counter()`` timestamp.
@@ -441,6 +449,8 @@ def repair_group(embedding, source_graph, target_graph, group, *,
                 boundary_sites)
     if objective not in ('qubits', 'qubits_contacts'):
         raise ValueError('unknown contact objective')
+    if tree_policy not in ('greedy', 'distance'):
+        raise ValueError('unknown tree policy')
     group = tuple(dict.fromkeys(group))
     if not 1 <= len(group) <= 4:
         raise ValueError("group must contain 1–4 distinct source vertices")
@@ -455,7 +465,7 @@ def repair_group(embedding, source_graph, target_graph, group, *,
         embedding, ctx, group, beam_width=beam_width, alternatives=alternatives,
         halo=halo, max_region=max_region, max_expansions=max_expansions,
         max_orders=max_orders, deadline=deadline, boundary_sites=boundary_sites,
-        objective=objective)
+        objective=objective, tree_policy=tree_policy)
     ended = time.perf_counter()
     info["wall"] = ended - start
     if deadline is not None:
@@ -499,7 +509,7 @@ def contact_polish(embedding, source_graph, target_graph, *, timeout=None,
                    group_sizes=(2, 3, 4), beam_width=4, alternatives=3, halo=2,
                    max_region=512, max_expansions=500000,
                    group_expansions=50000, max_orders=2, boundary_sites=0,
-                   group_policy="legacy", objective='qubits'):
+                   group_policy="legacy", objective='qubits', tree_policy='greedy'):
     """Apply bounded group reconstruction to one valid evolving incumbent.
 
     Global work limits include every attempted group. ``max_groups`` is total,
@@ -516,6 +526,8 @@ def contact_polish(embedding, source_graph, target_graph, *, timeout=None,
         raise ValueError('unknown group policy')
     if objective not in ('qubits', 'qubits_contacts'):
         raise ValueError('unknown contact objective')
+    if tree_policy not in ('greedy', 'distance'):
+        raise ValueError('unknown tree policy')
     for name, value in (("max_passes", max_passes), ("max_groups", max_groups),
                         ("group_expansions", group_expansions)):
         if not isinstance(value, int) or isinstance(value, bool) or value < 0:
@@ -578,7 +590,7 @@ def contact_polish(embedding, source_graph, target_graph, *, timeout=None,
                 halo=halo, max_region=max_region,
                 max_expansions=min(group_expansions, remaining),
                 max_orders=max_orders, deadline=deadline, boundary_sites=boundary_sites,
-                objective=objective)
+                objective=objective, tree_policy=tree_policy)
             info["groups_tried"] += 1
             for key in ("accepted", "qubits_saved", "member_growth", "expansions",
                         "tree_attempts", "beam_expansions", "beam_pruned",
@@ -586,6 +598,11 @@ def contact_polish(embedding, source_graph, target_graph, *, timeout=None,
                         "boundary_sites_added", "boundary_expansions",
                         "equal_size_moves", "contact_redundancy_gain"):
                 info[key] += move[key]
+            for key, value in move['tree_search'].items():
+                if key == 'initial_bound':
+                    continue  # A per-root value is not an aggregate counter.
+                old = info['tree_search'].get(key, 0)
+                info['tree_search'][key] = max(old, value) if key.endswith('_peak') else old + value
             info["max_region_size"] = max(info["max_region_size"], move["region_size"])
             if move["accepted"]:
                 work = result

@@ -77,3 +77,21 @@ def test_invalid_objective_and_exhausted_budget_preserve_inputs():
     output, info = cr.repair_group(embedding, source, target, (1,),
                                     objective='qubits_contacts', max_expansions=0)
     assert output == embedding and info['accepted'] == 0
+
+
+def test_nonimproving_equal_proposals_do_not_require_full_revalidation(monkeypatch):
+    embedding, source, target = fixture()
+    target.remove_edges_from([(0, 11), (1, 21)])
+    checked = []
+    original = cr._Context.valid
+
+    def count(self, proposed):
+        checked.append(deepcopy(proposed))
+        return original(self, proposed)
+
+    monkeypatch.setattr(cr._Context, 'valid', count)
+    output, info = cr.repair_group(embedding, source, target, (1,), beam_width=1,
+                                    objective='qubits_contacts')
+    assert info['complete_proposals'] > 0
+    assert info['accepted'] == 0 and output == embedding
+    assert checked == [embedding]  # Input validation; no eligible improving proposal.

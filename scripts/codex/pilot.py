@@ -273,6 +273,8 @@ for _suffix, _sites, _policy in (
     CONFIGS['native-search-joint1-' + _suffix] = dict(
         CONFIGS['native-search-joint1'], polish_boundary_sites=_sites,
         polish_group_policy=_policy)
+CONFIGS['native-search-joint1-contacts'] = dict(
+    CONFIGS['native-search-joint1-sites-groups'], polish_objective='qubits_contacts')
 
 
 def load_readiness_selection(path):

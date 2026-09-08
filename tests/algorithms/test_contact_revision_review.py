@@ -147,9 +147,11 @@ def test_native_outer_deadline_guard_does_not_report_late_polish_as_success(monk
     source, target = nx.complete_graph(4), dnx.zephyr_graph(3)
     result = native_embed(source, target, construction='packed', timeout=1.0,
                           polish_passes=1, polish_boundary_sites=16,
-                          polish_group_policy='round_robin')
+                          polish_group_policy='round_robin',
+                          polish_objective='qubits_contacts', polish_tree_policy='distance')
     assert len(calls) == 1
     assert calls[0]['boundary_sites'] == 16 and calls[0]['group_policy'] == 'round_robin'
+    assert calls[0]['objective'] == 'qubits_contacts' and calls[0]['tree_policy'] == 'distance'
     assert result['status'] == 'TIMEOUT' and not result['success']
     assert result['diag']['deadline_overrun'] == 1.0
     verify(result['embedding'], source, target)

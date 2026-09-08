@@ -216,3 +216,56 @@ launch/status/retrieval commands and interpretation limits are saved in
 115997, worker 116011, busy inherited lock and one finalized success. Continue
 monitoring this exact run, then retrieve after quiescence and independently
 analyze every result. No current evidence satisfies the full research objective.
+
+## Continued algorithm work after checkpoint 14eac906
+
+The previous turn made concrete progress: revision 016 was implemented and
+tested, its modest gains and regression documented, and the broader 019 screen
+launched. This turn began by verifying that exact controller remained live,
+with no restart. The latest automated continuation is appended verbatim to
+`PROMPTS_CODEX.md`. The goal remains active and incomplete.
+
+Parallel tasks: the benchmark auditor monitors 019 and independently reviews its
+full results after quiescent retrieval; the algorithm auditor designed and tested
+bounded distance-guided contact trees; the profiling agent implemented local
+reuse of fixed-order contact assignments and checked exact trajectory equality.
+Root developed equal-size contact rearrangements with a strict lexicographic
+objective (qubits first, then actual logical-edge coupler redundancy), with its
+self-critique recorded before implementation.
+
+Revision 021 preserves all 24 before/after embeddings and proposal traces. Warm
+time was 1.59% lower and cold time 1.23% higher in its small shared-host sample, so
+no reliable overall speedup is claimed. The implementation removes repeated
+contact computation without caching across changing orders or source graphs.
+
+Revision 022 saved 25 additional qubits over the fixed sites/groups reference on
+18 saved native incumbents: nine improvements, seven ties, two regressions.
+It initially tripled measured refinement time. Revision 024 moves exact score
+rejection ahead of full validation while still validating every potential
+acceptance. All 54 embeddings and non-time diagnostics reproduce 022 exactly;
+the redundancy arm's measured total falls 48.36→17.93 seconds, against 16.05 seconds
+for its contemporaneous strict control. Independent validation-count probes
+confirm the avoided work; see the detailed experiment notes and artifacts.
+
+Revision 020's distance-guided tree builder has real local mechanism witnesses,
+including a missed king-graph shortening, but cumulative 023 rejects promotion:
+zero improvements, 12 ties, six regressions and 24 more qubits than its fixed control.
+Thirteen of 18 calls exhaust the work allowance, versus two controls. Its code
+and failure evidence are preserved. The next candidate retains greedy trees.
+
+The 109-test focused suite passes after integrating the experimental tree API,
+score-rejection optimization, native objective forwarding, and corpus runner.
+Checkpoint `cdd89085` saved the initial contact-rearrangement implementation and
+contact-reuse optimization; later changes and results have separate provenance.
+
+Protocol 025 is fixed before outcomes: rerun the strict sites/groups control and
+the contact-redundancy candidate on all 34 readiness inputs, same host, one seed,
+60 seconds per call, after 019 finishes. MM 019 results will be a historical quality
+comparison only; no new contemporaneous MM timing ratio will be claimed.
+
+A user clarification is pending: when MM reaches the lower bound ACL 1, should
+an explicitly reported optimal tie count as acceptable, or require a speed
+advantage? Experiments continue independently; no answer or altered objective
+is inferred from silence. The algorithm auditor is separately specifying a
+general spectral initializer from source adjacency, with self-critique before
+any implementation and no end-to-end experiment yet.

@@ -37,6 +37,11 @@ EXPERIMENTS = {
         'both': ARMS['both'],
         'both_redundancy': {**ARMS['both'], 'objective': 'qubits_contacts'},
     },
+    'contact-trees': {
+        'legacy': ARMS['legacy'],
+        'both': ARMS['both'],
+        'both_distance': {**ARMS['both'], 'tree_policy': 'distance'},
+    },
 }
 COMMON = {
     "timeout": 60.0, "max_passes": 4, "max_groups": 512,
