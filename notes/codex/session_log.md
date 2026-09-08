@@ -1771,3 +1771,40 @@ serialization. No favorable/negative mechanism inference follows. Root explicitl
 amends the no-retry instruction for this instrumentation-only fault: one scalar
 serialization correction, one specific check, then the same six inputs and limits.
 No selective retry, allowance change, new snapshot or candidate registration.
+
+## 2026-09-08 23:56 UTC: current gaps and mechanism decisions
+
+056/057/058 finish, quiescent archives retrieved once and independently analyzed
+once. Current A053 succeeds134/136,68/70,4/4 versusMM120/136,64/70,4/4.
+Root reads reports, verifies18/22/11 final result bindings and saves the current
+gap note plus all72 class/size rows. Eighteen positive mean ACL gaps recur across
+original/additional representatives. Quality uses common successful seeds;
+variance and all-attempt solver/process time stay separate. No cross-host ratio,
+failed quality credit or held-out claim. A053 fails planted/wheel in056 and
+hypercube/wheel in057; saved stages distinguish local repair caps and native
+conversion failure from global timeout. The goal remains unmet.
+
+B020's paired/single constructors both fail0/9; root reviews report/analysis and
+retires both. A two-second saved497-scope compulsory-endpoint classification
+will distinguish a locked neighborhood from acceptance or routing cost before
+any whole-incidence constructor. No routing call in this diagnostic.
+
+A's amended packed-orientation gate returns no eligible physical-Q comparisons
+and is incomplete on cubic; no further repeat. Joint path reconstruction is
+specified, critiqued and implemented separately; nine targeted checks pass.
+Six fixed saved finals are timely and independently valid. CycleQ148→126 is
+optimal, five others tie, so the predeclared promotion rule fails. Root derives
+and agent confirms earliest-cut feasibility completeness for the fixed route.
+Correct the mistaken greedy-search explanation additively; no exact diagnostic
+or extra route search. Next design must address the contact/branch representation.
+
+C's approved eight-state fragmentation gate loses grid's returned observation
+to tuple/list driver comparison; preserve failure and unknown grid cost. A
+normalization/write-before-check amendment runs only the five unattempted inputs;
+no repeats. The schema check occurs after the remaining run starts, explicitly
+recorded. Two fragmented/Q-neutral witnesses exist among64 sampled;24/24
+connected controls also gain contacts. Neither witness is a full minor. Root
+reads the362-line gate and result and authorizes a bounded compound-move
+constructor screen: same C8,15s,seed0,compound/atomic/MM24calls,≥4/8 success
+and retain all control successes. No global fragmented state or saved-state
+follow-up. Implementation/targeted checks in C; root owns registry and launch.

@@ -17,4 +17,13 @@ The frozen input/target/selection bytes match042. Different host times are not
 pooled. Observe this existing handle after a network interruption; loss of
 observation never authorizes a replacement run.
 
-The controller is newly launched; no terminal outcome or retrieval is reported yet.
+Terminal: controller55147 finished at Unix1788910452.9278667,272/272
+finalized, lock free, tmux absent, supervisor exit0. Retrieval verifies1487
+files, digest`7b68106f54322afffc09566d7c0a22863e330709c5cbfeebc7cf12c0147a7d56`.
+One saved analysis passes all current/historical gates; root reads the report
+and verifies18 final bindings. A053 succeeds134/136 versusMM120/136, with
+40 lower-Q,65 higher-Q and13 ties on118 common successes. Both candidate
+failures and all16 MM timeouts remain in the accounting. All34 seed-zero
+candidate quality/status outcomes replay old053; historical times are not
+pooled. See [results](../../../results/codex/056-results-review/RESULTS.md)
+and [current class gaps](../mm_gap_current_replications.md).

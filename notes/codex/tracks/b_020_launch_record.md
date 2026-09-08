@@ -20,3 +20,12 @@ statuses `{"FAILURE": 3, "SUCCESS": 1, "TIMEOUT": 1}`. Lock and detached session
 remain active. These are provisional controller counts, not reviewed quality
 results. Root owns transport; a failed SSH observation does not authorize a
 replacement run. Full analysis waits for the quiescent archive.
+
+Terminal update: controller227617 finished at Unix1788909167.5870693;
+27/27 finalized, lock free, tmux absent, supervisor exit0. Retrieval verifies
+237files, digest
+`c9a4c095e322fda63eaee1af7ee84fcd5d5fd393c206ca413d7c51d009cbdc3b`.
+One saved-data analysis passes. Root reads the analyzer and report, checks
+all27 time records and20 final bindings. Both candidates complete0/9 versus
+MM8/9; every candidate retains overlap at its search deadline. Retire both
+fixed constructors. See [results](b_020_results.md).

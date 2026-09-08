@@ -33,3 +33,14 @@ path; original selection and source bytes remain unchanged. Full evidence is
 under `results/codex/057-launch/local-preparation-note.md`.
 
 Root owns transport and observes the existing handle after disconnections.
+
+Terminal update: controller207745 finished at Unix1788910054.8815928;
+140/140 finalized, lock free, tmux absent and supervisor exit0. The archive
+verifies830files, digest
+`c7c277ffa51de8ae5ff5b34ed0a21b89b66c2b95b90086ae62199edd288eb562`.
+One independent saved-data analysis passes all140 gates. A053 succeeds68/70
+versusMM64/70; on62 common successes it has25 lower-Q,33 higher-Q and4ties.
+Two candidate failures and all six MM timeouts remain in accounting. Root
+reads the report and verifies22 final bindings. See
+[results](../../../results/codex/057-results-review/RESULTS.md) and
+[failure-stage diagnosis](057_failure_stage_diagnosis.md).
