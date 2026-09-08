@@ -1623,3 +1623,15 @@ report and checks all72 final artifact/reference bindings. Reject only this
 fixed reserve-then-greedy-addition policy; C next designs maintained unused
 connectivity/future-access conditions, with no new paths yet. All remote jobs
 are quiescent and the research goal remains active and unmet.
+
+## 2026-09-08 21:46 UTC: continued goal, previous turn classified as progress
+
+Authoritative branch remains codex and goal status is active. The previous
+turn is progress: it completed the68-call053 screen, retained a measured ACL
+improvement with all outcomes, rejected B017 actual-state recovery and the
+C reserve-then-greedy-routing policy, and changed the next three experiments.
+The continuation prompt is appended verbatim apart from its separately
+identified log heading. A054 source-only checks passed on34 inputs and its
+already authorized narrow implementation/reach gate is underway; B018 tiny
+contact primitive implementation is underway; C's access-preserving routing
+proposal awaits root review. No remote job needs restart or observation.
