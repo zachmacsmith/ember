@@ -13,7 +13,15 @@ independently audited. All 68 results are timely and valid. Its frozen source is
 `91824466fdd3880940df0cc6d3569a461a617c3d1ae883e50425ee368952a765`.
 The already frozen `029-sudoku-development-comparison` then completed all six
 calls; fresh supervisor status reports complete, lock free and exit zero. Its
-independent audit is in progress. Neither completed controller should restart.
+independent audit passes. Neither completed controller should restart.
+
+`032-solver-seed-replication` is frozen and staged on hyde03: all 34 original
+readiness sources, MM and fixed spectral candidate, seeds 0–3, 272 calls and
+60 seconds per call. The benchmark auditor owns preflight/launch and records
+actual liveness in its protocol. Source
+`89a3e77bf1df22a7eea436e42f0bc04c81055e098d7baf78c632a76224046994`;
+transport `f02da9b1a88d747f8ba37e5e834395194cc084bd79ae3b47df73d09e13d83618`.
+It contains no direct singleton relocation and no physical checkpoint policy.
 
 ## Most recent complete evidence
 
@@ -50,10 +58,18 @@ on complete-40 before contact repair and none on the two sparse cases. Repeated
 conversion adds substantial cost. Root reran the independent artifact analysis;
 do not promote this 64-evaluation policy or tune its cap on these three inputs.
 
+029: all six outputs are independently valid and timely. At Sudoku box order 2,
+MM and spectral use 25 qubits, while contacts uses 24; spectral's tie is therefore
+nonoptimal. At box order 3, MM uses 408, contacts 405 and spectral 394. Spectral
+solver/MM ratios are 10.85 and 1.43 respectively. These are two source structures
+at seed zero, kept separate from the readiness corpus. Root reran both artifact
+analyzers successfully. The result archive supplies valid feasibility witnesses
+without changing the frozen input sidecars.
+
 ## Parallel work and ownership
 
-- `benchmark_audit`: 026 review is complete and reviewed. Now retrieve and
-  independently audit the six 029 results, with separate Sudoku provenance.
+- `benchmark_audit`: 026 and 029 reviews are complete and reviewed. Now
+  independently preflight and launch 032, then monitor its exact supervisor.
 - `algorithm_audit`: 028 performance change is complete and independently reviewed;
   55 proposal tests plus 38 root integration tests pass. All 12 outputs and
   trajectories match exactly, with small observed speed gains and timing caveats.
@@ -78,8 +94,8 @@ Preserve unrelated `.claude/` and graph-library `.verified.json` files.
    relocation experiment after reviewing its design, failure cases and budgets.
 2. Keep the 028 semantics-preserving speed change. No physical-checkpoint
    production callback is justified by the completed 030 diagnostic.
-3. Finish independent 029 analysis, preserving its separate input population
-   and actual new provenance.
+3. Follow 032 through repeated-seed quality and timing analysis, preserving all
+   failures and the distinction between solver seeds and source instances.
    Review the second-node preparation before using it for later experiments.
 4. Continue general revisions from observed failure mechanisms. No source-family
    dispatcher, per-input best-of result, hidden fallback, broad superiority claim,

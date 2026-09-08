@@ -390,3 +390,19 @@ After 026 quiescence and retrieval, the six-trial 029 Sudoku comparison complete
 on hyde03. Its independent supplementary-input audit is ongoing. Pinned
 environment preparation and supervisor inspection on hyde04 proceed separately;
 no global package or service change is authorized in that preparation task.
+
+The 029 independent audit is complete; root read its full report and reran both
+ordinary and independent analyses. All six outputs are timely and valid. The
+spectral candidate ties MM at 25 qubits on Sudoku order 2, where the independent
+contacts arm gives a better 24-qubit witness. At order 3 it uses 394 versus MM's
+408. The corresponding solver-time ratios are 10.85 and 1.43. The small-input
+runtime deficit and nonoptimal tie remain explicit. The resulting feasibility
+witnesses do not rewrite the original supplementary input provenance.
+
+Root prespecified and staged 032 at commit `9c01447d`: 34 original development
+inputs, MM and the fixed spectral candidate, four solver seeds 0–3 and 60 seconds
+per call, 272 total. The source includes the 028 speed change but neither proposed
+singleton relocation nor physical checkpoint selection. The benchmark auditor
+owns independent preflight and launch after the verified 029 completion/retrieval.
+Repeated seeds measure preliminary stochastic variation and current same-run MM
+timing; they do not create unseen source structures or support family-wide claims.

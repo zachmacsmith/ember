@@ -39,7 +39,9 @@ is unproved.
 - [Geometric-search performance diagnosis and bounded improvement](geometry_performance_spec.md)
 - [Sudoku comparison protocol and frozen supplementary run](experiments/029_sudoku_comparison_protocol.md)
 - [Sudoku comparison launch and completion status](experiments/029_launch_status.md)
+- [Complete Sudoku comparison and small-input runtime deficit](experiments/029_results_review.md)
 - [Physical-qubit checkpoint hypothesis and preimplementation critique](physical_checkpoint_spec.md)
+- [Four-seed comparison with contemporaneous MM measurements](experiments/032_solver_seed_replication.md)
 - [Generalization and final confirmation protocol](generalization_protocol.md)
 
 Earlier audit recommendations favoring exact local construction are historical
