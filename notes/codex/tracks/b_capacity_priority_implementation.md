@@ -1,0 +1,11 @@
+# B017 implementation gate for the reviewed B016 release policy
+
+Pre-code addendum, 2026-09-08. Implement the exact [B016 policy](b_conflict_directed_releases.md) in a separate fixed B015 copy. The static result identifies `[72]` first for ER66 and `[0,12]` as K40's sole capacity-surviving block; these observations do not authorize tuning either vector or increasing a limit.
+
+Assess baseline demand and every existing block before publishing the reordered vector. Use the engine's actual `scan()` method and original deadline for copying, owner/source/boundary work; cached adjacency bitsets need not be reconstructed. Record assessment scans and wall as overlapping repair work, with separate baseline/block receipts and explicit unknown interruption. Do not substitute the independent classifier's operation totals. Retain original block indices alongside their new positions, all rejected certificates, pool omissions and every attempted block. An interrupted prepass retains the committed incumbent and exposes no reordered prefix to search.
+
+Preserve the B015 first-v component predicate, frozen ownership, insertion order within a block, original contacts, future growth/matching rules, domain-reuse invalidation and first valid return. Keep 1M per repair, 5M repair total, 20M global and every nested allowance live. No registry edit or constructor run is authorized at this stage.
+
+Run targeted complete-block capacity, selected-versus-future demand, shared-guard, ordering, interruption/rollback and ordinary-success compatibility checks. Then run exactly three local-helper calls: the fixed tiny occupied-endpoint witness, saved B011 ER66, and the already frozen K40 next-9 entry. Each has five seconds including replay setup, and restores its saved live global/sub-budget counters and promotion set. Independently validate any returned original-graph partial minor, coverage, outside equality and future frontier. Preserve all failures, assessment work and uninspected blocks. These are supplied-state queries, not full constructors or realized final ACL.
+
+The falsifier remains failure to recover the actual blocked states under the fixed allowances. Even a positive local result does not authorize a panel automatically. Stop for root review of source and all three outcomes; do not adjust priorities, add a restart or enlarge a cap from the results.

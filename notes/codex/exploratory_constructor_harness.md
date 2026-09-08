@@ -231,3 +231,13 @@ new synthetic worker check passed0.22s, preserving the absolute deadline and
 original-graph validation path. This registration follows separate parent
 approval; the earlier author manifest correctly describes the then-unregistered
 state. Additive identities are in `a052-soft-guidance/adapter_manifest.json`.
+
+A053 adds only `native-site-transfer` →
+`factored/site_transfer_construction.py:reduced_core_embed`, `{}`, after root
+accepted its mixed four-input reach result for one exploratory paired screen.
+One isolated synthetic adapter check passed in 0.22 s, including the exact
+entrypoint, empty defaults, common deadline and original-graph validation.
+No real constructor was called. AST comparison confirms every previous
+registry entry and all other pilot code are unchanged. Candidate/helper bytes
+and the earlier reach/correction manifest remain intact. Additive evidence:
+`results/codex/a053-site-transfer/registration/manifest.json`.

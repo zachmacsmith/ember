@@ -44,6 +44,12 @@ only after ordinary connected insertion returns no candidate:
 
 All assessment, copying, failed blocks and certification stay inside **1M repair units per blockage, 5M repair units total, 20M global units**, with unchanged nested matching/propagation/growth limits and the original deadline. There is no new owner cap, restart, family rule, alternate constructor or successful-output comparison. Assessment needs at most 22 boundary/demand passes (baseline plus 21 releases), each bounded by occupied-site adjacency and source-incidence work; it may consume a material part of the query and must be metered explicitly.
 
+## Shared static diagnostic bound
+
+Before classifier code, fix **five seconds and 2,000,000 counted owner/site/target-adjacency/source-incidence operations total** for all tiny checks plus the baseline and at-most-21 release blocks on **both** supplied states. Input decoding, graph setup, pool preparation, sorting and record construction remain in measured wall. Record per-stage work, every completed or partial block and every uninspected index. An interrupted capacity assessment is unknown and cannot publish a completed reordered vector. The diagnostic uses no candidate methods or local-helper calls.
+
+Freeze complete-40's original `propagating-tree-ports`, seed-0 task identity and `FAILURE/construction_blocked` status before inspecting its release outcomes, alongside ER66's already fixed entry. Exclude deadline/work-limit failures. Add tiny cases that distinguish selected demand `d` from post-block demand `p`, and demonstrate that one protected free site can satisfy multiple future guards without an invented global free-site count.
+
 ## Cheap falsifier and critique
 
 Before any implementation, independently check the certificate on: the existing tiny occupied-endpoint witness; a fixed triangle collision with source edges `(0,1),(0,2),(1,2),(3,4)`, entry `1:[1],2:[0],3:[3]`, new vertex 0/release `{1}`, target edges `(0,1),(0,2),(3,2),(1,4)`; and the same target with `(0,4)` added. The first triangle has one usable site for two selected contacts at frozen owner 2 and must reject; the added site removes that particular obstruction. Also check source path `0–1–2`, entry `1:[1],2:[0]`, target path `0–1–2`, release `{1}`: owner 2's pending demand for released 1 is counted in `d`, not incorrectly reserved as future `p`.
