@@ -1377,3 +1377,29 @@ directed ownership-repair mechanism next, before any whole-pipeline candidate.
 
 Updated research state and newest automatic continuation prompt are saved.
 All results remain exposed development evidence; no final-test data opened.
+
+## 2026-09-08 19:39 UTC: stronger matching detects conflicts but loses coverage
+
+B009 finishes all18calls on02;175file archive validates. Candidate6/9 versus
+B0077/9: ER blocks after63placements, WS saves60Q, regular adds10Q and king16Q.
+FreshMM remains two wins/four losses. All846matchingqueries complete using
+251,254units and0.795seconds; limits do not explain the failures. ER actually
+finds a covering third alternative at its early Hall collision, then fails
+later. Reject promotion; diagnose the saved later obstruction before another
+policy change. Root reads the result note and overlapping-work reconciliation.
+
+A049 exact free-component analysis shows both failed steps have contact reach.
+Their future-port guards reject contention with unrelated placed owners68/12.
+Four fixed supplied-state probes confirm this: relaxing only that guard returns
+current-valid minors but strands the same owner's pending demands, so outputs
+remain inadmissible. Revised A050 includes at most two structurally identified
+critical competitors in its bounded release pool. Original guards and frozen
+outside ownership remain mandatory. Pre-code spec is read and saved before
+candidate implementation; three local reach tests precede a pipeline screen.
+
+C's pre-code directed vacancy diagnostic is read and saved: at most eight
+sealed-edge queries per supplied input, fixed depth/beam/proposal limits and
+30seconds/input. It transports free sites by donor exchanges preserving all
+previous source contacts, then tests a new free path. Tiny positive, unique
+contact obstruction and private-state checks precede the four saved states.
+No full C007 construction run is authorized by this diagnostic.

@@ -205,3 +205,13 @@ the current cyclic baseline configuration. Evidence is
 `8eeb7b4be1f6d3dc9f6c34638049d2908f9b8b1b0f9fef527e919f1b137299a0`.
 The registry checks call no real constructor. A049's separate targeted reach
 checks are documented in `reduced_core_implementation.md`; native is unchanged.
+
+## Track B009 adapter
+
+`propagating-tree-matching` maps to the standalone
+`factored/propagating_matching_construction.py:frontier_embed`, with empty
+configuration. Its one affected synthetic worker check passed in 0.22 seconds
+(`attempt016-propagating-matching`); source/registry identities are recorded in
+`propagating_matching_manifest.json`. B009 froze pilot
+`e9b401c4c5699e92d0d7b48953da7f447dfcb4374948793ab0072f80d43f923a`
+before subsequent changes. No real constructor was invoked by this registry check.
