@@ -1205,3 +1205,12 @@ outputs. No work-count equivalence between different algorithms is assumed.
 Root also reads the fresh-instance evaluation proposal and retains it for later
 validation design; no new validation or confirmation graph is exposed. The
 backend goal remains active and unmet.
+
+## 2026-09-08: faster concurrent workflow
+
+Logged the user's workflow change and saved `tracks/workflow.md`. Root owns
+inherited ownership reach on03; two agents own distinct new constructors
+on02/05. Pilot adds only explicit standalone entrypoints (8 targeted and
+36 existing checks pass). 043 reused reviewed code and validators; its protocol
+now defers exhaustive trace replay until promising, without changing settings.
+119 immutable files staged; target check and one detached launch are next.

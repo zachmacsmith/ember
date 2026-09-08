@@ -829,3 +829,17 @@ Blocked audit:
 Do not call update_goal unless the goal is complete or the strict blocked audit above is satisfied. Do not mark a goal complete merely because the budget is nearly exhausted or because you are stopping work.
 
 </codex_internal_context>
+
+
+## User — 2026-09-08: faster research workflow
+
+Change the research workflow to increase the rate of informative experiments. Run up to three independent research tracks concurrently: one improving the inherited prototype and two exploring substantially different, general algorithm ideas. At least one fresh track must investigate construction itself, rather than only postprocessing the inherited constructor.
+
+Before implementing each candidate, write a concise hypothesis, pseudocode, one self-critique, and a cheap experiment that could disprove its central
+assumption.
+
+Reuse the audited harness and validators. For exploratory screens, require dependency isolation, meaningful targeted checks, independent embedding validation, and complete failure/time accounting. Reserve extensive exhaustive testing and publication-grade reproducibility work for promising candidates or changes to shared correctness infrastructure.
+
+ Use available cluster nodes for independent experiments, keeping paired timing comparisons on the same host. Evaluate candidates separately; never combine their outputs into a portfolio. Preserve all existing Z12, no-MM, no-busclique, generality, and runtime constraints.
+
+Prioritize obtaining informative results quickly. Report hypotheses tested, results, lessons, and next decisions at regular milestones. Keep notes concise and distinguish exploration from confirmed findings.

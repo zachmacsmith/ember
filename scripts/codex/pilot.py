@@ -30,6 +30,47 @@ import traceback
 
 ROOT = Path(__file__).resolve().parents[2]
 
+# Explicit standalone constructors for the two independent exploratory tracks.
+# Existing native CONFIGS and dispatch remain unchanged. These modules receive
+# only the supplied graphs and one common absolute deadline, never an embedding.
+CONSTRUCTORS = {
+    'demand-tree': ('packages/ember-qc/src/ember_qc/algorithms/factored/demand_construction.py',
+                    'demand_embed'),
+    'multilevel-regions': ('packages/ember-qc/src/ember_qc/algorithms/multilevel_regions.py',
+                           'multilevel_embed'),
+}
+
+
+def method_config(method):
+    if method in CONSTRUCTORS:
+        return {}
+    return CONFIGS[method]
+
+
+def load_constructor(run, manifest, method):
+    """Load the exact standalone constructor bytes in this frozen snapshot."""
+    relative, function = CONSTRUCTORS[method]
+    root = Path(run) / 'source'
+    path = root / relative
+    if root.is_symlink() or path.is_symlink() or not path.resolve().is_relative_to(root.resolve()):
+        raise RuntimeError('Constructor source is outside frozen source')
+    raw = path.read_bytes()
+    if hashlib.sha256(raw).hexdigest() != manifest['source_files'].get(relative):
+        raise RuntimeError('Constructor source hash mismatch: ' + relative)
+    name = '_codex_pilot_constructor_' + method.replace('-', '_')
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module  # required by standalone dataclass definitions
+    try:
+        exec(compile(raw, str(path), 'exec'), module.__dict__)
+        entrypoint = getattr(module, function)
+        if not callable(entrypoint):
+            raise TypeError('Constructor entrypoint is not callable')
+    except BaseException:
+        sys.modules.pop(name, None)
+        raise
+    return entrypoint, path.resolve()
+
 
 def write_json(path, value):
     path = Path(path)
@@ -195,6 +236,13 @@ def worker(task_path):
             call = lambda: {'embedding': minorminer.find_embedding(
                 source.copy(), target.copy(), random_seed=task['seed'], timeout=task['timeout'],
                 **task['config'])}
+        elif method in CONSTRUCTORS:
+            constructor, implementation = load_constructor(run, manifest, method)
+            output['implementation_path'] = str(implementation)
+            # started is assigned immediately before invocation below; this
+            # deadline includes both graph copies and all constructor work.
+            call = lambda: constructor(source.copy(), target.copy(), seed=task['seed'],
+                timeout=task['timeout'], deadline=started + task['timeout'], **task['config'])
         else:
             from ember_qc.algorithms.factored.native import native_embed
             implementation = Path(sys.modules[native_embed.__module__].__file__).resolve()
@@ -521,7 +569,7 @@ def initialize(args):
     if supplement_path and names != list(records):
         raise ValueError('A supplement run must retain all declared sources in their frozen order')
     if (not methods or len(set(methods)) != len(methods)
-            or any(method not in CONFIGS for method in methods)):
+            or any(method not in CONFIGS and method not in CONSTRUCTORS for method in methods)):
         raise ValueError('Unknown or duplicate methods')
     run = Path(args.run).resolve()
     run.mkdir(parents=True, exist_ok=False)
@@ -558,7 +606,7 @@ def initialize(args):
             'bundle_files': {name: hashlib.sha256(raw).hexdigest() for name, raw in supplement_files.items()},
             'included_graphs': names, 'inputs': supplement_inputs,
             'methods': methods, 'seeds': list(range(args.seeds)), 'timeout': args.timeout,
-            'configurations': {method: CONFIGS[method] for method in methods},
+            'configurations': {method: method_config(method) for method in methods},
             'claim_scope': 'corrected Sudoku development supplement; original corpus unchanged; no holdout claim'}
         supplement_metadata['comparison_plan_id'] = _supplement_plan_id(supplement_metadata)
     tasks = []
@@ -572,7 +620,7 @@ def initialize(args):
             for method in order:
                 task = {'graph': name, 'source_hash': source_hash, 'target_hash': target_hash,
                         'source_snapshot': snapshot, 'seed': seed, 'method': method,
-                        'config': CONFIGS[method], 'timeout': args.timeout}
+                        'config': method_config(method), 'timeout': args.timeout}
                 if supplement_path:
                     task.update(input_supplement_id=supplement_manifest['supplement_id'],
                                 input_supplement_plan_id=supplement_metadata['comparison_plan_id'],
