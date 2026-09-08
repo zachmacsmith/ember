@@ -18,11 +18,12 @@ is deferred until a candidate is promising or shared correctness code changes.
   five seconds each. It is not a full-pipeline or MM comparison.
   [Protocol](experiments/043_ownership_exchange_reach_protocol.md).
 - **B, algorithm_audit, hyde02:** new demand-aware connected-tree constructor;
-  nine fixed development inputs with fresh same-host MM pairs.
+  B001 complete:5/9valid,all5 lose ACL to MM;4failures.
+  New hypothesis being prepared from placement/port failures.
   [Hypothesis](tracks/b_construction.md).
 - **C, benchmark_audit, hyde05:** new multilevel contact-preserving region
   splitting constructor; eight fixed development inputs with fresh same-host
-  MM pairs. [Hypothesis](tracks/c_multilevel.md).
+  MM pairs; host moved to idle hyde04 after05overload. [Hypothesis](tracks/c_multilevel.md).
 
 043 controller170963 is terminal and its496file archive is retrieved.
 See [screen results](experiments/043_results_screen.md) and
