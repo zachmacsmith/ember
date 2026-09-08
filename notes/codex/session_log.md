@@ -1140,3 +1140,50 @@ finalizer's overly strict empty-stderr assertion was corrected to retain the
 known deprecation warning; no test or embedding call was repeated. The result
 auditor is assigned before outcome reads, with explicit reconstruction and
 forward original-graph validation of the final-cleanup trace. Outcomes pending.
+
+At 15:30 UTC root accepts the revised ownership-exchange specification after
+full reading, independent critique and exact verification of 15 review files
+and four preserved revision files. Commit e95e8855 records the specification,
+review and root acceptance. An isolated dependency-free prototype and focused
+tests are assigned to the literature agent; independent oracle/code review is
+assigned to the algorithm agent. No production integration or corpus diagnostic
+is selected. The finite ordered group batch shares setup on one immutable entry
+and returns at most one Q-minus-one proposal. All reach, setup/generation cost,
+interruption and prior-art limitations remain explicit.
+
+The first fresh 042 running observation at 15:32:28.100 UTC records 44 of 68
+finalized calls, all reporting SUCCESS, with controller and worker alive,
+lock held and tmux running. These are lifecycle statuses only; no result archive
+or ACL outcome is read. The result auditor is still being frozen before its
+first outcome inspection. Continue observing controller 165387; do not restart.
+
+042 completes at 15:34:56.867 UTC; the fresh 15:37:06.955 UTC observation proves
+controller/worker quiescence, free lock, stopped tmux and supervisor exit zero.
+The full auditor is frozen before retrieval with manifest c3745a736850f639ccedb842ee127468b20fe181b4e170994d9f7c65e3b42cf2.
+Root reads its full new cleanup helper, main delta and 171-line synthetic suite,
+and verifies all 49 files and six references. A pre-freeze review catches missing
+successful diagnostics being classified partial/missing; the final checker
+requires complete checked cleanup/contact evidence for SUCCESS. Eleven synthetic
+groups pass. Earlier reviewer test/schema failures are preserved. No benchmark
+is repeated to correct a saved-data checker.
+
+Root retrieves all 435 terminal files, digest
+5d511a4c87f0520f23f6a1d26e38268858f660bb1f87ca39dd901f10ba0ab27c.
+The independent full audit executes once and passes with empty errors. A separate
+root canonical BFS/edge recount independently verifies every archive byte and
+all 68 valid embeddings: 13 lower ACL, 21 ties, zero higher; Q 15059 to 15016,
+macro ACL 3.3351353061220093 to 3.3259371862825464. Its source, tiny checks and
+executed copy are saved under 042-root-results-review. Its initial revision is
+preserved before a pre-outcome correction for late-valid diagnostic metrics.
+There is no complete root auditor repeat or additional solver call.
+
+The full audit confirms all 34 upstream and cleanup-entry states equal their
+controls, all 43 deletions valid on canonical/original graphs, and all 34 final
+treatment states single-deletion-minimal. Solver wall totals 183.5363 to 187.6939
+seconds; cleanup wrapper cost is 4.1531 seconds, including 2.5861 seconds of module
+initial validation. The no-saving cases retain their full costs. This supports a
+modest cleanup benefit on development inputs, not the broad MM objective.
+Ownership-exchange implementation and independent tests continue separately;
+its linear entry-contact validation requirement is checked against this cost
+lesson. A diagnostic-design note identifies future fair setup accounting and
+explicit group-coverage choices without fixing budgets or authorizing corpus calls.

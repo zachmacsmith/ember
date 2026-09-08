@@ -20,7 +20,7 @@ auditor and verifying all 38 review files and 14 references; see
 `experiments/041_root_results_acceptance.md`. This small development result
 does not meet the broad goal. All earlier project benchmark controllers are terminal.
 
-**Current running experiment:** 042 final-deletion comparison is frozen at `c789e5bc`,
+**Latest completed comparison:** 042 final-deletion comparison is frozen at `c789e5bc`,
 with 50 source files, snapshot
 `14d2d4b8fec918e06b08ce3404ed194e5bbe745adf37eb6c9658813140c62063`.
 All 34 development structures and 68 calls use the same 60-second native and
@@ -33,8 +33,19 @@ All ten synthetic evidence files are retrieved and the final remote preflight
 passes. Root verified all 84 review files and 35 references, then launched once
 at 15:28:00.073 UTC under controller 165387. Fresh SSH confirmed the controller
 and worker alive, lock held and tmux running. See `experiments/042_launch_record.md`.
-The independent saved-data auditor is being prepared before outcome reads.
-Observe this run after any connection failure; never start a replacement.
+It completed all 68 calls at 15:34:56.867 UTC. Fresh terminal observation proves
+quiescence, and root retrieved all 435 files, archive digest
+`5d511a4c87f0520f23f6a1d26e38268858f660bb1f87ca39dd901f10ba0ab27c`.
+The independently frozen full auditor and root's separate structural recount
+both pass: 13 improvements, 21 ties, no regressions, Q 15059 to 15016 and macro
+ACL 3.3351353061 to 3.3259371863. All 68 outputs are timely and valid; all 34
+closures complete, every deletion is independently validated, and every final
+treatment state is single-deletion-minimal. Total solver time increases about
+2.3%; initial module validation dominates cleanup cost. Root accepts the final
+report after verifying all 75 review files and 14 references; see
+`experiments/042_root_results_acceptance.md`. Retain cleanup for further fixed
+comparisons, with no default or family-specific dispatch change. All benchmark
+controllers are now terminal; never restart 042.
 
 **Latest completed diagnostic:** 040 on hyde03, controller 143531, ran from
 07:37:00.001 to 07:57:57.603 UTC. All 34 inputs and 68 phases finished with
@@ -95,12 +106,18 @@ evidence; see `deletion_closure_integration_root_acceptance.md`. This does not
 alter frozen 041. The full-pipeline comparison is 042, described above.
 
 The next mechanism remains a deletion-conditioned ownership-exchange search on
-one incumbent. Its prior-art and root critiques are committed. The precise
-isolated specification is under independent review; a bounded sequence of groups
-will share one charged entry validation and ownership setup. No implementation
-or corpus diagnostic is authorized until that review is resolved. Ordinary
-free-space reconstruction remains a possible complementary local move within
-the same algorithm; integration is not yet prescribed.
+one incumbent. Its precise specification, independent critique and root
+acceptance are committed in `e95e8855`; spec SHA256 is
+`8d870c3a2e16615574ad018eec266258200bd7740b7cbd2450d47a47d299f82f`.
+A bounded sequence of groups shares one charged entry validation and ownership
+setup. The literature agent is implementing an isolated dependency-free module
+and focused tests; the algorithm agent prepares independent oracles and review.
+No corpus diagnostic or native/contact/pilot integration is authorized yet.
+Ordinary free-space reconstruction remains a possible complementary local move
+within the same algorithm; integration is not prescribed. Root verified all
+15 review files and four preserved revision files, and read the complete spec,
+critique and 203-line toy oracle. Tiny witnesses are arbitrary-target evidence,
+not Zephyr opportunity frequency, useful runtime or a novelty claim.
 
 **Prior candidate comparison:** 039 on hyde03, controller 139008, finished at
 06:24:51.479 UTC with all 68 records finalized SUCCESS. Root verified the

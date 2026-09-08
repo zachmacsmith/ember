@@ -49,3 +49,22 @@ including independent reversal and forward validation of the full deletion
 trace. Internal cleanup savings and full-pipeline paired improvements will be
 reported separately. One development seed cannot establish variance,
 generalization or MM superiority.
+
+The run subsequently completed all 68 calls at 15:34:56.867 UTC, each reporting
+SUCCESS. A fresh terminal observation at 15:37:06.955 UTC found no matching
+processes, both recorded controller/worker absent, the inherited lock free,
+tmux stopped and supervisor exit 0. The observation summary SHA256 is
+`3662fa799f39721b602e4b63b296286f6862087ef5252654468ad64968a86114`.
+The completed controller must not be restarted.
+
+After the auditor was frozen, root retrieved and verified all 435 files into
+`results/codex/retrieved/hyde03/042-final-deletion-pipeline`. Archive digest is
+`5d511a4c87f0520f23f6a1d26e38268858f660bb1f87ca39dd901f10ba0ab27c`.
+The independent full saved-data audit ran once and passed. Root's separate
+canonical structural recount independently verified every archive hash and
+all 68 valid embeddings and Q/ACL values. Both find 13 improvements, 21 ties
+and no regressions, Q 15059 to 15016, mean per-input ACL 3.3351353061 to
+3.3259371863. All 34 cleanup-entry chain sets equal their paired control outputs;
+all 43 deletions are valid, and all 34 final cleanup states are independently
+certified single-deletion-minimal. The complete result report is being frozen.
+There is no concurrent MM arm or generalization claim.
