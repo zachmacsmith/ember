@@ -429,6 +429,10 @@ def contact_polish(embedding, source_graph, target_graph, *, timeout=None,
     for _ in range(max_passes):
         if deadline is not None and time.perf_counter() >= deadline:
             return finish("deadline")
+        if info["groups_tried"] >= max_groups:
+            return finish("group_limit")
+        if info["expansions"] >= max_expansions:
+            return finish("work_limit")
         info["passes"] += 1
         changed = False
         groups = _groups(work, ctx, group_sizes, max_groups - info["groups_tried"])

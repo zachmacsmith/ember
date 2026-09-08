@@ -71,6 +71,16 @@ duplicate start, graph/coordinate round-trip, and task-identity tampering.
 
 ## Outcome and decision
 
-Pending at launch. Report every status before comparing quality. Summarize only
-timely independently valid successes, retain missing/failed comparisons explicitly,
-and do not infer a class-wide win from these individual development instances.
+Completed: see [independent results review](009_results_review.md). All45 outputs
+were structurally valid;44 were timely successes. The MM K100 embedding was late
+and remains diagnostic only. On the eight timely MM comparisons, native search
+won mean chain length on two inputs and lost on six (one seed, not a class-level
+mean). Packed construction was substantially worse on sparse inputs; no portfolio
+choice is made from these rows. The next experiment applies the same contact
+primitive to the globally fixed search constructor.
+
+The review also found a reporting defect: all18 polish runs used their48-group
+limit but entered an empty second pass and reported `no_improvement`. A subsequent
+small correction checks global work/group limits before beginning another pass;
+a coordinated-move regression distinguishes exhaustion from no improvement.
+Original009 artifacts remain unchanged and must be interpreted with this caveat.

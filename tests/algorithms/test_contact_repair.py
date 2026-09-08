@@ -83,6 +83,16 @@ def test_polish_is_one_valid_monotone_state_and_records_growth(coordinated):
     assert info["expansions"] <= 10000
 
 
+def test_group_exhaustion_is_not_reported_as_no_improvement(coordinated):
+    embedding, source, target = coordinated
+    output, info = contact_polish(embedding, source, target, max_groups=1,
+                                 max_passes=4, group_sizes=(2,))
+    valid(output, source, target)
+    assert info['accepted'] == 1
+    assert info['groups_tried'] == 1 and info['passes'] == 1
+    assert info['stopped_by'] == 'group_limit'
+
+
 @pytest.mark.parametrize("options,reason", [
     ({"max_expansions": 0}, "work_limit"),
     ({"max_expansions": 1}, "work_limit"),
