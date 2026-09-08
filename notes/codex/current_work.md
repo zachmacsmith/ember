@@ -6,12 +6,21 @@ or busclique inside it, ideal Z12, quality and success retained, roughly MM's
 runtime range. The pending user question about optimal ACL-1 ties has no answer;
 do not interpret silence as a change in the success criterion.
 
-**Running now:** 039 on hyde03, controller 139008, started once at
-06:11:08 UTC under detached tmux and a 6,420-second outer watchdog. The fresh
-observer found its first worker active and inherited lock busy. This is the
-68-call off-versus-connected comparison on all 34 development structures, seed
-zero, 60 seconds. See `notes/codex/experiments/039_launch_record.md`. Observe;
-never restart after a connection failure. No results are promoted or combined.
+**Latest completed run:** 039 on hyde03, controller 139008, finished at
+06:24:51.479 UTC with all 68 records finalized SUCCESS. Root verified the
+controller and last worker absent, no matching run process, free lock, stopped
+tmux and supervisor exit zero. The 433-file retrieved archive has digest
+`9ad6f638f60242f51f79eb4002696c7222032bb76f8ff9406198a5ec40de4ed6`.
+Do not restart it. The full independent original-graph and connected-accounting
+audit passes. Root repeated it with all ten JSON tables identical, then reviewed
+two metadata-only corrections. The final result is 1 lower ACL, 3 higher, 28
+unresolved ties and 2 optimal ties, Q 15059 to 15063 and macro ACL 3.335135306 to
+3.337318882. Two local qubit savings accompany six fewer ordinary savings.
+The connected policy is rejected. The lead remains the fixed spectral/contact
+control. The complete report is `experiments/039_results_review.md`, SHA256
+`8b7c1e662971fd3699a47b8aff32fd6aa0d97a6bc0d771dc44b6be1d8826e860`.
+Root checked all 121 final review artifacts and four input references against
+manifest `70eee899eadcaab8e38ab94faab9cec7897b851dac5e7a01b2e7babb3cd4e703`.
 
 ## Latest cluster experiment
 
@@ -190,7 +199,8 @@ are complete with no errors and byte-identical deterministic tables. Root read
 the complete negative report and verified all 41 final review-artifact hashes.
 Report SHA `a697b5aa8b918acdb4e67cde881ef28aaf16e07cd4265e06c811ec887ad1a8b5`;
 review manifest `92f571a0fdce33ee65ee79c7eae583ff79b1b8d382e459a80a6a7f4599baaedc`.
-039 is now the sole running embedding benchmark. The goal remains active and unmet.
+039 has also terminated and been retrieved. No embedding benchmark controller
+is running. The goal remains active and unmet.
 
 Hyde02 environment preparation completed normally at approximately 05:29:58 UTC
 (exec session `43604`, started 05:26:55 UTC, exit zero). The pinned preparation
@@ -214,18 +224,21 @@ in commit `75860aea`, with all six effective SSH routes checked.
   review and connected native/contact/pilot integration. Integration is committed
   and frozen. The agent now owns a design-only review of separate ordinary and
   auxiliary work allocation, including conditional replay and counterexamples.
-  No production edit, solver call or change to 039 is included in that task.
+  That review is accepted and committed. Its physical-line locality design is
+  independently reviewed and accepted. The agent now owns isolated 040
+  diagnostic implementation and synthetic checks; no corpus run or production
+  algorithm edit is authorized before final review and preflight.
 - `literature` completed the connected core and its focused witnesses, integration
   critique and independent 039 local/remote preflight. Both preflight records
-  pass and its final report is accepted. The agent now coordinates with benchmark
-  audit on an independent connected-diagnostics helper under 039-results-review;
-  no candidate calls or lifecycle actions belong to that task.
+  pass and its final report is accepted. Its 039 connected-diagnostics helper
+  is frozen and used in the completed audit. It independently verified all 153
+  prepared 040 files and input mappings. It now reviews the offline line cache
+  and book reconstruction, with no corpus calls or author-code edits.
 - `benchmark_audit` completed 037's report, the connected implementation-policy
   review and final 038 preflight. It now owns 038's complete independent results
   audit, which passes and has been root-repeated. Its report and artifact
-  manifest are frozen. The agent now owns the independent 039 results auditor,
-  preparing against the fixed protocol while awaiting root's verified archive.
-  It may not run a solver or perform lifecycle actions.
+  manifest are frozen. The independent 039 results auditor, narrative and final
+  121-file review manifest are also complete, root-reviewed and frozen.
 - Root owns protocol decisions, current work/session notes, source commits,
   connected implementation specification and any future launches/integration.
 
@@ -303,6 +316,20 @@ snapshot `63a0aed1a880cbf008aa68ae7201aed7a4da635dea9362e5d296b1d13a91a473`.
 All independent local/remote gates passed and root launched once; current run
 details and identities are in `experiments/039_launch_record.md`.
 
+040 is under isolated diagnostic implementation. Root copied the exact 039 source (48 files), audited
+evaluator inputs (103 files), and both selection ledgers into
+`results/codex/040-physical-locality/prepared/`. Its 153-file map digest is
+`a5ddbd44613f37ebfa63c2e4232920573775fd3727e647dedce0b968b945bdcf`.
+The proposed new diagnostic observes the initial packed state and first 32
+adopted layouts on every development input with spectral initialization, seed
+zero. Physical line conversion is replayed offline, keeping its cost out of the
+live capture trajectory. The design and independent input review are accepted.
+Workers consume the canonical expected-normalized graph, preserving Ember's
+source order; original JSON insertion order differs on ember_37761. Geometry
+and offline phases have separate absolute 150/60-second process allowances.
+Focused synthetic/tiny Z2 checks have run; no corpus run has occurred. Final
+code freeze, independent implementation review and preflight remain required.
+
 The reviewed theory
 allows several center qubits and exact singleton-leaf assignment at a fixed
 footprint. The proposed implementation groups exactly identical leaf obligations
@@ -321,10 +348,12 @@ owned-site Hall-counting caveat; none is a novelty or superiority claim.
    report and all-input table are reviewed and committed as `a658ce00`.
 2. Preserve 038's independently verified negative report and frozen artifacts.
    The controller and all workers have terminated; never restart them.
-3. Observe 039 without restarting it, confirm quiescence before retrieval and
-   independently audit all final statuses/embeddings and work traces. Preserve
-   every outcome; no default or shared work-allocation rule changes mid-run.
-4. Continue one general constructor/refinement pipeline. No MM or busclique
+3. Preserve 039's independently verified negative full-pipeline outcome and all
+   unsuccessful work. Local improvements did not imply a final quality gain.
+4. Complete and independently review the physical-locality instrumentation,
+   then freeze and preflight one diagnostic run. Its question is whether exact
+   raw line updates are cheap; raw counts are not final ACL.
+5. Continue one general constructor/refinement pipeline. No MM or busclique
    dependency, cached competitor input, hidden fallback, per-family dispatch,
    selected seed or best-of result is allowed. Broader replication and fresh
    source instances remain necessary for any publication claim.

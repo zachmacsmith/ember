@@ -865,3 +865,62 @@ launched once, and its live controller was independently observed. The new
 prompt is appended verbatim toPROMPTS_CODEX.md. Goal remains active and unmet;
 no blocking condition is present. Continue039monitoring/results audit and
 general algorithm development without altering the in-flight experiment.
+
+039 completed at 06:24:51.479 UTC with 68 finalized SUCCESS records. Root's
+fresh terminal probe confirmed controller 139008 and last worker 139884 absent,
+no process command matching the run, free inherited lock, stopped tmux and
+supervisor exit zero. Fetch returned zero and verified all 433 archived files,
+digest 9ad6f638f60242f51f79eb4002696c7222032bb76f8ff9406198a5ec40de4ed6.
+The archive is results/codex/retrieved/hyde03/039-connected-star-pipeline.
+Benchmark and literature now independently audit original graph validity and
+connected accounting. No controller restart or solver retry occurred.
+
+Root ran the standard pilot analyzer in the isolated native environment. It
+passed all 68 records; analyzer/pilot hashes stayed unchanged and reviewed
+copies/invocation/output are retained in results/codex/039-ordinary-review.
+That analyzer's paired table is MM-specific, so its NOT_ATTEMPTED MM columns
+are not interpreted as a control comparison. Root separately paired the two
+declared native methods and recomputed Q from actual chain lists and rational
+ACLs. Preliminary results: one lower, three higher and 30 equal ACLs; total Q
+15059 to 15063 and macro ACL 3.335135306 to 3.337318882. The independent
+original-graph/work reconciliation is still required. The connected policy is
+not promoted; the globally fixed spectral/contact control remains the lead.
+
+Root also prepared 040's exact source/input copies without executing a solver:
+48 frozen 039 source files, 103 audited evaluator files and two selection
+ledgers, with map digest a5ddbd44613f37ebfa63c2e4232920573775fd3727e647dedce0b968b945bdcf.
+Algorithm audit is reviewing the new all-input/spectral locality diagnostic.
+The proposed measurement captures at most 33 layouts during an otherwise
+unchanged 1,000-ask trajectory, then compares exact per-line cached/raw conversion
+offline. Capture overhead remains charged; deadline interference must be visible.
+No diagnostic implementation or protocol freeze has been accepted yet.
+
+Root repeated the complete frozen 039 auditor: all ten deterministic JSON
+outputs match byte-for-byte. Two later auditor-only corrections restrict the
+raw inventory to verified files and rename load windows to five/fifteen minutes.
+Root reviewed the exact source changes; nine other tables are unchanged and
+summary equality holds after eight key renames. No solver rerun was needed.
+Root read the full final report and checked its 121-file review manifest plus
+four input references. Report SHA256
+8b7c1e662971fd3699a47b8aff32fd6aa0d97a6bc0d771dc44b6be1d8826e860;
+manifest SHA256
+70eee899eadcaab8e38ab94faab9cec7897b851dac5e7a01b2e7babb3cd4e703.
+All 68 embeddings are valid and timely. One graph improves, three regress,
+28 tie without optimality certification and two attain ACL 1. Total Q rises
+15059 to 15063. Two connected local savings accompany six fewer ordinary
+savings; two regressions accept no connected move. The fixed policy is rejected.
+
+Root accepted 040's amended design and full independent input/design review.
+All 153 prepared files match their frozen sources. The canonical normalized
+source order is required: original JSON ordering differs for ember_37761.
+The design uses two complete geometry invocations, bounded RAM-only capture,
+and a separate offline process; absolute worker allowances are 150 and 60
+seconds. Atomic cache publication, complete ordered-output equality and honest
+cost subtotals are explicit. Algorithm audit is implementing only the isolated
+diagnostic and focused synthetic/tiny checks. Literature independently reviews
+its offline reconstruction/cache. No corpus run or production change is made.
+
+The authoritative goal service was checked again and reports active. The UI
+question is already saved verbatim in PROMPTS_CODEX.md; it was not duplicated.
+The user was told no /goal resume is needed and the indicator appears out of
+sync. No goal state or UI internals were changed. Research success remains unmet.
