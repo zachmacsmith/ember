@@ -1301,3 +1301,11 @@ remains separate. C005 keeps4/8successes and loses all four MM comparisons;
 constant-Q movement crosses the old domain but yields no new success or
 halved deficit. Reject its fixed policy. C006 tests distinct-neighbor loss
 in contraction with the C004 search baseline. All records remain exploratory.
+
+048 independently passes all 68 outputs and all 192 complete cyclic seed
+schedules. Root read the minimal screen, membership checker and result note;
+no repeated audit. Cyclic saves another69Q with18improvements/16ties/no
+regressions, accepted158 versus89, total solver194.330→194.629 seconds.
+Retain this small development gain. It does not change the unmet generality,
+variance and MM runtime claims. Root also reviewed B006's one-use carry diff
+and focused tests; no stale-context path found, no repeated test run required.

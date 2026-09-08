@@ -22,6 +22,7 @@ Retrieval verified 446 files under
 `results/codex/retrieved/hyde03/048-cyclic-vacancy-pipeline`; archive digest
 `5ddecb714599370ed91fd386a558711fd2a054209421d75bc7bbfda4a60a0caa`.
 Exact CLI invocations, timestamps and outputs are in `results/codex/048-launch`.
-Reported SUCCESS is provisional until independent saved-output validation;
-the frozen minimal screen also checks cyclic membership/order/cursor receipts.
-It does not claim exhaustive intermediate connectivity replay.
+The frozen minimal screen subsequently passed all original-output and cyclic
+membership/order/cursor checks. [Results](048_results_screen.md): 18 quality
+improvements, 16 ties, no regressions. It does not claim exhaustive intermediate
+connectivity replay.
