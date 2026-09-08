@@ -1,6 +1,6 @@
 # Current research checkpoint
 
-Updated 2026-09-08 17:00 UTC. Branch `codex`. Goal active and unmet: one
+Updated 2026-09-08 17:26 UTC. Branch `codex`. Goal active and unmet: one
 principled general embedding heuristic, no MM/busclique or portfolio, ideal
 Z12 first, competitive mean ACL and roughly MM-scale runtime.
 
@@ -11,19 +11,21 @@ Exploratory screens use isolated dependencies, targeted checks, independent
 embedding validation and complete failure/time accounting. Exhaustive replay
 is deferred until a candidate is promising or shared correctness code changes.
 
-- **A, root, hyde03:** 043 completed: ordinary17 contractions, exchange3 (all shared),
-  zero exchange-only. All20 outputs independently valid;29 exchange work limits.
-  044 tests only a larger exchange work cap with the same five-second deadline. It compares first
-  contractions against ordinary reconstruction on all 34 accepted 042 entries,
-  five seconds each. It is not a full-pipeline or MM comparison.
-  [Protocol](experiments/043_ownership_exchange_reach_protocol.md).
-- **B, algorithm_audit, hyde02:** new demand-aware connected-tree constructor;
-  B001 complete:5/9valid,all5 lose ACL to MM;4failures.
-  New hypothesis being prepared from placement/port failures.
-  [Hypothesis](tracks/b_construction.md).
-- **C, benchmark_audit, hyde05:** new multilevel contact-preserving region
-  splitting constructor; eight fixed development inputs with fresh same-host
-  MM pairs; host moved to idle hyde04 after05overload. [Hypothesis](tracks/c_multilevel.md).
+- **A, root, hyde03:** 043/044 complete. Ordinary finds17 first contractions,
+  occupied exchange3, all shared; increasing only the cap adds no reach and
+  increases cost. That version is rejected. New free-site relocation repair
+  passed six focused checks and its bounded independent review. 045 is
+  running under controller 177245 after target integration checks passed.
+  [Hypothesis](tracks/a_vacancy_propagation.md).
+- **B, algorithm_audit, hyde02:** B001 rejected: 5/9 valid, all five lose ACL to MM,
+  four failures. B002 joint endpoint path construction is running on the same
+  nine-input panel with fresh MM pairs.
+  [Hypothesis](tracks/b_frontier_construction.md).
+- **C, benchmark_audit, hyde04:** C001 rejected: 0/8 valid, all early split
+  failures; partial quotient minors independently validate. C002 is preparing
+  connected aggregation and feasible splitting on the same panel. Hyde05 was
+  overloaded;04 now has working project-local tmux and isolated environments.
+  [Results](tracks/c_001_results.md).
 
 043 controller170963 is terminal and its496file archive is retrieved.
 See [screen results](experiments/043_results_screen.md) and

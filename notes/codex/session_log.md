@@ -1226,3 +1226,15 @@ under5s. Read complete minimal screen and result note; no rootrepeat needed.
 under unchanged5s to falsify allocation as the main limitation. Worker,
 candidate, group generator, validators and allinputs byte-identical.
 B launched on02; C arranging user-space tmux on idle04 after05overload.
+
+## 2026-09-08: initial three-track results
+
+044 repeats exactly the same exchange reach as043; all20credited outputs
+independently original-valid, all34paired groups equal. Exchange commonwall
+136.012s,24workcaps+5deadlines, no extra contraction; rejectcap-onlychange.
+B001:5/9valid, all5ACLlosses againstMM, fourfailures. Savedv1/results7c0883b9.
+C001:0/8valid, allsplitfailures; all8partialquotientminorsvalidate. Saved
+v1/results66a31191. B002 jointendpointconstructor running02; C002 revision
+inpreparation04. Root new free-site relocation hypothesis savedbeforecode;
+sixfocusedchecksPASS, singlefinalclockreviewcleanupapplied, boundedindependent
+reviewpendingbefore045. No new holdout or across-classclaim.
