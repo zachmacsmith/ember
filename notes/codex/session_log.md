@@ -1669,3 +1669,43 @@ policy and stop routing-only adjustments. Review at most two constructor
 alternatives that change occupied size/ownership before feasibility; no new
 calls yet. All cluster jobs are quiescent, all tracks remain separate, and
 the active research goal is unmet.
+
+## 2026-09-08 22:42 UTC: mechanism decisions, class gaps and full-constructor controls
+
+The user's new mechanism-focused prompt is appended verbatim toPROMPTS_CODEX.md
+and incorporated into the workflow. Root producesmm_gap_by_class.md plus
+separate current quality/runtime/older variability CSVs from audited results:
+A053 historical reference has11wins18loss3optimal ties2MMtimeouts; current
+variance is unknown. Inputs are one exposed source per membership; shared
+king/frustrated is counted once and Sudoku029 remains separate.
+
+A055 source gate and six structural checks pass. User's new coverage request
+amends the prospective scope from first6changed to all8changed plus1control
+before physical outcomes.18calls finish on03;192archivefiles verified, one
+minimal analysis passes. Root reviews71gatebindings and23finalbindings.
+Q3494→3503 despite macroACL2.742192→2.737235, fourwins/threeloss/twoties;
+solver47.055→46.783s. RetainA053 and stop eligibility/order tuning. This
+intervention does not establish a universal artificial-demand cause.
+
+B019 four constructor gates pass, with actual triangle overlap resolution;
+root reads all749lines and nine meaningful checks/34bindings. B020 scope-only
+control also resolves the triangle in one witness change; two new checks and
+50bindings pass. A runner path error unnecessarily repeated nine old tiny
+checks, preserved/disclosed; no paired full-constructor rerun. Approve one
+27-call paired/single/MM B9screen on02, pending registry/freeze.
+
+C elementary region growth fails its tiny cycle gate. Root reads391-line
+source, report and29bindings. Explicit final-state Q6 certificate proves
+representation capacity and positive elementary intermediates. One atomic
+path variant retains energy/schedule and passes the same four full gates;
+root reads its entire addition/commit implementation. Approve24-call atomic/
+elementary/MM C8screen on04 pending final preparation. A sole pilot owner
+adds four adapter entries and passive diagnostic_embedding retention with
+specific no-credit tests; prior055/056freezes stay immutable.
+
+Root prepares isolated06environments with the existing builder, then freezes,
+stages and starts fixedA053/MM four-seed056 once:272calls,controller55147,
+source0d5b77e35a196734c7b5a3526c2247ae7a6da5e230d2fb6b81b01f2b961ca9a4.
+Status0014SUCCESS,live lock/tmux. This baseline addresses current variance and
+same-host cost, not a fourth algorithm or new-source generalization. Continue
+observing the same detached handle after network changes. Goal remains active.

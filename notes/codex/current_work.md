@@ -1,57 +1,61 @@
 # Current research checkpoint
 
-Updated 2026-09-08 22:11 UTC. Branch `codex`. Goal active and unmet: one
-general non-portfolio algorithm, no MM/busclique, ideal Z12, competitive mean
-ACL and roughly MM-scale runtime. No new final-test inputs have been exposed.
+Updated 2026-09-08 22:42 UTC. Branch `codex`, goal active and unmet.
+One general non-portfolio algorithm, no MM/busclique calls, ideal Z12,
+competitive per-class mean ACL and roughly MM-scale cost. Optimal ACL-one
+ties are explicitly acceptable. No new final-test sources have been exposed.
 
-- **A / literature / hyde03 available:** Retain A053 within the reduced-core
-  line. Its broad comparison against A050 has 10 wins, two losses and 22 ties;
-  [results](experiments/053_results_screen.md). A054 restricts elimination to
-  degree two, making every reduction a minor operation. Its source-only gate,
-  focused checks and eight reach calls pass. The subsequent preselected screen
-  covers 13 structurally changed inputs and three unchanged controls: all 32
-  paired outputs validate, but Q rises 5093→5123, with six wins, seven losses
-  and three exact ties. Solver totals 79.164→80.565 seconds. The mathematical
-  reduction property did not establish better heuristic quality. Do not adopt
-  A054 over A053. Eighteen omitted inputs receive no new quality inference.
-  [Protocol](experiments/054_degree_two_focused_screen.md). The next design
-  review considers a general local criterion for degree-three elimination,
-  with no new implementation or calls yet.
-- **B / algorithm_audit / hyde02 available:** B018's movable-contact primitive
-  passes its bounded gate, including Q5→3 on a path and rejection of an
-  overlapping triangle-on-path state. This is not constructor evidence.
-  [Results](tracks/b_018_results.md). Root read and approved the exact
-  [B019 constructor policy](tracks/b_019_constructor_policy.md): one BFS
-  initialization, changing coupler witnesses and connected owner trees,
-  temporary overlap with explicit prices, and one evolving incumbent.
-  Prepared state amortizes setup without excluding it from the work budget.
-  Implementation, focused checks and four fixed five-second full-constructor
-  falsifiers are authorized. No panel or registry edit yet.
-- **C / benchmark_audit / hyde04 available:** Reject the access-preserving
-  shortest-path/cut policy: zero of eight supplied starts completes, six
-  exhaust their pass and two time out. Missing-contact counts are worse on
-  every input than the previous unrestricted diagnostic, with different
-  censoring retained. All 446 commits preserve unused connectivity and
-  required free ports, so the invariant is verified but insufficient.
-  [Results](tracks/c_preserved_access_routing_results.md). Stop routing-only
-  adjustments. A bounded constructor review now considers variable occupied
-  size and ownership changes before feasibility, distinct from both other
-  tracks. No new code or calls yet.
+The [mechanism workflow](tracks/workflow.md) now requires a representation /
+move-neighborhood / acceptance / cost diagnosis and a distinguishing observation
+before further refinement. Full-constructor outcomes determine continuation;
+partial progress alone does not. The [class gap analysis](mm_gap_by_class.md)
+separates current A053 historical quality, fresh047 timing and older032 seed
+variance. Current A053 versus frozen MM047 has11 wins,18 losses,3 optimal ties
+and2 MM timeouts. Current-policy variance remains unmeasured pending056.
 
-054 is terminal and retrieved: 32 SUCCESS, controller 200969 finished,
-free lock, absent tmux and supervisor exit 0; 266 archive files verified.
-Its prepared saved-result screen passes once; all original-label embeddings
-validate and no control replay discrepancies occur. Root read the checker
-changes before execution. C's final routing report/source and all 71 bound
-artifacts/references are checked without rerunning. Every cluster run is
-quiescent. Observe existing handles after network loss; never restart because
-SSH disconnected. Candidate outputs are never pooled.
+- **A / literature:** Retain A053. Both054 and055 are reviewed and not promoted.
+  [055](experiments/055_results_screen.md) completes18/18 valid/timely calls:
+  four wins,three losses,two ties, Q3494→3503 while macro ACL2.742192→2.737235
+  slightly improves; solver47.055→46.783s. Preserve this metric disagreement.
+  Stop reduction eligibility/order tuning. Next bounded design review targets
+  compact embeddings versus inherited constructor/search reach, without code
+  or calls yet. A currently handles the combined B/C registry update and one
+  passive diagnostic-map logging field before returning to that review.
+- **B / algorithm_audit:** [B019](tracks/b_019_results.md) passes four small
+  complete-constructor gates, including actual triangle overlap resolution.
+  [B020](tracks/b_020_control_gate.md) resolves the same triangle with a single
+  witness change, so paired-neighborhood benefit is unproved. Root reads the
+  full constructor and minimal control diff/checks; all34/50bindings pass.
+  [27-call B9 protocol](tracks/b_020_contact_screen_protocol.md) is approved:
+  paired contacts,single-primary control,freshMM,seed0/60s on02. No control
+  output is selected as a fallback. Registry/freeze/launch are pending.
+- **C / benchmark_audit:** [Elementary variable occupancy](tracks/c_variable_occupancy_constructor_results.md)
+  fails triangle→cycle6 at24visits withM1/Q3, despite ample remaining time.
+  A saved valid Q6 completion has elementary energy increments+.25,+.25,−.75.
+  The approved [atomic-growth discriminator](tracks/c_atomic_growth_constructor_proposal.md)
+  passes all four tiny gates: same initialization/visits0–1, then one path with
+  ΔM−1,ΔQ+3,ΔE−.25 completes the cycle. This supports larger growth proposals
+  under unchanged energy; it does not prove broad constructor quality.
+  Atomic/elementary/MM C8screen,24calls,seed0/15s on04 is approved pending
+  stable preparation/registry/freeze. No temperature/cap/schedule adjustment.
 
-The [workflow amendment](tracks/workflow.md) requires pre-code hypotheses,
-pseudocode, self-critique and cheap falsifiers. Exploration retains isolated
-libraries, targeted checks, independent original-edge validation and every
-failure/time. Extensive publication audits remain deferred. All findings here
-are exploratory. The latest fresh-MM baseline screen has 11 wins, 19 losses
-and two ties on 32 common timely inputs; its lower macro ACL does not establish
-all-class superiority, and the median solver ratio is 10.33. Novelty, seed
-variance and fresh-instance superiority remain unresolved.
+055 is terminal/retrieved:192files,digest4b3fcda430a34aaec72d670b26960cc2666b1bfa2589fa1a4155b761b29b4952,
+controller203360 finished1788906802.8006332,lockfree/tmuxoff/supervisor0.
+One saved analysis passes; root reads report/checkers and all23finalbindings.
+No candidate rerun. Root owns remote transport for all tracks.
+
+**056 baseline replication is detached/running on06** (within track A, not a
+fourth algorithm):272calls,34structures,seeds0–3,A053 versusMM,60s each.
+New isolated Python3.11.2 environments3c7aa36653394e61 prepared once. Source
+snapshot0d5b77e35a196734c7b5a3526c2247ae7a6da5e230d2fb6b81b01f2b961ca9a4.
+Controller55147, tmux ember-codex-160f709fe24a52ef3cdf, start1788906940.7068093,
+outer24780s. Status001:4/272SUCCESS,lockbusy/tmuxalive. Observe existing handle;
+never restart because SSH disconnected. [Protocol](experiments/056_current_policy_seed_replication.md).
+Do not pool06times with03/04/02. Sudoku has only older029 supplement evidence;
+no current A053 observation yet. Preserve its separate provenance in follow-up.
+
+Latest commits:cc2a7b2e (A055 plus user prompt/workflow/gap analysis),ad541c7a
+(B019 and C elementary/certificate/atomic proposal,056protocol). The root gap
+analysis script uses saved audited outputs only; no new oracle or solver.
+All claims remain exploratory. No source-generalization, novelty, current
+seed-variance or across-class MM superiority claim is justified.

@@ -58,7 +58,7 @@ def execute(run, task, prohibited=()):
     return row
 
 
-@pytest.mark.parametrize('method',('native-reduced-core','native-reduced-core-repair','native-original-soft-guide','native-site-transfer','native-degree-two','native-supported-degree-three','demand-tree','frontier-tree','frontier-tree-bounded','frontier-tree-reinsert','propagating-tree','propagating-tree-reuse','propagating-tree-growth','propagating-tree-matching','propagating-tree-ports','multilevel-regions','multilevel-regions-v2','quotient-reconfiguration','quotient-compact','quotient-vacancy','quotient-distinct'))
+@pytest.mark.parametrize('method',('native-reduced-core','native-reduced-core-repair','native-original-soft-guide','native-site-transfer','native-degree-two','native-supported-degree-three','demand-tree','frontier-tree','frontier-tree-bounded','frontier-tree-reinsert','propagating-tree','propagating-tree-reuse','propagating-tree-growth','propagating-tree-matching','propagating-tree-ports','movable-contact-trees','movable-contact-single','variable-regions','atomic-regions','multilevel-regions','multilevel-regions-v2','quotient-reconfiguration','quotient-compact','quotient-vacancy','quotient-distinct'))
 def test_constructor_worker_deadline_and_output(tmp_path,method):
     if method == 'native-site-transfer':
         assert pilot.CONSTRUCTORS[method] == (
@@ -75,6 +75,17 @@ def test_constructor_worker_deadline_and_output(tmp_path,method):
             'packages/ember-qc/src/ember_qc/algorithms/factored/supported_degree_three_construction.py',
             'reduced_core_embed')
         assert pilot.method_config(method) == {}
+    added = {
+        'movable-contact-trees': ('factored/movable_contact_construction.py', 'contact_embed'),
+        'movable-contact-single': ('factored/movable_contact_single_construction.py', 'contact_embed'),
+        'variable-regions': ('variable_regions.py', 'variable_embed'),
+        'atomic-regions': ('atomic_regions.py', 'atomic_embed'),
+    }
+    if method in added:
+        relative, function = added[method]
+        assert pilot.CONSTRUCTORS[method] == (
+            'packages/ember-qc/src/ember_qc/algorithms/' + relative, function)
+        assert pilot.method_config(method) == {}
     run,task,manifest,path = bundle(tmp_path,method,
         "import time\nassert seed == 7 and 0 < deadline-time.perf_counter() <= timeout\n"
         "return {'embedding':{0:[10,11],1:[12]},'status':'SUCCESS',"
@@ -86,6 +97,25 @@ def test_constructor_worker_deadline_and_output(tmp_path,method):
     assert row['diag']['constructor_name'].startswith('_codex_pilot_constructor_')
     assert row['solver_wall'] < task['timeout']
     assert row['diag']['received_deadline'] > 0
+
+
+@pytest.mark.parametrize('status', ('FAILED', 'TIMEOUT'))
+def test_diagnostic_embedding_is_preserved_without_credit(tmp_path, status):
+    # This diagnostic map is a valid minor. Only the empty primary embedding
+    # may enter validation and metrics, even for a timely TIMEOUT response.
+    run, task, _, _ = bundle(tmp_path, 'atomic-regions',
+        "return {'embedding':{},'status':" + repr(status) + ","
+        "'diagnostic_embedding':{0:[10,11],1:[12]},"
+        "'partial_embedding':{'0':[10]},'diag':{}}")
+    row = execute(run, task)
+    assert row['status'] == status and row['reported_status'] == status
+    assert row['embedding'] == {} and not row['embedding_valid']
+    assert row['validation_error'] is not None
+    assert row['diagnostic_embedding'] == {'0':[10,11], '1':[12]}
+    assert row['partial_embedding'] == {'0':[10]}
+    assert row['diagnostic_quality'] == {}
+    assert not {'qubits', 'acl', 'max_chain', 'within_chain_variance'} & row.keys()
+    assert row['solver_wall'] < task['timeout'] and row['deadline_overrun'] == 0
 
 
 def test_mutating_constructor_cannot_change_original_validation(tmp_path):

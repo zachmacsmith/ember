@@ -64,6 +64,14 @@ CONSTRUCTORS = {
                                   'frontier_embed'),
     'propagating-tree-ports': ('packages/ember-qc/src/ember_qc/algorithms/factored/propagating_port_construction.py',
                                'frontier_embed'),
+    'movable-contact-trees': ('packages/ember-qc/src/ember_qc/algorithms/factored/movable_contact_construction.py',
+                              'contact_embed'),
+    'movable-contact-single': ('packages/ember-qc/src/ember_qc/algorithms/factored/movable_contact_single_construction.py',
+                               'contact_embed'),
+    'variable-regions': ('packages/ember-qc/src/ember_qc/algorithms/variable_regions.py',
+                         'variable_embed'),
+    'atomic-regions': ('packages/ember-qc/src/ember_qc/algorithms/atomic_regions.py',
+                       'atomic_embed'),
     'multilevel-regions': ('packages/ember-qc/src/ember_qc/algorithms/multilevel_regions.py',
                            'multilevel_embed'),
     'multilevel-regions-v2': ('packages/ember-qc/src/ember_qc/algorithms/multilevel_regions_v2.py',
@@ -307,6 +315,7 @@ def worker(task_path):
                             'INVALID_OUTPUT' if claimed == 'SUCCESS' else claimed)
         output['embedding'] = {str(v): list(chain) for v, chain in embedding.items()}
         output['partial_embedding'] = response.get('partial_embedding')
+        output['diagnostic_embedding'] = response.get('diagnostic_embedding')
         if reason is None:
             lengths = [len(embedding[v]) for v in source]
             output['qubits'] = sum(lengths)
