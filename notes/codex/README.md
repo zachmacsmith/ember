@@ -43,7 +43,9 @@ is unproved.
 - [Physical-qubit checkpoint hypothesis and preimplementation critique](physical_checkpoint_spec.md)
 - [Four-seed comparison with contemporaneous MM measurements](experiments/032_solver_seed_replication.md)
 - [Direct singleton relocation design and self-critique](singleton_relocation_spec.md)
+- [Independent singleton validity and budget review](singleton_relocation_review.md)
 - [Full-pipeline singleton relocation comparison protocol](experiments/033_singleton_relocation_ablation.md)
+- [Second-node environment preparation and supervisor prerequisite](experiments/031_second_node_preparation.md)
 - [Generalization and final confirmation protocol](generalization_protocol.md)
 
 Earlier audit recommendations favoring exact local construction are historical

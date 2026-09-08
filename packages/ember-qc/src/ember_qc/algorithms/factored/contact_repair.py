@@ -509,7 +509,8 @@ def contact_polish(embedding, source_graph, target_graph, *, timeout=None,
                    group_sizes=(2, 3, 4), beam_width=4, alternatives=3, halo=2,
                    max_region=512, max_expansions=500000,
                    group_expansions=50000, max_orders=2, boundary_sites=0,
-                   group_policy="legacy", objective='qubits', tree_policy='greedy'):
+                   group_policy="legacy", objective='qubits', tree_policy='greedy',
+                   singleton_policy='legacy'):
     """Apply bounded group reconstruction to one valid evolving incumbent.
 
     Global work limits include every attempted group. ``max_groups`` is total,
@@ -518,6 +519,8 @@ def contact_polish(embedding, source_graph, target_graph, *, timeout=None,
     family names are never used. Outside chains remain fixed for each move.
     With ``objective='qubits_contacts'``, equal-size moves must strictly increase
     actual logical-edge coupler redundancy; the default accepts only shortening.
+    ``singleton_policy='direct'`` enables bounded common-boundary singleton
+    proposals, charging their cache and scans to the original work/group limits.
     """
     start = time.perf_counter()
     _parameters(beam_width, alternatives, halo, max_region, max_expansions, max_orders,
@@ -528,6 +531,13 @@ def contact_polish(embedding, source_graph, target_graph, *, timeout=None,
         raise ValueError('unknown contact objective')
     if tree_policy not in ('greedy', 'distance'):
         raise ValueError('unknown tree policy')
+    if singleton_policy not in ('legacy', 'direct'):
+        raise ValueError('unknown singleton policy')
+    if singleton_policy == 'direct':
+        for graph in (source_graph, target_graph):
+            if (graph.is_directed() or graph.is_multigraph()
+                    or any(v in graph[v] for v in graph)):
+                raise ValueError('direct singleton search requires simple undirected loopless graphs')
     for name, value in (("max_passes", max_passes), ("max_groups", max_groups),
                         ("group_expansions", group_expansions)):
         if not isinstance(value, int) or isinstance(value, bool) or value < 0:
@@ -563,6 +573,17 @@ def contact_polish(embedding, source_graph, target_graph, *, timeout=None,
         return finish("group_limit")
     if max_expansions == 0:
         return finish("work_limit")
+    if singleton_policy == 'direct' and 1 in group_sizes:
+        work, reason = _polish_with_singletons(
+            work, ctx, info, deadline=deadline, max_passes=max_passes,
+            max_groups=max_groups, group_sizes=group_sizes,
+            max_expansions=max_expansions, group_expansions=group_expansions,
+            group_policy=group_policy,
+            repair_kwargs=dict(beam_width=beam_width, alternatives=alternatives,
+                               halo=halo, max_region=max_region,
+                               max_orders=max_orders, boundary_sites=boundary_sites,
+                               objective=objective, tree_policy=tree_policy))
+        return finish(reason)
     for _ in range(max_passes):
         if deadline is not None and time.perf_counter() >= deadline:
             return finish("deadline")
@@ -621,3 +642,134 @@ def contact_polish(embedding, source_graph, target_graph, *, timeout=None,
         if not changed:
             return finish("no_improvement")
     return finish("pass_limit")
+
+
+def _polish_with_singletons(work, ctx, info, *, deadline, max_passes, max_groups,
+                            group_sizes, max_expansions, group_expansions,
+                            group_policy, repair_kwargs):
+    """Optional scheduling path; keep legacy traversal/diagnostics untouched."""
+    from ember_qc.algorithms.factored.singleton_relocation import SingletonSearch
+
+    search = SingletonSearch(ctx, max_expansions // 20, max_groups // 16)
+    info['singleton_search'] = search.info
+    objective = repair_kwargs['objective']
+
+    def expired():
+        return deadline is not None and time.perf_counter() >= deadline
+
+    def schedule(groups):
+        block = 0
+        for group in groups:
+            yield group, False
+            block += 1
+            if block == 15:
+                if objective == 'qubits_contacts' and search.extra_available():
+                    yield None, True
+                block = 0
+        if block and objective == 'qubits_contacts' and search.extra_available():
+            yield None, True
+
+    for _ in range(max_passes):
+        if expired():
+            return work, 'deadline'
+        if info['groups_tried'] >= max_groups:
+            return work, 'group_limit'
+        if info['expansions'] >= max_expansions:
+            return work, 'work_limit'
+        info['passes'] += 1
+        changed = False
+        if group_policy == 'round_robin':
+            from ember_qc.algorithms.factored.contact_groups import round_robin_groups
+            groups = round_robin_groups(work, ctx, group_sizes, max_groups - info['groups_tried'])
+        else:
+            groups = _groups(work, ctx, group_sizes, max_groups - info['groups_tried'])
+        ordinary_index = 0
+        for group, extra in schedule(groups):
+            if expired():
+                return work, 'deadline'
+            if info['groups_tried'] >= max_groups:
+                search.info['ordinary_groups_displaced'] += len(groups) - ordinary_index
+                return work, 'group_limit'
+            remaining = max_expansions - info['expansions']
+            if remaining <= 0:
+                return work, 'work_limit'
+            visit_budget = _Budget(min(group_expansions, remaining), deadline)
+            scan_limit = 256
+            if extra:
+                v, scan_limit = search.next_extra(work, visit_budget)
+                if v is None:
+                    info['expansions'] += visit_budget.expansions
+                    search.info['visit_work_peak'] = max(
+                        search.info['visit_work_peak'], visit_budget.expansions)
+                    continue
+                group = (v,)
+            else:
+                ordinary_index += 1
+                search.info['ordinary_groups_tried'] += 1
+
+            old_work = work
+            move = _diagnostics()
+            result = work
+            site = proposal = None
+            direct_accepted = False
+            if len(group) == 1:
+                site, proposal = search.propose(
+                    work, group[0], visit_budget, objective, scan_limit)
+            if site is not None:
+                trial = dict(work)
+                trial[group[0]] = [site]
+                if not expired():
+                    # The exact current-owner/contact certificate proves validity.
+                    result = trial
+                    direct_accepted = True
+                    move['accepted'] = move['complete_proposals'] = 1
+                    move['qubits_saved'] = proposal['qubits_saved']
+                    move['contact_redundancy_gain'] = proposal['contact_redundancy_gain']
+                    move['equal_size_moves'] = int(proposal['qubits_saved'] == 0)
+                    for key in ('accepted', 'qubits_saved', 'contact_redundancy_gain',
+                                'equal_size_moves'):
+                        search.info[key] += move[key]
+            if not move['accepted'] and (len(group) > 1 or len(work[group[0]]) > 1):
+                result, move = _repair(
+                    work, ctx, group,
+                    max_expansions=visit_budget.limit - visit_budget.expansions,
+                    deadline=deadline, **repair_kwargs)
+                visit_budget.expansions += move['expansions']
+            if move['accepted']:
+                # Refresh uses the same active group allowance, never a new budget.
+                search.refresh(old_work, result, group, visit_budget)
+            move['expansions'] = visit_budget.expansions
+            search.info['visit_work_peak'] = max(
+                search.info['visit_work_peak'], visit_budget.expansions)
+            info['groups_tried'] += 1
+            for key in ('accepted', 'qubits_saved', 'member_growth', 'expansions',
+                        'tree_attempts', 'beam_expansions', 'beam_pruned',
+                        'unreachable_contacts', 'complete_proposals', 'orders_tried',
+                        'boundary_sites_added', 'boundary_expansions',
+                        'equal_size_moves', 'contact_redundancy_gain'):
+                info[key] += move[key]
+            for key, value in move['tree_search'].items():
+                if key == 'initial_bound':
+                    continue
+                old = info['tree_search'].get(key, 0)
+                info['tree_search'][key] = max(old, value) if key.endswith('_peak') else old + value
+            info['max_region_size'] = max(info['max_region_size'], move['region_size'])
+            if move['accepted']:
+                work = result
+                changed = True
+                info['trajectory'].append({
+                    'group': list(group), 'qubits_saved': move['qubits_saved'],
+                    'member_growth': move['member_growth'],
+                    'equal_size_move': bool(move['equal_size_moves']),
+                    'contact_redundancy_gain': move['contact_redundancy_gain'],
+                    'total_qubits': sum(map(len, work.values())),
+                    'expansions': info['expansions'],
+                    'operator': 'singleton' if direct_accepted else 'group'})
+        if info['groups_tried'] >= max_groups:
+            search.info['ordinary_groups_displaced'] += len(groups) - ordinary_index
+            return work, 'group_limit'
+        if info['expansions'] >= max_expansions:
+            return work, 'work_limit'
+        if not changed:
+            return work, 'no_improvement'
+    return work, 'pass_limit'

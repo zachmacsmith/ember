@@ -52,3 +52,47 @@ are verified. The current four-seed experiment on hyde03 owns that node's
 sequential benchmark slot. Record the actual 033 host and frozen source/transport
 identities before launch; do not overlap benchmark jobs on a node merely to
 shorten elapsed development time.
+
+## Implementation review and local execution decision
+
+The operator specification and its self-critique were saved before implementation.
+Root and an independent reviewer found no blocking issue in the final core.
+Before any 033 trial, root ran 172 focused tests covering contact reconstruction,
+the new operator, native integration, source generality, spectral integration and
+the pilot. All passed. This includes an independently written exhaustive oracle:
+24 small valid source/target minors, five source vertices and two objectives each,
+240 proposer comparisons against full validation of every candidate target site.
+The oracle verifies best achievable redundancy among improving singleton sites,
+exact qubit/contact deltas and preservation of the incumbent. These correlated
+correctness cases are not performance samples. Nine native/API checks also pass,
+including real direct-mode execution with mixed labels and an isolated vertex.
+
+The high-degree-only ordinary-group counterexample was corrected before these
+checks and before benchmark outcomes. Lazy ownership-cache setup may now occur
+at the first scheduled extra visit as well as an eligible ordinary singleton.
+Both consume the same declared budgets. The independently reviewed final policy
+uses a 5% auxiliary share, 256 proposal-scan units per visit, and at most one new
+zero-excess visit per 16 shared group visits. No numeric setting was changed in
+response to a 033 result.
+
+Execute 033 locally in `/Users/dabh/ember`, using the existing isolated native
+interpreter without resolving its symlink. This permits the complete comparison
+while 032 continues on hyde03. Both 033 arms use this one local host; every worker
+records its actual machine, Python/dependency versions, load, fresh process and
+empty JIT cache. Their timings are compared only within 033. The prepared hyde04
+environments lack a verified logout-persistent supervisor, so no benchmark runs
+there yet. No new supervisor or global installation is needed for local execution.
+
+```sh
+.venv/bin/python scripts/codex/pilot.py init results/codex/033-singleton-relocation-ablation \
+  --corpus-selection results/codex/017-corpus-readiness/selection.json \
+  --methods native-search-joint1-contacts-spectral,native-search-joint1-contacts-spectral-singletons \
+  --seeds 1 --timeout 60 \
+  --candidate-python /Users/dabh/ember/.venv/codex-native/bin/python \
+  --mm-python /Users/dabh/ember/.venv/bin/python
+.venv/bin/python scripts/codex/pilot.py run results/codex/033-singleton-relocation-ablation
+```
+
+Freeze a committed source snapshot before initialization. The run must retain
+the complete original 34-input matrix and both fixed configurations. Record
+actual source identity and controller liveness after starting it.

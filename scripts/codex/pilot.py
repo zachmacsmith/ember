@@ -288,6 +288,8 @@ CONFIGS['native-search-joint1-contacts'] = dict(
     CONFIGS['native-search-joint1-sites-groups'], polish_objective='qubits_contacts')
 CONFIGS['native-search-joint1-contacts-spectral'] = dict(
     CONFIGS['native-search-joint1-contacts'], initialization='spectral')
+CONFIGS['native-search-joint1-contacts-spectral-singletons'] = dict(
+    CONFIGS['native-search-joint1-contacts-spectral'], polish_singleton_policy='direct')
 
 
 def load_readiness_selection(path):

@@ -92,10 +92,14 @@ Its neighboring owners reveal both distinct required contacts and the exact
 coupler count. The candidate's actual target degree must also be at least `d(v)`.
 This is equivalent to intersecting every boundary, without scanning all frozen
 neighbor chains. It is independent of the local halo and region admission caps.
+Store stable physical-rank chain order with the cache when its physical vertices
+are already being charged during setup/refresh. This avoids sorting an entire
+long frozen chain anew before a bounded candidate scan.
 
 Maintain one cache containing physical owner, per-chain adjacency volume, and
 the incumbent object/version it describes. Build it lazily on the first eligible
-singleton visit, not on the legacy path. Setup also collects a stable queue of
+ordinary singleton visit or the first scheduled extra visit, not on the legacy
+path. Setup also collects a stable queue of
 initially one-qubit source vertices of degree at most `Delta` with at least one
 longer logical-neighbor chain. All queue eligibility is checked again when used.
 Source screening charges one work unit per inspected source vertex; degree-
@@ -190,7 +194,7 @@ engineering hypotheses, not fitted constants or claims of optimal allocation:
 6. At every stage, exhaustion of the auxiliary allowance disables additional
    auxiliary work; ordinary reconstruction continues within the remaining common
    limits. Cache setup is lazy and is not attempted when `max_passes=0`, no
-   singleton visit exists, or the direct allowance is zero. No allowance resets
+   ordinary group exists, or the direct allowance is zero. No allowance resets
    across passes. All loops use the existing cooperative deadline checks.
 
 For work-unit consistency with current BFS, examining one physical vertex's
@@ -260,6 +264,18 @@ wins. Experiment 030 found a real seven-qubit unrefined checkpoint opportunity o
 one dense input, with large evaluation overhead and no savings on either sparse
 input. Neither isolated mechanism justifies promoting this one.
 
+Before the next implementation edit, root review identified a structural omission
+in the initial lazy-setup rule: if all positive-excess chains have logical degree
+greater than `Delta`, ordinary singleton visits never initialize the cache, while
+their already-singleton neighbors may still have useful redundancy moves. The
+scheduled extra visit is therefore also allowed to initialize the cache, within
+that visit's unchanged maintenance/group/global/auxiliary limits. There must still
+be at least one ordinary visit; this is not a separate startup sweep. Critique:
+an extra visit may now spend setup work and discover an empty eligible queue.
+Report that cost and an unused extra slot; do not conceal it or grant replacement
+work. This addresses a source-adjacency counterexample, not a measured benchmark
+outcome, and does not change the fixed allocation constants.
+
 This design introduces a second way to generate a proposal within one fixed
 state, objective and schedule; it does not compare independent embedding
 algorithms or outputs. Nevertheless its added implementation complexity needs
@@ -297,5 +313,92 @@ losses, or any validity/cache failure falsifies or defers the proposed integrati
 Do not select between the two configurations per input and do not infer broad
 superiority from the mechanism fixtures or a single seed.
 
-Status: design saved; no singleton module, integration, or new embedding run has
-been performed under this revision yet.
+## Bounded implementation and semantic verification
+
+Root reviewed the full specification/self-critique and authorized implementation.
+The implementation adds `singleton_relocation.py` and the explicit optional path
+in `contact_polish`; the legacy traversal remains separate so its diagnostics and
+proposal sequence are preserved. Root owns native/pilot forwarding and the fixed
+033 configuration. No full embedding experiment has been run by this task.
+
+The operator uses the API and fixed limits above. The owner cache also keeps
+physical-rank-sorted chain order, computed during charged setup/refresh, avoiding
+an uncharged full-chain sort before each bounded scan. After root identified the
+high-degree-only ordinary-group counterexample, the specification amendment and
+critique above were saved before extending lazy setup to a scheduled extra visit.
+
+Direct mode adds `info['singleton_search']`; legacy mode adds no keys. This nested
+record includes the auxiliary limit and actual work split into `setup_work`,
+`refresh_work`, `queue_work` and `scan_work`; actual exhaustive `complete_scans`,
+exact `proven_stops`, and `truncated_scans`; direct accepted shortenings and
+equal-size moves; cache builds/refreshes/disable reason; extra slots/actual visits;
+ordinary groups attempted and maximum active-visit work. Accepted direct moves
+have `operator='singleton'` in the direct policy's trajectory. A completed scan
+is distinguished from an admissible-bound or exact-skip stop. Early exact skips
+may leave the unneeded old/new redundancy fields `None`; every returned site has
+exact qubit and redundancy deltas, including negative redundancy after shortening.
+
+`ordinary_groups_displaced` counts groups already generated in the current pass
+that are left when the shared group cap is reached. It is a visible scheduling
+cost, not a counterfactual count of moves that the control would have attempted:
+the two evolving embeddings can produce different later groups.
+
+The new focused file has **35 passing tests**. The broad focused contact plus
+singleton API run had **114 passing tests** in 1.79 seconds before the final
+diagnostic-only distinction between complete scans and proven stops; the 35 new
+tests then passed again in 0.43 seconds. These are test-run durations, not embedding
+speed measurements. The repository emits its existing dwave-networkx deprecation
+warning during pytest configuration.
+
+The tests independently check whole embeddings using target induced-subgraph
+connectivity, disjoint chain sets and direct source-edge coupler enumeration.
+Evidence includes:
+
+* On the declared path witness, `v:[2] -> [5]` increases redundancy by one at
+  unchanged qubits. A subsequent `a:[0,1] -> [1]` saves one qubit and decreases
+  redundancy by one. The old scheduler makes no move. This demonstrates a local
+  mechanism only; no graph-class or runtime advantage follows.
+* An old chain with redundancy exceeding the singleton upper bound still shrinks
+  correctly, with a negative exact redundancy delta. A failed size-one proposal
+  leaves the existing three-to-two reconstruction opportunity intact.
+* A group can transfer an old qubit between selected owners. Subsequent singleton
+  search sees the new owner and independently validates. If the accepted group
+  consumes its whole work allowance, maintenance instead disables the cache and
+  retains the valid accepted embedding.
+* A 400-vertex frozen neighbor chain hits exactly the fixed 256 scan-unit cap,
+  while separately charging 404 setup units. The returned partial-search best
+  remains a complete valid replacement. Cache setup, refresh, queue and scan work
+  sum exactly to auxiliary work, and auxiliary plus ordinary reconstruction work
+  equals the reported global total across passes.
+* A deadline injected after proposal discovery prevents its commit and reports
+  the full elapsed time/overrun. Source/target loops, directed graphs and
+  multigraphs are explicitly rejected in direct mode.
+* Fifteen ordinary visits followed by one extra visit consume the same 16-group
+  limit and preserve ordinary relative order. The high-degree-only ordinary-group
+  witness now initializes the cache during its bounded extra visit.
+
+The unchanged legacy fixture's output and complete non-time diagnostics were
+also compared with `contact_repair.py` loaded from pre-edit commit
+`6d5168a72df4c287f147a0a2f2ec89a40859500a` in the isolated native environment.
+They match exactly. A durable expected diagnostic record is in the new test.
+Root is adding a separately owned exhaustive-site oracle over varied small valid
+minors before experiment 033; that oracle is additional independent evidence,
+not replaced by these chosen witnesses.
+
+Reproduction of the focused checks:
+
+```sh
+PYTHONPATH=packages/ember-qc/src .venv/bin/python -m pytest -q tests/algorithms/test_singleton_relocation.py tests/algorithms/test_contact_repair.py tests/algorithms/test_contact_redundancy.py tests/algorithms/test_contact_groups.py tests/algorithms/test_contact_revision_review.py tests/algorithms/test_contact_trees.py tests/algorithms/test_singleton_integration.py
+```
+
+Source SHA256 at this task's handoff, before root's final independent review:
+
+| File | SHA256 |
+| --- | --- |
+| `factored/contact_repair.py` | `804edfaaf9cdefe33249ffea9db1d752cd79c0e0b8a2a0d2bcd9478e0c483c57` |
+| `factored/singleton_relocation.py` | `bd3b6f7b32490c00a3843dd400c4998a96dd0f4fef5a02cebe06d8a94f90b424` |
+| `tests/algorithms/test_singleton_relocation.py` | `ec022ec1ae28a172a81e04f79a13e3d6e3404bd3a5d1217057d9e226e94bb7e4` |
+
+No claim of novelty, cumulative quality gain, or speed improvement is established
+by this implementation or the semantic fixtures. The full fixed 033 comparison
+remains the next empirical test.

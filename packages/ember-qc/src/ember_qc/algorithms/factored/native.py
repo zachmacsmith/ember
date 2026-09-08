@@ -90,12 +90,15 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
                  beam_width=4, max_groups=64, polish_group_sizes=(2, 3, 4),
                  polish_expansions=500000, polish_boundary_sites=0,
                  polish_group_policy="legacy", polish_objective='qubits',
-                 polish_tree_policy='greedy', initialization='random'):
+                 polish_tree_policy='greedy', initialization='random',
+                 polish_singleton_policy='legacy'):
     """Return a validated independent result or an explicit construction failure.
 
     Deadline overruns are reported and never counted as timely success. Conversion
     currently has no internal cancellation points; the experiment worker also uses
     an external watchdog. This limitation is recorded rather than hidden.
+    Direct singleton relocation is an optional proposal rule inside the one
+    contact-refinement call and shares that call's work and deadline limits.
     """
     started = time.perf_counter()
     deadline = started + timeout if timeout is not None and timeout > 0 else None
@@ -108,6 +111,8 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
             'polish_objective': polish_objective,
             'polish_tree_policy': polish_tree_policy,
             'initialization': initialization}
+    if polish_singleton_policy != 'legacy':
+        diag['polish_singleton_policy'] = polish_singleton_policy
 
     def result(embedding, status, **extra):
         elapsed = time.perf_counter() - started
@@ -125,6 +130,12 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
         return result({}, 'ERROR', error='unknown initialization')
     if initialization == 'spectral' and construction != 'search':
         return result({}, 'ERROR', error='spectral initialization requires search construction')
+    if polish_singleton_policy not in ('legacy', 'direct'):
+        return result({}, 'ERROR', error='unknown singleton policy')
+    if polish_singleton_policy == 'direct' and (
+            target_graph.is_directed() or target_graph.is_multigraph()
+            or nx.number_of_selfloops(target_graph)):
+        return result({}, 'ERROR', error='direct singleton target must be simple and undirected')
     if packing_passes < 1 or max_asks < 1 or polish_passes < 0:
         return result({}, "ERROR", error="invalid work limit")
     if (source_graph.is_directed() or source_graph.is_multigraph()
@@ -203,12 +214,15 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
         diag["pruned_qubits"] = sum(map(len, chains.values()))
         if polish_passes and (deadline is None or time.perf_counter() < deadline):
             from ember_qc.algorithms.factored.contact_repair import contact_polish
+            singleton_options = ({'singleton_policy': polish_singleton_policy}
+                                 if polish_singleton_policy != 'legacy' else {})
             chains, polish_info = contact_polish(
                 chains, source, target_graph, deadline=deadline,
                 max_passes=polish_passes, beam_width=beam_width, max_groups=max_groups,
                 group_sizes=polish_group_sizes, max_expansions=polish_expansions,
                 boundary_sites=polish_boundary_sites, group_policy=polish_group_policy,
-                objective=polish_objective, tree_policy=polish_tree_policy)
+                objective=polish_objective, tree_policy=polish_tree_policy,
+                **singleton_options)
             diag["contact_repair"] = polish_info
         embedding = {labels[v]: list(c) for v, c in chains.items()}
         if not is_valid_embedding(embedding, source_graph, target_graph):
