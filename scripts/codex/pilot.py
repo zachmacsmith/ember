@@ -36,6 +36,8 @@ ROOT = Path(__file__).resolve().parents[2]
 CONSTRUCTORS = {
     'demand-tree': ('packages/ember-qc/src/ember_qc/algorithms/factored/demand_construction.py',
                     'demand_embed'),
+    'frontier-tree': ('packages/ember-qc/src/ember_qc/algorithms/factored/frontier_construction.py',
+                      'frontier_embed'),
     'multilevel-regions': ('packages/ember-qc/src/ember_qc/algorithms/multilevel_regions.py',
                            'multilevel_embed'),
 }

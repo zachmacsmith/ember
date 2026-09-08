@@ -88,3 +88,15 @@ Focused rerun:
 ```sh
 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 .venv/bin/python -I -B -m pytest -p pytest_timeout -q tests/test_codex_constructor_pilot.py
 ```
+
+## Track B002 adapter
+
+The agreed B002 variant adds `frontier-tree` →
+`algorithms/factored/frontier_construction.py:frontier_embed`, with the same
+`(source, target, *, seed, timeout, deadline)` API and an empty configuration.
+This is a new explicit entrypoint within Track B; it does not call or select
+between the previous constructor and the new one. Only two registry lines and
+one additional parameterized worker case are needed. Existing run snapshots,
+method configs, dispatch, validator and process handling remain unchanged.
+All nine targeted adapter cases pass in `attempt004-frontier`; no actual B002
+constructor or corpus call was needed to check this entrypoint wiring.
