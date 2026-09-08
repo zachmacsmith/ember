@@ -160,3 +160,106 @@ Store scripts, snapshots, timing data, exact reproduction commands and summary
 under `results/codex/028-reinsert-preparation`, then append measured outcomes here.
 This protocol authorizes performance evaluation; it makes no algorithm-quality
 or novelty claim.
+
+## Implemented change and verification
+
+Only the directed-neighbor preparation, its minima, and the `_arm` neighbor-view
+setup are now guarded by `axis == 1`. The vertical branch performs the same
+operations in the same order. Horizontal frozen-net construction, both arm
+orientations, transition costs, prefix sums, comparisons, and backtracking remain
+unchanged. No compiled function, cache, API, constructor, or stopping rule was
+added. `plane.py`, `native.py`, and the pilot were not edited in this task.
+
+The new `tests/algorithms/test_reinsert_preparation.py` contains 24 exact proposal
+regressions, eight exact singleton cost-vector regressions, four direct checks
+that only vertical pricing reads source-neighbor views, and eight early-decline
+checks. The proposal examples include accepted forward and reversed blocks,
+rejections, half-integral coordinates and ties, and bar costs zero/eight. Their
+expected values were generated from the frozen pre-edit source, before editing.
+They reside directly in the test module, so the tests do not require ignored
+result artifacts or a git subprocess. They are regression data, not embeddings
+or tables used by the algorithm. Input and contact mutation are also checked.
+
+Combined with the existing brute-force reinsertion tests:
+
+```sh
+PYTHONPATH=packages/ember-qc/src .venv/bin/python -m pytest -q \
+  tests/algorithms/test_reinsert_preparation.py \
+  tests/algorithms/test_field.py::TestAlignReinsert
+```
+
+Result: **55 passed**, one existing dwave-networkx deprecation warning, 1.02 seconds.
+`git diff --check` also passed for the owned change.
+
+## Frozen twelve-call comparison
+
+All artifacts are in
+[`results/codex/028-reinsert-preparation`](../../results/codex/028-reinsert-preparation).
+The before snapshot was saved before editing; after was copied from it, replacing
+only `field.py`. The worker is a copied diagnostic harness from 021 with the
+predeclared three inputs and 1,000-evaluation budget. Both versions have identical
+proposal/contact-count/accepted-trace instrumentation, which adds some overhead.
+Snapshot hashes, inputs, worker configurations, guards, and every output were
+independently checked by `analyze.py`.
+
+All **12 calls** are valid, timely, and free of attempted/loaded MM or busclique
+dependencies. On each input, all four calls have exactly equal full embeddings,
+actual proposal hashes, contact rebuild counts, accepted traces, layout orders,
+and complete non-time diagnostics. Only `wall`, `bookmark_wall`, and `layout_wall`
+are excluded from diagnostic equality. The independent validator checks every
+original source and target adjacency. The full results and hash audit are saved
+in `analysis.json`; no input or failed result was dropped.
+
+| Input | Actual evaluations | Qubits, before = after | Cold solver before → after (s) | Warm solver before → after (s) | Warm layout before → after (s) |
+|---|---:|---:|---:|---:|---:|
+| complete-40 | 515 | 156 | 2.13403 → 1.99791 | 1.04109 → 0.93587 | 0.88475 → 0.77762 |
+| ER-80 | 1,000 | 273 | 3.91688 → 3.90620 | 2.76529 → 2.57413 | 2.60625 → 2.41670 |
+| grid-64 | 1,000 | 89 | 2.86744 → 2.71146 | 1.77792 → 1.64046 | 1.63721 → 1.49540 |
+| total | — | unchanged | 8.91834 → 8.61557 | 5.58429 → 5.15046 | 5.12822 → 4.68972 |
+
+Observed total solver reductions are **3.39% cold** and **7.77% warm**; warm layout
+decreases **8.55%**. Warm solver reductions are 10.11%, 6.91%, and 7.73% for the
+three rows respectively. Total solver CPU decreases 5.44% cold and 7.80% warm.
+These are sums over the three declared calls, not averages over Ember classes.
+The earlier 5.40% removal ceiling concerned ER at **300** evaluations; it was not
+a ceiling for these different trajectories or budgets.
+
+The local host was not reserved. Each version/input has only one fresh worker,
+one cold call, and one warm call; the measurements do not estimate uncertainty.
+Seed 28001 fixed the pair/within-pair shuffle before timing and happened to place
+`after` then `before` in **all three pairs**. That order is preserved in
+`execution_order.json`; possible time drift is not balanced away. The first ER
+after cold call also spent about 0.171 seconds more wall than CPU time, versus
+about 0.001 seconds in its before call. This limits conclusions from the tiny
+ER cold-wall difference. No new JIT work was introduced, and all pre-existing
+packing compilation remained inside the cold allowance.
+
+This evidence supports keeping a small behavior-preserving optimization. It does
+not close the MM runtime gap, estimate scaling to larger source graphs, establish
+graph-class-wide timing improvements, or improve ACL. More substantial search
+optimization may still be needed, with a separate specification and equivalence
+review.
+
+| Artifact | SHA256 |
+|---|---|
+| Before source map | `f40241742585d1f3212358d4882e5f72d0a9567b195d4bedf0a525a3287ece80` |
+| After source map | `a41ac4895fdfa324dec85f27a4aa52323e52180aa8a15a59f77835a3afbcdc27` |
+| Complete result-file hash map | `b005e2fce3352a0253bb5f4784ffcfbb8b44ae9ea8e83fa3fc6e8e322c4da8b1` |
+
+Reproduction uses fresh output directories and the already frozen source, avoiding
+new working-tree changes. The stored manifests preserve the interpreter's symlink
+path; moving to another checkout/machine requires explicitly updating that path
+and reporting the changed environment. Run from the repository root:
+
+```sh
+.venv/codex-native/bin/python results/codex/028-reinsert-preparation/reproduce.py \
+  results/codex/028-reinsert-preparation-repeat
+.venv/codex-native/bin/python results/codex/028-reinsert-preparation-repeat/run_pairs.py
+.venv/codex-native/bin/python results/codex/028-reinsert-preparation-repeat/analyze.py
+```
+
+`run_pairs.py` refuses to overwrite results and creates an empty per-worker JIT
+cache. Its environment sets `PYTHONHASHSEED=0` before process startup and numerical
+thread limits to one. The 30-second native allowance and 105-second worker
+watchdog remain in force. Re-running the original directory's `analyze.py` checks
+the original results and rewrites only its derived `analysis.json` summary.

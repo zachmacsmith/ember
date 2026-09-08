@@ -43,12 +43,13 @@ has used these new inputs, so embeddability remains unproved.
 
 - `benchmark_audit`: 025 review and 026 launch notes are complete and reviewed;
   now monitor and independently audit 026. Root reran ordinary 025 analysis.
-- `algorithm_audit`: implement only the unused horizontal-neighbor preparation
-  removal in `field.py`, following `geometry_performance_spec.md`. New regression
-  tests are `test_reinsert_preparation.py`; frozen before/after artifacts go under
-  `results/codex/028-reinsert-preparation`. Preserve exact proposal/slot outputs,
-  full trajectories and embeddings. Cold/warm comparison is three fixed sources,
-  1000 evaluations, 12 calls. No compiled kernel or search-policy change.
+- `algorithm_audit`: 028 performance change is complete and independently reviewed;
+  55 proposal tests plus 38 root integration tests pass. All 12 outputs and
+  trajectories match exactly, with small observed speed gains and timing caveats.
+  Now specify and diagnose physical-qubit checkpoint selection in one unchanged
+  placement trajectory. Own `physical_checkpoint_spec.md` and additive diagnostic
+  artifacts under `results/codex/030-physical-checkpoint-diagnostic`; no production
+  plane/native callback, new pilot configuration or repeated contact repair yet.
 - `literature`: add explicit `--input-supplement` loading to pilot/cluster/analyzer
   and `test_codex_pilot_supplement.py`, preserving every old path. Freeze the full
   supplement and loader source; carry provenance outside solver metadata.
@@ -64,9 +65,9 @@ Preserve unrelated `.claude/` and graph-library `.verified.json` files.
 
 1. Review and commit stable 025/026 notes, then preserve 026 all-input results and
    failures before deciding whether spectral initialization merits further study.
-2. Review 028 exact-equivalence evidence and measured speed, retaining all cases.
-   Its diagnostic ceiling is only about 5.4% of warm layout time on one input;
-   it cannot by itself close the current runtime gap.
+2. Preserve the completed 028 evidence. Review 030's physical-score mismatch and
+   cost evidence before choosing a bounded integration experiment. Neither the
+   small speed gain nor better checkpoint scores prove an all-class improvement.
 3. Review the supplement adapter's identity, source isolation, transport and
    corruption checks. Freeze and run the declared six-trial comparison after
    appropriate host sequencing, without altering earlier corpus experiments.

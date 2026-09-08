@@ -1613,42 +1613,45 @@ def align_reinsert(order: List[int], cluster,
     xs_slot = (np.array([float(other[v]) for v in order]) * rank_scale(n)
                if axis == 1 else None)
 
-    heads: List[int] = []
-    tails: List[int] = []
-    for t, v in enumerate(order):
-        for u in src_adj.get(v, []):
-            if u != v and u in slot_of:
-                heads.append(t)
-                tails.append(slot_of[u])
-    ha = np.asarray(heads, dtype=np.int64)
-    ta = np.asarray(tails, dtype=np.int64)
-    if ha.size:
-        srt = np.argsort(ha, kind="stable")
-        ta_s = ta[srt]
-        bnd = np.searchsorted(ha[srt], np.arange(n + 1))
-    else:
-        ta_s = ta
-        bnd = np.zeros(n + 1, dtype=np.int64)
+    # Only vertical reinsertion re-derives contacts from source neighbors.
+    # Horizontal reinsertion uses frozen contact nets below, so these views
+    # and minima are unused there. Keep vertical preparation unchanged.
+    if axis == 1:
+        heads: List[int] = []
+        tails: List[int] = []
+        for t, v in enumerate(order):
+            for u in src_adj.get(v, []):
+                if u != v and u in slot_of:
+                    heads.append(t)
+                    tails.append(slot_of[u])
+        ha = np.asarray(heads, dtype=np.int64)
+        ta = np.asarray(tails, dtype=np.int64)
+        if ha.size:
+            srt = np.argsort(ha, kind="stable")
+            ta_s = ta[srt]
+            bnd = np.searchsorted(ha[srt], np.arange(n + 1))
+        else:
+            ta_s = ta
+            bnd = np.zeros(n + 1, dtype=np.int64)
 
-    nRi: List[np.ndarray] = [None] * n  # R-side nbr indices, sorted
-    nQi: List[np.ndarray] = [None] * n  # Q-side nbr indices (fwd), sorted
-    xRn: List[Optional[np.ndarray]] = [None] * n  # x aligned with nRi
-    xQn: List[Optional[np.ndarray]] = [None] * n  # x aligned with nQi
-    for t in range(n):
-        nb = ta_s[bnd[t]:bnd[t + 1]]
-        mq = inS[nb]
-        rn_t = rpos[nb[~mq]]
-        qn_t = qpos[nb[mq]]
-        ro = np.argsort(rn_t, kind="stable")
-        qo = np.argsort(qn_t, kind="stable")
-        nRi[t] = rn_t[ro]
-        nQi[t] = qn_t[qo]
-        if axis == 1:
+        nRi: List[np.ndarray] = [None] * n  # R-side nbr indices, sorted
+        nQi: List[np.ndarray] = [None] * n  # Q-side nbr indices (fwd), sorted
+        xRn: List[Optional[np.ndarray]] = [None] * n  # x aligned with nRi
+        xQn: List[Optional[np.ndarray]] = [None] * n  # x aligned with nQi
+        for t in range(n):
+            nb = ta_s[bnd[t]:bnd[t + 1]]
+            mq = inS[nb]
+            rn_t = rpos[nb[~mq]]
+            qn_t = qpos[nb[mq]]
+            ro = np.argsort(rn_t, kind="stable")
+            qo = np.argsort(qn_t, kind="stable")
+            nRi[t] = rn_t[ro]
+            nQi[t] = qn_t[qo]
             xRn[t] = xs_slot[nb[~mq]][ro]
             xQn[t] = xs_slot[nb[mq]][qo]
-    minRv = np.array([int(a[0]) if a.size else BIG for a in nRi])
-    minQf = np.array([int(a[0]) if a.size else BIG for a in nQi])
-    maxQf = np.array([int(a[-1]) if a.size else -1 for a in nQi])
+        minRv = np.array([int(a[0]) if a.size else BIG for a in nRi])
+        minQf = np.array([int(a[0]) if a.size else BIG for a in nQi])
+        maxQf = np.array([int(a[-1]) if a.size else -1 for a in nQi])
 
     net_stats = None
     if axis == 0:
@@ -1696,14 +1699,14 @@ def align_reinsert(order: List[int], cluster,
         instead — see the ``slot_costs`` contract above."""
         Q = S[::-1] if arm_flip else S
         qsl = q_slots[::-1] if arm_flip else q_slots  # slot of Q[j]
-        minQv = (m - 1 - maxQf) if arm_flip else minQf
+        if axis == 1:
+            minQv = (m - 1 - maxQf) if arm_flip else minQf
 
-        def _qview(t):
-            # Q-side indices sorted ascending in THIS arm, x aligned
-            if arm_flip:
-                return ((m - 1 - nQi[t])[::-1],
-                        xQn[t][::-1] if axis == 1 else None)
-            return nQi[t], xQn[t]
+            def _qview(t):
+                # Q-side indices sorted ascending in THIS arm, x aligned
+                if arm_flip:
+                    return ((m - 1 - nQi[t])[::-1], xQn[t][::-1])
+                return nQi[t], xQn[t]
 
         # point-cost arrays: stepR[i, j] = cost of placing R[i-1] into
         # cell (i, j) (from (i-1, j)); stepQ[i, j] likewise for Q[j-1]
@@ -1897,5 +1900,4 @@ def align_reinsert(order: List[int], cluster,
     if best < e0 - 1e-9 and border != order:
         return border, flip
     return None, False
-
 

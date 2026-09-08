@@ -340,3 +340,30 @@ about 5.4% of warm layout time in the diagnostic case, so it cannot explain away
 the large MM runtime gap. The algorithm auditor saved a self-critique, then began
 the restricted code change and full-trajectory differential checks against a
 frozen pre-edit reference. No search objective or arithmetic changes are intended.
+
+## Third automatic continuation
+
+The preceding goal turn made progress: spectral initialization was implemented,
+reviewed, tested and launched; the complete 025 evidence was independently checked;
+and corrected Sudoku development records were frozen separately. The next prompt
+is appended verbatim to `PROMPTS_CODEX.md`. A fresh SSH check confirms the same
+026 controller is live, with 19 of 68 results finalized successfully at that
+observation. No run was restarted and the original objective remains unmet.
+
+The bounded 028 speed change is complete. Only unused horizontal-neighbor
+preparation was removed; before/after sources differ only in `field.py`.
+All 12 calls are valid, timely and exactly equal in their embeddings, actual
+proposal hashes and complete non-time diagnostics. The measured total solver
+reductions are 7.77% warm and 3.39% cold across the three fixed sources. These
+single local pairs happened to execute after-before in every pair, so drift is
+not balanced; no broad speed claim follows. Root reviewed the source diff,
+reran the artifact audit successfully and passed 38 additional native/spectral
+integration checks after the agent's 55 proposal/brute-force tests.
+
+The next bounded quality investigation tests the mismatch between geometric
+placement score and actual physical qubit count. Its specification and critique
+must precede diagnostics. It considers conversion/pruning at new proxy incumbents
+within one unchanged trajectory, with one final contact repair, not multiple
+initializers or selection among embedding algorithms. No production checkpoint
+callback has been implemented yet. The Sudoku runner adapter is independently
+under review before any supplementary embedding call.
