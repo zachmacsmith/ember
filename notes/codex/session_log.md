@@ -269,3 +269,28 @@ advantage? Experiments continue independently; no answer or altered objective
 is inferred from silence. The algorithm auditor is separately specifying a
 general spectral initializer from source adjacency, with self-critique before
 any implementation and no end-to-end experiment yet.
+
+## Completed broad screen and next independent initialization hypothesis
+
+Screen 019 is complete and independently checked: 102 finalized trials, 99 timely
+valid successes and three MM timeouts. Each native arm succeeds on all 34 inputs;
+MM succeeds in time on 31. On those 31 common timely inputs, each candidate has
+eight ACL wins and 23 losses against MM. The revised candidate's common-input
+mean ACL is 2.85991 versus MM's 2.96154, but that aggregate hides substantial
+sparse-graph deficits and does not satisfy the across-family objective. The
+revision saves 202 qubits over the previous candidate across 34 inputs, with
+22 improvements, seven ties and five regressions. Runtime remains a concern;
+the independent review retains both solver and process measurements and their
+denominators, rather than pooling hosts or excluding inconvenient outcomes.
+
+After verified quiescence of 019, root started the frozen 025 comparison. Fresh
+SSH status verifies controller 120218 and worker 120414 are live, with 17 of 68
+outputs finalized successfully. The benchmark auditor monitors this exact run.
+The algorithm auditor has separately specified and implemented one bounded
+source-Laplacian initializer; source-only tests are encouraging about its cost,
+but no embedding-quality result exists. Root and a second agent review its
+numerical behavior and integration contract before any end-to-end experiment.
+
+A fresh goal read still reports `active`. The user was told `/goal resume` is
+currently unnecessary; no claim was made to fix the UI display or its internals.
+The original user question was already saved verbatim in `PROMPTS_CODEX.md`.

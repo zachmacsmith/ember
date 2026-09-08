@@ -34,3 +34,23 @@ Report each fixed candidate separately, all failures, and the exact shared-input
 mapping. A tie where MM reaches ACL 1 must be described as an optimal tie, never
 as lower mean ACL. The user's preferred success criterion for such ties remains
 a pending clarification; the research objective is not redefined by this screen.
+
+## Frozen inputs and staging
+
+Code revision: `a33a44848d877baf085fb503a98bfdf8b0bcd0e5`.
+Source snapshot: `c4df2294edf74b55f767ee443e30f88d4a068cbed8a21e9b45cf33df420ffb8d`.
+Verified transport digest: `dd31a6a2c94f15da08e6549eb8eada585a1e24fbeb9f493b05bad2e8509b5827`.
+The 68 tasks are frozen locally at `results/codex/025-corpus-contact-rearrangement`
+and staged at `/home/dabh/ember-codex/runs/025-corpus-contact-rearrangement` on
+hyde03. Staging did not start a worker; launch followed observed quiescence of
+019 to preserve the declared sequential host protocol.
+
+## Launch and live verification
+
+The detached tmux supervisor started at Unix time `1788835033.8327`, in session
+`ember-codex-9e948f74e5d7acd28000` on the separate `ember-codex` tmux server. Its
+maximum lifetime is 6420 seconds. A fresh SSH status check confirmed controller
+PID 120218 and worker PID 120414, a busy inherited lock, a live tmux session and
+17 finalized successes out of 68 planned trials. This is an intermediate status,
+not evidence about complete-run performance. Continue this exact run without
+restarting it after a connection interruption; retrieve after verified quiescence.
