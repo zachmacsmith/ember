@@ -28,7 +28,7 @@ It contains no direct singleton relocation and no physical checkpoint policy.
 environment. At 03:51:01 UTC root verified complete controller status, absent
 controller33003/final worker34600, launch session94745 exit zero, and all68
 finalized records reporting SUCCESS. Independent original-embedding and metric
-audit is underway; reported success is not yet the independent audit result.
+audit passed, and root reran both ordinary and independent analyzers.
 Start time was 2026-09-08 03:40:02.619 UTC. Do not restart this run. It contains all
 34 readiness sources and two fixed spectral arms, differing only by direct
 singleton relocation, seed zero and 60 seconds. Frozen commit
@@ -41,6 +41,17 @@ matrix, and absence of MM/busclique in the native interpreter. No timing is
 pooled between 032 and 033.
 
 ## Most recent complete evidence
+
+033: all68outputs independently valid/timely. Direct singleton relocation has
+7wins,22ties,5losses versus its contemporaneous control, and net+1Q
+(15060to15061). Mean per-input ACL3.334421to3.334938; no cumulative benefit.
+Retain legacy singleton policy globally. The new operator saves143Q, while
+ordinary reconstruction saves471Q versus control615Q; operator-specific savings
+do not establish an advantage. Group coverage and equal-size trajectories change.
+Runtime median ratio1.00884 is small relative to local load variation.
+Within-run layouts/constructed/pruned counts agree for all34pairs. Cross-host
+026controls reproduce28/34finalchainsets and32/34Qcounts; numerical differences
+are a plausible but unproved cause. No cross-host timing comparison.
 
 019: both candidates have 34 timely valid results; MM has 31 plus three timeouts.
 On the common 31 inputs, candidates win eight and lose 23 on ACL. The lower
@@ -107,9 +118,10 @@ without changing the frozen input sidecars.
   tmux: supervisor work remains deferred, so no benchmark runs on hyde04.
   The independent singleton core review found no blocker. The034capacity audit
   is complete and root reran its saved-hash/physical-witness verifier successfully.
-  Now own the full033independent artifact audit and033_results_review.md. Root
-  supplied verified completion before full-run analysis. No source edits or new
-  solver runs.
+  The033independent review is complete and root reran its analyzer successfully.
+  Now own the bounded induced-star relocation review: tiny exhaustively checked
+  witness and targeted primary-source prior art. Root saved the new specification
+  and self-critique before this task. No source edits or full embedding calls.
 
 Review agent-owned edits before committing. The current cluster run uses its
 frozen source and is unaffected by these working-tree edits. Root owns README,
@@ -118,14 +130,17 @@ Preserve unrelated `.claude/` and graph-library `.verified.json` files.
 
 ## Next actions
 
-1. Follow complete033 outcomes through independent validation and cumulative
-   quality/work/runtime analysis, keeping all regressions and comparing one fixed
-   policy globally. The legacy control's old traversal remains byte-identical.
+1. Keep033's negative cumulative result and unchanged legacy singleton policy.
+   Review the induced-star joint relocation hypothesis before implementation.
+   Matching decides a restricted all-singleton block problem; usefulness and
+   novelty remain unproved, and scheduling/budgets are not yet implemented.
 2. Review035's converter correction against the exhaustive class-assignment and
    actual-seating oracles, plus measured state growth. Root reviewed034 and the
    physical-cost model: feasible assignments are missed by the old DP while
    physical seating remains disjoint; no full-pipeline effect is established.
    A later full-pipeline correction ablation requires its own frozen specification.
+   Root saved036's34call local fixed-candidate protocol, contingent on035review.
+   Its quality reference is033control; across-run timing is explicitly limited.
    Keep028; no physical-checkpoint production callback is promoted.
 3. Follow 032 through repeated-seed quality and timing analysis, preserving all
    failures and the distinction between solver seeds and source instances.

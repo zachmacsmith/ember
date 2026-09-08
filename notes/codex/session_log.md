@@ -453,3 +453,27 @@ was saved and reviewed before source implementation review: a common monotone
 frontier plus a complete closed-interval overlap check replaces unsafe expiration.
 Its exactness claim is limited to class intervals, and state growth/runtime must
 be measured against exhaustive tiny oracles before a full embedding ablation.
+
+033's complete independent audit passed and root reran both analyzers. Direct
+singleton relocation improves7inputs,ties22andregresses5, using one more qubit
+overall (15060to15061). Retain the globally fixed legacy policy. The new operator
+saves143qubits inside its trajectory, but ordinary reconstruction then saves471
+versus615in the control; these local gains are not comparative gains. The report
+preserves all changes in group coverage, equal-size moves and runtime, plus the
+limits imposed by missing intermediate chain snapshots. No parameter retuning
+or family selection follows.
+
+Root's separate exhaustive converter review checked431901small interval cases
+against direct occupancy enumeration, with zero assignment/cost/tie differences.
+The final field source has the same whole-module AST as that frozen oracle
+snapshot; only restored EOF whitespace differs. Root also passed109integration
+tests and276subtests, including native, plane, spectral, contact and pilot paths.
+The035physical/state/runtime audit remains required before036's newly saved
+fixed-candidate full-pipeline protocol can launch.
+
+A new design/critique considers replacing an induced star of logical vertices
+with singleton chains together. For a fixed center site, bipartite matching can
+assign independent leaves to distinct eligible neighboring qubits while
+preserving all frozen outside contacts. The literature auditor is checking a
+tiny counterexample to single-chain reductions and primary-source prior art.
+No implementation, generalization or novelty claim has been made.

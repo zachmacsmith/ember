@@ -45,8 +45,11 @@ is unproved.
 - [Direct singleton relocation design and self-critique](singleton_relocation_spec.md)
 - [Independent singleton validity and budget review](singleton_relocation_review.md)
 - [Full-pipeline singleton relocation comparison protocol](experiments/033_singleton_relocation_ablation.md)
+- [Singleton comparison: valid proposals but no cumulative improvement](experiments/033_results_review.md)
 - [Reproduced converter capacity defect and physical witness](conversion_capacity_review.md)
 - [Physical wire-cost model and limits of local pricing](physical_cost_model.md)
+- [Induced-star joint relocation hypothesis and self-critique](induced_star_relocation_spec.md)
+- [Corrected-converter full-pipeline comparison protocol](experiments/036_converter_correction_pipeline.md)
 - [Second-node environment preparation and supervisor prerequisite](experiments/031_second_node_preparation.md)
 - [Generalization and final confirmation protocol](generalization_protocol.md)
 
