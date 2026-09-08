@@ -1309,3 +1309,29 @@ regressions, accepted158 versus89, total solver194.330→194.629 seconds.
 Retain this small development gain. It does not change the unmet generality,
 variance and MM runtime claims. Root also reviewed B006's one-use carry diff
 and focused tests; no stale-context path found, no repeated test run required.
+
+## 2026-09-08 19:00 UTC: growth and source reduction, stronger quotient initialization
+
+B006 independently preserves all nine final/partial mappings and decisions,
+with212reuses and3,074,312 fewer counted units. Walltimes are mixed even where
+no reuse occurs; retain work reduction, no portable speed claim. B007's
+pre-code growth spec and15focusedchecks demonstrate actual triangle/C4
+completion with one grown chain; original-contact preservation and interrupted
+partial growth pass. The same9inputscreen is next, as a separate candidate.
+
+C006 passes the capacity mechanism test on all8 inputs. Complete starts with
+1168ratherthan5554missing edges and reaches146ratherthan3514 at15seconds;
+regular337ratherthan1012. Still4/8successes, all4loseMM. Root read the
+original-map/conservation additions and result note, no repeated audit.
+Readback also confirms all four partial Q values equal initial budgets
+(540/1680/3556/484). C006b is authorized as unchanged-code60second followup
+onall8inputs, fresh samehostMM. No new search change is bundled.
+
+A049 design was reviewed/committed before implementation. Root kept native
+unchanged: remaining relative core allowance plus authoritative outer deadline
+and late-core rejection. The wrapper's source-requirement journal makes active
+fill contacts and pending demands explicit. Basic Z12 star/wheel/subdivision
+success is a gate before any34inputscreen. Root's source review requested
+retaining failed core partial evidence and pruning endpoints of released fill
+requirements. These are being documented before adjustment. The existing
+freeze script is prepared in049-preparation but has not run; hyde03 is idle.
