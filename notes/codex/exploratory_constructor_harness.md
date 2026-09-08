@@ -160,3 +160,31 @@ worker check passed in `attempt010-propagating`; source/registry identities are
 in `propagating_manifest.json`. Pilot `f560276b` also includes the independently
 checked 048 cyclic vacancy policy. Both were stable before the B005 snapshot;
 no real B005 constructor call or existing snapshot change occurred here.
+
+## Track C005 adapter
+
+After 048 was frozen, `quotient-vacancy` adds the direct standalone
+`algorithms/quotient_vacancy.py:vacancy_embed` entrypoint with the same deadline
+API and empty configuration. Its single affected isolated worker check passed
+in 0.22 seconds (`attempt011-quotient-vacancy`); the source/registry binding is
+`quotient_vacancy_manifest.json`. Pilot hash is `3468e300`. C005 froze that
+version before further shared edits; no real constructor call was needed here.
+
+## Track B006 and C006 adapters
+
+`propagating-tree-reuse` maps directly to
+`algorithms/factored/propagating_reuse_construction.py:frontier_embed`, with
+empty configuration and the existing absolute-deadline interface. Its affected
+synthetic worker check passed (`attempt012-propagating-reuse`), with identities
+in `propagating_reuse_manifest.json`. B006 froze pilot `be2e90fc` before C006's
+registration and runs only those immutable bytes.
+
+`quotient-distinct` then adds
+`algorithms/quotient_distinct.py:distinct_embed`, also with empty configuration.
+The one affected synthetic worker check passed in 0.22 seconds
+(`attempt013-distinct`); source/registry identities are bound in
+`quotient_distinct_manifest.json`. Pilot is
+`926d543e7e47b6ddc23fd3bfb723736b4bbdbd1ad996abce2b745b145f143a65`.
+Each addition changes only the explicit registry and its parameterized adapter
+case. No candidate constructor, corpus call, or shared validator modification
+was needed for these integrations; the 048 snapshot remains unchanged.

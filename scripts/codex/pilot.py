@@ -44,6 +44,8 @@ CONSTRUCTORS = {
                                'frontier_embed'),
     'propagating-tree': ('packages/ember-qc/src/ember_qc/algorithms/factored/propagating_construction.py',
                          'frontier_embed'),
+    'propagating-tree-reuse': ('packages/ember-qc/src/ember_qc/algorithms/factored/propagating_reuse_construction.py',
+                               'frontier_embed'),
     'multilevel-regions': ('packages/ember-qc/src/ember_qc/algorithms/multilevel_regions.py',
                            'multilevel_embed'),
     'multilevel-regions-v2': ('packages/ember-qc/src/ember_qc/algorithms/multilevel_regions_v2.py',
@@ -52,6 +54,10 @@ CONSTRUCTORS = {
                                  'quotient_embed'),
     'quotient-compact': ('packages/ember-qc/src/ember_qc/algorithms/quotient_compact.py',
                          'compact_embed'),
+    'quotient-vacancy': ('packages/ember-qc/src/ember_qc/algorithms/quotient_vacancy.py',
+                        'vacancy_embed'),
+    'quotient-distinct': ('packages/ember-qc/src/ember_qc/algorithms/quotient_distinct.py',
+                         'distinct_embed'),
 }
 
 
