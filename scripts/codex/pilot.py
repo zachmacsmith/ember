@@ -50,6 +50,8 @@ CONSTRUCTORS = {
                                'frontier_embed'),
     'propagating-tree-growth': ('packages/ember-qc/src/ember_qc/algorithms/factored/propagating_growth_construction.py',
                                 'frontier_embed'),
+    'propagating-tree-matching': ('packages/ember-qc/src/ember_qc/algorithms/factored/propagating_matching_construction.py',
+                                  'frontier_embed'),
     'multilevel-regions': ('packages/ember-qc/src/ember_qc/algorithms/multilevel_regions.py',
                            'multilevel_embed'),
     'multilevel-regions-v2': ('packages/ember-qc/src/ember_qc/algorithms/multilevel_regions_v2.py',
