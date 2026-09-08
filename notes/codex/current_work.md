@@ -6,6 +6,15 @@ or busclique inside it, ideal Z12, quality and success retained, roughly MM's
 runtime range. The pending user question about optimal ACL-1 ties has no answer;
 do not interpret silence as a change in the success criterion.
 
+**Running diagnostic:** 040 on hyde03, controller 143531, started at
+07:37:00.001 UTC. Remote preflight and all 23 final focused checks passed.
+A fresh observation found its first geometry worker active, inherited lock
+busy and detached tmux present. Never restart it after an observer failure.
+Execution manifest is
+`3f6155277ba866f376427b105371bb7b8a8abc70cefe961542f5a139534e096d`;
+transport is `9dfba5ece5e210c9ca932c5b4fa277e807ceafb3b67d083239c61590fdbe8865`.
+See `experiments/040_launch_record.md`. No result conclusion is available yet.
+
 **Latest completed run:** 039 on hyde03, controller 139008, finished at
 06:24:51.479 UTC with all 68 records finalized SUCCESS. Root verified the
 controller and last worker absent, no matching run process, free lock, stopped
@@ -331,8 +340,8 @@ Focused synthetic/tiny Z2 checks have run; no corpus run has occurred. Root has
 accepted the final independent geometry/offline reviews and verified all review
 hashes. Diagnostic digest is
 `0c68ab814eb76aea5876ec79386d1cbabd59f8a37197c688e1d12d447c412733`.
-One target-environment 23-check suite and final remote preflight are still
-required before launch. Hyde03 readiness passes; intended run path is absent.
+The target-environment 23-check suite and final remote preflight passed. Root
+launched once on hyde03; current identities and lifecycle are recorded above.
 
 The reviewed theory
 allows several center qubits and exact singleton-leaf assignment at a fixed
@@ -354,9 +363,9 @@ owned-site Hall-counting caveat; none is a novelty or superiority claim.
    The controller and all workers have terminated; never restart them.
 3. Preserve 039's independently verified negative full-pipeline outcome and all
    unsuccessful work. Local improvements did not imply a final quality gain.
-4. Complete and independently review the physical-locality instrumentation,
-   then freeze and preflight one diagnostic run. Its question is whether exact
-   raw line updates are cheap; raw counts are not final ACL.
+4. Observe the running physical-locality diagnostic through fresh connections,
+   retrieve only after quiescence, and audit all saved outputs and costs. Its
+   question is whether exact raw line updates are cheap; raw counts are not ACL.
 5. Continue one general constructor/refinement pipeline. No MM or busclique
    dependency, cached competitor input, hidden fallback, per-family dispatch,
    selected seed or best-of result is allowed. Broader replication and fresh

@@ -943,3 +943,24 @@ KillUserProcesses=false. Root's fixed-run remote helper was independently
 reviewed. It supports quiescent failed-run retrieval without rewriting stale
 controller state and requires the target-environment check summary before start.
 No new corpus controller has started at this checkpoint.
+
+040 froze with execution manifest
+3f6155277ba866f376427b105371bb7b8a8abc70cefe961542f5a139534e096d.
+Staging verified 165 files, transport digest
+9dfba5ece5e210c9ca932c5b4fa277e807ceafb3b67d083239c61590fdbe8865.
+Remote preflight passes and finds no prior controller/worker/session/lock.
+The final 23-check suite passes in the actual hyde03 native interpreter, with
+unchanged diagnostic/environment, no failures/errors/prohibited imports;
+summary18f703ee6e9c58e0dc4a228b785352ca2e682a7c60724065e4bbd6cb381c6c6b.
+Root accepted the final start gate and launched once. Controller143531 starts
+at07:37:00.001 UTC. A fresh07:37:20.614 observation finds geometry worker143539
+active, inherited lock busy and detached tmux present. No completed input or
+scientific outcome is claimed at launch. Never restart this identity.
+
+While040 runs, algorithm audit has a separate design-only task on distinct
+endpoint support as an equal-Q refinement potential. Literature checks relevant
+prior art. The hypothesis distinguishes multiple couplers incident to one chain
+qubit from contacts distributed across deletable chain sites; connectivity and
+singleton saturation are explicit limitations. No policy implementation, family
+selection or source change is authorized by that design task. Benchmark audit
+prepares the independent040 saved-data auditor; root retains lifecycle ownership.
