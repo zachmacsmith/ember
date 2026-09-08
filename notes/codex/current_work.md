@@ -172,14 +172,16 @@ class-wide improvement.
 
 ## Current work and ownership
 
-The 038 diagnostic controller is running locally as PID `60678`, detached
-session/process group `60678`, started 05:42:33 UTC. Its launcher exited zero
-and the first independent observer found the inherited lock busy, two completed
-inputs and five atomic observations. The exact handle is
-`results/codex/038-initial-prefix-certificates/controller.json`, with
-`launch.json`, `controller.stdout`, `controller.stderr` and per-input progress
-beside it. Do not rerun launch after a Wi-Fi or observer interruption. The goal
-remains active and unmet; no other benchmark controller is running.
+The 038 diagnostic controller completed locally at 05:46:49.789 UTC after its
+05:42:33 UTC start. Root verified controller PID `60678` absent, all 34 workers
+reaped, 68 atomic observations, free inherited lock and empty controller stderr.
+The terminal controller SHA is
+`5895509a4cd90091c25f0a342e957852f770dc12565a900de24db2b65c6255ae`;
+the evidence is `results/codex/038-initial-prefix-certificates/root-terminal-observation.json`.
+Do not restart this run. Benchmark audit is executing its independent complete
+results analysis; root is running the separately frozen analyzer into
+`root-frozen-analysis`. No embedding benchmark controller is running. The goal
+remains active and unmet.
 
 Hyde02 environment preparation completed normally at approximately 05:29:58 UTC
 (exec session `43604`, started 05:26:55 UTC, exit zero). The pinned preparation
@@ -203,13 +205,17 @@ in commit `75860aea`, with all six effective SSH routes checked.
   diagnostic, including native/AST capture, worker, input/source/environment
   freeze and focused checks. It may run small synthetic correctness checks, but
   no production edits. That implementation is now frozen and reviewed. The agent
-  is now independently auditing the connected core and creating separate
-  expanded-assignment, original-graph and interruption checks.
+  completed the independent connected-core audit. Root read that review and
+  reproduced it, then authorized native/contact/pilot integration and a new
+  focused test file. Those integration edits are now in progress and mutable;
+  no corpus use is authorized until their final checks and source freeze.
 - `literature` completed the 038 supervision helper and eight synthetic check
   groups, then received root's connected-core-only implementation task. It owns
   the new `connected_star_relocation.py`, focused new tests, a Z12 witness and
-  one implementation note. No existing production modules, 038 files, scheduler
-  integration or corpus benchmark may change in that task.
+  one implementation note. It also completed integration-plan and 039-protocol
+  reviews. It now owns independent 039 preflight preparation, including the
+  evaluator-only original/label-map freeze. No candidate or corpus calls in
+  that task; final integrated source/task verification follows root preparation.
 - `benchmark_audit` completed 037's report, the connected implementation-policy
   review and final 038 preflight. It now owns 038's complete independent results
   audit after verified controller termination and a free inherited lock. Root
@@ -233,9 +239,15 @@ diagnostic `ec34d4e18e0fb72870e473b92669959f968288cec95bf62e2deb28bce85e9d78`.
 The final prelaunch observation found all five output directories empty and no
 controller attempt. Root's `results/codex/038-initial-prefix-certificates/launch.py`
 started the frozen controller once at 05:42:32 UTC and recorded PID 60678;
-controller startup was 05:42:33 UTC. All results remain provisional until the
-complete terminal audit. If no timely initial certificate exists, reject this
-checkpoint position instead of tuning a later index.
+controller startup was 05:42:33 UTC and all workers finished at 05:46:49 UTC.
+Root's frozen analyzer completed with zero audit errors or nonbinding replay
+mismatches: 26 VALID_NONATTAINING observations and 42 SKIPPED_OVERLOAD, zero
+timely certificates. All 34 cold/second captures are comparable and agree in
+saved geometry, RNG, orders and structural-state hashes; physical chain maps
+exist for only the 13 eligible pairs. The independent complete audit is still
+pending. If it confirms this result, reject the fixed initial-checkpoint policy
+including its overload throttle; do not tune later checkpoint indices or infer
+that every skipped initial state is physically infeasible.
 
 The prerequisite read-only certificate audit is complete and root-repeated:
 all 170 saved candidate outputs validate. Only path/cycle attain the degree
@@ -253,8 +265,22 @@ disabled; its raw logs remain, and only the harness was corrected. Four separate
 native-environment witnesses include actual ideal Z12, degree-22 source center,
 Q 25 to 24 and center length 3 to 2 using 1,808 total units. A saved alternative
 valid embedding accompanies the known one-root failure. These are mechanism
-checks, not corpus quality or speed evidence. The independent oracle review is
-running and remains necessary before integration.
+checks, not corpus quality or speed evidence. The independent oracle review
+passed: 32,404 matching comparisons, 419 connected footprints, 121 strict-Q
+certificates and 2,315 query/shared/cache interruption checks. Root read the
+complete review and reran its verifier; summary matches except audit wall and
+six deterministic JSON files match byte-for-byte. The accepted review SHA is
+`18abd36b638fcb376058132a3252e6366600298df48aec7d8106fd6f1930e33d`.
+Root has now authorized integration and focused checks, without a corpus run.
+
+The draft 039 complete-pipeline protocol compares only the global control with
+the connected policy under the same work/deadline limits. Its input order is
+predeclared in `results/codex/039-protocol/graph_order.json`, SHA
+`8be5feff3102f38801ab32abf4efc17c9967aa22cc11b63e3969b955d01151fc`.
+Evaluator-only originals, label maps, expected normalized inputs and target are
+copied/hash-verified from 038: 103 files, manifest SHA
+`dc7632dd7d50cb72e81360f495d5b1a98c3a2ce68121c0ba4191dbfe9fa6c145`.
+These are preparation artifacts; no final 039 source/task freeze or launch yet.
 
 The reviewed theory
 allows several center qubits and exact singleton-leaf assignment at a fixed

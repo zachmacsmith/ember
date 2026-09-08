@@ -777,3 +777,28 @@ the initial-prefix diagnostic ran on this local machine for part of their
 execution; diagnostic timings are not MM comparisons or reserved-host timings.
 Algorithm audit is performing separate expanded-assignment/original-graph and
 interruption checks. No scheduler integration has occurred.
+
+038 completed at05:46:49.789UTC. Root verified the detached controller absent,
+all34workers reaped, all68observations present, free inherited lock and empty
+stderr; the exact terminal observation is saved. Root's frozen analyzer passed
+with zero audit errors or nonbinding replay mismatches,26VALID_NONATTAINING and
+42SKIPPED_OVERLOAD observations, and no timely certificate. The separate
+original-data audit is in progress. This outcome provisionally rejects the
+predeclared initial-checkpoint policy, not physical feasibility of skipped
+inputs and not every possible stopping rule. No later checkpoint is selected.
+
+Root read the full independent connected-core review and reran its verifier
+against the frozen source. All32,404matching checks,419connected footprints and
+2,315interruption prefixes passed. Summary agrees except audit duration; six
+deterministic JSON files are byte-identical, with a saved comparison record.
+Root accepted the core gate and assigned algorithm audit the bounded native/
+contact/pilot integration and new focused tests. The core/dependency and038
+artifacts stay frozen. Literature's integration critique emphasizes signed R,
+actual member growth, exclusive factory selection and charging live work once.
+
+039's draft comparison was independently reviewed before its corpus outcomes.
+Root predeclared all34inputs' explicit shuffle using seed
+ember-codex-039-input-order and retained the pilot's per-input arm shuffle.
+An evaluator-only103-file original/label/expected-normalized/target freeze was
+copied byte-for-byte from audited038records; literature is independently
+checking it and preparing039preflight. No final039source/taskfreeze or launch.
