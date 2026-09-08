@@ -367,3 +367,26 @@ within one unchanged trajectory, with one final contact repair, not multiple
 initializers or selection among embedding algorithms. No production checkpoint
 callback has been implemented yet. The Sudoku runner adapter is independently
 under review before any supplementary embedding call.
+
+The complete 026 comparison is retrieved and independently audited: all 68
+embeddings are timely and valid. Spectral initialization saves 644 qubits versus
+the fixed random control, with 23 improvements, nine regressions and two ties.
+Against historical MM it still has eight wins, 21 losses and two optimal ties
+on 31 common timely successes. Root reran ordinary analysis successfully and
+reviewed the complete family ledger. Spectral is the single initialization for
+the next development revision; every regression remains part of the evidence.
+The numerical audit verifies recorded diagnostics, not residuals recomputed from
+unsaved eigenvectors. No all-family or generalization claim follows.
+
+The 030 checkpoint diagnostic preserves exact search trajectories and validates
+all 150 evaluated physical states. It finds seven pre-refinement qubits of gain
+on complete-40 but none on ER-80 or grid-64, at substantial conversion cost. Root
+reran its independent analyzer successfully. The 64-evaluation policy is not
+promoted. A new preimplementation critique instead examines direct singleton
+relocation through exact common neighbor-chain boundaries and its shared-budget
+cost, including length-one chains excluded by current group generation.
+
+After 026 quiescence and retrieval, the six-trial 029 Sudoku comparison completed
+on hyde03. Its independent supplementary-input audit is ongoing. Pinned
+environment preparation and supervisor inspection on hyde04 proceed separately;
+no global package or service change is authorized in that preparation task.

@@ -6,16 +6,14 @@ or busclique inside it, ideal Z12, quality and success retained, roughly MM's
 runtime range. The pending user question about optimal ACL-1 ties has no answer;
 do not interpret silence as a change in the success criterion.
 
-## Running experiment
+## Latest cluster experiment
 
-`026-corpus-spectral-initialization` is running on hyde03, after completed 025 was
-retrieved. It compares random versus one bounded spectral initialization in the
-same contact-rearrangement pipeline, 34 inputs and 68 trials, one seed, 60 seconds.
-Frozen commit `f93f889f428baa26d1722382c77de385d4b4822f`; source hash
+`026-corpus-spectral-initialization` completed on hyde03 and was retrieved and
+independently audited. All 68 results are timely and valid. Its frozen source is
 `91824466fdd3880940df0cc6d3569a461a617c3d1ae883e50425ee368952a765`.
-Initial live check found controller 122275 and worker 122287, held lock and live
-tmux supervisor. The benchmark auditor monitors this exact run. Do not restart
-it after a transient connection failure. Retrieve and analyze after quiescence.
+The already frozen `029-sudoku-development-comparison` then completed all six
+calls; fresh supervisor status reports complete, lock free and exit zero. Its
+independent audit is in progress. Neither completed controller should restart.
 
 ## Most recent complete evidence
 
@@ -29,30 +27,42 @@ The strict arm reproduces all 34 strict-019 embeddings exactly. Contact policy
 still wins eight and loses 23 against historical MM quality. Ordinary and
 independent artifact checks pass; no new MM timing comparison is available.
 
-026 local smoke: all three predeclared spectral calls valid, with MM absent and
-no prohibited imports. This is correctness evidence only. The integration suite
-passed 160 focused tests, then the full 14-test integration file passed after
-adding the approximate-success boundary test.
+026: spectral improves 23 inputs, regresses on nine and ties two against its
+random-initialized control, saving 644 qubits and lowering mean ACL 4.146%.
+Against historical MM quality it has eight wins, 21 losses and two optimal ties
+(cycle and path) on 31 common timely successes. The other three MM timeouts
+remain separate. All controls exactly replay 025 chain sets. Root reran ordinary
+analysis; the independent audit checks every original embedding and numerical
+diagnostic consistency. No vectors/orders were retained to recompute residuals.
+Carry the spectral configuration forward globally as the development candidate;
+do not select initialization by input or family. One graph/seed per family is
+not evidence about family means or generalization.
 
 027: Sudoku q2/q3 records are frozen separately, with new IDs 1000002/1000003,
 16/81 vertices and 56/810 edges. Root reran all 34 tests and verified the bundle.
-Original entries remain unchanged; q4/q5 are reserved and ungenerated. No solver
-has used these new inputs, so embeddability remains unproved.
+Original entries remain unchanged; q4/q5 are reserved and ungenerated. Their
+frozen input provenance says feasibility unproved. The separate 029 results
+must establish any subsequent feasibility claim without rewriting those inputs.
+
+030: 150 checkpoint conversions are valid and preserve the unchanged placement
+trajectory. Choosing the smallest evaluated physical state saves seven qubits
+on complete-40 before contact repair and none on the two sparse cases. Repeated
+conversion adds substantial cost. Root reran the independent artifact analysis;
+do not promote this 64-evaluation policy or tune its cap on these three inputs.
 
 ## Parallel work and ownership
 
-- `benchmark_audit`: 025 review and 026 launch notes are complete and reviewed;
-  now monitor and independently audit 026. Root reran ordinary 025 analysis.
+- `benchmark_audit`: 026 review is complete and reviewed. Now retrieve and
+  independently audit the six 029 results, with separate Sudoku provenance.
 - `algorithm_audit`: 028 performance change is complete and independently reviewed;
   55 proposal tests plus 38 root integration tests pass. All 12 outputs and
   trajectories match exactly, with small observed speed gains and timing caveats.
-  Now specify and diagnose physical-qubit checkpoint selection in one unchanged
-  placement trajectory. Own `physical_checkpoint_spec.md` and additive diagnostic
-  artifacts under `results/codex/030-physical-checkpoint-diagnostic`; no production
-  plane/native callback, new pilot configuration or repeated contact repair yet.
+  030 is complete and reviewed. Now specify direct singleton relocation using
+  common neighbor-chain boundaries, including zero-excess chains under the same
+  qubit/contact objective. Own `singleton_relocation_spec.md`; critique before
+  implementation and explicitly account for shared work and scheduling costs.
 - `literature`: 029 adapter is complete; root reviewed it, reran 103 tests and
-  committed `4cad1d67`. The six-trial run is staged on hyde03 and the benchmark
-  auditor will start it after 026 is quiescent and retrieved. Now prepare the
+  committed `4cad1d67`. The six-trial run completed on hyde03. Now prepare the
   pinned environments on hyde04 and inspect supervisor availability, with evidence
   under `031-second-node-preparation`. No benchmark, global package/service
   change or new supervisor fallback is authorized in that bounded task.
@@ -64,13 +74,12 @@ Preserve unrelated `.claude/` and graph-library `.verified.json` files.
 
 ## Next actions
 
-1. Review and commit stable 025/026 notes, then preserve 026 all-input results and
-   failures before deciding whether spectral initialization merits further study.
-2. Preserve the completed 028 evidence. Review 030's physical-score mismatch and
-   cost evidence before choosing a bounded integration experiment. Neither the
-   small speed gain nor better checkpoint scores prove an all-class improvement.
-3. Follow the staged 029 comparison through launch and independent complete
-   analysis, preserving its separate input population and actual new provenance.
+1. Preserve complete 026/030 evidence and develop a fixed direct singleton
+   relocation experiment after reviewing its design, failure cases and budgets.
+2. Keep the 028 semantics-preserving speed change. No physical-checkpoint
+   production callback is justified by the completed 030 diagnostic.
+3. Finish independent 029 analysis, preserving its separate input population
+   and actual new provenance.
    Review the second-node preparation before using it for later experiments.
 4. Continue general revisions from observed failure mechanisms. No source-family
    dispatcher, per-input best-of result, hidden fallback, broad superiority claim,

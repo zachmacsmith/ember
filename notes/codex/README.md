@@ -6,9 +6,11 @@ execution, ideal Z12, primary mean ACL, runtime roughly within MM's order of mag
 An independent native constructor and bounded joint contact reconstruction are
 implemented and tested in an environment without MM. No algorithm has yet
 demonstrated the requested superiority across graph families. The current
-research candidate uses structural group coverage and permits equal-size contact
-rearrangements only when an exact secondary objective improves; broader results
-remain necessary, and novelty is unproved.
+research candidate uses one bounded spectral initialization, structural group
+coverage, and equal-size contact rearrangements only when an exact secondary
+objective improves. It still loses to MM on 21 of 31 common timely inputs in
+the latest development screen; broader results remain necessary, and novelty
+is unproved.
 
 - [Final research plan](../../PLAN_CODEX.md)
 - [Append-only user prompts](../../PROMPTS_CODEX.md)
@@ -32,9 +34,11 @@ remain necessary, and novelty is unproved.
 - [Spectral initializer design and critique](spectral_initialization_spec.md)
 - [Independent numerical and attribution review](spectral_initialization_review.md)
 - [Fixed spectral integration experiment](experiments/026_spectral_initialization.md)
+- [Completed spectral comparison and remaining MM gaps](experiments/026_results_review.md)
 - [Corrected Sudoku development inputs and preserved original records](experiments/027_sudoku_development_supplement.md)
 - [Geometric-search performance diagnosis and bounded improvement](geometry_performance_spec.md)
 - [Sudoku comparison protocol and frozen supplementary run](experiments/029_sudoku_comparison_protocol.md)
+- [Sudoku comparison launch and completion status](experiments/029_launch_status.md)
 - [Physical-qubit checkpoint hypothesis and preimplementation critique](physical_checkpoint_spec.md)
 - [Generalization and final confirmation protocol](generalization_protocol.md)
 
