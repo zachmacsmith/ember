@@ -288,8 +288,6 @@ CONFIGS['native-search-joint1-contacts'] = dict(
     CONFIGS['native-search-joint1-sites-groups'], polish_objective='qubits_contacts')
 CONFIGS['native-search-joint1-contacts-spectral'] = dict(
     CONFIGS['native-search-joint1-contacts'], initialization='spectral')
-CONFIGS['native-search-joint1-contacts-spectral-final-deletion'] = dict(
-    CONFIGS['native-search-joint1-contacts-spectral'], final_cleanup='deletion')
 CONFIGS['native-search-joint1-endpoint-support-spectral'] = dict(
     CONFIGS['native-search-joint1-contacts-spectral'],
     polish_objective='qubits_endpoint_support')

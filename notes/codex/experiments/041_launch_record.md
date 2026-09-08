@@ -70,3 +70,19 @@ The supervisor uses tmux with timeout and `KillUserProcesses=false`, independent
 of the observing SSH connection. A fresh connection verified live processes
 and lock/session state after launch. This tests reconnection, not an actual
 Wi-Fi network switch. Outcome validation and accounting remain pending.
+
+## Completion and retrieval
+
+The original controller completed at **09:15:23.430 UTC**
+(`1788858923.4296567`), with all 68 records finalized SUCCESS. Observation at
+09:15:37.539 UTC found no matching run process in `/proc`, no live controller
+or last worker, a free inherited lock, stopped tmux and supervisor exit zero.
+Root fetched into the previously absent local archive
+`results/codex/retrieved/hyde03/041-endpoint-support-pipeline`; the transfer exited
+zero and all 435 inventory files matched digest
+`0216429b5820b8ea81f161f8e769180fdf10d99d561e4e0ac127f42e511f38a5`.
+A second local complete-inventory/hash check and independent canonical-graph
+validity/Q recount pass. These observations establish preserved execution and
+valid serialized minors; the complete results report separately addresses
+original-label provenance, comparison populations and scoring diagnostics.
+No solver or experiment restart occurred.

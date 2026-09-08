@@ -6,11 +6,17 @@ or busclique inside it, ideal Z12, quality and success retained, roughly MM's
 runtime range. The pending user question about optimal ACL-1 ties has no answer;
 do not interpret silence as a change in the success criterion.
 
-**Active cluster run:** 041 on hyde03, controller 150200, started at
-09:07:16.175 UTC. Fresh SSH observation confirmed live controller/worker 150212,
-busy inherited lock and detached tmux session, initially 0/68 finalized. See
-`experiments/041_launch_record.md`. Never restart this run after an observer
-failure; inspect its existing identity. All older recorded runs are terminal.
+**Latest completed cluster run:** 041 on hyde03, controller 150200, ran
+09:07:16.175–09:15:23.430 UTC. All 68 calls finalized SUCCESS. Fresh observation
+confirmed no matching processes, free inherited lock, stopped tmux and supervisor
+exit zero. Retrieval checked all 435 files, digest
+`0216429b5820b8ea81f161f8e769180fdf10d99d561e4e0ac127f42e511f38a5`.
+Never restart it. Root independently rehashed the complete archive and checked
+all 68 canonical minors and Q/ACL arithmetic: 9 lower, 6 higher, 19 ties;
+Q 15059 to 15050, mean per-input ACL 3.3351353061 to 3.3328938601. The full
+independent audit reports matching original-graph validity and complete endpoint
+accounting; its final report awaits root review. This small development result
+does not meet the broad goal. All project benchmark controllers are terminal.
 
 **Latest completed diagnostic:** 040 on hyde03, controller 143531, ran from
 07:37:00.001 to 07:57:57.603 UTC. All 34 inputs and 68 phases finished with
@@ -49,7 +55,7 @@ route was verified. See `experiments/041_preflight_review.md` and
 `results/codex/041-launch`. Root owns the single start and subsequent lifecycle;
 after any observer interruption, inspect the same run before doing anything
 else. Its proxy counterexample and prior-art limits remain explicit; no 041
-quality outcome is yet claimed.
+across-class or MM superiority is claimed.
 
 The separate read-only deletion audit is complete and root-repeated: all 34
 frozen 039 control outputs are valid, and 43 individual deletions on 43 chains
@@ -70,7 +76,7 @@ Independent integration review and a full-pipeline comparison remain pending.
 The algorithm agent separately reviews at most two substantive, general next
 mechanisms, accounting for prior rejected policies and explicit self-critique.
 
-**Latest completed candidate comparison:** 039 on hyde03, controller 139008, finished at
+**Prior candidate comparison:** 039 on hyde03, controller 139008, finished at
 06:24:51.479 UTC with all 68 records finalized SUCCESS. Root verified the
 controller and last worker absent, no matching run process, free lock, stopped
 tmux and supervisor exit zero. The 433-file retrieved archive has digest

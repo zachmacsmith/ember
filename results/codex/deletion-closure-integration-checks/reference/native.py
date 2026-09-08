@@ -84,60 +84,6 @@ def _packed_layout(src_adj, grid, order, *, passes, deadline):
     }
 
 
-def _final_deletion_cleanup(chains, source, target, src_adj, adjacency, *,
-                            deadline, polish_passes, info):
-    """Enabled-only wrapper; the original-graph final validator stays outside."""
-    started = time.perf_counter()
-    try:
-        info['before_qubits'] = sum(map(len, chains.values()))
-        info['after_qubits'] = info['before_qubits']
-        info['qubits_saved'] = 0
-        info['status'] = 'skipped'
-        if not polish_passes:
-            info['reason'] = 'polish_disabled'
-            return chains, None
-        if not info['contact_invoked']:
-            info['reason'] = 'deadline_before_refinement'
-            return chains, None
-        if info['contact_invalid_input']:
-            info.update(status='error', reason='invalid_contact_input')
-            return chains, 'INVALID_OUTPUT'
-        if deadline is not None and time.perf_counter() >= deadline:
-            info['reason'] = 'deadline_before_cleanup'
-            return chains, None
-        checking = time.perf_counter()
-        try:
-            info['entry_validated'] = is_valid_embedding(chains, source, target)
-        finally:
-            info['entry_validation_wall'] = time.perf_counter() - checking
-        if not info['entry_validated']:
-            info.update(status='error', reason='invalid_cleanup_entry')
-            return chains, 'INVALID_OUTPUT'
-        if deadline is not None and time.perf_counter() >= deadline:
-            info['reason'] = 'deadline_after_entry_validation'
-            return chains, None
-        from ember_qc.algorithms.factored.deletion_closure import deletion_closure
-        info['module_calls'] += 1
-        calling = time.perf_counter()
-        try:
-            chains, module_info = deletion_closure(
-                chains, src_adj, adjacency, deadline=deadline)
-        finally:
-            info['module_call_wall'] = time.perf_counter() - calling
-        info['module_returned'] = True
-        info['module'] = module_info
-        info['after_qubits'] = sum(map(len, chains.values()))
-        info['qubits_saved'] = info['before_qubits'] - info['after_qubits']
-        info['status'] = 'completed' if module_info['closure_complete'] else 'interrupted'
-        info['reason'] = module_info['stopped_reason']
-        return chains, None
-    except Exception:
-        info.update(status='error', reason='exception')
-        raise
-    finally:
-        info['wall'] = time.perf_counter() - started
-
-
 def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
                  construction="search", order_strategy="random", packing_passes=2,
                  max_asks=10000, sched_seed=None, polish_passes=0,
@@ -145,8 +91,7 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
                  polish_expansions=500000, polish_boundary_sites=0,
                  polish_group_policy="legacy", polish_objective='qubits',
                  polish_tree_policy='greedy', initialization='random',
-                 polish_singleton_policy='legacy', polish_star_policy='off',
-                 final_cleanup='off'):
+                 polish_singleton_policy='legacy', polish_star_policy='off'):
     """Return a validated independent result or an explicit construction failure.
 
     Deadline overruns are reported and never counted as timely success. Conversion
@@ -156,10 +101,6 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
     contact-refinement call and shares that call's work and deadline limits.
     Matching-star or connected-center relocation selects one experimental
     proposal policy in that same call; either requires the legacy singleton policy.
-    ``final_cleanup='deletion'`` optionally closes safe single deletions after
-    legacy contact refinement, within the original deadline and before final
-    validation. It is currently supported only with greedy contact scoring,
-    legacy singletons and stars off; disabled refinement causes a recorded skip.
     """
     started = time.perf_counter()
     deadline = started + timeout if timeout is not None and timeout > 0 else None
@@ -176,52 +117,17 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
         diag['polish_singleton_policy'] = polish_singleton_policy
     if polish_star_policy != 'off':
         diag['polish_star_policy'] = polish_star_policy
-    if final_cleanup == 'deletion':
-        diag['final_cleanup_policy'] = final_cleanup
-        cleanup_info = {
-            'status': 'not_reached', 'reason': 'pipeline_not_reached',
-            'pipeline_stage': 'parameters', 'pipeline_status': None,
-            'contact_invoked': False, 'contact_returned': False,
-            'contact_invalid_input': None, 'entry_validated': None,
-            'before_qubits': None, 'after_qubits': None, 'qubits_saved': None,
-            'wall': None, 'prerequisite_wall': None, 'entry_validation_wall': None,
-            'module_call_wall': None, 'module_calls': 0, 'module_returned': False,
-        }
-        diag['final_cleanup'] = cleanup_info
 
     def result(embedding, status, **extra):
         elapsed = time.perf_counter() - started
         if deadline is not None and time.perf_counter() > deadline:
             diag["deadline_overrun"] = max(0.0, elapsed - timeout)
             status = "TIMEOUT"
-        if final_cleanup == 'deletion':
-            cleanup_info['pipeline_status'] = status
-            if cleanup_info['status'] == 'not_reached':
-                cleanup_info['status'] = 'skipped'
         return {"embedding": embedding, "success": status == "SUCCESS",
                 "status": status, "time": elapsed, "diag": diag, **extra}
 
     if timeout is not None and (not math.isfinite(timeout) or timeout <= 0):
         return result({}, "ERROR", error="timeout must be finite and positive, or None")
-    if final_cleanup not in ('off', 'deletion'):
-        return result({}, 'ERROR', error='unknown final cleanup policy')
-    if final_cleanup == 'deletion':
-        if (polish_objective != 'qubits_contacts' or polish_tree_policy != 'greedy'
-                or polish_singleton_policy != 'legacy' or polish_star_policy != 'off'):
-            return result({}, 'ERROR', error='final deletion requires greedy contact scoring, legacy singletons and stars off')
-        checking = time.perf_counter()
-        prerequisite_error = None
-        try:
-            for graph in (source_graph, target_graph):
-                if graph.is_directed() or graph.is_multigraph() or nx.number_of_selfloops(graph):
-                    prerequisite_error = 'final deletion requires simple undirected loopless graphs'
-                    break
-            if prerequisite_error is None and any(type(q) is not int for q in target_graph):
-                prerequisite_error = 'final deletion requires ordinary integer target labels'
-        finally:
-            cleanup_info['prerequisite_wall'] = time.perf_counter() - checking
-        if prerequisite_error:
-            return result({}, 'ERROR', error=prerequisite_error)
     if construction not in ("search", "packed"):
         return result({}, "ERROR", error="unknown construction")
     if initialization not in ('random', 'spectral'):
@@ -262,11 +168,6 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
             or source_graph.number_of_edges() > target_graph.number_of_edges()):
         return result({}, "INFEASIBLE_CAPACITY")
     if not source_graph:
-        if final_cleanup == 'deletion':
-            skipping = time.perf_counter()
-            cleanup_info.update(status='skipped', reason='empty_source',
-                                before_qubits=0, after_qubits=0, qubits_saved=0)
-            cleanup_info['wall'] = time.perf_counter() - skipping
         return result({}, "SUCCESS")
 
     # Existing geometric primitives require integer source labels. Keep an explicit
@@ -277,8 +178,6 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
     src_adj = {v: sorted(source[v]) for v in source}
     adjacency = build_adjacency(target_graph)
     try:
-        if final_cleanup == 'deletion':
-            cleanup_info['pipeline_stage'] = 'layout'
         import dwave_networkx as dnx
         positions = dnx.zephyr_layout(target_graph)
         grid = TileGrid(target_graph, positions, courses=True)
@@ -313,8 +212,6 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
         diag["layout"] = layout_info
         if deadline is not None and time.perf_counter() >= deadline:
             return result({}, "TIMEOUT")
-        if final_cleanup == 'deletion':
-            cleanup_info['pipeline_stage'] = 'conversion'
         chains, conversion = wire_seeds_exact(grid, points, state[1], src_adj, state)
         chains, completion = complete_seeds(grid, chains, src_adj, adjacency)
         # Isolates impose no contacts and need just one unused physical vertex.
@@ -332,8 +229,6 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
             return result({}, "CONSTRUCTION_FAILED",
                           partial_embedding={labels[v]: list(c) for v, c in chains.items()})
         diag["constructed_qubits"] = sum(map(len, chains.values()))
-        if final_cleanup == 'deletion':
-            cleanup_info['pipeline_stage'] = 'initial_pruning'
         chains = spur_prune(chains, src_adj, adjacency, deadline=deadline)
         diag["pruned_qubits"] = sum(map(len, chains.values()))
         if polish_passes and (deadline is None or time.perf_counter() < deadline):
@@ -342,9 +237,6 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
                                  if polish_singleton_policy != 'legacy' else {})
             star_options = ({'star_policy': polish_star_policy}
                             if polish_star_policy != 'off' else {})
-            if final_cleanup == 'deletion':
-                cleanup_info['pipeline_stage'] = 'contact_refinement'
-                cleanup_info['contact_invoked'] = True
             chains, polish_info = contact_polish(
                 chains, source, target_graph, deadline=deadline,
                 max_passes=polish_passes, beam_width=beam_width, max_groups=max_groups,
@@ -353,17 +245,6 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
                 objective=polish_objective, tree_policy=polish_tree_policy,
                 **singleton_options, **star_options)
             diag["contact_repair"] = polish_info
-            if final_cleanup == 'deletion':
-                cleanup_info['contact_returned'] = True
-                cleanup_info['contact_invalid_input'] = bool(polish_info.get('invalid_input'))
-        if final_cleanup == 'deletion':
-            cleanup_info['pipeline_stage'] = 'final_cleanup'
-            chains, cleanup_error = _final_deletion_cleanup(
-                chains, source, target_graph, src_adj, adjacency,
-                deadline=deadline, polish_passes=polish_passes, info=cleanup_info)
-            if cleanup_error:
-                return result({}, cleanup_error)
-            cleanup_info['pipeline_stage'] = 'final_validation'
         embedding = {labels[v]: list(c) for v, c in chains.items()}
         if not is_valid_embedding(embedding, source_graph, target_graph):
             return result({}, "INVALID_OUTPUT")

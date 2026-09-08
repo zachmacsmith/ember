@@ -1,0 +1,7 @@
+{
+  "files": {
+    "packages/ember-qc/src/ember_qc/algorithms/factored/native.py": "2aab860de0c6d450b09e24af67c7582619c9818acec257566463b3c7700a4e43",
+    "scripts/codex/pilot.py": "938da94f320dd66ae509d9e931a56e7b5d9b4db3f263cda6430f63a93307b4bb"
+  },
+  "scope": "Workspace source immediately before accepted final-cleanup integration; no 041 observations read."
+}

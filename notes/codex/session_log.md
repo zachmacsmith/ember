@@ -1068,3 +1068,33 @@ pass root hash checks. A local manifest-base error was preserved and corrected
 before any remote start; no benchmark repetition occurred. The run remains
 pending; root owns observation/retrieval, benchmark audit prepares its independent
 result checks, and separate cleanup integration continues in the workspace.
+
+Automatic continuation 10 starts at 09:09 UTC. The previous turn is progress:
+041 was frozen, passed independent local/remote/target checks, launched once,
+and was observed live; closure integration scope was accepted and committed
+in 6a7ec785. The complete objective remains active and unmet. The exact new
+6,352-character prompt is appended to PROMPTS_CODEX.md, SHA256 92132ed770ab1504b08aa4931922753637c849779776f5d0e8346b9831d8f4c0.
+No no-progress or blocked condition is present.
+
+041 completed all68 calls at09:15:23.430UTC. Fresh process/lock/session/exit
+inspection establishes quiescence, and root retrieved435 files with exact digest
+0216429b5820b8ea81f161f8e769180fdf10d99d561e4e0ac127f42e511f38a5.
+Root's independent stdlib BFS/contact recount validates all68 canonical minors
+and reports9 lowerACL,6 higher,19ties; Q15059→15050 and macroACL3.3351353061→
+3.3328938601. The frozen independent full audit agrees, including original-label
+validity and all endpoint accounting; final report/root reading remain pending.
+No solver was repeated. The goal remains unmet.
+
+Cleanup integration passes34 focused author checks and189 broader checks;
+root reads the full diff, tests, runner and implementation note and verifies all
+20 author-manifest files. The independent integration reviewer reports12 groups
+passed on the local native interpreter; its final report is being frozen.
+042 input preparation alone is complete: all105 files preserve the previous
+map, and order813e83cee03dac431b460049182cd31a1c9e2beab04c3ffb191bbda7da677869
+uses the fixed042 shuffle across all34 structures. No042 source freeze/call yet.
+
+The next mechanism design retains one deletion-conditioned ownership-exchange
+hypothesis. Primary-source review finds substantial overlap with Bian/PSSA/CMR;
+root records reach/cost/novelty critiques and leaves pipeline integration open.
+A precise isolated API/specification is authorized, with no implementation or
+corpus diagnostic yet. It remains one proposed local move on one incumbent.

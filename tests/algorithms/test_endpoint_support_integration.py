@@ -106,4 +106,6 @@ def test_named_pilot_arm_only_changes_objective_and_leaves_historical_arm_unchan
     control = 'native-search-joint1-contacts-spectral'
     variant = 'native-search-joint1-endpoint-support-spectral'
     assert pilot.CONFIGS[variant] == dict(pilot.CONFIGS[control], polish_objective=OBJECTIVE)
-    assert {k: v for k, v in pilot.CONFIGS.items() if k != variant} == old.CONFIGS
+    cleanup = 'native-search-joint1-contacts-spectral-final-deletion'
+    assert pilot.CONFIGS[cleanup] == dict(pilot.CONFIGS[control], final_cleanup='deletion')
+    assert {k: v for k, v in pilot.CONFIGS.items() if k not in (variant, cleanup)} == old.CONFIGS
