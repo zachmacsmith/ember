@@ -81,5 +81,31 @@ The isolated correctness smoke uses the existing fixed development inputs
 `complete_40`, `regular_80_d3`, and `grid_8x8`, one spectral candidate call each,
 with the same 60-second end-to-end allowance and normal worker import guards.
 All three inputs are retained regardless of outcome. These calls exercise dense,
-sparse irregular and sparse geometric construction paths; they are not an
+sparse random and sparse geometric construction paths; they are not an
 MM comparison or a family-level performance estimate.
+
+All three smoke calls completed with independently valid embeddings and no
+forbidden import attempts or loaded embedding libraries. MM is absent from the
+candidate environment. The ordinary artifact analyzer passed all three records.
+
+| Smoke source | Qubits / ACL | Solver / process seconds | Initialization seconds |
+| --- | ---: | ---: | ---: |
+| complete_40 | 151 / 3.775 | 3.652 / 4.867 | 0.168 |
+| regular_80_d3 | 107 / 1.3375 | 3.841 / 4.632 | 0.131 |
+| grid_8x8 | 72 / 1.125 | 3.099 / 3.891 | 0.128 |
+
+These are local cold-process observations, including first-call JIT cost. They
+are not pooled with cluster timings. Each call's two layout vectors met the
+residual tolerance; complete_40 correctly reports an unresolved subspace cutoff.
+Raw smoke artifacts are at `results/codex/026-spectral-native-smoke`.
+
+## Frozen full comparison
+
+Code revision: `f93f889f428baa26d1722382c77de385d4b4822f`.
+Source snapshot: `91824466fdd3880940df0cc6d3569a461a617c3d1ae883e50425ee368952a765`.
+Verified transport: `481ae432e47dc5b0c9f3951d38080ee21e9de0d9e52833bafd15985322c9608c`.
+The 68 tasks are frozen in `results/codex/026-corpus-spectral-initialization`
+and staged at `/home/dabh/ember-codex/runs/026-corpus-spectral-initialization`
+on hyde03. They preserve selection 017 and its sidecars. The current stage has
+not launched a worker. The benchmark auditor will launch this exact run after
+freshly verifying quiescence of 025 and retrieving that finished archive.

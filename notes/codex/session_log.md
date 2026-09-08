@@ -294,3 +294,21 @@ numerical behavior and integration contract before any end-to-end experiment.
 A fresh goal read still reports `active`. The user was told `/goal resume` is
 currently unnecessary; no claim was made to fix the UI display or its internals.
 The original user question was already saved verbatim in `PROMPTS_CODEX.md`.
+
+Spectral integration is committed as `f93f889f`, following the source-only design
+checkpoint `d8385017`. Independent review found no integration blocker. Tests
+verify order-to-rank semantics through complete old-trajectory replay, failure
+boundaries, scheduler independence and a shared deadline. The focused suite passed
+160 tests; after adding the reviewer-requested finite-approximation boundary,
+the complete integration file passed 14 tests. The isolated native smoke then
+passed on all three predeclared development inputs with no MM installed or
+imported. No spectral superiority claim follows from those correctness checks.
+
+The complete 026 random-versus-spectral comparison is frozen and staged on hyde03
+with the same 34 readiness inputs, two fixed arms and 60 seconds each. It will
+start after 025 is quiescent and retrieved. The spectral policy changes only the
+single pipeline's initialization and never selects between embedding results.
+Two independent bounded tasks proceed meanwhile: prepare the explicitly planned
+Sudoku development supplement at box orders 2 and 3, preserving original IDs and
+reserved larger orders; and specify one semantics-preserving geometric-search
+speed improvement from the saved profiling evidence, before implementing it.
