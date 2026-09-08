@@ -56,3 +56,27 @@ Preparation used the existing pilot:
 ```
 
 Do not rerun `init` over this identity. New source/settings require a new identity; no reconnect causes a restart.
+
+## B002 outcome
+
+All18calls finalized and the detached supervisor exited0 before retrieval. All163retained files and task/source/target identities were checked. Archive `results/codex/retrieved/hyde02/track-b-frontier-002`, digest `9b4c61e7091413a7a9ed736d6df64b015fbc7b61e02fa8e44997dc0ae5bab84c`; complete tables/diagnostics `results/codex/track-b002-analysis/analysis001`. All six candidate successes are independently valid and timely. MM had eight successes and one late K100 output.
+
+| Input | Candidate status | Candidate Q | MM status | MM Q | Candidate seconds | MM seconds |
+|---|---|---:|---|---:|---:|---:|
+| complete_40 | FAILURE | — | SUCCESS | 194 | 23.186 | 7.912 |
+| complete_100 | FAILURE | — | TIMEOUT | 1057 | 19.997 | 62.927 |
+| bipartite_30_30 | FAILURE | — | SUCCESS | 180 | 25.099 | 11.961 |
+| random_er_80_d8 | SUCCESS | 301 | SUCCESS | 211 | 22.990 | 13.595 |
+| regular_80_d3 | SUCCESS | 114 | SUCCESS | 90 | 4.114 | 1.939 |
+| watts_strogatz_80 | SUCCESS | 112 | SUCCESS | 94 | 4.352 | 1.153 |
+| grid_8x8 | SUCCESS | 73 | SUCCESS | 70 | 3.264 | 0.935 |
+| honeycomb_5x5 | SUCCESS | 83 | SUCCESS | 71 | 4.552 | 1.318 |
+| king_8x8 | SUCCESS | 105 | SUCCESS | 90 | 5.443 | 1.105 |
+
+The late K100 MM result (1057Q,62.927seconds against60) is diagnostic only. B002 still has zero MM wins/ties and six losses. Its six valid-pair solver-time ratios are1.69–4.92. Solver CPU/wall ratios0.9979–0.9998 indicate little direct CPU descheduling in these calls, despite load around33 on32logicalCPUs. No cross-run MM timing claim follows.
+
+There is useful quality progress relative to B001 on every common success: regular148→114Q, Watts–Strogatz135→112, grid106→73, honeycomb98→83, king118→105. ER, which previously failed after61placements, now completes at301Q versus MM211. The revised constructor commits old-chain changes27times on ER and2–12times on each other successful input. This supports continuing the mechanism but does not isolate which B002 component caused the gain.
+
+All three dense inputs still exhaust exactly20million adjacency scans: K40after19vertices/227path queries, K100after14/109, bipartite after30/253. Every retained partial is valid and has zero violations of the declared one-free-extension-site condition. No dense preparation failure or frontier rejection is recorded. Thus this screen does not attribute those stops to frontier infeasibility. The broad average scan count per weighted path motivates inspecting the unbounded congestion cost rather than raising the work cap.
+
+Next hypothesis: replace per-site1+p by1+p/(1+p), preserving site-price order but bounding each site cost below2. This deliberately changes summed path preferences. It is a fixed-metric ablation within the new constructor, not an output selector. B002 remains unpromoted; B003 gets its own pre-code specification and the same nine-input screen.
