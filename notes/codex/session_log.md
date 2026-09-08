@@ -1277,4 +1277,27 @@ reject full-target occupancy. C004 tests one compact connected target subset.
 cyclic seed traversal after each accepted contraction instead of restarting it.
 About half of 046 proposals revisit earlier owner/site keys, which does not
 establish unchanged dependencies or justify a cache. Literature implements the
-bounded scheduling variant and targeted checks; original047 source stays frozen.
+ bounded scheduling variant and targeted checks; original047 source stays frozen.
+
+## 2026-09-08 18:40 UTC: mixed MM evidence and independent constructor lessons
+
+047 independently validates all 66 timely complete outputs. The current A
+pipeline completes 34/34, MM 32/34. Common-pair ACL: 11 wins, 19 losses,
+two ties; macro mean 14.29% lower. Median paired solver ratio 10.33 and
+16/32 above 10× leave runtime and across-input quality unresolved. The two
+MM timeouts remain explicit, including one valid late result.
+
+048 completed 68/68 reported SUCCESS, controller184715, one launch on03.
+The 446-file archive was retrieved after quiescence; frozen independent
+validation and cursor/order checks are now running. No quality claim yet.
+A049 is a design-only source elimination/core/reinsertion proposal; reverse
+extension is not guaranteed by a filled core minor and must be falsified.
+
+B005 gives the first fresh-construction MM wins: grid64Q and honeycomb70Q
+are ACL1. It completes6/9; ER regresses, and four other pairs lose. B006
+passes14focusedchecks and launched18tasks on02 at1788892799.551527,
+testing one-use carry of completed domain values. Future-aware chain growth
+remains separate. C005 keeps4/8successes and loses all four MM comparisons;
+constant-Q movement crosses the old domain but yields no new success or
+halved deficit. Reject its fixed policy. C006 tests distinct-neighbor loss
+in contraction with the C004 search baseline. All records remain exploratory.
