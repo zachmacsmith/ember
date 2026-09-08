@@ -1,5 +1,13 @@
 # Codex research plan
 
+2026-09-08 workflow amendment: run three independent research tracks concurrently
+(inherited prototype, demand-aware connected-tree construction, multilevel region
+splitting), with hypotheses and cheap falsification screens before implementation.
+Reuse audited infrastructure and reserve exhaustive testing for promising changes.
+See [the current workflow](notes/codex/tracks/workflow.md); this user-authorized
+amendment supersedes earlier exploratory audit sequencing, while preserving all
+algorithm, generality, Z12, runtime and eventual confirmation requirements.
+
 Status: approved in user prompt 6; implementation may proceed. The user additionally
 requires a general, principled heuristic with no graph- or family-specific fitting.
 Prepared after two self-critique rounds and two further checks of the runtime-focused

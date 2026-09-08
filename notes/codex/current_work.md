@@ -11,8 +11,8 @@ Exploratory screens use isolated dependencies, targeted checks, independent
 embedding validation and complete failure/time accounting. Exhaustive replay
 is deferred until a candidate is promising or shared correctness code changes.
 
-- **A, root, hyde03:** 043 ownership-exchange reach diagnostic is staged; target
-  integration check and one detached start are next. It compares first
+- **A, root, hyde03:** 043 ownership-exchange reach diagnostic is running as controller
+  170963; target 18-check suite passed and one detached start succeeded. It compares first
   contractions against ordinary reconstruction on all 34 accepted 042 entries,
   five seconds each. It is not a full-pipeline or MM comparison.
   [Protocol](experiments/043_ownership_exchange_reach_protocol.md).
