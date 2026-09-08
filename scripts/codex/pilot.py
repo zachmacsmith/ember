@@ -38,8 +38,16 @@ CONSTRUCTORS = {
                     'demand_embed'),
     'frontier-tree': ('packages/ember-qc/src/ember_qc/algorithms/factored/frontier_construction.py',
                       'frontier_embed'),
+    'frontier-tree-bounded': ('packages/ember-qc/src/ember_qc/algorithms/factored/frontier_bounded_construction.py',
+                              'frontier_embed'),
+    'frontier-tree-reinsert': ('packages/ember-qc/src/ember_qc/algorithms/factored/frontier_reinsertion_construction.py',
+                               'frontier_embed'),
     'multilevel-regions': ('packages/ember-qc/src/ember_qc/algorithms/multilevel_regions.py',
                            'multilevel_embed'),
+    'multilevel-regions-v2': ('packages/ember-qc/src/ember_qc/algorithms/multilevel_regions_v2.py',
+                              'multilevel_embed'),
+    'quotient-reconfiguration': ('packages/ember-qc/src/ember_qc/algorithms/quotient_reconfiguration.py',
+                                 'quotient_embed'),
 }
 
 
@@ -340,6 +348,9 @@ CONFIGS['native-search-joint1-contacts-spectral'] = dict(
     CONFIGS['native-search-joint1-contacts'], initialization='spectral')
 CONFIGS['native-search-joint1-contacts-spectral-final-deletion'] = dict(
     CONFIGS['native-search-joint1-contacts-spectral'], final_cleanup='deletion')
+CONFIGS['native-search-joint1-contacts-spectral-vacancy'] = dict(
+    CONFIGS['native-search-joint1-contacts-spectral-final-deletion'],
+    vacancy_refinement='bounded')
 CONFIGS['native-search-joint1-endpoint-support-spectral'] = dict(
     CONFIGS['native-search-joint1-contacts-spectral'],
     polish_objective='qubits_endpoint_support')

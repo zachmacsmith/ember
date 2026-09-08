@@ -100,3 +100,42 @@ one additional parameterized worker case are needed. Existing run snapshots,
 method configs, dispatch, validator and process handling remain unchanged.
 All nine targeted adapter cases pass in `attempt004-frontier`; no actual B002
 constructor or corpus call was needed to check this entrypoint wiring.
+
+## Track C002 adapter
+
+`multilevel-regions-v2` selects
+`algorithms/multilevel_regions_v2.py:multilevel_embed`, with the same API and
+empty configuration. The first V2 module used a package-relative helper import,
+which was incompatible with the standalone pilot loader. The author corrected
+it to load exact hash-checked sibling V1 bytes and use only structural utility
+functions; the V1 constructor is never called. A separate isolated import-only
+check confirms the real V2 loads through the pilot without `ember_qc` package
+imports or prohibited dependency attempts. No candidate was invoked.
+
+All ten targeted adapter tests pass in `attempt005-multilevel-v2`. The actual
+import-only evidence is under `multilevel-v2-import`. This adds two registry
+lines and one parameterized case; old methods and frozen screens are intact.
+
+## Track B003 adapter
+
+`frontier-tree-bounded` selects
+`algorithms/factored/frontier_bounded_construction.py:frontier_embed` with the
+unchanged deadline API and empty configuration. The dedicated fresh-worker
+adapter case passes in `attempt006-frontier-bounded`. Only that newly added
+case was run: it checks the two-line registry addition without repeating the
+already passing shared harness checks or invoking the actual constructor.
+
+## Track C003 and B004 adapters
+
+After the immutable 046 freeze, `quotient-reconfiguration` adds the standalone
+`algorithms/quotient_reconfiguration.py:quotient_embed` entrypoint. C003 froze
+pilot `1b281a9a` before the next registration. `frontier-tree-reinsert` then adds
+`algorithms/factored/frontier_reinsertion_construction.py:frontier_embed`; its
+pilot hash is `375b686eab25298b8bfabbf41e44cc4c37d056541938c743c58023d1c6a4e6b3`.
+Both retain the same absolute-deadline API and empty configuration. Each added
+only two registry lines and one parameterized worker case; each affected case
+passed independently in 0.30 seconds. Evidence is in
+`constructor-harness-checks/quotient_manifest.json` and
+`frontier_reinsert_manifest.json`. These were synthetic adapter checks, with
+the existing isolated worker and validator; no real constructor or corpus was
+called by this integration task. Existing 046 and C003 snapshots are unchanged.
