@@ -845,3 +845,15 @@ Root read the full narrative and independently checked all41manifest-listed
 review artifact hashes. No additional solver or repeated matching audit was
 needed. Benchmark audit now prepares the separate039original-data/accounting
 auditor while waiting for root's quiescent, hash-verified archive.
+
+Root read and accepted the separate allocation review (SHA
+8ffc8765c883b8328a73d63229232a494ca775811c19d4c9baf8e11a804eeabd) as design only.
+It restricts the replay guarantee to projected ordinary traces with no auxiliary
+commit, isolated state, unchanged scheduling and nonbinding deadlines. It
+retains explicit commit/deadline/cache/group-limit counterexamples; no allocation
+implementation or change to039followed. A fresh039observer found12of68records
+finalized SUCCESS, controller139008stillrunning, lockbusy and tmuxactive. These
+are provisional controller statuses, not independently audited quality results.
+The goal service remains active at its latest check; full research success
+remains unmet. The next work is039observation, terminal retrieval and the
+independent results/accounting review already assigned to benchmark/literature.
