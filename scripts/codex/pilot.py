@@ -34,6 +34,8 @@ ROOT = Path(__file__).resolve().parents[2]
 # Existing native CONFIGS and dispatch remain unchanged. These modules receive
 # only the supplied graphs and one common absolute deadline, never an embedding.
 CONSTRUCTORS = {
+    'native-reduced-core': ('packages/ember-qc/src/ember_qc/algorithms/factored/reduced_core_construction.py',
+                            'reduced_core_embed'),
     'demand-tree': ('packages/ember-qc/src/ember_qc/algorithms/factored/demand_construction.py',
                     'demand_embed'),
     'frontier-tree': ('packages/ember-qc/src/ember_qc/algorithms/factored/frontier_construction.py',
@@ -46,6 +48,8 @@ CONSTRUCTORS = {
                          'frontier_embed'),
     'propagating-tree-reuse': ('packages/ember-qc/src/ember_qc/algorithms/factored/propagating_reuse_construction.py',
                                'frontier_embed'),
+    'propagating-tree-growth': ('packages/ember-qc/src/ember_qc/algorithms/factored/propagating_growth_construction.py',
+                                'frontier_embed'),
     'multilevel-regions': ('packages/ember-qc/src/ember_qc/algorithms/multilevel_regions.py',
                            'multilevel_embed'),
     'multilevel-regions-v2': ('packages/ember-qc/src/ember_qc/algorithms/multilevel_regions_v2.py',
