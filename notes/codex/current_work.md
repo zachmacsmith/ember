@@ -15,8 +15,22 @@ Never restart it. Root independently rehashed the complete archive and checked
 all 68 canonical minors and Q/ACL arithmetic: 9 lower, 6 higher, 19 ties;
 Q 15059 to 15050, mean per-input ACL 3.3351353061 to 3.3328938601. The full
 independent audit reports matching original-graph validity and complete endpoint
-accounting; its final report awaits root review. This small development result
+accounting. Root accepts the corrected final report after reading the complete
+auditor and verifying all 38 review files and 14 references; see
+`experiments/041_root_results_acceptance.md`. This small development result
 does not meet the broad goal. All project benchmark controllers are terminal.
+
+**Current preparation:** 042 final-deletion comparison is frozen at `c789e5bc`,
+with 50 source files, snapshot
+`14d2d4b8fec918e06b08ce3404ed194e5bbe745adf37eb6c9658813140c62063`.
+All 34 development structures and 68 calls use the same 60-second native and
+90-second process allowances. Only final cleanup differs; endpoint scoring is
+off in both arms. Independent local preflight passes, runtime transport is
+staged on hyde03 with digest
+`d6510eab6afcf1d203f0eaf8f512f3a770c652cd1c55fe2e979845eec8a9407d`,
+and the actual target-environment 12-group synthetic suite passes once.
+Target evidence retrieval and the final remote preflight remain pending before
+the single detached start. There have been no 042 benchmark calls.
 
 **Latest completed diagnostic:** 040 on hyde03, controller 143531, ran from
 07:37:00.001 to 07:57:57.603 UTC. All 34 inputs and 68 phases finished with
@@ -70,11 +84,19 @@ The isolated deletion-closure module is implemented and committed in
 prefixes and two additional multiple-neighbor fixtures, with exact reference
 deletion order and list agreement. Root verified all author/reviewer evidence
 and accepted the default-off integration specification and draft 042 protocol;
-see `deletion_closure_root_acceptance.md`. The literature agent owns integration
-and focused checks in the current workspace. This does not alter frozen 041.
-Independent integration review and a full-pipeline comparison remain pending.
-The algorithm agent separately reviews at most two substantive, general next
-mechanisms, accounting for prior rejected policies and explicit self-critique.
+see `deletion_closure_root_acceptance.md`. Integration is accepted and committed
+in `c789e5bc`: 34 focused author checks, 189 broader checks and 12 independent
+groups pass. Root read the full implementation and review and verified their
+evidence; see `deletion_closure_integration_root_acceptance.md`. This does not
+alter frozen 041. The full-pipeline comparison is 042, described above.
+
+The next mechanism remains a deletion-conditioned ownership-exchange search on
+one incumbent. Its prior-art and root critiques are committed. The precise
+isolated specification is under independent review; a bounded sequence of groups
+will share one charged entry validation and ownership setup. No implementation
+or corpus diagnostic is authorized until that review is resolved. Ordinary
+free-space reconstruction remains a possible complementary local move within
+the same algorithm; integration is not yet prescribed.
 
 **Prior candidate comparison:** 039 on hyde03, controller 139008, finished at
 06:24:51.479 UTC with all 68 records finalized SUCCESS. Root verified the

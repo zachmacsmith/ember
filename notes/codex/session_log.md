@@ -1098,3 +1098,34 @@ hypothesis. Primary-source review finds substantial overlap with Bian/PSSA/CMR;
 root records reach/cost/novelty critiques and leaves pipeline integration open.
 A precise isolated API/specification is authorized, with no implementation or
 corpus diagnostic yet. It remains one proposed local move on one incumbent.
+
+At15:03UTC root resumes after a usage-limit interruption. The last completed
+working turn made progress:041 was retrieved/audited and reviewed cleanup
+integration was committedc789e5bc. Two subsequent identical automatic continuation
+prompts arrived without intervening executed work; both are preserved verbatim
+as continuations11/12 in PROMPTS_CODEX.md. Each has6,352 characters and SHA256
+13689982bff44760f548b4ce830df08f53f954187802e91c8157f1201366ee3d. Their token-used field is15676477.
+No042 runtime was initialized or launched before the interruption. The backend
+is active and the worktree retains the accepted source, with only unrelated
+untracked .claude/ and graph .verified.json. Root resumes the two failed agents'
+saved bounded tasks while continuing local source/input preparation. A transient
+agent usage failure is not a completed scientific objective or a reason to restart
+any benchmark; meaningful local progress remains available.
+
+At15:19UTC the backend again reports the research goal active. Root briefly
+answers the user’s UI status question from that live record; no scheduler/UI
+state is changed and /goal resume is unnecessary. The original prompt is already
+preserved at PROMPTS_CODEX.md line84, so this resumption adds no duplicate user
+prompt. The source branch is codex.
+
+042 local freeze and independent source/input review pass. Runtime stage finishes
+with the expected156-file digestd6510eab6afcf1d203f0eaf8f512f3a770c652cd1c55fe2e979845eec8a9407d.
+Root reads the complete new164-line preflight and target wrapper. It stages the
+immutable69-file synthetic bundle and invokes its12-group suite once on the
+pinned hyde03 native interpreter; observer exit iszero. Final evidence retrieval
+and remote preflight remain pending, with no042 benchmark calls yet.
+
+Root accepts the final corrected041 report and saves a concise acceptance note.
+All38 review files and14 references match, and its results agree with root’s
+separate68-output structural recount. Six regressions and the small mean gain
+remain explicit. No additional041 computation is needed.
