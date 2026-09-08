@@ -23,18 +23,98 @@ from typing import Dict, List, Optional, Tuple
 
 # ── Helpers ─────────────────────────────────────────────────────────────────────
 
-def _per_problem_means(df: pd.DataFrame, metric: str) -> pd.DataFrame:
-    """Per-problem mean of `metric` for each algorithm (successful trials only).
+def _problem_keys(df: pd.DataFrame) -> pd.DataFrame:
+    """Identify source/target/configuration strata using existing run fields.
 
-    Returns a DataFrame indexed by graph_name, columns = algorithm names.
-    NaN where an algorithm had no successful trial on that problem.
+    Positive manifest IDs identify sources; zero is the documented custom/legacy
+    sentinel. Full topology names retain hardware size and fault information.
+    Batch IDs identify configurations because config_json is stored per batch,
+    not in the analysis frame. Distinct batches are not assumed equivalent.
+
+    Older frames remain usable with warnings. Their names and available graph
+    sizes are only a fallback, not proof of graph identity. Missing components
+    form separate strata from known components and are never silently dropped.
     """
-    return (
-        df[df['success']]
-        .groupby(['algorithm', 'graph_name'])[metric]
-        .mean()
-        .unstack(level='algorithm')
+    keys = df[['algorithm']].copy()
+    missing = []
+    graph_ids = pd.to_numeric(
+        df.get('graph_id', pd.Series(np.nan, index=df.index)), errors='coerce'
     )
+    has_id = graph_ids.notna() & graph_ids.gt(0) & graph_ids.mod(1).eq(0)
+    names = df.get('graph_name', df.get('problem_name'))
+    if (~has_id).any():
+        missing.append('positive graph_id (using graph name and available size fields)')
+        if names is None or names[~has_id].isna().any() or names[~has_id].eq('').any():
+            raise ValueError('Cannot identify a problem without a positive graph_id or graph_name.')
+
+    fallback_fields = [c for c in ('problem_nodes', 'problem_edges') if c in df.columns]
+    identities = []
+    for pos, valid_id in enumerate(has_id):
+        if valid_id:
+            identities.append(('id', int(graph_ids.iloc[pos])))
+        else:
+            sizes = tuple(
+                None if pd.isna(df[c].iloc[pos]) else df[c].iloc[pos]
+                for c in fallback_fields
+            )
+            identities.append(('name', names.iloc[pos], *sizes))
+    keys['graph_identity'] = pd.Series(identities, index=df.index, dtype=object)
+
+    topology = df.get('topology_name', pd.Series(np.nan, index=df.index))
+    topology = topology.replace('', np.nan)
+    if topology.isna().any():
+        missing.append('topology_name (unknown target stratum)')
+    keys['topology_name'] = topology
+
+    batch = df.get('batch_id', pd.Series(np.nan, index=df.index)).replace('', np.nan)
+    if 'source_batch' in df.columns:
+        batch = batch.fillna(df['source_batch'].replace('', np.nan))
+    if batch.isna().any():
+        missing.append('batch_id/source_batch (configuration equivalence unverified)')
+    keys['batch_id'] = batch
+
+    if missing:
+        warnings.warn(
+            'Incomplete problem identity: ' + '; '.join(missing)
+            + '. Legacy fallback may conflate indistinguishable records; '
+            'provide complete provenance for scientific comparisons.',
+            UserWarning,
+            stacklevel=3,
+        )
+    return keys
+
+
+def _per_problem_data(df: pd.DataFrame, metric: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """Successful-trial means and attempted-trial masks on identical strata."""
+    keys = _problem_keys(df)
+    group_columns = list(keys.columns)
+    if 'algorithm_version' in df.columns:
+        version_counts = (
+            keys.assign(_version=df['algorithm_version'])
+            .groupby(group_columns, sort=False, dropna=False, observed=True)['_version']
+            .nunique(dropna=False)
+        )
+        if version_counts.gt(1).any():
+            raise ValueError(
+                'Multiple algorithm_version values occur in one algorithm/problem/batch '
+                'stratum; separate the configurations before comparison.'
+            )
+    grouped = (
+        keys.assign(_metric=df[metric].where(df['success'].eq(True)))
+        .groupby(group_columns, sort=False, dropna=False, observed=True)['_metric']
+        .agg(['mean', 'size'])
+    )
+    return grouped['mean'].unstack('algorithm'), grouped['size'].unstack('algorithm').notna()
+
+
+def _per_problem_means(df: pd.DataFrame, metric: str) -> pd.DataFrame:
+    """Mean successful-trial metric per graph identity, topology, and batch.
+
+    Columns are algorithm names. Failed or unattempted cells are NaN; repeated
+    successful trials within the same identified problem are still averaged.
+    Missing legacy identity fields produce an explicit warning.
+    """
+    return _per_problem_data(df, metric)[0]
 
 
 def _holm_bonferroni(p_values: List[float]) -> List[float]:
@@ -153,7 +233,10 @@ def win_rate_matrix(df: pd.DataFrame,
     Cell (A, B) = fraction of problems where algorithm A beats algorithm B.
     A win is: A succeeded and B failed, OR both succeeded and A has a
     strictly better ``metric`` value.  Ties (both succeed with equal metric)
-    count for neither.  Diagonal is NaN.
+    count for neither. Only problems attempted by both algorithms and solved by
+    at least one enter the denominator; no trial is not treated as failure.
+    Different graph IDs, topologies, and batches are distinct problems.
+    Diagonal is NaN.
 
     Args:
         df:               Derived DataFrame from load_batch().
@@ -164,14 +247,15 @@ def win_rate_matrix(df: pd.DataFrame,
         DataFrame with algorithm names as both index and columns.
         Values are fractions in [0, 1] (multiply by 100 for percentages).
     """
-    per_problem = _per_problem_means(df, metric)
+    per_problem, attempted = _per_problem_data(df, metric)
     algos = list(per_problem.columns)
     matrix = pd.DataFrame(np.nan, index=algos, columns=algos)
 
     for a, b in itertools.combinations(algos, 2):
         pair = per_problem[[a, b]]
-        # Consider graphs where at least one algorithm has data
-        present = pair[pair[a].notna() | pair[b].notna()]
+        # A missing experiment is not evidence that an algorithm failed.
+        both_attempted = attempted[a] & attempted[b]
+        present = pair[both_attempted & (pair[a].notna() | pair[b].notna())]
         if present.empty:
             continue
 

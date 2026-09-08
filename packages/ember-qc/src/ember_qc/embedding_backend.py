@@ -42,6 +42,7 @@ Conventions
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 import heapq
 import logging
 import math
@@ -415,7 +416,7 @@ def resolve_overlaps(
                 used.update(work[v])
 
     embedding = {int(v): [int(q) for q in chain] for v, chain in work.items()}
-    if _is_valid_embedding(embedding, source, adj):
+    if is_valid_embedding(embedding, source, target):
         return embedding
     logger.debug("resolve_overlaps: could not legalize within %d passes", max_passes)
     return None
@@ -428,15 +429,20 @@ def is_valid_embedding(
     *,
     adj: Optional[Adjacency] = None,
 ) -> bool:
-    """Public structural validity check: connected, disjoint, edges covered.
+    """Check a complete minor embedding against the supplied target graph.
 
-    Equivalent to :func:`ember_qc.validation.validate_layer1` returning
-    ``passed``, but operating on a frozen adjacency so chain-builders can gate
-    "success" cheaply without constructing :class:`ValidationResult` objects.
+    Keys must equal the source vertex set. Every chain must be nonempty,
+    contain distinct target qubits, be connected, and be disjoint from every
+    other chain. Every source edge must have a target coupler between its
+    chains. The empty mapping is valid for an empty source graph.
+
+    ``adj`` is retained for call compatibility, but validation always uses
+    ``target``: a routing cache may be stale or describe a different graph.
+    No target adjacency copy or :class:`ValidationResult` object is created.
+    Format and serialization requirements remain the responsibility of
+    :func:`ember_qc.validation.validate_layer2`.
     """
-    if adj is None:
-        adj = build_adjacency(target)
-    return _is_valid_embedding(embedding, source, adj)
+    return _is_valid_embedding(embedding, source, target.adj)
 
 
 # ------------------------------------------------------------------------------
@@ -502,31 +508,53 @@ def _reconnect_chain(
     return sorted(merged)
 
 
-def _is_valid_embedding(embedding: Embedding, source: nx.Graph, adj: Adjacency) -> bool:
-    """Structural validity check (connected, disjoint, edges covered).
+def _is_valid_embedding(
+    embedding: Embedding,
+    source: nx.Graph,
+    adj: Mapping[int, Iterable[int]],
+) -> bool:
+    """Check all structural invariants against authoritative adjacency.
 
-    A self-contained mirror of :func:`ember_qc.validation.validate_layer1` that
-    runs on the frozen adjacency, so the backend has no import-time dependency on
-    the validation module.
+    Callers with a target graph must use :func:`is_valid_embedding` so a
+    cached adjacency cannot change which hardware graph is being validated.
     """
-    # Coverage + non-empty
-    for v in source.nodes():
-        if v not in embedding or not embedding[v]:
+    if not isinstance(embedding, Mapping) or set(embedding) != set(source):
+        return False
+
+    chain_sets: Dict[int, Set[int]] = {}
+    used: Set[int] = set()
+    for vertex, chain in embedding.items():
+        # Strings and mappings are not collections of qubits in this format.
+        # Sets and tuples can still represent mathematically valid chains;
+        # layer 2 enforces the stricter list/int serialization contract.
+        if isinstance(chain, (str, bytes, Mapping)):
             return False
-    # Disjointness
-    seen: Set[int] = set()
-    for chain in embedding.values():
-        for q in chain:
-            if q in seen:
+        try:
+            chain_set = set(chain)
+            if not chain_set or len(chain_set) != len(chain):
                 return False
-            seen.add(q)
-    # Connectivity
-    for chain in embedding.values():
-        if not chain_connected(chain, adj):
+        except TypeError:
             return False
+        if any(q not in adj or q in used for q in chain_set):
+            return False
+        used.update(chain_set)
+        chain_sets[vertex] = chain_set
+
+    for chain_set in chain_sets.values():
+        start = next(iter(chain_set))
+        reached = {start}
+        stack = [start]
+        while stack:
+            q = stack.pop()
+            for neighbor in adj[q]:
+                if neighbor in chain_set and neighbor not in reached:
+                    reached.add(neighbor)
+                    stack.append(neighbor)
+        if len(reached) != len(chain_set):
+            return False
+
     # Edge coverage
     for u, v in source.edges():
-        chain_v = set(embedding[v])
-        if not any(w in chain_v for q in embedding[u] for w in adj.get(q, ())):
+        if not any(w in chain_sets[v] for q in chain_sets[u] for w in adj[q]):
             return False
     return True

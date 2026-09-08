@@ -39,6 +39,85 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
+from ember_qc_analysis.statistics import _per_problem_means, _problem_keys
+
+
+def _identified_plot_rows(df: pd.DataFrame) -> pd.DataFrame:
+    """Attach plot-local problem codes using the statistical identity contract.
+
+    Codes are for grouping only. Display names remain labels; graph identity,
+    full topology, and batch provenance determine which trials belong together.
+    """
+    keys = _problem_keys(df)
+    identity_columns = ['graph_identity', 'topology_name', 'batch_id']
+    identity = pd.MultiIndex.from_frame(keys[identity_columns])
+    result = df.copy()
+    result['_problem_id'] = pd.factorize(identity, sort=False)[0]
+    if 'algorithm_version' in result.columns:
+        versions = result.groupby(['algorithm', '_problem_id'])['algorithm_version'].nunique(dropna=False)
+        if versions.gt(1).any():
+            raise ValueError(
+                'Multiple algorithm_version values occur in one algorithm/problem/batch '
+                'stratum; separate the configurations before comparison.'
+            )
+
+    names = df.get('graph_name', df.get('problem_name', pd.Series('', index=df.index)))
+    result['_display_name'] = names.fillna('').astype(str)
+    representatives = result.drop_duplicates('_problem_id')
+    representative_positions = np.flatnonzero(~result['_problem_id'].duplicated().to_numpy())
+    labels = {}
+    categories = {}
+    jitter_keys = {}
+    ambiguous = representatives['_display_name'].duplicated(keep=False)
+    for pos, (_, row) in enumerate(representatives.iterrows()):
+        code = row['_problem_id']
+        name = row['_display_name']
+        key = keys.iloc[representative_positions[pos]]
+        jitter_keys[code] = repr((
+            key['graph_identity'],
+            None if pd.isna(key['topology_name']) else key['topology_name'],
+            None if pd.isna(key['batch_id']) else key['batch_id'],
+        ))
+        if ambiguous.iloc[pos] or not name:
+            source = key['graph_identity']
+            source_label = f'id={source[1]}' if source[0] == 'id' else f'custom sizes={source[2:]}'
+            name = (f"{name or 'Graph'} [{source_label}; "
+                    f"target={key['topology_name']}; batch={key['batch_id']}]")
+        labels[code] = name
+        category = row.get('category')
+        categories[code] = category if pd.notna(category) else _category_of(row['_display_name'])
+    result['_problem_label'] = result['_problem_id'].map(labels)
+    result['_problem_category'] = result['_problem_id'].map(categories)
+    result['_problem_jitter_key'] = result['_problem_id'].map(jitter_keys)
+    return result
+
+
+def _plot_problem_order(df: pd.DataFrame) -> list:
+    """Stable display-name ordering without using display names as identities."""
+    return (df.drop_duplicates('_problem_id')
+            .sort_values('_problem_label', kind='stable')['_problem_id'].tolist())
+
+
+def _category_win_rates(df: pd.DataFrame) -> pd.DataFrame:
+    """Fractional minimum-mean ACL wins on problems attempted by every algorithm.
+
+    Tied minima share one win. Problems with no successful algorithm are omitted.
+    This is an all-algorithm comparison, distinct from pairwise win-rate matrices.
+    """
+    rows = _identified_plot_rows(df)
+    grouped = rows.assign(_acl=rows['avg_chain_length'].where(rows['success'].eq(True))).groupby(
+        ['_problem_id', 'algorithm'], observed=True, sort=False
+    )['_acl'].agg(['mean', 'size'])
+    means = grouped['mean'].unstack('algorithm')
+    attempted = grouped['size'].unstack('algorithm').notna()
+    means = means.loc[attempted.all(axis=1) & means.notna().any(axis=1)]
+    if means.empty:
+        return pd.DataFrame()
+    tied = means.eq(means.min(axis=1), axis=0)
+    credit = tied.div(tied.sum(axis=1), axis=0)
+    category = rows.drop_duplicates('_problem_id').set_index('_problem_id')['_problem_category']
+    return credit.groupby(category.reindex(credit.index)).mean().T
+
 
 # ── Palette ─────────────────────────────────────────────────────────────────────
 
@@ -91,27 +170,11 @@ def plot_heatmap(df: pd.DataFrame,
 
     For most metrics only successful trials are included.
     ``success_rate`` and ``wall_time`` use all trials.
+    ``win_rate`` compares per-problem mean ACL on problems attempted by every
+    algorithm, with tied minima sharing credit; unsolved problems are excluded.
     """
     if metric == 'win_rate':
-        # Win rate: % of graphs where this algorithm has the shortest
-        # avg_chain_length among all algorithms (successful trials only)
-        sdf = df[df['success']].copy()
-        if sdf.empty:
-            fig, ax = plt.subplots()
-            ax.text(0.5, 0.5, 'No successful data', ha='center', va='center')
-            _maybe_save(fig, output_dir, 'by_category.png', save,
-                        subdir=f'figures/category_breakdown/{metric}', fmt=fmt)
-            return fig
-        # For each graph_id, find the algorithm(s) with the minimum avg_chain_length
-        best = sdf.loc[sdf.groupby('graph_id')['avg_chain_length'].idxmin()]
-        # Count wins per (algorithm, category)
-        win_counts = best.groupby(['algorithm', 'category']).size().unstack(level='category', fill_value=0)
-        # Total graphs per category (where at least one algo succeeded)
-        total_per_cat = best.groupby('category').size()
-        pivot = win_counts.div(total_per_cat, axis=1)
-        # Ensure all algorithms appear (even if zero wins)
-        all_algos = sorted(df['algorithm'].unique())
-        pivot = pivot.reindex(all_algos, fill_value=0.0)
+        pivot = _category_win_rates(df)
     elif metric == 'success_rate':
         # Compute success rate per (algorithm, category)
         pivot = (
@@ -297,14 +360,12 @@ def plot_heatmap_family_summary(df: pd.DataFrame,
             continue
 
         if metric == 'win_rate':
-            sdf = fdf[fdf['success']].copy()
-            if sdf.empty:
+            per_cat = _category_win_rates(fdf)
+            if per_cat.empty:
                 continue
-            best = sdf.loc[sdf.groupby('graph_id')['avg_chain_length'].idxmin()]
-            win_counts = best.groupby('algorithm').size()
-            total = best.shape[0]
+            macro = per_cat.mean(axis=1)
             for algo in all_algos:
-                rows.setdefault(algo, {})[family_key] = win_counts.get(algo, 0) / total if total else 0.0
+                rows.setdefault(algo, {})[family_key] = macro.get(algo, np.nan)
         elif metric == 'success_rate':
             per_cat = fdf.groupby(['algorithm', 'category'])['success'].mean().unstack('category')
             macro = per_cat.mean(axis=1)
@@ -543,7 +604,7 @@ _HEATMAP_LABELS = {
     'qubit_overhead_ratio':'Qubit overhead ratio',
     'success_rate':        'Success rate',
     'wall_time':           'Embedding time (s)',
-    'win_rate':            'Win rate (best chain length)',
+    'win_rate':            'Win rate (minimum mean ACL; ties shared)',
     'relative_time':       'Relative slowdown (×fastest)',
 }
 
@@ -1028,7 +1089,7 @@ def _pareto_front(points: np.ndarray) -> np.ndarray:
     for i in range(n):
         if not is_pareto[i]:
             continue
-        dominated = np.all(points <= points[i], axis=1) & np.any(points < points[i], axis=1)
+        dominated = np.all(points >= points[i], axis=1) & np.any(points > points[i], axis=1)
         dominated[i] = False
         is_pareto[dominated] = False
     return is_pareto
@@ -1045,7 +1106,8 @@ def plot_pareto(df: pd.DataFrame,
 
     Uses per-problem mean across successful trials.
     """
-    success_df = df[df['success']].copy()
+    identified = _identified_plot_rows(df)
+    success_df = identified[identified['success']].copy()
     if success_df.empty:
         fig, ax = plt.subplots()
         ax.text(0.5, 0.5, 'No successful trials', ha='center', va='center')
@@ -1053,7 +1115,7 @@ def plot_pareto(df: pd.DataFrame,
                     subdir='figures', fmt=fmt)
         return fig
 
-    agg = success_df.groupby(['algorithm', 'graph_name'])[[x, y]].mean().reset_index()
+    agg = success_df.groupby(['algorithm', '_problem_id'])[[x, y]].mean().reset_index()
     palette = algo_palette or _algo_palette(agg['algorithm'].unique())
 
     fig, ax = plt.subplots(figsize=(9, 6))
@@ -1358,15 +1420,9 @@ def plot_head_to_head(df: pd.DataFrame,
                       fmt: str = 'png') -> plt.Figure:
     """Scatter: per-problem mean metric for algo_a (x) vs algo_b (y).
 
-    Points below the diagonal → algo_a wins (lower is better for most metrics).
+    Points below the diagonal → algo_b wins (lower is better for most metrics).
     """
-    success_df = df[df['success']].copy()
-    per_problem = (
-        success_df
-        .groupby(['algorithm', 'graph_name'])[metric]
-        .mean()
-        .unstack(level='algorithm')
-    )
+    per_problem = _per_problem_means(df, metric)
 
     fig, ax = plt.subplots(figsize=(6, 6))
 
@@ -1420,11 +1476,12 @@ def plot_consistency(df: pd.DataFrame,
     Lower CV → more consistent.  Computed per (algo, problem) pair, then averaged.
     Only problems with ≥ 2 successful trials contribute.
     """
-    success_df = df[df['success']].copy()
+    identified = _identified_plot_rows(df)
+    success_df = identified[identified['success']].copy()
 
     def _mean_cv(metric):
         cv_per_prob = (
-            success_df.groupby(['algorithm', 'graph_name'])[metric]
+            success_df.groupby(['algorithm', '_problem_id'])[metric]
             .agg(lambda s: s.std() / s.mean() if s.mean() != 0 and len(s) >= 2 else np.nan)
         )
         return cv_per_prob.groupby('algorithm').mean()
@@ -1517,8 +1574,19 @@ def plot_problem_deep_dive(df: pd.DataFrame,
                             output_dir=None,
                             save: bool = False,
                             fmt: str = 'png') -> plt.Figure:
-    """Two-panel bar chart for a single problem: time and chain length per algorithm."""
+    """Two-panel bar chart for one identified problem selected by display name.
+
+    Ambiguous names raise: prefilter graph_id/topology_name/batch_id to select the
+    desired problem before calling. Different problems are never pooled here.
+    """
     prob_df = df[df['graph_name'] == graph_name].copy()
+    if not prob_df.empty:
+        prob_df = _identified_plot_rows(prob_df)
+        if prob_df['_problem_id'].nunique() > 1:
+            raise ValueError(
+                f'Ambiguous graph_name {graph_name!r}: multiple graph/topology/batch '
+                'identities; prefilter the DataFrame to one identified problem.'
+            )
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
 
@@ -1644,9 +1712,11 @@ _MAX_GRAPH_HEATMAP = 300  # beyond this a per-graph heatmap is unreadable
 
 
 def plot_success_heatmap(df, output_dir=None, save=False, fmt='png'):
-    """Heatmap: algorithm × graph, cell = success rate across trials."""
+    """Heatmap: algorithm × identified problem, success rate across trials."""
+    df = _identified_plot_rows(df)
     algos = sorted(df['algorithm'].unique())
-    graphs = sorted(df['graph_name'].unique())
+    graphs = _plot_problem_order(df)
+    labels = df.drop_duplicates('_problem_id').set_index('_problem_id')['_problem_label']
 
     if len(graphs) > _MAX_GRAPH_HEATMAP:
         fig, ax = plt.subplots(figsize=(8, 2))
@@ -1660,7 +1730,7 @@ def plot_success_heatmap(df, output_dir=None, save=False, fmt='png'):
         return fig
 
     # Vectorised: groupby instead of O(algos × graphs) nested loop
-    agg = df.groupby(['algorithm', 'graph_name'])['success'].agg(
+    agg = df.groupby(['algorithm', '_problem_id'])['success'].agg(
         n_ok='sum', n_total='count'
     ).reset_index()
     agg['rate'] = agg['n_ok'] / agg['n_total'].replace(0, float('nan'))
@@ -1668,14 +1738,15 @@ def plot_success_heatmap(df, output_dir=None, save=False, fmt='png'):
         lambda r: f"{int(r.n_ok)}/{int(r.n_total)}"
         if r.n_total <= 5 else f"{r.rate:.0%}", axis=1
     )
-    data  = agg.pivot(index='algorithm', columns='graph_name', values='rate').reindex(index=algos, columns=graphs)
-    annot = agg.pivot(index='algorithm', columns='graph_name', values='label').reindex(index=algos, columns=graphs).fillna('')
+    data  = agg.pivot(index='algorithm', columns='_problem_id', values='rate').reindex(index=algos, columns=graphs)
+    annot = agg.pivot(index='algorithm', columns='_problem_id', values='label').reindex(index=algos, columns=graphs).fillna('')
 
     width = max(10, len(graphs) * 0.5)
     height = max(3, len(algos) * 0.8) + 1
     fig, ax = plt.subplots(figsize=(width, height))
     sns.heatmap(data.astype(float), ax=ax, annot=annot.values, fmt='',
                 cmap='RdYlGn', vmin=0, vmax=1, linewidths=0.3,
+                xticklabels=labels.reindex(graphs).tolist(),
                 cbar_kws={'label': 'Success rate'})
     ax.set_title('Success rate per algorithm and graph')
     ax.set_xlabel('Graph')
@@ -1760,15 +1831,16 @@ def _draw_chain_dots_categorical(ax, df, graphs, algos, palette, markers,
                                   metric='avg_chain_length'):
     """Draw dot plot on ax with categorical x positions for the given graphs."""
     x_pos = {g: i for i, g in enumerate(graphs)}
-    categories = [_category_of(g) for g in graphs]
+    category_map = df.drop_duplicates('_problem_id').set_index('_problem_id')['_problem_category']
+    categories = category_map.reindex(graphs).tolist()
 
     graph_set = set(graphs)
     for algo in algos:
-        adf = df[(df['algorithm'] == algo) & df['graph_name'].isin(graph_set)].copy()
+        adf = df[(df['algorithm'] == algo) & df['_problem_id'].isin(graph_set)].copy()
         adf = adf.dropna(subset=[metric])
         if adf.empty:
             continue
-        adf['_x'] = adf['graph_name'].map(x_pos)
+        adf['_x'] = adf['_problem_id'].map(x_pos)
         adf = adf.dropna(subset=['_x'])
         xs_trial = adf['_x'].tolist()
         ys_trial = adf[metric].tolist()
@@ -1840,7 +1912,8 @@ def plot_graph_indexed_chain(df, x_mode='by_graph_id', algo_palette=None,
     Shows per-trial dots (small, semi-transparent) + per-algorithm mean marker (diamond).
     Each algorithm only appears where it succeeded — absence is itself the signal.
     """
-    success_df = df[df['success']].copy()
+    identified = _identified_plot_rows(df)
+    success_df = identified[identified['success']].copy()
     # Drop rows where the requested metric is NaN (pre-SQLite batches may have nulls)
     if metric in success_df.columns:
         success_df = success_df.dropna(subset=[metric])
@@ -1860,14 +1933,15 @@ def plot_graph_indexed_chain(df, x_mode='by_graph_id', algo_palette=None,
     markers = _algo_markers(algos)
 
     filt_df = success_df
-    graphs = sorted(filt_df['graph_name'].unique())
+    graphs = _plot_problem_order(filt_df)
     n_graphs = len(graphs)
     n_algos = len(algos)
 
     if x_mode == 'by_graph_id':
         # Categorical x-axis
         facet = n_graphs > 25
-        categories = [_category_of(g) for g in graphs]
+        category_map = filt_df.drop_duplicates('_problem_id').set_index('_problem_id')['_problem_category']
+        categories = category_map.reindex(graphs).tolist()
 
         if facet:
             unique_cats = sorted(set(categories))
@@ -1878,7 +1952,7 @@ def plot_graph_indexed_chain(df, x_mode='by_graph_id', algo_palette=None,
             if n_cats == 1:
                 axes = [axes]
             for ax, cat in zip(axes, unique_cats):
-                cat_graphs = [g for g in graphs if _category_of(g) == cat]
+                cat_graphs = [g for g in graphs if category_map[g] == cat]
                 _draw_chain_dots_categorical(ax, filt_df, cat_graphs, algos, palette, markers,
                                              metric=metric)
                 ax.set_title(cat, fontsize=10)
@@ -1909,17 +1983,17 @@ def plot_graph_indexed_chain(df, x_mode='by_graph_id', algo_palette=None,
         for algo in algos:
             adf = filt_df[filt_df['algorithm'] == algo]
             # Per-trial dots
-            x_trial = [row[x_col] + _graph_jitter(row['graph_name'], jitter_mag)
+            x_trial = [row[x_col] + _graph_jitter(row['_problem_jitter_key'], jitter_mag)
                        for _, row in adf.iterrows()]
             ax.scatter(x_trial, adf[metric],
                        color=palette[algo], marker=markers[algo],
                        alpha=0.35, s=25, zorder=2)
             # Per-graph mean
-            means = adf.groupby('graph_name').agg(
-                {x_col: 'first', metric: 'mean'}
+            means = adf.groupby('_problem_id').agg(
+                {x_col: 'first', metric: 'mean', '_problem_jitter_key': 'first'}
             )
-            x_mean = [xv + _graph_jitter(gid, jitter_mag)
-                      for gid, xv in zip(means.index, means[x_col])]
+            x_mean = [xv + _graph_jitter(key, jitter_mag)
+                      for key, xv in zip(means['_problem_jitter_key'], means[x_col])]
             ax.scatter(x_mean, means[metric],
                        color=palette[algo], marker='D', s=70,
                        label=algo, zorder=3, edgecolors='black', linewidths=0.5)
@@ -1951,6 +2025,7 @@ def plot_graph_indexed_time(df, x_mode='by_graph_id', algo_palette=None,
                     subdir=f'figures/graph_indexed/{x_mode}', fmt=fmt)
         return fig
 
+    df = _identified_plot_rows(df)
     algos = sorted(df['algorithm'].unique())
     palette = algo_palette or _algo_palette(algos)
     markers_map = _algo_markers(algos)
@@ -1958,17 +2033,18 @@ def plot_graph_indexed_time(df, x_mode='by_graph_id', algo_palette=None,
     timeout_val = df['wall_time'].max() * 1.05
 
     if x_mode == 'by_graph_id':
-        graphs = sorted(df['graph_name'].unique())
+        graphs = _plot_problem_order(df)
         n_graphs = len(graphs)
         width = max(14, n_graphs * 0.55)
         fig, ax = plt.subplots(figsize=(width, 5))
         x_pos = {g: i for i, g in enumerate(graphs)}
-        categories = [_category_of(g) for g in graphs]
+        categories = (df.drop_duplicates('_problem_id').set_index('_problem_id')
+                      ['_problem_category'].reindex(graphs).tolist())
 
         for algo in algos:
             adf = df[df['algorithm'] == algo]
             for g in graphs:
-                gdf = adf[adf['graph_name'] == g]
+                gdf = adf[adf['_problem_id'] == g]
                 if gdf.empty:
                     continue
                 for _, row in gdf.iterrows():
@@ -1999,7 +2075,7 @@ def plot_graph_indexed_time(df, x_mode='by_graph_id', algo_palette=None,
             for _, row in adf.iterrows():
                 is_timeout = row.get('is_timeout', False)
                 mk = '^' if is_timeout else markers_map[algo]
-                jx = row[x_col] + _graph_jitter(str(row['graph_name']), jitter_mag)
+                jx = row[x_col] + _graph_jitter(row['_problem_jitter_key'], jitter_mag)
                 ax.scatter(jx, row['wall_time'],
                            color=palette[algo], marker=mk,
                            alpha=0.5 if not is_timeout else 0.9,
@@ -2030,8 +2106,10 @@ def plot_graph_indexed_success(df, x_mode='by_graph_id', output_dir=None, save=F
     Note: for by_n_nodes and by_density x_modes, graphs are still shown as categorical
     positions (same ordering as by_graph_id) since success is binary.
     """
+    df = _identified_plot_rows(df)
     algos = sorted(df['algorithm'].unique())
-    graphs = sorted(df['graph_name'].unique())
+    graphs = _plot_problem_order(df)
+    labels = df.drop_duplicates('_problem_id').set_index('_problem_id')['_problem_label']
 
     if len(graphs) > _MAX_GRAPH_HEATMAP:
         fig, ax = plt.subplots(figsize=(8, 2))
@@ -2045,14 +2123,14 @@ def plot_graph_indexed_success(df, x_mode='by_graph_id', output_dir=None, save=F
         return fig
 
     # Vectorised: groupby instead of O(algos × graphs) nested loop
-    agg = df.groupby(['algorithm', 'graph_name'])['success'].agg(
+    agg = df.groupby(['algorithm', '_problem_id'])['success'].agg(
         n_ok='sum', n_total='count'
     ).reset_index()
     agg['rate'] = agg['n_ok'] / agg['n_total'].replace(0, float('nan'))
     agg['label'] = agg.apply(lambda r: f"{int(r.n_ok)}/{int(r.n_total)}", axis=1)
 
-    rate_pivot  = agg.pivot(index='algorithm', columns='graph_name', values='rate').reindex(index=algos, columns=graphs)
-    annot_pivot = agg.pivot(index='algorithm', columns='graph_name', values='label').reindex(index=algos, columns=graphs).fillna('')
+    rate_pivot  = agg.pivot(index='algorithm', columns='_problem_id', values='rate').reindex(index=algos, columns=graphs)
+    annot_pivot = agg.pivot(index='algorithm', columns='_problem_id', values='label').reindex(index=algos, columns=graphs).fillna('')
 
     data  = rate_pivot.values
     annot = annot_pivot.values
@@ -2064,7 +2142,7 @@ def plot_graph_indexed_success(df, x_mode='by_graph_id', output_dir=None, save=F
     sns.heatmap(data, ax=ax, annot=annot, fmt='',
                 cmap='RdYlGn', vmin=0, vmax=1,
                 linewidths=0.3, linecolor='white',
-                xticklabels=graphs, yticklabels=algos,
+                xticklabels=labels.reindex(graphs).tolist(), yticklabels=algos,
                 cbar_kws={'label': 'Success rate'})
     ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha='right', fontsize=7)
     ax.set_title(f'Success rate per algorithm x graph ({x_mode})')
@@ -2155,21 +2233,22 @@ def plot_intersection_comparison(df: pd.DataFrame,
         ('qubit_overhead_ratio','Qubit\noverhead'),
     ]
 
+    df = _identified_plot_rows(df)
     success_df = df[df['success']].copy()
 
     # Graphs where each algorithm succeeded
-    a_graphs = set(success_df[success_df['algorithm'] == algo_a]['graph_name'].unique())
-    b_graphs = set(success_df[success_df['algorithm'] == algo_b]['graph_name'].unique())
+    a_graphs = set(success_df[success_df['algorithm'] == algo_a]['_problem_id'].unique())
+    b_graphs = set(success_df[success_df['algorithm'] == algo_b]['_problem_id'].unique())
     shared_graphs = a_graphs & b_graphs
     N = len(shared_graphs)
 
-    n_problems = df['graph_name'].nunique()
+    n_problems = df['_problem_id'].nunique()
 
     palette = algo_palette or _algo_palette([algo_a, algo_b])
     color_a = palette.get(algo_a, _CB_PALETTE[0])
     color_b = palette.get(algo_b, _CB_PALETTE[1])
 
-    intersection_df = success_df[success_df['graph_name'].isin(shared_graphs)]
+    intersection_df = success_df[success_df['_problem_id'].isin(shared_graphs)]
 
     # Collect per-metric data (only metrics with data in both algos)
     metrics_data = []

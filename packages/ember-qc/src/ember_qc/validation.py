@@ -11,8 +11,8 @@ Implemented:
   Layer 2 — Type/Format: numpy int leakage, tuple chains, NaN/zero wall time,
              spurious/missing keys, chain values not in target graph,
              CPU time plausibility. Runs first on every result.
-  Layer 1 — Structural: five mathematical checks on the embedding itself.
-             Runs only if Layer 2 passed and algorithm claimed success.
+  Layer 1 — Structural: complete mathematical validation of an embedding.
+             Runs after Layer 2 for every returned embedding.
 
 Not yet implemented (TODO):
   Layer 3 — Consistency: field-level cross-checks (success ↔ embedding,
@@ -22,7 +22,7 @@ Not yet implemented (TODO):
 
 Integration order:
   1. Layer 2 (type/format) — always, on every result
-  2. Layer 1 (structural) — only if Layer 2 passed and algorithm claimed success
+  2. Layer 1 (structural) — after Layer 2, for every returned embedding
   3. Layer 3 (consistency) — always [TODO]
 
 Import:
@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import math
 import os
+from collections.abc import Collection, Mapping
 from dataclasses import dataclass
 from typing import Optional
 
@@ -65,18 +66,17 @@ def validate_layer1(embedding: dict,
                     target_graph: nx.Graph) -> ValidationResult:
     """Verify that the embedding is a mathematically correct minor embedding.
 
-    Runs five checks in order, stopping at the first failure:
+    Validates the embedding independently of algorithm metadata or Layer 2:
 
-    1. **Coverage** — every source vertex has a key in the embedding.
-    2. **Non-empty chains** — every chain contains at least one target node.
+    1. **Exact coverage** — keys are exactly the source vertices, including isolates.
+    2. **Chain membership** — finite nonempty collections of target vertices.
     3. **Connectivity** — every chain forms a connected subgraph of the target
        graph. Checked via BFS on the target graph's adjacency structure so no
        subgraph object is created. Chains of length 1 are trivially connected.
     4. **Disjointness** — no target qubit appears in more than one chain.
        Uses a reverse-map dict for O(1) collision detection.
-    5. **Edge preservation** — for every source edge, at least one target edge
-       exists between the two chains. Uses the O(e) approach: iterate qubits in
-       one chain, check each neighbor against the other chain set.
+    5. **Edge preservation** — for every source edge, at least one original target
+       edge exists between the two chains.
 
     Args:
         embedding:    The raw embedding dict ``{source_node: [target_qubits]}``.
@@ -87,12 +87,20 @@ def validate_layer1(embedding: dict,
         :class:`ValidationResult` — ``passed=True`` on success, or
         ``passed=False`` with ``check_name`` and ``detail`` on failure.
 
-    Note:
-        Layer 2 must run before Layer 1 in production. Layer 2 guarantees that
-        keys are valid source-node IDs, chain values are valid target-node IDs,
-        and all types are plain Python ``int`` — preconditions Layer 1 relies on.
+    Hashable graph labels are supported. Layer 2 additionally enforces the
+    benchmark's stricter serialization contract (plain integer IDs/list chains).
+    The empty mapping is a valid embedding of an empty source; ``None`` is not.
     """
+    if not isinstance(embedding, Mapping):
+        return ValidationResult(False, "embedding_format", "embedding must be a mapping")
+
     # ── Check 1: Coverage ──────────────────────────────────────────────────────
+    extra_keys = set(embedding) - set(source_graph)
+    if extra_keys:
+        return ValidationResult(
+            False, "key_validity",
+            f"embedding contains keys not in source graph: {sorted(extra_keys, key=repr)[:5]}",
+        )
     for node in source_graph.nodes():
         if node not in embedding:
             return ValidationResult(
@@ -101,21 +109,38 @@ def validate_layer1(embedding: dict,
                 detail=f"source vertex {node!r} has no chain in embedding",
             )
 
-    # ── Check 2: Non-empty chains ──────────────────────────────────────────────
+    # ── Check 2: Non-empty chains and membership ───────────────────────────────
+    chains = {}
+    chain_sets = {}
     for src, chain in embedding.items():
+        if not isinstance(chain, Collection) or isinstance(chain, (str, bytes, Mapping)):
+            return ValidationResult(
+                False, "chain_format",
+                f"chain for source vertex {src!r} must be a finite collection of target vertices",
+            )
         if len(chain) == 0:
             return ValidationResult(
                 passed=False,
                 check_name="non_empty_chains",
                 detail=f"chain for source vertex {src!r} is empty",
             )
+        nodes = list(chain)
+        for qubit in nodes:
+            if qubit not in target_graph:
+                return ValidationResult(
+                    False, "value_validity",
+                    f"chain for source vertex {src!r} contains qubit {qubit!r} "
+                    "which does not exist in the target graph",
+                )
+        chains[src] = nodes
+        chain_sets[src] = set(nodes)
 
     # ── Check 3: Connectivity ──────────────────────────────────────────────────
     # BFS on target graph restricted to chain nodes — no subgraph object created.
-    for src, chain in embedding.items():
+    for src, chain in chains.items():
         if len(chain) == 1:
             continue  # trivially connected
-        chain_set = set(chain)
+        chain_set = chain_sets[src]
         visited = {chain[0]}
         queue = [chain[0]]
         while queue:
@@ -131,14 +156,14 @@ def validate_layer1(embedding: dict,
                 check_name="connectivity",
                 detail=(
                     f"chain for source vertex {src!r} is not connected in "
-                    f"target graph; unreachable target nodes: {sorted(disconnected)}"
+                    f"target graph; unreachable target nodes: {sorted(disconnected, key=repr)}"
                 ),
             )
 
     # ── Check 4: Disjointness ──────────────────────────────────────────────────
     # Build reverse map as we go; fail immediately on first collision.
     qubit_to_src: dict = {}
-    for src, chain in embedding.items():
+    for src, chain in chains.items():
         for qubit in chain:
             if qubit in qubit_to_src:
                 return ValidationResult(
@@ -152,13 +177,12 @@ def validate_layer1(embedding: dict,
             qubit_to_src[qubit] = src
 
     # ── Check 5: Edge preservation ─────────────────────────────────────────────
-    # O(e_target) total: for each qubit in chain_u, check its target-graph
-    # neighbors against chain_v_set (O(1) lookup). Each target edge is visited
-    # at most twice across the full loop.
+    # Check contacts using the original target adjacency. A target edge may be
+    # inspected for several source neighbors, so this is not O(e_target) overall.
     for src_u, src_v in source_graph.edges():
-        chain_v_set = set(embedding[src_v])
+        chain_v_set = chain_sets[src_v]
         found = False
-        for qubit_u in embedding[src_u]:
+        for qubit_u in chains[src_u]:
             for nbr in target_graph.neighbors(qubit_u):
                 if nbr in chain_v_set:
                     found = True
@@ -218,9 +242,14 @@ def validate_layer2(result: dict,
         :class:`ValidationResult` — ``passed=True`` on success, or
         ``passed=False`` with ``check_name`` and ``detail`` on failure.
     """
-    embedding = result.get('embedding') or {}
+    if not isinstance(result, dict):
+        return ValidationResult(False, "result_format", "algorithm result must be a dict")
+    embedding = result.get('embedding')
+    if embedding is None:
+        embedding = {}
+    if not isinstance(embedding, dict):
+        return ValidationResult(False, "embedding_format", "embedding must be a dict")
     source_nodes = set(source_graph.nodes())
-    target_nodes = set(target_graph.nodes())
 
     if embedding:
         embedding_keys = set(embedding.keys())
@@ -233,7 +262,7 @@ def validate_layer2(result: dict,
                 check_name="key_validity",
                 detail=(
                     f"embedding contains {len(extra_keys)} key(s) not in source graph: "
-                    f"{sorted(extra_keys)[:5]}{'...' if len(extra_keys) > 5 else ''}"
+                    f"{sorted(extra_keys, key=repr)[:5]}{'...' if len(extra_keys) > 5 else ''}"
                 ),
             )
         missing_keys = source_nodes - embedding_keys
@@ -243,7 +272,7 @@ def validate_layer2(result: dict,
                 check_name="key_validity",
                 detail=(
                     f"embedding missing {len(missing_keys)} source vertex key(s): "
-                    f"{sorted(missing_keys)[:5]}{'...' if len(missing_keys) > 5 else ''}"
+                    f"{sorted(missing_keys, key=repr)[:5]}{'...' if len(missing_keys) > 5 else ''}"
                 ),
             )
 
@@ -265,7 +294,7 @@ def validate_layer2(result: dict,
 
             # ── Check 2: Value validity ─────────────────────────────────────────
             for qubit in chain:
-                if qubit not in target_nodes:
+                if qubit not in target_graph:
                     return ValidationResult(
                         passed=False,
                         check_name="value_validity",

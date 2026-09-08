@@ -14,6 +14,8 @@ import numpy as np
 import pandas as pd
 from typing import Optional
 
+from ember_qc_analysis.statistics import _per_problem_means
+
 
 # ── Helpers ─────────────────────────────────────────────────────────────────────
 
@@ -117,6 +119,8 @@ def rank_table(df: pd.DataFrame,
     For each problem where ≥ 2 algorithms have at least one successful trial,
     algorithms are ranked 1 (best) to N (worst) by their mean metric across trials.
     Ranks are then averaged across all problems to give an overall ranking.
+    Graph identity, full topology name, and batch/configuration identify each
+    problem. Missing legacy identity fields produce an explicit warning.
 
     Args:
         df:               Derived DataFrame from load_batch().
@@ -132,12 +136,7 @@ def rank_table(df: pd.DataFrame,
         raise ValueError(f"metric '{metric}' not found in DataFrame columns.")
 
     # Per-problem mean metric per algorithm (successful trials only)
-    per_problem = (
-        df[df['success']]
-        .groupby(['algorithm', 'graph_name'])[metric]
-        .mean()
-        .unstack(level='algorithm')
-    )
+    per_problem = _per_problem_means(df, metric)
 
     # Only rank problems where ≥ 2 algorithms succeeded
     per_problem = per_problem.dropna(thresh=2)

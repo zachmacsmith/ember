@@ -18,6 +18,7 @@ import statistics
 import sys
 import threading
 import time
+import warnings
 try:
     import resource as _resource
     _HAS_RESOURCE = True
@@ -134,7 +135,11 @@ class EmbeddingResult:
 
 def compute_embedding_metrics(embedding: Dict[int, list], 
                                target_graph: nx.Graph) -> Dict:
-    """Compute quality metrics for an embedding.
+    """Compute quality metrics for an already validated embedding.
+
+    This low-level helper does not have a source graph and cannot certify an
+    embedding. Public evaluation and ingestion validate before calling it.
+    For an empty source's empty embedding, ACL/max-chain are reported as zero.
     
     Args:
         embedding: {source_node: [target_qubits, ...]}
@@ -160,8 +165,8 @@ def compute_embedding_metrics(embedding: Dict[int, list],
     
     return {
         'chain_lengths': chain_lengths,
-        'avg_chain_length': float(np.mean(chain_lengths)),
-        'max_chain_length': max(chain_lengths),
+        'avg_chain_length': float(np.mean(chain_lengths)) if chain_lengths else 0.0,
+        'max_chain_length': max(chain_lengths, default=0),
         'total_qubits_used': len(all_qubits),
         'total_couplers_used': coupler_count
     }
@@ -197,12 +202,21 @@ def evaluate(embedding: Optional[Dict[int, list]],
         source_graph: Problem graph (for validity and node counts).
         target_graph: Hardware graph (for couplers and validity).
         wall_time:    Optional measured wall-clock seconds to fold into the report.
-        validate:     Run structural validation (set False to skip if already known).
+        validate:     Deprecated compatibility keyword. Validation always runs;
+                      False emits a DeprecationWarning and cannot bypass it.
 
     Returns:
-        Flat metrics dict. For an empty/``None`` embedding, ``valid`` is False and
-        the quality metrics are zeroed.
+        Flat metrics dict. Invalid/``None`` embeddings have ``valid=False`` and
+        zeroed quality fields. ``{}`` is valid for an empty source, with ACL=0
+        by reporting convention; this is not a quality observation for a nonempty
+        graph. Invalid outputs never reach metric computation.
     """
+    if not validate:
+        warnings.warn(
+            "evaluate(validate=False) is deprecated; embeddings are always validated",
+            DeprecationWarning,
+            stacklevel=2,
+        )
     base = {
         'valid': False,
         'num_source_nodes': source_graph.number_of_nodes(),
@@ -216,18 +230,19 @@ def evaluate(embedding: Optional[Dict[int, list]],
         'chain_length_cv': 0.0,
         'wall_time': wall_time,
     }
-    if not embedding:
+    if not validate_layer1(embedding, source_graph, target_graph).passed:
+        return base
+
+    base['valid'] = True
+    if source_graph.number_of_nodes() == 0:
         return base
 
     metrics = compute_embedding_metrics(embedding, target_graph)
     chain_lengths = np.asarray(metrics['chain_lengths'], dtype=float)
-    mean = float(chain_lengths.mean())
+    mean = metrics['total_qubits_used'] / source_graph.number_of_nodes()
     std = float(chain_lengths.std())  # population std — within-embedding spread
-    valid = bool(validate_layer1(embedding, source_graph, target_graph).passed) \
-        if validate else None
 
     base.update({
-        'valid': valid,
         'num_chains': len(embedding),
         'total_qubits_used': metrics['total_qubits_used'],
         'total_couplers_used': metrics['total_couplers_used'],
@@ -256,7 +271,9 @@ def benchmark_one(source_graph: nx.Graph,
         source_graph: Problem graph to embed.
         target_graph: Hardware topology graph.
         algorithm: Name of registered algorithm (e.g., "minorminer").
-        timeout: Max seconds for this attempt.
+        timeout: Max seconds inside embed(). A result returned after this limit
+                 is TIMEOUT even if structurally valid; late embeddings are
+                 retained for diagnostics without credited quality metrics.
         graph_name: Human-readable label for this problem (e.g., "K10").
         graph_id: Manifest integer ID; 0 for custom/non-manifest graphs.
         topology_name: Label for the hardware (e.g., "chimera_4x4x4").
@@ -293,16 +310,23 @@ def benchmark_one(source_graph: nx.Graph,
     )
     
     try:
+        # Isolate graph structure supplied to the algorithm. Algorithms may edit
+        # their working graphs, but cannot thereby change the original problem
+        # used for validation or contaminate a later benchmark trial. NetworkX
+        # copies preserve labels and attributes while copying adjacency structure.
+        algorithm_source = source_graph.copy()
+        algorithm_target = target_graph.copy()
         uses_subprocess = getattr(algo, '_uses_subprocess', False)
         if uses_subprocess and _HAS_RESOURCE:
             _rusage_before = _resource.getrusage(_resource.RUSAGE_CHILDREN)
         _cpu_start = time.process_time()
         _wall_start = time.perf_counter()
 
-        result = algo.embed(source_graph, target_graph, timeout=timeout, **kwargs)
+        result = algo.embed(algorithm_source, algorithm_target, timeout=timeout, **kwargs)
 
         _wall_elapsed = time.perf_counter() - _wall_start
         _cpu_elapsed = time.process_time() - _cpu_start
+        over_budget = timeout is not None and _wall_elapsed > timeout
         if uses_subprocess and _HAS_RESOURCE:
             _rusage_after = _resource.getrusage(_resource.RUSAGE_CHILDREN)
             _cpu_elapsed = (
@@ -315,25 +339,28 @@ def benchmark_one(source_graph: nx.Graph,
         if result is None:
             return EmbeddingResult(
                 **fail_base,
-                status='FAILURE',
+                status='TIMEOUT' if over_budget else 'FAILURE',
                 wall_time=_wall_elapsed,
                 cpu_time=_cpu_elapsed,
                 algorithm_version=algo_version,
-                error="Algorithm returned None",
+                error=("Algorithm returned None after the declared timeout" if over_budget
+                       else "Algorithm returned None"),
             )
 
         # ------------------------------------------------------------------
         # Layer 2 — type/format validation (always, before anything else).
         # Catches numpy int leakage, bad chain types, NaN times, etc.
-        # If it fails, status is INVALID_OUTPUT — no further processing.
+        # If it fails, status is INVALID_OUTPUT (or TIMEOUT after a deadline
+        # overrun); malformed data never reaches structural validation/metrics.
         # ------------------------------------------------------------------
         layer2 = validate_layer2(result, source_graph, target_graph)
         if not layer2.passed:
-            _emb_size = len(result.get('embedding') or {})
+            _raw = result.get('embedding') if isinstance(result, dict) else None
+            _emb_size = len(_raw) if isinstance(_raw, dict) else 0
             _outcome = f"returned embedding (size={_emb_size})" if _emb_size else "returned empty embedding"
             return EmbeddingResult(
                 **fail_base,
-                status='INVALID_OUTPUT',
+                status='TIMEOUT' if over_budget else 'INVALID_OUTPUT',
                 wall_time=_wall_elapsed,
                 cpu_time=_cpu_elapsed,
                 algorithm_version=algo_version,
@@ -344,37 +371,52 @@ def benchmark_one(source_graph: nx.Graph,
             )
 
         # ------------------------------------------------------------------
-        # Trustless success inference — never trust the algorithm's own flag.
-        # Infer from embedding presence if the key is absent.
+        # Infer success from structural validity, regardless of the algorithm's
+        # own success/partial flags. Failure metadata only describes a run that
+        # did not return a complete valid embedding.
         # ------------------------------------------------------------------
-        claimed_success = result.get('success', len(result.get('embedding', {})) > 0)
-        raw_embedding = result.get('embedding') or None  # treat {} as falsy
+        raw_embedding = result.get('embedding')
+        claimed_success = result.get('success', bool(raw_embedding))
         is_partial = result.get('partial', False)
-        layer1 = None  # set below only when structural validation runs
+        layer1 = (validate_layer1(raw_embedding, source_graph, target_graph)
+                  if raw_embedding is not None else None)
 
-        if claimed_success and raw_embedding:
-            # Validate against the target graph the algorithm actually used
-            # (OCT self-reports chimera_graph when it resizes the topology)
-            validation_target = result.get('chimera_graph', target_graph)
-            layer1 = validate_layer1(raw_embedding, source_graph, validation_target)
-            if layer1.passed:
-                status = 'SUCCESS'
-                success = True
-            else:
-                status = 'INVALID_OUTPUT'
-                success = False
+        if over_budget:
+            return EmbeddingResult(
+                **fail_base,
+                status='TIMEOUT',
+                wall_time=_wall_elapsed,
+                cpu_time=_cpu_elapsed,
+                is_valid=bool(layer1 is not None and layer1.passed),
+                embedding=raw_embedding,
+                algorithm_version=algo_version,
+                partial=is_partial and not bool(layer1 is not None and layer1.passed),
+                error=(f"embed() returned after {_wall_elapsed:.6f}s, exceeding "
+                       f"the declared timeout of {timeout:.6f}s; no timely quality result"),
+                metadata=result.get('metadata'),
+            )
+
+        if layer1 is not None and layer1.passed:
+            status = 'SUCCESS'
+            success = True
         elif is_partial:
             # Algorithm hit a limit but returned a partial state — preserve for
             # diagnostic telemetry but do not pass to metrics calculators.
             status = result.get('status', 'TIMEOUT')
             success = False
             raw_embedding = None
+        elif claimed_success or raw_embedding:
+            status = 'INVALID_OUTPUT'
+            success = False
         else:
             status = result.get('status', 'FAILURE')
             success = False
 
-        if success and raw_embedding:
-            metrics = compute_embedding_metrics(raw_embedding, validation_target)
+        if not success and status not in {'INVALID_OUTPUT', 'TIMEOUT', 'CRASH', 'OOM', 'FAILURE'}:
+            status = 'INVALID_OUTPUT' if status == 'SUCCESS' else 'FAILURE'
+
+        if success:
+            metrics = compute_embedding_metrics(raw_embedding, target_graph)
             return EmbeddingResult(
                 algorithm=algorithm,
                 graph_name=graph_name,
@@ -408,7 +450,7 @@ def benchmark_one(source_graph: nx.Graph,
             # For other failures (TIMEOUT, CRASH, etc.), use the algorithm's error.
             if status == 'INVALID_OUTPUT' and layer1 is not None and not layer1.passed:
                 error_msg = (
-                    f"returned embedding (size={len(raw_embedding)}); "
+                    f"returned embedding (size={len(result.get('embedding') or {})}); "
                     f"Layer 1 [{layer1.check_name}]: {layer1.detail}"
                 )
             else:
@@ -2477,4 +2519,3 @@ def delete_benchmark(batch_id: Optional[str] = None,
     shutil.rmtree(batch_dir)
     print(f"Deleted {batch_dir.name}.")
     return True
-

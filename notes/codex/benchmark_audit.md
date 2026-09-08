@@ -4,7 +4,9 @@ Date: 2026-09-07. Scope: read the current benchmark, manifest, saved evidence an
 
 ## What the present evidence establishes
 
-The frozen handoff CSVs support the arithmetic in most of the displayed 10-cell table. They do **not** establish valid, independent, equal-budget superiority on all Ember families. There are 36 manifest categories; the development board represents only nine of them. Its `new+mm` and `old` arms explicitly include MM. Its independent `new` arm loses to MM on the regular, Watts–Strogatz, grid, honeycomb and king-graph cells. The board does not independently validate its returned embeddings or save embedding witnesses, so even its positive ACL results require reconstruction and revalidation.
+The frozen handoff CSVs support the arithmetic in most of the displayed 10-cell table. They do **not** establish valid, independent, equal-budget superiority on all Ember families. There are 36 manifest categories; the development board represents only nine of them. Its `new+mm` and `old` arms explicitly include MM. Its `new` arm, configured with `tail='none'`, reports worse ACL than MM on the regular, Watts–Strogatz, grid, honeycomb and king-graph cells. The board does not independently validate its returned embeddings or save embedding witnesses, so even its positive ACL results require reconstruction and revalidation.
+
+**Clarification after the source audit:** the original version of this note called the `new` arm independent based on its `tail='none'` setting. That inference was incorrect: the algorithm audit found hidden MM legalization/fallback paths even with that setting. The unchanged CSV arithmetic describes the named experimental arm; it does not establish MM-free execution. See `notes/codex/algorithm_audit.md`. The validation findings below describe the audited starting version; subsequent repairs are recorded separately in `notes/codex/experiments/001_validation.md`.
 
 There are several repairable problems in the benchmark and analysis code, including an algorithm-controlled target override in validation, analysis keys that merge different graph IDs, and inadequate structural deduplication. None of these proves that a specific archived win was false. They prevent treating an unchecked summary as proof.
 
@@ -129,7 +131,7 @@ The published-in-repo 10-cell board, its seeds, acceptance thresholds and prior 
 
 Evidence files: `docs/handoff/baseline/rewrite_board_mm.csv`, `rewrite_board_new-newmm.csv`, `rewrite_board_old.csv`; summarized claims in `docs/handoff/baseline/RESULTS.md:44`. The three CSVs contain 58, 116 and 58 rows. The following means were independently recalculated from the frozen rows; they remain **unverified embedding claims** because witnesses are absent from these CSVs.
 
-| Cell | Trials per arm | Stock MM ACL | Independent `new` ACL | `new` mean wall, seconds | MM mean wall, seconds |
+| Cell | Trials per arm | Stock MM ACL | Reported `new` ACL | `new` mean wall, seconds | MM mean wall, seconds |
 |---|---:|---:|---:|---:|---:|
 | K100 | 3 | 10.467 | 7.260 | 21.3 | 61.6 |
 | K140 | 3 | 20.286 (2 successes) | 9.766 | 37.8 | 65.8 |
@@ -142,7 +144,7 @@ Evidence files: `docs/handoff/baseline/rewrite_board_mm.csv`, `rewrite_board_new
 | honeycomb_200 | 3 | 1.160 | 1.890 | 62.4 | 0.7 |
 | king_graph_196 | 3 | 1.760 | 2.561 | 72.0 | 1.8 |
 
-The board's MM arm calls `minorminer.find_embedding(source_graph, target_edges, random_seed=seed, timeout=60)` (`docs/paper2/data/rewrite_board.py:75`). The `new` arm calls the independent engine with `tail='none'`, graph-specific work budgets and a 1,800-second safety timeout (`:82`). `new+mm` calls the engine with `tail='mm'` and a 60-second timeout (`:85`); `old` uses the former defaults with the MM tail. Thus a low ACL in those latter arms does not satisfy the user's independence constraint. Slower execution is now acceptable, but elapsed work must still be reported accurately and compared with strengthened MM quality baselines.
+The board's MM arm calls `minorminer.find_embedding(source_graph, target_edges, random_seed=seed, timeout=60)` (`docs/paper2/data/rewrite_board.py:75`). The `new` arm calls the engine with `tail='none'`, graph-specific work budgets and a 1,800-second safety timeout (`:82`), but that setting does not exclude the hidden MM legalization/fallback paths found by the source audit. `new+mm` calls the engine with `tail='mm'` and a 60-second timeout (`:85`); `old` uses the former defaults with the MM tail. None of these arm configurations by itself establishes the user's independence constraint. Slower execution is now acceptable, but elapsed work must still be reported accurately and compared with strengthened MM quality baselines.
 
 The board counts any nonempty returned embedding as success, divides by the number of returned keys, rounds ACL to three decimals, and saves only summary fields (`rewrite_board.py:89`). It bypasses both validation layers. Its summary globs every `rewrite_board_*.csv`, without an experiment-ID deduplication rule, and forms a dictionary keyed by seed for MM while averaging all selected arm rows (`:108`, `:126`). Duplicate runs or different versions in that directory can therefore be pooled asymmetrically. The frozen handoff files can be read individually, but the live glob summary is unsafe for publication. The baseline comparison drops failed pairs before computing mean deltas and uses tolerance `max(0.05, 2% of old ACL)` (`docs/handoff/compare_baseline.py:47`, `:109`), which is a development tolerance rather than statistical evidence.
 
