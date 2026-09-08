@@ -42,6 +42,8 @@ is unproved.
 - [Complete Sudoku comparison and small-input runtime deficit](experiments/029_results_review.md)
 - [Physical-qubit checkpoint hypothesis and preimplementation critique](physical_checkpoint_spec.md)
 - [Four-seed comparison with contemporaneous MM measurements](experiments/032_solver_seed_replication.md)
+- [Direct singleton relocation design and self-critique](singleton_relocation_spec.md)
+- [Full-pipeline singleton relocation comparison protocol](experiments/033_singleton_relocation_ablation.md)
 - [Generalization and final confirmation protocol](generalization_protocol.md)
 
 Earlier audit recommendations favoring exact local construction are historical

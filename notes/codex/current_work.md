@@ -15,10 +15,11 @@ The already frozen `029-sudoku-development-comparison` then completed all six
 calls; fresh supervisor status reports complete, lock free and exit zero. Its
 independent audit passes. Neither completed controller should restart.
 
-`032-solver-seed-replication` is frozen and staged on hyde03: all 34 original
+`032-solver-seed-replication` is running on hyde03: all 34 original
 readiness sources, MM and fixed spectral candidate, seeds 0–3, 272 calls and
-60 seconds per call. The benchmark auditor owns preflight/launch and records
-actual liveness in its protocol. Source
+60 seconds per call. Independent preflight passed before the 03:21:46 UTC launch;
+fresh SSH status verified controller 125964, worker 125975, held lock and live
+tmux. The benchmark auditor monitors this exact supervisor. Source
 `89a3e77bf1df22a7eea436e42f0bc04c81055e098d7baf78c632a76224046994`;
 transport `f02da9b1a88d747f8ba37e5e834395194cc084bd79ae3b47df73d09e13d83618`.
 It contains no direct singleton relocation and no physical checkpoint policy.
@@ -73,15 +74,20 @@ without changing the frozen input sidecars.
 - `algorithm_audit`: 028 performance change is complete and independently reviewed;
   55 proposal tests plus 38 root integration tests pass. All 12 outputs and
   trajectories match exactly, with small observed speed gains and timing caveats.
-  030 is complete and reviewed. Now specify direct singleton relocation using
-  common neighbor-chain boundaries, including zero-excess chains under the same
-  qubit/contact objective. Own `singleton_relocation_spec.md`; critique before
-  implementation and explicitly account for shared work and scheduling costs.
+  030 is complete and reviewed. The direct singleton specification/self-critique
+  is saved and root-reviewed. Now implement the bounded operator and ownership
+  cache in `singleton_relocation.py`/`contact_repair.py`, with focused oracle,
+  budget and invalidation tests. Root owns native/pilot integration and its tests.
+  The 033 protocol requires all 34 full-pipeline pairs after correctness checks.
 - `literature`: 029 adapter is complete; root reviewed it, reran 103 tests and
   committed `4cad1d67`. The six-trial run completed on hyde03. Now prepare the
-  pinned environments on hyde04 and inspect supervisor availability, with evidence
-  under `031-second-node-preparation`. No benchmark, global package/service
-  change or new supervisor fallback is authorized in that bounded task.
+  pinned environments on hyde04 and inspect supervisor availability. Its SSH
+  context failed DNS while root reached the node; root now executes remote
+  actions, and the agent reviews additive evidence. First preparation failed
+  because pip23 cannot bootstrap Python3.12. The unchanged helper is now running
+  with the local Python3.12 bundled pip24, under root session37071. The first
+  partial environment is unused. Root session20531 queries supervisor details;
+  no benchmark or new supervisor fallback is active on this node.
 
 Review agent-owned edits before committing. The current cluster run uses its
 frozen source and is unaffected by these working-tree edits. Root owns README,

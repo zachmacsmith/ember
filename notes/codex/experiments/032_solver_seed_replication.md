@@ -58,3 +58,47 @@ trigger per-family settings or a seed-selection policy.
 
 This note freezes the protocol before any 032 solver outcome. Record actual
 source/transport identities and verified launch in an additive section.
+
+## Verified preflight and launch
+
+The independent preflight passed before launch. It recomputed all 355 immutable
+input-file hashes, including 45 source files, and checked the exact Cartesian
+product of 34 inputs, two methods and seeds 0–3. Every task has the specified
+configuration and a 60-second solver budget. The 34 graph files, target and both
+corpus selection sidecars are byte-identical to 026. The only source-map change
+from 029 is omission of `scripts/codex/sudoku_supplement.py`; all remaining source
+bytes match. This run contains no supplementary Sudoku inputs.
+
+| Identity | Frozen value |
+|---|---|
+| Commit | `9c01447dbc8ef2249664123d1b511504b8803222` |
+| Source snapshot | `89a3e77bf1df22a7eea436e42f0bc04c81055e098d7baf78c632a76224046994` |
+| Transport input digest | `f02da9b1a88d747f8ba37e5e834395194cc084bd79ae3b47df73d09e13d83618` |
+| Target | `38cde794d3c1461054a45b5a660d157737b019c19cb9a7b38e2027730e3d5938` |
+| Readiness selection | `06c02356f8df5503b57f280ba4939c298cc05834c563a3da8a71f96fe245db98` |
+
+A fresh SSH connection confirmed the preceding 029 run was complete with six
+finalized successes, no held controller lock, stopped tmux supervision and exit
+code zero. All 95 files in its retrieved archive were rechecked against retrieval
+digest `eb27661c6f97ff253e30a15f77e00eb070969bb8ea83b4fe5b00b4e1111f17a9`.
+A separate fresh check confirmed 032 was staged and unstarted, with no claims or
+results. The launch command was:
+
+```sh
+.venv/bin/python scripts/codex/cluster.py --host hyde03 start 032-solver-seed-replication
+.venv/bin/python scripts/codex/cluster.py --host hyde03 status 032-solver-seed-replication
+```
+
+The exact run `/home/dabh/ember-codex/runs/032-solver-seed-replication` started at
+`2026-09-08T03:21:46.368074Z` (Unix `1788837706.368074`). A subsequent connection
+confirmed controller PID `125964` running and worker PID `125975` executing task
+`66f17800e7dd9e7e8282aa3d`. The inherited lock was busy and tmux was running. This
+first status had zero of 272 trials finalized; it establishes liveness, without
+an outcome claim. The detached supervisor has a 24780-second outer limit and
+executes the frozen runner under the native isolated interpreter. The inactive
+systemd service fields are expected because supervision uses tmux.
+
+Raw launch and live-status responses, plus the independently executable local
+preflight and its report, are saved outside the frozen run in
+`results/codex/032-launch/`. Monitor this exact supervisor without restarting;
+retrieve its full archive only after verified quiescence.
