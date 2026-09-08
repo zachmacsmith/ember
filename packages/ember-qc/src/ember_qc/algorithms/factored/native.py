@@ -90,7 +90,7 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
                  beam_width=4, max_groups=64, polish_group_sizes=(2, 3, 4),
                  polish_expansions=500000, polish_boundary_sites=0,
                  polish_group_policy="legacy", polish_objective='qubits',
-                 polish_tree_policy='greedy'):
+                 polish_tree_policy='greedy', initialization='random'):
     """Return a validated independent result or an explicit construction failure.
 
     Deadline overruns are reported and never counted as timely success. Conversion
@@ -106,7 +106,8 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
             "polish_boundary_sites": polish_boundary_sites,
             "polish_group_policy": polish_group_policy,
             'polish_objective': polish_objective,
-            'polish_tree_policy': polish_tree_policy}
+            'polish_tree_policy': polish_tree_policy,
+            'initialization': initialization}
 
     def result(embedding, status, **extra):
         elapsed = time.perf_counter() - started
@@ -120,6 +121,10 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
         return result({}, "ERROR", error="timeout must be finite and positive, or None")
     if construction not in ("search", "packed"):
         return result({}, "ERROR", error="unknown construction")
+    if initialization not in ('random', 'spectral'):
+        return result({}, 'ERROR', error='unknown initialization')
+    if initialization == 'spectral' and construction != 'search':
+        return result({}, 'ERROR', error='spectral initialization requires search construction')
     if packing_passes < 1 or max_asks < 1 or polish_passes < 0:
         return result({}, "ERROR", error="invalid work limit")
     if (source_graph.is_directed() or source_graph.is_multigraph()
@@ -150,9 +155,25 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
             return result({}, "UNSUPPORTED", error="course-resolved native wires unavailable")
         layout_started = time.perf_counter()
         if construction == "search":
+            initialization_args = {}
+            if initialization == 'spectral':
+                from ember_qc.algorithms.factored.spectral_order import spectral_orders
+                initial_orders, initialization_info = spectral_orders(
+                    src_adj, seed=seed, deadline=deadline)
+                diag['initialization_info'] = initialization_info
+                if initial_orders is None:
+                    diag['layout_wall'] = time.perf_counter() - layout_started
+                    status = ('TIMEOUT' if initialization_info['status'] == 'deadline'
+                              else 'INITIALIZATION_FAILED')
+                    return result({}, status)
+                initialization_args['initial_orders'] = initial_orders
+                if deadline is not None and time.perf_counter() >= deadline:
+                    diag['layout_wall'] = time.perf_counter() - layout_started
+                    return result({}, 'TIMEOUT')
             points, state, layout_info = plane.arrange(
                 src_adj, grid, seed=seed, max_asks=max_asks, deadline=deadline,
-                snap=True, sched_seed=seed if sched_seed is None else sched_seed)
+                snap=True, sched_seed=seed if sched_seed is None else sched_seed,
+                **initialization_args)
         else:
             points, state, layout_info = _packed_layout(
                 src_adj, grid, _shared_order(source, seed, order_strategy),

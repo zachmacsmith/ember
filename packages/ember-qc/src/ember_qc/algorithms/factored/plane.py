@@ -303,16 +303,18 @@ def arrange(src_adj: Dict[int, List[int]], grid: TileGrid, *,
             seed: int = 0, max_asks: Optional[int] = None,
             deadline: Optional[float] = None, snap: bool = False,
             moves: bool = True, trace: bool = False,
-            sched_seed: Optional[int] = None
+            sched_seed: Optional[int] = None,
+            initial_orders: Optional[Tuple[List[int], List[int]]] = None
             ) -> Tuple[Pos, Books, dict]:
-    """The engine. Init = two seeded permutations. Loop: for each unit
-    in the pass's bag, ask the interleaver (strict improvement in the
-    true objective on the frozen picture), re-pack the moved axis,
-    judge, adopt (every proposal is adopted), bookmark the best
-    ``(pen, stair)``. Stop = a pass with zero accepts (the fixpoint
-    certificate), or ``max_asks`` DP evaluations (the work budget), or
-    the deadline (a safety net, reported). Returns the bookmark's
-    positions and books and the diagnostics."""
+    """Search a geometric placement from one fixed initialization.
+
+    By default use two seeded rank permutations. Explicit ``initial_orders``
+    are vertex orders, converted to ranks; the search scheduler has its own
+    seeded generator in either case. Proposals optimize a frozen geometric
+    surrogate and are then repacked. Retain the best ``(pen, stair)`` state;
+    this score is not the final physical chain objective. Stop on a pass with
+    no accepted proposal, the evaluation allowance, or the common deadline.
+    """
     t0 = _time.perf_counter()
     ids = sorted(src_adj)
     n = len(ids)
@@ -322,9 +324,18 @@ def arrange(src_adj: Dict[int, List[int]], grid: TileGrid, *,
                   "bars": None, "misses": None, "accept_traj": [],
                   "adopt_worse": 0, "infeasible": 0,
                   "trace": [] if trace else None}
-    rng = np.random.default_rng(seed)          # the init
-    px = rng.permutation(n)
-    py = rng.permutation(n)
+    if initial_orders is None:
+        rng = np.random.default_rng(seed)
+        px = rng.permutation(n)
+        py = rng.permutation(n)
+    else:
+        if (len(initial_orders) != 2 or any(
+                len(order) != n or set(order) != set(ids)
+                for order in initial_orders)):
+            raise ValueError('initial_orders must contain two permutations of source vertices')
+        ranks = [rank_of(order) for order in initial_orders]
+        px = [ranks[0][v] for v in ids]
+        py = [ranks[1][v] for v in ids]
     # the bag's own seed (the order-invariance instrument varies it
     # independently of the init); defaults to the init's
     rng = np.random.default_rng(seed if sched_seed is None else sched_seed)

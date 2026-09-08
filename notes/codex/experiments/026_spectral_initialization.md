@@ -61,3 +61,25 @@ source-only tests, test explicit-order equivalence and invalid-order rejection,
 check native failure/deadline forwarding, and perform a small isolated-environment
 correctness smoke with forbidden embedding imports guarded. Only then save the
 source snapshot and stage the declared full input comparison.
+
+## Integration verification
+
+Independent module review found no numerical or independence blocker and retained
+the conventional-method attribution and approximation limits. A second review
+checked the actual plane/native/pilot changes: order inversion, independent
+scheduler, common deadline, fixed configuration and no fallback are preserved.
+The default random branch remains unchanged. The native adapter now records
+`initialization` and, for spectral calls, the full numerical diagnosis.
+
+The combined focused suite passed 160 tests in 28.93 seconds. An additional
+approximate-output boundary test was added after review: finite approximate
+orders must pass through exactly one placement call and retain their numerical
+status. The complete integration test file then passed 14 tests. These checks
+establish implementation behavior, not a benchmark quality improvement.
+
+The isolated correctness smoke uses the existing fixed development inputs
+`complete_40`, `regular_80_d3`, and `grid_8x8`, one spectral candidate call each,
+with the same 60-second end-to-end allowance and normal worker import guards.
+All three inputs are retained regardless of outcome. These calls exercise dense,
+sparse irregular and sparse geometric construction paths; they are not an
+MM comparison or a family-level performance estimate.

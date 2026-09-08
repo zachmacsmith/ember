@@ -71,7 +71,8 @@ and two-vertex components require no invented nonconstant modes.
 
 The diagonal preconditioner is the inverse positive diagonal of scaled L. It is
 an inexpensive numerical operation, not a linear system solve or an IP subroutine.
-Matrix construction and graph validation require `O(n+m)` storage/work. With a
+Matrix storage and construction after canonicalization require `O(n+m)` work.
+Canonicalizing IDs, components and adjacency also incurs sorting costs. With a
 constant block size, each sparse operator application costs `O(n+m)`; orthogonal
 operations cost `O(n)`, and the internal dense eigenproblems have bounded dimension.
 All components share the work cap. The work count is a numerical-operation proxy;
@@ -91,8 +92,11 @@ Procrustes orientation removes arbitrary sign and basis rotation of a fixed
 two-dimensional returned subspace, provided the reference projection has full
 rank. It may mix two distinct eigenvectors; the result spans the same low-mode
 plane and preserves the sum of their quadratic energies. Report Ritz residuals
-before that rotation. Flag a deficient reference projection, near ties between
-the second and third Ritz values, and any residual above tolerance. A low residual
+before that rotation. Flag a deficient reference projection and near ties between
+the second and third Ritz values; report every residual. The `residual_tolerance`
+status refers to the first two layout vectors. The third residual contributes to
+the cutoff-uncertainty diagnosis, and that status does not assert its convergence.
+A low residual
 does not certify that the solver found the globally lowest eigenvalues. A
 degeneracy extending past the selected subspace can change that subspace; the
 orientation rule does not cure it. No full large eigenspace is computed to conceal
