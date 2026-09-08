@@ -406,3 +406,33 @@ singleton relocation nor physical checkpoint selection. The benchmark auditor
 owns independent preflight and launch after the verified 029 completion/retrieval.
 Repeated seeds measure preliminary stochastic variation and current same-run MM
 timing; they do not create unseen source structures or support family-wide claims.
+
+The direct singleton revision is now independently reviewed and committed as
+`684a95d5`. Root ran 172 focused tests successfully, including an independent
+exhaustive-site oracle over 240 vertex/objective cases across 24 small valid
+minors. A pre-benchmark structural counterexample led to a documented correction:
+lazy cache setup can also occur in the first scheduled extra visit when all
+overlong chains exceed the target degree bound. The same budgets and fixed
+constants remain. No general performance claim follows from these checks.
+
+Root froze and launched033 locally, 68 complete pipeline calls on the original
+34 readiness sources. The two globally fixed spectral arms differ only by the
+direct singleton policy. Source identity is e0ba48c4636082140e4a8d7040ecb22165712a1ef0672d0dee518948ef40853b.
+Controller33003 and an isolated native worker were verified live; root owns
+session94745. The four-seed032 comparison remains separately active onhyde03.
+Their timing populations are never pooled.
+
+Hyde04's pinned Python3.12.3 environments are prepared and independently read
+back under1111b11934b4524b. An initial pip23 bootstrap failed; the unchanged helper
+succeeded using an existing local Python3.12 bundled pip24. The failed partial
+environment is unused. Linger is disabled and tmux absent, so persistent
+benchmark supervision there remains a separate unfinished prerequisite.
+
+During physical-cost modeling, the algorithm auditor identified a possible
+converter capacity-state error. An independent frozen-source diagnostic has now
+reproduced infeasible DP assignments and a missed feasible assignment, including
+an intact default-Z12 line. Physical seating still prevents overlap and reports
+the miss. This is converter-only evidence: no upstream occurrence frequency or
+full-pipeline ACL effect is yet established. The proposed correction and its
+runtime/proof limitations are being documented before implementation;033's
+frozen source remains unchanged.

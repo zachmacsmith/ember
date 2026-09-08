@@ -24,6 +24,21 @@ tmux. The benchmark auditor monitors this exact supervisor. Source
 transport `f02da9b1a88d747f8ba37e5e834395194cc084bd79ae3b47df73d09e13d83618`.
 It contains no direct singleton relocation and no physical checkpoint policy.
 
+`033-singleton-relocation-ablation` is also running, on the local host in the
+isolated native environment. Root owns exec session **94745** and controller
+PID **33003**; a fresh OS check also verified worker 33065. Start time was
+2026-09-08 03:40:02.619 UTC, with two finalized results at the first detailed
+check. Do not restart this run after an observation timeout. It contains all
+34 readiness sources and two fixed spectral arms, differing only by direct
+singleton relocation, seed zero and 60 seconds. Frozen commit
+`684a95d5f00c4b36ffaab1e23983aca5d58ee0c3`, source
+`e0ba48c4636082140e4a8d7040ecb22165712a1ef0672d0dee518948ef40853b`.
+The 152-file local input-bundle check has digest
+`e71d3c4b255301ad641703777aaef0e11b16b4acfe1359aecd48dfd4a5fc3ca8`.
+Local preflight confirms the target/all source bytes match 026, the exact trial
+matrix, and absence of MM/busclique in the native interpreter. No timing is
+pooled between 032 and 033.
+
 ## Most recent complete evidence
 
 019: both candidates have 34 timely valid results; MM has 31 plus three timeouts.
@@ -74,20 +89,20 @@ without changing the frozen input sidecars.
 - `algorithm_audit`: 028 performance change is complete and independently reviewed;
   55 proposal tests plus 38 root integration tests pass. All 12 outputs and
   trajectories match exactly, with small observed speed gains and timing caveats.
-  030 is complete and reviewed. The direct singleton specification/self-critique
-  is saved and root-reviewed. Now implement the bounded operator and ownership
-  cache in `singleton_relocation.py`/`contact_repair.py`, with focused oracle,
-  budget and invalidation tests. Root owns native/pilot integration and its tests.
-  The 033 protocol requires all 34 full-pipeline pairs after correctness checks.
+  The singleton implementation is complete and committed, with independent
+  review and 172 root-run focused tests passing. A separate exhaustive oracle
+  checks 240 proposer cases across 24 small minors. Now derive an honest physical
+  cost model from conversion/packing and030 evidence; own `physical_cost_model.md`.
+  No geometry/converter implementation changes or full solver calls in that task.
 - `literature`: 029 adapter is complete; root reviewed it, reran 103 tests and
   committed `4cad1d67`. The six-trial run completed on hyde03. Now prepare the
-  pinned environments on hyde04 and inspect supervisor availability. Its SSH
-  context failed DNS while root reached the node; root now executes remote
-  actions, and the agent reviews additive evidence. First preparation failed
-  because pip23 cannot bootstrap Python3.12. The unchanged helper is now running
-  with the local Python3.12 bundled pip24, under root session37071. The first
-  partial environment is unused. Root session20531 queries supervisor details;
-  no benchmark or new supervisor fallback is active on this node.
+  031 is complete to environment preparation/readback: Python3.12.3, pinned
+  native/MM environments under `/home/dabh/ember-codex/envs/1111b11934b4524b`.
+  All five records and versions were independently verified. Linger=no and no
+  tmux: supervisor work remains deferred, so no benchmark runs on hyde04.
+  The independent singleton core review found no blocker. Now audit converter
+  capacity using tiny source-frozen diagnostics under034; own
+  `conversion_capacity_review.md`. No source edits or full embedding runs.
 
 Review agent-owned edits before committing. The current cluster run uses its
 frozen source and is unaffected by these working-tree edits. Root owns README,
@@ -96,10 +111,14 @@ Preserve unrelated `.claude/` and graph-library `.verified.json` files.
 
 ## Next actions
 
-1. Preserve complete 026/030 evidence and develop a fixed direct singleton
-   relocation experiment after reviewing its design, failure cases and budgets.
-2. Keep the 028 semantics-preserving speed change. No physical-checkpoint
-   production callback is justified by the completed 030 diagnostic.
+1. Follow complete033 outcomes through independent validation and cumulative
+   quality/work/runtime analysis, keeping all regressions and comparing one fixed
+   policy globally. The legacy control's old traversal remains byte-identical.
+2. Review034's reproduced converter DP capacity defect and the physical-cost
+   model before any correction. Tiny feasible assignments are missed by the DP
+   while physical seating remains disjoint; no full-pipeline effect is established.
+   A narrowly scoped correction needs its own critique, oracle and frozen ablation.
+   Keep028; no physical-checkpoint production callback is promoted.
 3. Follow 032 through repeated-seed quality and timing analysis, preserving all
    failures and the distinction between solver seeds and source instances.
    Review the second-node preparation before using it for later experiments.

@@ -96,3 +96,20 @@ there yet. No new supervisor or global installation is needed for local executio
 Freeze a committed source snapshot before initialization. The run must retain
 the complete original 34-input matrix and both fixed configurations. Record
 actual source identity and controller liveness after starting it.
+
+## Frozen source and verified local launch
+
+The run is frozen from commit `684a95d5f00c4b36ffaab1e23983aca5d58ee0c3`, with
+source SHA256 `e0ba48c4636082140e4a8d7040ecb22165712a1ef0672d0dee518948ef40853b`.
+Preflight rechecked all 152 frozen input files, all source/target hashes, the
+complete 34-by-two task matrix, and native package absence. Its local bundle
+digest is `e71d3c4b255301ad641703777aaef0e11b16b4acfe1359aecd48dfd4a5fc3ca8`;
+this is a local verification artifact, not a remote transfer. Target identity
+remains `38cde794d3c1461054a45b5a660d157737b019c19cb9a7b38e2027730e3d5938`.
+
+The controller started at `2026-09-08T03:40:02.619148Z`, PID33003, under root
+exec session94745. A fresh OS process check verified that controller and isolated
+native worker PID33065; two results had finalized at that check. This proves
+launch/liveness only. Raw preflight, controller stdout/stderr and initial live
+status are under `results/codex/033-launch/`. Preserve all outputs and use the
+existing exact process handle; an observation timeout is not grounds to restart.
