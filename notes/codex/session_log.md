@@ -678,3 +678,33 @@ Benchmark audit now owns 038's independent preflight after its diagnostic
 freeze is stable. Algorithm audit reports five focused instrumentation checks
 and literature's eight supervision checks passing, with no corpus observations.
 Root rechecked the backend at05:13:29UTC: goal active and unmet.
+
+Automated goal continuation6 was appended verbatim to PROMPTS_CODEX.md. The
+previous goal turn was progress: 037 completed and its full independent audit
+was reproduced byte-for-byte; degree-gate readiness was independently reproduced;
+the reports, next experiment protocol and reviewed connected-core specification
+were committed. The connected core and 038 diagnostic implementation are now
+assigned, with no corpus execution before preflight. Current goal status is
+active; the objective is unmet and there is no repeated external blocker.
+
+During038preflight, independent review confirmed exact037source bytes and all34
+original input mappings without any solver import. It also found that best/RNG
+hashes did not meet the stronger grid/graph/adjacency immutability requirement.
+Root approved capture-onward structural hashes with their overhead charged to
+the common deadline. Static inspection finds physical helpers mutate only local
+chains; line-pool caches are created during the prefix and must be included in
+the capture baseline. Native received-deadline logging and partial-capture
+analyzer handling are being completed before the final diagnostic freeze.
+
+Root also approved one default-fatal worker SIGALRM tied to the remaining fixed
+150-second launch allowance, never reset for the second invocation. This backs
+up the existing external150-second plus5-second process-group cleanup if the
+controller dies. Algorithm audit owns its implementation and focused checks;
+literature remains assigned exclusively to the connected core. No corpus
+observation has occurred and no production candidate source changes for038.
+
+Root saved a separately critiqued future allocation hypothesis: ordinary work
+could retain its original quota with an explicitly additional bounded auxiliary
+allowance, under the same wall deadline. This responds to037's no-commit
+regressions and makes a conditional replay property testable. It is design only,
+not a change to the current connected core or a newly authorized benchmark.

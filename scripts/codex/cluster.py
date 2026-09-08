@@ -1,4 +1,4 @@
-"""Transfer, supervise and retrieve frozen Ember pilot runs on hyde03/04.
+"""Transfer, supervise and retrieve frozen Ember pilot runs on the hyde nodes.
 
 No benchmark starts during prepare or stage. Explicit start uses a uniquely named
 persistent supervisor, so an SSH disconnect does not own the controller lifetime.
@@ -210,7 +210,8 @@ class SSH:
             '  ConnectionAttempts 1\n  ServerAliveInterval 15\n  ServerAliveCountMax 2\n'
             '  ForwardAgent no\n  StrictHostKeyChecking yes\n  ControlMaster no\n'
             f'  ControlPath {self.temp.name}/%C\n'
-            'Host hyde03.dabh.io hyde04.dabh.io\n  ProxyJump dabh@hyde01.dabh.io\n'
+            'Host hyde02.dabh.io hyde03.dabh.io hyde04.dabh.io '
+            'hyde05.dabh.io hyde06.dabh.io\n  ProxyJump dabh@hyde01.dabh.io\n'
         )
         self.command = ['ssh', '-F', str(self.config)]
 
@@ -298,7 +299,7 @@ def build_bundle(run, destination):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--host', choices=('hyde03', 'hyde04'), default='hyde03')
+    parser.add_argument('--host', choices=tuple(f'hyde{i:02}' for i in range(1, 7)), default='hyde03')
     sub = parser.add_subparsers(dest='action', required=True)
     prep = sub.add_parser('prepare', help='create isolated, pinned native/MM environments; no benchmark')
     prep.add_argument('--python', default='/usr/bin/python3.10')
