@@ -1352,7 +1352,7 @@ C006b started once on04, controller170867, exactpriorC006snapshota8142195,
 Literature prepares049minimaloriginal-output/requirement/work screen while
 root owns its lifecycle. No new final-test data or shared-validator change.
 
-## 2026-09-08 19:30 UTC: construction obstructions identified
+## 2026-09-08 19:28 UTC: construction obstructions identified
 
 049 is terminal on03, with66SUCCESS/twoFAILURE rows across both arms;451file
 retrieval passes its bound digest. Root accepts the original-output/journal
@@ -1378,7 +1378,7 @@ directed ownership-repair mechanism next, before any whole-pipeline candidate.
 Updated research state and newest automatic continuation prompt are saved.
 All results remain exposed development evidence; no final-test data opened.
 
-## 2026-09-08 19:39 UTC: stronger matching detects conflicts but loses coverage
+## 2026-09-08 19:38 UTC: stronger matching detects conflicts but loses coverage
 
 B009 finishes all18calls on02;175file archive validates. Candidate6/9 versus
 B0077/9: ER blocks after63placements, WS saves60Q, regular adds10Q and king16Q.

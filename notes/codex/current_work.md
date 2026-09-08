@@ -1,6 +1,6 @@
 # Current research checkpoint
 
-Updated 2026-09-08 19:51 UTC. Branch `codex`. Goal active and unmet: one
+Updated 2026-09-08 19:49 UTC. Branch `codex`. Goal active and unmet: one
 general non-portfolio algorithm, no MM/busclique, ideal Z12, competitive mean
 ACL and roughly MM-scale runtime. No new final-test inputs have been exposed.
 

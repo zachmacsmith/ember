@@ -36,6 +36,8 @@ ROOT = Path(__file__).resolve().parents[2]
 CONSTRUCTORS = {
     'native-reduced-core': ('packages/ember-qc/src/ember_qc/algorithms/factored/reduced_core_construction.py',
                             'reduced_core_embed'),
+    'native-reduced-core-repair': ('packages/ember-qc/src/ember_qc/algorithms/factored/reduced_reinsertion_construction.py',
+                                   'reduced_core_embed'),
     'demand-tree': ('packages/ember-qc/src/ember_qc/algorithms/factored/demand_construction.py',
                     'demand_embed'),
     'frontier-tree': ('packages/ember-qc/src/ember_qc/algorithms/factored/frontier_construction.py',
@@ -52,6 +54,8 @@ CONSTRUCTORS = {
                                 'frontier_embed'),
     'propagating-tree-matching': ('packages/ember-qc/src/ember_qc/algorithms/factored/propagating_matching_construction.py',
                                   'frontier_embed'),
+    'propagating-tree-ports': ('packages/ember-qc/src/ember_qc/algorithms/factored/propagating_port_construction.py',
+                               'frontier_embed'),
     'multilevel-regions': ('packages/ember-qc/src/ember_qc/algorithms/multilevel_regions.py',
                            'multilevel_embed'),
     'multilevel-regions-v2': ('packages/ember-qc/src/ember_qc/algorithms/multilevel_regions_v2.py',
