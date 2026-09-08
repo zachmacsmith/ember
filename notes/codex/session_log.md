@@ -130,8 +130,8 @@ late-result accounting, graph/target/batch identity, absent-trial handling, and 
 confirmed Pareto-direction correction. Existing unrelated legacy fixture failures
 are documented in the respective experiment notes; no whole-suite pass is claimed.
 
-Experiment009 completed all45 trials. Every returned embedding passed independent
-structural revalidation;44 were timely, and the K100 MM result was valid but late.
+Experiment 009 completed all 45 trials. Every returned embedding passed independent
+structural revalidation; 44 were timely, and the K100 MM result was valid but late.
 Native candidates made no forbidden import attempts and loaded no external embedding
 libraries. On the eight common timely comparisons, native search won ACL on two
 inputs and lost on six. This is development evidence, not a class-level conclusion.
@@ -141,11 +141,19 @@ one while using more work. See the dedicated results review for exact metrics.
 Next decision: retain one globally fixed native-search constructor and compare
 singleton reconstruction with narrow/wider joint reconstruction. Expose existing
 contact group-size/work bounds through the native adapter; add no family dispatcher.
-The prespecified011 ablation uses the same nine development inputs, two seeds and
+The prespecified 011 ablation uses the same nine development inputs, two seeds and
 60-second allowances, with exact frozen source and separate candidate/MM processes.
 Partial-construction design is saved but deferred until the valid-Z12 quality
 question is resolved. The novelty review identifies close prior art; no publication
 claim is justified by the present implementation or data.
+
+The 90-trial 011 ablation is running on hyde03 under a detached tmux supervisor.
+Fresh SSH inspection confirmed 10 finalized successes and a live controller
+(PID 113328). Candidate records use the isolated environment and frozen source,
+with clean dependency guards. See experiment 011 for exact paths, manifest hashes,
+status/retrieval commands and launch details. Follow through to quiescence, verified
+retrieval, independent revalidation, and comparison before changing the algorithm
+based on this experiment. The overall goal record is active; it is not achieved.
 
 Append every new user prompt/answer verbatim to `PROMPTS_CODEX.md`. Record each
 experiment's question, pre-run prediction, revision hash, config, graph/target hashes,
