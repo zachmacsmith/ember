@@ -153,7 +153,7 @@ class _VacancyBudget:
 
 
 def _bounded_vacancy_refinement(chains, source, target, src_adj, adjacency, *,
-                                started, deadline, cleanup_info, info, policy='bounded'):
+                                started, deadline, cleanup_info, info):
     """Evolve one valid incumbent; unsuccessful queries never replace it."""
     stage_start = time.perf_counter()
     elapsed = max(0.0, stage_start - started)
@@ -176,23 +176,6 @@ def _bounded_vacancy_refinement(chains, source, target, src_adj, adjacency, *,
         if time.perf_counter() >= stage_deadline:
             info['reason'] = 'deadline_before_vacancy'
             return chains, None
-        owner_priority = None
-        cursor = None
-        if policy == 'cyclic':
-            info.update(owner_priority=None, priority_setup_wall=None, cursor=None)
-            ordering = time.perf_counter()
-            try:
-                keys = []
-                for owner, chain in chains.items():
-                    if time.perf_counter() >= stage_deadline:
-                        info.update(status='interrupted', reason='deadline')
-                        return chains, None
-                    keys.append((-len(chain), -len(src_adj[owner]), owner))
-                keys.sort()
-                owner_priority = tuple(key[2] for key in keys)
-                info['owner_priority'] = owner_priority
-            finally:
-                info['priority_setup_wall'] = time.perf_counter() - ordering
         from ember_qc.algorithms.factored.vacancy_repair import vacancy_repair
         info['status'] = 'completed'
         for index in range(1, 21):
@@ -207,16 +190,12 @@ def _bounded_vacancy_refinement(chains, source, target, src_adj, adjacency, *,
                         commit_rejection=None, budget_start=budget.expansions,
                         budget_end=None, module_call_wall=None, validation_wall=None,
                         candidate_validated=None, core=None)
-            options = {}
-            if policy == 'cyclic':
-                call.update(cursor_before=cursor, cursor_after=cursor)
-                options = dict(owner_priority=owner_priority, cursor=cursor)
             info['calls'].append(call)
             info['query_calls'] += 1
             calling = time.perf_counter()
             try:
                 candidate, core_info = vacancy_repair(
-                    chains, src_adj, adjacency, (), budget=budget, deadline=stage_deadline, **options)
+                    chains, src_adj, adjacency, (), budget=budget, deadline=stage_deadline)
                 call['core'] = core_info
             finally:
                 call['module_call_wall'] = time.perf_counter() - calling
@@ -252,13 +231,6 @@ def _bounded_vacancy_refinement(chains, source, target, src_adj, adjacency, *,
                 call['commit_rejection'] = 'invalid_candidate'
                 info.update(status='error', reason='invalid_candidate')
                 return chains, 'INVALID_OUTPUT'
-            if policy == 'cyclic':
-                proposal = core_info['proposal']
-                next_cursor = (proposal['seed_owner'], proposal['deleted'])
-                if next_cursor[0] not in chains or next_cursor[1] not in chains[next_cursor[0]]:
-                    call['commit_rejection'] = 'invalid_seed_cursor'
-                    info.update(status='error', reason='invalid_seed_cursor')
-                    return chains, 'INVALID_OUTPUT'
             # The full candidate and its accounting exist before the admission gate.
             if time.perf_counter() >= stage_deadline:
                 call['commit_rejection'] = 'deadline'
@@ -270,10 +242,6 @@ def _bounded_vacancy_refinement(chains, source, target, src_adj, adjacency, *,
             info['accepted'] += 1
             info['after_qubits'] -= 1
             info['qubits_saved'] += 1
-            if policy == 'cyclic':
-                cursor = next_cursor
-                call['cursor_after'] = cursor
-                info['cursor'] = cursor
         else:
             info['reason'] = 'successful_call_limit'
         return chains, None
@@ -316,8 +284,6 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
     ``vacancy_refinement='bounded'`` adds at most 20 Q-minus-one contractions
     after completed deletion cleanup, sharing 50,000 relocation proposals and
     at most one second or 20% of the preceding pipeline time, whichever is less.
-    ``'cyclic'`` retains these limits while continuing after the last accepted
-    deletion seed in a fixed entry-owner priority and current-site order.
     """
     started = time.perf_counter()
     deadline = started + timeout if timeout is not None and timeout > 0 else None
@@ -346,7 +312,7 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
             'module_call_wall': None, 'module_calls': 0, 'module_returned': False,
         }
         diag['final_cleanup'] = cleanup_info
-    if vacancy_refinement in ('bounded', 'cyclic'):
+    if vacancy_refinement == 'bounded':
         diag['vacancy_refinement_policy'] = vacancy_refinement
         vacancy_info = {'status': 'not_reached', 'reason': 'pipeline_not_reached',
                         'pipeline_status': None, 'wall': None, 'calls': [],
@@ -363,7 +329,7 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
             cleanup_info['pipeline_status'] = status
             if cleanup_info['status'] == 'not_reached':
                 cleanup_info['status'] = 'skipped'
-        if vacancy_refinement in ('bounded', 'cyclic'):
+        if vacancy_refinement == 'bounded':
             vacancy_info['pipeline_status'] = status
             if vacancy_info['status'] == 'not_reached':
                 vacancy_info['status'] = 'skipped'
@@ -374,9 +340,9 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
         return result({}, "ERROR", error="timeout must be finite and positive, or None")
     if final_cleanup not in ('off', 'deletion'):
         return result({}, 'ERROR', error='unknown final cleanup policy')
-    if vacancy_refinement not in ('off', 'bounded', 'cyclic'):
+    if vacancy_refinement not in ('off', 'bounded'):
         return result({}, 'ERROR', error='unknown vacancy refinement policy')
-    if vacancy_refinement in ('bounded', 'cyclic') and final_cleanup != 'deletion':
+    if vacancy_refinement == 'bounded' and final_cleanup != 'deletion':
         return result({}, 'ERROR', error='bounded vacancy refinement requires final deletion cleanup')
     if final_cleanup == 'deletion':
         if (polish_objective != 'qubits_contacts' or polish_tree_policy != 'greedy'
@@ -440,7 +406,7 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
             cleanup_info.update(status='skipped', reason='empty_source',
                                 before_qubits=0, after_qubits=0, qubits_saved=0)
             cleanup_info['wall'] = time.perf_counter() - skipping
-        if vacancy_refinement in ('bounded', 'cyclic'):
+        if vacancy_refinement == 'bounded':
             vacancy_info.update(status='skipped', reason='empty_source',
                                 before_qubits=0, after_qubits=0, qubits_saved=0)
         return result({}, "SUCCESS")
@@ -540,11 +506,10 @@ def native_embed(source_graph, target_graph, *, timeout=60.0, seed=0,
             if cleanup_error:
                 return result({}, cleanup_error)
             cleanup_info['pipeline_stage'] = 'final_validation'
-        if vacancy_refinement in ('bounded', 'cyclic'):
+        if vacancy_refinement == 'bounded':
             chains, vacancy_error = _bounded_vacancy_refinement(
                 chains, source, target_graph, src_adj, adjacency,
-                started=started, deadline=deadline, cleanup_info=cleanup_info, info=vacancy_info,
-                policy=vacancy_refinement)
+                started=started, deadline=deadline, cleanup_info=cleanup_info, info=vacancy_info)
             if vacancy_error:
                 return result({}, vacancy_error, error=vacancy_info.get('error', vacancy_info['reason']),
                               partial_embedding={labels[v]: list(c) for v, c in chains.items()})

@@ -58,7 +58,7 @@ def execute(run, task, prohibited=()):
     return row
 
 
-@pytest.mark.parametrize('method',('demand-tree','frontier-tree','frontier-tree-bounded','frontier-tree-reinsert','multilevel-regions','multilevel-regions-v2','quotient-reconfiguration'))
+@pytest.mark.parametrize('method',('demand-tree','frontier-tree','frontier-tree-bounded','frontier-tree-reinsert','propagating-tree','multilevel-regions','multilevel-regions-v2','quotient-reconfiguration','quotient-compact'))
 def test_constructor_worker_deadline_and_output(tmp_path,method):
     run,task,manifest,path = bundle(tmp_path,method,
         "import time\nassert seed == 7 and 0 < deadline-time.perf_counter() <= timeout\n"

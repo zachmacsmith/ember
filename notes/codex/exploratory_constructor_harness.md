@@ -139,3 +139,24 @@ passed independently in 0.30 seconds. Evidence is in
 `frontier_reinsert_manifest.json`. These were synthetic adapter checks, with
 the existing isolated worker and validator; no real constructor or corpus was
 called by this integration task. Existing 046 and C003 snapshots are unchanged.
+
+## Track C004 adapter
+
+`quotient-compact` maps directly to
+`algorithms/quotient_compact.py:compact_embed`, with the existing absolute
+deadline API and empty configuration. Its dedicated isolated synthetic worker
+case passed in `attempt009-compact`; the source and two exact sibling utility
+files are bound in `quotient_compact_manifest.json`. Pilot is now
+`4d0ab85dc3bdf354ac34ed3097e6b84542828d4b83dc825bd46893e2a3c829de`.
+The registration was added after C003 and 047 were frozen and does not change
+those runs. No real constructor call or shared-validator change was needed.
+
+## Track B005 adapter
+
+`propagating-tree` maps to
+`algorithms/factored/propagating_construction.py:frontier_embed`, with the same
+absolute deadline API and empty configuration. The one affected synthetic
+worker check passed in `attempt010-propagating`; source/registry identities are
+in `propagating_manifest.json`. Pilot `f560276b` also includes the independently
+checked 048 cyclic vacancy policy. Both were stable before the B005 snapshot;
+no real B005 constructor call or existing snapshot change occurred here.

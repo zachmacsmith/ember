@@ -1,0 +1,13 @@
+{
+  "origin_manifest_sha256": "aa932046df941e0bf8907f6ea4e42dc0b6afdba31bd9c53b2241d520e1300d19",
+  "files": {
+    "native.py": {
+      "source": "results/codex/047-current-pipeline-mm/source/packages/ember-qc/src/ember_qc/algorithms/factored/native.py",
+      "sha256": "d8bf466e09ca7578a30b98f21f6fdd59631cda8877bd86715bbba08d90a29e9e"
+    },
+    "vacancy_repair.py": {
+      "source": "results/codex/047-current-pipeline-mm/source/packages/ember-qc/src/ember_qc/algorithms/factored/vacancy_repair.py",
+      "sha256": "6f990653299e418e878188466f61d4e2ddb0490262c6406075f9c50c2c595093"
+    }
+  }
+}

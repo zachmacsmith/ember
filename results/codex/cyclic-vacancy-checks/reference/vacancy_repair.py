@@ -17,63 +17,12 @@ class _Stop(Exception):
         self.reason = reason
 
 
-def _cyclic_seed_batches(entry, owner_priority, cursor, check):
-    """List current seeds once, then rotate strictly after a possibly absent key."""
-    if not isinstance(owner_priority, (list, tuple)):
-        raise ValueError('owner priority must be a complete list or tuple')
-    ranks = {}
-    for index, owner in enumerate(owner_priority):
-        check()
-        if owner not in entry or owner in ranks:
-            raise ValueError('owner priority coverage or duplicate')
-        ranks[owner] = index
-    if len(ranks) != len(entry):
-        raise ValueError('owner priority coverage')
-    if cursor is not None:
-        if (not isinstance(cursor, (list, tuple)) or len(cursor) != 2
-                or cursor[0] not in ranks or type(cursor[1]) is not int):
-            raise ValueError('invalid deletion cursor')
-        cursor_key = (ranks[cursor[0]], cursor[1])
-    else:
-        cursor_key = None
-    seeds = []
-    for owner in owner_priority:
-        check()
-        if 1 < len(entry[owner]) <= SITES:
-            for site in sorted(entry[owner]):
-                check()
-                seeds.append((owner, site))
-    cut = 0
-    if cursor_key is not None:
-        cut = len(seeds)
-        for index, (owner, site) in enumerate(seeds):
-            check()
-            if (ranks[owner], site) > cursor_key:
-                cut = index
-                break
-    ordered = seeds[cut:] + seeds[:cut]
-    batches = []
-    for owner, site in ordered:
-        check()
-        if not batches or batches[-1][0] != owner:
-            batches.append((owner, []))
-        batches[-1][1].append(site)
-    check()
-    return batches, dict(seed_schedule=ordered, seed_schedule_complete=True,
-                         seed_count=len(seeds), rotation_index=cut,
-                         cursor_before=None if cursor is None else tuple(cursor),
-                         wraps=bool(cursor_key is not None and cut))
-
-
-def vacancy_repair(embedding, source, target, _seed_groups, *, budget, deadline=None,
-                   owner_priority=None, cursor=None):
+def vacancy_repair(embedding, source, target, _seed_groups, *, budget, deadline=None):
     """Return at most one private Q-minus-one proposal and complete accounting.
 
     The supplied group vector is retained by the diagnostic caller for its
     ordinary control. This method searches all eligible deletion seeds instead.
     Budget units count attempted relocation proposals, not adjacency scans.
-    An optional complete owner priority enables cyclic current-site traversal;
-    all other search rules stay fixed. Omitted options preserve restart order.
     """
     started = time.perf_counter()
     deadlines = [x for x in (deadline, getattr(budget, 'deadline', None)) if x is not None]
@@ -86,8 +35,6 @@ def vacancy_repair(embedding, source, target, _seed_groups, *, budget, deadline=
                     beam=BEAM, proposals_per_seed=PER_SEED, owners=OWNERS, original_sites=SITES),
                 seed_order=[], groups_inspected=0, setup_completed=False)
     answer = None
-    if owner_priority is not None:
-        info.update(seed_schedule=None, seed_schedule_complete=False)
 
     def check():
         if time.perf_counter() >= deadline:
@@ -169,19 +116,11 @@ def vacancy_repair(embedding, source, target, _seed_groups, *, budget, deadline=
                 raise ValueError('entry missing original contact')
         entry_q = sum(map(len, entry.values()))
         info.update(entry_validated=True, setup_completed=True, q_before=entry_q)
-        if owner_priority is None:
-            if cursor is not None:
-                raise ValueError('cursor requires owner priority')
-            order = sorted((v for v in entry if 1 < len(entry[v]) <= SITES),
-                           key=lambda v: (-len(entry[v]), -len(source[v]), v))
-            info['seed_order'] = order
-            batches = ((v, sorted(entry[v])) for v in order)
-        else:
-            batches, schedule = _cyclic_seed_batches(entry, owner_priority, cursor, check)
-            info.update(schedule)
-            info['seed_order'] = [v for v, sites in batches]
-        for v, sites in batches:
-            for removed in sites:
+        order = sorted((v for v in entry if 1 < len(entry[v]) <= SITES),
+                       key=lambda v: (-len(entry[v]), -len(source[v]), v))
+        info['seed_order'] = order
+        for v in order:
+            for removed in sorted(entry[v]):
                 check()
                 row = dict(owner=v, removed=removed, proposals=0, entered=0,
                            reason=None, depth_peak=0)
