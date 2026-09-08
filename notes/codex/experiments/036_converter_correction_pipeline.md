@@ -79,3 +79,25 @@ time0.293 to1.816 ms. This6.21-fold slowdown is material, but the observed absol
 cost supports this bounded full-pipeline measurement without a new state cap.
 No broad runtime guarantee follows. The source freeze will use final field SHA
 `a055553988ba3db17ef3588986c1719070c3fcfae4bbfcce7a7084ffe45c7690`.
+
+## Frozen source and verified launch
+
+Independent preflight passed all46 source files per revision, all37 unchanged
+source/selection/target records, all34 exact control configurations, and absence
+of forbidden embedders in the isolated native environment. Only `field.py`
+differs from033's frozen source. Before launch all output/cache directories
+were empty and the prior local controller/final worker were absent.
+
+Frozen commit: `18ab7590e1267c6281e4c8c4443fa00b73887228`.
+Source: `56338bafc7038d75001fe9fd36b067f246dc13ab796a2fdd29ded59b3226f243`.
+Target: `38cde794d3c1461054a45b5a660d157737b019c19cb9a7b38e2027730e3d5938`.
+Preflight file-map digest:
+`5428dc63d9a38e4b05ac4f5bffb34951a9d666b2790f361cd644f42489813721`.
+
+The controller started at2026-09-08T04:05:41.556109Z. Root verified controller
+38178 and native worker38191 alive at04:05:48UTC, under exec session16497.
+No result had finalized at that first check. Preflight evidence is in
+`results/codex/036-independent-review`; stdout/stderr and actual OS liveness
+are in `results/codex/036-launch`. Root owns process monitoring; an observation
+timeout is not terminal status or permission to restart. Independent final
+quality analysis begins only after verified completion.

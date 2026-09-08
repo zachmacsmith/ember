@@ -96,6 +96,14 @@ parity range lies on an existing physical lane or covers every intended crossing
 In particular, negative snapped targets may have been discarded earlier, and
 `_lane_ok` currently does not require both requested endpoints to exist.
 
+Numerical qualification identified during root review: the implementation retains
+the original `0.0` cost accumulator. The optimum/tie proof therefore also assumes
+all accumulated integer spans are exactly representable in that floating-point
+type. The declared small coordinate/cost ranges satisfy this condition; the
+implementation does not establish exact optimization for arbitrary huge integer
+endpoints. An integer accumulator could remove this numerical limitation in a
+later source revision. The frozen036 source is preserved.
+
 ## Self-critique before implementation
 
 The old recurrence obtained some of its small state count by discarding needed

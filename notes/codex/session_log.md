@@ -477,3 +477,26 @@ assign independent leaves to distinct eligible neighboring qubits while
 preserving all frozen outside contacts. The literature auditor is checking a
 tiny counterexample to single-chain reductions and primary-source prior art.
 No implementation, generalization or novelty claim has been made.
+
+035's full evidence is reviewed and committed as18ab7590. Root reran its saved
+artifact auditor without overwriting original measurements. Both independent
+oracles and actual seating checks pass; the sixfold hard-line slowdown remains
+documented. The recurrence's exact-cost claim is qualified by representability
+of the existing floating-point accumulator; declared coordinate ranges satisfy
+that condition, without claiming arbitrary huge-integer optimization.
+
+036 is frozen and running locally after independent preflight. It has34calls
+with the fixed spectral/legacy-singleton configuration, differing from033's
+control only in corrected field.py. Root verified controller38178 and worker
+38191 at04:05:48UTC; session16497 owns the launch. Source SHA is
+56338bafc7038d75001fe9fd36b067f246dc13ab796a2fdd29ded59b3226f243.
+The algorithm auditor prepares complete-results analysis while root monitors.
+032 remains separately active onhyde03 (last report189/272 finalized).
+
+The induced-star matching proposal overlaps directly with Solnon's local
+AllDifferent subgraph filter. Its matching reduction is treated as conventional.
+A tiny actual-Z12 witness confirms a joint8-to5-qubit improvement unavailable
+to unilateral singleton reductions, but its group size3 does not establish
+an advantage over the existing generic2–4-chain operation. The independent
+review is checking that comparison on the same fixed witness without a full
+embedding call or new operator implementation.

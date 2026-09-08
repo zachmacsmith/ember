@@ -24,6 +24,23 @@ tmux. The benchmark auditor monitors this exact supervisor. Source
 transport `f02da9b1a88d747f8ba37e5e834395194cc084bd79ae3b47df73d09e13d83618`.
 It contains no direct singleton relocation and no physical checkpoint policy.
 
+Latest032 status at approximately04:04UTC:189/272 finalized,177SUCCESS and
+12TIMEOUT, original controller healthy. Do not fetch until quiescent.
+
+036 is **running locally** as of04:05:48UTC. Its34 tasks use only the
+fixed spectral/legacy-singleton candidate with the corrected converter. Commit
+`18ab7590e1267c6281e4c8c4443fa00b73887228`, source
+`56338bafc7038d75001fe9fd36b067f246dc13ab796a2fdd29ded59b3226f243`.
+Root and independent preflight confirm only field.py differs from033's frozen
+source, with identical target and34 source graph bytes. Preflight passed all46
+source hashes per run,37 input files,34 task configurations and package absence.
+The algorithm auditor owns subsequent results review; root owns exec session
+**16497**, controller **38178**, and launch/process monitoring. Fresh OS checks
+verified controller38178 and isolated worker38191 alive. Start timestamp is
+1788840341.556109 (2026-09-08T04:05:41.556109Z). Do not restart after an
+observation timeout. Raw launch evidence is under `results/codex/036-launch`.
+Run path: `results/codex/036-converter-correction-pipeline`.
+
 `033-singleton-relocation-ablation` completed locally in the isolated native
 environment. At 03:51:01 UTC root verified complete controller status, absent
 controller33003/final worker34600, launch session94745 exit zero, and all68
@@ -106,10 +123,10 @@ without changing the frozen input sidecars.
   The singleton implementation is complete and committed, with independent
   review and 172 root-run focused tests passing. A separate exhaustive oracle
   checks 240 proposer cases across 24 small minors. The physical cost model is
-  complete. Now own the narrowly specified035converter correction, field.py,
-  converter tests and tiny diagnostic artifacts. Root read the saved specification
-  and critique before implementation review. No other pipeline change or full
-  solver call is part of035.
+  complete. The035correction and converter tests are committed as18ab7590;
+  root reviewed all physical/state/runtime evidence and reran the saved auditor.
+  Now independently preflight036, then audit its completed outputs. No source
+  edits or controller action in this task.
 - `literature`: 029 adapter is complete; root reviewed it, reran 103 tests and
   committed `4cad1d67`. The six-trial run completed on hyde03.
   031 is complete to environment preparation/readback: Python3.12.3, pinned
@@ -134,12 +151,12 @@ Preserve unrelated `.claude/` and graph-library `.verified.json` files.
    Review the induced-star joint relocation hypothesis before implementation.
    Matching decides a restricted all-singleton block problem; usefulness and
    novelty remain unproved, and scheduling/budgets are not yet implemented.
-2. Review035's converter correction against the exhaustive class-assignment and
-   actual-seating oracles, plus measured state growth. Root reviewed034 and the
-   physical-cost model: feasible assignments are missed by the old DP while
-   physical seating remains disjoint; no full-pipeline effect is established.
-   A later full-pipeline correction ablation requires its own frozen specification.
-   Root saved036's34call local fixed-candidate protocol, contingent on035review.
+2. Follow the frozen036run through verified completion and independent analysis.
+   Root owns session16497; the algorithm auditor owns its results review and must
+   receive a completion signal before full-run conclusions. The035correction fixes all
+   feasible diagnostic seatings; the hard nine-arm witness becomes6.21times
+   slower (0.293to1.816ms), explicitly retained. The absolute observed cost
+   supports bounded full-pipeline measurement, not a runtime guarantee.
    Its quality reference is033control; across-run timing is explicitly limited.
    Keep028; no physical-checkpoint production callback is promoted.
 3. Follow 032 through repeated-seed quality and timing analysis, preserving all
