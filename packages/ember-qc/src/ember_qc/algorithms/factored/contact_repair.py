@@ -289,11 +289,33 @@ def _diagnostics():
             "beam_expansions": 0, "beam_pruned": 0,
             "unreachable_contacts": 0, "complete_proposals": 0,
             "orders_tried": 0, "boundary_sites_added": 0,
-            "boundary_expansions": 0, "stopped_by": None}
+            "boundary_expansions": 0, "equal_size_moves": 0,
+            "contact_redundancy_gain": 0, "stopped_by": None}
+
+
+def _contact_redundancy(embedding, selected, ctx):
+    """Count excess actual couplers on source edges incident to selected chains."""
+    selected = set(selected)
+    owner = {q: v for v, chain in embedding.items() for q in chain}
+    internal = external = internal_edges = external_edges = 0
+    for v in selected:
+        neighbors = set(ctx.src_adj[v])
+        internal_edges += len(neighbors & selected)
+        external_edges += len(neighbors - selected)
+        for p in embedding[v]:
+            for q in ctx.adj[p]:
+                w = owner.get(q)
+                if w in neighbors:
+                    if w in selected:
+                        internal += 1
+                    else:
+                        external += 1
+    return internal // 2 + external - internal_edges // 2 - external_edges
 
 
 def _repair(embedding, ctx, group, *, beam_width, alternatives, halo,
-            max_region, max_expansions, max_orders, deadline, boundary_sites=0):
+            max_region, max_expansions, max_orders, deadline, boundary_sites=0,
+            objective='qubits'):
     start = time.perf_counter()
     info = _diagnostics()
     selected = set(group)
@@ -301,6 +323,9 @@ def _repair(embedding, ctx, group, *, beam_width, alternatives, halo,
     budget = _Budget(max_expansions, deadline)
     best = embedding
     best_size = old_size
+    rearrange = objective == 'qubits_contacts'
+    old_redundancy = _contact_redundancy(embedding, selected, ctx) if rearrange else 0
+    best_redundancy = old_redundancy
 
     def finish(reason):
         ended = time.perf_counter()
@@ -314,13 +339,15 @@ def _repair(embedding, ctx, group, *, beam_width, alternatives, halo,
         if best is not embedding:
             info["accepted"] = 1
             info["qubits_saved"] = old_size - best_size
+            info['equal_size_moves'] = int(old_size == best_size)
+            info['contact_redundancy_gain'] = best_redundancy - old_redundancy
             info["member_growth"] = sum(
                 len(best[v]) > len(embedding[v]) for v in group)
         return best, info
 
     if not budget.check():
         return finish("work_limit")
-    if old_size <= sum(ctx.lower_bound(v) for v in group):
+    if not rearrange and old_size <= sum(ctx.lower_bound(v) for v in group):
         return finish("size_bound")
     region = _region(ctx, embedding, selected, halo, max_region, budget)
     if region is None:
@@ -348,7 +375,7 @@ def _repair(embedding, ctx, group, *, beam_width, alternatives, halo,
             successors = []
             remaining_bound = sum(ctx.lower_bound(w) for w in order[index + 1:])
             for prefix, occupied, size in beam:
-                size_cap = best_size - 1 - size - remaining_bound
+                size_cap = best_size - (0 if rearrange else 1) - size - remaining_bound
                 choices = _alternatives(
                     v, prefix, occupied, selected, region, embedding, ctx,
                     alternatives, size_cap, budget, info)
@@ -368,7 +395,7 @@ def _repair(embedding, ctx, group, *, beam_width, alternatives, halo,
             if not beam:
                 break
         for prefix, _occupied, size in beam:
-            if len(prefix) != len(group) or size >= best_size:
+            if len(prefix) != len(group) or size > best_size or (size == best_size and not rearrange):
                 continue
             info["complete_proposals"] += 1
             trial = dict(embedding)
@@ -376,7 +403,9 @@ def _repair(embedding, ctx, group, *, beam_width, alternatives, halo,
                 trial[v] = sorted(chain, key=ctx.rank.__getitem__)
             # Validate against all original graph obligations before commit.
             if ctx.valid(trial):
-                best, best_size = trial, size
+                redundancy = _contact_redundancy(trial, selected, ctx) if rearrange else 0
+                if size < best_size or (size == best_size and redundancy > best_redundancy):
+                    best, best_size, best_redundancy = trial, size, redundancy
     return finish("searched")
 
 
@@ -394,8 +423,9 @@ def _parameters(beam_width, alternatives, halo, max_region,
 
 def repair_group(embedding, source_graph, target_graph, group, *,
                  beam_width=4, alternatives=3, halo=2, max_region=512,
-                 max_expansions=50000, max_orders=2, deadline=None, boundary_sites=0):
-    """Try a strictly shorter replacement of 1–4 selected chains.
+                 max_expansions=50000, max_orders=2, deadline=None, boundary_sites=0,
+                 objective='qubits'):
+    """Try an improving replacement of 1–4 selected chains.
 
     ``deadline`` is an absolute ``time.perf_counter()`` timestamp.
     ``max_expansions`` bounds popped vertices across region BFS and routing.
@@ -403,10 +433,14 @@ def repair_group(embedding, source_graph, target_graph, group, *,
     No input graph, chain list, or embedding mapping is mutated. Invalid input
     returns unchanged with ``invalid_input=True``. A timeout may return a valid
     improvement already found; otherwise the original embedding is returned.
+    The default objective requires fewer qubits. ``qubits_contacts`` additionally
+    permits equal size with strictly greater redundancy on logical-edge couplers.
     """
     start = time.perf_counter()
     _parameters(beam_width, alternatives, halo, max_region, max_expansions, max_orders,
                 boundary_sites)
+    if objective not in ('qubits', 'qubits_contacts'):
+        raise ValueError('unknown contact objective')
     group = tuple(dict.fromkeys(group))
     if not 1 <= len(group) <= 4:
         raise ValueError("group must contain 1–4 distinct source vertices")
@@ -420,7 +454,8 @@ def repair_group(embedding, source_graph, target_graph, group, *,
     result, info = _repair(
         embedding, ctx, group, beam_width=beam_width, alternatives=alternatives,
         halo=halo, max_region=max_region, max_expansions=max_expansions,
-        max_orders=max_orders, deadline=deadline, boundary_sites=boundary_sites)
+        max_orders=max_orders, deadline=deadline, boundary_sites=boundary_sites,
+        objective=objective)
     ended = time.perf_counter()
     info["wall"] = ended - start
     if deadline is not None:
@@ -464,19 +499,23 @@ def contact_polish(embedding, source_graph, target_graph, *, timeout=None,
                    group_sizes=(2, 3, 4), beam_width=4, alternatives=3, halo=2,
                    max_region=512, max_expansions=500000,
                    group_expansions=50000, max_orders=2, boundary_sites=0,
-                   group_policy="legacy"):
+                   group_policy="legacy", objective='qubits'):
     """Apply bounded group reconstruction to one valid evolving incumbent.
 
     Global work limits include every attempted group. ``max_groups`` is total,
     not per pass. The fixed source/target adjacency is built once. Groups are
     generated from chain costs, source contacts, and physical blockers; graph
     family names are never used. Outside chains remain fixed for each move.
+    With ``objective='qubits_contacts'``, equal-size moves must strictly increase
+    actual logical-edge coupler redundancy; the default accepts only shortening.
     """
     start = time.perf_counter()
     _parameters(beam_width, alternatives, halo, max_region, max_expansions, max_orders,
                 boundary_sites)
     if group_policy not in ('legacy', 'round_robin'):
         raise ValueError('unknown group policy')
+    if objective not in ('qubits', 'qubits_contacts'):
+        raise ValueError('unknown contact objective')
     for name, value in (("max_passes", max_passes), ("max_groups", max_groups),
                         ("group_expansions", group_expansions)):
         if not isinstance(value, int) or isinstance(value, bool) or value < 0:
@@ -538,12 +577,14 @@ def contact_polish(embedding, source_graph, target_graph, *, timeout=None,
                 work, ctx, group, beam_width=beam_width, alternatives=alternatives,
                 halo=halo, max_region=max_region,
                 max_expansions=min(group_expansions, remaining),
-                max_orders=max_orders, deadline=deadline, boundary_sites=boundary_sites)
+                max_orders=max_orders, deadline=deadline, boundary_sites=boundary_sites,
+                objective=objective)
             info["groups_tried"] += 1
             for key in ("accepted", "qubits_saved", "member_growth", "expansions",
                         "tree_attempts", "beam_expansions", "beam_pruned",
                         "unreachable_contacts", "complete_proposals", "orders_tried",
-                        "boundary_sites_added", "boundary_expansions"):
+                        "boundary_sites_added", "boundary_expansions",
+                        "equal_size_moves", "contact_redundancy_gain"):
                 info[key] += move[key]
             info["max_region_size"] = max(info["max_region_size"], move["region_size"])
             if move["accepted"]:
@@ -552,6 +593,8 @@ def contact_polish(embedding, source_graph, target_graph, *, timeout=None,
                 info["trajectory"].append({
                     "group": list(group), "qubits_saved": move["qubits_saved"],
                     "member_growth": move["member_growth"],
+                    "equal_size_move": bool(move['equal_size_moves']),
+                    "contact_redundancy_gain": move['contact_redundancy_gain'],
                     "total_qubits": sum(map(len, work.values())),
                     "expansions": info["expansions"]})
         if info['groups_tried'] >= max_groups:

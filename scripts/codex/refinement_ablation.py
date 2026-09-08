@@ -30,6 +30,14 @@ ARMS = {
     "groupsround_robin": {"boundary_sites": 0, "group_policy": "round_robin"},
     "both": {"boundary_sites": 16, "group_policy": "round_robin"},
 }
+EXPERIMENTS = {
+    'sites-groups': ARMS,
+    'contact-redundancy': {
+        'legacy': ARMS['legacy'],
+        'both': ARMS['both'],
+        'both_redundancy': {**ARMS['both'], 'objective': 'qubits_contacts'},
+    },
+}
 COMMON = {
     "timeout": 60.0, "max_passes": 4, "max_groups": 512,
     "group_sizes": [1, 2, 3, 4], "beam_width": 1, "alternatives": 3,
@@ -69,6 +77,14 @@ def graph_from_record(record):
         graph.edges[a, b].update(attributes)
     graph.graph.update(record["metadata"])
     return graph
+
+
+def contact_redundancy(embedding, source, target):
+    """Independent whole-target enumeration, outside measured refinement."""
+    owner = {q: v for v, chain in embedding.items() for q in chain}
+    contacts = sum(q in owner and r in owner and source.has_edge(owner[q], owner[r])
+                   for q, r in target.edges())
+    return contacts - source.number_of_edges()
 
 
 def verify(embedding, source, target):
@@ -187,6 +203,12 @@ def worker(run, task_id):
         output["initial_quality"] = initial_quality
         validation_started = time.perf_counter()
         output.update(verify(embedding, source, target))
+        output['initial_contact_redundancy'] = contact_redundancy(incumbent, source, target)
+        output['final_contact_redundancy'] = contact_redundancy(embedding, source, target)
+        if task['configuration'].get('objective') == 'qubits_contacts':
+            actual_gain = output['final_contact_redundancy'] - output['initial_contact_redundancy']
+            if actual_gain != info['contact_redundancy_gain']:
+                raise RuntimeError('Contact redundancy delta mismatch')
         output["validation_wall"] = time.perf_counter() - validation_started
         output["embedding"] = {str(v): list(chain) for v, chain in embedding.items()}
         output["embedding_hash"] = digest(canonical_embedding(embedding))
@@ -212,7 +234,8 @@ def worker(run, task_id):
     write_json(run / "results" / (task_id + ".json"), output)
 
 
-def prepare(run, inputs, python):
+def prepare(run, inputs, python, experiment='sites-groups'):
+    arms = EXPERIMENTS[experiment]
     run.mkdir(parents=True, exist_ok=False)
     for directory in ("source", "graphs", "incumbents", "expected", "results", "logs", "jit_cache"):
         (run / directory).mkdir()
@@ -258,7 +281,7 @@ def prepare(run, inputs, python):
         shutil.copyfile(inputs / "graphs" / (graph + ".json"), run / "graphs" / (graph + ".json"))
         shutil.copyfile(inputs / "results" / (incumbent_id + ".json"), run / "incumbents" / (case_id + ".json"))
         shutil.copyfile(inputs / "results" / (expected_id + ".json"), run / "expected" / (case_id + ".json"))
-        for arm, options in ARMS.items():
+        for arm, options in arms.items():
             task = {"case_id": case_id, "graph": graph, "seed": seed, "arm": arm,
                     "configuration": {**COMMON, **options}}
             tasks[digest(task)[:24]] = task
@@ -271,6 +294,7 @@ def prepare(run, inputs, python):
     input_paths = [run / "target.json"] + [f for d in ("graphs", "incumbents", "expected")
                                            for f in (run / d).glob("*.json")]
     manifest = {"purpose": "refinement-only fixed-policy ablation; no MM embedding input",
+                'experiment': experiment,
                 "created_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
                 "python": os.path.abspath(python), "inputs": str(inputs),
                 "input_source_snapshot": previous["source_snapshot"],
@@ -334,6 +358,7 @@ def main():
     prep.add_argument("run", type=Path)
     prep.add_argument("--inputs", type=Path, default=DEFAULT_INPUTS)
     prep.add_argument("--python", default=str(ROOT / ".venv/codex-native/bin/python"))
+    prep.add_argument('--experiment', choices=EXPERIMENTS, default='sites-groups')
     execute = sub.add_parser("run")
     execute.add_argument("run", type=Path)
     child = sub.add_parser("worker")
@@ -342,7 +367,7 @@ def main():
     args = parser.parse_args()
     run = args.run.absolute()
     if args.action == "prepare":
-        prepare(run, args.inputs.absolute(), args.python)
+        prepare(run, args.inputs.absolute(), args.python, args.experiment)
     elif args.action == "run":
         run_jobs(run)
     else:

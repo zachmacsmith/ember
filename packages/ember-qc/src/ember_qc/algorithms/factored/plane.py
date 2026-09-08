@@ -79,7 +79,7 @@ def rank_of(order: List[int]) -> Dict[int, int]:
 
 
 def books(pos: Pos, src_adj, grid: TileGrid, yrank: Dict[int, int],
-          *, snap: bool) -> Books:
+          *, snap: bool, contacts=None) -> Books:
     """One accounting. Contacts by the y-order's RANK (the stair rule:
     the lower endpoint reaches sideways, the higher reaches down), bars
     = the hulls of the contacts plus the variable's own seat, tuples =
@@ -88,8 +88,11 @@ def books(pos: Pos, src_adj, grid: TileGrid, yrank: Dict[int, int],
     derived reach, enforced by the packer); every arm is at least one
     tile (``min_span=0`` — the one-tile footprint, so a point arm still
     occupies its tile); y is not clipped to the chip (rows beyond it are
-    the judge's business)."""
-    contacts = _stair_contacts(pos, src_adj, yrank=yrank)
+    the judge's business). Explicit ``contacts`` must describe the same
+    source adjacency, participating vertices, and carried y-order; coordinate
+    changes alone do not invalidate them. Geometry is always rebuilt."""
+    if contacts is None:
+        contacts = _stair_contacts(pos, src_adj, yrank=yrank)
     return arm_books(pos, src_adj, grid, kappa=1.0, floor=False,
                      snap=snap, min_span=0.0, contacts=contacts,
                      yrank=yrank, ybound=False)
@@ -250,7 +253,7 @@ def readout(axis: int, orders: Dict[int, List[int]], pos: Pos, src_adj,
     new = {v: p.copy() for v, p in pos.items()}
     for v, ln in lines.items():
         new[v][axis] = float(ln)
-    bk2 = books(new, src_adj, grid, ranks[1], snap=snap)
+    bk2 = books(new, src_adj, grid, ranks[1], snap=snap, contacts=bk[0])
     return new, bk2, misses
 
 
