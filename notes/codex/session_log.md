@@ -1256,3 +1256,25 @@ C002 remains 0/8; six fixed region allocations have insufficient inter-region
 couplers for original source edges. Stop that formulation. C003 will allow
 target boundaries to move. Both construction tracks continue independently;
 no outputs are combined and no new final-test graphs are used.
+
+## 2026-09-08 18:10 UTC: cumulative gain, fresh MM test, revised constructions
+
+046 completed all 68 calls; original-label screen passed once. Vacancy saves
+89Q: 25 improvements, nine ties, no regressions. Macro ACL 3.325937→3.305570;
+solver totals 187.415→194.742 seconds. All 34 treatment stage entries match
+their control Q, and committed Q-minus-one receipts account for every saving.
+All work is recorded. Twenty-five inputs hit 50,000 proposals; none hit wall.
+The unchanged candidate is now in fresh MM screen 047 on03, controller182328.
+
+B004 remains 7/9 with all seven ACL losses to MM. Reinsertion saves107Q on
+bipartite but worsens ER/grid/king; regular spends5M repair scans with no
+accepted repair. Reject that schedule, retain relocatable ownership as a lesson.
+B is designing domain propagation with explicit connected-chain relaxation.
+C003 recovers4/8 constructions but all four chains are much longer than MM's;
+reject full-target occupancy. C004 tests one compact connected target subset.
+
+048 scheduling hypothesis is saved before implementation: continue a complete
+cyclic seed traversal after each accepted contraction instead of restarting it.
+About half of 046 proposals revisit earlier owner/site keys, which does not
+establish unchanged dependencies or justify a cache. Literature implements the
+bounded scheduling variant and targeted checks; original047 source stays frozen.
