@@ -71,6 +71,13 @@ Elimination may leave a large minimum-degree-four core, create inconvenient fill
 
 Before implementation freeze, use a few fixed checks: nested fill with shared existing edges and exact final adjacency recovery; components/isolates; deadline rollback; the missing-detour failure above; degree-two subdivisions; and an independently generated degree-127 star and wheel on ideal Z12. Require valid output or truthful failed insertion, never presumed embeddability. The star test must demonstrate a multi-site hub if it succeeds. These are correctness/failure witnesses, not new held-out performance inputs.
 
+**Pre-screen reach gate:** the star, wheel and degree-two subdivision cases
+must actually complete under the fixed bounded policy before launching the
+34-input screen. Failure on these basic lift cases is informative evidence
+against this first construction policy, even when correctly reported. Save it
+and reconsider the mechanism instead of automatically increasing its limits.
+The deliberately blocked P4 core remains an expected truthful failure.
+
 Only after those checks, propose a cheap fresh paired screen on the same 34 development structures, seed zero, ideal Z12, common 60 seconds: current cyclic pipeline versus this single reduced-core algorithm. Preserve every failure, reduction/core size, fill count, core time, expansion work/time, growth Q, failed insertion, final original-valid Q/ACL and total process time. No experiment is frozen or launched by this design. If lifting failures or expansion cost overwhelm the sparse gains, reject or revise the mechanism explicitly; do not select a per-family winner. One seed cannot establish ACL variance or an all-class advantage.
 
 Source inspected: B003 `frontier_bounded_construction.py` (`prepare`, `path`, `cut`, `prune`, `insert`), current `native.py`, `contact_repair.py::_grow/repair_group`, and `field.py::complete_seeds`. The proposed algorithm uses one evolving partial embedding; local insertion branches are internal proposals, not a portfolio of complete embedders.
