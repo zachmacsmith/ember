@@ -327,8 +327,12 @@ live capture trajectory. The design and independent input review are accepted.
 Workers consume the canonical expected-normalized graph, preserving Ember's
 source order; original JSON insertion order differs on ember_37761. Geometry
 and offline phases have separate absolute 150/60-second process allowances.
-Focused synthetic/tiny Z2 checks have run; no corpus run has occurred. Final
-code freeze, independent implementation review and preflight remain required.
+Focused synthetic/tiny Z2 checks have run; no corpus run has occurred. Root has
+accepted the final independent geometry/offline reviews and verified all review
+hashes. Diagnostic digest is
+`0c68ab814eb76aea5876ec79386d1cbabd59f8a37197c688e1d12d447c412733`.
+One target-environment 23-check suite and final remote preflight are still
+required before launch. Hyde03 readiness passes; intended run path is absent.
 
 The reviewed theory
 allows several center qubits and exact singleton-leaf assignment at a fixed

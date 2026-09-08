@@ -924,3 +924,22 @@ The authoritative goal service was checked again and reports active. The UI
 question is already saved verbatim in PROMPTS_CODEX.md; it was not duplicated.
 The user was told no /goal resume is needed and the indicator appears out of
 sync. No goal state or UI internals were changed. Research success remains unmet.
+
+040 implementation review is accepted after correcting input order, hardware
+coordinate binding, diagnostic timing separation, recording-interference and
+phase-exit eligibility, and interrupted-work retention. Root read both final
+independent reviews and checked all 1,085 geometry-review artifact hashes plus
+final diagnostic/check identities. The final diagnostic digest is
+0c68ab814eb76aea5876ec79386d1cbabd59f8a37197c688e1d12d447c412733.
+Independent geometry/phase checks pass eight cases; independent offline checks
+pass ten cases including 36 tiny converter/cache comparisons. Author tests pass
+21 full checks before the final failure-only addition and four focused checks
+afterward. The current 23-check suite will run once in the actual hyde03 native
+environment before a corpus start. Root's local final review preflight passes.
+
+The hyde03 read-only readiness probe returned zero: pinned packages/native-MM
+separation unchanged, intended run path absent, tmux/timeout available and
+KillUserProcesses=false. Root's fixed-run remote helper was independently
+reviewed. It supports quiescent failed-run retrieval without rewriting stale
+controller state and requires the target-environment check summary before start.
+No new corpus controller has started at this checkpoint.
