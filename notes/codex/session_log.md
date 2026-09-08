@@ -1351,3 +1351,29 @@ C006b started once on04, controller170867, exactpriorC006snapshota8142195,
 16uniform60secondtasks. Both retain independent freshMM comparisons.
 Literature prepares049minimaloriginal-output/requirement/work screen while
 root owns its lifecycle. No new final-test data or shared-validator change.
+
+## 2026-09-08 19:30 UTC: construction obstructions identified
+
+049 is terminal on03, with66SUCCESS/twoFAILURE rows across both arms;451file
+retrieval passes its bound digest. Root accepts the original-output/journal
+screen and result report, without rerunning constructors or checks. Reduced
+core completes32/34 versus34/34; common Q falls11 but macroACL worsens slightly.
+Both failures are blocked reinsertion, not caps. Retain048, test blocked-only
+local release/reinsertion next; broader049quality regressions remain relevant.
+
+B007 completes7/9 but loses five timely MM pairs; extra growth causes a large
+WS regression. B008 independently exposes Hall deficits in all six inspected
+prefixes. All262 offline matching queries finish,106 with certified deficits;
+matching totals0.206seconds. B009 strengthens singleton/growth feasibility with
+bounded covering matching, against explicit B007 ancestry. Root reads its diff
+and six focused tests; no repeat requested. Screen02 is next after freezing.
+
+C006b's unchanged60seconds yields no new completion; complete logs best2missing
+but final3. Supplied-state free paths leave all four incomplete. Each initial
+state has a missing-edge endpoint with no free neighbor, so additions alone
+cannot complete with ownership fixed. Root reads diagnostic/recount code and
+report, and checks all17manifest-bound files; no repeated diagnostic. Test a
+directed ownership-repair mechanism next, before any whole-pipeline candidate.
+
+Updated research state and newest automatic continuation prompt are saved.
+All results remain exposed development evidence; no final-test data opened.

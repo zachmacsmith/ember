@@ -33,3 +33,12 @@ outputs and active partial requirements, and check reduction/work accounting.
 It will not replay every intermediate physical search proposal. The current
 claim is only that the targeted implementation gate passed and the development
 experiment is running.
+
+Terminal observation and retrieval: controller187555 finished at Unix time
+1788894770.2100692. Status003 reports 66 SUCCESS and two FAILURE rows, free
+lock, absent tmux session and supervisor exit0. Fetch001 retrieves451 files
+with archive digest `1a05e6e4ed3a0cf838fa9bba19ebaff7d3384a02bb8c94479d7381bf7cc3b16d`.
+There was one launch and no restart. The independently checked
+[results](049_results_screen.md) reject promotion because two insertions fail
+and common-success macro ACL worsens slightly. All66 timely complete outputs
+and both active-requirement partial states validate; all68 rows retain costs.
