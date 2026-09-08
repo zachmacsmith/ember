@@ -192,3 +192,27 @@ corpus suite passes 39 tests. No actual 017 corpus comparison has run yet.
 A fresh goal-status read confirms `active`. The UI pause report was answered from
 that backend observation; no resume command is currently needed, and no UI or
 goal scheduler internals were edited. The research objective remains incomplete.
+
+Revision 016 completed all 72 refinement calls with valid, timely outputs.
+Legacy exactly reproduces all 18 prior Joint1 chain assignments. Sites alone
+change no output. Round-robin groups save 19 additional qubits; both changes
+save 21 (nine improvements, eight ties, one regression versus the reference).
+Both changes give the lowest fixed candidate mean; the additional site benefit
+is only one case, and no broad superiority follows. Preserve the honeycomb
+regression. Final deadline diagnostics were then corrected without changing
+search decisions; the frozen ablation predates those diagnostic-only edits.
+
+The source/harness checkpoint is committed as `d270f2bb`; the earlier completed
+diagnostics/corpus notes are committed as `af339c19`. A combined focused suite
+passed 95 tests, followed by all 10 finalized independent revision-review tests
+after adding helper-level deadline coverage. The local corpus adapter smoke
+produced two valid outputs but a clear candidate loss on the path input.
+
+The outcome-independent 019 screen is now running on hyde03: 34 exact solver
+inputs, three globally fixed arms (MM, prior width-one joint candidate, both
+revision changes), seed 0, 60 seconds each, 102 trials. Source and corpus hashes,
+launch/status/retrieval commands and interpretation limits are saved in
+`experiments/019_ember_readiness_screen.md`. A fresh SSH check verified controller
+115997, worker 116011, busy inherited lock and one finalized success. Continue
+monitoring this exact run, then retrieve after quiescence and independently
+analyze every result. No current evidence satisfies the full research objective.
