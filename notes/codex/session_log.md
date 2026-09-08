@@ -1563,3 +1563,31 @@ Root saves an unimplemented degree-at-most-two reduction alternative within
 track A. Its minor-preserving contraction argument is distinct from a measured
 heuristic quality claim. It is deferred until the fixed A053 transfer test;
 no fourth research track or alternate-output selection is introduced.
+
+## 2026-09-08 21:26 UTC: two negative local gates and one access tradeoff
+
+B016 static capacity screening passes its diagnostic gate, but exact B017
+implementation fails both actual saved states: ER66 exhausts1M restoring72;
+K40 fails its sole eligible block after611854 units. The tiny witness and ten
+targeted groups pass. Root reads the full source delta and report; no panel
+is justified. B now reviews broad placement/quality weaknesses and proposes
+a replacement constructor principle, with no additional release-order tweaks.
+
+A053 passes eight focused groups and eight fresh reach calls, including every
+original full-minor check. Star138→138 Q, wheel189→191, subdivision17→17,
+cycle155→148. Root explicitly accepts the wheel loss for one fixed broad
+exploratory comparison; no candidate ordering/cap change. Root checks54
+manifest bindings and the receipt-only cap/deadline correction. One isolated
+registry check passes. The68-call053 screen versus050 is frozen and launched
+once on03. A local start argument error is preserved before the single actual
+remote start; first observation20/68SUCCESS, controller197491 alive.
+
+C reserved-access initialization completes8/8 within5s/input, all occupied
+sets connected and all chains touching one unused component. Every initial
+missing-edge count rises. Root reads the helper/report and checks27 artifact
+plus6 reference bindings, without rerunning. Corrected narrative terminology:
+these are connected/disjoint partial-contact assignments, not valid minors
+of the original graphs. The exact next one-pass free-path diagnostic is
+reviewed and approved on all8 saved states,30s/1024visits/256commits, fullZ12,
+no ownership moves or cleanup. This tests reserve consumption, not constructor
+runtime or final ACL. All three tracks remain separate and exploratory.
