@@ -110,9 +110,18 @@ one incumbent. Its precise specification, independent critique and root
 acceptance are committed in `e95e8855`; spec SHA256 is
 `8d870c3a2e16615574ad018eec266258200bd7740b7cbd2450d47a47d299f82f`.
 A bounded sequence of groups shares one charged entry validation and ownership
-setup. The literature agent is implementing an isolated dependency-free module
-and focused tests; the algorithm agent prepares independent oracles and review.
-No corpus diagnostic or native/contact/pilot integration is authorized yet.
+setup. The isolated module is now accepted after 38 author checks and ten
+independent test groups, including 10,476 exact tiny-minor comparisons. Root
+read the complete source/oracle/verifier and verified all 28 author and 64
+independent artifact records. Source SHA256 is
+`015781019833ee5a3f49dcec5a189161104003224b1327b44cedda6e084532bb`.
+See `ownership_exchange_root_implementation_acceptance.md`; no duplicate suite
+run was needed. No native/contact/pilot integration has occurred.
+Preparation now covers a general fixed group rule, an ordinary reconstruction
+adapter sharing immutable-entry setup, and tiny fixture cost calibration before
+freezing a first-contraction diagnostic on all 34 deletion-closed 042 inputs.
+The fresh-instance evaluation review remains a later validation proposal: no
+new validation or final-test graph has been generated or inspected.
 Ordinary free-space reconstruction remains a possible complementary local move
 within the same algorithm; integration is not prescribed. Root verified all
 15 review files and four preserved revision files, and read the complete spec,
@@ -465,16 +474,15 @@ owned-site Hall-counting caveat; none is a novelty or superiority claim.
 
 ## Next actions
 
-1. Preserve 037's narrow, concentrated gain and four regressions. Its complete
-   report and all-input table are reviewed and committed as `a658ce00`.
-2. Preserve 038's independently verified negative report and frozen artifacts.
-   The controller and all workers have terminated; never restart them.
-3. Preserve 039's independently verified negative full-pipeline outcome and all
-   unsuccessful work. Local improvements did not imply a final quality gain.
-4. Preserve the accepted 040 outcome: exact saved-cache agreement, but update
-   cost fails the per-proposal criterion on all inputs. Review the experimental
-   endpoint implementation and isolated deletion closure before new screens.
-5. Continue one general constructor/refinement pipeline. No MM or busclique
+1. Preserve accepted 041/042 reports and all earlier negative results. Every
+   completed cluster controller remains terminal; never restart it.
+2. Freeze and review the ownership-exchange reach/cost diagnostic, including
+   common group coverage, finite work/time bounds, unchanged ordinary proposal
+   settings and complete unsuccessful-work accounting. Prototype correctness
+   alone is not performance evidence.
+3. Keep fresh validation separate from development. Review generator semantics,
+   structural novelty and finite-catalogue coverage before exposing new inputs.
+4. Continue one general constructor/refinement pipeline. No MM or busclique
    dependency, cached competitor input, hidden fallback, per-family dispatch,
    selected seed or best-of result is allowed. Broader replication and fresh
    source instances remain necessary for any publication claim.

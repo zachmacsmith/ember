@@ -1187,3 +1187,21 @@ Ownership-exchange implementation and independent tests continue separately;
 its linear entry-contact validation requirement is checked against this cost
 lesson. A diagnostic-design note identifies future fair setup accounting and
 explicit group-coverage choices without fixing budgets or authorizing corpus calls.
+
+At 16:06 UTC root accepts the isolated ownership-exchange implementation after
+complete source, independent oracle/verifier and fixture review. The unchanged
+source is 015781019833ee5a3f49dcec5a189161104003224b1327b44cedda6e084532bb.
+Author attempt004 has 38 passing checks; independent attempt003 has ten passing
+groups, including 10,476 exact tiny-minor comparisons and complete interruption
+prefix checks. Root verifies all 28 author and 64 independent artifact records.
+Earlier author/reviewer-only failed assertions remain preserved. No repeat of
+the passing suite, pipeline integration or corpus call occurs at this milestone.
+
+The next bounded assignments are a general seed-group rule, a fair ordinary
+proposal adapter sharing one immutable entry setup, and implementation-cost
+calibration on the existing nine synthetic fixtures. Their purpose is to freeze
+a meaningful reach/cost diagnostic using all 34 audited deletion-closed 042
+outputs. No work-count equivalence between different algorithms is assumed.
+Root also reads the fresh-instance evaluation proposal and retains it for later
+validation design; no new validation or confirmation graph is exposed. The
+backend goal remains active and unmet.
