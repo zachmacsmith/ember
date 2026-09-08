@@ -50,11 +50,12 @@ has used these new inputs, so embeddability remains unproved.
   placement trajectory. Own `physical_checkpoint_spec.md` and additive diagnostic
   artifacts under `results/codex/030-physical-checkpoint-diagnostic`; no production
   plane/native callback, new pilot configuration or repeated contact repair yet.
-- `literature`: add explicit `--input-supplement` loading to pilot/cluster/analyzer
-  and `test_codex_pilot_supplement.py`, preserving every old path. Freeze the full
-  supplement and loader source; carry provenance outside solver metadata.
-  `029_sudoku_comparison_protocol.md` predeclares both sources, MM/contacts/spectral
-  contacts, seed 0, 60 seconds, six trials. Do not launch until reviewed and tested.
+- `literature`: 029 adapter is complete; root reviewed it, reran 103 tests and
+  committed `4cad1d67`. The six-trial run is staged on hyde03 and the benchmark
+  auditor will start it after 026 is quiescent and retrieved. Now prepare the
+  pinned environments on hyde04 and inspect supervisor availability, with evidence
+  under `031-second-node-preparation`. No benchmark, global package/service
+  change or new supervisor fallback is authorized in that bounded task.
 
 Review agent-owned edits before committing. The current cluster run uses its
 frozen source and is unaffected by these working-tree edits. Root owns README,
@@ -68,9 +69,9 @@ Preserve unrelated `.claude/` and graph-library `.verified.json` files.
 2. Preserve the completed 028 evidence. Review 030's physical-score mismatch and
    cost evidence before choosing a bounded integration experiment. Neither the
    small speed gain nor better checkpoint scores prove an all-class improvement.
-3. Review the supplement adapter's identity, source isolation, transport and
-   corruption checks. Freeze and run the declared six-trial comparison after
-   appropriate host sequencing, without altering earlier corpus experiments.
+3. Follow the staged 029 comparison through launch and independent complete
+   analysis, preserving its separate input population and actual new provenance.
+   Review the second-node preparation before using it for later experiments.
 4. Continue general revisions from observed failure mechanisms. No source-family
    dispatcher, per-input best-of result, hidden fallback, broad superiority claim,
    or paper-success claim is justified by present evidence.

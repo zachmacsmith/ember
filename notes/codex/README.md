@@ -34,6 +34,8 @@ remain necessary, and novelty is unproved.
 - [Fixed spectral integration experiment](experiments/026_spectral_initialization.md)
 - [Corrected Sudoku development inputs and preserved original records](experiments/027_sudoku_development_supplement.md)
 - [Geometric-search performance diagnosis and bounded improvement](geometry_performance_spec.md)
+- [Sudoku comparison protocol and frozen supplementary run](experiments/029_sudoku_comparison_protocol.md)
+- [Physical-qubit checkpoint hypothesis and preimplementation critique](physical_checkpoint_spec.md)
 - [Generalization and final confirmation protocol](generalization_protocol.md)
 
 Earlier audit recommendations favoring exact local construction are historical

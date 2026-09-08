@@ -156,3 +156,30 @@ and launch time are intentionally absent until the parent reviews this support
 and performs the later initialization. No actual experiment 029 has been staged
 or launched in this task. Algorithm modules and the original 017/027 records
 were not edited.
+
+## Parent review, freeze and staging
+
+Root reviewed the source, controller/transport checks and tests, then independently
+reran the same 103-test suite successfully in 2.24 seconds. The implementation is
+committed as `4cad1d67c59484b4d9583e02f49d06e1a556b2af`. The algorithm snapshot also
+contains the already validated 028 dead-work removal; this is separate from 026's
+older frozen snapshot. No cross-run timing comparison is implied.
+
+The exact six-trial comparison is now initialized and staged, not yet launched,
+at `results/codex/029-sudoku-development-comparison` locally and
+`/home/dabh/ember-codex/runs/029-sudoku-development-comparison` on hyde03.
+All eight supplement files and the loader source are included in transport.
+
+| Frozen item | SHA-256 |
+| --- | --- |
+| Source snapshot | `321f24371678f3080b4aef67bcdb43479b5acce7b7ec90b47acdf01b82afd747` |
+| Verified transport | `88e1c99260de51f3c42c1a226ed71a664f3cecdc199357b20369d5edb518b29a` |
+| Supplement | `e6e3036634164be8e5491d0c6b8d41e8d4fb042fd63fe3fd43fda3538018f047` |
+| Complete comparison plan | `ff77c22ce191c2dfe27dfab9cac149e4b7dd9fcf3618b8e14d41514ac33846a0` |
+| Ideal Z12 | `38cde794d3c1461054a45b5a660d157737b019c19cb9a7b38e2027730e3d5938` |
+
+The benchmark auditor will start this exact run after 026 is quiescent and its
+completed archive is retrieved. This preserves sequential host use. The separate
+native and MM environments are the existing pinned pair under
+`/home/dabh/ember-codex/envs/4e1fb892db12754e/`. The preset is fixed before Sudoku
+outcomes; retain both source records, all six observations and every failure.
