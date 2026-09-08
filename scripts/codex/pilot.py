@@ -38,6 +38,8 @@ CONSTRUCTORS = {
                             'reduced_core_embed'),
     'native-reduced-core-repair': ('packages/ember-qc/src/ember_qc/algorithms/factored/reduced_reinsertion_construction.py',
                                    'reduced_core_embed'),
+    'native-original-soft-guide': ('packages/ember-qc/src/ember_qc/algorithms/factored/soft_guidance_construction.py',
+                                    'reduced_core_embed'),
     'demand-tree': ('packages/ember-qc/src/ember_qc/algorithms/factored/demand_construction.py',
                     'demand_embed'),
     'frontier-tree': ('packages/ember-qc/src/ember_qc/algorithms/factored/frontier_construction.py',

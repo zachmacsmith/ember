@@ -224,3 +224,10 @@ also `{}`. Both reuse the existing absolute deadline and original-graph worker
 validator. Two isolated synthetic worker adapter checks passed; logs and exact
 source identities are bound in `a050-blocked-reinsertion/manifest.json`. Neither
 adapter test called a real constructor.
+
+After its fixed reach gate, A052 adds `native-original-soft-guide` →
+`factored/soft_guidance_construction.py:reduced_core_embed`, `{}`. The sole
+new synthetic worker check passed0.22s, preserving the absolute deadline and
+original-graph validation path. This registration follows separate parent
+approval; the earlier author manifest correctly describes the then-unregistered
+state. Additive identities are in `a052-soft-guidance/adapter_manifest.json`.
