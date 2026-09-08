@@ -818,3 +818,30 @@ Root's integration review and six-file hash map are saved for 039 preflight.
 The goal backend was rechecked at06:05:31UTC and reports active. The user was
 told that `/goal resume` is unnecessary and the UI indicator cannot be repaired
 through the available goal controls. No goal state was mutated.
+
+The connected integration froze in commit c61c474ca7bdd2f6e455cfa67f34af72b8d537cf.
+Root initialized039once with the predeclared34-input shuffle, seedzero, both
+fixed native methods and correct hyde03 interpreter paths. Source snapshot
+63a0aed1a880cbf008aa68ae7201aed7a4da635dea9362e5d296b1d13a91a473 contains48files.
+Independent localpreflight checked original-label topology,68taskidentities,
+configuration/order, exact source/test records and protocol/evaluator freezes.
+Root executed the hash-bound remote preflight after successful staging:
+all154transportfiles match, no prior attempts, empty caches/outputs, pinned
+native metadata with no prohibited modules, and logout-persistent tmux route.
+Seven older project runs were quiescent. Root accepted both complete passes;
+the independent reviewer confirmed no unresolved gate.
+
+Root launched039once at06:11:08UTC onhyde03. Start returnedzero. A new status
+connection found controller139008running, firstworker139016active, inherited
+lockbusy and detachedtmuxpresent. The outer watchdog is6420seconds; eachworker
+has90seconds including grace, while timelysolverquality requires60seconds.
+Raw launch/preflight/status records remain inresults/codex/039-launch. No
+result comparison or performance claim is made at launch. Observation failures
+must not restart the controller; retrieve only after confirmed quiescence.
+
+038's final report froze atSHAa697b5aa8b918acdb4e67cde881ef28aaf16e07cd4265e06c811ec887ad1a8b5,
+review manifest92f571a0fdce33ee65ee79c7eae583ff79b1b8d382e459a80a6a7f4599baaedc.
+Root read the full narrative and independently checked all41manifest-listed
+review artifact hashes. No additional solver or repeated matching audit was
+needed. Benchmark audit now prepares the separate039original-data/accounting
+auditor while waiting for root's quiescent, hash-verified archive.
