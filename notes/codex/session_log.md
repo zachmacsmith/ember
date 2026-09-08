@@ -1214,3 +1214,15 @@ on02/05. Pilot adds only explicit standalone entrypoints (8 targeted and
 36 existing checks pass). 043 reused reviewed code and validators; its protocol
 now defers exhaustive trace replay until promising, without changing settings.
 119 immutable files staged; target check and one detached launch are next.
+
+## 2026-09-08 17:05 UTC: first fast milestone
+
+043 completed68/68 in62s on03;496file archive retrieved after quiescence.
+Independent original-label screen validates20 credited outputs, all34 paired
+group vectors equal. Ordinary17 contractions, exchange3 (all shared),
+0exchange-only,29exchange work caps. Maximum exchange commonwall0.900s
+under5s. Read complete minimal screen and result note; no rootrepeat needed.
+044 hypothesis recorded before preparation: only raise exchange cap1.25M→10M
+under unchanged5s to falsify allocation as the main limitation. Worker,
+candidate, group generator, validators and allinputs byte-identical.
+B launched on02; C arranging user-space tmux on idle04 after05overload.

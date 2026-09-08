@@ -11,8 +11,9 @@ Exploratory screens use isolated dependencies, targeted checks, independent
 embedding validation and complete failure/time accounting. Exhaustive replay
 is deferred until a candidate is promising or shared correctness code changes.
 
-- **A, root, hyde03:** 043 ownership-exchange reach diagnostic is running as controller
-  170963; target 18-check suite passed and one detached start succeeded. It compares first
+- **A, root, hyde03:** 043 completed: ordinary17 contractions, exchange3 (all shared),
+  zero exchange-only. All20 outputs independently valid;29 exchange work limits.
+  044 tests only a larger exchange work cap with the same five-second deadline. It compares first
   contractions against ordinary reconstruction on all 34 accepted 042 entries,
   five seconds each. It is not a full-pipeline or MM comparison.
   [Protocol](experiments/043_ownership_exchange_reach_protocol.md).
@@ -22,6 +23,10 @@ is deferred until a candidate is promising or shared correctness code changes.
 - **C, benchmark_audit, hyde05:** new multilevel contact-preserving region
   splitting constructor; eight fixed development inputs with fresh same-host
   MM pairs. [Hypothesis](tracks/c_multilevel.md).
+
+043 controller170963 is terminal and its496file archive is retrieved.
+See [screen results](experiments/043_results_screen.md) and
+[044 hypothesis](experiments/044_ownership_work_allowance.md).
 
 The shared pilot has two explicit standalone entrypoints. Eight targeted and
 36 existing checks passed; historical method configurations are unchanged.
