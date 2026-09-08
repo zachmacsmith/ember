@@ -971,3 +971,12 @@ continues on ember_1584 geometry, worker143916, lock busy and tmux present.
 These are provisional lifecycle facts, not an independent raw-cost audit.
 The backend again reports the research goal active at07:40:30 UTC; the broader
 objective remains unmet. No goal/UI state was mutated.
+
+Automatic continuation 8 begins with authoritative branch/backend checks and a
+fresh observation of the existing040 process. The preceding turn is progress:
+039 was independently audited and rejected;040 instrumentation was corrected,
+frozen and independently reviewed, its23 focused checks passed on hyde03, and
+its controller launched once and was observed running. The full objective is
+unchanged and unmet. The exact new prompt is appended toPROMPTS_CODEX.md.
+Continue the existing run and the separate general endpoint-support design;
+no no-progress or blocked condition is present.
