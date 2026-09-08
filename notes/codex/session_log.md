@@ -601,3 +601,34 @@ frozen run at 04:45:37 UTC. Fresh status verifies controller 134553 and worker
 has a 6,420-second outer watchdog. The benchmark auditor owns monitoring and
 retrieval only after quiescence, followed by all-results and diagnostic audits.
 The backend goal was checked again at 04:46 UTC and remains active and unmet.
+
+Automated goal continuation 5 was appended verbatim to PROMPTS_CODEX.md. The
+previous goal turn was progress: it completed and independently checked the
+induced-star implementation, reproduced the full 032 audit, and committed and
+launched frozen 037 after preflight. The objective remains unmet; there is no
+repeated external blocker. Current work follows the existing 037 controller
+and reviews the saved general extensions without changing its frozen source.
+
+Root repeated the standalone certificate-readiness verifier against all 450
+frozen input files. All 170 candidate outputs are valid and timely; the only
+bound-attaining inputs remain path and cycle (2 calls in 036, 8 in 032).
+Every necessary degree gate passes on all 34 inputs. The 3,680 degree-20 target
+sites make these particular degree-only relaxations automatically pass when
+L<=1,440; the gates save no conversions here. No earlier attainment or runtime
+benefit follows from saved final embeddings. The next assigned task is only an
+instrumentation specification for one initial-prefix check, without source
+changes or embedding calls.
+
+Root read the targeted connected-center prior-art note and rechecked the
+polymatroid Steiner publisher abstract and accessible RANGI text. The root
+attempt to fetch the former author PDF failed TLS verification (raw failure
+retained); the latter live URL later returned a moved-page response. Full
+approximation-algorithm verification is not claimed. Established matching,
+connected selection and coordinated chain changes require attribution. The
+exclusive center/leaf role constraint makes boundary matching nonmonotone,
+but this distinction alone is no novelty or performance proof.
+
+Fresh 037 reviewer status advanced to 48/68 SUCCESS, same live controller,
+worker and held lock. No running archive was retrieved or controller restarted.
+Root checked goal status again and told the user it is active, continuation is
+working, and `/goal resume` is unnecessary despite the reported UI indicator.

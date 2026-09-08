@@ -167,15 +167,19 @@ These are correctness checks, not evidence of benchmark improvement.
   The committed source/run is now frozen and staged. Complete independent
   preflight for hyde03 passed. Monitor controller 134553, retrieve only when
   quiescent, and audit all 68 results; root owns any necessary SSH fallback.
-- `algorithm_audit`: core and scheduler reviews are complete, with no source
-  changes requested. The connected multi-qubit center specification is stable
-  and reviewed, but remains design only. Final integration-test hash review is
-  complete and committed. Now assess a future general certificate-based early
-  termination rule, including the rejected 030 conversion-cost evidence; no code.
-- `literature`: isolated core, 85 new core tests and 27 integration tests are
-  complete and committed. Now investigate focused primary prior art for the
-  connected-center matching/routing design; no implementation. The separate
-  hyde04 environment is prepared, but its supervisor remains deferred.
+- `algorithm_audit`: the certificate design and read-only readiness audit are
+  complete. Root independently repeated all 170 saved candidate validations:
+  all pass, and only path/cycle attain the bound. All 34 degree gates pass;
+  3,680 maximum-degree target sites make them vacuous for these L values. Now
+  specify an exact initial-prefix diagnostic using existing source, with no
+  production edits or embedding calls. The connected-center design remains
+  unimplemented until 037 is audited.
+- `literature`: targeted connected-center prior art is complete; polymatroid
+  Steiner, LAD, RANGI and existing minor-embedding moves prevent a broad novelty
+  claim for combining matching and routing. Its independent saved-diagnostic
+  helper for 037 passed 19 synthetic checks and all 34 historical 036 controls.
+  No additional implementation is running. The separate hyde04 environment is
+  prepared, but its supervisor remains deferred.
 
 Root owns launch, monitoring coordination, current work and session notes.
 Preserve unrelated `.claude/` and graph-library `.verified.json` files. Do not
@@ -202,3 +206,8 @@ restart any completed controller or fetch a run before verified quiescence.
 The backend goal was checked again at 04:46 UTC and reports `active`; the user was
 told `/goal resume` is currently unnecessary. No UI internals or goal scheduler
 state were modified. The full research objective remains unmet.
+
+At approximately 04:57 UTC, fresh reviewer status reports 48/68 finalized
+SUCCESS in 037, controller 134553 unchanged, worker 135643 active, lock held and
+tmux live. This is progress only; no partial-output quality selection is made.
+Root also rechecked the backend during this continuation: it remains active.
