@@ -106,6 +106,24 @@ Source snapshot: `91824466fdd3880940df0cc6d3569a461a617c3d1ae883e50425ee368952a7
 Verified transport: `481ae432e47dc5b0c9f3951d38080ee21e9de0d9e52833bafd15985322c9608c`.
 The 68 tasks are frozen in `results/codex/026-corpus-spectral-initialization`
 and staged at `/home/dabh/ember-codex/runs/026-corpus-spectral-initialization`
-on hyde03. They preserve selection 017 and its sidecars. The current stage has
-not launched a worker. The benchmark auditor will launch this exact run after
-freshly verifying quiescence of 025 and retrieving that finished archive.
+on hyde03. They preserve selection 017 and its sidecars.
+
+## Actual launch and fresh live verification
+
+The benchmark auditor started this exact run after verifying that 025 had
+completed all 68 trials, released its lock, stopped its tmux supervisor, and
+returned supervisor exit 0, and after retrieving 025 with all 429 archive files
+hash-verified. No 025 outcome changed the already frozen 026 protocol.
+
+026's supervisor started at `2026-09-08T02:51:44.531316Z` under tmux session
+`ember-codex-ef2a0cc9c971540d0411`; maximum lifetime is 6420 seconds. A fresh
+SSH observation confirmed running controller PID 122275, active worker PID
+122287, held inherited worker lock, and live tmux supervisor. A subsequent
+fresh observation showed 4/68 finalized SUCCESS records and active worker
+122416 under the same controller. These are launch/progress observations,
+not completed quality evidence. No restart or active-run fetch was performed.
+
+The full launch record is in `026_launch_status.md`, with raw responses saved
+at `results/codex/026-launch/`. Retrieve the completed run only after verified
+quiescence. Keep candidate timing comparisons within 026; MM019 remains
+historical quality evidence only.

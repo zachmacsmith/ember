@@ -41,8 +41,8 @@ has used these new inputs, so embeddability remains unproved.
 
 ## Parallel work and ownership
 
-- `benchmark_audit`: finalize `025_results_review.md` and actual 026 launch notes,
-  then monitor and independently audit 026. Root has rerun ordinary 025 analysis.
+- `benchmark_audit`: 025 review and 026 launch notes are complete and reviewed;
+  now monitor and independently audit 026. Root reran ordinary 025 analysis.
 - `algorithm_audit`: implement only the unused horizontal-neighbor preparation
   removal in `field.py`, following `geometry_performance_spec.md`. New regression
   tests are `test_reinsert_preparation.py`; frozen before/after artifacts go under

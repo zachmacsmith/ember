@@ -28,6 +28,7 @@ remain necessary, and novelty is unproved.
 - [Contact rearrangement result and validation-cost correction](experiments/022_results_review.md)
 - [Rejected distance-tree policy and lessons](experiments/023_contact_tree_ablation.md)
 - [Broader contact-rearrangement experiment protocol](experiments/025_corpus_contact_rearrangement.md)
+- [Complete contact-rearrangement results, including regressions](experiments/025_results_review.md)
 - [Spectral initializer design and critique](spectral_initialization_spec.md)
 - [Independent numerical and attribution review](spectral_initialization_review.md)
 - [Fixed spectral integration experiment](experiments/026_spectral_initialization.md)
