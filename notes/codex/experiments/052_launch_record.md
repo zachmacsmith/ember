@@ -1,4 +1,4 @@
-# 052 soft-guidance screen: running
+# 052 soft-guidance screen: terminal and retrieved
 
 The four fixed reach cases and six focused correctness groups precede this
 screen. Root read the complete source/tests and one-method adapter diff.
@@ -24,5 +24,11 @@ never authorizes restarting the run.
 
 All invocations and exact stdout/stderr/status files are in
 `results/codex/052-launch`; the local frozen run is
-`results/codex/052-original-soft-guidance-pipeline`. Completion and independent
-result analysis have not yet occurred at this checkpoint.
+`results/codex/052-original-soft-guidance-pipeline`. Status003 records controller completion at1788900384.682528, all68 finalized
+(67SUCCESS/oneFAILURE), free lock, absent tmux and supervisor exit0. The last
+active PID is historical. Fetch001 succeeds without a restart or second
+retrieval attempt, verifies458 files, and saves the quiescent archive at
+`results/codex/retrieved/hyde03/052-original-soft-guidance-pipeline`. Its digest
+is `053a3e42e31ba881ec4528660bcb4ba1068519cfdad0f5769589bac2a19e3192`.
+The separate minimal saved-result screen is now requested; no candidate or
+comparator rerun is authorized by that analysis.

@@ -1,0 +1,29 @@
+# B014 design: connected available regions after a release
+
+Pre-code diagnostic, 2026-09-08. B013 correctly passes all 21 ER blocks: releasing owner 53 opens unprotected site 1990 next to required chain 72. That does not establish a connected route from this site to the other required chains. Test connectivity without assuming that 1990 is isolated or changing B012's block order.
+
+## Predicate and proof scope
+
+For each existing block `K`, retain B013's exact definitions: frozen chains `F=E without K`, available sites `A=V(target) minus union(F)`, required frozen owners `R=N_source(v) intersect F.keys`, and protected set `Z`. A site belongs to `Z` when it is a frozen owner's sole free boundary site and that owner has an original neighbor absent from `F.keys union {v}`. This includes demands for released `K` and self-protecting required owners, but excludes demand solely for `v`.
+
+Form the induced target graph on `A minus Z`. For every connected component `C`, compute
+
+`touch(C) = {r in R : a target edge joins C to F[r]}`.
+
+Reject exactly when **no nonempty component has `touch(C)=R`**. If `R` is empty, at least one available unprotected site is still necessary for the new nonempty chain; an empty graph rejects and any nonempty component passes. If `|R|=1`, this reduces to the corresponding B013 unprotected-contact test. For larger `R`, separate components may each supply some contacts without supplying them jointly.
+
+A valid first chain for `v` is nonempty, connected and disjoint from frozen `F`. Its sites must lie in `A`. Occupying `Z` would strand a frozen owner's remaining demand and violate the intermediate frontier guard. Therefore it lies entirely in one component of `A minus Z`; every required contact must touch that same component. Absence proves an obstruction to this **first-v, frozen-outside primitive**. Preparation or growth cannot expose additional sites by moving frozen chains; subsequent deletion of newly occupied sites cannot enlarge the initial available set. The claim does not cover simultaneous rebuilding, a different insertion order, a larger release, or moving outside owners.
+
+Passing means only **not rejected**. It does not establish acceptable chain size, preservation of multi-site future frontiers, an extension site for `v`, matching feasibility, restoration of `K`, or reach within the fixed root/path limits. Do not use a component as a proposed embedding.
+
+## Fixed classification protocol
+
+Use all 21 saved B012 ER66 blocks in their exact existing order, the original B011 failed entry/source/target, and the accepted B013 definitions. Reuse the hash-bound stdlib boundary classifier to recompute `Z` after each release. Decode no competitor embedding and invoke no candidate, reconstruction or constructor. Scan **all** components for each block; retain each component's members, required owners touched, and actual required-contact sites. Preserve the old B013 status beside the new status so any additional rejection is explicit.
+
+Before these observations, run six fixed tiny cases: two required chains with disconnected versus connected available contact regions; zero required chains with nonempty versus empty available graph; one required chain with an allowed contact versus a self-protected sole contact. For the first pair use source edges `(0,1),(0,2),(0,4)`, entry `1:[0],2:[3],4:[6]`, new `v=0`, release `K={4}`, and target edges `(0,1),(2,3),(2,7),(6,7)`. Adding `(1,2)` connects the regions. For the zero-required pair use source nodes `{0,4}`, no edges, entry `4:[6]`, target nodes `{6}`, no edges, and release `{4}` versus the empty release; the latter leaves no available site. Empty release is only a predicate edge-case fixture, not a new production block. For the one-required pair use source edges `(0,1)` versus `(0,1),(1,2)`, add isolated source owner 4, entry `1:[0],4:[6]`, target nodes `{0,1,6}` with edge `(0,1)`, and release `{4}`. In the second case owner 1 still needs source 2 and protects site 1.
+
+Use **five seconds and 3,000,000 counted operations total**, including input decoding/setup, tiny checks, all 21 classifications and complete record construction in measured wall. A full target component scan costs at most approximately `2|V|+2|E|` root/pop/adjacency iterations; 21 scans of ideal Z12 therefore require about 2.13 million such operations before boundary work. This is a diagnostic allowance justified by scanning the declared graph, not a larger reconstruction budget. Check around loops/sorts and final recording. Preserve completed and partial rows, with any interrupted block explicitly unknown and every uninspected index listed. Do not label an interrupted component scan as a negative certificate or accept a favorable prefix as complete evidence.
+
+Report exact rejected/not-rejected/unknown counts, the earliest surviving block, all component/contact evidence, work and wall. No block reordering, reconstruction call or implementation follows automatically. If no early block is rejected, reject this skip hypothesis for the present state. If early blocks are rejected cheaply, the result may justify proposing a separate bounded reconstruction experiment under unchanged B012 limits.
+
+**Self-critique.** Full free-graph scans may cost more than the routing they avoid, especially when repeated blocks differ by one small release. A large common component can hide the actual multi-owner capacity conflict. Frozen first-v scope is conservative, and a certificate says nothing about a different rebuild order. Even skipping certified failures can merely move the work limit to another unsuccessful block. These are ordinary graph-connectivity necessary conditions, not novelty or a promised ACL improvement. This diagnostic earns value only through informative new certificates and honest cost, not by increasing search allowances.
