@@ -638,25 +638,78 @@ def _arm_targets(pos: Dict[int, Point], contacts, bars: BarIntervals,
     return out
 
 
+def _class_interval_assignment(arms, caps):
+    """Minimum-span feasible class intervals, with deterministic history ties.
+
+    Each arm has two closed integer intervals in ``arm[3]``. This solves their
+    class-capacity problem only; individual physical lanes, missing endpoints
+    and actual target couplers are checked separately. Retain intervals against
+    a shared monotone frontier and check overlap throughout each new interval.
+    State growth can be exponential in the number of arms on a line.
+    """
+    order_i = sorted(range(len(arms)), key=lambda i: (
+        min(arms[i][3][0][0], arms[i][3][1][0]), arms[i][2]))
+    states: Dict[frozenset, Tuple[float, tuple]] = {frozenset(): (0.0, ())}
+    for i in order_i:
+        frontier = min(arms[i][3][0][0], arms[i][3][1][0])
+        nxt: Dict[frozenset, Tuple[float, tuple]] = {}
+        for st, (cost, hist) in states.items():
+            # No future class choice can start before this shared frontier.
+            live = frozenset((j, cj) for j, cj in st
+                             if arms[j][3][cj][1] >= frontier)
+            for pi in (0, 1):
+                if caps[pi] <= 0:
+                    continue
+                lo, hi = arms[i][3][pi]
+                overlaps = []
+                for j, cj in live:
+                    if cj != pi:
+                        continue
+                    a, b = arms[j][3][cj]
+                    if a <= hi and b >= lo:
+                        overlaps.append((max(a, lo), min(b, hi)))
+                if len(overlaps) >= caps[pi]:
+                    # Closed integer endpoints: an interval ending at b no
+                    # longer contributes starting at b+1. Candidate adds one.
+                    events = {}
+                    for a, b in overlaps:
+                        events[a] = events.get(a, 0) + 1
+                        events[b + 1] = events.get(b + 1, 0) - 1
+                    depth = 1
+                    fits = True
+                    for position in sorted(events):
+                        depth += events[position]
+                        if depth > caps[pi]:
+                            fits = False
+                            break
+                    if not fits:
+                        continue
+                st2 = live | {(i, pi)}
+                c2 = cost + (hi - lo)
+                h2 = hist + ((i, pi),)
+                cur = nxt.get(st2)
+                if cur is None or (c2, h2) < cur:
+                    nxt[st2] = (c2, h2)
+        if not nxt:
+            return {}
+        states = nxt
+    best = min(states.values(), key=lambda t: (t[0], t[1]))
+    return dict(best[1])
+
+
 def _convert_line(grid: TileGrid, claimed: set,
                   chains: Dict[int, List[int]], orientation: int,
                   line: int, items: List[Tuple[float, float, int]],
                   targets: Optional[Dict[int, tuple]]) -> Tuple[int, int]:
-    """The exact per-line converter, v2 (s3.96): jointly choose a
-    parity class and a lane for every arm on one line so that every
-    designated crossing (and the arm's own corner — it is in the
-    target list) is parity-covered.
+    """Assign required-hull parity classes, then seat arms on physical lanes.
 
-    v2 fixes the two measured v1 defects (notes s3.96): (1) claims
-    contest POSITIONS, not books-hulls — an arm claims only its
-    REQUIRED hull (the span of its parity targets), so benign overlap
-    of the wider books intervals no longer blocks seating and chains
-    get shorter than the kappa-floor width; (2) the class assignment
-    is an exact DP whose state is the CLASSED ACTIVE SET — any
-    feasible line keeps <= cap0+cap1 (= 8) arms alive at once, so the
-    state space is tiny and the v1 greedy+repair thrash (1747 flips
-    on ws) is gone. Dead qubits are absorbed as lane-infeasibility;
-    they never reach the packer. Returns (misses, 0)."""
+    The class DP minimizes total required-hull span subject to closed-interval
+    capacities. This is not an exact joint physical-lane solve: seating checks
+    actual available runs, may change class or use the wider fallback interval,
+    and may miss arms. Missing endpoints/couplers require separate validation.
+    Claims remain physically disjoint. Returns (misses, 0); the second counter
+    does not report seating's parity changes.
+    """
     subs_all = sorted({s for (o_, ln_, s) in grid.wire_map
                        if o_ == orientation and ln_ == line})
     if not subs_all or not items:
@@ -686,46 +739,8 @@ def _convert_line(grid: TileGrid, claimed: set,
         arms.append((a, b, v, R))
     n = len(arms)
 
-    # ---- exact class assignment: DP over arms (sorted by earliest
-    # required-lo), state = frozenset of (arm index, class) for arms
-    # still active; any feasible state has <= 8 members. Cost =
-    # total required-hull length (shorter claims win ties).
-    order_i = sorted(range(n), key=lambda i: (min(arms[i][3][0][0],
-                                                  arms[i][3][1][0]),
-                                              arms[i][2]))
-    states: Dict[frozenset, Tuple[float, tuple]] = {frozenset(): (0.0, ())}
-    for i in order_i:
-        lo0, hi0 = arms[i][3][0]
-        lo1, hi1 = arms[i][3][1]
-        nxt: Dict[frozenset, Tuple[float, tuple]] = {}
-        for st, (cost, hist) in states.items():
-            # expire actives whose interval ends before this arm starts
-            # (interval-graph fact: depth maxima occur at starts, so
-            # checking capacity at starts is exact)
-            for pi, lo in ((0, lo0), (1, lo1)):
-                live = frozenset(
-                    (j, cj) for (j, cj) in st
-                    if arms[j][3][cj][1] >= lo)
-                cnt = sum(1 for (_j, cj) in live if cj == pi)
-                if cnt + 1 > caps[pi]:
-                    continue
-                st2 = live | {(i, pi)}
-                c2 = cost + (arms[i][3][pi][1] - arms[i][3][pi][0])
-                h2 = hist + ((i, pi),)
-                cur = nxt.get(st2)
-                if cur is None or (c2, h2) < cur:
-                    nxt[st2] = (c2, h2)
-        if not nxt:
-            # no feasible class assignment at all: seat greedily below
-            states = {}
-            break
-        # prune: keep best cost per state
-        states = nxt
-    assign: Dict[int, int] = {}
-    if states:
-        best = min(states.values(), key=lambda t: (t[0], t[1]))
-        for (i, pi) in best[1]:
-            assign[i] = pi
+    # An absent complete class assignment uses the unchanged greedy seating.
+    assign = _class_interval_assignment(arms, caps)
 
     def _lane_ok(s: int, lo: int, hi: int) -> Optional[List[int]]:
         run = grid.wire_map.get((orientation, line, s), {})
@@ -787,12 +802,14 @@ def wire_seeds_exact(grid: TileGrid, pos: Dict[int, Point],
                      bars: BarIntervals,
                      src_adj: Dict[int, List[int]],
                      books) -> Tuple[Dict[int, List[int]], dict]:
-    """The exact converter (s3.96): plane layout -> claimed wires, one
-    exact per-line solve at a time (``_convert_line``), replacing the
-    three global greedy passes (snap coloring + completion's
-    corner/edge repairs) with joint parity+lane choices. Completion
-    still runs afterwards as the VERIFIER and bridge net. Reads the
-    same shared books as everything else; returns (chains, info)."""
+    """Convert plane arms using class-interval optimization and lane seating.
+
+    Each line's class assignment is optimized for interval span/capacity, then
+    physical seating may change those choices or miss arms. Completion and
+    original-graph validation remain necessary; the name is retained for API
+    compatibility and does not imply exact global embedding optimization.
+    Reads the supplied shared arm data; returns (chains, info).
+    """
     claimed: set = set()
     chains: Dict[int, List[int]] = {v: [] for v in pos}
     info = {"convert_miss": 0, "convert_flips": 0}

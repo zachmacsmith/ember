@@ -149,3 +149,15 @@ and cumulative improvements under fixed general budgets.
    is warranted. Generalization still requires new source instances.
 
 Status: design/critique only. No implementation or new experiment has begun.
+
+## Initial prior-art finding after the design
+
+The literature review found strong overlap with Christine Solnon's
+[AllDifferent-based Filtering for Subgraph Isomorphism](https://liris.cnrs.fr/Documents/Liris-4568.pdf),
+Section 4: its root-conditioned neighborhood graph also uses variable domains
+and a covering matching. Treat this matching reduction as conventional. The
+independent-leaf condition makes that test sufficient for our restricted block;
+it does not make matching a new algorithmic idea. Any research contribution
+would need a distinct, useful minor-refinement neighborhood and demonstrated
+cumulative improvements at practical cost. A detailed attribution review and
+physical witness check are underway.

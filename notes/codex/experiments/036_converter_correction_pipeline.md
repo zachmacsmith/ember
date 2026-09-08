@@ -67,3 +67,15 @@ solver with a separately specified feasible heuristic; do not hide the known
 capacity defect inside a preferred-family exception.
 
 Status: protocol saved. Source freeze and launch await completed035review.
+
+## Review before freezing
+
+Root reviewed the completed035 report and full source diff. The corrected helper
+agrees with257 declared oracle cases and a separate431,901-case exhaustive root
+check; all14 feasible physical fixtures are seated, and both infeasible fixtures
+retain safe partial output. The109-test integration run plus276 subtests passes.
+On the difficult nine-arm Z12 witness, peak states rise30 to240 and mean warm
+time0.293 to1.816 ms. This6.21-fold slowdown is material, but the observed absolute
+cost supports this bounded full-pipeline measurement without a new state cap.
+No broad runtime guarantee follows. The source freeze will use final field SHA
+`a055553988ba3db17ef3588986c1719070c3fcfae4bbfcce7a7084ffe45c7690`.

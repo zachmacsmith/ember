@@ -47,6 +47,7 @@ is unproved.
 - [Full-pipeline singleton relocation comparison protocol](experiments/033_singleton_relocation_ablation.md)
 - [Singleton comparison: valid proposals but no cumulative improvement](experiments/033_results_review.md)
 - [Reproduced converter capacity defect and physical witness](conversion_capacity_review.md)
+- [Corrected capacity recurrence, exhaustive checks and runtime costs](converter_correction_spec.md)
 - [Physical wire-cost model and limits of local pricing](physical_cost_model.md)
 - [Induced-star joint relocation hypothesis and self-critique](induced_star_relocation_spec.md)
 - [Corrected-converter full-pipeline comparison protocol](experiments/036_converter_correction_pipeline.md)
