@@ -241,3 +241,13 @@ No real constructor was called. AST comparison confirms every previous
 registry entry and all other pilot code are unchanged. Candidate/helper bytes
 and the earlier reach/correction manifest remain intact. Additive evidence:
 `results/codex/a053-site-transfer/registration/manifest.json`.
+
+A054 registration adds only `native-degree-two` →
+`factored/degree_two_construction.py:reduced_core_embed`, with `{}` defaults.
+The existing worker supplies copied graphs and the common absolute deadline.
+One isolated synthetic dispatch test passed; no real constructor was called.
+Removing this single registry entry gives exact prior pilot AST equality.
+Gate source/tests/evidence remain unchanged; registration evidence is under
+`results/codex/a054-degree-two/registration`. The authorized next screen is
+16 selected structures (13 changed reductions plus three fixed controls),
+not an all-34 quality estimate.

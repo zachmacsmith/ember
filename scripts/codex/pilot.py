@@ -42,6 +42,8 @@ CONSTRUCTORS = {
                                     'reduced_core_embed'),
     'native-site-transfer': ('packages/ember-qc/src/ember_qc/algorithms/factored/site_transfer_construction.py',
                              'reduced_core_embed'),
+    'native-degree-two': ('packages/ember-qc/src/ember_qc/algorithms/factored/degree_two_construction.py',
+                          'reduced_core_embed'),
     'demand-tree': ('packages/ember-qc/src/ember_qc/algorithms/factored/demand_construction.py',
                     'demand_embed'),
     'frontier-tree': ('packages/ember-qc/src/ember_qc/algorithms/factored/frontier_construction.py',
