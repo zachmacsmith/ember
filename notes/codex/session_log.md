@@ -1709,3 +1709,65 @@ source0d5b77e35a196734c7b5a3526c2247ae7a6da5e230d2fb6b81b01f2b961ca9a4.
 Status0014SUCCESS,live lock/tmux. This baseline addresses current variance and
 same-host cost, not a fourth algorithm or new-source generalization. Continue
 observing the same detached handle after network changes. Goal remains active.
+
+## 2026-09-08 23:00 UTC: three mechanism tracks and controlled launches
+
+Root reviews the combined registration's four adapters and passive failed-map
+field; six targeted adapter/no-credit cases pass, all 12 bindings match. B020
+freezes and launches once on02: 27 paired-contact/single-contact/MM calls.
+C007 freezes/stages on04 but start is refused before any supervisor or trial;
+read-only evidence identifies missing tmux. Root moves the entire unchanged
+24-call comparison to idle03, with a pre-observation amendment, new manifest
+and run name C007b. One successful03 start. Manifest paths change but task IDs
+remain equal to the unexecuted04 bundle; the launch record corrects the initial
+prediction. No failed transport command is treated as an algorithm failure.
+
+Root reads both minimal analyzers. A C-specific credit bug is fixed before
+analysis: an exception after quality assignment must erase quality. Three
+injected saved-record groups cover late/nonfinite/negative time, nonzero/missing
+outcomes and post-scoring errors; no solver rerun. Fourteen amended bindings
+pass. B analyzer needs no extra tests. Original bytes remain preserved.
+
+A's design review identifies a concrete pre-packing proposal-selection loss,
+distinct from representation, acceptance and cost. Approve one bounded replay
+of six saved040 states, first32 questions and5s each; no new capture or sequence
+of local repairs. Physical-Q evidence on at least two non-cycle cases is needed
+before a small complete-constructor screen. Cycle's lift remains outside this
+mechanism. All three tracks stay independent.
+
+056 four-seed baseline continues on06; latest status002 is78/272 finalized,
+including one failure. Prepare a minimal independent saved-data summary while
+it runs, reusing existing validators and recording per-class successful and
+paired-common means/variances, all statuses and all runtime. No current seed
+robustness claim follows before terminal validation. Goal remains active.
+
+## 2026-09-08 23:11 UTC: retire atomic growth; broaden the retained baseline
+
+C007b completes24 calls and a single independent analysis passes. Both candidates
+complete2/8 versusMM6/8; atomic loses both common quality comparisons and prior
+sparse coverage. All640 scored atomic paths are accepted with negative energy;
+85.3% of completed additions find no free route, while the elementary arm already
+accepts92.6% of positive growth. This rejects the fixed constructors and the idea
+that their tiny acceptance-barrier fix is the dominant panel solution. Six failed
+calls per candidate consume their search deadline; work counts do not by themselves
+attribute wall time. Root reads report/projection and verifies32 final bindings.
+
+057 selects35 additional archived exact records across35 memberships using only
+original012 readiness and exact size-distance/hash/ID ranking, excluding017
+normalized topologies. Existing pilot validates inputs. A053/MM two-seed140calls
+freeze and launch once on03 after C007b finishes; source202453c0, all existing
+factored dependencies match056, ideal target identical.05 needs a new stack, so
+its read-only readiness result is saved and03 reused. Two local wrapper issues
+before transport are preserved; Python-I avoids the select.py shadow. No source
+or outcome-dependent selection change. Current additional-instance outcomes unknown.
+
+Root reads056 analyzer and catches a wrong expected shuffle order before outcome
+analysis. Agent preserves original bytes, changes only the expected list, and
+verifies all272 frozen tasks. Thirteen amended bindings pass. Variance arithmetic
+and analytical display order stay unchanged.057 adaptation will reuse its gates.
+
+A's saved-state orientation execution loses five query logs at final NumPy-bool
+serialization. No favorable/negative mechanism inference follows. Root explicitly
+amends the no-retry instruction for this instrumentation-only fault: one scalar
+serialization correction, one specific check, then the same six inputs and limits.
+No selective retry, allowance change, new snapshot or candidate registration.

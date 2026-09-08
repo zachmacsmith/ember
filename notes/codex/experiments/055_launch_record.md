@@ -20,5 +20,6 @@ observation never authorizes a replacement run.
 Status001 and fetch001 confirm terminal18/18SUCCESS, controller203360
 finished Unix1788906802.8006332, free lock, absent tmux and
 supervisor exit0. Fetch verifies192 files, digest
-`4b3fcda430a34aaec72d670b26960cc2666b1bfa2589fa1a4155b761b29b4952`. The prepared minimal checker is approved
-for one saved-result execution; no constructor rerun.
+`4b3fcda430a34aaec72d670b26960cc2666b1bfa2589fa1a4155b761b29b4952`. One saved-result analysis passed; root reviewed the report, narrow checkers
+and all 23 final bindings. Four wins, three losses and two ties do not support
+promotion; retain A053. No constructor rerun.
