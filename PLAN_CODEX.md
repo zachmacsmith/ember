@@ -1,5 +1,13 @@
 # Codex research plan
 
+2026-09-09 completed-cycle decision: [Transfer001 results](notes/codex/transfer_cycle_001_decision.md)
+retain A061 and preserve all 198 outcomes. A063 supports a bounded scheduling
+follow-up but is too costly for promotion; B027/C012 fixed policies are rejected.
+Future independent tracks target A's measured root-search allocation, B's routing
+cost, and a coherent replacement for C's failed frontier geometry. The decision
+includes two self-critiques and retains all-class, variance, runtime and untouched
+confirmation requirements.
+
 2026-09-09 execution checkpoint: [Transfer001](notes/codex/transfer_cycle_001_launch.md)
 implements the reviewed strategy with three independent complete-constructor
 screens, fresh structures/sizes/relabelings and evaluator-hidden witnesses.

@@ -45,3 +45,12 @@ The retained policy is one algorithm, not a per-class selection. All 34 candidat
 Success and variability outside this seed remain unresolved. The same retained policy in [060](experiments/060_branched_path_results.md) and [062 controls](experiments/062_ready_lifting_results.md) includes failed planted, wheel and hypercube attempts; a successful seed does not erase them. No all-class, across-seed A061 variance estimate exists. The [separate A053 replication tables](mm_gap_current_tables.md) retain all means, sample variances and failures without pooling constructor versions. Within-embedding chain-length variance is a different quantity.
 
 Sudoku is the remaining class label outside this A061 breadth cohort: A061 versus MM success, ACL, across-seed variance and timing are **not measured here**. [The separate A053 q2/q3 comparison](experiments/058_results_screen.md) is historical evidence, not an A061 row. This keeps all36 labels visible without inventing coverage.
+
+The [Transfer001 expansion](../../results/codex/transfer-cycle-001/milestone001/tables.md)
+adds a separate six-family development table for this same retained policy on
+hyde06: 12/12 fresh successes versus MM12/12, four lower-Q and eight higher-Q
+inputs. Each class has two sizes and one seed per structure; the table preserves
+mixed-size wins/losses beside its descriptive mean ACL. Do not pool it with the
+breadth cohort or the separate hyde02/03 controls. A063's small improvements do
+not replace A061 on selected rows. [The cycle decision](transfer_cycle_001_decision.md)
+keeps the full class objective and outstanding variance/runtime coverage visible.

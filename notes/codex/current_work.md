@@ -1,14 +1,16 @@
 # Current research checkpoint
 
-Updated 2026-09-09 04:00 UTC, transfer screens launched. Branch `codex`; goal active and
+Updated 2026-09-09 21:00 UTC, transfer screens resolved. Branch `codex`; goal active and
 unmet. The latest user request is preserved in `PROMPTS_CODEX.md`.
 
 The [current strategic decision](strategic_review_20260909.md) supersedes the
 previous sequence of local refinements. All previously launched B025/C011 calls
 are terminal, retrieved once and independently analyzed once. Root reviewed the
 reports and verified 27/31 final evidence bindings. The subsequent
-[three-track transfer cycle](transfer_cycle_001_launch.md) now has198 frozen calls
-on06/02/03. The guarded-connector draft remains held and untested.
+[three-track transfer cycle](transfer_cycle_001_decision.md) has all 198 calls
+terminal and retrieved from06/02/03; all original-graph audits and mechanism
+readers passed once. No current run remains active. The guarded-connector draft
+remains held and untested.
 
 The one retained policy is **A061/native-branched-path**. Its
 [complete class table](mm_gap_retained_a061.md) preserves 34/34 valid versus MM 29/34;
@@ -27,13 +29,16 @@ These suggest a general mechanism; they do not prove causation or novelty.
 
 Three independent design directions remain:
 
-- A: test original-contact whole-chain/boundary reconstruction within the retained
-  valid constructor output; preserve its incomplete-construction failures.
-- B: fresh whole-chain construction with mobile contact boundaries through
-  feasibility and quality. It shares a mechanism with A, but tests construction
-  without the inherited core. Do not call them independent novelty evidence.
-- C: fresh Zephyr frontier/contact-event construction; explicitly test forced
-  frontier-carrying cost and failures on dense/irregular inputs.
+- A: A063 passes its exploratory transfer signal: six primary Q gains, including
+  three fresh structures, and no Q/success regression against same-host A061.
+  Every call is reconstruction-time censored before completing an owner sweep.
+  A bounded owner/root interleaving hypothesis follows; no first-root-only cap.
+- B: B027 is rejected: two primary successes, zero fresh successes, all hidden
+  controls failed. Routing uses95.82% of solver time. A bounded acceleration-only
+  diagnostic can distinguish cost from persistent proposal/price deficits.
+- C: C012 is rejected: four primary successes, every common-MM Q comparison worse,
+  and17 structural port/carry stops before deadline. Stop the fixed monotone
+  frontier/suffix-repair sequence and redesign geometry and contact space together.
 
 Before-code contracts and focused risk checks are complete for A063, B027 and
 C012. Their independent complete screens use12 fresh structures, four hidden-
