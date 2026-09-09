@@ -1,6 +1,6 @@
 # Current research checkpoint
 
-Updated 2026-09-09 01:37 UTC. Branch `codex`; goal active and unmet.
+Updated 2026-09-09 02:15 UTC. Branch `codex`; goal active and unmet.
 Single general heuristic, no MM/busclique, no portfolio, ideal Z12. Success,
 mean ACL, variability and roughly MM-scale runtime remain separate requirements;
 optimal ACL-one ties are acceptable.
@@ -9,8 +9,8 @@ The [latest mechanism milestone](mechanism_cycle_061_b023_c009.md) covers 136
 complete-constructor calls, all terminal, retrieved once and independently
 analyzed once. Root reviewed the candidate sources and specific new-risk checks
 before freezing the runs. Shared worker/import/validator logic is unchanged;
-only constructor descriptors were added. No remote job from this or earlier
-screens remains live.
+only constructor descriptors were added. All jobs from that milestone and
+earlier screens are terminal. The next three independent screens are now live.
 
 - **A: retain unchanged branch reconstruction within measured scope.** The
   [060 replication](experiments/060_branched_path_results.md) and full 34-input
@@ -46,8 +46,19 @@ variance is a different quantity. All observations are exposed development data.
 The [workflow](tracks/workflow.md) requires a representation/neighborhood/
 acceptance/cost diagnosis, distinguishing observation, hypothesis, pseudocode,
 self-critique and cheap complete-constructor falsifier before new code. Three
-independent next-track memos are in preparation; no next implementation is
-approved merely because a partial score improves. Exact neighborhood solves
+independent next-track memos have been reviewed. Isolated implementations are
+authorized after their exact pre-code policies: A changes only dependency-ready
+lifting order, B changes only the initial bijection on the same physical sites,
+and C grows an auxiliary clone graph with bounded greedy placement revision.
+The reviewed implementations are frozen and launched: [A062, 36 calls on 06](experiments/062_launch_record.md),
+[B024, 27 calls on 02](tracks/b_024_launch_record.md), and
+[C010, 16 calls on 03](tracks/c_010_launch_record.md). Each has fresh same-host
+MM comparisons; A/B also have their unchanged control. Six, four and three
+targeted risk groups passed respectively; C repeated only its affected final
+error-credit safeguard after a proactive correction. Root verified all frozen
+source/input bindings and task vectors. Their small screens decide continuation
+from complete success, quality and time. No implementation is approved merely
+because a partial score improves. Exact neighborhood solves
 remain optional local diagnostics, never global constructors.
 
 Transport identities: [061](experiments/061_launch_record.md),

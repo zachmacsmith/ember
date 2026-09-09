@@ -1,0 +1,11 @@
+# C010: fixed full-constructor screen
+
+Compare the single `adaptive-clones` constructor with fresh stock MM on **all eight unchanged C development inputs**: path, tree, grid, random planar, ER, regular, complete and SBM. Use ideal Z12, seed 0, fifteen seconds per method, and the existing isolated native/MM Python3.10.12 environments on hyde03. Root owns registration, source freeze and lifecycle; no run is initialized by this note.
+
+Reuse the exact C009 selection, normalized graphs, original-label maps, evaluator originals and target bytes. The [comparison plan](../../../results/codex/track-c-010-protocol/comparison_plan.json) binds these inputs and sixteen task templates. The per-input order is the audited `Random(f'{graph}:0').shuffle` on `[mm, adaptive-clones]`. Methods run in separate processes on the same host. There is no historical MM timing pool, family dispatch, fallback, architecture change, input replacement or extra seed.
+
+The candidate is fixed by the [policy](c_010_adaptive_clone_policy.md) and [focused checks](c_010_adaptive_clone_implementation.md): 32 ranked sites, at most four implicated clones/four greedy revisions, single deterministic splits, 19M search/20M total work, no cleanup, and final original validity under the absolute deadline. Retain every partial map, unplaced clone, failed revision/split, exception, work stop and late-valid output; none becomes timely quality credit.
+
+**Continuation requires all three:** at least **6/8 timely valid** candidate embeddings; Q no larger than timely MM on at least **three common timely inputs**, with optimal ACL=1 ties allowed; median candidate/MM solver-time ratio over all common timely pairs at most **3**. Partial placement, reduced missing edges or lower provisional Q cannot substitute. An undefined comparison fails its condition.
+
+Saved-data analysis will independently recount original validity/Q and diagnose setup, domain-ranking, revision and splitting work; Q increases after heuristic conflicts are never lower-bound proofs. Process wall remains separate from solver wall. This is one repeatedly used instance per class and one seed, suitable for a mechanism decision, not class means, variance, clean generalization or a paper claim. Failed continuation retires this fixed policy without automatic scope/cap adjustment.

@@ -12,7 +12,7 @@ prior art for constraint-based placement, not a general minimal-minor constructo
 or evidence for performance on Ember. Any adaptive-splitting proposal would need
 to explain its separate chain-growth mechanism and bounded heuristic search;
 calling a global exact subgraph solver is not our intended approach.
-[Primary manuscript, PDF page 19](https://www.dwavequantum.com/media/bljnr3zz/beyond-classical-computation-in-quantum-simulation.pdf).
+[Primary manuscript, PDF page 20](https://www.dwavequantum.com/media/bljnr3zz/beyond-classical-computation-in-quantum-simulation.pdf#page=20).
 
 Sugie et al. report improved PSSA scaling on random cubic and Barabási–Albert
 inputs up to 102,400 hardware nodes, while their constant-density random graphs

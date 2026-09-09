@@ -1938,3 +1938,54 @@ The new milestone links all class rows without pooling versions or hiding sparse
 losses in dense gains. All three next-track memos are design-only. Each must
 identify a causal distinction and a cheap complete-constructor falsifier before
 implementation. The active research goal remains unmet; protected files untouched.
+
+
+## 2026-09-09 01:53 UTC: three controlled construction hypotheses
+
+Root reads all three pre-code hypothesis/pseudocode/self-critique/falsifier
+memos and authorizes isolated implementation with only the new-risk checks.
+A changes dependency-ready lifting order: use every recorded filled neighbor
+for readiness, then fewest free direct singleton contacts first. Logical R edits
+commute for simultaneously ready rows; physical choices need not. Preserve
+reducer/core, insertion moves/acceptance/caps and the measured branch stage.
+Root inspects actual reduction and reversal code; fixtures must cover shared
+fill creation/removal, synthetic dependencies and failed-selection rollback.
+A's fixed six-input, two-seed, three-arm screen has 36 calls on 06 and includes
+known lifting failures plus an out-of-scope native-core failure.
+
+B024 preserves B023's initial physical-site set and changes only the bijection:
+two fixed pair-exchange passes decrease original-edge target-distance sum.
+The original routing, erasure, acceptance and finalization bodies stay fixed;
+all setup consumes the same allowance. The 27-call B9 screen compares B024,
+B023 and MM on 02. Proxy cost improvement alone cannot advance it.
+
+C010 replaces finite whole-chain alternatives with a growing source-clone graph,
+one greedy partial injective placement and at most four small greedy revisions
+per conflict. Failed local revision is not a proof that another clone is needed.
+There is no global exact CSP/subgraph solver. Root clarifies exact admissible-set
+emptiness versus a 32-site ranking prefix, seeded ties and fatal/noncredit rules.
+The unchanged C8 candidate/MM screen has 16 calls on 03. No corpus/public
+constructor call precedes root's code/check review and experiment freeze.
+
+Cycle results and class gaps are committed as 03876303; the goal tool confirms
+active status. No user approval or additional resources are needed to continue.
+
+
+## 2026-09-09 02:15 UTC — three mechanism screens launched
+
+Root reviewed all three isolated implementations and focused new-risk evidence.
+A062 changes ready-row ordering only; B024 changes the initial source assignment
+on unchanged sites only; C010 constructs an auxiliary clone graph with bounded
+greedy local revision. Fixed screens have 36/27/16 calls on HYDE06/02/03, each
+with fresh same-host MM; A/B retain unchanged algorithm controls. Each run was
+frozen, staged and started exactly once. The launch records bind source,
+protocol, task order, raw inputs and transport. All 30 inherited registry entries
+and shared worker/validator logic remain unchanged; only three entries were added.
+
+C010's static Z12 setup plus idealized 128-singleton-placement lower bound is
+10,374,975 charged units, 54.6% of its search allowance. This is a cost warning,
+not an efficacy result or justification to change the cap. Keep shared domain
+operations as an honest cost category; no counter rewrite solely for finer
+attribution. B/C saved-data analyzers were read before outcomes; A's minimal
+journal-order adaptation is being prepared. Full outcomes, independent original
+validation, failure-inclusive times and fixed continuation decisions are pending.
