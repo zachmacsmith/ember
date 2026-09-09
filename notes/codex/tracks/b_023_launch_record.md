@@ -19,3 +19,16 @@ hash and unchanged B9 graph/target bytes before transport. The final source
 `7fd89929` passed eight targeted groups; root reviewed source and tests. Workers,
 import isolation and original validators are reused; shared code adds only a
 constructor descriptor. Quality credit awaits terminal independent validation.
+
+Controller 237003 completed at Unix 1788917149.0621495. `status002` observes
+18/18 finalized, free lock, absent tmux and supervisor exit 0. `fetch001`
+retrieves 199 verified files once to
+`results/codex/retrieved/hyde02/track-b-temporary-contact-023`;
+archive digest `99de4c5a3a3910850bd18e2a852887fb44199b89955178d0a4de1a5c599f1165`.
+Root reviewed the saved analyzer and verified 13 bindings before authorizing
+its one analysis. No additional constructor call follows from retrieval.
+
+The one approved saved analysis passes with zero errors in 0.877 seconds.
+Root reads the full [report](b_023_results.md) and verifies 23 final bindings.
+Six successes and one common Q win miss the fixed continuation rule; retire
+the fixed policy while retaining its contact-loss/restoration observations.

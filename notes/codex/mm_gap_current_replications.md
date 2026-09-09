@@ -143,3 +143,10 @@ four of six A053 outputs but still loses five common MM quality comparisons;
 the two fresh constructor policies fail their fixed continuation rules. These
 results support coordinated contacts as a useful local mechanism on some
 structures, without establishing it as the cause of all repeated class gaps.
+
+The [following 136-call milestone](mechanism_cycle_061_b023_c009.md) adds the
+unchanged A061 breadth result and independent B023/C009 constructor failures.
+[A061's 35 class memberships](experiments/061_branched_path_results.md) retain
+every fresh MM comparison; the branch stage still loses 17 of 29 common inputs
+despite a favorable paired macro mean. Its one seed cannot update the replicated
+ACL-variance estimates above. Constructor versions and cohorts remain separate.

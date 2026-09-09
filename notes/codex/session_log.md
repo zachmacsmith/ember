@@ -1901,3 +1901,40 @@ No candidate rerun. Root reviews the minimal B023 saved analyzer before outcomes
 Descriptors are the only shared code changes. No MM/busclique candidate imports,
 portfolio selection or exact global optimization is introduced. No new policy
 will be justified solely by partial overlap, contact or probability metrics.
+
+## 2026-09-09 01:39 UTC: 136-call mechanism milestone
+
+A061/B023/C009 are terminal and quiescent, retrieved once each. Their approved
+saved analyses each run once and pass with zero errors; root reads the complete
+reports and verifies 40/23/31 final bindings respectively. No candidate repeats.
+Source/checks, 060 replication and launch records are committed as 31a7b46a.
+
+A061 passes its strict breadth rule: 34/34 for each candidate, MM29/34, six
+improvements and 28 ties against A053, zero per-input Q regressions. Exactly
+two new noncycle gains are named-special58→53 and honeycomb243→241. All40Q
+is stage-attributed, every base Q matches its fresh control. Against MM it
+wins8, loses17 and ties4 optimally, with five MM timeouts. One seed supplies
+no seed-variance claim. Twelve common solver ratios exceed10x, mostly inherited
+core/layout or lifting cost; the final stage does not resolve these deficits.
+Retain unchanged stage within observed scope and turn A toward construction.
+
+B023 fails its gate:6/9 versusMM8/9 and only one common Q win. Contact loss and
+restoration appear on all six successful trajectories, but sparse Q remains
+2.04–3.26xMM after307 final deletions. Only one of2868 route/erasure actions is
+interrupted, and every completed action commits. ER/king end with previously
+lost contacts after all eight passes. Placement, available moves and disruptive
+forced acceptance remain confounded. Retire the fixed policy; B prepares one
+controlled joint-initial-placement hypothesis, without changing routing/erasure.
+
+C009 fails0/8 versusMM6/8. Generation consumes74.7% of33.455solver seconds;
+five inputs never publish non-singleton replacements before the search-work cap.
+Three do and remain invalid. Pairwise support does not prove global consistency.
+Retire the fixed policy. C considers adaptive source splitting with heuristic
+local placement revision, explicitly excluding a global exact CSP constructor.
+Root provides a focused primary-source note on existing subgraph placement;
+no novelty inference follows from a narrow search or from that prior art.
+
+The new milestone links all class rows without pooling versions or hiding sparse
+losses in dense gains. All three next-track memos are design-only. Each must
+identify a causal distinction and a cheap complete-constructor falsifier before
+implementation. The active research goal remains unmet; protected files untouched.

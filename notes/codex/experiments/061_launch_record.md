@@ -16,3 +16,15 @@ Root checks every copied source hash, the exact task vector and old input/target
 bytes before transport. Algorithms run separately; only fresh same-host timing
 comparisons are made. Worker/import guards and original validators are reused.
 Quality requires terminal retrieval and the independently reviewed saved analyzer.
+
+Controller 153659 completed at Unix 1788917175.1796463. `status005` observes
+102/102 finalized, free lock, absent tmux and supervisor exit 0. `fetch001`
+retrieves 646 verified files once to
+`results/codex/retrieved/hyde06/061-branched-path-breadth`;
+archive digest `bd6e3e63025722943f9514347690fc1acb2405ff6f77a9238be734b413efdf6e`.
+Root supplies this terminal archive for the one previously approved saved
+analysis; reported statuses alone receive no quality credit.
+
+The one approved saved analysis passes with zero errors. Root reads the full
+[report](061_branched_path_results.md), all class metrics and verifies 40 final
+bindings. The breadth gate passes; every paired MM deficit remains explicit.

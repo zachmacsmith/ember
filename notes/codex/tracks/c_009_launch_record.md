@@ -23,3 +23,8 @@ retrieves 190 verified files once to
 `results/codex/retrieved/hyde03/track-c-009-connected-domains`;
 archive digest `7fdb41396ca51e41a4efe423c520319406f178a190b44fb301f4b5f35c4006d8`.
 Reported statuses are not quality credit before independent analysis.
+
+The one saved analysis passes with zero errors in 0.993 seconds. Root reads
+the complete [result](c_009_results.md) and verifies all 31 final bindings.
+Candidate 0/8 versus MM 6/8 fails the frozen continuation rule. Final failure
+and cost records are retained; no rerun or cap adjustment follows.
