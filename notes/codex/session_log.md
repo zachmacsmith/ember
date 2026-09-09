@@ -2010,3 +2010,12 @@ screens, not a sweep or portfolio. They are implementation-authorized only,
 with root freeze/launch pending. A prepares a narrow diagnosis before another
 refinement. Work counters are conservative instrumentation and must not be
 presented as measured CPU cost. The all-class goal remains unmet.
+
+
+## 2026-09-09 — strategic review before further refinement
+
+Saved the user's latest steering verbatim in PROMPTS_CODEX.md. Finished the already-launched B025/C011 experiments, preserving every outcome and single saved-data analysis. B025 2/9 versus control 6/9/MM 8/9 rejects nonincreasing acceptance; C011 2/8 versus control 2/8/MM 6/8 rejects unused wall alone as the remedy for that clone policy. Root verified 27/31 final evidence bindings; no replacement run followed the strategic-review request.
+
+Three agents audited active limits/measured cost, exact stock MM 0.2.22 source/distributions, and seven saved A061/MM map pairs with exposure/Zephyr controls. Root separately reconstructed temporary fill constraints and core-owner allocations on those fourteen original-valid maps. These are offline projections, not constructor calls or proof of causation. MM's whole-chain reconstruction, boundary movement and continued valid quality search explain concrete available capabilities; grid/honey/wheel show low-degree contact compactness deficits, while BA and planar preserve counterexamples.
+
+The decision and two plan self-critiques are in strategic_review_20260909.md. A061 remains the single retained policy, with all class rows saved in mm_gap_retained_a061.md and absent variance/Sudoku coverage explicit. Future A/B/C directions and early transfer requirements replace the local refinement sequence. No universal 3× gate is retained for future promotion. Old frozen failures and the seven-file guarded-connector untested checkpoint are preserved. The goal remains active and unmet.

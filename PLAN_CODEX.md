@@ -1,5 +1,15 @@
 # Codex research plan
 
+2026-09-09 strategic-review amendment: the [current research decision](notes/codex/strategic_review_20260909.md)
+supersedes the exploratory sequencing below. Previously running B025/C011 are
+complete and preserved. Keep A061 as the whole retained policy; prioritize
+physical contact mobility and coordinated construction, audit limits using
+measured computation, remove the universal3× gate from future decisions, and
+test fresh structures/relabelings/hidden witnesses early. Three independent
+tracks continue; a coherent redesign may coordinate complementary operators
+within one state. Historical frozen policies and every regression remain intact.
+The amendment includes candidate critiques and two plan self-critique rounds.
+
 2026-09-08 workflow amendment: run three independent research tracks concurrently
 (inherited prototype, demand-aware connected-tree construction, multilevel region
 splitting), with hypotheses and cheap falsification screens before implementation.

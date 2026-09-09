@@ -1036,3 +1036,36 @@ At each milestone, report the hypothesis resolved, end-to-end results, evidence 
 Produce a gap analysis against MM by graph class, separating success, mean ACL, variability, and runtime. Identify which deficits share a plausible structural cause. Prioritize hypotheses that address several deficits through one general mechanism. Allow optimal ties where MM already achieves ACL 1; retain the goal of improvement across classes without allowing aggregate dense-graph gains to hide regressions.
 
 When evaluating a new algorithm or idea, consider what prevents the current search from reaching good embeddings, then design experiments that distinguish those causes.
+
+
+## 2026-09-09 02:48:23 UTC — strategic review steering
+
+> Conduct a strategic review before extending the current sequence of refinements. Finish already-running experiments and preserve their outcomes.
+  >
+  > Keep three independent tracks and all existing Z12, no-MM, no-busclique, non-portfolio, validation and failure-accounting constraints.
+  >
+  > Distinguish exploratory evidence from promotion criteria. A failed fixed policy remains rejected, but a mechanism may receive a bounded follow-up when
+  > the completed experiment supports a specific, testable explanation. Preserve every regression. The final class-level objective remains unchanged.
+  >
+  > Use measured computation to allocate research effort. Audit artificial work limits, local caps and runtime gates across all tracks. Identify where they
+  > stop useful investigation substantially before the allowed wall time. Keep counters as diagnostics; justify any active limit empirically. My runtime
+  > target remains roughly MM’s order of magnitude, with quality first—not an unexplained universal 3× gate. Freeze each experiment, but allow explicitly
+  > documented subsequent experiments to test different allocations.
+  >
+  > Explain why MM’s good embeddings are good. On several structurally different development inputs with persistent ACL gaps, inspect saved candidate and
+  > MM embeddings and the pinned MM implementation. Identify concrete structural capabilities the candidate lacks. MM outputs may inform offline diagnosis;
+  > they must never initialize or supply a candidate’s embedding.
+  >
+  > Allow coherent algorithm design. Preserve controlled ablations for causal questions, but allow a principled constructor redesign to change
+  > complementary mechanisms together. One evolving embedding state may use multiple coordinated operators and structural adaptation. This is compatible
+  > with the non-portfolio requirement. Never select among independent complete algorithms’ outputs.
+  >
+  > Exploit Zephyr where useful. Generality across source graphs does not require hardware-agnostic construction. Consider general heuristics that use
+  > Zephyr’s actual geometry and connectivity, without source-family labels, instance IDs or canned embeddings.
+  >
+  > Test transfer earlier. Supplement repeatedly used development examples with fresh development instances, sizes and source relabelings. Use known-
+  > embedding synthetic instances as diagnostic controls, with their witness embeddings hidden from candidates. Keep a separate untouched confirmation set.
+  >
+  > At the next milestone, provide a compact research decision: what MM capability we now understand, which general mechanism addresses several persistent
+  > deficits, what complete-constructor evidence supports it, and which directions should stop. Track progress through the best retained algorithm’s per-
+  > class results, rather than experiment count.

@@ -1,53 +1,58 @@
 # Current research checkpoint
 
-Updated 2026-09-09 02:43 UTC. Branch `codex`; goal active and unmet.
-Single general heuristic, no MM/busclique, no portfolio, ideal Z12. Success,
-mean ACL, variability and roughly MM-scale runtime remain separate requirements;
-optimal ACL-one ties are acceptable. Candidate dependencies and the independent
-original validator remain isolated from MM.
+Updated 2026-09-09, strategic review complete. Branch `codex`; goal active and
+unmet. The latest user request is preserved in `PROMPTS_CODEX.md`.
 
-The [latest 79-call milestone](mechanism_cycle_062_b024_c010.md) is complete:
-all three runs are terminal, retrieved once and analyzed once, with zero
-validation errors. Root reviewed source and focused checks before launch and
-verified final evidence: A06248 bindings, B02421, C01023. None passes its fixed
-continuation gate. No old remote job remains live.
+The [current strategic decision](strategic_review_20260909.md) supersedes the
+previous sequence of local refinements. All previously launched B025/C011 calls
+are terminal, retrieved once and independently analyzed once. Root reviewed the
+reports and verified 27/31 final evidence bindings. No candidate or guarded-connector
+run was launched after the strategic-review request.
 
-- A062 ready ordering recovers two lifting failures but loses planted seed0,
-  regresses wheel/grid means and adds22.136s of scheduler wall. Retire its fixed
-  priority; retain the unchanged measured A061 branch control. The reviewed
-  [guarded-connector diagnostic](guarded_connector_diagnostic_proposal.md) is
-  being implemented on exactly three saved blocked states. It tests fixed-owner
-  connectors of at most three sites with all future-port guards and 5s/2M
-  per-state limits. Root code review precedes its one run; no constructor replay.
-- B024 reduces both initialization proxies on all seven noncliques but finishes
-  only4/9 versus control6/9 and MM8/9. Retire it. [B025's reviewed acceptance
-  discriminator](tracks/b_025_acceptance_discriminator.md) is implemented:
-  unchanged B023 generators/prices/schedule, accept selected winners only when
-  current-price energy does not increase. [27 calls are launched on02](tracks/b_025_launch_record.md),
-  20s,seed0,treatment/control/MM. Root verified41 author/input bindings and
-  reviewed the four new-risk groups and source diff before freezing it.
-- C010 finishes2/8 versus MM6/8, with optimal path/tree ties. Six failures stop
-  at charged work after0.318–0.653s, leaving most of15s unused. Retire the fixed
-  policy. [C011's reviewed computation-allocation ablation](tracks/c_010_wall_budget_diagnostic_proposal.md)
-  is implemented with unchanged placement/splitting and wall deadline,
-  retaining work counts but disabling search/final work denial. [24 calls are
-  launched on03](tracks/c_011_launch_record.md),15s,seed0,fixed C010/treatment/MM.
-  Root verified23 author bindings and reviewed three new-risk groups plus the
-  source diff before freezing it. Extra complete outputs and the separate
-  continuation gate decide it; no partial-score justification or cap sweep.
+The one retained policy is **A061/native-branched-path**. Its
+[complete class table](mm_gap_retained_a061.md) preserves 34/34 valid versus MM 29/34;
+eight lower-Q, seventeen higher-Q and four optimal ACL1 ties on common successes.
+One seed gives no across-seed variance estimate. Earlier planted/wheel/hypercube
+failures remain; Sudoku is not measured for this retained version. The separate
+[replicated A053 tables](mm_gap_current_tables.md) are not pooled into A061.
 
-The [replicated gap analysis](mm_gap_current_replications.md) and
-[72 class/size rows](mm_gap_current_tables.md) preserve all36 class labels,
-paired mean/sample-variance comparisons and failure-inclusive times. Eighteen
-memberships repeat positive mean ACL gaps. The [prior136-call milestone](mechanism_cycle_061_b023_c009.md)
-retains A061's modest branch gains and B023/C009 failures. Different constructor
-versions, seed sets and hosts are never pooled. All current data are exposed
-development inputs; no held-out or all-class improvement claim exists.
+The [stock source review](stock_mm_capabilities_review.md) verifies the actual
+0.2.22 comparator distributions and explains all-neighbor chain reconstruction,
+movable contact boundaries and continued quality search. The
+[seven saved-map pairs](tracks/c_a061_static_map_results.md) and
+[fill/core projection](strategic_fill_diagnosis_results.md) locate sparse deficits
+in low-degree contacts, with different contributions from core and lifting.
+These suggest a general mechanism; they do not prove causation or novelty.
 
-The [workflow](tracks/workflow.md) requires a causal diagnosis, distinguishing
-observation, hypothesis, pseudocode, self-critique and cheap falsifier before
-implementation. Exact neighborhood solves remain optional local diagnostics,
-never global constructors. Root owns runtime freeze and transport; observation
-failure never authorizes another launch. Only candidate registry entries were
-added to shared pilot logic. Protected `.verified.json` and `.claude/` remain
-untouched. No alternate architecture, paper or novelty claim is warranted yet.
+Three independent design directions remain:
+
+- A: test original-contact whole-chain/boundary reconstruction within the retained
+  valid constructor output; preserve its incomplete-construction failures.
+- B: fresh whole-chain construction with mobile contact boundaries through
+  feasibility and quality. It shares a mechanism with A, but tests construction
+  without the inherited core. Do not call them independent novelty evidence.
+- C: fresh Zephyr frontier/contact-event construction; explicitly test forced
+  frontier-carrying cost and failures on dense/irregular inputs.
+
+Exact before-code operator contracts, focused risk checks and frozen small
+complete screens come next. Include fresh development structures, sizes and
+source relabelings immediately, with evaluator-hidden feasibility witnesses.
+No new controls or clean confirmation split have yet been generated. A separate
+confirmation set must stay unseen until the candidate and evaluation are frozen.
+
+[B025](tracks/b_025_results.md) is rejected: 2/9 versus B023 6/9/MM 8/9 and both
+common-Q regressions. [C011](tracks/c_011_results.md) is rejected: 2/8 unchanged
+despite much more measured computation. A062's failure and grid/wheel regressions
+remain rejected. The guarded-connector draft remains held and untested; all
+seven checkpoint files match. No new execution follows from its old cap memo.
+
+The [allocation audit](strategic_allocation_review.md) separates early local
+repair denial, fixed pass endpoints, work denial and real deadline stops. Future
+quality-first decisions use measured CPU/wall, explicit later allocations and
+all regressions; no universal 3× gate. Historical frozen verdicts stay intact.
+
+All work keeps ideal Z12, no-MM/no-busclique candidate dependencies, one evolving
+embedding state, no independent-output portfolio, existing original validation
+and full failure/time accounting. Paired timing stays on the same host with
+detached cluster supervision via 01. Protected `.verified.json` and `.claude/`
+remain untouched. No all-class win, held-out result or publication claim exists.

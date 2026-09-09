@@ -16,4 +16,13 @@ bindings, exact27 tasks and all10 original graph/target files.
 All33 inherited registry entries and shared pilot AST remain unchanged;
 only B025/C011 entries were added. Candidate/MM environments remain isolated.
 Complete action evidence is in `results/codex/track-b025-launch`. An observation failure
-never permits a second start. Terminal retrieval/analysis are pending.
+never permits a second start.
+
+Terminal update, 2026-09-09: all27 calls finalized; controller242467 exited0
+at1788921832.8711817. One retrieval preserved251 files, archive digest
+`4133d08edb21816b14d52ad920f893c43f90be626516410ee9826c61c9744532`.
+The single saved-data analysis passed with no audit errors. Root read the
+[results](b_025_results.md) and verified all27 final evidence bindings in
+`results/codex/track-b025-analysis/results_manifest.json`, SHA256
+`adf48e38de50f913e43a8ba34a502e140dd830deaf0dab65a3a1b1aa07f7e51e`.
+Retire the fixed policy:2/9 successes versus unchangedB0236/9 andMM8/9.

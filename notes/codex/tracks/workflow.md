@@ -1,5 +1,13 @@
 # Concurrent exploratory research — plan amendment
 
+Current authority, 2026-09-09: [strategic review](../strategic_review_20260909.md)
+and [retained-policy class table](../mm_gap_retained_a061.md). The initial track
+names and prior cycle paragraphs below are historical. B025/C011 are terminal;
+their fixed policies remain rejected. Future work distinguishes exploratory
+mechanism evidence from promotion, permits justified bounded follow-ups and
+coherent multi-operator redesign in one state, and uses measured computation
+instead of a universal3× gate. Test transfer in the first complete screen.
+
 2026-09-08. User-authorized update to the existing research plan. These are
 independent candidates; no selection of their outputs becomes an algorithm.
 

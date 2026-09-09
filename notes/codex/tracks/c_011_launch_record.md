@@ -17,5 +17,14 @@ Candidate/MM environments remain isolated, with the unchanged original
 validator and all late/error non-credit gates. The only pilot changes are
 two new constructor entries; all33 inherited entries and other AST are
 unchanged. Action evidence is in `results/codex/track-c011-launch`.
-Observation failure never permits another start. Terminal retrieval and
-single saved-data analysis are pending.
+Observation failure never permits another start.
+
+Terminal update, 2026-09-09: all24 calls finalized; controller221967 exited0
+at1788921747.147618. One retrieval preserved237 files, archive digest
+`21ccf8f9ad394a6b2dfc35e0533c1e44a83d9f31371dfeb321c38eaa8c60fd9c`.
+The single saved-data analysis passed with no audit errors. Root read the
+[results](c_011_results.md) and verified31 final evidence bindings in
+`results/codex/track-c-011-review/review_manifest.json`, SHA256
+`bbed3d416b7805e9def0ba3042a95324ac0618e3a44c2e936b99785b2a0c5264`.
+Retire the fixed wall-allocation variant: both candidates2/8,MM6/8; no extra
+completion despite using the formerly unused search time.
