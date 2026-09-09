@@ -34,6 +34,14 @@ ROOT = Path(__file__).resolve().parents[2]
 # Existing native CONFIGS and dispatch remain unchanged. These modules receive
 # only the supplied graphs and one common absolute deadline, never an embedding.
 CONSTRUCTORS = {
+    'native-mobile-boundary': ('packages/ember-qc/src/ember_qc/algorithms/factored/mobile_boundary_construction.py',
+                               'mobile_boundary_embed'),
+    'mobile-tree': ('packages/ember-qc/src/ember_qc/algorithms/factored/mobile_tree_construction.py',
+                   'contact_embed'),
+    'mobile-tree-recurrence': ('packages/ember-qc/src/ember_qc/algorithms/factored/recurrence_mobile_tree_construction.py',
+                              'contact_embed'),
+    'zephyr-frontier': ('packages/ember-qc/src/ember_qc/algorithms/zephyr_frontier.py',
+                        'frontier_embed'),
     'native-reduced-core': ('packages/ember-qc/src/ember_qc/algorithms/factored/reduced_core_construction.py',
                             'reduced_core_embed'),
     'native-reduced-core-repair': ('packages/ember-qc/src/ember_qc/algorithms/factored/reduced_reinsertion_construction.py',

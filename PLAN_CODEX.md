@@ -1,5 +1,13 @@
 # Codex research plan
 
+2026-09-09 execution checkpoint: [Transfer001](notes/codex/transfer_cycle_001_launch.md)
+implements the reviewed strategy with three independent complete-constructor
+screens, fresh structures/sizes/relabelings and evaluator-hidden witnesses.
+The [bounded B027 amendment](notes/codex/transfer_cycle_001_b027_amendment.md)
+addresses measured exact neutral-state recurrence; B026 and its outcomes remain
+preserved. All-class promotion and a separate untouched confirmation set remain
+later requirements. A061 remains retained until complete results justify change.
+
 2026-09-09 strategic-review amendment: the [current research decision](notes/codex/strategic_review_20260909.md)
 supersedes the exploratory sequencing below. Previously running B025/C011 are
 complete and preserved. Keep A061 as the whole retained policy; prioritize

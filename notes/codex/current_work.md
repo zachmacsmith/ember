@@ -1,13 +1,14 @@
 # Current research checkpoint
 
-Updated 2026-09-09, strategic review complete. Branch `codex`; goal active and
+Updated 2026-09-09 04:00 UTC, transfer screens launched. Branch `codex`; goal active and
 unmet. The latest user request is preserved in `PROMPTS_CODEX.md`.
 
 The [current strategic decision](strategic_review_20260909.md) supersedes the
 previous sequence of local refinements. All previously launched B025/C011 calls
 are terminal, retrieved once and independently analyzed once. Root reviewed the
-reports and verified 27/31 final evidence bindings. No candidate or guarded-connector
-run was launched after the strategic-review request.
+reports and verified 27/31 final evidence bindings. The subsequent
+[three-track transfer cycle](transfer_cycle_001_launch.md) now has198 frozen calls
+on06/02/03. The guarded-connector draft remains held and untested.
 
 The one retained policy is **A061/native-branched-path**. Its
 [complete class table](mm_gap_retained_a061.md) preserves 34/34 valid versus MM 29/34;
@@ -34,11 +35,13 @@ Three independent design directions remain:
 - C: fresh Zephyr frontier/contact-event construction; explicitly test forced
   frontier-carrying cost and failures on dense/irregular inputs.
 
-Exact before-code operator contracts, focused risk checks and frozen small
-complete screens come next. Include fresh development structures, sizes and
-source relabelings immediately, with evaluator-hidden feasibility witnesses.
-No new controls or clean confirmation split have yet been generated. A separate
-confirmation set must stay unseen until the candidate and evaluation are frozen.
+Before-code contracts and focused risk checks are complete for A063, B027 and
+C012. Their independent complete screens use12 fresh structures, four hidden-
+witness controls, four exposed anchors/sentinels and two nested relabelings.
+B026's panel was held after measured neutral cycling; a separately frozen B027
+diagnostic justified exact recurrence termination before its new screen.
+Generation and private/public identity checks passed. No untouched confirmation
+set has been created; none of this development panel can become confirmation.
 
 [B025](tracks/b_025_results.md) is rejected: 2/9 versus B023 6/9/MM 8/9 and both
 common-Q regressions. [C011](tracks/c_011_results.md) is rejected: 2/8 unchanged

@@ -2019,3 +2019,12 @@ Saved the user's latest steering verbatim in PROMPTS_CODEX.md. Finished the alre
 Three agents audited active limits/measured cost, exact stock MM 0.2.22 source/distributions, and seven saved A061/MM map pairs with exposure/Zephyr controls. Root separately reconstructed temporary fill constraints and core-owner allocations on those fourteen original-valid maps. These are offline projections, not constructor calls or proof of causation. MM's whole-chain reconstruction, boundary movement and continued valid quality search explain concrete available capabilities; grid/honey/wheel show low-degree contact compactness deficits, while BA and planar preserve counterexamples.
 
 The decision and two plan self-critiques are in strategic_review_20260909.md. A061 remains the single retained policy, with all class rows saved in mm_gap_retained_a061.md and absent variance/Sudoku coverage explicit. Future A/B/C directions and early transfer requirements replace the local refinement sequence. No universal 3× gate is retained for future promotion. Old frozen failures and the seven-file guarded-connector untested checkpoint are preserved. The goal remains active and unmet.
+
+
+## 2026-09-09 04:00 UTC — early-transfer constructor cycle launched
+
+Completed20/20 declared generation attempts and independent22-input original/label checks, including four evaluator-private witness maps. Twelve generated structures from six families at80/160 have no match in the declared490-file exposure index; two additional encodings are nested relabels, not independent graphs. This is development only. Candidate runtime bundles contain no originals, label maps or witnesses.
+
+Root reviewed A063/B026/B027/C012 source and focused new-risk checks. B026 tiny C4 quality search repeated neutral states; its panel was held. A separately declared B027 exact-recurrence diagnostic preserved the complete nine-visit control prefix and Q4 while removing thousands of repeats. Root documented the subsequent B027 panel amendment, preserving B026.
+
+A063, B027 and C012 are frozen/staged/started once on06/02/03,66 calls each including fresh same-host A061/MM. All35 prior pilot registry entries and all nonregistry AST are unchanged. Common saved-output analysis was corrected through narrow static review before execution; outputs remain pending. See transfer_cycle_001_launch.md. No candidate is promoted and no confirmation data exists. Goal tool reports active/unmet.
