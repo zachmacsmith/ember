@@ -2037,3 +2037,34 @@ Previous goal turn classified as progress: implementations/checks and immutable 
 On20 primary structures, A063 succeeds20/20, improves A061Q on6 with no Q regressions, but still loses15/19 common MM comparisons and spends almost its whole allowance on each input. The3 fresh gains remain worse than MM. All22 operator calls are censored inside reconstruction before one sweep completes;1045.837s of nonimproving reconstruction identifies a scheduling-cost hypothesis. B0272/20 (0/12fresh) is rejected; routing consumes95.82% of solver time and prevents most feasibility sweeps. C0124/20 (2/12fresh, both worseQ) is rejected;17 structural port/carry stops occur before the wall limit, and poor birth geometry persists even without carrying. Every hidden-witness control succeeds for A and fails for B/C. See transfer_cycle_001_decision.md and its complete input/class tables. A061 remains retained; no all-class or confirmation claim.
 
 The pending user command `codex logout` completed successfully at20:39UTC. Three attempted subagent starts then failed authentication, without altering the research jobs. Local saved-data work continued. At21:01UTC `codex login status` reported a signed-in account, and the three agent reviews resumed successfully. Both continuation prompts and the logout prompt are preserved in PROMPTS_CODEX.md. No credential contents were inspected or saved.
+
+## 2026-09-09 21:49 UTC — mechanism screens and a construction falsifier
+
+Previous research continuation classified as progress: new inputs were generated
+once, independently reviewed, and three before-code policies produced isolated
+implementations and targeted evidence. The subsequent explicit logout completed
+at21:27UTC; current continuation prompts are appended verbatim. CLI status at
+21:44UTC showed an available session; root did not perform a login.
+
+A064 retains every root while interleaving owners and invalidating cached queries
+after each strict-Q commit. Four targeted groups passed first execution. Root
+found a diagnostic overwrite of the original deadline phase; its isolated fix
+passed the strengthened affected group. Source and adapter review then froze36
+paired calls on06, snapshot6e27c49abfb07a431e8b8c93896c45632f6ca672c102fab4216e5bbcd36bf9ca.
+Stage/start each completed once; tmux supervision was observed live. No result
+has been promoted or selected across algorithms.
+
+B028 changes only B027's exact joint-root routing. Preserved implementation-stage
+failures concern preparation path filtering and Numba typed-list syntax; the
+affected focused checks now pass. Root reviewed the kernel, inherited wrapper
+diff, six saved-query packet and detached supervision. Measured02 results are
+pending; cold compilation and all adaptation/process costs count.
+
+C013's four risk groups pass, but the first six actual tiny calls contain one
+unexpected policy failure: star22 ends at20 introduced singleton chains. Source
+and saved-state review confirm that the singleton-first generator excludes a
+necessary larger hub even when rebuilding every owner. The fixed policy is
+rejected and its larger panel held; a separate capacity-aware construction
+hypothesis may be drafted before code. All30 evidence bindings match. The
+four successful tiny controls, negative control and every failure remain
+separate from Z12 development-screen claims. A061 remains the retained policy.

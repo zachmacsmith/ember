@@ -455,3 +455,15 @@ algorithm exists or declare success without evidence. Ask the user for decisions
 that change scope or scientific claims; continue already authorized independent work.
 The planning phase produces reviewable notes and a finalized plan, not a claimed
 algorithmic breakthrough.
+
+## 2026-09-09 mechanism-cycle continuation
+
+The strategic review and completed Transfer001 results remain authoritative.
+Follow [Transfer002's frozen protocol](notes/codex/transfer_cycle_002_protocol.md):
+A064 tests allocation of unchanged reconstruction queries in a complete36-call
+screen; B028 first measures exact-route acceleration including cold compilation;
+C013's complete tiny star failure rejects singleton-first construction and permits
+one separately specified capacity-aware design hypothesis. Each decision uses
+complete outcomes and the identified representation, neighborhood, acceptance or
+cost explanation. Preserve earlier regressions and track the retained A061 class
+table; none of these development screens replaces confirmation or the full goal.

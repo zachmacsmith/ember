@@ -1,0 +1,88 @@
+"""Thin generation adapter for the declared Transfer002 development inputs."""
+import concurrent.futures
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+import platform
+import shutil
+import subprocess
+import sys
+import time
+
+ROOT = Path(__file__).resolve().parents[2]
+HELPER = ROOT/'scripts/codex/transfer_panel.py'
+assert hashlib.sha256(HELPER.read_bytes()).hexdigest() == '85056d607d540ff788b305b7d6abb94e990cca1797ecb6fabb2eb644f1001e24'
+spec = importlib.util.spec_from_file_location('_frozen_transfer_helpers', HELPER)
+h = importlib.util.module_from_spec(spec); spec.loader.exec_module(h)
+OLD_PUBLIC, OLD_PRIVATE = h.PUBLIC, h.PRIVATE
+h.PUBLIC = ROOT/'results/codex/transfer-cycle-002'
+h.PRIVATE = ROOT.parent/'ember-evaluator-private/transfer-cycle-002'
+PROTOCOL = ROOT/'notes/codex/transfer_cycle_002_inputs.md'
+COPIES = ['g0001','g0005','g0008','g0004','g0012','g0017','g0013']
+
+
+def seed(namespace, case):
+    return int.from_bytes(hashlib.sha256(f'ember-codex-transfer002/{namespace}/{case}'.encode()).digest()[:8], 'big')
+
+
+h.seed = seed
+
+
+def attempt(case):
+    folder = h.PRIVATE/case['case']; folder.mkdir()
+    argv = [sys.executable, '-I', '-B', str(Path(__file__).resolve()), '--worker',
+            json.dumps(case,sort_keys=True), str(folder/'generated.json')]
+    h.save(folder/'invocation.json',dict(argv=argv,script_sha256=h.sha(__file__)))
+    began = time.perf_counter()
+    with (folder/'stdout').open('x') as stdout, (folder/'stderr').open('x') as stderr:
+        try:
+            result = subprocess.run(argv,stdout=stdout,stderr=stderr,timeout=30)
+            status = dict(returncode=result.returncode,timed_out=False)
+        except subprocess.TimeoutExpired:
+            status = dict(returncode=None,timed_out=True)
+    status['process_wall'] = time.perf_counter()-began
+    h.save(folder/'status.json',status)
+    if status['returncode'] != 0 or not (folder/'generated.json').exists():
+        return dict(case=case,status='GENERATION_TIMEOUT' if status['timed_out'] else 'GENERATION_ERROR',**status)
+    return dict(case=case,**status,**json.loads((folder/'generated.json').read_text()))
+
+
+def main():
+    assert h.sha(h.GENERATOR) == 'f5528a0a2b9f82f8af501c1d253dc7bd34b77da52af58eac02117a6baf1b43b2'
+    assert h.sha(h.ORACLE) == 'e4718c2ec09f3ec80e035ef89648f81b45413f52c7580123ef129419b25612d9'
+    assert h.sha(h.ARCHIVE/'target.json') == 'c683ae784e2ee9a1d14f0760368deaa5cfeee2c47a6c2eade683e5412e61177c'
+    h.PUBLIC.mkdir(exist_ok=False); (h.PUBLIC/'graphs').mkdir()
+    h.PRIVATE.mkdir(exist_ok=False)
+    cases = [dict(case='random_er-100-p008',family='random_er',kind='fresh',params=dict(n=100,p=.08)),
+             dict(case='barabasi_albert-100-m3',family='barabasi_albert',kind='fresh',params=dict(n=100,m=3))]
+    plan = dict(cases=cases,copied_graphs=COPIES,script_sha256=h.sha(__file__),helper_sha256=h.sha(HELPER),
+                protocol_sha256=h.sha(PROTOCOL),old_panel_sha256=h.sha(OLD_PUBLIC/'panel.json'),
+                generator_sha256=h.sha(h.GENERATOR),oracle_sha256=h.sha(h.ORACLE),python=platform.python_version(),
+                purpose='Development mechanism screens only; no constructor calls')
+    h.save(h.PUBLIC/'generation_plan.json',plan)
+    old = json.loads((OLD_PUBLIC/'panel.json').read_text()); entries={r['graph']:r for r in old['inputs']}
+    rows=[]
+    for key in COPIES:
+        row=dict(entries[key]);assert row['parent'] is None
+        assert h.sha(OLD_PUBLIC/'graphs'/(key+'.json')) == row['graph_sha256']
+        assert h.sha(OLD_PRIVATE/(key+'.json')) == row['private_record_sha256']
+        shutil.copy2(OLD_PUBLIC/'graphs'/(key+'.json'), h.PUBLIC/'graphs'/(key+'.json'))
+        shutil.copy2(OLD_PRIVATE/(key+'.json'), h.PRIVATE/(key+'.json'))
+        row.update(prior_panel='transfer001',prior_kind=row['kind'],kind='reused_development')
+        rows.append(row)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+        values=list(pool.map(attempt,cases))
+    ledger=[]
+    for i,value in enumerate(values,101):
+        ledger.append({k:v for k,v in value.items() if k not in ('original','witness','witness_quality')})
+        if value['status']=='READY':rows.append(h.publish(value,f'g{i:04d}',value['case']['case']))
+    h.save(h.PUBLIC/'attempt_ledger.json',ledger)
+    h.save(h.PUBLIC/'panel.json',dict(inputs=rows,realized_inputs=len(rows),intended_structures=9,
+        intended_relabelings=0,private_witnesses_shipped=False,generation_plan_sha256=h.sha(h.PUBLIC/'generation_plan.json')))
+    print(json.dumps(dict(status='PANEL_FROZEN',inputs=len(rows),generation_failures=sum(v['status']!='READY' for v in values))))
+
+
+if __name__ == '__main__':
+    if len(sys.argv)>1 and sys.argv[1]=='--worker':h.worker(json.loads(sys.argv[2]),Path(sys.argv[3]))
+    else:main()

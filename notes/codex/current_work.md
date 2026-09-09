@@ -1,6 +1,6 @@
 # Current research checkpoint
 
-Updated 2026-09-09 21:00 UTC, transfer screens resolved. Branch `codex`; goal active and
+Updated 2026-09-09 21:49 UTC, next mechanism cycle started. Branch `codex`; goal active and
 unmet. The latest user request is preserved in `PROMPTS_CODEX.md`.
 
 The [current strategic decision](strategic_review_20260909.md) supersedes the
@@ -9,8 +9,29 @@ are terminal, retrieved once and independently analyzed once. Root reviewed the
 reports and verified 27/31 final evidence bindings. The subsequent
 [three-track transfer cycle](transfer_cycle_001_decision.md) has all 198 calls
 terminal and retrieved from06/02/03; all original-graph audits and mechanism
-readers passed once. No current run remains active. The guarded-connector draft
+readers passed once. Those three runs are terminal. The guarded-connector draft
 remains held and untested.
+
+The [next mechanism protocol](transfer_cycle_002_protocol.md) uses seven unchanged
+development encodings and two newly generated100-vertex structures; independent
+input review passed, including hidden-witness validation and bounded exposure
+checks. A064's36-call screen is frozen, staged and started once on hyde06 under
+detached supervision (`064-interleaved-boundary-transfer`). Its four new-risk
+groups passed; a subsequent diagnostic-only deadline-phase correction passed
+the single affected group. Root and peer reviewed the source, input-only harness
+adapter and unchanged output-credit logic. Results are pending.
+
+B028's exact compiled routing matches B027 in targeted routes/proposals. Root
+approved its six-query paired cold diagnostic on02, including all import/JIT/
+conversion and process costs; its prepared detached packet is being launched.
+No complete-constructor extension is authorized until measured evidence arrives.
+C013's four targeted risk groups passed, but its first tiny complete screen
+failed on star22: singleton-first placement cannot supply the degree21 hub's
+distinct contacts. All-owner retraction repeats the exclusion, with no time or
+work cap reached. Four other positive tiny calls achieveACL1; the negative case
+fails as expected. All six calls and30 checked bindings are preserved. C013 is
+rejected before its planned larger screen; C014 capacity-aware growth is a
+bounded before-code design task only. No algorithm is promoted.
 
 The one retained policy is **A061/native-branched-path**. Its
 [complete class table](mm_gap_retained_a061.md) preserves 34/34 valid versus MM 29/34;
