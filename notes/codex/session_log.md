@@ -1989,3 +1989,24 @@ operations as an honest cost category; no counter rewrite solely for finer
 attribution. B/C saved-data analyzers were read before outcomes; A's minimal
 journal-order adaptation is being prepared. Full outcomes, independent original
 validation, failure-inclusive times and fixed continuation decisions are pending.
+
+
+## 2026-09-09 02:32 UTC — 79-call cycle resolved
+
+All three independent screens are terminal and passed their single saved-data
+analysis. Root reviewed final reports and verified A06248/B02421/C01023 evidence
+bindings. All fixed continuation rules fail. A062's two recovered failures
+coexist with a new failed planted seed and wheel/grid mean regressions; B024's
+universally improved initialization proxies coexist with fewer valid outputs;
+C010's six failures are charged-work censored below0.66s, not evidence of poor
+wall-time scaling. Full class/seed/variance/time evidence is linked from
+mechanism_cycle_062_b024_c010.md. No new source or constructor rerun changes
+those outcomes.
+
+Next before-code memos are reviewed: B025 isolates nonincreasing current-price
+acceptance on unchanged B023; C011 isolates work denial with unchanged C010
+choices and15s wall deadline. Both receive small complete-constructor controlled
+screens, not a sweep or portfolio. They are implementation-authorized only,
+with root freeze/launch pending. A prepares a narrow diagnosis before another
+refinement. Work counters are conservative instrumentation and must not be
+presented as measured CPU cost. The all-class goal remains unmet.

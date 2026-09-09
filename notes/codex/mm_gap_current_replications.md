@@ -150,3 +150,11 @@ unchanged A061 breadth result and independent B023/C009 constructor failures.
 every fresh MM comparison; the branch stage still loses 17 of 29 common inputs
 despite a favorable paired macro mean. Its one seed cannot update the replicated
 ACL-variance estimates above. Constructor versions and cohorts remain separate.
+
+The [79-call construction cycle](mechanism_cycle_062_b024_c010.md) retires
+three fixed policies. A062 improves success count but loses a previously
+successful planted call and regresses wheel/grid means; B024 improves both
+initialization proxies yet loses two successes; C010 obtains two optimal ties
+but leaves six inputs work-censored far below the wall deadline. Their
+per-input reports preserve all regressions and failure costs. These exposed
+mechanism tests do not replace the replicated class/variance baseline above.

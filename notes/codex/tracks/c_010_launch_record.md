@@ -20,4 +20,14 @@ entries; all 30 inherited entries remain identical. B024 was frozen before the
 A/C registry entries were added; A062 and C010 share the later source snapshot.
 The extra modules do not run in another candidate's process.
 
-Terminal retrieval and independent saved-data analysis are pending.
+Terminal retrieval completed once: 195 files, digest
+`107925ef523daea03adf827f49b5dd0ad42a052a812131723c2c381a2d1c3d52`. Controller `219736`
+finished at `1788920087.7236466`; all planned calls finalized, lock free,
+tmux absent and supervisor exit 0. Root independently checked every retrieved
+file and its aggregate digest. One approved saved-data analysis is now
+under way; no candidate reruns or changed screen policy.
+
+The single saved-data analysis passed without errors; root read the
+[result report](c_010_results.md) and verified all 23 final evidence bindings.
+Results manifest: `3114c47daf4f691fd4df2816f77585e93cfac937e9cad85bc9ddf6006cd6754a`.
+The fixed candidate failed its predeclared continuation gate and is retired.
