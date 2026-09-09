@@ -136,3 +136,10 @@ for individual graph identities.
 [C007 results](tracks/c_007_results.md),
 [projection inputs](../../results/codex/mm-gap-current-20260908/projection_manifest.json).
 The [earlier gap note](mm_gap_by_class.md) remains a historical cohort report.
+
+The [next mechanism milestone](mechanism_cycle_20260909.md) keeps A059, B022
+and C008 separate from this A053 baseline. Retaining branch contacts improves
+four of six A053 outputs but still loses five common MM quality comparisons;
+the two fresh constructor policies fail their fixed continuation rules. These
+results support coordinated contacts as a useful local mechanism on some
+structures, without establishing it as the cause of all repeated class gaps.

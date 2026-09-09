@@ -1848,3 +1848,56 @@ predeclared repeat to preserve contiguous-seed harness semantics;059 is never
 replaced. Both source snapshots equal059 byte-for-byte, all input/task checks
 pass. Root owns one stage/start per cohort, then verified retrieval; no restart
 on observation loss. Existing goal is verified active and unmet.
+
+
+## 2026-09-09 00:56 UTC: unchanged branch replication
+
+060 completes72 calls, one36-call cohort on each03/06; each starts once, ends
+quiescent and retrieves286verifiedfiles once. Source bytes exactlymatch059.
+Root reviews the206-line saved analyzer and20 bindings before one combined
+analysis, which passes with no errors. Extra36/36 success; original34/36 success
+with both candidates failing plantedseed1 identically. Fixed replication gate
+passes: extra two noncycle classmean gains(grid0.5Q,planted1.5Q), no classmean
+regression or lost A053 success; originals likewise no lost success. Across23
+common candidate pairs,12wins11ties; all67 savedQ comes from stage commits,
+baseQ unchanged. MM remainsbetter17/23 and wins the failed planted case.
+Allfour cycle outputs ACL1optimal; variability canworsen(extra grid,original
+Petersen), original failure not reset. Root reads complete class tables and
+scalar cost decomposition. Most >10×MM cost lies in inherited core/layout or
+expansion; no unsupported JIT attribution. No new A localrepair.
+
+B023 now has an accepted pre-code direction: permit missing contacts and overlap
+while preserving connected nonempty chains; route selected missing contacts and
+erase contested ownership, recording any lost contacts. Root identifies full
+missing-edge-pass before erasure as a possible dense cost confound and requires
+an explicit interleaved policy before code. C009 uses finite connected domains
+and approximate probabilities, with exact pre-code policy and focused checks.
+Root corrects pairwise support versus global consistency and flags dense domain
+operation cost. Both remain standalone, no MM/busclique or global exact solve;
+no public constructor/corpus test before root freeze. The next candidate screens
+retain fixed failure/quality/time thresholds; no automatic cap/price tuning.
+
+## 2026-09-09 01:24 UTC: breadth and replacement constructor screens
+
+A061 tests unchanged branch reconstruction across all original 34 structures,
+35 class memberships, seed 0, with fresh A053 and MM: 102 separate calls on 06.
+The frozen rule requires at least two new noncycle structure improvements,
+no lost A053 success and no per-structure Q regression. Status002 has 83/102
+finalized; no outcome claim before the approved saved analysis. Source changes
+relative to 059 are only two unused new modules; all A/worker/validator bytes
+are unchanged. The original pilot in this snapshot does not register B023/C009.
+
+B023's pre-code policy, full standalone source and eight focused groups pass
+root review. One fixture loses a contact, restores it and finishes valid;
+20-second B9 construction is the actual continuation test. Root freezes and
+starts all 18 calls once on 02. C009's source and three groups were reviewed;
+root caught a fatal-error credit bug before transport, corrected it and reran
+only the affected group. Its 16 C8 calls on 03 are terminal, quiescent and
+retrieved once. A minimal C009 saved analyzer reuses the existing original-label
+guard, independently recounts overlap/contact/domain evidence and receives one
+additional assertion rejecting error-bearing success before its one analysis.
+No candidate rerun. Root reviews the minimal B023 saved analyzer before outcomes.
+
+Descriptors are the only shared code changes. No MM/busclique candidate imports,
+portfolio selection or exact global optimization is introduced. No new policy
+will be justified solely by partial overlap, contact or probability metrics.
