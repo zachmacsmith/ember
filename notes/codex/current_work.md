@@ -1,6 +1,6 @@
 # Current research checkpoint
 
-Updated 2026-09-09 02:32 UTC. Branch `codex`; goal active and unmet.
+Updated 2026-09-09 02:43 UTC. Branch `codex`; goal active and unmet.
 Single general heuristic, no MM/busclique, no portfolio, ideal Z12. Success,
 mean ACL, variability and roughly MM-scale runtime remain separate requirements;
 optimal ACL-one ties are acceptable. Candidate dependencies and the independent
@@ -14,21 +14,26 @@ continuation gate. No old remote job remains live.
 
 - A062 ready ordering recovers two lifting failures but loses planted seed0,
   regresses wheel/grid means and adds22.136s of scheduler wall. Retire its fixed
-  priority; retain the unchanged measured A061 branch control. The next A task
-  is a concise saved-trace diagnosis of proxy versus physical move constraints
-  and cost, before any further refinement.
+  priority; retain the unchanged measured A061 branch control. The reviewed
+  [guarded-connector diagnostic](guarded_connector_diagnostic_proposal.md) is
+  being implemented on exactly three saved blocked states. It tests fixed-owner
+  connectors of at most three sites with all future-port guards and 5s/2M
+  per-state limits. Root code review precedes its one run; no constructor replay.
 - B024 reduces both initialization proxies on all seven noncliques but finishes
   only4/9 versus control6/9 and MM8/9. Retire it. [B025's reviewed acceptance
-  discriminator](tracks/b_025_acceptance_discriminator.md) is being implemented:
+  discriminator](tracks/b_025_acceptance_discriminator.md) is implemented:
   unchanged B023 generators/prices/schedule, accept selected winners only when
-  current-price energy does not increase. Planned27 calls on02,20s,seed0,
-  treatment/control/MM. Root has not frozen or launched it.
+  current-price energy does not increase. [27 calls are launched on02](tracks/b_025_launch_record.md),
+  20s,seed0,treatment/control/MM. Root verified41 author/input bindings and
+  reviewed the four new-risk groups and source diff before freezing it.
 - C010 finishes2/8 versus MM6/8, with optimal path/tree ties. Six failures stop
   at charged work after0.318–0.653s, leaving most of15s unused. Retire the fixed
   policy. [C011's reviewed computation-allocation ablation](tracks/c_010_wall_budget_diagnostic_proposal.md)
-  is being implemented with unchanged placement/splitting and wall deadline,
-  retaining work counts but disabling search/final work denial. Planned24 calls
-  on03,15s,seed0,fixed C010/treatment/MM. Extra complete outputs and the separate
+  is implemented with unchanged placement/splitting and wall deadline,
+  retaining work counts but disabling search/final work denial. [24 calls are
+  launched on03](tracks/c_011_launch_record.md),15s,seed0,fixed C010/treatment/MM.
+  Root verified23 author bindings and reviewed three new-risk groups plus the
+  source diff before freezing it. Extra complete outputs and the separate
   continuation gate decide it; no partial-score justification or cap sweep.
 
 The [replicated gap analysis](mm_gap_current_replications.md) and
