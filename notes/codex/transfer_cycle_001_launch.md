@@ -60,3 +60,8 @@ from representation/neighborhood/acceptance/cost failures. Compare20 primary
 structures separately from two nested labels; across-seed ACL variability is
 unmeasured. Retain all regressions and per-class gaps. No universal3× gate or
 new limit inferred solely from event counts applies.
+
+Checkpoint `b420fb0c` saves the implementation, protocols and launch records.
+The staged whitespace check reported two trailing spaces in the already frozen
+A063 policy (lines195/207); its hash-bound bytes were preserved. This was a
+document formatting finding, not a source or targeted-check failure.
