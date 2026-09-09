@@ -2089,3 +2089,50 @@ evaluator-only witness maps pass root's independent original-minor revalidation
 and optimality lower bounds; no candidate gets them. Preserve the earlier bound
 artifacts and link the correction from transfer_cycle_002_launch.md. No broader
 C014 screen or new retained algorithm is claimed.
+
+
+## 2026-09-09 22:33 UTC — complete mechanism results and broader construction tests
+
+Previous research continuation classified as progress: A064 completed, was
+retrieved once and independently audited; its passive reader passed once.
+The explicit `codex logout` succeeded and was logged. Automatic continuation
+resumed research without any credential read, login or authentication change.
+One A subagent refresh failed after logout; B and C agents remained available
+for bounded source and evidence work. Prompts36607671 and36771857 are appended
+verbatim. The research goal is active and unmet.
+
+A064's nine complete outputs all improve over A061/A063, saving110 totalQ versus
+the inherited bases and92 versus A063. Eight remain worse than MM; the only MM
+win was already an A061 win. Ranking costs85.2% of its added stage. Root reviewed
+all mechanism evidence and verified28 bindings. Frozen continuation criteria
+support one unchanged broader screen:22 Transfer001 inputs, three separate
+methods, seed0/60s,66 calls on06. Initialize/stage/start completed once; manifest
+92374055586742875ecebe0d9c09617af050a9106c7a230e246d16f56efdbc41.
+The input-directory-only analyzer adapter has root/peer static review and a
+pre-execution identity record; historical fresh labels are explicitly exposed
+here. No A064 refinement or promotion follows from this launch.
+
+B028's24 calls completed; root fetched once243files, digest
+fa4fc35a0734ff329cddc97ba4b8da33ad989fb1b595f2f6130051b984d30e7b.
+Original audit and passive reader pass first attempts, all times known; root
+verified29 reader bindings. B0282/6 versus B0271/6 and A061/MM6/6 rejects the
+fixed acceleration-only constructor. New SBM success supports a cost explanation
+there, but both fresh inputs fail with unresolved overlap. Grid query packing
+alone exceeds the old complete call. A candidate-state diagnostic contract may
+be drafted, with no further execution authorized until review.
+
+C014's5 focused groups and both optimal tiny complete calls pass first attempt;
+root verified34 packet bindings and two peers found no concrete source blocker.
+The27-call Z12 screen froze/staged/started once03, manifest
+6c74f1f33bb16878e6439830d0545f2aa3ff1acc7bb7ee72204333ae8ccf9955.
+It tests future free-boundary capacity and coordinated reconstruction; tiny
+controls did not exercise retraction. The prepared passive reader waits for
+terminal original audit. Execution-order wording was corrected additively before
+freeze; the audited per-graph shuffle remains unchanged.
+
+The prospective variance clarification restores the user's mean-ACL objective:
+variance tradeoffs must be reported but do not alone veto promotion. It changes
+no frozen exploratory criterion, result, input, allocation or source. A061
+remains the retained policy; the milestone links its full class gaps and a
+separate nine-input same-host descriptive table. No confirmation set or
+across-seed result exists, and no per-class portfolio is selected.

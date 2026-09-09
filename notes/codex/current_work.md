@@ -1,6 +1,6 @@
 # Current research checkpoint
 
-Updated 2026-09-09 22:02 UTC, next mechanism cycle running. Branch `codex`; goal active and
+Updated 2026-09-09 22:33 UTC, two complete screens reviewed and two running. Branch `codex`; goal active and
 unmet. The latest user request is preserved in `PROMPTS_CODEX.md`.
 
 The [current strategic decision](strategic_review_20260909.md) supersedes the
@@ -15,26 +15,38 @@ remains held and untested.
 The [next mechanism protocol](transfer_cycle_002_protocol.md) uses seven unchanged
 development encodings and two newly generated100-vertex structures; independent
 input review passed, including hidden-witness validation and bounded exposure
-checks. A064's36-call screen is frozen, staged and started once on hyde06 under
-detached supervision (`064-interleaved-boundary-transfer`). Its four new-risk
-groups passed; a subsequent diagnostic-only deadline-phase correction passed
-the single affected group. Root and peer reviewed the source, input-only harness
-adapter and unchanged output-credit logic. Results are pending.
+checks. A064's36-call screen completed on hyde06 and was fetched once after
+quiescence (306 files); both original audit and passive mechanism reader pass.
+All nine complete outputs improve over A061/A063, but eight remain worse than
+MM. Root ranking costs85.2% of its added stage. Root verified28 mechanism
+bindings and authorized one unchanged broader screen: all22 Transfer001 inputs,
+A064/A061/MM, seed0/60s,66 fresh calls on06 under detached supervision, run
+`064-interleaved-boundary-full-transfer`. See the
+[milestone and retained-policy gaps](transfer_cycle_002_milestone.md).
 
 B028's six-query paired diagnostic completed on02: exact projections and
 attachments match, with1.060× cold-packet and3.819× postcompilation routing/
 adaptation speedups (2.099× excluding K100). All small-query regressions and cold
 costs remain. Root reviewed and verified31 archive bindings, then froze/staged/
 started24 B028/B027/A061/MM complete calls once on02, run
-`track-b-compiled-mobile-tree-028`. Their original-valid outcomes are pending.
+`track-b-compiled-mobile-tree-028`. All24 are now terminal and fetched once
+(243 files); original audit and passive reader pass with complete time fields.
+B028 succeeds2/6 versus B0271/6 and A061/MM6/6. Both fresh inputs fail. The fixed
+acceleration-only policy is rejected; query packing causes the grid timing
+regression, while four failures retain unresolved overlap. The next bounded
+question concerns routing-surrogate preference versus the movable neighborhood.
 C013's four targeted risk groups passed, but its first tiny complete screen
 failed on star22: singleton-first placement cannot supply the degree21 hub's
 distinct contacts. All-owner retraction repeats the exclusion, with no time or
 work cap reached. Four other positive tiny calls achieveACL1; the negative case
 fails as expected. All six calls and30 checked bindings are preserved. C013 is
 rejected before its planned larger screen. C014's separate capacity-aware policy
-has been reviewed; isolated implementation, focused checks and two complete tiny
-controls are authorized, with no larger panel yet. Evaluator-only witnesses
+passes five focused groups and two optimal complete tiny controls, star22Q23 and
+K2,10Q12. Neither tiny call exercises retraction. Root reviewed the full source,
+verified34 packet bindings and launched27 fresh C014/A061/MM calls once on03,
+seed0/60s, run`track-c-capacity-contact-014`. Results remain pending. The prepared
+passive reader cannot execute until terminal retrieval and original audit.
+Evaluator-only witnesses
 certify optimal star22Q23 on Z2/Z12 and K2,10Q12 on Z2; root revalidated all three.
 The [launch decision](transfer_cycle_002_launch.md) corrects an inherited detail:
 Z2 maximum degree is19, while Z12 maximum is20. No algorithm is promoted.
@@ -56,16 +68,15 @@ These suggest a general mechanism; they do not prove causation or novelty.
 
 Three independent design directions remain:
 
-- A: A063 passes its exploratory transfer signal: six primary Q gains, including
-  three fresh structures, and no Q/success regression against same-host A061.
-  Every call is reconstruction-time censored before completing an owner sweep.
-  A bounded owner/root interleaving hypothesis follows; no first-root-only cap.
-- B: B027 is rejected: two primary successes, zero fresh successes, all hidden
-  controls failed. Routing uses95.82% of solver time. A bounded acceleration-only
-  diagnostic can distinguish cost from persistent proposal/price deficits.
-- C: C012 is rejected: four primary successes, every common-MM Q comparison worse,
-  and17 structural port/carry stops before deadline. Stop the fixed monotone
-  frontier/suffix-repair sequence and redesign geometry and contact space together.
+- A: Continue unchanged A064 into broader complete transfer. Its nine-input
+  gains establish an allocation mechanism; they do not establish all-class
+  quality or acceptable runtime. Do not refine before broader outcomes.
+- B: Reject B028 as a complete policy. Its exact compiled router remains useful
+  implementation evidence. Diagnose proposal preference versus neighborhood
+  before another complete-constructor design; more sweeps alone are insufficient.
+- C: Reject C012/C013 fixed policies. C014 tests coordinated contact construction
+  with actual-boundary capacity, without the old monotone frontier restriction.
+  Preserve every earlier failure; tiny optima do not predict panel success.
 
 Before-code contracts and focused risk checks are complete for A063, B027 and
 C012. Their independent complete screens use12 fresh structures, four hidden-

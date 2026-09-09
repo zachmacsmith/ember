@@ -11,7 +11,7 @@ import types
 
 ROOT=Path(__file__).resolve().parents[2]
 PILOT=ROOT/'scripts/codex/pilot.py'
-ALLOWED_NEW={'native-interleaved-boundary','compiled-mobile-tree','contact-domain'}
+ALLOWED_NEW={'native-interleaved-boundary','compiled-mobile-tree','contact-domain','capacity-contact-domain'}
 
 
 def sha(path):return hashlib.sha256(path.read_bytes()).hexdigest()

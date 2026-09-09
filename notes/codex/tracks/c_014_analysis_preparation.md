@@ -1,0 +1,16 @@
+# C014 passive analysis preparation
+
+2026-09-09. Prepare the receipt reader while the complete screen runs; **do not execute it or read partial outcomes before all 27 calls terminate and the common independent audit passes**. No constructor, solver, witness, graph generator or new minor validator is imported. No C014 source, bound policy, screen, or check artifact changes.
+
+`results/codex/c014-transfer-analysis/analyze.py` accepts four paths: terminal archive, common audit output, `results/codex/transfer-cycle-002/freeze-c/freeze_result.json`, and a fresh output directory. It uses the C012 saved-receipt analysis pattern, retains every common-audit row/comparison, and pins C014 source, screen, manifest, source snapshot and common analyzer. At execution, root must bind the actual terminal audit rows/summary/comparisons and archive before starting one recorded attempt with invocation, stdout, stderr and exit/wall/CPU status. Preserve failures; any correction requires a separate attempt with the prior reader/output retained.
+
+The reader will report complete success/Q/ACL and secondary within-chain variance solely from the common oracle, with all 27 calls' wall/CPU/process times, failures and unknown times. Candidate receipt projection separates:
+
+- All scanned root proposals from actual net-one-vertex publications; safe singleton chains from chains grown despite singleton domains; claimed growth, signed capacity changes, pruning, quota blockers and incomplete root scans.
+- Coordinated retraction attempts, repeated and closed-owner retractions, completed saved reintroductions, strict obstruction-set expansions, capacity failure, contact failure, refusal, interruption, and score preference. Historical maps are unsaved, so arithmetic receipt checks are not independent replay of intermediate geometry.
+- Last published occupancy from the final certified private occupancy. Either remains diagnostic until the common oracle grants complete credit. Actual final free boundaries are individual fixed-chain capacities, never a simultaneous-feasibility certificate.
+- Placement and stage timing as overlapping measurements, plus diagnostic work counters. Counts of enumerated growth sites are not visited-site counts when interrupted; no work-to-time conversion or hidden zero for missing time is permitted.
+
+The exact method vector is C014/A061/MM, but the [prospective root clarification](c_014_root_freeze_clarification.md) binds the audited deterministic per-graph shuffle as actual execution order. The [variance clarification](../variance_objective_clarification.md) applies: increased variance alone is not a promotion veto. Preserve all success/mean-ACL deficits and evaluate measured runtime against the user's stated target, without a new universal ratio gate.
+
+This is a nine-structure, one-seed exploratory mechanism screen: seven exposed, two new development structures; no relabel pairs, across-seed variance or confirmation claim. The reader supplies observations rather than an automatic mechanism verdict. The fixed continuation criterion and every regression remain available for the subsequent concise research decision. Static syntax inspection is allowed before execution; no receipt tests or broader correctness suite are added.
