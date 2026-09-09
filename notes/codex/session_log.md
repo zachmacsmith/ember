@@ -2136,3 +2136,34 @@ no frozen exploratory criterion, result, input, allocation or source. A061
 remains the retained policy; the milestone links its full class gaps and a
 separate nine-input same-host descriptive table. No confirmation set or
 across-seed result exists, and no per-class portfolio is selected.
+
+
+## 2026-09-09 22:49 UTC — C014 decision and measured memory-scope correction
+
+C014 terminal27/27 was retrieved once after quiescence:262 files,3,923,184,225
+bytes, digest48e2b32b752b5b0fe4798e62293959eb198a26f7c9e0a1282b70b6dc4d656d93.
+The200.355s transfer completed normally. Root original audit passes first attempt
+(14.060s), then the prepared passive reader passes first attempt (23.644s), all
+nine receipts checked and all27 complete times known. Root verified25 evidence
+bindings. C0144/9 versus A061/MM9/9 rejects the fixed policy; hidden controlQ80
+is optimal, but both fresh inputs fail and SBM/WS regress. Three early private-
+capacity failures and two deadline failures require different explanations.
+No candidate rerun, C refinement or portfolio selection follows.
+
+Repeated unrelated worker RSS peaks prompted one synthetic probe, written after
+its before-execution hypothesis and run once on03. Three minimal children all
+exit0; ru_maxrss follows the parent's192MiB allocation and historical high-water
+mark even after release, while executed-image /proc VmHWM stays about9MiB.
+The correction note preserves raw benchmark RSS but removes unqualified
+algorithm-memory attribution. Shared harness, timing fields and validity/Q
+semantics remain unchanged. No benchmark was rerun.
+
+Root approved B's before-code fixed-state diagnostic plan, after reading pinned
+weights/proposal source. The agent may implement isolated helpers, specific
+risk checks and four candidate-only bundles; remote execution awaits code/input
+review. The plan distinguishes root surrogate, priced pair occupancy, reported
+excess-owner overlap and one contact retargeting; no global solve or constructor.
+A064 broader screen is verified live at40/66 finalized on06 (status002), with
+controller and worker active; no partial Q results were read. Goal stays active,
+A061 remains retained, and all class-level/seed/runtime/confirmation deficits
+remain. No authentication action was taken during research continuation.

@@ -1,6 +1,6 @@
 # Current research checkpoint
 
-Updated 2026-09-09 22:33 UTC, two complete screens reviewed and two running. Branch `codex`; goal active and
+Updated 2026-09-09 22:49 UTC, all three small screens reviewed; A's broader screen running. Branch `codex`; goal active and
 unmet. The latest user request is preserved in `PROMPTS_CODEX.md`.
 
 The [current strategic decision](strategic_review_20260909.md) supersedes the
@@ -33,8 +33,11 @@ started24 B028/B027/A061/MM complete calls once on02, run
 (243 files); original audit and passive reader pass with complete time fields.
 B028 succeeds2/6 versus B0271/6 and A061/MM6/6. Both fresh inputs fail. The fixed
 acceleration-only policy is rejected; query packing causes the grid timing
-regression, while four failures retain unresolved overlap. The next bounded
-question concerns routing-surrogate preference versus the movable neighborhood.
+regression, while four failures retain unresolved overlap. Root reviewed the
+fixed-state diagnostic contract and authorized isolated implementation/checks
+and four candidate-only bundles, not remote execution yet. It compares shared-
+tree root costs, actual priced occupancy, overlap and one witness retargeting;
+the saved states do not support complete trajectory replay.
 C013's four targeted risk groups passed, but its first tiny complete screen
 failed on star22: singleton-first placement cannot supply the degree21 hub's
 distinct contacts. All-owner retraction repeats the exclusion, with no time or
@@ -44,8 +47,12 @@ rejected before its planned larger screen. C014's separate capacity-aware policy
 passes five focused groups and two optimal complete tiny controls, star22Q23 and
 K2,10Q12. Neither tiny call exercises retraction. Root reviewed the full source,
 verified34 packet bindings and launched27 fresh C014/A061/MM calls once on03,
-seed0/60s, run`track-c-capacity-contact-014`. Results remain pending. The prepared
-passive reader cannot execute until terminal retrieval and original audit.
+seed0/60s, run`track-c-capacity-contact-014`. All27 completed and were fetched
+once (262 files,3.923GB); original audit and passive reader pass first attempts.
+C014 succeeds4/9 versus A061/MM9/9, with a certifiedQ80/ACL1 hidden-control result.
+Both fresh inputs fail; SBM/WS regress against A061. The fixed policy is rejected.
+Three failures stop early at private capacity conflicts; two reach the deadline.
+Root verified25 reader bindings. See [C014 results](tracks/c_014_results.md).
 Evaluator-only witnesses
 certify optimal star22Q23 on Z2/Z12 and K2,10Q12 on Z2; root revalidated all three.
 The [launch decision](transfer_cycle_002_launch.md) corrects an inherited detail:
@@ -75,8 +82,10 @@ Three independent design directions remain:
   implementation evidence. Diagnose proposal preference versus neighborhood
   before another complete-constructor design; more sweeps alone are insufficient.
 - C: Reject C012/C013 fixed policies. C014 tests coordinated contact construction
-  with actual-boundary capacity, without the old monotone frontier restriction.
-  Preserve every earlier failure; tiny optima do not predict panel success.
+  with actual-boundary capacity and is also rejected after its panel. Its optimal
+  hidden control and successful retractions are exploratory capabilities, while
+  private-choice backtracking/route restrictions and computational cost remain
+  distinct unresolved causes. No C014 refinement is authorized yet.
 
 Before-code contracts and focused risk checks are complete for A063, B027 and
 C012. Their independent complete screens use12 fresh structures, four hidden-
@@ -96,6 +105,12 @@ The [allocation audit](strategic_allocation_review.md) separates early local
 repair denial, fixed pass endpoints, work denial and real deadline stops. Future
 quality-first decisions use measured CPU/wall, explicit later allocations and
 all regressions; no universal 3× gate. Historical frozen verdicts stay intact.
+
+A [targeted measurement probe](measurement_rss_scope_diagnostic.md) confirms
+that Linux worker ru_maxrss can inherit its parent's historical peak under this
+spawn path. Raw values remain preserved, but they cannot establish algorithm-
+specific memory comparisons. Separate validity/Q/wall/CPU measures remain intact;
+no shared harness or frozen benchmark was changed.
 
 All work keeps ideal Z12, no-MM/no-busclique candidate dependencies, one evolving
 embedding state, no independent-output portfolio, existing original validation
