@@ -67,3 +67,15 @@ across-seed variability and runtime separated. Do not merge algorithm versions,
 censored populations or different-host times. Prioritize a general mechanism
 that addresses several structurally related deficits; dense aggregate gains
 must never conceal a class regression.
+
+
+## Current mechanism cycle — 2026-09-09
+
+A059 passes its fixed complete-constructor continuation rule and proceeds to
+unchanged-policy replication060. B022 and C008 fail their respective fixed
+coverage/quality rules and are retired. Their extra local reach is documented,
+without extending a repair sequence on partial scores. B and C each prepare a
+substantially different general constructor hypothesis. Root owns shared code
+and transport; the three research tracks remain independent. See the
+[mechanism decisions](../mechanism_cycle_20260909.md) for hypotheses resolved,
+all-call results, generalization limits and next decisions.

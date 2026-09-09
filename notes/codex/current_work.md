@@ -1,6 +1,6 @@
 # Current research checkpoint
 
-Updated 2026-09-08 23:56 UTC. Branch `codex`; goal active and unmet.
+Updated 2026-09-09 00:37 UTC. Branch `codex`; goal active and unmet.
 Single general heuristic, no MM/busclique, no portfolio, ideal Z12. Preserve
 success and roughly MM-scale cost; optimal ACL-one ties are acceptable.
 
@@ -12,34 +12,35 @@ seed mean ACL, sample variance and failure-inclusive solver/process time.
 Eighteen class memberships have positive mean ACL gaps on both original and
 additional representatives. All observations are exposed development data.
 
-- **A:** Retain A053. A054/A055 and packed-orientation are unpromoted.
-  The isolated [joint path operator](joint_path_reconstruction_hypothesis.md)
-  passes its nine focused checks and returns six timely independently valid
-  saved-final outputs. Cycle reaches Q148→126 in0.203s; five others tie.
-  Its cycle-plus-another promotion criterion fails. Root's read-only proof
-  corrects the proposal: earliest segment endings are a complete feasibility
-  test within a fixed route/order. All557 completed non-cycle failures identify
-  route/contact representation limits, not a need for an exact partition solver.
-  No registration or complete-constructor call for this fixed operator. Next
-  work is design only, addressing branches or broader coordinated relocation.
-- **B:** [B020](tracks/b_020_results.md) completes0/9 for both paired/single
-  contact constructors versusMM8/9; retire both fixed policies. All candidate
-  calls use their search deadline, and no complete eligible proposal is lost
-  solely by query interruption. A [bounded saved classifier](tracks/b_021_incidence_lock_design.md)
-  now tests compulsory endpoints across all497 recorded dense scopes (2s/500k,
-  no routing). Whole-incidence block reconstruction remains design only pending
-  that diagnosis. The one056 analysis is complete and root-reviewed.
-- **C:** [C007](tracks/c_007_results.md) completes2/8 for atomic and elementary
-  versusMM6/8; retire both fixed policies. The [fragmentation gate](tracks/c_fragmentation_gate_results.md)
-  finds2 compact fragmented-transfer witnesses among64 sampled, while24/24
-  connected controls also succeed. Neither witness is a full minor; grid's
-  observation was lost to a driver schema failure and remains unknown.
-  No repeat. Root authorizes the [compound constructor](tracks/c_compound_transfer_constructor_proposal.md)
-  with one evolving connected state, bounded private transfer/reconnect/prune,
-  specific integration checks and one24-call C8 compound/atomic/MM comparison.
-  Require at least4/8 timely valid results while retaining every atomic-control
-  success. Code preparation is active; no constructor launch yet. Root owns
-  registry/transport. This is a move-neighborhood test, not global fragmentation.
+- **A: continue unchanged-policy replication.** [A059](experiments/059_branched_path_results.md)
+  returns six timely valid outputs, as do fresh A053 and MM. Retained branches
+  give four wins/two ties versus A053: Q1078→1045, all33 saved sites from nine
+  commits. All26 unshortened route questions are feasible, supporting the
+  representation diagnosis. Cycle reaches optimal ACL1; MM wins on the other
+  five. Solver totals39.407s versus38.632s A053 and3.654s MM; planted/Petersen
+  still exceed10× MM. Next: unchanged code, six corresponding additional
+  records and original six, seeds0/1, three fresh arms per host. No tuning.
+- **B: retire the fixed whole-incidence policy.** B022 releases all incident
+  witness bindings but completes1/9 versus MM8/9, with worse Q on the sole
+  common success. Of1124 queries,1017 complete and474 commit; eight inputs
+  retain overlap. Some230 eligible proposals are discarded across47 interrupted
+  uncommitted queries. This distinguishes extra local reach and a cost/publication
+  restriction; it does not prove that saving those proposals solves construction.
+  Solver totals171.451s versus62.883s MM. No root/beam/cap tuning. A replacement
+  general constructor is design only, with a new mechanism diagnosis required.
+- **C: retire the fixed compound-region policy.** C008 completes3/8 versus
+  atomic2/8 and MM6/8, failing its frozen4/8 threshold. All atomic successes
+  survive and grid becomes valid, but all three common MM outputs use less Q.
+  Nine Q-neutral compound commits directly remove12 missing contacts. This
+  confirms extra local reach, not adequate quality or coverage. No additional
+  local region repair based on partial missing-edge improvements. Replacement
+  construction is design only.
+
+Three independent complete-constructor screens finished:60 calls, common
+source snapshot `ffa39188`, separate methods on three hosts. Shared edits are
+only descriptors; audited workers, dependency isolation and original validators
+are unchanged. Each approved saved analysis ran once and passed. Results remain
+exploratory; there is no new across-seed variance or all-class claim.
 
 All three recent baseline runs are terminal, retrieved and independently analyzed:
 056 original four-seed A053134/136 versusMM120/136;057 additional two-seed
@@ -49,12 +50,14 @@ Sudoku order2 loses2% mean ACL; order3 wins8.17%, with higher variance on both.
 Failures remain visible: planted/wheel in056, hypercube/wheel in057. The path
 stage cannot repair those incomplete constructions.
 
-No remote research job remains live from056/057/058/B020/C007b. Their detached
-controllers completed with free locks, absent sessions and supervisor exit0.
-Archives and invocation identities remain in each launch record. Observation
-failure never authorizes a replacement launch.02/03 are prepared for new paired
-screens;06 has its own3.11.2 environment and high observed load.04 lacks tmux,
-05 lacks the prepared stack. Do not start the old refused04 C007 bundle.
+No remote job remains live from the completed056/057/058/B020/C007b or
+A059/B022/C008 screens. Controllers finished with free locks, absent detached
+sessions and supervisor exit0; each archive was retrieved once. New identities:
+[A059](experiments/059_launch_record.md), [B022](tracks/b_022_launch_record.md),
+[C008](tracks/c_008_launch_record.md). Observation failure never authorizes a
+replacement launch.02/03 are prepared;06 has its own3.11.2 environment and
+high observed load.04 lacks tmux;05 lacks the prepared stack. Do not start the
+old refused04 bundle. Root owns transport for the next frozen replication.
 
 Root leaves protected `.verified.json` and `.claude/` untouched. No held-out
 input, hardware defect graph, alternate architecture or publication claim has

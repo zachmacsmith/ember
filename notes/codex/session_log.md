@@ -1808,3 +1808,43 @@ reads the362-line gate and result and authorizes a bounded compound-move
 constructor screen: same C8,15s,seed0,compound/atomic/MM24calls,≥4/8 success
 and retain all control successes. No global fragmented state or saved-state
 follow-up. Implementation/targeted checks in C; root owns registry and launch.
+
+
+## 2026-09-09 00:42 UTC: complete-constructor mechanism decisions
+
+A059/B022/C008 finish60 calls on06/02/03, each with one detached launch,
+quiescent terminal retrieval and one approved saved analysis. All three analyses
+pass. Sourceffa39188 is common; each algorithm is separate. Root reviews reports
+and verifies32/21/27 final bindings. No shared correctness logic changed beyond
+three descriptors; source and new-risk checks were reviewed before launch.
+
+A059 retains off-route branches and improves four of six versus fresh A053,
+Q1078→1045. All33Q is attributable to nine stage commits; six wrapper baseQs
+match fresh controls. All26 unshortened questions now feasible. This repairs
+local proposal representation, not global minor-state expressivity. All18 valid
+and timely; MM still wins five and ties cycle optimally. Stage0.476s; solver
+totals39.407s new versus38.632s control and3.654s MM. No variance/generalization
+claim. Root authorizes unchanged replication, no refinement.
+
+B022 completes1/9 versusMM8/9 and loses sole common Q93vs71. Extra reach474
+commits/291 overlap reductions does not solve eight constructions. Of230
+eligible proposals discarded at47 interrupted queries, none has O0. Acceptance
+also rejects795 lower-overlap scored proposals; neither fact proves a simple
+rescue would succeed. Allattempt solver171.451vs62.883s. Retire fixed policy.
+
+C008 completes3/8 versusatomic2/8/MM6/8, below frozen4/8. Nine Q-neutral
+compound commits directly remove12 missing contacts, but all common MM quality
+pairs lose. Private work0.459s/90.223s total; speeding it does not address broad
+failure. First-divergence receipts distinguish actual compound commits from
+ordinary deadline differences. Retire fixed policy. Two additive scalar-summary
+schema assertions are preserved; accepted analysis/raw records unchanged.
+
+Root saves the mechanism milestone and retains the72-row36-class gap reference.
+B and C prepare distinct replacement constructor proposals, design only; no
+additional local repairs, exact diagnostics or calls based on partial progress.
+060 replication freezes72 calls: six original and six corresponding additional
+records, seeds0/1, allthreefresharms,36/cohort on06/03. Original seed0 is a
+predeclared repeat to preserve contiguous-seed harness semantics;059 is never
+replaced. Both source snapshots equal059 byte-for-byte, all input/task checks
+pass. Root owns one stage/start per cohort, then verified retrieval; no restart
+on observation loss. Existing goal is verified active and unmet.
