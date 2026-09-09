@@ -2068,3 +2068,24 @@ rejected and its larger panel held; a separate capacity-aware construction
 hypothesis may be drafted before code. All30 evidence bindings match. The
 four successful tiny controls, negative control and every failure remain
 separate from Z12 development-screen claims. A061 remains the retained policy.
+
+## 2026-09-09 22:02 UTC — routing result and bounded capacity follow-up
+
+B028's two cold diagnostic processes finished once and were retrieved after
+verified quiescence. Full route/attachment equivalence passes on all six queries;
+root checked31 archive bindings. Cold packet15.777→14.887s gives1.060×; five
+postcompilation queries9.374→2.454s give3.819×, or2.099× excluding K100. First-query
+compilation and grid/honey regressions remain. This justified a separately frozen
+six-input24-call complete screen on02, with unchanged source and new paired
+B027/A061/MM. Initialize/stage/start all completed once. A's36-call screen remains
+live on06,20 finalized at the last observation; its original-output audit waits
+for terminal retrieval. The passive A reader passed bounded static review,
+including corrected predecessor comparison labeling.
+
+C014's before-code contract was reviewed and its isolated implementation/two
+tiny controls authorized, after the C013 fixed-policy rejection. Offline actual-
+target measurement corrected Z2's maximum degree to19 (Z12 remains20). Three
+evaluator-only witness maps pass root's independent original-minor revalidation
+and optimality lower bounds; no candidate gets them. Preserve the earlier bound
+artifacts and link the correction from transfer_cycle_002_launch.md. No broader
+C014 screen or new retained algorithm is claimed.

@@ -1,6 +1,6 @@
 # Current research checkpoint
 
-Updated 2026-09-09 21:49 UTC, next mechanism cycle started. Branch `codex`; goal active and
+Updated 2026-09-09 22:02 UTC, next mechanism cycle running. Branch `codex`; goal active and
 unmet. The latest user request is preserved in `PROMPTS_CODEX.md`.
 
 The [current strategic decision](strategic_review_20260909.md) supersedes the
@@ -21,17 +21,23 @@ groups passed; a subsequent diagnostic-only deadline-phase correction passed
 the single affected group. Root and peer reviewed the source, input-only harness
 adapter and unchanged output-credit logic. Results are pending.
 
-B028's exact compiled routing matches B027 in targeted routes/proposals. Root
-approved its six-query paired cold diagnostic on02, including all import/JIT/
-conversion and process costs; its prepared detached packet is being launched.
-No complete-constructor extension is authorized until measured evidence arrives.
+B028's six-query paired diagnostic completed on02: exact projections and
+attachments match, with1.060× cold-packet and3.819× postcompilation routing/
+adaptation speedups (2.099× excluding K100). All small-query regressions and cold
+costs remain. Root reviewed and verified31 archive bindings, then froze/staged/
+started24 B028/B027/A061/MM complete calls once on02, run
+`track-b-compiled-mobile-tree-028`. Their original-valid outcomes are pending.
 C013's four targeted risk groups passed, but its first tiny complete screen
 failed on star22: singleton-first placement cannot supply the degree21 hub's
 distinct contacts. All-owner retraction repeats the exclusion, with no time or
 work cap reached. Four other positive tiny calls achieveACL1; the negative case
 fails as expected. All six calls and30 checked bindings are preserved. C013 is
-rejected before its planned larger screen; C014 capacity-aware growth is a
-bounded before-code design task only. No algorithm is promoted.
+rejected before its planned larger screen. C014's separate capacity-aware policy
+has been reviewed; isolated implementation, focused checks and two complete tiny
+controls are authorized, with no larger panel yet. Evaluator-only witnesses
+certify optimal star22Q23 on Z2/Z12 and K2,10Q12 on Z2; root revalidated all three.
+The [launch decision](transfer_cycle_002_launch.md) corrects an inherited detail:
+Z2 maximum degree is19, while Z12 maximum is20. No algorithm is promoted.
 
 The one retained policy is **A061/native-branched-path**. Its
 [complete class table](mm_gap_retained_a061.md) preserves 34/34 valid versus MM 29/34;
