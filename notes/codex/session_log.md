@@ -2167,3 +2167,39 @@ A064 broader screen is verified live at40/66 finalized on06 (status002), with
 controller and worker active; no partial Q results were read. Goal stays active,
 A061 remains retained, and all class-level/seed/runtime/confirmation deficits
 remain. No authentication action was taken during research continuation.
+
+
+## 2026-09-09 23:21 UTC — broader quality transfer and failure mechanisms
+
+Previous research goal cycle: progress. Its prepared diagnostics and completed
+A screen changed the next action; no blocked condition recurred. The separate
+explicit logout command succeeded and was logged. This research continuation
+made no authentication changes. Full automatic prompts37464099/37545030 were
+appended; all work remains on codex.
+
+A064 broader66/66 terminal was fetched once,470 files verified, digest
+c9d3a672023954d24da85820f686390e61f64a8b61082a156758a75bdcefd384.
+Original audit and passive reader each passed first execution; root verified33
+reader bindings. A064/A06122/22 versus MM21/22. A064 improves21 Q values and ties
+K100 relative to A061, with gains across all six generated families and outside
+the small cohort. It still loses16/21 common MM comparisons. The added stage
+spends81.50% in root ranking, all22 calls reach its deadline. The full result and
+per-input variance/time tables preserve MM losses and nested relabelings.
+A061 remains the single retained algorithm; A065 is a cost-mechanism design,
+not an all-class quality or runtime claim.
+
+C's candidate-only saved-prefix instrument passed once: all3 prefixes and25
+rejection ledgers independently validate;140 saved combinations supply zero
+admissible witnesses. No zero-allowance cut proves fixed-prefix impossibility.
+Root verified19 preparation and9 results bindings. One separately specified
+three-prefix routing instrument is authorized, at most5s each, with old chains
+fixed and every original contact/quota independently checked. No constructor
+refinement follows without a positive local result and a small complete screen.
+
+B's four-state diagnostic passed focused checks and immutable preparation.
+Root read both adapted lifecycle files, verified20 bindings and2 adapter hashes,
+and authorized one launch. Agent staged/preflighted/started once on02 at23:20:27;
+exact tmux/processes observed live. It owns monitoring and terminal inventory/
+fetch. No constructor was rerun and no failed policy was revived. Measurements
+will distinguish root surrogate, actual priced occupancy and contact-neighborhood
+constraints, charging every failed/censored query.

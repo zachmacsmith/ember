@@ -1,6 +1,6 @@
 # Current research checkpoint
 
-Updated 2026-09-09 22:49 UTC, all three small screens reviewed; A's broader screen running. Branch `codex`; goal active and
+Updated 2026-09-09 23:21 UTC, A broader screen audited; B diagnostic running; C routing probe authorized. Branch `codex`; goal active and
 unmet. The latest user request is preserved in `PROMPTS_CODEX.md`.
 
 The [current strategic decision](strategic_review_20260909.md) supersedes the
@@ -21,7 +21,14 @@ All nine complete outputs improve over A061/A063, but eight remain worse than
 MM. Root ranking costs85.2% of its added stage. Root verified28 mechanism
 bindings and authorized one unchanged broader screen: all22 Transfer001 inputs,
 A064/A061/MM, seed0/60s,66 fresh calls on06 under detached supervision, run
-`064-interleaved-boundary-full-transfer`. See the
+`064-interleaved-boundary-full-transfer`. This broader screen is now terminal,
+470 files retrieved once; original audit and passive reader pass first attempts.
+A064/A06122/22 versus MM21/22,21 Q improvements plus K100 tie over A061;
+six generated families all improve. A064 still loses16/21 common MM comparisons.
+Root ranking consumes875.655/1074.385 added-stage seconds. Root verified33 reader
+bindings. The [broader result](experiments/064_broader_transfer_results.md) passes
+its frozen exploratory criterion without promotion. A065's next before-code
+design tests exact compiled root ranking as a computation mechanism. See the
 [milestone and retained-policy gaps](transfer_cycle_002_milestone.md).
 
 B028's six-query paired diagnostic completed on02: exact projections and
@@ -35,7 +42,11 @@ B028 succeeds2/6 versus B0271/6 and A061/MM6/6. Both fresh inputs fail. The fixe
 acceleration-only policy is rejected; query packing causes the grid timing
 regression, while four failures retain unresolved overlap. Root reviewed the
 fixed-state diagnostic contract and authorized isolated implementation/checks
-and four candidate-only bundles, not remote execution yet. It compares shared-
+and four candidate-only bundles. Four targeted groups and preparation passed;
+root reviewed helpers, worker and lifecycle, verified20 bindings and both
+adapters, then authorized one diagnostic launch. The agent staged/preflighted/
+launched once on02 at23:20 UTC, session `ember-codex-b028-failure001`, observed
+live tmux/processes; it owns monitoring and terminal retrieval. It compares shared-
 tree root costs, actual priced occupancy, overlap and one witness retargeting;
 the saved states do not support complete trajectory replay.
 C013's four targeted risk groups passed, but its first tiny complete screen
@@ -75,9 +86,9 @@ These suggest a general mechanism; they do not prove causation or novelty.
 
 Three independent design directions remain:
 
-- A: Continue unchanged A064 into broader complete transfer. Its nine-input
-  gains establish an allocation mechanism; they do not establish all-class
-  quality or acceptable runtime. Do not refine before broader outcomes.
+- A: A064 passes broader complete transfer after its nine-input result, while
+  all-class quality and runtime remain unmet. Prepare one exact root-ranking
+  acceleration falsifier based on the measured dominant cost; no promotion.
 - B: Reject B028 as a complete policy. Its exact compiled router remains useful
   implementation evidence. Diagnose proposal preference versus neighborhood
   before another complete-constructor design; more sweeps alone are insufficient.
@@ -85,7 +96,13 @@ Three independent design directions remain:
   with actual-boundary capacity and is also rejected after its panel. Its optimal
   hidden control and successful retractions are exploratory capabilities, while
   private-choice backtracking/route restrictions and computational cost remain
-  distinct unresolved causes. No C014 refinement is authorized yet.
+  distinct unresolved causes. The first saved-prefix diagnostic now passes:
+  3 valid reconstructions,25 matching rejection ledgers,140 combinations with
+  no admissible witness, and no zero-allowance infeasibility certificate.
+  Root verified9 result bindings. A separately specified three-prefix routing
+  probe is authorized, at most5s each with old chains fixed and all old/new
+  quota checks plus the unchanged oracle. No C constructor refinement is
+  authorized yet; see [C diagnostic results](tracks/c_014_failure_diagnostic_results.md).
 
 Before-code contracts and focused risk checks are complete for A063, B027 and
 C012. Their independent complete screens use12 fresh structures, four hidden-
