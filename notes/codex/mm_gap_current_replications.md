@@ -87,14 +87,16 @@ No result from this post-success stage can repair a failed constructor.
 
 **Contact obligations can lock a narrow neighborhood before acceptance is
 tested.** B020's fresh contact constructors complete0/9, even though paired
-updates reduce overlap more on some inputs. In inspected dense queries, every
-selected chain site is still required by an unchanged incident witness.
-A compulsory-site lower bound can certify that a query cannot improve overlap
-or fixed-price energy. Such equality identifies a neighborhood restriction;
+updates reduce overlap more on some inputs. B021 now certifies that **all497
+recorded scopes in the two unchanged dense states** retain every selected site
+as a compulsory endpoint of an unchanged incident witness. Their lower bounds
+equal entry Q, overlap and fixed-price energy; none of7909 complete combinations
+is eligible. This identifies a neighborhood restriction in those states;
 an improving complete proposal rejected by the rule would instead implicate
 acceptance. Cost-censored routing without either observation remains unknown.
-Releasing all incident bindings of a small connected owner block is the next
-general construction hypothesis, contingent on the saved classification.
+Releasing all incident bindings of a small owner block is the next general
+construction hypothesis. The certificate does not establish sparse-case causes
+or exclude an untested energy-neutral witness-changing trajectory.
 
 **Connected ownership and access to unused target sites can constrain
 construction.** C007's atomic free-path rule completes only2/8; all640 scored
