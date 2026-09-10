@@ -14,7 +14,8 @@ PILOT=ROOT/'scripts/codex/pilot.py'
 ALLOWED_NEW={'native-interleaved-boundary','compiled-mobile-tree','contact-domain','capacity-contact-domain',
              'native-compiled-boundary','constrained-contact-domain','admissible-contact-domain',
              'union-cost-mobile-tree','union-cost-fixed-anchor',
-             'native-paired-boundary','native-pruned-boundary'}
+             'native-paired-boundary','native-pruned-boundary','native-contact-coverage',
+             'disconnected-ownership','connected-ownership','territory-relocation','territory-old-roots'}
 
 
 def sha(path):return hashlib.sha256(path.read_bytes()).hexdigest()

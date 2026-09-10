@@ -34,6 +34,16 @@ ROOT = Path(__file__).resolve().parents[2]
 # Existing native CONFIGS and dispatch remain unchanged. These modules receive
 # only the supplied graphs and one common absolute deadline, never an embedding.
 CONSTRUCTORS = {
+    'native-contact-coverage': ('packages/ember-qc/src/ember_qc/algorithms/factored/contact_coverage_construction.py',
+                                'contact_coverage_embed'),
+    'disconnected-ownership': ('packages/ember-qc/src/ember_qc/algorithms/factored/disconnected_ownership_construction.py',
+                               'ownership_embed'),
+    'connected-ownership': ('packages/ember-qc/src/ember_qc/algorithms/factored/disconnected_ownership_construction.py',
+                            'connected_embed'),
+    'territory-relocation': ('packages/ember-qc/src/ember_qc/algorithms/territory_relocation.py',
+                             'territory_relocation_embed'),
+    'territory-old-roots': ('packages/ember-qc/src/ember_qc/algorithms/territory_relocation.py',
+                            'territory_old_roots_embed'),
     'native-paired-boundary': ('packages/ember-qc/src/ember_qc/algorithms/factored/paired_boundary_construction.py',
                                'paired_boundary_embed'),
     'native-pruned-boundary': ('packages/ember-qc/src/ember_qc/algorithms/factored/paired_boundary_construction.py',
