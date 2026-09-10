@@ -1,0 +1,25 @@
+# Decision after the completed bounded cycle
+
+2026-09-10. **No successor is promoted. Replace two major construction assumptions and retain one bounded incremental track.** All previously running experiments are terminal and preserved. The new work below is implementation, with no new complete-constructor result yet.
+
+The retained A061 [full-class record](mm_gap_retained_a061.md) remains 34/34 successes versus MM29/34, with eight ACL wins, 17 losses and four optimal ties on common successes. Earlier failures and unmeasured Sudoku remain. The separate [A066 development gap table](a066_combined_class_gaps.md) preserves each success, mean ACL, within-chain variance and runtime; across-seed ACL variance remains unknown. A066 has five MM wins and 18 losses on 23 common successful structures, plus one MM timeout. Dense gains do not hide the WS, SBM, planar, grid, honeycomb, wheel and control deficits.
+
+The MM capability we now understand is spatial reuse of contacts: a single site can touch several source neighbors, while longer chains can share useful branches. The pinned implementation can move contact boundaries and rebuild whole chains. Selected saved maps locate most grid/honeycomb/wheel excess in low-degree owners; BA instead benefits from branching. These observations support coordinated contact placement, without proving which MM operation created a particular saved map or establishing novelty.
+
+| Completed hypothesis | End-to-end evidence and decision |
+|---|---|
+| Small coordinated contact movement is sufficient to advance A066 broadly | Seven additional Q gains coexist with three one-qubit regressions against A065. All17 successes survive, but the fixed criterion fails. Wheel's ten pair savings displace eleven ordinary savings; ER/SBM instead lose a late ordinary admission without a pair commit. Keep the mechanism evidence; stop the fixed policy and narrow pair extensions. |
+| Overlap-first local improvement can produce compact B029 embeddings after later shortening | Only3/9 successes versus MM9/9; both old successes worsen. First-validity and incumbent trajectories show larger initial chains and poor later recovery. Retire this architecture and acceleration-only continuation. |
+| Releasing the recorded C016 quota blockers can resolve the shared obstruction | C017 finds an admissible ER100 partial alternative, but ER80 and BA100 are locally infeasible even without quotas. Six timely workers total59.00 process seconds. Stop this bounded repair direction; no complete-constructor gain follows from the partial witness. |
+
+Measured computation changes the next questions. A066's initial examples reach their final Q early, but the broader screen contains useful admissions near58 seconds. A universal early cutoff would lack support. Its easy-input runtime can exceed100× MM; the modest quality improvements do not solve that deficit. Same-seed A065 timed calls also vary on three larger inputs while the paired MM Q values stay fixed, so one observed qubit is not a universal mechanism verdict or a variance estimate.
+
+Three independent implementations are now authorized after before-code hypotheses, pseudocode, self-critique and falsifiers:
+
+- **A067:** choose reconstruction paths by distinct contacts per added site, looking beyond the nearest contact layer. It keeps the same evolving A state and strict-Q admission. A tiny distinguishing fixture leads directly to a complete screen with fresh inputs, every A066 regression anchor and both A065/A066 controls. Isolated small gains with persistent gaps and cost do not justify another repair chain.
+- **B030:** allow temporary disconnected owner sets and move several owners' contact-bearing patches before reconnecting, with actual hardware-distance debt and real merge costs. Earlier fragmentation failures remain explicit. A connectivity-preserving ablation tests whether reconnection yields compact complete minors rather than expensive fragments.
+- **C018:** release a whole connected chain and regrow it at a root anywhere on Z12. An otherwise identical old-territory-root ablation tests the access restriction seen in earlier local growth. The representation and contact relaxation are reused ideas, not claimed new. First-valid quality is a primary test.
+
+B's first contact-only draft was withdrawn when it duplicated earlier B failures. Both replacements reconcile prior C/B experiments before implementation. Each stays one evolving state; no outputs are combined, and no MM/busclique call, canned embedding or global IP is allowed. Focused checks reuse the original validator and dependency guard. Complete screens preserve every failure and cold cost, with same-host paired comparisons and two seeds for B/C.
+
+[Transfer004](transfer_cycle_004_input_results.md) supplies eight fresh development structures, two types of hidden-witness controls and a new relabel. No candidate has used them yet. No untouched confirmation set is claimed. Extensive reproducibility work and class-level promotion remain contingent on promising complete results.

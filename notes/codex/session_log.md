@@ -2271,3 +2271,14 @@ C017 is terminal and fetched once. Six timely workers total 59.00 seconds proces
 Root read the corrected passive reader, exact three-hunk diff, typed digest receipts, retrieval checker and both decision notes; verified 278 completion bindings and 15 corrected-reader inputs. The first reader failed on integer-key JSON digest ordering and remains preserved. Correction restores only three schema-defined integer-key fields; no worker/model/input changed, and no solve was repeated. Corrected audit passes with two independently validated partial witnesses.
 
 A transfer status003 confirms actual controller/tmux live and 48/68 finalized; no restart or partial quality analysis. A agent prepares a substantial incremental design; B/C agents prepare distinct architecture replacements, with concise before-code hypotheses and complete-constructor continuation criteria. No new implementation or constructor run yet. A061 remains retained; all regressions and unknown across-seed variance remain explicit.
+
+
+## 2026-09-10 03:06 UTC — bounded cycle complete; three implementations authorized
+
+A066 remaining transfer finished68/68 on06. Terminal status007 confirms controller complete, tmux absent, free lock and supervisor0; fetched once. Original audit first PASS2.165process/296bindings; passive reader first PASS2.813process/71bindings, root verified. A066/A065/A06117/17; MM16/17 plus K100 timeout. Seven Q gains and three +1Q losses against A065 reject the fixed policy. Wheel pair/ordinary interaction differs from ER/SBM's matching scalar prefixes and missing late ordinary admissions. No universal pair veto or early stopping claim.
+
+Root reviewed the passive report, approved two explicit inner-time count fields, then agent ran it once: PASS0.426process,113calls/24canonicalstructures,12inputs verified. Combined A066/A0655MMwins18losses1unpaired; retainedA0614wins19losses1unpaired in this separate development scope. MM Q stays identical on15 earlier sharedinputs; unchanged timedA065 varies onER160/regular160/SBM160. Both cohorts and all regressions preserved.
+
+Transfer004 generated eight fresh96-node structures and one BA relabel once, with private controls and27oldcopies. Generation10.268s, independentinputreview4.698s;605bindings verified, no embedder calls. Panel36encodings/33structures, no confirmation claim.
+
+Root reviewed A067's before-code coverage rule, B030's revised fragmentation design/exact contract, and C018's whole-territory design/exact regrowth contract. All include self-critique and a direct complete-screen falsifier. B's duplicated contact draft withdrawn and saved; B/C reconcile earlier failed representations explicitly. Authorized three isolated implementations and focused risk checks; no shared infrastructure mutation or remote screen before source review. A067 proposed60calls, B03048 withtwo seeds, C01840 withtwo seeds. Root owns registry/freeze/launch. All prior remote work is terminal; no successor promoted.
