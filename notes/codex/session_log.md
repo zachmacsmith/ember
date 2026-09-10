@@ -2294,3 +2294,6 @@ Root reviewed A067's before-code coverage rule, B030's revised fragmentation des
 
 
 C018 count clarification:93–148 saved incumbent events include the first-valid event, so each call makes92–147 strict-Q improvements. This corrects the descriptive count above; original event evidence is unchanged. The bounded geometry supplement finds1,044,785 identical old-root publications, which remain charged work but are not genuine geometry changes;1,367 quality-phase valid equal-Q changed proposals in the full arm are rejected by strict-Q acceptance. The fixed policy remains rejected, with both proposal and acceptance deficits; no counterfactual success claim.
+
+
+2026-09-10 04:10 UTC — Root reviewed C's full result/decision notes, both saved-scalar projection sources/diff and29 bindings; preserved first notes and clarified timeout counterfactual limits with32 verified bindings, no new execution. C fixed policy rejected; nonlocal completion capability retained as research evidence only. A status00549/60 reported success, B status00442/48 (22success/20failure), both still running. All passive readers are reviewed/bound; A/B require terminal fetch and first common/passive invocation. No new refinement until combined evidence. Goal recheckedactive; no status mutation. C notes committedfdc7d349/210ae192.
