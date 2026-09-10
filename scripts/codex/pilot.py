@@ -34,6 +34,10 @@ ROOT = Path(__file__).resolve().parents[2]
 # Existing native CONFIGS and dispatch remain unchanged. These modules receive
 # only the supplied graphs and one common absolute deadline, never an embedding.
 CONSTRUCTORS = {
+    'strip-transport': ('packages/ember-qc/src/ember_qc/algorithms/factored/strip_transport_construction.py',
+                        'strip_embed'),
+    'ordinary-strip-insertion': ('packages/ember-qc/src/ember_qc/algorithms/factored/strip_transport_construction.py',
+                                 'ordinary_embed'),
     'native-contact-footprint': ('packages/ember-qc/src/ember_qc/algorithms/factored/contact_footprint_construction.py',
                                   'contact_footprint_embed'),
     'native-inactive-booking': ('packages/ember-qc/src/ember_qc/algorithms/factored/contact_footprint_construction.py',
