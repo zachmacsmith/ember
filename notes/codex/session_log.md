@@ -2214,3 +2214,12 @@ A065's36-call screen completed on06; fetched once after quiescence,311 verified 
 Root froze unchangedA065 on the exact15-encoding remainingTransfer001 complement,60calls A065/A064/A061/MM,06samehost; stage/start once, source snapshot5d20423663adaebf2692e484e25165b335b0ef814a28e103ed15ed8a999b9718. Readers prepared by explicit identity/cardinality/scope adaptation and unexecuted. No further ranking refinement.
 
 B028 diagnostic outcome and Transfer003 reviewed generation are documented. B029 isolated implementation approved for source review with specific risk clarifications; no execution authorized before that review. C015 passive reader preparation runs independently. A061 remains retained, all historical regressions and class gaps preserved, goal active/unmet.
+
+
+## 2026-09-10 00:35 UTC — base confounding resolved; C015 rejected
+
+A065 passive recovery passed once:18 valid reconstructed entries,9 identical ordered paired bases,9 complete A064 prefixes of A065. Root read code/checks and verified35result/20nestedfreeze bindings. Additional gains are34Q onBA160,1onWS100,2onSBM100; the other6 final ordered maps are identical. The old constructor result note stays frozen; findings are a separate addendum.
+
+C015 completed24/24 on03; root observed terminal controller/missingtmux/freelock/supervisor0 then fetched once,253files, artifact9e0bbdfad75ed5b4fb80e2a722839c430197caa9b5493c17cdcc31f8d44be800. OriginalauditfirstPASS.456sprocess, passivereaderfirstPASS1.282s;29bindingsreverified. C0150/8FAILURE, A061/MM8/8SUCCESS. Every C call reaches59.50ssearchdeadline, total476.045solverwall/476.008CPU/480.161processwall. No validACL exists forC. All savedpartialminor/capacitychecks pass. Fixedpolicyrejected and all oldsuccessregressions preserved. Passive causalreview will quantify proactive rebuilds rather than add another routing repair.
+
+B0293productionfiles and3diagnostichelpers reviewed; focusedchecks authorized once afterfreeze. Agentinterruption detected via liveteamstate and resumed without restartingwork. No B029constructoror genuine route launched. A065remaining60callrun confirmedlive on06 at21finalized, norestart orpartialqualityanalysis. Goalremainsactive/unmet; priorgoalworkisprogress.
