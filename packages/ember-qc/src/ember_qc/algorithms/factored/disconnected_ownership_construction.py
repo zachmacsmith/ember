@@ -31,6 +31,10 @@ def _uniform(values, draw):
     return values[min(len(values)-1, int(draw * len(values)))] if len(values) else None
 
 
+class _InputError(ValueError):
+    """A declared caller-input failure, separate from a search implementation error."""
+
+
 class _State:
     def __init__(self, chains, labels, components, debts, missing, distances):
         self.chains, self.labels = chains, labels
@@ -48,10 +52,13 @@ class _Engine:
         self.state, self.cert_graphs = None, None
         self.rng = Random(seed)
         with meter.phase('normalization'):
-            original = support._adjacency(source, meter)
-            self.H = support._adjacency(target, meter)
+            try:
+                original = support._adjacency(source, meter)
+                self.H = support._adjacency(target, meter)
+            except ValueError as exc:
+                raise _InputError(str(exc)) from exc
             if set(self.H) != set(range(4800)):
-                raise ValueError('B030 requires original linear ideal-Z12 target IDs')
+                raise _InputError('B030 requires original linear ideal-Z12 target IDs')
             self.vlabels = tuple(original)
             vindex = {v: i for i, v in enumerate(self.vlabels)}
             self.G = tuple(frozenset(vindex[v] for v in original[u]) for u in self.vlabels)
@@ -242,7 +249,7 @@ class _Engine:
                     if r not in seen:
                         seen.add(r); queue.append(r)
             if len(order) != self.n:
-                raise ValueError('target component too small')
+                raise _InputError('target component too small')
             self.state = self.prepare({u: frozenset([int(q)]) for u, q in zip(self.order, order)})
             self.initial = self.snapshot()
             self.initial['target_root'] = root
@@ -462,18 +469,18 @@ def ownership_embed(source, target, *, timeout=60., deadline=None, seed=0, conne
     support = meter = engine = None
     absolute = began
     info = dict(algorithm='disconnected-ownership', version='B030', seed=seed,
-                connected_only=connected_only, error=None, stopped_by=None,
+                connected_only=connected_only, error=None, fatal=False, stopped_by=None,
                 work_limit=None, sweep_limit=None, query_limit=None, trace_limit=16)
     output, status = {}, 'FAILURE'
     try:
         if type(timeout) not in (float, int) or not isfinite(timeout) or timeout <= 0:
-            raise ValueError('positive finite timeout required')
+            raise _InputError('positive finite timeout required')
         if type(seed) is not int or type(connected_only) is not bool:
-            raise ValueError('integer seed and boolean ablation required')
+            raise _InputError('integer seed and boolean ablation required')
         absolute = began+timeout
         if deadline is not None:
             if type(deadline) not in (float, int) or not isfinite(deadline):
-                raise ValueError('finite absolute deadline required')
+                raise _InputError('finite absolute deadline required')
             absolute = min(absolute, deadline)
         support = _load('support', Path(__file__).with_name('compiled_mobile_tree_construction.py'))
         imported = perf_counter()
@@ -488,21 +495,23 @@ def ownership_embed(source, target, *, timeout=60., deadline=None, seed=0, conne
     except Exception as exc:
         if support is not None and isinstance(exc, support._Stop):
             info.update(stopped_by='search_deadline', interrupted_stage=str(exc))
+        elif isinstance(exc, _InputError):
+            info.update(stopped_by='input_error', error=repr(exc))
         else:
-            info.update(stopped_by='error', error=repr(exc))
+            info.update(stopped_by='error', error=repr(exc), fatal=True)
     if meter is not None:
         meter.deadline = absolute
         # Preserve already-observed failure evidence even if finalization is late.
         # This is reporting only; no new search or certificate is attempted here.
-        if engine is not None:
-            info.update(initial=engine.initial, final=engine.snapshot(), first_valid=engine.first_valid,
-                        quality_progress=engine.events, stats=dict(engine.stats), receipts=engine.receipts,
-                        sweeps=engine.sweeps, traces=engine.traces, last_trace=engine.last_trace,
-                        detailed_traces_omitted=max(0, len(engine.receipts)-16),
-                        initialization_order=[engine.vlabels[u] for u in engine.order],
-                        private_final=engine.mapping(engine.state) if engine.state is not None else None,
-                        distance_cache_entries=len(engine.arrays.fields))
         try:
+            if engine is not None:
+                info.update(initial=engine.initial, final=engine.snapshot(), first_valid=engine.first_valid,
+                            quality_progress=engine.events, stats=dict(engine.stats), receipts=engine.receipts,
+                            sweeps=engine.sweeps, traces=engine.traces, last_trace=engine.last_trace,
+                            detailed_traces_omitted=max(0, len(engine.receipts)-16),
+                            initialization_order=[engine.vlabels[u] for u in engine.order],
+                            private_final=engine.mapping(engine.state) if engine.state is not None else None,
+                            distance_cache_entries=len(engine.arrays.fields))
             with meter.phase('finalization'):
                 if engine is not None:
                     if info['error'] is None and engine.incumbent is not None:
@@ -515,17 +524,22 @@ def ownership_embed(source, target, *, timeout=60., deadline=None, seed=0, conne
                 info['finalization_stop'] = str(exc)
             else:
                 info['finalization_error'] = repr(exc)
+                info['fatal'] = True
         meter.switch('administration')
         info.update(work=meter.total, stage_wall=dict(meter.seconds), stage_units=dict(meter.units),
                     operation_counts=dict(meter.kinds))
     returned = perf_counter()
     if returned >= absolute:
         status, output = 'TIMEOUT', {}
-    if info['error'] is not None:
-        output = {}; status = 'FAILURE' if returned < absolute else 'TIMEOUT'
+    if info['stopped_by'] == 'input_error':
+        output, status = {}, 'FAILURE'
+    if info['fatal']:
+        output, status = {}, 'ERROR'
     info.update(returned=returned, wall=returned-began, cpu=process_time()-cpu_began,
                 deadline=absolute, deadline_overrun=max(0., returned-absolute))
-    return dict(status=status, embedding=output if status == 'SUCCESS' else {}, diag=info)
+    return dict(status=status, embedding=output if status == 'SUCCESS' else {}, diag=info,
+                fatal=info['fatal'],
+                error=(info['error'] or info.get('finalization_error')) if info['fatal'] else None)
 
 
 def connected_embed(source, target, *, timeout=60., deadline=None, seed=0):
