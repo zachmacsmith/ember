@@ -34,6 +34,10 @@ ROOT = Path(__file__).resolve().parents[2]
 # Existing native CONFIGS and dispatch remain unchanged. These modules receive
 # only the supplied graphs and one common absolute deadline, never an embedding.
 CONSTRUCTORS = {
+    'native-paired-boundary': ('packages/ember-qc/src/ember_qc/algorithms/factored/paired_boundary_construction.py',
+                               'paired_boundary_embed'),
+    'native-pruned-boundary': ('packages/ember-qc/src/ember_qc/algorithms/factored/paired_boundary_construction.py',
+                               'pruned_boundary_embed'),
     'union-cost-mobile-tree': ('packages/ember-qc/src/ember_qc/algorithms/factored/union_cost_mobile_tree_construction.py',
                                'contact_embed'),
     'union-cost-fixed-anchor': ('packages/ember-qc/src/ember_qc/algorithms/factored/union_cost_mobile_tree_construction.py',
