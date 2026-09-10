@@ -1,0 +1,13 @@
+# C016 passive analysis preparation
+
+2026-09-10 UTC. **Prepared, not executed.** Root owns the common original-label audit and cluster lifecycle. This adapter reads saved records only, imports no candidate, and makes no constructor call. Its screen/freeze/manifest/snapshot and common-adapter identities remain external, using C015's unchanged `identity.json` schema and required command-line SHA256.
+
+`results/codex/c016-transfer-analysis/analyze.py` starts from the reviewed C015 reader (`9c24b244...`). Identity changes are C016 diagnostic/helper-module names, method `admissible-contact-domain`, algorithm `admissible_contact_domain`, and an additional pinned source requirement for `zephyr_admissible_contact.py`. C015/C014/C013 source requirements remain intact. The exact diff is saved as `reader_diff.patch`.
+
+One added passive `publication_policy` projection aligns ordinary placement receipts, publication attempts and transactions. It verifies that a successful ordinary proposal has no intervening rebuild; a published ordinary result has exactly the saved proposal's Q and score; and every recorded rebuild follows an explicitly completed ordinary failure. Interruptions and errors cannot trigger a transaction or publish a partial result. A terminal ordinary stage may expire before recording a placement; a successful ordinary proposal may also expire before publication. Both remain incomplete records, without inferred success. Counts distinguish successful ordinary births with newly empty domains, their actual publications, unpublished proposals and failed-birth transactions.
+
+Everything else remains the existing reader: eight input IDs and 24 task identities; original-audit final credit and all-method costs; generated/started/completed root distinctions; completed policy failure versus interruption; first-admissible stopping; nested placement/stage timing; quota and retraction ledgers; and independent original-oracle validation of saved partial states. It never reads an MM embedding. Historical intermediate embeddings are not replayed, and partial Q is not final ACL.
+
+Self-review: receipt consistency can establish that the changed publication policy ran, but cannot establish why later feasibility or quality improved. Missing terminal records must not become false failures or successes. The complete constructor and paired class-level outcomes remain the decision evidence.
+
+Source SHA256: `b55170c7d818136b0f1477a4ae1700aa376a246a789cb12dd8a6fc67393f5a73`. `preparation001.json` SHA256: `fd7cd321d7ffd4ea37fc902ae3b23d3fbf89a050db153420601f245bad3ea851`; it binds six files. Syntax was AST-parsed only, without imports or reader execution. No shared validator or correctness infrastructure changed.

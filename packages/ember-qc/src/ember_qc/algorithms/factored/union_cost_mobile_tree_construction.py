@@ -837,3 +837,9 @@ def contact_embed(source, target, *, timeout=60.0, deadline=None, seed=0, refine
     info.update(returned=returned, wall=returned - began, deadline=absolute,
                 deadline_overrun=max(0.0, returned - absolute))
     return dict(status=status, embedding=output if status == 'SUCCESS' else {}, diag=info)
+
+
+def fixed_anchor_embed(source, target, *, timeout=60.0, deadline=None, seed=0):
+    """B029 ablation: same constructor and evaluator, without root movement."""
+    return contact_embed(source, target, timeout=timeout, deadline=deadline,
+                         seed=seed, refine_roots=False)

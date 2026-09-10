@@ -34,6 +34,12 @@ ROOT = Path(__file__).resolve().parents[2]
 # Existing native CONFIGS and dispatch remain unchanged. These modules receive
 # only the supplied graphs and one common absolute deadline, never an embedding.
 CONSTRUCTORS = {
+    'union-cost-mobile-tree': ('packages/ember-qc/src/ember_qc/algorithms/factored/union_cost_mobile_tree_construction.py',
+                               'contact_embed'),
+    'union-cost-fixed-anchor': ('packages/ember-qc/src/ember_qc/algorithms/factored/union_cost_mobile_tree_construction.py',
+                                'fixed_anchor_embed'),
+    'admissible-contact-domain': ('packages/ember-qc/src/ember_qc/algorithms/zephyr_admissible_contact.py',
+                                  'admissible_contact_embed'),
     'constrained-contact-domain': ('packages/ember-qc/src/ember_qc/algorithms/zephyr_constrained_contact.py',
                                    'constrained_contact_embed'),
     'native-compiled-boundary': ('packages/ember-qc/src/ember_qc/algorithms/factored/compiled_boundary_construction.py',
