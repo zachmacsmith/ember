@@ -1,6 +1,6 @@
 # Current research checkpoint
 
-Updated 2026-09-10 03:06 UTC. Branch **codex**; goal **active and unmet**. Work is progress. The user-requested logout succeeded; subsequent explicit continuation resumed research. Research does not alter authentication. User prompts are appended to `PROMPTS_CODEX.md`.
+Updated 2026-09-10 03:38 UTC. Branch **codex**; goal **active and unmet**. Work is progress. The user-requested logout succeeded; subsequent explicit continuation resumed research. Research does not alter authentication. User prompts are appended to `PROMPTS_CODEX.md`.
 
 ## Retained algorithm and constraints
 
@@ -9,6 +9,19 @@ Updated 2026-09-10 03:06 UTC. Branch **codex**; goal **active and unmet**. Work 
 Keep ideal Z12; no MM or busclique candidate dependencies, initialization or fallback; general source-graph heuristics; original independent validation; complete cold/failure timing. Quality comes first with roughly MM's runtime order, without a universal 3× gate. Tiny exact solves are optional diagnostics, not a global constructor. Zephyr geometry and coordinated operators in one evolving state are allowed. Saved MM maps inform offline diagnosis only.
 
 Latest steering: keep one incremental track and allow two architecture replacements. Before implementation, name the substantial shared deficit, hypothesis, pseudocode, self-critique, cheap falsifier and complete-constructor continuation result. Distinguish representation, neighborhood, acceptance and computational cost. Use time to validity and incumbent-ACL trajectories. Preserve every regression without treating one seed as a universal mechanism veto. Intermediate improvements alone do not sustain a repair sequence.
+
+## Active complete-constructor screens
+
+[Fixed protocol](three_track_constructor_screens_2026_09_10.md): A067 and C018 source review, focused checks and frozen input/source proofs pass. Both screens started once under detached supervision; start receipts show tmux running. B030 first implementation/check is preserved in git997bc7d1; a narrow fatal-error accounting correction is undergoing its one added check before its48-call freeze. No policy result is yet inferred.
+
+| Track | Host / run | Frozen calls | Evidence |
+| --- | --- | --- | --- |
+| A067 | hyde06 / `067-contact-coverage-transfer` |60;12 encodings;seed0;five arms | `results/codex/a067-transfer` |
+| C018 | hyde03 / `c018-territory-relocation-transfer` |40;five encodings;seeds0/1;four arms | `results/codex/c018-territories` |
+
+A source `d9c86d0f02d3e0a18490acb7590bc900c2b44737a4d1376e0b03c1ff54c43492`, manifest `cc23d455f3c7c036afcec55a66d9f8869f5b0b67b2982ab7b0050bfcd03f8c88`. C source `1b123236393082641750d6f8e28fa83a182c4de96f64f840e1d8a837b652aa6e`, manifest `f8d41179ed29eff5b2f351ac5a169982ce59e4df766dc2ab4bac9e02d1ab3da0`. Their source snapshots differ only in the unrelated B030 error-accounting code, which neither A/C imports. Each snapshot is internally byte-verified. Start load averages are101.29 on06 (128 logical CPUs) and4.70 on03; these are paired exploratory timing measurements, not exclusive-host timing.
+
+Root reviewed the original analyzer and an isolated seed-dimension extension for B/C, SHA `a4c16e83ff90210d5ac9454010723ce0f6301c05fd4fef3eaa92c276855f7540`. Only paths, seed keys/counts/loops and scope wording change; oracle/credit/error/time rules remain unchanged. All three agents prepare passive receipt readers; root owns analysis execution and cluster lifecycle. First C source/check preserved in0011136c; narrow runtime-error correction in1e1bb52e. Both prior four-case and new one-case checks pass. No development constructor was used for those checks.
 
 ## Completed evidence and current allocation
 
@@ -32,10 +45,10 @@ Root has reviewed [C018](tracks/c_018_contact_relaxed_territories_design.md) and
 
 ## Inputs, interpretation and operations
 
-[Transfer004 is ready](transfer_cycle_004_input_results.md): eight fresh 96-node structures and one BA relabel, plus 27 byte-identical old encodings; 36 encodings / 33 structures. Generation and original-label validation pass once. Root verified605 bindings. Panel SHA `b54a8ed0af8e35b3901630fddd2892e3735338ad29104913d3332df49eed250d`. No candidate has used the new inputs; witnesses stay evaluator-private. This is development data; **no untouched confirmation set exists yet**. Freeze small subsets separately. Two seeds provide only initial variability evidence; relabels are not independent structures.
+[Transfer004 is ready](transfer_cycle_004_input_results.md): eight fresh 96-node structures and one BA relabel, plus 27 byte-identical old encodings; 36 encodings / 33 structures. Generation and original-label validation pass once. Root verified605 bindings. Panel SHA `b54a8ed0af8e35b3901630fddd2892e3735338ad29104913d3332df49eed250d`. New A/C screens have now begun using subsets; witnesses stay evaluator-private. This is development data; **no untouched confirmation set exists yet**. Freeze small subsets separately. Two seeds provide only initial variability evidence; relabels are not independent structures.
 
 The [pinned MM review](stock_mm_capabilities_review.md) establishes whole-target root search, shared connecting branches, movable contact boundaries and working-state moves that need not improve the saved incumbent. [Saved maps](tracks/c_a061_static_map_results.md) show that low-degree owners explain much of the grid/honeycomb/wheel excess, while BA benefits from branching. [Core/lifted attribution](strategic_fill_diagnosis_results.md) rules out treating every gap as a lifting issue. Spatial compatibility of contact positions is a shared hypothesis, not an established universal cause or novelty claim.
 
-Reuse the audited harness and [allocation audit](strategic_allocation_review.md). [Historical censoring review](a064_a065_censoring_impact.md) found no affected classifications in79 completed A064/A065 calls; the latent reader defect is corrected only in the new adapter. [RSS scope](measurement_rss_scope_diagnostic.md) prevents algorithm-specific claims from inherited peaks. All cluster experiments are currently terminal; new remote work awaits reviewed sources and frozen screens. Detached supervision survives network changes; an observation timeout never permits restart. Protected `.verified.json` and `.claude/` remain untouched.
+Reuse the audited harness and [allocation audit](strategic_allocation_review.md). [Historical censoring review](a064_a065_censoring_impact.md) found no affected classifications in79 completed A064/A065 calls; the latent reader defect is corrected only in the new adapter. [RSS scope](measurement_rss_scope_diagnostic.md) prevents algorithm-specific claims from inherited peaks. All earlier cluster experiments are terminal; current A067/C018 screens are running as recorded above. Detached supervision survives network changes; an observation timeout never permits restart. Protected `.verified.json` and `.claude/` remain untouched.
 
 [Current compact milestone](mechanism_decision_2026_09_10_0305.md) records the completed-cycle decision and all three authorized implementations.
