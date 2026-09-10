@@ -2262,3 +2262,12 @@ Root froze/staged/startedunchangedA06617additionalencodings68calls06 once,contro
 A066 initial trajectory projection firstPASS27calls186admissions; rootreviewedsource/eightbindings. EventualfinalQ8.181–17.217s;428.544/449.048stage seconds followlastgain. Unknowninternalfirstvalidity/untestedearlystopremainexplicit. B029complete/causalnotesrootreviewed, includingallsevennativevalidity/qualitytrajectories andfixedarchitecture rejection. NewcompactmilestoneseparatesA066familygapsfromretainedA061fullclasstable.
 
 C017 inputserializationfirstPASS73bindingsrootreviewed. Three tinygroups/eightmodes/sixsolvesPASS,13bindings. Rootreviewedfullmodel/worker/runner/adapters and03environmentterminalPASS; no MM/busclique/ember_qcdependency. Exactlysixbounded60scoldworkers nowauthorizedafterfinalfreeze/preflight, agentc016_constructorownslifecycle.03selectedafterread-only04/05nomuxprobes; neitherfailedhosthadremoteenvironmentmutation. No Cconstructorfollowon.
+
+
+## 2026-09-10 02:38 UTC — finish C017; allocate architecture review
+
+C017 is terminal and fetched once. Six timely workers total 59.00 seconds process wall time; ER100 has two valid, quota-safe partial alternatives, ER80 and BA100 are infeasible in both fixed neighborhoods. The frozen ER-and-BA support condition fails. Stop this diagnostic primitive and the C016 repair sequence. No complete-constructor improvement or replacement algorithm is credited.
+
+Root read the corrected passive reader, exact three-hunk diff, typed digest receipts, retrieval checker and both decision notes; verified 278 completion bindings and 15 corrected-reader inputs. The first reader failed on integer-key JSON digest ordering and remains preserved. Correction restores only three schema-defined integer-key fields; no worker/model/input changed, and no solve was repeated. Corrected audit passes with two independently validated partial witnesses.
+
+A transfer status003 confirms actual controller/tmux live and 48/68 finalized; no restart or partial quality analysis. A agent prepares a substantial incremental design; B/C agents prepare distinct architecture replacements, with concise before-code hypotheses and complete-constructor continuation criteria. No new implementation or constructor run yet. A061 remains retained; all regressions and unknown across-seed variance remain explicit.

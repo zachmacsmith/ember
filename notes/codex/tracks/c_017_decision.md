@@ -1,0 +1,15 @@
+# C017 mechanism decision
+
+2026-09-10 UTC. **The recorded quota blockers are not a sufficient common repair set. Retire this fixed local primitive and finish the C016 repair sequence.** The existing C016 rejection, its three poor-quality successful embeddings, and all C014/C015 regressions remain in force.
+
+The completed experiment separates the proposed explanations:
+
+- **Realized search omission is established on ER100.** Repositioning the failed owner and two recorded blockers admits a quota-safe partial minor within every reference length bound. This does not identify one missing operator uniquely: a different earlier chain/contact ordering might also reach it. The result gives no evidence that a practical heuristic would find that alternative quickly or complete the source.
+- **Final quotas do not explain the two negative cases.** ER80 and BA100 are infeasible even in the identical quota-relaxed models. For BA100, fixed outside contacts and the failed owner's length bound already produce an empty sound domain. ER80 has nonempty individual domains but no jointly feasible assignment in the tested owner/length neighborhood. Those outcomes reject this bounded repair assumption; they do not establish global source infeasibility or distinguish which additional outside chain or length change would be sufficient.
+- **Computation did not obscure the decision.** Every worker resolved before its allowance. More time on these same models cannot create a feasible assignment in ER80 or BA100. The ER100 exact solves consumed 17–24 s without constructing a complete embedding, so they provide no case for installing this instrument as a frequent production operation.
+
+The plausible shared structural deficit is premature commitment of contact positions and chain geometry beyond the small recorded blocker set. C016's quota counts describe available adjacent sites but do not preserve the spatial compatibility of later source contacts. This packet supports that limitation of the fixed neighborhood, especially the BA contact-domain obstruction; it does **not** prove that all quota-based representations fail or isolate one universally effective replacement.
+
+Do not enlarge this diagnostic until it succeeds, drop quotas from C016, or substitute another local solver. Any future C-track replacement belongs to the broader strategic review and must connect source-contact placement, relocation of earlier chains, and chain shortening in a coherent state. It must promptly earn complete-constructor evidence on diverse and fresh development inputs, including time to first validity and incumbent ACL trajectories. The present single-instance partial witness supplies neither a constructor design decision nor permission for another local-repair sequence.
+
+The best retained algorithm's per-class record is unchanged. C017 contributes one bounded causal result, no new algorithm, no MM-comparison row and no improvement toward the class-level objective. See [all six outcomes](c_017_results.md) and the preserved [C016 decision](c_016_causal_decision.md).
