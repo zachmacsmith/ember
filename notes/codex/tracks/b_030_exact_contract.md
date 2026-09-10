@@ -117,7 +117,10 @@ affected cache is invalidated. Search stops at the caller deadline minus
 There is no per-query clock, work cap or time extension. If M=0 and every owner
 is connected, certify using the existing validator before adding a strictly
 lower-Q valid incumbent; equal-Q states do not replace it. Record first-valid
-time and every incumbent Q/ACL change. Finalization and final validation must
+time and every incumbent Q/ACL change. Implementation clarification before checks:
+stop immediately when a certified incumbent has Q=n, the exact minimum for
+nonempty disjoint owners; this is a mathematical optimum, not a work cap.
+Finalization and final validation must
 finish before the original deadline; late output receives no success credit.
 Without a timely valid incumbent return no embedding, retaining the actual
 stop reason, all partial-state defects and complete failure/time accounting.
