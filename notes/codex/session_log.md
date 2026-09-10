@@ -2203,3 +2203,14 @@ exact tmux/processes observed live. It owns monitoring and terminal inventory/
 fetch. No constructor was rerun and no failed policy was revived. Measurements
 will distinguish root surrogate, actual priced occupancy and contact-neighborhood
 constraints, charging every failed/censored query.
+
+
+## 2026-09-10 00:24 UTC — complete screens and mechanism decisions
+
+Previous goal work is progress. Saved the latest logout and automatic continuation prompts; logout succeeded, research resumed only after explicit continuation, no research authentication changes. Rechecked codex branch and current sources. Root verified all25 C015 preparation bindings, registered its descriptor only, froze24 C015/A061/MM calls and staged/started once on03. Original39 registry entries and all other pilotAST unchanged. Actual tmux/controller handles confirmed live.
+
+A065's36-call screen completed on06; fetched once after quiescence,311 verified files, digest9b97096fc9d4f0e10826c9e7e97668574adeb573ad6832c1ff67cd7a8b83ccf1. Original audit and passive reader pass first attempts; root verified34bindings.9/9 A065 successes,3Q gains overA064 onBA160/freshWS/freshSBM,6ties;1MMwin7losses on common successes. Full cold time stays about59s each. Non-improving reconstruction now86.6%stage; no epoch exhausted. Per-input quality/variance and complete timing projections saved. Base-map recovery is a separate bounded passive diagnostic, with source review pending.
+
+Root froze unchangedA065 on the exact15-encoding remainingTransfer001 complement,60calls A065/A064/A061/MM,06samehost; stage/start once, source snapshot5d20423663adaebf2692e484e25165b335b0ef814a28e103ed15ed8a999b9718. Readers prepared by explicit identity/cardinality/scope adaptation and unexecuted. No further ranking refinement.
+
+B028 diagnostic outcome and Transfer003 reviewed generation are documented. B029 isolated implementation approved for source review with specific risk clarifications; no execution authorized before that review. C015 passive reader preparation runs independently. A061 remains retained, all historical regressions and class gaps preserved, goal active/unmet.

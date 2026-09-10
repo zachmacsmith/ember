@@ -11,7 +11,8 @@ import types
 
 ROOT=Path(__file__).resolve().parents[2]
 PILOT=ROOT/'scripts/codex/pilot.py'
-ALLOWED_NEW={'native-interleaved-boundary','compiled-mobile-tree','contact-domain','capacity-contact-domain'}
+ALLOWED_NEW={'native-interleaved-boundary','compiled-mobile-tree','contact-domain','capacity-contact-domain',
+             'native-compiled-boundary','constrained-contact-domain'}
 
 
 def sha(path):return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -90,7 +91,8 @@ def main(spec_path):
     pilot.write_json(run/'manifest.json',manifest)
     for path in run.rglob('*'):
         assert not path.is_symlink() and 'ember-evaluator-private' not in str(path)
-        assert path.name not in ('transfer_panel.py','transfer_panel002.py','transfer_verify002.py')
+        assert path.name not in ('transfer_panel.py','transfer_panel002.py','transfer_verify002.py',
+                                 'transfer_panel003.py','transfer_verify003.py')
     result=dict(status='FROZEN',run=str(run),tasks=len(expected),source_snapshot=manifest['source_snapshot'],
                 manifest_sha256=sha(run/'manifest.json'),ordered_tasks_sha256=digest(expected),**authority)
     (out/'freeze_result.json').write_text(json.dumps(result,indent=2,sort_keys=True)+'\n')

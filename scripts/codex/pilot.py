@@ -34,6 +34,10 @@ ROOT = Path(__file__).resolve().parents[2]
 # Existing native CONFIGS and dispatch remain unchanged. These modules receive
 # only the supplied graphs and one common absolute deadline, never an embedding.
 CONSTRUCTORS = {
+    'constrained-contact-domain': ('packages/ember-qc/src/ember_qc/algorithms/zephyr_constrained_contact.py',
+                                   'constrained_contact_embed'),
+    'native-compiled-boundary': ('packages/ember-qc/src/ember_qc/algorithms/factored/compiled_boundary_construction.py',
+                                  'compiled_boundary_embed'),
     'capacity-contact-domain': ('packages/ember-qc/src/ember_qc/algorithms/zephyr_capacity_contact.py',
                                  'capacity_contact_embed'),
     'native-interleaved-boundary': ('packages/ember-qc/src/ember_qc/algorithms/factored/interleaved_boundary_construction.py',
