@@ -34,6 +34,14 @@ ROOT = Path(__file__).resolve().parents[2]
 # Existing native CONFIGS and dispatch remain unchanged. These modules receive
 # only the supplied graphs and one common absolute deadline, never an embedding.
 CONSTRUCTORS = {
+    'native-contact-footprint': ('packages/ember-qc/src/ember_qc/algorithms/factored/contact_footprint_construction.py',
+                                  'contact_footprint_embed'),
+    'native-inactive-booking': ('packages/ember-qc/src/ember_qc/algorithms/factored/contact_footprint_construction.py',
+                                 'inactive_booking_embed'),
+    'joint-star-construction': ('packages/ember-qc/src/ember_qc/algorithms/joint_star_construction.py',
+                                 'joint_star_construction_embed'),
+    'cardinality-star-construction': ('packages/ember-qc/src/ember_qc/algorithms/joint_star_construction.py',
+                                       'cardinality_star_construction_embed'),
     'native-contact-coverage': ('packages/ember-qc/src/ember_qc/algorithms/factored/contact_coverage_construction.py',
                                 'contact_coverage_embed'),
     'disconnected-ownership': ('packages/ember-qc/src/ember_qc/algorithms/factored/disconnected_ownership_construction.py',

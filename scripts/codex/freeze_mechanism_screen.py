@@ -11,7 +11,8 @@ import types
 
 ROOT=Path(__file__).resolve().parents[2]
 PILOT=ROOT/'scripts/codex/pilot.py'
-ALLOWED_NEW={'native-interleaved-boundary','compiled-mobile-tree','contact-domain','capacity-contact-domain',
+ALLOWED_NEW={'native-contact-footprint','native-inactive-booking','joint-star-construction','cardinality-star-construction',
+             'native-interleaved-boundary','compiled-mobile-tree','contact-domain','capacity-contact-domain',
              'native-compiled-boundary','constrained-contact-domain','admissible-contact-domain',
              'union-cost-mobile-tree','union-cost-fixed-anchor',
              'native-paired-boundary','native-pruned-boundary','native-contact-coverage',
