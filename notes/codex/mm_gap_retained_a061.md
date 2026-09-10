@@ -54,3 +54,11 @@ mixed-size wins/losses beside its descriptive mean ACL. Do not pool it with the
 breadth cohort or the separate hyde02/03 controls. A063's small improvements do
 not replace A061 on selected rows. [The cycle decision](transfer_cycle_001_decision.md)
 keeps the full class objective and outstanding variance/runtime coverage visible.
+
+The [September 10 development supplement](mm_gap_development_20260910.md) adds
+the unchanged A061 controls from A067, B030 and C018. It preserves each host's
+cohort separately, including two-seed ACL means, sample variances and individual
+losses on the B/C subsets. Grid and hardware-derived controls remain persistent
+gaps; BA96 and SBM96 change winner across seeds. These limited observations do
+not fill the all-class variability gap or replace any earlier failure. No new
+candidate is promoted.
