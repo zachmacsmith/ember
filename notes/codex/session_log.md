@@ -2248,3 +2248,17 @@ A066source/test/root+peerreviewcomplete, fourtargetedgroupsfirstPASS14bindings. 
 Previous research turn is progress: independent historical impact check and corrected passive-reader review resolve accounting risks before terminal analysis. Root read all three targetedA066 reader groups and reverified21bindings; approved only after original audit. Historical check independently verifies102bindings/79completedcalls, no affected censoring classifications. Frozen running screens confirmed actual controller/tmuxlive: A06637/45on06, B02946/54on02; no restart/partialqualityanalysis.
 
 Root read C017 contract and authorized exact local-model implementation plus specific tiny checks, pending source/model review before six60s development workers. Fixed changed sets2/3/3 and matched length domains distinguish quota exclusion from missed joint moves; no global solver/constructor or indefinite neighborhood broadening. C016 stays rejected. Current goal and logout prompts appended; no authentication changes during research. Goalactive/unmet, A061retained.
+
+
+## 2026-09-10 02:12 UTC — complete A/B decisions and unchanged A transfer
+
+Previousgoalworkisprogress. A06645callscomplete,original/passiveauditsfirstPASS234/56bindings. Three distinctstructuregains andgridrelabel, noA065/pruningQregression, allnineMMlosses; sevenpairadmissions895attempts, 93.75%stageinnonimprovingordinaryreconstruction. B02954callscomplete,commonfirstPASS250bindings;3/9vsMM9/9, botholdsuccessesworsen. Originalreader18assertionfailurepreserved; reviewedonephasev2/tinyprojection10bindings/reverseAST, secondanalysisPASS59bindings. No candidate or validator rerun. A065/B028/etc historiesunchanged.
+
+Root froze/staged/startedunchangedA06617additionalencodings68calls06 once,controller1614766live; includesBA160/K100, noER100, noseedvariance. Bothreadersprepared, passive16bindings/eighthelpersreviewed. Latestusersteeringloggedandrelayed: Aincremental, B/Cmayreplacearchitectures; decisionsmustaddresssubstantialclassspanningdeficitsusingtime-to-validity/incumbentACLtrajectories. Finishunderwayworkfirst. C017exactmodel/worker/threegroupsrootreviewed,13freezeinputbindings; firsttinyPASS8modes6solves, developmentpacketstillunlaunchedpendinginput/runnerreview. NoglobalIP/MM/busclique/portfolio.
+
+
+## 2026-09-10 02:20 UTC — trajectory evidence and C017 launch authorization
+
+A066 initial trajectory projection firstPASS27calls186admissions; rootreviewedsource/eightbindings. EventualfinalQ8.181–17.217s;428.544/449.048stage seconds followlastgain. Unknowninternalfirstvalidity/untestedearlystopremainexplicit. B029complete/causalnotesrootreviewed, includingallsevennativevalidity/qualitytrajectories andfixedarchitecture rejection. NewcompactmilestoneseparatesA066familygapsfromretainedA061fullclasstable.
+
+C017 inputserializationfirstPASS73bindingsrootreviewed. Three tinygroups/eightmodes/sixsolvesPASS,13bindings. Rootreviewedfullmodel/worker/runner/adapters and03environmentterminalPASS; no MM/busclique/ember_qcdependency. Exactlysixbounded60scoldworkers nowauthorizedafterfinalfreeze/preflight, agentc016_constructorownslifecycle.03selectedafterread-only04/05nomuxprobes; neitherfailedhosthadremoteenvironmentmutation. No Cconstructorfollowon.

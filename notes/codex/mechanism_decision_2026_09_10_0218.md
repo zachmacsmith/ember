@@ -1,0 +1,27 @@
+# Research decision after the A066 and B029 complete screens
+
+2026-09-10 UTC. The strongest new evidence is a reason to replace B's fixed construction assumption. A's coordinated movement is useful but small; it does not close the class-level MM gaps. Finish the unchanged A066 transfer and the bounded C017 diagnostic already underway before choosing another refinement. Keep A incremental and allow B/C to replace their architectures.
+
+The pinned MM implementation can move neighbor contact branches and rebuild whole chains with shared paths. A066 now demonstrates one concrete benefit of coordinated movement in complete constructors: grid Q162→159, WS100244→243 and planar100170→169 versus pruning/A065; grid relabel158→157 also improves. Five other inputs tie, all successes survive, and seven local pair savings yield only six net extra qubits because another operator saves one fewer on grid. This is measured interaction in one evolving state, not independent-output selection. It neither proves which MM operation produced its maps nor establishes novelty by itself.
+
+[The full A066 result](experiments/066_constructor_results.md) preserves every MM loss. The following supplementary gap table uses only eight distinct structures from that screen, omitting the grid relabel. All pairs succeed. Means across the two planar sizes are descriptive; the other rows each have one structure. Across-seed ACL variability remains unknown throughout.
+
+| Development family | Structures | Mean ACL A066 / MM | Mean within-chain variance A066 / MM | Total solver s A066 / MM |
+|---|---:|---:|---:|---:|
+| ER | 1 | 3.1500 / 3.1000 | 1.5525 / 1.6400 | 59.017 / 3.849 |
+| BA | 1 | 2.3500 / 1.9900 | 3.8075 / 1.7699 | 59.014 / 7.644 |
+| Planar | 2 | 1.6325 / 1.5125 | 0.8541 / 0.4809 | 118.015 / 1.639 |
+| Grid | 1 | 1.2422 / 1.0391 | 0.1835 / 0.0375 | 59.007 / 0.481 |
+| WS | 1 | 2.4300 / 2.2300 | 1.2651 / 0.9371 | 59.016 / 0.797 |
+| SBM | 1 | 2.5100 / 2.4100 | 1.5299 / 1.2219 | 59.016 / 1.716 |
+| Diagnostic control | 1 | 2.4875 / 2.2625 | 0.7998 / 0.9186 | 59.019 / 1.841 |
+
+A061 remains the single retained full-class baseline; its [complete class gap table](mm_gap_retained_a061.md), earlier failures and unmeasured Sudoku are unchanged. No per-class choice among versions is made. BA100's deficit remains visible beside the earlier BA80/160 A065 wins. Lower mean ACL, within-chain variance, across-seed ACL variance, success and runtime remain separate quantities.
+
+[The trajectory projection](experiments/066_initial_trajectories.md) finds A066's eventual final Q at8.181–17.217s, with95.43% of its added-stage time afterward. Its internal time to first valid embedding is unknown; successful-base handoff is bounded explicitly. These data expose computational waste but do not establish an early stopping policy. A's next refinement must either address this substantial cost across structures or enlarge useful contact rearrangement enough to reduce the remaining quality gaps. A smaller local metric alone is insufficient, and the broader fixed screen must finish first.
+
+[B029's complete screen](tracks/b_029_constructor_results.md) rejects overlap-prioritized local root movement followed by later shortening as a sufficient strategy:3/9 successes versus9/9 for retained algorithms/MM; both previous successes worsen, and only planar100 recovers. Initial overlap decreases while Q increases on all nine inputs. SBM reaches validity later at worse ACL; grid reaches Q147 and never improves before recurrence, versus Q139 for anchor/B028 and133 forMM. The [causal decision](tracks/b_029_causal_decision.md) preserves its array-conversion benefit and planar success while stopping this fixed constructor and acceleration-only continuation. It does not veto all root movement or infer impossibility from a single seed. B's replacement must resolve completion and chain-length quality together in a diverse complete screen, with first-valid and incumbent trajectories.
+
+C016 remains rejected3/8 with all valid ACLs worse thanMM. C017 is only a bounded instrument for three zero-root conflicts: release two or three specified owners and compare identical finite neighborhoods with/without final capacity constraints. Root reviewed the exact model, independent validation, tiny enumeration checks and73 input bindings. Its six development solves are not a global constructor or a proposed production solver. Finish this instrument, then decide whether its evidence supports changing the representation, reconsidering earlier contact choices, or replacing the architecture; do not revive C016 from a local witness alone.
+
+No successor is promoted; no all-class win, untouched confirmation result or publication claim exists. Reuse current correctness infrastructure. Future changes need a substantial shared deficit, a distinguishing observation, and a complete-constructor continuation criterion before implementation. Preserve all regressions while allowing a bounded explanatory follow-up when completed evidence warrants one.

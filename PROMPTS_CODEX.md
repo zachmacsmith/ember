@@ -2180,3 +2180,14 @@ Blocked audit:
 Do not call update_goal unless the goal is complete or the strict blocked audit above is satisfied. Do not mark a goal complete merely because the budget is nearly exhausted or because you are stopping work.
 
 </codex_internal_context>
+
+
+## User prompt — 2026-09-10 UTC
+
+> Preserve the completed evidence and finish the bounded diagnostics already underway. Then allocate further effort according to demonstrated potential
+  > to close the remaining class-level gaps. Keep one incremental track and allow the other two to replace unsuccessful architectures. Before another
+  > refinement, explain what substantial class-spanning deficit it could address and what complete-constructor result would justify continuing. Use time-
+  > to-validity and incumbent-ACL trajectories to distinguish construction quality, search capability and computational cost. Preserve every regression
+  > without treating every single-seed loss as a universal mechanism veto. Reuse correctness infrastructure and keep documentation focused on decisions.
+  > The next milestone should show either meaningful progress against MM across several structures or a decisive reason to replace a major design
+  > assumption.
