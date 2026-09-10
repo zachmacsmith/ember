@@ -200,12 +200,40 @@ class NewRisks(unittest.TestCase):
         self.assertIsNotNone(late['diag']['first_valid'])
         RECORDS.append(dict(check='final_deadline_no_credit',status=late['status'],embedding_empty=True))
 
+    def test_post_first_valid_runtime_valueerror_is_fatal(self):
+        global PUBLIC_CALLS
+        import networkx as nx
+        G=nx.Graph([(9,-4)]);H=nx.Graph([(101,87),(87,-3)])
+        original_run=c._run
+        def fail_after_valid(e):
+            original_run(e)
+            self.assertIsNotNone(e.incumbent)
+            self.assertEqual(e.events[0]['kind'],'first_valid')
+            validate(self,'valid_before_injected_runtime_error',e,e.incumbent,True)
+            raise ValueError('injected post-first-valid runtime failure')
+        with patch.object(c,'_run',fail_after_valid):
+            PUBLIC_CALLS+=1
+            result=c.territory_relocation_embed(G,H,seed=0,timeout=30.)
+        self.assertEqual(result['status'],'ERROR')
+        self.assertTrue(result['diag']['fatal_error'])
+        self.assertEqual(result['diag']['stop_reason'],'exception')
+        self.assertEqual(result['error'],'ValueError: injected post-first-valid runtime failure')
+        self.assertFalse(result['embedding']);self.assertNotIn('diagnostic_embedding',result)
+        self.assertEqual(result['diag']['first_valid']['Q'],2)
+        self.assertEqual(result['diag']['terminal']['missing_edges'],0)
+        RECORDS.append(dict(check='post_first_valid_runtime_error_no_credit',status=result['status'],
+                            fatal_error=True,embedding_empty=True,prior_first_valid_Q=2))
+
 
 def main():
-    parser=argparse.ArgumentParser();parser.add_argument('output',type=Path);args=parser.parse_args()
+    parser=argparse.ArgumentParser();parser.add_argument('output',type=Path)
+    parser.add_argument('--case',choices=unittest.defaultTestLoader.getTestCaseNames(NewRisks))
+    args=parser.parse_args()
     args.output.mkdir(parents=True,exist_ok=False)
     started,cpu=time.perf_counter(),time.process_time()
-    result=unittest.TextTestRunner(verbosity=2).run(unittest.defaultTestLoader.loadTestsFromTestCase(NewRisks))
+    suite=(unittest.TestSuite([NewRisks(args.case)]) if args.case else
+           unittest.defaultTestLoader.loadTestsFromTestCase(NewRisks))
+    result=unittest.TextTestRunner(verbosity=2).run(suite)
     record=dict(status='PASS' if result.wasSuccessful() and not ATTEMPTS else 'FAIL',
         focused_check_groups=1,test_cases=result.testsRun,failures=len(result.failures),errors=len(result.errors),
         prohibited_attempts=ATTEMPTS,public_tiny_constructor_calls=PUBLIC_CALLS,development_constructor_calls=0,

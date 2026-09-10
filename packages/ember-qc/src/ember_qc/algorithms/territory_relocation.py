@@ -17,6 +17,10 @@ class _Deadline(Exception):
     pass
 
 
+class _InputRejected(Exception):
+    pass
+
+
 class _Budget:
     def __init__(self, deadline):
         self.deadline = deadline; self.work = Counter()
@@ -345,15 +349,18 @@ def _embed(source,target,seed,timeout,deadline,old_roots):
     sl=tl=[]
     try:
         if type(seed) is not int or type(timeout) not in (int,float) or not math.isfinite(timeout) or timeout<=0:
-            raise ValueError('integer seed and positive finite timeout required')
+            raise _InputRejected('integer seed and positive finite timeout required')
         if deadline is not None and (type(deadline) not in (int,float) or not math.isfinite(deadline)):
-            raise ValueError('finite deadline required')
+            raise _InputRejected('finite deadline required')
         absolute=min(started+timeout,deadline) if deadline is not None else started+timeout
         reserve=min(.5,timeout/10);b=_Budget(absolute-reserve)
         diag.update(started=started,deadline=absolute,search_deadline=b.deadline,final_reserve=reserve)
         with b.stage('support_imports'):helper,kernels=_support()
         with b.stage('input'):
-            sl,src=helper._adjacency(source,b);tl,adj=helper._adjacency(target,b)
+            try:
+                sl,src=helper._adjacency(source,b);tl,adj=helper._adjacency(target,b)
+            except ValueError as exc:
+                raise _InputRejected(str(exc)) from exc
             if len(src)>len(adj):raise helper._Failed('more source owners than target sites')
         rng=random.Random(seed)
         with b.stage('initialization'):
@@ -368,7 +375,7 @@ def _embed(source,target,seed,timeout,deadline,old_roots):
         if helper is not None and isinstance(exc,helper._Expired):
             response['status']='TIMEOUT';diag.update(stop_reason='search_deadline',interrupted_stage=str(exc))
         else:
-            expected=isinstance(exc,ValueError) or (helper is not None and isinstance(exc,helper._Failed))
+            expected=isinstance(exc,_InputRejected) or (helper is not None and isinstance(exc,helper._Failed))
             response.update(status='FAILURE' if expected else 'ERROR',error=type(exc).__name__+': '+str(exc))
             diag.update(fatal_error=not expected,stop_reason='input_rejected' if expected else 'exception')
     if b is not None:

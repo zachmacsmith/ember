@@ -1,0 +1,11 @@
+# C018 narrow error-accounting correction
+
+2026-09-10 UTC. Root's source review found that `_embed` classified every `ValueError` as expected input rejection, including a possible runtime bug after a certified valid incumbent. Corrected only this accounting boundary before the complete screen. The constructor policy, numerical kernels, budgets and prior four-case check are unchanged.
+
+Explicit parameter validation and the unchanged adjacency helper's declared validation errors now become `_InputRejected`. The helper's declared `_Failed` exceptions remain expected failures. Any other runtime `ValueError` receives `ERROR`, `fatal_error=true` and no embedding credit. The test runner gained a single-case selector so the one new risk could be checked without repeating the earlier four cases.
+
+The new case ran **once and passed**. One tiny public constructor first certified an independently valid Q=2 original minor, then an injected runtime `ValueError` produced fatal `ERROR`, an empty credited mapping, the preserved first-valid event and complete terminal diagnostics. There were zero development calls, errors, failed assertions or prohibited dependency attempts. Test wall/CPU: **1.443/1.134 s**; wrapper elapsed **1.703 s**. These are check timings, not performance evidence.
+
+The exact three source/test files used for the first PASS are preserved under `results/codex/c018-territories/first_check_sources`, with byte hashes matching `check_freeze001.json`; the first check's outputs and note remain unchanged. The exact correction diff is `runtime_error_correction.diff` in that result directory, SHA `7eec370333ea0ca39e79cbbb44fe855cf04877b1ab58e07f2c15bb00ed7e3ec5`. New pre-check freeze `check_freeze002.json`, SHA `569fb8fed2785483aac56c11eed9f3112b43dc35ae10e643388d312a77dfc9df`, binds 16 files. All were unchanged after the new check.
+
+Current main source SHA: `05a4a77c09d0627e42f27de39a79ed79200fe5e948929f2a3f47ec453fe44e55`; test: `c5721b32915c2afc76e1f4c94f60865df58a11d5c8df5821094452ec9aec2c36`; kernel remains `be490cb57a59dfb2044aea2733dc0b3d2a91301e8d55dbbf03e7dd6a2c9f0e35`. No further algorithm change or experiment is proposed by this correction. Root owns registration and the complete screen.
