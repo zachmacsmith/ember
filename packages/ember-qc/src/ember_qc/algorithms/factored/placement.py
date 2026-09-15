@@ -1,34 +1,8 @@
-"""
-ember_qc/algorithms/factored/placement.py
-==========================================
-The **attraction** embedder: the plane engine (``plane.py``) decides
-where every variable lives — two orders, positions derived by the
-packer under hard capacity, chains derived by the stair rule — and the
-hardware adapter turns that layout into qubits:
-
-1. **arrange** — ``plane.arrange``: random orders in, the bookmark's
-   positions and books out (see ``plane.py`` for the whole algorithm).
-2. **seeds** — the bookmark's books feed the converter
-   (``wire_seeds_exact`` on course-resolved fabrics, ``wire_seeds_iv``
-   elsewhere) and, on stride-2 fabrics, the exactness completion; a
-   completion with zero deficits and a passing validity check IS the
-   embedding and minorminer legalization is skipped (``mm_skipped``).
-3. **legalize** — otherwise stock minorminer, seeded with the chains.
-4. **fallback** — one nearest-qubit-seeded attempt if that failed.
-5. **tail** — ``tail="mm"``: minorminer's warm-started grind then the
-   ball pass; ``tail="none"``: the legal embedding as is.
-
-Fabric policy is decided once, here: exactness and snap are gated to
-stride > 1 (junction completeness is what makes coverage = validity).
-``field.py`` and ``plane.py`` never inspect the fabric.
-
-Parameters: ``timeout`` (a safety net; the engine's real stop is the
-work budget), ``seed``, ``max_asks`` (DP evaluations), ``sched_seed``
-(the bag's own seed; defaults to ``seed``), ``tail``. Deterministic
-per ``(seed, sched_seed)``.
-"""
+"""Native three-order embedding on intact Zephyr; optional explicit MM polish."""
 from __future__ import annotations
 
+from dataclasses import dataclass
+import heapq
 import logging
 import math
 import time
@@ -37,20 +11,16 @@ from typing import Dict, List, Optional, Sequence
 import networkx as nx
 import numpy as np
 
-from ember_qc.embedding_backend import (
-    Embedding,
-    build_adjacency,
-    is_valid_embedding,
-)
-from ember_qc.algorithms.factored.polish import spur_prune
+from ember_qc.embedding_backend import Embedding, build_adjacency, is_valid_embedding
+from .native_model import Source, capacity_ok
 
 logger = logging.getLogger(__name__)
+Point = np.ndarray
 
-Point = np.ndarray  # shape (2,)
 
-FALLBACK_TIMEOUT = 60.0  # budget when the caller passes timeout=0/None
-SEED_STRIDE = 100        # router-seed derivation: seed*STRIDE (+99 fallback)
-TAIL_SPLIT = 0.5         # wall reserved for the tail when a timeout exists
+def _auto_bins(n_qubits: int) -> int:
+    """Drawing resolution used by the separately callable legacy ball utility."""
+    return max(4, min(16, int(math.sqrt(n_qubits) / 5)))
 
 
 def target_layout(target: nx.Graph) -> Dict[int, Point]:
@@ -83,10 +53,6 @@ def snap(cent: Dict[int, Point], coords: np.ndarray, qubits: Sequence[int],
     return seeds
 
 
-def _auto_bins(n_qubits: int) -> int:
-    return max(4, min(16, int(math.sqrt(n_qubits) / 5)))
-
-
 def _mm_route(source_graph: nx.Graph, target_graph: nx.Graph, *,
               chains: Optional[Dict[int, List[int]]] = None,
               warm: Optional[Embedding] = None,
@@ -108,185 +74,149 @@ def _mm_route(source_graph: nx.Graph, target_graph: nx.Graph, *,
         source_graph, list(target_graph.edges()), **kwargs) or {}
 
 
-def attract_embed(
-    source_graph: nx.Graph,
-    target_graph: nx.Graph,
-    *,
-    timeout: float = 300.0,
-    seed: int = 0,
-    max_asks: Optional[int] = None,
-    sched_seed: Optional[int] = None,
-    tail: str = "mm",
-    **ignored,
-) -> dict:
-    """Functional entry point; returns an ember-qc result dict (never
-    raises). Unknown keyword arguments are ignored."""
+@dataclass
+class ZephyrFabric:
+    m: int
+    tile: int
+    lookup: dict
+    qubits: tuple
+
+    @classmethod
+    def from_graph(cls, target):
+        import dwave_networkx as dnx
+        if target.is_directed() or target.is_multigraph() or target.graph.get("family") != "zephyr":
+            raise ValueError("unsupported target: native attraction requires intact Zephyr")
+        m = int(target.graph.get("rows", 0))
+        tile = int(target.graph.get("tile", 0))
+        labels = target.graph.get("labels")
+        if m < 1 or tile < 1 or labels not in ("int", "coordinate"):
+            raise ValueError("unsupported Zephyr metadata or node labels")
+        expected = dnx.zephyr_graph(m, tile, coordinates=labels == "coordinate", data=False)
+        if (set(target) != set(expected) or target.number_of_edges() != expected.number_of_edges()
+                or any(not target.has_edge(u, v) for u, v in expected.edges())):
+            raise ValueError("unsupported target: native attraction currently requires intact Zephyr")
+        converter = dnx.zephyr_coordinates(m, tile)
+        lookup = {}
+        for q in target:
+            coordinate = q if labels == "coordinate" else converter.linear_to_zephyr(q)
+            lookup[tuple(int(k) for k in coordinate)] = q
+        return cls(m, tile, lookup, tuple(sorted(target)))
+
+
+def materialize(layout, source, fabric):
+    """Color the certified reservations, then take actual same-course runs."""
+    book, coords = layout.book, layout.coords
+    if book.outside or not capacity_ok(book, coords, 2 * fabric.tile, fabric.m):
+        raise AssertionError("only a fitting conservative book can be materialized")
+    if book.reserved + len(source.isolates) > len(fabric.qubits):
+        raise AssertionError("book does not reserve room for isolated vertices")
+    embedding = {v: [] for v in source.labels}
+    occupied = set()
+    guard_lo, guard_hi = book.guard_lo, book.guard_hi
+    for axis in range(2):
+        lanes = {}
+        for v in np.flatnonzero(book.active[axis]):
+            lanes.setdefault(int(coords[axis, v]), []).append(
+                (int(guard_lo[axis, v]), int(guard_hi[axis, v]), int(v)))
+        for lane, arms in sorted(lanes.items()):
+            busy = []
+            free = list(range(2 * fabric.tile))
+            heapq.heapify(free)
+            for lo, hi, v in sorted(arms):
+                while busy and busy[0][0] < lo:
+                    _, color = heapq.heappop(busy)
+                    heapq.heappush(free, color)
+                if not free:
+                    raise AssertionError("reservation coloring exhausted its proven capacity")
+                color = heapq.heappop(free)
+                heapq.heappush(busy, (hi, color))
+                track, course = divmod(color, 2)
+                a = (int(book.lo[axis, v]) - course) // 2
+                b = (int(book.hi[axis, v]) - course) // 2
+                chain = embedding[source.labels[v]]
+                for z in range(a, b + 1):
+                    q = fabric.lookup[axis, lane, track, course, z]
+                    if q in occupied:
+                        raise AssertionError("conservative coloring reused a physical qubit")
+                    chain.append(q)
+                    occupied.add(q)
+    free_qubits = (q for q in fabric.qubits if q not in occupied)
+    for v in source.isolates:
+        embedding[v] = [next(free_qubits)]
+    return embedding
+
+
+def attract_embed(source_graph: nx.Graph, target_graph: nx.Graph, *,
+                  timeout: float = 300.0, seed: int = 0,
+                  max_asks: Optional[int] = None,
+                  sched_seed: Optional[int] = None, tail: str = "none", **ignored) -> dict:
+    """Standalone native result; unknown historical keyword arguments are ignored.
+
+    tail='mm' requests only postprocessing of a successful native embedding.
+    Unsupported hardware or a missing finite bookmark returns an explicit
+    failure, never a routed fallback or a partial success.
+    """
     start = time.perf_counter()
     deadline = start + timeout if timeout else None
+    diag = dict(mm_calls=0, mm_skipped=True, certified=False)
 
-    def _failure(**extra) -> dict:
-        return {"embedding": {}, "time": time.perf_counter() - start,
-                "success": False, "status": "FAILURE", **extra}
+    def failure(error):
+        return dict(embedding={}, time=time.perf_counter() - start,
+                    success=False, status="FAILURE", error=error, diag=diag)
 
     try:
         if tail not in ("none", "mm"):
-            raise ValueError(f"unknown tail {tail!r}")
+            raise ValueError("unknown tail %r" % tail)
         if max_asks is not None and max_asks < 1:
             raise ValueError("max_asks must be >= 1")
-        from ember_qc.algorithms.factored import plane
-        from ember_qc.algorithms.factored.field import (
-            TileGrid, bar_widths, complete_seeds, stair_energy,
-            wire_seeds_exact, wire_seeds_iv)
-
+        if timeout is not None and timeout < 0:
+            raise ValueError("timeout must be nonnegative")
+        if not source_graph or len(source_graph) > len(target_graph):
+            return failure("empty source or insufficient target qubits")
+        fabric = ZephyrFabric.from_graph(target_graph)
+        source = Source.from_graph(source_graph)
+        from . import plane
+        layout, metrics = plane.arrange(
+            source, fabric.m, fabric.tile, seed=int(seed), max_asks=max_asks,
+            deadline=deadline, sched_seed=sched_seed,
+            trace=bool(ignored.get("trace", False)), target_qubits=len(target_graph))
+        diag.update(metrics)
+        diag["stride"] = 2
+        if layout is None:
+            return failure("no native embedding fitting the chip was found within the budget")
+        embedding = materialize(layout, source, fabric)
         adj = build_adjacency(target_graph)
-        qubits = sorted(adj)
-        nodes = sorted(source_graph.nodes())
-        if not nodes or not qubits or len(nodes) > len(qubits):
-            return _failure()
-        src_adj = {v: sorted(source_graph.neighbors(v)) for v in nodes}
-        degree_order = sorted(nodes, key=lambda v: (-len(src_adj[v]), v))
-
-        pos = target_layout(target_graph)
-        coords = np.array([pos[q] for q in qubits], dtype=float)
-        grid = TileGrid(target_graph, pos,
-                        fallback_bins=_auto_bins(len(qubits)),
-                        courses=True)
-        # fabric policy, decided once: the exactness path (completion,
-        # certificate, snap-aimed claims) needs junction completeness,
-        # which is a stride-2 fact
-        stride2 = grid.stride > 1
-        eff_exact = stride2
-        eff_snap = stride2
-        engine_deadline = ((start + TAIL_SPLIT * timeout)
-                           if (timeout and tail != "none") else deadline)
-
-        # ---- arrange
-        _t0 = time.perf_counter()
-        tpts, books, info = plane.arrange(
-            src_adj, grid, seed=seed, max_asks=max_asks,
-            deadline=engine_deadline, snap=eff_snap,
-            sched_seed=seed if sched_seed is None else sched_seed)
-        arrange_wall = time.perf_counter() - _t0
-        stair_E = round(stair_energy(tpts, src_adj, contacts=books[0]), 1)
-
-        # ---- seeds: the bookmark's books ARE the converter's books
-        conv_info = None
-        ex_info = None
-        if stride2 and grid.wire_map:
-            seed_chains, conv_info = wire_seeds_exact(
-                grid, tpts, books[1], src_adj, books)
-        else:
-            seed_chains = wire_seeds_iv(grid, tpts, books[1],
-                                        src_adj=src_adj, snap=eff_snap,
-                                        books=books)
-        if eff_exact:
-            seed_chains, ex_info = complete_seeds(
-                grid, seed_chains, src_adj, adj)
-
-        # ---- legalize
-        mm_skipped = False
-        emb: Embedding = {}
-        if (ex_info is not None
-                and ex_info["deficit_edges"] == 0
-                and ex_info["corner_deficit"] == 0
-                and is_valid_embedding(seed_chains, source_graph,
-                                       target_graph, adj=adj)):
-            emb = {v: list(c) for v, c in seed_chains.items()}
-            mm_skipped = True
-        else:
-            cap = ((engine_deadline - time.perf_counter())
-                   if engine_deadline else FALLBACK_TIMEOUT)
-            if cap > 0:
-                emb = _mm_route(source_graph, target_graph,
-                                chains=seed_chains,
-                                seed=seed * SEED_STRIDE, timeout=cap)
-        if not emb:
-            remaining = ((deadline - time.perf_counter()) if deadline
-                         else FALLBACK_TIMEOUT)
-            if remaining > 0:
-                cent = {v: grid.Minv @ (tpts[v] - grid.c) for v in tpts}
-                fb = {v: [q] for v, q in
-                      snap(cent, coords, qubits, degree_order).items()}
-                emb = _mm_route(source_graph, target_graph, chains=fb,
-                                seed=seed * SEED_STRIDE + 99,
-                                timeout=remaining)
-        if not emb:
-            return _failure(stair_E=stair_E)
-        emb = spur_prune(emb, src_adj, adj, deadline=deadline)
-        legal_acl = sum(len(c) for c in emb.values()) / len(emb)
-        legal_max_chain = max(len(c) for c in emb.values())
-
-        # ---- tail
-        finished = emb
-        ball_info = None
+        if not is_valid_embedding(embedding, source_graph, target_graph, adj=adj):
+            raise AssertionError("native materialization failed independent embedding validation")
+        native_q = sum(map(len, embedding.values()))
+        native_max = max(map(len, embedding.values()))
+        diag.update(certified=True, native_physical_qubits=native_q,
+                    legal_acl=native_q / len(source_graph), legal_max_chain=native_max,
+                    deficit_edges=0, corner_deficit=0, extensions=0,
+                    ext_qubits=0, bridges=0, convert_miss=0)
+        # Historical tail opt-in remains explicit; it is never legalization.
         if tail == "mm":
-            remaining = ((deadline - time.perf_counter()) if deadline
-                         else FALLBACK_TIMEOUT)
-            if remaining > 0:
-                ground = _mm_route(source_graph, target_graph, warm=emb,
-                                   seed=seed, timeout=remaining) or emb
-                if is_valid_embedding(ground, source_graph, target_graph,
-                                      adj=adj):
-                    finished = ground
-            from ember_qc.algorithms.factored.ball import ball_polish
-            balled, ball_info = ball_polish(
-                finished, source_graph, target_graph,
-                deadline=deadline, adj=adj, grid=grid)
-            if is_valid_embedding(balled, source_graph, target_graph,
-                                  adj=adj):
-                finished = balled
-
-        # ---- diagnostics
-        widths = bar_widths(books[1])
-        sizes = (np.array([widths[v].sum() for v in widths])
-                 if widths else np.zeros(1))
-        diag = {
-            "extent_mean": round(float(sizes.mean()), 3),
-            "extent_max": round(float(sizes.max()), 3),
-            "stride": int(grid.stride),
-            "max_chain": max(len(c) for c in finished.values()),
-            "arrange_wall": round(arrange_wall, 2),
-            "legal_acl": round(float(legal_acl), 3),
-            "legal_max_chain": int(legal_max_chain),
-        }
-        for k in ("asks", "accepts", "passes", "readouts", "bookmark_asks",
-                  "bookmark_wall", "stopped_by", "pen", "stair", "bars",
-                  "misses", "adopt_worse", "infeasible"):
-            diag[k] = info.get(k)
-        diag["accept_traj"] = list(info.get("accept_traj", []))[:12]
-        _mes = 0.0
-        for _u in src_adj:
-            for _v in src_adj[_u]:
-                if _u < _v and _u in tpts and _v in tpts:
-                    _mes = max(_mes,
-                               abs(float(tpts[_u][0] - tpts[_v][0]))
-                               + abs(float(tpts[_u][1] - tpts[_v][1])))
-        diag["max_edge_span"] = round(_mes, 1)
-        if conv_info is not None:
-            diag["convert_miss"] = int(conv_info["convert_miss"])
-            # the certificate: every arm seated its required hull AND
-            # completion closed — the prediction the validity check
-            # (the paranoia net) is checked against
-            diag["certified"] = bool(
-                conv_info["convert_miss"] == 0
-                and ex_info is not None
-                and ex_info.get("deficit_edges", 1) == 0
-                and ex_info.get("corner_deficit", 1) == 0)
-        if eff_exact:
-            diag["mm_skipped"] = mm_skipped
-            if ex_info is not None:
-                for k in ("deficit_edges", "corner_deficit", "extensions",
-                          "ext_qubits", "bridges"):
-                    diag[k] = ex_info[k]
-        if ball_info is not None:
-            diag["ball_accepts"] = ball_info["accepted"]
-            diag["ball_tried"] = ball_info["tried"]
-            diag["ball_wall"] = round(ball_info["wall"], 1)
-        return {"embedding": finished,
-                "time": time.perf_counter() - start,
-                "stair_E": stair_E,
-                "legal_acl": round(legal_acl, 3),
-                "diag": diag}
-    except Exception as exc:  # noqa: BLE001 — the contract: never raise
-        logger.exception("attraction embed error: %s", exc)
-        return _failure(error=str(exc))
+            remaining = max(0.0, deadline - time.perf_counter()) if deadline else 60.0
+            if remaining:
+                diag["mm_calls"] += 1
+                diag["mm_skipped"] = False
+                try:
+                    polished = _mm_route(source_graph, target_graph, warm=embedding,
+                                         seed=seed, timeout=remaining)
+                except Exception as exc:
+                    diag["polish_error"] = str(exc)
+                    polished = None
+                if (polished and is_valid_embedding(polished, source_graph, target_graph, adj=adj)
+                        and sum(map(len, polished.values())) < native_q):
+                    embedding = polished
+        lengths = [len(c) for c in embedding.values()]
+        widths = (layout.book.hi - layout.book.lo + 1)[layout.book.active]
+        diag.update(physical_qubits=sum(lengths), max_chain=max(lengths),
+                    extent_mean=float(widths.mean()) if len(widths) else 0.0,
+                    extent_max=int(widths.max()) if len(widths) else 0)
+        return dict(embedding=embedding, time=time.perf_counter() - start,
+                    success=True, status="SUCCESS", stair_E=layout.book.reserved,
+                    legal_acl=diag["legal_acl"], diag=diag)
+    except Exception as exc:
+        logger.debug("native attraction failed", exc_info=True)
+        return failure(str(exc))

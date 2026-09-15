@@ -301,7 +301,7 @@ class TestTail:
         assert a["embedding"]
         assert validate_embedding(a["embedding"], source, zephyr)
         assert a["embedding"] == b["embedding"]
-        assert "ball_accepts" in a["diag"]
+        assert a["diag"]["mm_calls"] == 1
 
     def test_tail_none_is_mm_free_when_gate_fires(self):
         import networkx as nx
@@ -314,12 +314,12 @@ class TestTail:
         assert r["diag"].get("mm_skipped") is True
         assert "ball_accepts" not in r["diag"]
 
-    def test_tail_default_is_mm(self, source, zephyr):
+    def test_tail_default_is_native(self, source, zephyr):
         from ember_qc.algorithms.factored import attract_embed
         a = attract_embed(source, zephyr, timeout=45, seed=0)
-        b = attract_embed(source, zephyr, timeout=45, seed=0, tail="mm")
+        b = attract_embed(source, zephyr, timeout=45, seed=0, tail="none")
         assert a["embedding"] == b["embedding"]
-        assert "ball_accepts" in a["diag"]
+        assert a["diag"]["mm_calls"] == 0
         c = attract_embed(source, zephyr, timeout=45, seed=0, tail="none")
         assert c["embedding"]
         assert "ball_accepts" not in c["diag"]

@@ -1,100 +1,69 @@
 # Ideas
 
-The entry point. One page: the algorithm, the principles any change
-must respect, and the open fronts. History is elsewhere and is history,
-not instruction: `notes.md` (chronicle; s3.127 is the rewrite),
-`attraction.md` (verdict ledger of the old engine — check before
-proposing), `anatomy.md` (as-built spec of the rewrite),
-`fabrics.md` (measured hardware facts), `mm-internals.md` (what
-shipped minorminer actually does), `archive/` (the old engine's
-records and its probe scripts).
+The first three-order native build is implemented on `factored` (2026-09-14).
+The [design contract](three-orders.md) is the authoritative resumption point;
+the [results report](three-orders-results.md) records tests
+and retained comparisons. Implementation does not establish superiority over
+MinorMiner.
 
-## The algorithm (s3.127, `factored/plane.py`)
+## The current idea
 
-1. A D-Wave fabric is a grid of **lanes** with a complete bipartite
-   **junction** wherever lanes cross. A qubit is a bar on a lane; a
-   chain is a horizontal run plus a vertical run; a source edge is a
-   crossing of one variable's run with the other's.
-2. **State** = two orders: each variable's rank on the x-axis and on
-   the y-axis. Nothing else is stored. Init = two seeded permutations.
-3. **Readout**: the packer DP gives every variable a line on each axis
-   — each line takes a contiguous run of the order, feasible iff the
-   run's claim intervals fit the line's per-brick pools (the chip's
-   real lines, boundary lines zero on course fabrics, extended past
-   the chip with the ideal pool so a packing always exists). The stair
-   rule then derives every chain: the endpoint lower in the y-order
-   reaches sideways to the other's column, the higher reaches down.
-4. **Objective**, lexicographic: brick overload of the claim intervals
-   against the chip (pool 0 off-chip) first, then total derived chain
-   length = every active arm's span plus one bar (the qubit an arm
-   needs even when its hull is one junction). One accounting: the
-   books the packer packs, the judge prices and the converter seats.
-5. **Move**: remove a set of variables from one order and re-insert it
-   at its exact optimum over all weaves, forward or reversed (the
-   interleaver DP, pricing the frozen picture: the other axis fixed,
-   spots on its own axis fixed, occupants moving). **Units** per pass:
-   every contiguous run of each order at scales n/2 … 1, and every
-   variable's neighbourhood N(v) — the order-independent gather (for a
-   biclique N(v) is the other block, so the bipartition is one move;
-   for a sparse graph, "bring my neighbours to me"). No pairs.
-6. **Schedule**: one seeded bag per pass. **Acceptance**: every DP
-   proposal is adopted (the proposer's picture is frozen; the readout
-   re-packs the moved axis then the other; the judge scores what the
-   packer produced; the bookmark keeps the best). A proposal the
-   packer cannot seat is declined — outside the valid set. The DP's
-   own gate is strict improvement in true cost with total rank span
-   as an exact lexicographic tiebreak (the tie-moves are the drift
-   that compacts sparse chains).
-7. **Stop**: a pass with zero accepts (the fixpoint certificate), or
-   the work budget `max_asks` (DP evaluations — never seconds), or the
-   wall clock as a reported safety net.
-8. **Adapter** (`field.py`): books → converter → completion →
-   certificate. On course-resolved Zephyr a zero-deficit completion is
-   a proof of validity and minorminer is skipped. `tail="mm"` runs
-   minorminer's warm grind and the ball pass afterwards; `tail="none"`
-   is the engine's own answer.
+Separate where chains sit from which endpoint supplies each contact. The state
+is three independent random orders: x, y, and contact order t. For edge uv,
+the earlier t endpoint supplies a horizontal bar and the later a vertical bar.
+Required contacts create the bars and determine their reaches. A variable with
+both bars includes its own crossing; a variable with one bar has no obligation
+to reach an absent perpendicular arm. An isolated variable needs one free qubit.
 
-Parameters: `timeout`, `seed`, `sched_seed`, `max_asks`, `tail`.
+On intact Zephyr, reserve `[(a-1)//2, b//2]` for a bar whose contact extrema are
+a and b. A brick can cover contacts at **three junction rows**, including the
+shared boundary. Bounding reservation depth by the physical courses/tracks
+allows interval coloring to produce connected, disjoint chains with the
+required contacts. The objective is lexicographic outside-chip reserved volume,
+then total reserved volume. Conservative reservations may exceed physical
+qubit use; both are measured.
 
-## Principles (each one was paid for; s3.127's audit is the receipt)
+The three interleavers search exact merges of selected subsequences against
+frozen coordinate slots and the same current book. Every strict improvement of
+the common fixed-slot objective, with rank span as an exact tie break, is
+accepted. Intermediate books need not satisfy capacity. After a sweep or work-budget exhaustion,
+decode its accumulated orders from a canonical expanded feasible seed. Each
+conditional minimum cut optimizes one axis while enforcing both orientations'
+capacity; alternate until stable. Adopt the decoded state even if it is worse,
+and retain the best finite native bookmark. Packing runs once per sweep, with
+no per-proposal feasibility rejection cascade.
 
-- **The init must not matter.** The old default init pre-committed a
-  maximally interleaved y-order on turán and the seed could not change
-  it (two inits ever); it was the driver of the 9.253 attractor.
-- **Question order must not matter.** Schedule sensitivity is a
-  family/judge defect. The ladder was worth nothing on 8/10 cells and
-  was the worst order on ER and turán.
-- **Units must not be defined by the current order alone.** A reinsert
-  keeps both sides as subsequences, so contiguous runs cannot
-  un-interleave; N(v) can.
-- **Proposer == judge**, one accounting; feasibility by construction,
-  never repair; no penalty methods, no λ.
-- **The objective must be the qubits.** A contact-bearing point arm
-  costs a bar; the span-only objective was off by −76% on grid.
-- **Budgets in work, not wall.** The clock was a parameter of the
-  answer (turán needed the third pass).
-- **No mechanism names a graph type.** Winners ship as defaults.
+## What this commits us to
 
-## Open fronts (2026-09-07; the paired board and the instrument are done — `docs/handoff/baseline/RESULTS.md`)
+- One general algorithm for sparse and dense inputs: no graph-specific patches,
+  special initializers, or repairs. Same-lane abutment is deferred.
+- One conservative accounting shared by proposer, packer, and converter, with
+  exact comparisons and no penalty parameter.
+- Native output by default (`tail="none"`). Explicit `tail="mm"` may polish
+  an already valid native embedding; it cannot rescue a native failure.
+- Intact Zephyr support only in this build. Broader hardware support needs a
+  sound physical model and validation.
+- Work budgets and measured elapsed time, separate compilation accounting,
+  independent small exact oracles, and paired tests across dense and sparse
+  instances. Old fingerprints are historical comparisons, not acceptance laws.
 
-1. **Per-ask cost.** A new-engine DP evaluation costs ~5× an old one
-   (two packs + books per adoption; the `stepR`/`stepQ` Python loops in
-   `align_reinsert._arm`), so the 60-second arm finishes a fraction of
-   a pass on ws and hands minorminer poor seeds. Vectorize; one books
-   computation per pack; measure asks/s on ws_n486 before and after
-   (`arrange_wall`, `asks` in diag). The fingerprints must not move.
-2. **The sparse reach.** At a full work budget the engine's own answer
-   on ws is 4.40 with chains up to 27; regular 4.75; king 2.56 — worse
-   than the old engine's from its spectral init (the +0.4 the init
-   carried on exactly these cells; the optimizer must replace it). The
-   invariance map: regular order-sensitive (range 0.54), ws order- and
-   init-sensitive (0.39 / 1.01), king init-sensitive (0.32), all
-   budget-bound — first discriminate unfinished descent from a family
-   ceiling with a 2× budget. Candidates: abutment (two chains meeting
-   end to end on a lane — the grid half of the product topology, unused
-   by the cross model), junction packing, richer unit families.
-3. **The wall-clock arm.** `TAIL_SPLIT` gives the engine half the wall;
-   with (1) fixed, re-measure `new+mm` at 60 s on the sparse cells.
-4. **Parked**: Pegasus (junctions ~56% complete: converter/completion/
-   certificate gated to stride 2; the engine runs), max chain as a
-   third lexicographic slot.
+## Questions the implementation leaves open
+
+The contact order permits acyclic contact orientations; it is a structured
+family, not a representation theorem for every short-chain embedding. Frozen
+slots approximate the cost after packing, and alternating exact conditional
+packs need not find the joint coordinate optimum. Initialization and schedule
+robustness must be measured. A contiguous merge preserves its two subsequences,
+but sequences of singleton moves can still reach arbitrary permutations.
+
+The next conclusions should come from the retained comparisons: where native
+solutions succeed, what prevents the remaining cases, and whether representation
+or search explains the cost gap. Evaluate common structural changes against
+that evidence before adding more mechanisms.
+
+For the history behind these choices, see [the chronicle](notes.md),
+[the old verdict ledger](attraction.md), [the old pipeline](anatomy.md), and
+[the historical handoff](../handoff/README.md). Hardware observations are in
+[fabrics](fabrics.md), and the stock solver reference is
+[MinorMiner internals](mm-internals.md). These records do not supersede the
+current design contract.

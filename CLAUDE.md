@@ -1,39 +1,75 @@
 # Ember — `factored` branch
 
-This branch holds the **attraction** embedder (`packages/ember-qc/src/ember_qc/algorithms/factored/`),
-a placement-first minor embedder for D-Wave fabrics, on top of `main`'s benchmarking framework.
-The s3.127 rewrite (2026-09-03) replaced the previous engine; the archived tree is commit
-`ea5d1cf2` and the archived probes live in `docs/paper2/archive/probes/`.
+The **first build of the three-order native core is implemented** as of
+2026-09-14. Start with the [design contract](docs/paper2/three-orders.md), then
+the [results report](docs/paper2/three-orders-results.md) with retained
+measurements. This is an implementation milestone; universal quality or speed
+superiority over MinorMiner has not been established.
 
-**The algorithm in one breath.** A D-Wave fabric is a grid of lanes with a complete bipartite
-junction wherever lanes cross, so a variable's chain is one horizontal run and one vertical run
-whose reaches follow from two orders alone: the variable's rank on the x-axis and on the y-axis.
-The engine (`plane.py`, ~400 lines) optimizes those two orders. A packer DP derives positions
-under hard capacity; the stair rule derives every chain from the positions and the y-order; the
-objective is capacity overload first, then derived chain length (spans plus one bar per active
-arm); one move re-inserts a set of variables at its exact optimum over all weaves (an interleaver
-DP), where the sets are the contiguous runs of each order at every scale and every variable's
-neighbourhood; the schedule is a seeded bag; every proposal is adopted; the stop is a work budget
-or a pass with no accepts. The adapter (`field.py`) turns the layout into qubits — books,
-converter, completion, certificate — and on course-resolved Zephyr a zero-deficit completion is a
-proof of validity, so minorminer is skipped. Minorminer is an optional polisher (`tail="mm"`).
+The attraction embedder lives in
+`packages/ember-qc/src/ember_qc/algorithms/factored/`, alongside the repository's
+benchmarking framework and graph dataset support. Its current native target is
+**intact Zephyr only**.
 
-**Ground rules.** Proposer and judge read one accounting (the books). No penalty methods, no λ:
-capacity is the leading lexicographic key and infeasible proposals are declined. No mechanism
-names a graph type. The init must not matter (it is two random permutations) and the question
-order must not matter (measure it with the bag seed). Budgets are counted in DP evaluations
-(`max_asks`), never in seconds, so a measurement never depends on the box's load. Fingerprints
-(`docs/paper2/data/plane_fingerprint.py`) are the acceptance test of any engine change: K8/K10 on
-Z3 certified at the template, path-60 ≈ 1.07, K100 = 7.26 at a fixpoint, turán n162 = 6.000 from
-every random init, grid_200 pre-tail ≤ 1.76. Measure paired by (instance, seed) against stock
-minorminer and against the archived default (a worktree at `ea5d1cf2`). Winners ship as defaults.
+## Current algorithm
 
-**New here? Start at `docs/handoff/README.md`** (the hand-off: algorithm with diagrams, code map, how experiments are run, the frozen baseline and `compare_baseline.py`, the history of refuted ideas, the open fronts). Then **read `docs/paper2/ideas.md`** (one page: the algorithm, the principles, the open fronts),
-then `docs/paper2/anatomy.md` (the pipeline as built), `docs/paper2/fabrics.md` (measured
-fabric facts), `docs/paper2/mm-internals.md` (what shipped minorminer actually does) and
-`docs/paper2/notes.md` (the chronicle; s3.127 is the rewrite entry). `docs/paper2/archive/` is
-history, not instruction.
+State is three independent random permutations from one seed: spatial orders x
+and y, and contact order t. On each source edge, the earlier t endpoint supplies
+the horizontal bar and the later endpoint the vertical bar. Contacts determine
+which bars exist and their reaches. Two bars of one variable meet at their own
+crossing; a single bar has no absent-arm anchor. Isolates receive unused qubits.
 
-The minorminer C++ fork (`scripts/mm_fork.patch`, `build_mm_fork.sh`; registered as `mmfork*`)
-is unchanged: stock 0.2.22 plus two switches, byte-identical to stock when unset. The paper-1
-Reweave line lives only on the `new-algorithm` branch; do not reintroduce it.
+An arm reaching junctions a through b reserves the inclusive brick interval
+`[(a-1)//2, b//2]`. A reserved brick can touch **three junction rows**. This
+conservative model supports a sound interval-coloring conversion on intact
+Zephyr. Search minimizes outside-chip reserved volume, then total reserved
+volume; reservations and actual physical qubits are reported separately.
+
+The interleavers optimize merges in all three orders against one common book
+with coordinate slots frozen for an entire sweep. Every strict winner under
+that fixed objective, including its exact rank-span tie break, is accepted.
+Packing happens **once per sweep**, including a sweep cut short by its budget:
+a canonical feasible expanded
+seed is packed by alternating exact conditional minimum cuts. Each conditional
+pack enforces capacity in both orientations. This is not a joint global x/y
+optimality claim. The decoded sweep is adopted even when its score worsens;
+the best finite native bookmark is retained for output.
+
+The public entry point is `attract_embed` in `placement.py`; `plane.py` owns
+search and decoding, `native_model.py` the shared book, `packing.py` conditional
+minimum cuts, and `order_dp.py` the interleavers. The default is
+`tail="none"`. Explicit `tail="mm"` may polish an already valid native result;
+it cannot legalize a failed native attempt. There is no implicit MinorMiner
+fallback.
+
+## Working rules
+
+- Improve the common design. No graph-family detection, special initializers,
+  per-instance repairs, or cascades that reject accepted proposals during
+  decoding. Same-lane abutment is deferred until after this core.
+- Keep proposal, packing, and conversion accounting consistent. Use exact
+  lexicographic comparisons, not tunable penalties or floating tolerances.
+- Count search work in DP evaluations (`max_asks`) and report actual elapsed
+  time and compilation separately. Initialization and schedule robustness are
+  measured goals, not theorems or assumed acceptance criteria.
+- Check changes with independent optimization oracles, physical embedding
+  validation, and paired dense/sparse measurements. Historical fingerprint
+  numbers are comparison evidence, not mandatory targets for the new model.
+- Keep the design contract and results report current. Do not restore an older
+  rule merely because it appears in a handoff or chronicle.
+
+## Historical context
+
+[Ideas](docs/paper2/ideas.md) is the short current summary.
+[Hardware facts](docs/paper2/fabrics.md) and
+[MinorMiner internals](docs/paper2/mm-internals.md) remain useful references.
+[The handoff](docs/handoff/README.md), `docs/paper2/anatomy.md`,
+`docs/paper2/attraction.md`, and `docs/paper2/notes.md` record earlier designs;
+the handoff index identifies their historical scope. The predecessor before
+the s3.127 rewrite is archived at `ea5d1cf2`, with probes in
+`docs/paper2/archive/`.
+
+The separate C++ MinorMiner fork (`scripts/mm_fork.patch`, `build_mm_fork.sh`,
+registered as `mmfork*`) is stock 0.2.22 plus two switches, byte-identical to
+stock when unset. The paper-1 Reweave line lives on `new-algorithm`; do not
+reintroduce it into this core.

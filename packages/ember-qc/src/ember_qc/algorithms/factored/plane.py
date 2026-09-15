@@ -1,468 +1,206 @@
-"""
-The plane engine (s3.127 — the rewrite).
+"""Three-order search with fixed-slot proposal sweeps and native decoding.
 
-State: two orders, one per axis. From the orders alone the packer
-derives a position (a line index) per variable under hard capacity,
-and from the positions and the y-order the stair rule derives every
-chain: a horizontal run and a vertical run per variable, each the hull
-of the contacts it must reach. The objective is the derived chain
-length on a plane that is strictly weaker than the hardware — capacity
-first, then spans plus one bar per active arm. One move: remove a set
-of variables from one order and re-insert it at its exact optimum over
-all weaves (forward or reversed). Every proposal is adopted; the
-proposer prices the frozen picture, the readout re-packs only the axis
-that moved, and the judge scores what the readout produced.
-
-Everything fabric-specific is a fact of the ``TileGrid``: line pools,
-the brick period, the two boundary lines that carry one course parity.
-Everything else is arithmetic on the two orders.
+See docs/paper2/three-orders.md for the design contract and its exactness limits.
+Capacity belongs to the total decoder; a proposal never invokes legalization.
 """
 from __future__ import annotations
 
-import time as _time
-from typing import Dict, List, Optional, Tuple
+from dataclasses import dataclass
+import time
+from typing import Optional
 
 import numpy as np
 
-from ember_qc.algorithms.factored.field import (
-    TileGrid, _axis_coeffs, _brick_pool_arrays, _stair_contacts,
-    align_reinsert, arm_books, line_pools, pack_lines, stair_energy)
-
-Pos = Dict[int, np.ndarray]
-Books = tuple  # (contacts, bars, tuples) — arm_books' triple
+from .native_model import (Book, Source, capacity_ok, complete_coordinates,
+                           make_book, packing_problem)
+from .order_dp import interleave
+from .packing import pack_axis
 
 
-# ----------------------------------------------------------------------
-# the fabric's capacity book
+@dataclass
+class Layout:
+    orders: np.ndarray
+    coords: np.ndarray
+    book: Book
+    extent_m: int
+    complete: bool = True
 
 
-def profiles(grid: TileGrid) -> Tuple[np.ndarray, np.ndarray]:
-    """THE capacity book: per-(line, brick) pools, ``(ph, pv)`` indexed
-    ``[h-line (row), brick along x]`` and ``[v-line (column), brick
-    along y]``. On a course-resolved fabric (stride > 1) the two
-    boundary lines of each orientation carry one course parity only
-    and are parity-starved at claim time, so their pools are zero. The
-    packer packs against this table (extended past the chip with the
-    ideal pool, so that a state always exists) and the judge prices
-    against it (nothing past the chip, so that overflow is visible)."""
-    s = stride(grid)
-    cache = getattr(grid, "_plane_profiles", None)
-    if cache is not None and cache[0] == s:
-        return cache[1]
-    ph, pv = _brick_pool_arrays(grid, s)
-    ph = np.array(ph, dtype=float, copy=True)
-    pv = np.array(pv, dtype=float, copy=True)
-    if s > 1:
-        for arr in (ph, pv):
-            if arr.shape[0] >= 2:
-                arr[0, :] = 0.0
-                arr[-1, :] = 0.0
-    grid._plane_profiles = (s, (ph, pv))
-    return ph, pv
+def decode(orders, source, chip_m, tile, *, seed=0, deadline=None, info=None):
+    """A total, deterministic decoder on an expanded intact ideal fabric.
 
-
-def stride(grid) -> int:
-    return max(int(getattr(grid, "stride", 1) or 1), 1)
-
-
-def ideal_pool(grid) -> float:
-    lp = line_pools(grid)
-    return float(max(lp.values())) if lp else 0.0
-
-
-# ----------------------------------------------------------------------
-# the books and the judge
-
-
-def rank_of(order: List[int]) -> Dict[int, int]:
-    return {v: r for r, v in enumerate(order)}
-
-
-def books(pos: Pos, src_adj, grid: TileGrid, yrank: Dict[int, int],
-          *, snap: bool) -> Books:
-    """One accounting. Contacts by the y-order's RANK (the stair rule:
-    the lower endpoint reaches sideways, the higher reaches down), bars
-    = the hulls of the contacts plus the variable's own seat, tuples =
-    the claim intervals the packer packs and the converter seats. No
-    capacity floor invented from a degree heuristic (capacity is the
-    derived reach, enforced by the packer); every arm is at least one
-    tile (``min_span=0`` — the one-tile footprint, so a point arm still
-    occupies its tile); y is not clipped to the chip (rows beyond it are
-    the judge's business)."""
-    contacts = _stair_contacts(pos, src_adj, yrank=yrank)
-    return arm_books(pos, src_adj, grid, kappa=1.0, floor=False,
-                     snap=snap, min_span=0.0, contacts=contacts,
-                     yrank=yrank, ybound=False)
-
-
-def _cover_bricks(a: float, b: float, s: int, nb_eff: int
-                  ) -> Tuple[int, int]:
-    """The pack's own brick rule for an inclusive hull [a, b]: bricks
-    floor(a/s) .. floor(b/s), as the half-open [lo, hi), hi clamped to
-    the last capacity-bearing brick of the line (off-chip extent past
-    it is booked on the last real brick — projection and judge agree)."""
-    lo = max(0, int(np.floor(a / s)))
-    hi = int(np.floor(b / s)) + 1
-    return lo, min(hi, nb_eff)
-
-
-def judge(bk: Books, pos: Pos, src_adj, grid: TileGrid, *, bar: float
-          ) -> Tuple[int, float]:
-    """The objective, lexicographic: ``(pen, stair)``.
-
-    ``pen`` = sum over every (orientation, line, brick) of the squared
-    overload of the books' claim intervals against ``profiles(grid)``;
-    lines and bricks the chip does not have are pool 0, so a state that
-    hangs off the chip is priced, never clamped. ``stair`` = the total
-    derived chain length: every active arm's hull span plus one bar
-    (``bar`` junctions) for the qubit the arm needs even when its hull
-    is a single junction. Integers throughout, so a tuple comparison is
-    the exact lexicographic order — no weight, no lambda."""
-    s = stride(grid)
-    ph, pv = profiles(grid)
-    pen = 0.0
-    for o, table in ((1, ph), (0, pv)):
-        nlines, nb = table.shape
-        nb_eff_real = int(np.max(np.nonzero(table.max(axis=0) > 0)[0])) + 1 \
-            if np.any(table > 0) else 0
-        cover: Dict[int, np.ndarray] = {}
-        for (line, a, b, _v) in bk[2][o]:
-            ln = int(line)
-            if ln < 0:
+    Every initial lane has at most C arms TOTAL. Thus every order triple has
+    a valid starting layout, including triples changing both arm masks at once.
+    Each subsequent exact conditional pack preserves both capacity directions.
+    """
+    t0 = time.perf_counter()
+    if info is None:
+        info = {}
+    info["decode_calls"] = info.get("decode_calls", 0) + 1
+    n = orders.shape[1]
+    capacity = 2 * tile
+    coords = np.ones((2, n), dtype=np.int64)
+    book = make_book(orders, coords, source.indptr, source.indices, chip_m)
+    max_groups = 1
+    for axis in range(2):
+        active = orders[axis][book.active[axis, orders[axis]]]
+        coords[axis, active] = 1 + np.arange(len(active)) // capacity
+        max_groups = max(max_groups, (len(active) + capacity - 1) // capacity)
+    extent_m = max(chip_m, (max_groups + 2) // 2)
+    book = make_book(orders, coords, source.indptr, source.indices, chip_m)
+    finished = True
+    while n:
+        previous = coords.copy()
+        for axis in (int(seed) & 1, 1 - (int(seed) & 1)):
+            if deadline is not None and time.perf_counter() >= deadline:
+                finished = False
+                break
+            problem = packing_problem(axis, orders, coords, book)
+            if not len(problem[0]):
                 continue
-            on_chip = ln < nlines
-            # off-chip lines have no last real brick: every brick counts
-            lo, hi = _cover_bricks(float(a), float(b), s,
-                                   nb_eff_real if on_chip else 10 ** 9)
-            if hi <= lo:
-                continue
-            arr = cover.get(ln)
-            if arr is None or arr.size < hi + 1:
-                new = np.zeros(max(hi + 1, nb + 1, 1))
-                if arr is not None:
-                    new[:arr.size] = arr
-                cover[ln] = arr = new
-            arr[lo] += 1.0
-            arr[hi] -= 1.0
-        for ln, diff in cover.items():
-            c = np.cumsum(diff)[:-1]
-            pool = np.zeros_like(c)
-            if ln < nlines:
-                k = min(nb, c.size)
-                pool[:k] = table[ln, :k]
-            over = np.maximum(c - pool, 0.0)
-            pen += float((over * over).sum())
-    stair = stair_energy(pos, src_adj, contacts=bk[0], bar=bar)
-    return int(round(pen)), float(stair)
+            pack_start = time.perf_counter()
+            lines, metrics = pack_axis(*problem, capacity=capacity,
+                                       chip_m=chip_m, extent_m=extent_m)
+            info["packing_wall"] = info.get("packing_wall", 0.0) + time.perf_counter() - pack_start
+            info["readouts"] = info.get("readouts", 0) + 1
+            for key in ("flow_nodes", "flow_arcs"):
+                info[key] = info.get(key, 0) + int(metrics.get(key, 0))
+            if lines is None:
+                raise AssertionError("conditional pack rejected its feasible input")
+            old_score = book.score
+            old_lines = coords[axis, problem[0]].copy()
+            coords[axis, problem[0]] = lines
+            book = make_book(orders, coords, source.indptr, source.indices, chip_m)
+            if book.score > old_score:
+                raise AssertionError("conditional pack increased the shared objective")
+            if book.score == old_score and np.any(lines > old_lines):
+                raise AssertionError("equal-cost pack is not componentwise minimal")
+        info["decode_sweeps"] = info.get("decode_sweeps", 0) + 1
+        if not finished or np.array_equal(previous, coords):
+            break
+    if not capacity_ok(book, coords, capacity, extent_m):
+        raise AssertionError("decoded book violates the conservative capacity invariant")
+    info["decode_wall"] = info.get("decode_wall", 0.0) + time.perf_counter() - t0
+    return Layout(orders.copy(), coords, book, extent_m, finished)
 
 
-# ----------------------------------------------------------------------
-# the packer: one axis, against the other axis held fixed
-
-
-def _line_profiles(axis: int, grid: TileGrid, items, s: int, *,
-                   bounded: bool = False) -> List[np.ndarray]:
-    """The packer's capacity table for ``axis``. Unbounded (the
-    search): the chip's real lines (boundary lines zero) extended with
-    the ideal pool on BOTH axes — extra lines shaped like an interior
-    line, enough to seat everyone at full pool (the L_max lemma), and
-    every line extended along its bricks past the chip up to the
-    farthest hull — so every order has a packing and nothing is ever
-    clamped; what hangs off the chip is the judge's to price. Bounded
-    (the final projection, only when the bookmark hangs off the chip):
-    the chip's real lines and bricks only."""
-    ph, pv = profiles(grid)
-    table = ph if axis == 1 else pv
-    if bounded:
-        return [row for row in table]
-    pool_u = ideal_pool(grid)
-    far = max((float(b) for (_a, b, _v) in items), default=0.0)
-    need_b = int(far // s) + 2
-    n = len(items)
-    extra = int((n + max(int(pool_u), 1) - 1) // max(int(pool_u), 1)) + 1
-    out = []
-    for pr in table:
-        nz = np.flatnonzero(pr > 0)
-        if not nz.size:
-            out.append(np.zeros(max(need_b, pr.size)))
-            continue
-        ne = int(nz.max()) + 1
-        out.append(np.concatenate(
-            [pr[:ne], np.full(max(need_b - ne, 0), pool_u)]))
-    shape = np.where(table.max(axis=0) > 0, pool_u, 0.0)   # interior line
-    ne = int(np.flatnonzero(shape > 0).max()) + 1 if np.any(shape > 0) else 0
-    ext_line = np.concatenate([shape[:ne],
-                               np.full(max(need_b - ne, 0), pool_u)])
-    return out + [ext_line.copy() for _ in range(extra)]
-
-
-def pack_axis(axis: int, order: List[int], pos: Pos, bk: Books,
-              grid: TileGrid, ranks: Dict[int, Dict[int, int]], *,
-              bounded: bool = False) -> Tuple[Dict[int, int], int]:
-    """One forced pack of ``axis``: each line takes a contiguous run of
-    the carried order, feasible iff the run's claim intervals fit the
-    line's per-brick pools; cost = the true stair objective linearized
-    by ``_axis_coeffs`` (exact for any assignment monotone in the
-    carried order). A variable the DP cannot seat is placed on its
-    order-predecessor's line — monotone by construction, no re-sort,
-    and COUNTED (its overload is the judge's to see). Returns
-    ``({v: line}, misses)``."""
-    s = stride(grid)
-    ivs_by_v = {v: (a, b) for (_line, a, b, v) in bk[2][axis]}
-    order = [v for v in order if v in ivs_by_v]
-    if not order:
-        return {}, 0
-    items = [(ivs_by_v[v][0], ivs_by_v[v][1], v) for v in order]
-    prof = _line_profiles(axis, grid, items, s, bounded=bounded)
-    L = len(prof)
-    cmap = _axis_coeffs(bk[0], pos, axis, ranks=ranks[axis])
-    cs = [float(cmap.get(v, 0)) for v in order]
-    vals = [float(pos[v][axis]) for v in order]
-    assign, _cost = pack_lines([ivs_by_v[v] for v in order], vals,
-                               [0.0] * L, coeffs=cs, brick=(s, prof))
-    lines: Dict[int, int] = {}
-    misses = 0
-    first = next((ln for ln in assign if ln is not None), 0)
-    prev = int(first)
-    for v, ln in zip(order, assign):
-        if ln is None:
-            misses += 1
-            ln = prev
-        lines[v] = int(ln)
-        prev = int(ln)
-    return lines, misses
-
-
-def readout(axis: int, orders: Dict[int, List[int]], pos: Pos, src_adj,
-            grid: TileGrid, *, snap: bool, bounded: bool = False,
-            bk: Optional[Books] = None) -> Tuple[Pos, Books, int]:
-    """Orders -> positions on ``axis``, the other axis held exactly as
-    it is. Books on the current positions (``bk`` if the caller already
-    holds them for exactly these positions and this y-order), one pack,
-    positions rewritten as integer-valued floats, books again on the
-    result (the y-order is untouched by a pack, so contacts are the
-    same)."""
-    ranks = {ax: rank_of(orders[ax]) for ax in (0, 1)}
-    if bk is None:
-        bk = books(pos, src_adj, grid, ranks[1], snap=snap)
-    lines, misses = pack_axis(axis, orders[axis], pos, bk, grid, ranks,
-                              bounded=bounded)
-    new = {v: p.copy() for v, p in pos.items()}
-    for v, ln in lines.items():
-        new[v][axis] = float(ln)
-    bk2 = books(new, src_adj, grid, ranks[1], snap=snap)
-    return new, bk2, misses
-
-
-# ----------------------------------------------------------------------
-# the search
-
-
-def units(orders: Dict[int, List[int]], src_adj,
-          rng: np.random.Generator) -> List[Tuple[int, tuple]]:
-    """One pass's questions, shuffled: on each axis, every contiguous
-    run of the current order at scales n/2, n/4, ..., 2, 1
-    (half-overlapping), and every variable's neighbourhood N(v) as one
-    block (the order-independent gather: for a complete bipartite graph
-    N(v) is the other block, so the bipartition is one move; for a
-    sparse graph it is "bring my neighbours to me"). Returned as
-    ``(axis, unit)`` with ``unit`` a tuple of variables."""
-    n = len(orders[0])
-    scales: List[int] = []
-    s = n // 2
-    while s >= 2:
-        scales.append(s)
-        s //= 2
+def units(orders, source, rng):
+    """One deduplicated seeded bag, using only general order/neighbor sets."""
+    n = orders.shape[1]
+    scales = []
+    scale = n // 2
+    while scale >= 2:
+        scales.append(scale)
+        scale //= 2
     scales.append(1)
-    out: List[Tuple[int, tuple]] = []
-    for ax in (0, 1):
-        order = orders[ax]
-        for sc in scales:
-            step = max(sc // 2, 1)
-            for off in range(0, n, step):
-                blk = tuple(order[off:off + sc])
-                if blk:
-                    out.append((ax, blk))
-        # one ask per distinct neighbourhood: twins share N(v) (turán's
-        # two blocks give 81 identical units each), and a duplicate is
-        # re-asked after every accept for nothing
+    neighborhoods = []
+    for v in range(n):
+        neighbors = source.indices[source.indptr[v]:source.indptr[v + 1]]
+        if 0 < len(neighbors) < n:
+            neighborhoods.append(tuple(int(u) for u in neighbors))
+    result = []
+    for axis in range(3):
         seen = set()
-        for v in sorted(src_adj):
-            nb = tuple(sorted(u for u in src_adj[v] if u != v))
-            if 1 <= len(nb) < n and nb not in seen:
-                seen.add(nb)
-                out.append((ax, nb))
-    perm = rng.permutation(len(out))
-    return [out[i] for i in perm]
+        candidates = []
+        for scale in scales:
+            for start in range(0, n, max(1, scale // 2)):
+                candidates.append(tuple(sorted(int(v) for v in orders[axis, start:start + scale])))
+        candidates.extend(neighborhoods)
+        for unit in candidates:
+            if 0 < len(unit) < n and unit not in seen:
+                seen.add(unit)
+                result.append((axis, unit))
+    return [result[int(i)] for i in rng.permutation(len(result))]
 
 
-def arrange(src_adj: Dict[int, List[int]], grid: TileGrid, *,
-            seed: int = 0, max_asks: Optional[int] = None,
-            deadline: Optional[float] = None, snap: bool = False,
-            moves: bool = True, trace: bool = False,
-            sched_seed: Optional[int] = None
-            ) -> Tuple[Pos, Books, dict]:
-    """The engine. Init = two seeded permutations. Loop: for each unit
-    in the pass's bag, ask the interleaver (strict improvement in the
-    true objective on the frozen picture), re-pack the moved axis,
-    judge, adopt (every proposal is adopted), bookmark the best
-    ``(pen, stair)``. Stop = a pass with zero accepts (the fixpoint
-    certificate), or ``max_asks`` DP evaluations (the work budget), or
-    the deadline (a safety net, reported). Returns the bookmark's
-    positions and books and the diagnostics."""
-    t0 = _time.perf_counter()
-    ids = sorted(src_adj)
-    n = len(ids)
-    info: dict = {"asks": 0, "accepts": 0, "passes": 0, "readouts": 0,
-                  "bookmark_asks": 0, "bookmark_wall": 0.0,
-                  "stopped_by": None, "pen": None, "stair": None,
-                  "bars": None, "misses": None, "accept_traj": [],
-                  "adopt_worse": 0, "infeasible": 0,
-                  "trace": [] if trace else None}
-    rng = np.random.default_rng(seed)          # the init
-    px = rng.permutation(n)
-    py = rng.permutation(n)
-    # the bag's own seed (the order-invariance instrument varies it
-    # independently of the init); defaults to the init's
+def arrange(source: Source, chip_m: int, tile: int, *, seed: int = 0,
+            max_asks: Optional[int] = None, deadline: Optional[float] = None,
+            sched_seed: Optional[int] = None, trace: bool = False,
+            moves: bool = True, target_qubits: Optional[int] = None):
+    """Explore complete sweeps, adopt them unconditionally, return a native bookmark."""
+    started = time.perf_counter()
+    n = len(source.labels)
+    target_qubits = (4 * tile * chip_m * (2 * chip_m + 1)
+                     if target_qubits is None else target_qubits)
+    info = dict(asks=0, accepts=0, passes=0, readouts=0, decode_calls=0,
+                bookmark_asks=0, bookmark_wall=0.0, stopped_by=None,
+                adopt_worse=0, infeasible=0, accept_traj=[],
+                accepted_by_order=[0, 0, 0], interleave_wall=0.0,
+                packing_wall=0.0, decode_wall=0.0, flow_nodes=0,
+                flow_arcs=0, trace=[] if trace else None)
+    rng = np.random.default_rng(seed)
+    orders = np.asarray([rng.permutation(n) for _ in range(3)], dtype=np.int64)
     rng = np.random.default_rng(seed if sched_seed is None else sched_seed)
-    pos: Pos = {v: np.array([float(px[i]), float(py[i])])
-                for i, v in enumerate(ids)}
-    typed = bool(getattr(grid, "typed", False)) and bool(line_pools(grid))
-    if n < 3 or not typed:
-        yr = rank_of(sorted(ids, key=lambda v: (pos[v][1], v)))
-        bk = arm_books(pos, src_adj, grid, kappa=1.0, floor=False,
-                       snap=snap, min_span=0.0,
-                       contacts=_stair_contacts(pos, src_adj, yrank=yr),
-                       yrank=yr, ybound=True) if n else ((), {}, {1: [], 0: []})
-        info["stopped_by"] = "trivial"
-        return pos, bk, info
-    orders = {ax: sorted(ids, key=lambda v: (float(pos[v][ax]), v))
-              for ax in (0, 1)}
-    bar = float(stride(grid))
-    nbr_units = {tuple(sorted(u for u in src_adj[v] if u != v))
-                 for v in ids}
+    current = decode(orders, source, chip_m, tile, seed=seed, deadline=deadline, info=info)
+    best = None
+    best_expanded = current.book.score
 
-    def _expired() -> bool:
+    def bookmark(layout):
+        nonlocal best, best_expanded
+        best_expanded = min(best_expanded, layout.book.score)
+        usable = (layout.book.outside == 0 and
+                  layout.book.reserved + len(source.isolates) <= target_qubits)
+        if usable and (best is None or layout.book.reserved < best.book.reserved):
+            best = layout
+            info["bookmark_asks"] = info["asks"]
+            info["bookmark_wall"] = time.perf_counter() - started
+
+    def expired():
         if max_asks is not None and info["asks"] >= max_asks:
-            return True
-        return deadline is not None and _time.perf_counter() > deadline
+            return "asks"
+        if deadline is not None and time.perf_counter() >= deadline:
+            return "deadline"
+        return None
 
-    # the first picture: rows, columns, rows against the packed columns
-    bk = None
-    for ax in (1, 0, 1):
-        pos, bk, miss = readout(ax, orders, pos, src_adj, grid, snap=snap,
-                                bk=bk)
-        info["readouts"] += 1
-    e_cur = judge(bk, pos, src_adj, grid, bar=bar)
-    best = (e_cur, {v: p.copy() for v, p in pos.items()}, bk, miss,
-            {ax: list(orders[ax]) for ax in (0, 1)})
-    fix = False
-    tried: Dict[Tuple[int, tuple], int] = {}
-    state_ver = 0
-    while moves and not _expired():
+    bookmark(current)
+    while n > 1 and moves and not expired():
         info["passes"] += 1
         changes = 0
-        for ax, unit in units(orders, src_adj, rng):
-            if _expired():
+        proposal = current.orders.copy()
+        coords = complete_coordinates(proposal, current.coords,
+                                      current.book.active, 2 * tile)
+        slots = np.asarray([coords[axis, proposal[axis]].copy() for axis in range(2)])
+        for axis, unit in units(proposal, source, rng):
+            if expired():
                 break
-            key = (ax, unit)
-            if tried.get(key) == state_ver:
-                continue
             info["asks"] += 1
-            order = orders[ax]
-            vals = [float(pos[v][ax]) for v in order]
-            other = {v: float(pos[v][1 - ax]) for v in ids}
-            new_order, _flip = align_reinsert(
-                order, set(unit), src_adj, vals, None, axis=ax,
-                other=other, contacts=bk[0], bar=bar)
-            if new_order is None:
-                tried[key] = state_ver
+            t0 = time.perf_counter()
+            order, flipped = interleave(proposal, coords, source.indptr,
+                                         source.indices, axis, unit, chip_m)
+            info["interleave_wall"] += time.perf_counter() - t0
+            if order is None:
                 continue
-            cand = {v: p.copy() for v, p in pos.items()}
-            for r, v in enumerate(new_order):
-                cand[v][ax] = float(vals[r])
-            new_orders = {a: (new_order if a == ax else orders[a])
-                          for a in (0, 1)}
-            # the packer's guarantee is capacity on BOTH axes: re-pack
-            # the moved axis (its contacts changed), then the other (its
-            # hulls changed). Re-packing only the moved axis left the
-            # other axis overloaded until its next accepted move — the
-            # search then wandered in overloaded states (turán: bookmark
-            # frozen at the init for 15,000 asks).
-            cand, bk2, miss = readout(ax, new_orders, cand, src_adj, grid,
-                                      snap=snap)
-            info["readouts"] += 1
-            if miss == 0:
-                cand, bk2, miss = readout(1 - ax, new_orders, cand, src_adj,
-                                          grid, snap=snap, bk=bk2)
-                info["readouts"] += 1
-            if miss > 0:
-                # the packer could not seat everyone: the proposal is
-                # outside the valid set and is declined — feasibility by
-                # construction, never a priced or adopted overload
-                # (measured: adopting one such state on turán left the
-                # bookmark at the init for 15,000 asks)
-                info["infeasible"] += 1
-                tried[key] = state_ver
-                continue
-            e2 = judge(bk2, cand, src_adj, grid, bar=bar)
-            if e2 > e_cur:
-                info["adopt_worse"] += 1
-            if trace:
-                info["trace"].append((info["asks"], ax, len(unit),
-                                      unit in nbr_units, e_cur, e2))
-            pos, bk, orders, e_cur = cand, bk2, new_orders, e2
-            state_ver += 1
-            changes += 1
+            proposal[axis] = order
+            if axis < 2:
+                coords[axis, order] = slots[axis]
             info["accepts"] += 1
-            if e2 < best[0]:
-                best = (e2, {v: p.copy() for v, p in pos.items()}, bk,
-                        miss, {a: list(orders[a]) for a in (0, 1)})
-                info["bookmark_asks"] = info["asks"]
-                info["bookmark_wall"] = round(_time.perf_counter() - t0, 2)
+            info["accepted_by_order"][axis] += 1
+            changes += 1
+            if trace:
+                info["trace"].append(dict(ask=info["asks"], order=axis,
+                                           size=len(unit), flipped=bool(flipped)))
         info["accept_traj"].append(changes)
-        if changes == 0:
-            fix = not _expired()
+        if changes:
+            # One compound proposal, one decoder boundary. There is no veto
+            # based on its decoded score or its intermediate capacity.
+            candidate = decode(proposal, source, chip_m, tile, seed=seed,
+                               deadline=deadline, info=info)
+            info["adopt_worse"] += int(candidate.book.score > current.book.score)
+            current = candidate
+            bookmark(current)
+        elif not expired():
+            info["stopped_by"] = "fixpoint"
             break
-    if fix:
-        info["stopped_by"] = "fixpoint"
-    elif max_asks is not None and info["asks"] >= max_asks:
-        info["stopped_by"] = "asks"
-    elif deadline is not None and _time.perf_counter() > deadline:
-        info["stopped_by"] = "deadline"
-    else:
-        info["stopped_by"] = "moves-off" if not moves else "passes"
-    (pen, stair), bpos, bbk, bmiss, bords = best
-    info["projected"] = False
-    info["proj_misses"] = 0
-    if pen > 0:
-        # the bookmark hangs off the chip: hand over its bounded
-        # projection — the same packer with the chip's real lines only,
-        # both axes, stragglers on their predecessor's line and COUNTED
-        # (the converter misses them; the router legalizes). What the
-        # search found stays reported as (pen, stair).
-        ppos = {v: p.copy() for v, p in bpos.items()}
-        pm = 0
-        # columns first: while x hangs off the chip, h-arms past the
-        # last real brick are free in the row pack (the packer's
-        # off-chip rule), and a y-pack before x would stack everyone
-        # on one row; then rows, then columns once more against the
-        # packed rows
-        pbk = None
-        for ax in (0, 1, 0):
-            ppos, pbk, m = readout(ax, bords, ppos, src_adj, grid,
-                                   snap=snap, bounded=True, bk=pbk)
-            pm = m
-        bbk = pbk
-        bpos = ppos
-        info["projected"] = True
-        info["proj_misses"] = int(pm)
-    info["pen"] = int(pen)
-    info["stair"] = float(stair)
-    info["bars"] = int(sum((1 if h else 0) + (1 if v else 0)
-                           for h, v in bbk[0].values()))
-    info["misses"] = int(bmiss)
-    info["orders"] = (list(bords[0]), list(bords[1]))
-    info["yrank"] = rank_of(bords[1])
-    info["wall"] = round(_time.perf_counter() - t0, 2)
-    return bpos, bbk, info
+    if info["stopped_by"] is None:
+        info["stopped_by"] = expired() or ("moves-off" if not moves else "trivial")
+    shown = best.book if best is not None else current.book
+    info.update(outside_reserved_qubits=shown.outside,
+                reserved_qubits=shown.reserved + len(source.isolates),
+                active_horizontal=int(shown.active[1].sum()),
+                active_vertical=int(shown.active[0].sum()),
+                mixed_vertices=int(np.logical_and(*shown.active).sum()),
+                pen=shown.outside, stair=shown.reserved,
+                bars=int(shown.active.sum()), misses=0,
+                best_expanded_score=best_expanded,
+                arrange_wall=time.perf_counter() - started)
+    return best, info

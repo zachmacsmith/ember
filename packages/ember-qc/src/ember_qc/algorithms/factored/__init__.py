@@ -1,20 +1,11 @@
 """
 ember_qc/algorithms/factored
 ============================
-The **attraction** embedder: a placement-first minor embedder for
-D-Wave fabrics. The hardware graph is a product of a grid and complete
-bipartite junctions, so a variable's chain is a horizontal run and a
-vertical run whose reaches follow from two orders (x and y) alone. The
-plane engine (``plane.py``) optimizes the two orders — a packer DP
-derives positions under hard capacity, an interleaver DP re-weaves
-sets of variables at their exact optimum — and the hardware adapter
-(``field.py``: books, converter, completion, certificate) turns the
-layout into qubits. Minorminer is an optional polisher at the end.
-
-Modules: ``plane.py`` (the engine), ``field.py`` (fabric adapter and
-the exact kernels), ``placement.py`` (the pipeline and the registry
-entry), ``polish.py`` (spur pruning), ``ball.py`` (the ball pass of
-the tail), ``trees.py`` (the ball pass's Steiner rebuild).
+The **attraction** embedder searches three orders on intact Zephyr.
+Contact order determines active bars; spatial orders are packed under a
+shared conservative capacity model. Interleaver sweeps are adopted without
+a feasibility-veto layer. The default result is native; MinorMiner is an
+explicit optional postprocessor. See docs/paper2/three-orders.md.
 """
 
 from ember_qc.registry import EmbeddingAlgorithm, register_algorithm
@@ -25,13 +16,11 @@ from ember_qc.algorithms.factored.ball import ball_polish  # noqa: F401
 
 @register_algorithm("attraction")
 class Attraction(EmbeddingAlgorithm):
-    """Placement-first embedder: two orders, packer + interleaver DPs,
-    exact conversion and completion on course-resolved Zephyr (valid
-    seeds skip minorminer legalization), optional minorminer tail."""
+    """Three-order native Zephyr embedding with optional explicit MM polish."""
 
     @property
     def version(self) -> str:
-        return "0.3.0"
+        return "0.4.0"
 
     def embed(self, source_graph, target_graph, timeout: float = 60.0,
               **kwargs) -> dict:

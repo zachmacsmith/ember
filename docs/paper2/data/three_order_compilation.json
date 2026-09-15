@@ -1,0 +1,27 @@
+{
+  "import_seconds": 0.42377147707156837,
+  "numba": "0.67.0",
+  "code_hash": "6a7980d06f5f4345e753657d4277d0bc1f81d6ba32c0fd1991da370d351ce975",
+  "load_average": [
+    72.04541015625,
+    78.00048828125,
+    78.69384765625
+  ],
+  "scope": "Path8/Z3 warmup, fresh Numba cache, one process",
+  "rows": [
+    {
+      "run": "cold",
+      "elapsed_seconds": 13.759486373048276,
+      "compilation_seconds": 13.42305297893472,
+      "asks": 200,
+      "physical_qubits": 8
+    },
+    {
+      "run": "warm",
+      "elapsed_seconds": 0.007107194978743792,
+      "compilation_seconds": 0.0,
+      "asks": 200,
+      "physical_qubits": 8
+    }
+  ]
+}

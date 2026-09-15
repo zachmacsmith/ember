@@ -1,0 +1,183 @@
+{
+  "kind": "conditional_packing_pilot",
+  "created_utc": "2026-09-14T23:45:58.415448+00:00",
+  "graph_path": "/data/max/ember-qc-data/ember-qc/graphs/17188_ws_n486_k4_b0.30_s0.json",
+  "graph_sha256": "524a1437a3d11aa46bc627659bd8ea97a2b378008950e25efeee0342db15252b",
+  "graph_id": 17188,
+  "nodes": 486,
+  "edges": 972,
+  "seed": 0,
+  "chip_m": 12,
+  "tile": 4,
+  "extent_m": 25,
+  "active_horizontal": 381,
+  "active_vertical": 392,
+  "initialization_seconds": 0.34074486000463367,
+  "python": "3.11.2",
+  "numpy": "2.4.6",
+  "numba": "0.67.0",
+  "load_average": [
+    80.26708984375,
+    78.015625,
+    77.08837890625
+  ],
+  "code_sha256": {
+    "packing.py": "57c1b335576598ee90d15e4deb63cce5fe7392385c62a33b866d471887096079",
+    "native_model.py": "a4aef76c60bc0db3905c91d3e0b3e1d4f84708c071fbbf5d51aebcbbcbeb914b"
+  },
+  "axes": [
+    {
+      "axis": 1,
+      "active_items": 381,
+      "opposite_bars": 392,
+      "max_coordinate": 41,
+      "runs": [
+        {
+          "pack_wall": 0.03733984299469739,
+          "flow_nodes": 3142,
+          "flow_arcs": 10508,
+          "objective": [
+            7231,
+            10000
+          ],
+          "infeasible": false,
+          "encoding_weight": 15127,
+          "graph_wall": 0.006194896064698696,
+          "flow_wall": 0.008038544096052647,
+          "encoding_infinite": 45868299,
+          "startup": true,
+          "capacity_verified": true,
+          "shared_score_verified": true
+        },
+        {
+          "pack_wall": 0.001140159904025495,
+          "flow_nodes": 3142,
+          "flow_arcs": 10508,
+          "objective": [
+            7231,
+            10000
+          ],
+          "infeasible": false,
+          "encoding_weight": 15127,
+          "graph_wall": 0.00026423996314406395,
+          "flow_wall": 0.00032036006450653076,
+          "encoding_infinite": 45868299,
+          "startup": false,
+          "capacity_verified": true,
+          "shared_score_verified": true
+        },
+        {
+          "pack_wall": 0.001021789968945086,
+          "flow_nodes": 3142,
+          "flow_arcs": 10508,
+          "objective": [
+            7231,
+            10000
+          ],
+          "infeasible": false,
+          "encoding_weight": 15127,
+          "graph_wall": 0.00021249009296298027,
+          "flow_wall": 0.0003327400190755725,
+          "encoding_infinite": 45868299,
+          "startup": false,
+          "capacity_verified": true,
+          "shared_score_verified": true
+        },
+        {
+          "pack_wall": 0.0009381090058013797,
+          "flow_nodes": 3142,
+          "flow_arcs": 10508,
+          "objective": [
+            7231,
+            10000
+          ],
+          "infeasible": false,
+          "encoding_weight": 15127,
+          "graph_wall": 0.00020416988991200924,
+          "flow_wall": 0.00029901997186243534,
+          "encoding_infinite": 45868299,
+          "startup": false,
+          "capacity_verified": true,
+          "shared_score_verified": true
+        }
+      ]
+    },
+    {
+      "axis": 0,
+      "active_items": 392,
+      "opposite_bars": 381,
+      "max_coordinate": 44,
+      "runs": [
+        {
+          "pack_wall": 0.0009941289899870753,
+          "flow_nodes": 1948,
+          "flow_arcs": 6375,
+          "objective": [
+            6613,
+            9579
+          ],
+          "infeasible": false,
+          "encoding_weight": 14200,
+          "graph_wall": 0.00014186999760568142,
+          "flow_wall": 0.00041846896056085825,
+          "encoding_infinite": 24198626,
+          "startup": true,
+          "capacity_verified": true,
+          "shared_score_verified": true
+        },
+        {
+          "pack_wall": 0.0009683689568191767,
+          "flow_nodes": 1948,
+          "flow_arcs": 6375,
+          "objective": [
+            6613,
+            9579
+          ],
+          "infeasible": false,
+          "encoding_weight": 14200,
+          "graph_wall": 0.0001233500661328435,
+          "flow_wall": 0.00040512008126825094,
+          "encoding_infinite": 24198626,
+          "startup": false,
+          "capacity_verified": true,
+          "shared_score_verified": true
+        },
+        {
+          "pack_wall": 0.0009694700129330158,
+          "flow_nodes": 1948,
+          "flow_arcs": 6375,
+          "objective": [
+            6613,
+            9579
+          ],
+          "infeasible": false,
+          "encoding_weight": 14200,
+          "graph_wall": 0.00012659002095460892,
+          "flow_wall": 0.00042384990956634283,
+          "encoding_infinite": 24198626,
+          "startup": false,
+          "capacity_verified": true,
+          "shared_score_verified": true
+        },
+        {
+          "pack_wall": 0.000958880060352385,
+          "flow_nodes": 1948,
+          "flow_arcs": 6375,
+          "objective": [
+            6613,
+            9579
+          ],
+          "infeasible": false,
+          "encoding_weight": 14200,
+          "graph_wall": 0.00012111000251024961,
+          "flow_wall": 0.0004253400256857276,
+          "encoding_infinite": 24198626,
+          "startup": false,
+          "capacity_verified": true,
+          "shared_score_verified": true
+        }
+      ]
+    }
+  ],
+  "scope": "Two conditional axis packs from a canonical seed; not a search or embedding benchmark."
+}

@@ -1,190 +1,195 @@
-"""
-tests/algorithms/test_plane.py
-==============================
-The plane engine (s3.127): the judge against brute force, the packer's
-invariants, the readout, the N(v) gather, the stops, determinism.
-"""
-import dwave_networkx as dnx
+"""The native model, total decoder and per-sweep adoption contracts."""
 import networkx as nx
 import numpy as np
-import pytest
 
 from ember_qc.algorithms.factored import plane
-from ember_qc.algorithms.factored.field import (TileGrid, _stair_contacts,
-                                                stair_energy)
-from ember_qc.algorithms.factored.placement import target_layout
+from ember_qc.algorithms.factored.native_model import (
+    Source, capacity_ok, complete_coordinates, make_book)
 
 
-def _zgrid(m=3):
-    g = dnx.zephyr_graph(m, 4)
-    return TileGrid(g, target_layout(g), courses=True)
+def _orders(n, seed=0):
+    rng = np.random.default_rng(seed)
+    return np.asarray([rng.permutation(n) for _ in range(3)], dtype=np.int64)
 
 
-def _cgrid():
-    g = dnx.chimera_graph(4, 4, 4)
-    return TileGrid(g, target_layout(g))
+def test_single_bars_do_not_reach_ghost_corners():
+    source = Source.from_graph(nx.path_graph(2))
+    orders = np.tile(np.arange(2), (3, 1))
+    coords = np.array([[100, 3], [5, 100]], dtype=np.int64)
+    book = make_book(orders, coords, source.indptr, source.indices, 3)
+    assert book.active.tolist() == [[False, True], [True, False]]
+    assert book.lo[1, 0] == book.hi[1, 0] == 3
+    assert book.lo[0, 1] == book.hi[0, 1] == 5
+    assert book.score == (0, 2)
 
 
-def _state(rng, grid, n, p=0.4, ymax=None):
-    g = nx.gnp_random_graph(n, p, seed=int(rng.integers(9999)))
-    adj = {v: sorted(g.neighbors(v)) for v in g.nodes()}
-    H = ymax if ymax is not None else grid.H
-    pos = {v: np.array([float(rng.integers(1, grid.W - 1)),
-                        float(rng.integers(0, H))]) for v in g.nodes()}
-    oy = sorted(pos, key=lambda v: (pos[v][1], v))
-    return adj, pos, oy
+def test_shared_even_boundary_is_reserved():
+    source = Source.from_graph(nx.path_graph(2))
+    orders = np.tile(np.arange(2), (3, 1))
+    coords = np.full((2, 2), 2, dtype=np.int64)
+    book = make_book(orders, coords, source.indptr, source.indices, 3)
+    assert book.guard_lo[book.active].tolist() == [0, 0]
+    assert book.guard_hi[book.active].tolist() == [1, 1]
+    assert book.reserved == 4
 
 
-class TestJudge:
-    def test_stair_is_stair_energy_with_bar(self):
-        rng = np.random.default_rng(1)
-        grid = _zgrid()
-        for _ in range(10):
-            adj, pos, oy = _state(rng, grid, 12)
-            bk = plane.books(pos, adj, grid, plane.rank_of(oy), snap=True)
-            pen, stair = plane.judge(bk, pos, adj, grid, bar=2.0)
-            want = stair_energy(pos, adj, bar=2.0,
-                                contacts=_stair_contacts(
-                                    pos, adj, yrank=plane.rank_of(oy)))
-            assert stair == pytest.approx(want)
-
-    def test_pen_vs_brute_force_including_off_chip(self):
-        rng = np.random.default_rng(2)
-        grid = _zgrid()
-        s = plane.stride(grid)
-        ph, pv = plane.profiles(grid)
-        for trial in range(20):
-            adj, pos, oy = _state(rng, grid, int(rng.integers(4, 14)),
-                                  ymax=2 * grid.H)
-            bk = plane.books(pos, adj, grid, plane.rank_of(oy), snap=False)
-            pen, _ = plane.judge(bk, pos, adj, grid, bar=0.0)
-            want = 0.0
-            for o, table in ((1, ph), (0, pv)):
-                nl, nb = table.shape
-                real_last = int(np.max(np.nonzero(table.max(axis=0) > 0)[0])) + 1
-                cover = {}
-                for (line, a, b, v) in bk[2][o]:
-                    ln = int(line)
-                    lo = max(0, int(np.floor(a / s)))
-                    hi = int(np.floor(b / s)) + 1
-                    if ln < nl:
-                        hi = min(hi, real_last)
-                    for q in range(lo, hi):
-                        cover[(ln, q)] = cover.get((ln, q), 0) + 1
-                for (ln, q), c in cover.items():
-                    pool = table[ln, q] if (ln < nl and q < nb) else 0.0
-                    want += max(c - pool, 0.0) ** 2
-            assert pen == int(round(want)), (trial, pen, want)
-
-    def test_boundary_lines_zero_only_on_courses(self):
-        ph, pv = plane.profiles(_zgrid())
-        assert ph[0].sum() == 0 and ph[-1].sum() == 0
-        assert pv[0].sum() == 0 and pv[-1].sum() == 0
-        assert ph[1].max() == 8
-        ch, cv = plane.profiles(_cgrid())
-        assert ch[0].sum() > 0 and cv[-1].sum() > 0
+def test_dormant_interpolation_is_ordered_and_does_not_change_active_positions():
+    orders = np.tile(np.arange(7), (3, 1))
+    coords = np.array([[99, 1, 99, 99, 7, 99, 99]] * 2)
+    active = np.array([[False, True, False, False, True, False, False]] * 2)
+    filled = complete_coordinates(orders, coords, active, 8)
+    assert filled[0].tolist() == [1, 1, 3, 5, 7, 7, 7]
+    assert np.array_equal(filled[active], coords[active])
 
 
-class TestPacker:
-    def test_pack_axis_zero_own_overload_and_order_kept(self):
-        rng = np.random.default_rng(3)
-        grid = _zgrid(4)
-        for _ in range(10):
-            adj, pos, oy = _state(rng, grid, int(rng.integers(6, 20)))
-            ox = sorted(pos, key=lambda v: (pos[v][0], v))
-            orders = {0: ox, 1: oy}
-            for ax in (1, 0):
-                new, bk, miss = plane.readout(ax, orders, pos, adj, grid,
-                                              snap=True)
-                lines = [new[v][ax] for v in orders[ax]]
-                assert lines == sorted(lines)          # monotone in order
-                assert all(float(x).is_integer() for x in lines)
-                if ax == 0:
-                    assert 0 <= min(lines) and max(lines) <= grid.W - 1
-                if miss == 0:
-                    # the packed axis carries no overload on the chip
-                    pen, _ = plane.judge(bk, new, adj, grid, bar=0.0)
-                    ph, pv = plane.profiles(grid)
-                    table = ph if ax == 1 else pv
-                    nl = table.shape[0]
-                    over = 0.0
-                    s = plane.stride(grid)
-                    real_last = int(np.max(np.nonzero(
-                        table.max(axis=0) > 0)[0])) + 1
-                    cov = {}
-                    for (line, a, b, v) in bk[2][ax]:
-                        ln = int(line)
-                        if ln >= nl:
-                            continue
-                        lo = max(0, int(np.floor(a / s)))
-                        hi = min(int(np.floor(b / s)) + 1, real_last)
-                        for q in range(lo, hi):
-                            cov[(ln, q)] = cov.get((ln, q), 0) + 1
-                    for (ln, q), c in cov.items():
-                        over += max(c - table[ln, q], 0.0)
-                    assert over == 0.0
-                pos = new
-
-    def test_readout_deterministic(self):
-        rng = np.random.default_rng(4)
-        grid = _zgrid()
-        adj, pos, oy = _state(rng, grid, 12)
-        ox = sorted(pos, key=lambda v: (pos[v][0], v))
-        a = plane.readout(1, {0: ox, 1: oy}, pos, adj, grid, snap=True)
-        b = plane.readout(1, {0: ox, 1: oy}, pos, adj, grid, snap=True)
-        assert all(np.array_equal(a[0][v], b[0][v]) for v in a[0])
-        assert a[2] == b[2]
+def test_decoder_is_deterministic_and_enforces_both_orientations():
+    for graph in (nx.path_graph(12), nx.complete_graph(12), nx.complete_bipartite_graph(7, 9)):
+        source = Source.from_graph(graph)
+        orders = _orders(len(source.labels), 4)
+        a = plane.decode(orders, source, 3, 4, seed=1)
+        b = plane.decode(orders, source, 3, 4, seed=1)
+        assert np.array_equal(a.coords, b.coords)
+        assert a.book.score == b.book.score
+        assert capacity_ok(a.book, a.coords, 8, a.extent_m)
+        for axis in range(2):
+            active = orders[axis][a.book.active[axis, orders[axis]]]
+            assert np.all(np.diff(a.coords[axis, active]) >= 0)
 
 
-class TestArrange:
-    def test_trivial_and_untyped_noop(self):
-        adj = {0: [1], 1: [0]}
-        pos, bk, info = plane.arrange(adj, _zgrid(), seed=0)
-        assert info["stopped_by"] == "trivial" and len(pos) == 2
-        g = nx.grid_2d_graph(6, 6)
-        grid = TileGrid(g, {v: np.array(v, dtype=float) for v in g})
-        adj = {v: [u for u in range(5) if u != v] for v in range(5)}
-        pos, bk, info = plane.arrange(adj, grid, seed=0)
-        assert info["stopped_by"] == "trivial"
+def test_total_decoder_accepts_roles_on_an_expanded_fabric():
+    source = Source.from_graph(nx.complete_graph(20))
+    layout = plane.decode(_orders(20, 2), source, 1, 2)
+    assert layout.extent_m > 1
+    assert capacity_ok(layout.book, layout.coords, 4, layout.extent_m)
+    assert layout.book.outside > 0
 
-    def test_bookmark_equals_judge_and_stops(self):
-        rng = np.random.default_rng(5)
-        grid = _zgrid(4)
-        g = nx.gnp_random_graph(24, 0.2, seed=7)
-        adj = {v: sorted(g.neighbors(v)) for v in g.nodes()}
-        pos, bk, info = plane.arrange(adj, grid, seed=0, max_asks=10 ** 6,
-                                      snap=True)
-        assert info["stopped_by"] == "fixpoint"
-        pen, stair = plane.judge(bk, pos, adj, grid,
-                                 bar=float(plane.stride(grid)))
-        assert (pen, stair) == (info["pen"], info["stair"])
-        pos2, _, info2 = plane.arrange(adj, grid, seed=0, max_asks=30,
-                                       snap=True)
-        assert info2["stopped_by"] == "asks" and info2["asks"] == 30
-        assert 0 <= info2["bookmark_asks"] <= 30
-        pos3, _, info3 = plane.arrange(adj, grid, seed=0, max_asks=30,
-                                       snap=True)
-        assert all(np.array_equal(pos2[v], pos3[v]) for v in pos2)
 
-    def test_biclique_gather_is_one_move(self):
-        # K_{8,8} from an interleaved y-order: the N(v) unit re-weaves
-        # the other block as ONE contiguous run — the bipartition in a
-        # single accepted ask — and the crystal's every variable is
-        # one-sided (bars == n)
-        from ember_qc.algorithms.factored.field import align_reinsert
-        g = nx.complete_bipartite_graph(8, 8)
-        adj = {v: sorted(g.neighbors(v)) for v in g.nodes()}
-        oy = [0, 8, 1, 9, 2, 10, 3, 11, 4, 12, 5, 13, 6, 14, 7, 15]
-        vals = [float(i // 2) for i in range(16)]
-        other = {v: float(v % 8) for v in range(16)}
-        new, _flip = align_reinsert(oy, set(adj[0]), adj, vals, None,
-                                    axis=1, other=other, contacts=None,
-                                    bar=2.0)
-        assert new is not None
-        blocks = [v // 8 for v in new]
-        runs = 1 + sum(1 for a, b in zip(blocks, blocks[1:]) if a != b)
-        assert runs == 2
-        grid = _zgrid(4)
-        pos, bk, info = plane.arrange(adj, grid, seed=0, max_asks=2000,
-                                      snap=True)
-        assert info["bars"] == 16 and info["pen"] == 0
+def test_units_deduplicate_neighborhoods_and_cover_three_orders():
+    source = Source.from_graph(nx.complete_bipartite_graph(8, 8))
+    bag = plane.units(_orders(16), source, np.random.default_rng(0))
+    keys = [(axis, tuple(sorted(unit))) for axis, unit in bag]
+    assert len(keys) == len(set(keys))
+    assert {axis for axis, _ in keys} == {0, 1, 2}
+    for axis in range(3):
+        assert (axis, tuple(range(8))) in keys
+        assert (axis, tuple(range(8, 16))) in keys
+
+
+def test_packing_occurs_once_after_many_adoptions_and_worse_output_is_kept(monkeypatch):
+    source = Source.from_graph(nx.path_graph(6))
+    actual_decode = plane.decode
+    decoded_orders = []
+    first_layout = []
+
+    def decode(*args, **kwargs):
+        layout = actual_decode(*args, **kwargs)
+        decoded_orders.append(layout.orders.copy())
+        if not first_layout:
+            first_layout.append(layout)
+        else:
+            # A worse successful decoder response must not veto its proposal.
+            layout.book.reserved += 100
+        return layout
+
+    def propose(orders, coords, indptr, indices, axis, unit, chip_m):
+        return np.roll(orders[axis], 1), False
+
+    monkeypatch.setattr(plane, "decode", decode)
+    monkeypatch.setattr(plane, "interleave", propose)
+    best, info = plane.arrange(source, 3, 4, max_asks=5)
+    assert info["asks"] == info["accepts"] == 5
+    assert info["decode_calls"] == len(decoded_orders) == 2
+    assert info["adopt_worse"] == 1
+    assert best is first_layout[0]
+    assert not np.array_equal(decoded_orders[0], decoded_orders[1])
+    assert info["stopped_by"] == "asks"
+
+
+def test_only_finite_decoded_layouts_can_be_bookmarks():
+    source = Source.from_graph(nx.complete_graph(20))
+    best, info = plane.arrange(source, 1, 2, max_asks=2)
+    assert best is None
+    assert info["outside_reserved_qubits"] > 0
+    assert info["infeasible"] == 0
+
+
+def test_work_budget_and_schedule_reproducibility():
+    source = Source.from_graph(nx.gnp_random_graph(12, .3, seed=4))
+    a, da = plane.arrange(source, 3, 4, seed=2, max_asks=25)
+    b, db = plane.arrange(source, 3, 4, seed=2, sched_seed=2, max_asks=25)
+    assert da["asks"] == db["asks"] == 25
+    assert np.array_equal(a.coords, b.coords)
+    assert np.array_equal(a.orders, b.orders)
+    assert a.book.score == b.book.score
+
+
+def test_deadline_between_axis_packs_preserves_last_valid_state(monkeypatch):
+    source = Source.from_graph(nx.path_graph(16))
+    orders = _orders(len(source.labels))
+    now = [0.0]
+    actual_pack = plane.pack_axis
+    packed = []
+
+    def pack_then_expire(*args, **kwargs):
+        lines, metrics = actual_pack(*args, **kwargs)
+        packed.append((args[0].copy(), lines.copy()))
+        now[0] = 2.0
+        return lines, metrics
+
+    monkeypatch.setattr(plane.time, "perf_counter", lambda: now[0])
+    monkeypatch.setattr(plane, "pack_axis", pack_then_expire)
+    info = {}
+    layout = plane.decode(orders, source, 3, 4, seed=0, deadline=1.0, info=info)
+
+    assert len(packed) == info["readouts"] == 1
+    assert not layout.complete
+    assert capacity_ok(layout.book, layout.coords, 8, layout.extent_m)
+    vertices, last_lines = packed[0]
+    np.testing.assert_array_equal(layout.coords[0, vertices], last_lines)
+    rebuilt = make_book(layout.orders, layout.coords, source.indptr, source.indices, 3)
+    assert layout.book.score == rebuilt.score
+
+
+def test_deadline_after_adoption_keeps_earlier_better_finite_bookmark(monkeypatch):
+    source = Source.from_graph(nx.path_graph(16))
+    now = [0.0]
+    actual_decode = plane.decode
+    decoded = []
+    readout_counts = []
+
+    def capture_decode(*args, **kwargs):
+        layout = actual_decode(*args, **kwargs)
+        decoded.append(layout)
+        readout_counts.append(kwargs["info"]["readouts"])
+        return layout
+
+    def one_unit(orders, source, rng):
+        return [(0, (int(orders[0, -1]),))]
+
+    def accept_then_expire(orders, coords, indptr, indices, axis, unit, chip_m):
+        # An admissible singleton interleaving; this test controls acceptance
+        # independently of the exhaustive tests of the proposal optimizer.
+        now[0] = 2.0
+        return np.roll(orders[axis], 1), False
+
+    monkeypatch.setattr(plane.time, "perf_counter", lambda: now[0])
+    monkeypatch.setattr(plane, "decode", capture_decode)
+    monkeypatch.setattr(plane, "units", one_unit)
+    monkeypatch.setattr(plane, "interleave", accept_then_expire)
+    best, info = plane.arrange(source, 3, 4, seed=0, max_asks=10, deadline=1.0)
+
+    assert len(decoded) == info["decode_calls"] == 2
+    initial, interrupted = decoded
+    assert initial.complete and not interrupted.complete
+    assert initial.book.outside == interrupted.book.outside == 0
+    assert initial.book.score < interrupted.book.score
+    assert best is initial
+    assert readout_counts[0] > 0
+    assert readout_counts[0] == readout_counts[1]
+    np.testing.assert_array_equal(interrupted.orders[0], np.roll(initial.orders[0], 1))
+    for layout in decoded:
+        assert capacity_ok(layout.book, layout.coords, 8, layout.extent_m)
+    assert info["asks"] == info["accepts"] == 1
+    assert info["adopt_worse"] == 1
+    assert info["bookmark_asks"] == 0
+    assert info["stopped_by"] == "deadline"

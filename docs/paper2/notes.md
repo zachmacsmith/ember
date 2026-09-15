@@ -1,5 +1,12 @@
 # Notes — the chronological record (condensed)
 
+**Current implementation (2026-09-14):** read the
+[three-order design contract](three-orders.md) and
+[measured results](three-orders-results.md). These supersede historical
+two-order state, mandatory crosses, per-proposal packing and feasibility
+rejection rules. The implementation has standalone output; abutment remains
+deferred. `ideas.md` is the current concise summary.
+
 Condensed 2026-08-06 at Max's directive: the notebook had grown 3,900
 lines of micro-verdicts and self-invented doctrine that crowded out the
 ideas and poisoned later reading. **Read `ideas.md` first** — principles
@@ -2776,3 +2783,22 @@ Numbered here; BibTeX in `refs.bib` (keys in brackets).
     global routing. [`mueller2011resource`]
 22. Nocedal, Wright (2006). *Numerical Optimization*, 2nd ed. — trust-region
     methods; the cadence rationale of §3.24. [`nocedal2006numopt`]
+# Three-order native core implemented (2026-09-14)
+
+The owner approved the [three-order design contract](three-orders.md): x/y/t
+orders, demand-derived single or mixed bars, shared conservative reservations,
+and native output without implicit MinorMiner. Pack after a complete sweep of
+interleavings; adopt the accumulated proposal even if its decoded cost worsens.
+Core first; abutment is deferred. The linked document preserves the rationale,
+the corrected shared-boundary packing argument, and implementation status.
+Historical acceptance rules above do not override these decisions.
+
+The first build and its exhaustive subproblem tests are complete. The
+[paired measurements](three-orders-results.md) retain both successes and
+regressions: inexpensive search is established on this board; a general
+embedding-quality win is not. Longer search improves several sparse layouts,
+but does not solve the retained small-world case. These are observations about
+the current composition, not reasons to add graph-specific remedies. The
+remaining question is how the fixed-slot objective, contact roles and canonical
+packing can cooperate more effectively. No global-optimality claim follows
+from making each conditional subproblem exact.
