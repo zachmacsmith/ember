@@ -5,7 +5,7 @@ from itertools import combinations
 import numpy as np
 import pytest
 
-from ember_qc.algorithms.factored.order_dp import interleave, score_layout
+from ember_qc.algorithms.factored.order_dp import check_cost_bounds, interleave, score_layout
 
 
 def csr(n, edges):
@@ -66,15 +66,16 @@ def merges(a, b):
                          dtype=np.int64)
 
 
-def exhaustive(orders, coords, edges, axis, unit, chip_m):
+def exhaustive(orders, coords, edges, axis, unit, chip_m, donors=None):
     selected = set(unit)
-    part = [v for v in orders[axis] if v in selected]
     rest = [v for v in orders[axis] if v not in selected]
     best = oracle_score(orders, coords, edges, chip_m)
-    for side in (part, part[::-1]):
-        for candidate in merges(side, rest):
-            changed, placed = apply_order(orders, coords, axis, candidate)
-            best = min(best, oracle_score(changed, placed, edges, chip_m))
+    for donor in ({0, 1, 2} if donors is None else set(donors) | {axis}):
+        part = [v for v in orders[donor] if v in selected]
+        for side in (part, part[::-1]):
+            for candidate in merges(side, rest):
+                changed, placed = apply_order(orders, coords, axis, candidate)
+                best = min(best, oracle_score(changed, placed, edges, chip_m))
     return best
 
 
@@ -84,11 +85,12 @@ def check_move(orders, coords, edges, axis, unit, chip_m):
     before = oracle_score(orders, coords, edges, chip_m)
     assert score_layout(orders, coords, ptr, idx, chip_m) == before
     expected = exhaustive(orders, coords, edges, axis, unit, chip_m)
-    result, flipped = interleave(orders, coords, ptr, idx, axis, unit, chip_m)
+    info = {}
+    result, flipped = interleave(orders, coords, ptr, idx, axis, unit, chip_m, info=info)
     np.testing.assert_array_equal(orders, old_orders)
     np.testing.assert_array_equal(coords, old_coords)
-    if expected == before:
-        assert result is None
+    if result is None:
+        assert expected == before
         assert not flipped
         return before
     assert result is not None
@@ -97,10 +99,13 @@ def check_move(orders, coords, edges, axis, unit, chip_m):
     assert actual == expected
     assert score_layout(changed, placed, ptr, idx, chip_m) == actual
     selected = set(unit)
-    part = [v for v in orders[axis] if v in selected]
+    part = [v for v in orders[info["donor"]] if v in selected]
     rest = [v for v in orders[axis] if v not in selected]
     assert [v for v in result if v not in selected] == rest
     assert [v for v in result if v in selected] == (part[::-1] if flipped else part)
+    assert info["strict"] == (actual < before)
+    assert info["complete"]
+    assert info["score"] <= info["baseline_score"]
     return actual
 
 
@@ -165,7 +170,8 @@ def test_reversed_unit_is_a_distinct_candidate_family():
                       dtype=np.int64)
     coords = np.array([[4, 5, 3, 1, 5], [4, 1, 1, 2, 1]], dtype=np.int64)
     ptr, idx = csr(5, edges)
-    result, flipped = interleave(orders, coords, ptr, idx, 0, range(5), 3)
+    result, flipped = interleave(orders, coords, ptr, idx, 0, range(5), 3,
+                                 donors=(0,), accept_equal=False)
     assert flipped
     np.testing.assert_array_equal(result, orders[0, ::-1])
     check_move(orders, coords, edges, 0, range(5), 3)
@@ -263,3 +269,165 @@ def test_book_compiler_agrees_on_mixed_and_outside_layouts():
         ptr, idx = csr(n, edges)
         expected = oracle_score(orders, coords, edges, 3)
         assert tuple(make_book(orders, coords, ptr, idx, 3).score) == expected[:2]
+
+
+def test_neutral_borrowed_winner_and_oriented_deduplication():
+    # Both foreign donors name the same two oriented strands. They differ
+    # from both incumbent strands, and all four families have the same cost.
+    orders = np.array([[0, 1, 2, 3, 4], [1, 0, 2, 3, 4], [2, 0, 1, 3, 4]])
+    coords = np.ones((2, 5), dtype=np.int64)
+    ptr, idx = csr(5, [])
+    info = {}
+    result, flipped = interleave(orders, coords, ptr, idx, 0, [0, 1, 2], 3, info=info)
+    np.testing.assert_array_equal(result, [3, 4, 1, 0, 2])
+    assert not flipped
+    assert info["donor"] == 1 and info["donor_mask"] == 0b110
+    assert info["borrowed"] and not info["strict"] and info["complete"]
+    assert info["score"] == info["baseline_score"] == (0, 0, 0)
+    assert info["strand_solves"] == 4
+    assert info["dp_cells"] == 4 * (4 * 3 - 1)
+    assert info["direct_scores"] == 0
+    assert info["preparation_wall"] >= info["transition_wall"] >= 0
+    assert info["dp_wall"] >= 0
+    assert interleave(orders, coords, ptr, idx, 0, [0, 1, 2], 3,
+                      accept_equal=False) == (None, False)
+
+
+def test_foreign_alias_of_incumbent_does_not_hide_real_borrowing():
+    orders = np.array([[0, 1, 2, 3], [0, 1, 2, 3], [1, 0, 2, 3]])
+    coords = np.ones((2, 4), dtype=np.int64)
+    ptr, idx = csr(4, [])
+    info = {}
+    result, _ = interleave(orders, coords, ptr, idx, 0, [0, 1, 2], 2, info=info)
+    assert info["donor"] == 2 and info["borrowed"]
+    np.testing.assert_array_equal(result, [3, 1, 0, 2])
+
+
+@pytest.mark.parametrize("axis", range(3))
+def test_donor_restriction_retains_incumbent_and_full_union_is_no_worse(axis):
+    for seed in range(12):
+        rng = np.random.default_rng(8100 + 20 * axis + seed)
+        n = 6
+        edges = [edge for edge in combinations(range(n), 2) if rng.random() < 0.5]
+        orders = np.stack([rng.permutation(n) for _ in range(3)])
+        coords = np.empty((2, n), dtype=np.int64)
+        for physical in (0, 1):
+            coords[physical, orders[physical]] = np.sort(rng.integers(1, 9, n))
+        ptr, idx = csr(n, edges)
+        scores = []
+        for donors in ((), ((axis + 1) % 3,), None):
+            info = {}
+            result, _ = interleave(orders, coords, ptr, idx, axis, [0, 2, 4], 3,
+                                    donors=donors, info=info)
+            changed, placed = ((orders, coords) if result is None else
+                               apply_order(orders, coords, axis, result))
+            actual = oracle_score(changed, placed, edges, 3)
+            assert actual == exhaustive(orders, coords, edges, axis, [0, 2, 4], 3, donors)
+            assert info["score"] <= info["baseline_score"]
+            scores.append(actual)
+        assert scores[2] <= scores[1] <= scores[0]
+
+
+def test_whole_set_uses_direct_scores_and_changed_tie_beats_incumbent():
+    orders = np.array([[0, 1, 2, 3], [1, 0, 2, 3], [2, 0, 3, 1]])
+    coords = np.ones((2, 4), dtype=np.int64)
+    ptr, idx = csr(4, [])
+    info = {}
+    result, flipped = interleave(orders, coords, ptr, idx, 0, range(4), 3, info=info)
+    np.testing.assert_array_equal(result, orders[1])
+    assert not flipped and info["borrowed"]
+    assert info["strand_solves"] == info["dp_cells"] == 0
+    assert info["direct_scores"] == 5  # six unique strands; incumbent is known
+    info = {}
+    result, flipped = interleave(orders, coords, ptr, idx, 0, range(4), 3,
+                                 donors=(), info=info)
+    np.testing.assert_array_equal(result, orders[0, ::-1])
+    assert flipped and not info["borrowed"]
+    assert info["direct_scores"] == 1
+
+
+def test_singleton_donor_duplicates_require_one_merge_solve():
+    orders = np.array([[0, 1, 2], [1, 2, 0], [2, 0, 1]])
+    coords = np.ones((2, 3), dtype=np.int64)
+    ptr, idx = csr(3, [])
+    info = {}
+    result, _ = interleave(orders, coords, ptr, idx, 0, [0], 2, info=info)
+    np.testing.assert_array_equal(result, [1, 2, 0])
+    assert info["strand_solves"] == 1 and info["donor_mask"] == 0b111
+    assert not info["borrowed"]
+
+
+def test_expired_query_returns_incumbent_without_candidate_work(monkeypatch):
+    import ember_qc.algorithms.factored.order_dp as module
+
+    orders = np.tile(np.arange(4), (3, 1))
+    coords = np.ones((2, 4), dtype=np.int64)
+    ptr, idx = csr(4, [(0, 3)])
+    monkeypatch.setattr(module.time, "perf_counter", lambda: 1.0)
+    info = {}
+    assert interleave(orders, coords, ptr, idx, 0, [0, 1], 3,
+                      deadline=0.0, info=info) == (None, False)
+    assert not info["complete"]
+    assert info["strand_solves"] == info["direct_scores"] == 0
+    assert info["score"] == info["baseline_score"]
+
+
+def test_deadline_keeps_completed_neutral_winner(monkeypatch):
+    import ember_qc.algorithms.factored.order_dp as module
+
+    orders = np.array([[0, 1, 2, 3], [1, 0, 2, 3], [2, 0, 1, 3]])
+    coords = np.ones((2, 4), dtype=np.int64)
+    ptr, idx = csr(4, [])
+    clock = [0.0]
+    original_fill = module._fill
+
+    def finish_then_expire(*args):
+        result = original_fill(*args)
+        clock[0] = 2.0
+        return result
+
+    monkeypatch.setattr(module.time, "perf_counter", lambda: clock[0])
+    monkeypatch.setattr(module, "_fill", finish_then_expire)
+    info = {}
+    result, _ = interleave(orders, coords, ptr, idx, 0, [0, 1, 2], 3,
+                           deadline=1.0, info=info)
+    np.testing.assert_array_equal(result, [3, 1, 0, 2])
+    assert info["strand_solves"] == 1 and not info["complete"]
+    assert info["borrowed"] and not info["strict"]
+
+
+def test_trusted_queries_share_bounds_and_preserve_checked_result(monkeypatch):
+    import ember_qc.algorithms.factored.order_dp as module
+
+    orders = np.array([[0, 1, 2, 3], [1, 0, 2, 3], [2, 0, 3, 1]])
+    coords = np.array([[1, 2, 3, 4], [2, 1, 3, 4]], dtype=np.int64)
+    ptr, idx = csr(4, [(0, 2), (1, 2), (2, 3)])
+    check_cost_bounds(4, len(idx) // 2, 3, int(coords.max()))
+    expected, expected_flip = interleave(orders, coords, ptr, idx, 0, [0, 1, 2], 3)
+    original_bounds = module._bounds
+    calls = []
+
+    def counted_bounds(*args):
+        calls.append(1)
+        return original_bounds(*args)
+
+    def forbidden_validation(*args):
+        raise AssertionError("trusted query repeated source/slot validation")
+
+    monkeypatch.setattr(module, "_bounds", counted_bounds)
+    monkeypatch.setattr(module, "_check_inputs", forbidden_validation)
+    result, flipped = interleave(orders, coords, ptr, idx, 0, [0, 1, 2], 3, checked=False)
+    assert len(calls) == 1
+    assert flipped == expected_flip
+    np.testing.assert_array_equal(result, expected)
+
+
+def test_cheap_bounds_and_donor_validation():
+    with pytest.raises(OverflowError, match="rank-span"):
+        check_cost_bounds(100, 1 << 60, 3, 1)
+    with pytest.raises(ValueError, match="maximum"):
+        check_cost_bounds(2, 1, 3, 0)
+    orders = np.tile(np.arange(2), (3, 1))
+    ptr, idx = csr(2, [(0, 1)])
+    with pytest.raises(ValueError, match="donors"):
+        interleave(orders, np.ones((2, 2), dtype=np.int64), ptr, idx, 0, [0], 3, donors=(4,))

@@ -2802,3 +2802,36 @@ the current composition, not reasons to add graph-specific remedies. The
 remaining question is how the fixed-slot objective, contact roles and canonical
 packing can cooperate more effectively. No global-optimality claim follows
 from making each conditional subproblem exact.
+
+**Clique follow-up:** [retained diagnosis](clique-diagnosis.md). The old 18-qubit
+K10 and 726-qubit K100 embeddings fit the new acyclic contact model and capacity
+book. For fitting cliques, axis capacity and reserved cost separate, ruling out
+alternating-packer local minima. Tied-slot order shuffles unlock strict winners
+at the K100 fixed point; source-edge rank-span drift is constant on cliques.
+Separately, safe reservations are not exact physical costs: course assignment
+and coordinate ties lose qubits, and K10 already achieves the global reservation
+lower bound. Production code remains unchanged pending a general design response.
+
+The final K10 state actually supports the old 18-qubit result at the globally
+minimal 22 reservations: greedy coloring uses20, and the reservation-only
+bookmark returns an earlier21. This corrects any inference that conservative
+capacity or its optimum necessarily rules out the old K10 template.
+
+
+# Bidirectional feedback implementation (2026-09-15)
+
+The owner approved the general [borrowed-order move family](three-orders.md#bidirectional-order-feedback-approved-2026-09-15): compare all three donor
+strands and their reversals, include whole-order moves, and adopt changed
+equal-score optima. Pack once per sweep and continue from every decoded
+proposal. Physical accounting and packing remain fixed for the experiment.
+The preceding statement that production is unchanged is historical; this
+implementation and its paired mechanism controls are now complete.
+
+The feedback implementation passes 590 regression tests. Its [focused report](feedback-results.md)
+records all 245 timed cases, including schedule sensitivity. Full feedback
+improves dense results, while sparse changes are mixed. Optimizing contact
+order matters, but the added spatial-strand route into contact order has no
+demonstrated overall benefit over the one-way control. Quality remains
+schedule-sensitive. Transition preparation dominates runtime; packing accounts
+for less than 1% on this board. The earlier clique witness alone does not
+establish learned contact feedback.

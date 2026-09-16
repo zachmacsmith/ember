@@ -1,0 +1,6 @@
+{
+  "commit": "f7a48a65c7d4344d169e976251d4eaa962dfaa6f",
+  "source_sha256": "6a7980d06f5f4345e753657d4277d0bc1f81d6ba32c0fd1991da370d351ce975",
+  "baseline_src": "/tmp/ember-feedback-baseline-f7a48a65c7d4/src",
+  "description": "Native three-order strict implementation before borrowed-strand feedback."
+}

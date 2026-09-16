@@ -6,6 +6,15 @@ work budgets, and **not yet a general quality improvement** over the recorded
 implementation or stock MinorMiner. No source-graph-specific changes were made
 in response to these results.
 
+The follow-up [clique diagnosis](clique-diagnosis.md) distinguishes order
+plateaus from reservation/physical-cost slack and proves that the conditional
+axis packers are jointly optimal for the fitting clique subproblem.
+
+The subsequent [bidirectional feedback report](feedback-results.md) records
+the 2026-09-15 implementation, six native controls and stock MM under a common
+10-second warm request, plus fingerprints and schedule sensitivity. The
+60-second results below retain their original protocol and historical scope.
+
 ## Protocol
 
 The board has ten fixed graphs on intact Z12, seeds 0/1/2, paired by graph and

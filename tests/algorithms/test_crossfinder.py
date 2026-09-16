@@ -16,7 +16,7 @@ class TestBallSingles:
 
     def _finished(self, g, z, seed=0):
         from ember_qc.algorithms.factored import attract_embed
-        r = attract_embed(g, z, timeout=30, seed=seed)
+        r = attract_embed(g, z, timeout=30, max_asks=200, seed=seed)
         assert r["embedding"]
         return r["embedding"]
 

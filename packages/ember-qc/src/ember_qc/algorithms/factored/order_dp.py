@@ -1,6 +1,7 @@
 """Exact interleavings in the native embedder's frozen coordinate picture.
 
-An order is merged with a selected subsequence, forward or reversed.  The
+An order is merged with a selected strand borrowed from any of the three
+orders, forward or reversed, with identical oriented strands solved once. The
 three integer costs are outside-chip reserved volume, reserved volume, and
 source-edge rank span.  No packing, capacity test, or physical conversion
 occurs here.  Coordinates belong to the current occupants of fixed slots;
@@ -14,6 +15,8 @@ separate int64 cost components rather than a scalar lexicographic weight.
 """
 
 from __future__ import annotations
+
+import time
 
 import numpy as np
 from numba import njit
@@ -53,6 +56,28 @@ def _check_arrays(orders, coords, indptr, indices, monotone_axis):
     return maximum
 
 
+def check_cost_bounds(n, edge_count, chip_m, maximum):
+    """Cheap Python-integer bounds for an already validated source and slots.
+
+    Trusted sweep callers may check these once and use ``checked=False`` for
+    their queries: permutations and fixed-slot reassignment preserve the bounds.
+    """
+    n, edge_count, chip_m, maximum = map(int, (n, edge_count, chip_m, maximum))
+    limit = int(np.iinfo(np.int64).max)
+    if n < 0 or edge_count < 0 or maximum < 1:
+        raise ValueError("invalid source size or coordinate maximum")
+    if chip_m < 1:
+        raise ValueError("chip_m must be positive")
+    if chip_m > limit // 2:
+        raise OverflowError("chip extent exceeds safe int64 arithmetic")
+    # Partial spatial endpoint charges can be negative; bound their magnitude
+    # as well as the nonnegative cost of complete reservations.
+    if 2 * n * (maximum // 2 + 2) > limit:
+        raise OverflowError("reserved-volume bounds exceed int64")
+    if 3 * edge_count * max(n - 1, 0) > limit:
+        raise OverflowError("rank-span bounds exceed int64")
+
+
 def _check_inputs(orders, coords, indptr, indices, chip_m, monotone_axis=-1):
     if orders.ndim != 2 or orders.shape[0] != 3:
         raise ValueError("orders must have shape (3, n)")
@@ -61,19 +86,10 @@ def _check_inputs(orders, coords, indptr, indices, chip_m, monotone_axis=-1):
         raise ValueError("coords must have shape (2, n)")
     if indptr.shape != (n + 1,) or indices.ndim != 1 or indices.size % 2:
         raise ValueError("source must be an undirected graph in CSR form")
-    limit = int(np.iinfo(np.int64).max)
-    if chip_m < 1:
-        raise ValueError("chip_m must be positive")
-    if chip_m > limit // 2:
-        raise OverflowError("chip extent exceeds safe int64 arithmetic")
+    # Reject an unsafe chip extent before a compiled call can coerce it.
+    check_cost_bounds(n, indices.size // 2, chip_m, 1)
     maximum = int(_check_arrays(orders, coords, indptr, indices, monotone_axis))
-    # Check in Python integers, before any compiled cost arithmetic.  This
-    # includes partially emitted spatial nets, whose endpoint charges may
-    # be negative even though completed interval costs are nonnegative.
-    if 2 * n * (maximum // 2 + 2) > limit:
-        raise OverflowError("reserved-volume bounds exceed int64")
-    if 3 * (indices.size // 2) * max(n - 1, 0) > limit:
-        raise OverflowError("rank-span bounds exceed int64")
+    check_cost_bounds(n, indices.size // 2, chip_m, maximum)
 
 
 @njit(cache=True)
@@ -127,8 +143,7 @@ def _bounds(orders, coords, indptr, indices):
 
 
 @njit(cache=True)
-def _score(orders, coords, indptr, indices, chip_m, rank_axis):
-    lo, hi = _bounds(orders, coords, indptr, indices)
+def _score_from_bounds(orders, coords, indptr, indices, chip_m, rank_axis, lo, hi):
     outside = np.int64(0)
     volume = np.int64(0)
     span = np.int64(0)
@@ -152,6 +167,12 @@ def _score(orders, coords, indptr, indices, chip_m, rank_axis):
                 if v < u:
                     span += abs(rank[v] - rank[u])
     return outside, volume, span
+
+
+@njit(cache=True)
+def _score(orders, coords, indptr, indices, chip_m, rank_axis):
+    lo, hi = _bounds(orders, coords, indptr, indices)
+    return _score_from_bounds(orders, coords, indptr, indices, chip_m, rank_axis, lo, hi)
 
 
 def score_layout(orders, coords, indptr, indices, chip_m):
@@ -299,11 +320,9 @@ def _contact_costs(part, rest, pa, pb, coords, indptr, indices, chip_m):
 
 @njit(cache=True)
 def _spatial_costs(orders, coords, indptr, indices, axis,
-                   part, rest, pa, pb, chip_m):
+                   part, rest, pa, pb, chip_m, trank, lo, hi):
     p, q = part.size, rest.size
     n = orders.shape[1]
-    trank = _ranks(orders[2])
-    lo, hi = _bounds(orders, coords, indptr, indices)
     # For each part: prefix/suffix range differences, separated by whether
     # the net's (fixed) anchoring lane is outside the chip.
     da = np.zeros((p, q + 2, 4), dtype=np.int64)
@@ -374,7 +393,8 @@ def _spatial_costs(orders, coords, indptr, indices, axis,
 
 
 @njit(cache=True)
-def _solve(orders, coords, indptr, indices, axis, part, rest, chip_m):
+def _prepare_transitions(orders, coords, indptr, indices, axis, part, rest,
+                          chip_m, trank, lo, hi):
     p, q = part.size, rest.size
     pa, pb = _partition_positions(p + q, part, rest)
     cuts = _cut_costs(part, rest, pa, pb, indptr, indices)
@@ -384,29 +404,39 @@ def _solve(orders, coords, indptr, indices, axis, part, rest, chip_m):
     else:
         ca, cb = _spatial_costs(
             orders, coords, indptr, indices, axis, part, rest, pa, pb, chip_m,
+            trank, lo, hi,
         )
-    values = np.zeros((p + 1, q + 1, 3), dtype=np.int64)
+    return cuts, ca, cb
+
+
+@njit(cache=True)
+def _fill(part, rest, cuts, ca, cb):
+    """Fill the merge grid and trace its exact winner; no graph preparation."""
+    p, q = part.size, rest.size
+    # Only the preceding value row is live; retain parents for traceback.
+    values = np.zeros((2, q + 1, 3), dtype=np.int64)
     parent = np.zeros((p + 1, q + 1), dtype=np.uint8)
     for i in range(p + 1):
+        row, previous = i % 2, 1 - i % 2
         for j in range(q + 1):
             if i == 0 and j == 0:
                 continue
             if i > 0:
-                out = values[i - 1, j, 0] + ca[i - 1, j, 0]
-                size = values[i - 1, j, 1] + ca[i - 1, j, 1]
-                span = values[i - 1, j, 2] + cuts[i, j]
+                out = values[previous, j, 0] + ca[i - 1, j, 0]
+                size = values[previous, j, 1] + ca[i - 1, j, 1]
+                span = values[previous, j, 2] + cuts[i, j]
             else:
                 out, size, span = 0, 0, 0
             if j > 0:
-                bo = values[i, j - 1, 0] + cb[j - 1, i, 0]
-                bs = values[i, j - 1, 1] + cb[j - 1, i, 1]
-                br = values[i, j - 1, 2] + cuts[i, j]
+                bo = values[row, j - 1, 0] + cb[j - 1, i, 0]
+                bs = values[row, j - 1, 1] + cb[j - 1, i, 1]
+                br = values[row, j - 1, 2] + cuts[i, j]
                 if i == 0 or _less(bo, bs, br, out, size, span):
                     out, size, span = bo, bs, br
                     parent[i, j] = 1
-            values[i, j, 0] = out
-            values[i, j, 1] = size
-            values[i, j, 2] = span
+            values[row, j, 0] = out
+            values[row, j, 1] = size
+            values[row, j, 2] = span
     result = np.empty(p + q, dtype=np.int64)
     i, j = p, q
     for k in range(p + q - 1, -1, -1):
@@ -416,18 +446,62 @@ def _solve(orders, coords, indptr, indices, axis, part, rest, chip_m):
         else:
             j -= 1
             result[k] = rest[j]
-    return result, values[p, q]
+    return result, values[p % 2, q].copy()
 
 
-def interleave(orders, coords, indptr, indices, axis, unit, chip_m):
-    """Return the best strict improvement over forward/reversed unit merges.
+@njit(cache=True)
+def _solve_prepared(orders, coords, indptr, indices, axis, part, rest, chip_m,
+                    trank, lo, hi):
+    cuts, ca, cb = _prepare_transitions(
+        orders, coords, indptr, indices, axis, part, rest, chip_m, trank, lo, hi)
+    return _fill(part, rest, cuts, ca, cb)
+
+
+@njit(cache=True)
+def _solve(orders, coords, indptr, indices, axis, part, rest, chip_m):
+    """Compatibility entry point for a single fixed-strand merge and probes."""
+    trank = _ranks(orders[2])
+    lo, hi = _bounds(orders, coords, indptr, indices)
+    return _solve_prepared(orders, coords, indptr, indices, axis, part, rest,
+                           chip_m, trank, lo, hi)
+
+
+@njit(cache=True)
+def _direct_score(orders, coords, indptr, indices, axis, candidate, chip_m):
+    """A whole-set strand has one possible order and needs no merge grid."""
+    changed = orders.copy()
+    placed = coords.copy()
+    changed[axis] = candidate
+    if axis < 2:
+        for i in range(len(candidate)):
+            placed[axis, candidate[i]] = coords[axis, orders[axis, i]]
+    return _score(changed, placed, indptr, indices, chip_m, axis)
+
+
+def interleave(orders, coords, indptr, indices, axis, unit, chip_m, *,
+               donors=None, accept_equal=True, deadline=None, info=None,
+               checked=True):
+    """Compare one canonical optimal traceback per distinct donor strand.
 
     ``orders`` has rows x, y, contact; ``coords`` has x/y rows indexed by
     vertex.  Spatial coordinates must be nondecreasing in their orders and
     positive.  The source is a simple undirected graph in symmetric CSR.
-    Input arrays are never modified.  Unit input order and duplicates have
-    no effect: its forward order is taken from the current master order.
+    The unit is restricted from each donor's CURRENT order. The receiver's
+    complement remains fixed. Destination strands are always included, even
+    when ``donors`` restricts borrowing, so the incumbent remains available.
+
+    Equal-cost returned tracebacks prefer change, then genuinely borrowed
+    strands, then cyclic donor order and forward orientation. DP path ties
+    are fixed: a strand can return the incumbent even when another tied
+    traceback in that family would change it. Those ties are not enumerated.
+    ``accept_equal=False`` retains strict-only adoption for controlled probes.
+    Deadlines are checked between candidate kernels; interrupted queries
+    return their best completed candidate, including the initial incumbent.
+    ``checked=False`` is for validated, construction-preserving search callers
+    that have already called :func:`check_cost_bounds` for their frozen slots.
+    Input arrays are never modified.
     """
+    preparation_start = time.perf_counter()
     orders = np.asarray(orders, dtype=np.int64)
     coords = np.asarray(coords, dtype=np.int64)
     indptr = np.asarray(indptr, dtype=np.int64)
@@ -436,28 +510,97 @@ def interleave(orders, coords, indptr, indices, axis, unit, chip_m):
     chip_m = int(chip_m)
     if axis not in (0, 1, 2):
         raise ValueError("axis must be 0, 1, or 2")
-    _check_inputs(orders, coords, indptr, indices, chip_m, axis)
+    if checked:
+        _check_inputs(orders, coords, indptr, indices, chip_m, axis)
     n = orders.shape[1]
+    allowed = {0, 1, 2} if donors is None else {int(donor) for donor in donors}
+    if not allowed <= {0, 1, 2}:
+        raise ValueError("donors must contain only axes 0, 1, and 2")
+    allowed.add(axis)
     selected = np.zeros(n, dtype=np.bool_)
     for v in unit:
         if not 0 <= int(v) < n:
             raise ValueError("unit contains an invalid vertex")
         selected[int(v)] = True
     order = orders[axis]
-    part = np.ascontiguousarray(order[selected[order]])
-    if part.size == 0 or n < 2:
-        return None, False
+    own = np.ascontiguousarray(order[selected[order]])
     rest = np.ascontiguousarray(order[~selected[order]])
-    baseline = _score(orders, coords, indptr, indices, chip_m, axis)
-    result, best = _solve(orders, coords, indptr, indices, axis, part, rest, chip_m)
-    flipped = False
-    if part.size > 1:
-        reverse, reverse_cost = _solve(
-            orders, coords, indptr, indices, axis,
-            np.ascontiguousarray(part[::-1]), rest, chip_m,
-        )
-        if tuple(reverse_cost) < tuple(best):
-            result, best, flipped = reverse, reverse_cost, True
-    if tuple(best) < tuple(baseline):
-        return result, flipped
-    return None, False
+    # These coordinates, roles, and baseline stay fixed across every strand
+    # solve in this query. Reuse their bounds rather than rescanning per donor.
+    trank = _ranks(orders[2])
+    lo, hi = _bounds(orders, coords, indptr, indices)
+    baseline = tuple(int(v) for v in _score_from_bounds(
+        orders, coords, indptr, indices, chip_m, axis, lo, hi))
+    metrics = dict(baseline_score=baseline, score=baseline, donor=axis,
+                   donor_mask=1 << axis, borrowed=False, strict=False,
+                   complete=True, strand_solves=0, dp_cells=0,
+                   direct_scores=0, preparation_wall=0.0, dp_wall=0.0,
+                   transition_wall=0.0, direct_wall=0.0)
+    if info is None:
+        info = {}
+    own_keys = {own.tobytes(), own[::-1].tobytes()}
+    donor_order = ((axis + 1) % 3, (axis + 2) % 3, axis)
+    candidates = {}
+    if own.size and n > 1:
+        for priority, donor in enumerate(donor_order):
+            if donor not in allowed:
+                continue
+            strand = orders[donor, selected[orders[donor]]]
+            for flipped in (False, True):
+                part = np.ascontiguousarray(strand[::-1] if flipped else strand)
+                key = part.tobytes()
+                if key in candidates:
+                    candidates[key]["mask"] |= 1 << donor
+                else:
+                    candidates[key] = dict(part=part, donor=donor,
+                                           priority=priority, flipped=flipped,
+                                           mask=1 << donor, borrowed=key not in own_keys)
+    metrics["preparation_wall"] = time.perf_counter() - preparation_start
+    best, result, chosen = baseline, None, None
+    best_tie = (1, 1, 2, False)  # the unchanged incumbent
+    for candidate in candidates.values():
+        part = candidate["part"]
+        # The full-set incumbent score is already known and needs no kernel.
+        if not rest.size and np.array_equal(part, order):
+            proposed, cost = part, baseline
+        else:
+            if deadline is not None and time.perf_counter() >= deadline:
+                metrics["complete"] = False
+                break
+            if not rest.size:
+                direct_start = time.perf_counter()
+                proposed = part
+                cost = _direct_score(orders, coords, indptr, indices, axis, part, chip_m)
+                metrics["direct_wall"] += time.perf_counter() - direct_start
+                metrics["direct_scores"] += 1
+            else:
+                transition_start = time.perf_counter()
+                cuts, ca, cb = _prepare_transitions(
+                    orders, coords, indptr, indices, axis, part, rest, chip_m,
+                    trank, lo, hi,
+                )
+                elapsed = time.perf_counter() - transition_start
+                metrics["transition_wall"] += elapsed
+                metrics["preparation_wall"] += elapsed
+                dp_start = time.perf_counter()
+                proposed, cost = _fill(part, rest, cuts, ca, cb)
+                metrics["dp_wall"] += time.perf_counter() - dp_start
+                metrics["strand_solves"] += 1
+                metrics["dp_cells"] += (part.size + 1) * (rest.size + 1) - 1
+            cost = tuple(int(v) for v in cost)
+        if np.array_equal(part, own) and cost > baseline:
+            raise AssertionError("destination merge lost its available incumbent")
+        changed = not np.array_equal(proposed, order)
+        tie = (not changed, not candidate["borrowed"], candidate["priority"],
+               candidate["flipped"])
+        if cost < best or (cost == best and tie < best_tie):
+            best, result, chosen, best_tie = cost, proposed, candidate, tie
+    strict = best < baseline
+    if result is None or np.array_equal(result, order) or (not accept_equal and not strict):
+        metrics["score"] = baseline
+        info.update(metrics)
+        return None, False
+    metrics.update(score=best, donor=chosen["donor"], donor_mask=chosen["mask"],
+                   borrowed=chosen["borrowed"], strict=strict)
+    info.update(metrics)
+    return result, bool(chosen["flipped"])

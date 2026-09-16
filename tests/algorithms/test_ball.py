@@ -216,7 +216,7 @@ class TestHullQuestions:
         # but none accepts, and dryness terminates without a deadline
         from ember_qc.algorithms.factored import attract_embed
         k = nx.complete_graph(10)
-        r = attract_embed(k, zephyr, timeout=45, seed=0)
+        r = attract_embed(k, zephyr, timeout=45, max_asks=200, seed=0)
         assert r["embedding"]
         assert r["diag"].get("mm_skipped") is True
         emb = {int(v): sorted(int(q) for q in c)
@@ -296,8 +296,8 @@ class TestBarRebuild:
 class TestTail:
     def test_tail_mm_valid_deterministic(self, source, zephyr):
         from ember_qc.algorithms.factored import attract_embed
-        a = attract_embed(source, zephyr, timeout=45, seed=0, tail="mm")
-        b = attract_embed(source, zephyr, timeout=45, seed=0, tail="mm")
+        a = attract_embed(source, zephyr, timeout=45, max_asks=200, seed=0, tail="mm")
+        b = attract_embed(source, zephyr, timeout=45, max_asks=200, seed=0, tail="mm")
         assert a["embedding"]
         assert validate_embedding(a["embedding"], source, zephyr)
         assert a["embedding"] == b["embedding"]
@@ -308,7 +308,7 @@ class TestTail:
         from ember_qc.algorithms.factored import attract_embed
         z = dnx.zephyr_graph(3, 4)
         k = nx.complete_graph(10)
-        r = attract_embed(k, z, timeout=45, seed=0, tail="none")
+        r = attract_embed(k, z, timeout=45, max_asks=200, seed=0, tail="none")
         assert r["embedding"]
         assert validate_embedding(r["embedding"], k, z)
         assert r["diag"].get("mm_skipped") is True
@@ -316,11 +316,11 @@ class TestTail:
 
     def test_tail_default_is_native(self, source, zephyr):
         from ember_qc.algorithms.factored import attract_embed
-        a = attract_embed(source, zephyr, timeout=45, seed=0)
-        b = attract_embed(source, zephyr, timeout=45, seed=0, tail="none")
+        a = attract_embed(source, zephyr, timeout=45, max_asks=200, seed=0)
+        b = attract_embed(source, zephyr, timeout=45, max_asks=200, seed=0, tail="none")
         assert a["embedding"] == b["embedding"]
         assert a["diag"]["mm_calls"] == 0
-        c = attract_embed(source, zephyr, timeout=45, seed=0, tail="none")
+        c = attract_embed(source, zephyr, timeout=45, max_asks=200, seed=0, tail="none")
         assert c["embedding"]
         assert "ball_accepts" not in c["diag"]
 

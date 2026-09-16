@@ -1038,7 +1038,7 @@ class TestContactsFreshness:
             for n, p, seed in ((120, 0.035, 5), (80, 0.06, 6)):
                 src = nx.gnp_random_graph(n, p, seed=seed)
                 r = attract_embed(src, dnx.zephyr_graph(6, 4),
-                                  timeout=20, seed=0, tail="none")
+                                  timeout=20, max_asks=200, seed=0, tail="none")
                 assert r["embedding"] is not None
         finally:
             F._VERIFY_CONTACTS = False
@@ -1202,8 +1202,8 @@ class TestUnboundedPack:
         from ember_qc.algorithms.factored import attract_embed
         z = dnx.zephyr_graph(3, 4)
         for g in (nx.complete_graph(8), nx.cycle_graph(20)):
-            a = attract_embed(g, z, timeout=20, seed=0)
-            c = attract_embed(g, z, timeout=20, seed=0)
+            a = attract_embed(g, z, timeout=20, max_asks=200, seed=0)
+            c = attract_embed(g, z, timeout=20, max_asks=200, seed=0)
             assert a["embedding"] == c["embedding"]  # deterministic
             assert c["embedding"], c["diag"]
             d = c["diag"]
@@ -1223,7 +1223,7 @@ class TestCertificate:
         z = dnx.zephyr_graph(3, 4)
         for g in (nx.complete_graph(8), nx.cycle_graph(20),
                   nx.turan_graph(24, 3)):
-            r = attract_embed(g, z, timeout=20, seed=0, tail="none")
+            r = attract_embed(g, z, timeout=20, max_asks=200, seed=0, tail="none")
             d = r["diag"]
             if d.get("certified"):
                 assert r["embedding"]

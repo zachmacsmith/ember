@@ -1,0 +1,6763 @@
+{
+  "schema": 1,
+  "provenance": {
+    "policy": "feedback",
+    "code_hash": "c60f9af48965d3f0d1ae52e39454313d5fedeac0c748f59258e4207a88ddd7b2",
+    "source": "/data/max/ember/packages/ember-qc/src/ember_qc/algorithms/factored",
+    "harness_sha256": "8a8c3d4be2de28ed580a52c9ef66fae52f35f5447f0c8581ebc8605744120d5f",
+    "loaders_sha256": "d71b2025d5b4af6db67b2b8e02c78f8adbbffc1eb6bd1515688477af463b4379",
+    "validator_sha256": "62dc90a8c4b904a193767a7f6613d4904f367455fad64a1981bf0233145807bf",
+    "minorminer_sha256": "fb42a09ef3cd179e59cc275169da831441c793f68a7d32511db7906a1f40afda",
+    "python": "3.11.2",
+    "dependencies": {
+      "numpy": "2.4.6",
+      "networkx": "3.6.1",
+      "numba": "0.67.0",
+      "dwave-networkx": "0.8.19",
+      "minorminer": "0.2.22"
+    }
+  },
+  "created_at": "2026-09-15T21:07:09.303503+00:00",
+  "cpu_count": 128,
+  "platform": "Linux-6.1.0-52-amd64-x86_64-with-glibc2.36",
+  "sessions": [
+    {
+      "arguments": {
+        "policy": "feedback",
+        "suite": "fingerprint",
+        "seeds": null,
+        "sched_seeds": null,
+        "cells": "",
+        "wall": 10.0,
+        "output": null,
+        "baseline_src": "/tmp/ember-feedback-baseline-f7a48a65c7d4/src",
+        "cold_cache": true
+      },
+      "startup": {
+        "started_at": "2026-09-15T21:07:09.303474+00:00",
+        "cold_cache": true,
+        "cache_directory": "/tmp/ember-feedback-cache-26h7xw_k",
+        "import_seconds": 0.31614678201731294,
+        "warmup": [
+          {
+            "stage": "first",
+            "elapsed_seconds": 9.000792937004007,
+            "compilation_seconds": 8.772721398039721,
+            "valid": true,
+            "mm_calls": 0
+          },
+          {
+            "stage": "warm",
+            "elapsed_seconds": 0.008701732964254916,
+            "compilation_seconds": 0.0,
+            "valid": true,
+            "mm_calls": 0
+          }
+        ],
+        "total_seconds": 9.325641451985575
+      },
+      "worker": 5,
+      "load_at_start": [
+        4.0869140625,
+        6.98876953125,
+        8.6552734375
+      ],
+      "requested_cases": 15,
+      "resumed_cases": 0,
+      "completed_cases": 15,
+      "finished_at": "2026-09-15T21:07:51.457563+00:00"
+    }
+  ],
+  "rows": [
+    {
+      "cell": "K10",
+      "suite": "fingerprint",
+      "source_spec": [
+        "complete",
+        10
+      ],
+      "target_m": 3,
+      "target_tile": 4,
+      "seed": 0,
+      "sched_seed": 0,
+      "max_asks": 2000,
+      "timeout_seconds": 120,
+      "input_sha256": "c02745292ef815c097cfc737fda76882af0ce876a4109776f578a5f263070a96",
+      "target_sha256": "f5237004f0af478a7e2edcbacb70a376c05b7fb37d9da35817e2ce713ec77bf5",
+      "n": 10,
+      "edges": 45,
+      "input_loading_seconds": 0.0025877009611576796,
+      "policy": "feedback",
+      "success": true,
+      "physical_qubits": 21,
+      "acl": 2.1,
+      "max_chain": 3,
+      "elapsed_seconds": 0.0806768290931359,
+      "compilation_seconds": 0.0,
+      "warm_timing_clean": true,
+      "diag": {
+        "mm_calls": 0,
+        "mm_skipped": true,
+        "certified": true,
+        "asks": 2000,
+        "accepts": 1861,
+        "passes": 20,
+        "readouts": 84,
+        "decode_calls": 21,
+        "bookmark_asks": 408,
+        "bookmark_wall": 0.016375486040487885,
+        "stopped_by": "asks",
+        "adopt_worse": 3,
+        "infeasible": 0,
+        "accept_traj": [
+          93,
+          97,
+          95,
+          96,
+          96,
+          94,
+          90,
+          96,
+          93,
+          94,
+          97,
+          95,
+          93,
+          96,
+          94,
+          94,
+          100,
+          95,
+          95,
+          58
+        ],
+        "accepted_by_order": [
+          633,
+          635,
+          593
+        ],
+        "interleave_wall": 0.06454414187464863,
+        "packing_wall": 0.00334703060798347,
+        "decode_wall": 0.007909463834948838,
+        "flow_nodes": 3024,
+        "flow_arcs": 5792,
+        "trace": null,
+        "strict_accepts": 13,
+        "neutral_accepts": 1848,
+        "borrowed_accepts": 721,
+        "whole_order_accepts": 51,
+        "accepted_by_donor": [
+          [
+            0,
+            489,
+            144
+          ],
+          [
+            15,
+            0,
+            620
+          ],
+          [
+            468,
+            69,
+            56
+          ]
+        ],
+        "dp_solves": 6043,
+        "dp_cells": 139135,
+        "direct_scores": 296,
+        "interrupted_asks": 0,
+        "preparation_wall": 0.03476866916753352,
+        "transition_wall": 0.015214901533909142,
+        "dp_wall": 0.0051734569715335965,
+        "direct_wall": 0.00030459987465292215,
+        "sweep_traj": [
+          {
+            "pass_index": 0,
+            "ask": 0,
+            "wall": 0.00048705004155635834,
+            "current_score": [
+              0,
+              24
+            ],
+            "bookmark_score": [
+              0,
+              24
+            ],
+            "current_usable": true,
+            "changed": 0,
+            "strict": 0,
+            "neutral": 0,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 1,
+            "ask": 102,
+            "wall": 0.004509220947511494,
+            "current_score": [
+              0,
+              23
+            ],
+            "bookmark_score": [
+              0,
+              23
+            ],
+            "current_usable": true,
+            "changed": 93,
+            "strict": 3,
+            "neutral": 90,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 2,
+            "ask": 204,
+            "wall": 0.008422513026744127,
+            "current_score": [
+              0,
+              23
+            ],
+            "bookmark_score": [
+              0,
+              23
+            ],
+            "current_usable": true,
+            "changed": 97,
+            "strict": 1,
+            "neutral": 96,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 3,
+            "ask": 306,
+            "wall": 0.01241499395109713,
+            "current_score": [
+              0,
+              24
+            ],
+            "bookmark_score": [
+              0,
+              23
+            ],
+            "current_usable": true,
+            "changed": 95,
+            "strict": 2,
+            "neutral": 93,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 4,
+            "ask": 408,
+            "wall": 0.01637781597673893,
+            "current_score": [
+              0,
+              22
+            ],
+            "bookmark_score": [
+              0,
+              22
+            ],
+            "current_usable": true,
+            "changed": 96,
+            "strict": 2,
+            "neutral": 94,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 5,
+            "ask": 510,
+            "wall": 0.020320937037467957,
+            "current_score": [
+              0,
+              22
+            ],
+            "bookmark_score": [
+              0,
+              22
+            ],
+            "current_usable": true,
+            "changed": 96,
+            "strict": 0,
+            "neutral": 96,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 6,
+            "ask": 612,
+            "wall": 0.02431689901277423,
+            "current_score": [
+              0,
+              22
+            ],
+            "bookmark_score": [
+              0,
+              22
+            ],
+            "current_usable": true,
+            "changed": 94,
+            "strict": 0,
+            "neutral": 94,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 7,
+            "ask": 714,
+            "wall": 0.028274129959754646,
+            "current_score": [
+              0,
+              22
+            ],
+            "bookmark_score": [
+              0,
+              22
+            ],
+            "current_usable": true,
+            "changed": 90,
+            "strict": 1,
+            "neutral": 89,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 8,
+            "ask": 816,
+            "wall": 0.03215258102864027,
+            "current_score": [
+              0,
+              22
+            ],
+            "bookmark_score": [
+              0,
+              22
+            ],
+            "current_usable": true,
+            "changed": 96,
+            "strict": 0,
+            "neutral": 96,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 9,
+            "ask": 918,
+            "wall": 0.036075512995012105,
+            "current_score": [
+              0,
+              22
+            ],
+            "bookmark_score": [
+              0,
+              22
+            ],
+            "current_usable": true,
+            "changed": 93,
+            "strict": 0,
+            "neutral": 93,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 10,
+            "ask": 1020,
+            "wall": 0.04003578401170671,
+            "current_score": [
+              0,
+              22
+            ],
+            "bookmark_score": [
+              0,
+              22
+            ],
+            "current_usable": true,
+            "changed": 94,
+            "strict": 0,
+            "neutral": 94,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 11,
+            "ask": 1122,
+            "wall": 0.04386605496983975,
+            "current_score": [
+              0,
+              22
+            ],
+            "bookmark_score": [
+              0,
+              22
+            ],
+            "current_usable": true,
+            "changed": 97,
+            "strict": 0,
+            "neutral": 97,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 12,
+            "ask": 1224,
+            "wall": 0.04780612699687481,
+            "current_score": [
+              0,
+              22
+            ],
+            "bookmark_score": [
+              0,
+              22
+            ],
+            "current_usable": true,
+            "changed": 95,
+            "strict": 0,
+            "neutral": 95,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 13,
+            "ask": 1326,
+            "wall": 0.05172309803310782,
+            "current_score": [
+              0,
+              26
+            ],
+            "bookmark_score": [
+              0,
+              22
+            ],
+            "current_usable": true,
+            "changed": 93,
+            "strict": 1,
+            "neutral": 92,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 14,
+            "ask": 1428,
+            "wall": 0.05568072001915425,
+            "current_score": [
+              0,
+              22
+            ],
+            "bookmark_score": [
+              0,
+              22
+            ],
+            "current_usable": true,
+            "changed": 96,
+            "strict": 1,
+            "neutral": 95,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 15,
+            "ask": 1530,
+            "wall": 0.05967536102980375,
+            "current_score": [
+              0,
+              23
+            ],
+            "bookmark_score": [
+              0,
+              22
+            ],
+            "current_usable": true,
+            "changed": 94,
+            "strict": 1,
+            "neutral": 93,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 16,
+            "ask": 1632,
+            "wall": 0.06364297296386212,
+            "current_score": [
+              0,
+              22
+            ],
+            "bookmark_score": [
+              0,
+              22
+            ],
+            "current_usable": true,
+            "changed": 94,
+            "strict": 1,
+            "neutral": 93,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 17,
+            "ask": 1734,
+            "wall": 0.0675916139734909,
+            "current_score": [
+              0,
+              22
+            ],
+            "bookmark_score": [
+              0,
+              22
+            ],
+            "current_usable": true,
+            "changed": 100,
+            "strict": 0,
+            "neutral": 100,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 18,
+            "ask": 1836,
+            "wall": 0.07169180596247315,
+            "current_score": [
+              0,
+              22
+            ],
+            "bookmark_score": [
+              0,
+              22
+            ],
+            "current_usable": true,
+            "changed": 95,
+            "strict": 0,
+            "neutral": 95,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 19,
+            "ask": 1938,
+            "wall": 0.07567149703390896,
+            "current_score": [
+              0,
+              22
+            ],
+            "bookmark_score": [
+              0,
+              22
+            ],
+            "current_usable": true,
+            "changed": 95,
+            "strict": 0,
+            "neutral": 95,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 20,
+            "ask": 2000,
+            "wall": 0.07840757793746889,
+            "current_score": [
+              0,
+              22
+            ],
+            "bookmark_score": [
+              0,
+              22
+            ],
+            "current_usable": true,
+            "changed": 58,
+            "strict": 0,
+            "neutral": 58,
+            "complete": false,
+            "decode_complete": true,
+            "repeated_state": false
+          }
+        ],
+        "repeated_sweep_states": 0,
+        "decode_sweeps": 42,
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 22,
+        "active_horizontal": 9,
+        "active_vertical": 9,
+        "mixed_vertices": 8,
+        "pen": 0,
+        "stair": 22,
+        "bars": 18,
+        "misses": 0,
+        "best_expanded_score": [
+          0,
+          22
+        ],
+        "final_current_score": [
+          0,
+          22
+        ],
+        "final_current_usable": true,
+        "final_bookmark_score": [
+          0,
+          22
+        ],
+        "arrange_wall": 0.07842040795367211,
+        "stride": 2,
+        "native_physical_qubits": 21,
+        "legal_acl": 2.1,
+        "legal_max_chain": 3,
+        "deficit_edges": 0,
+        "corner_deficit": 0,
+        "extensions": 0,
+        "ext_qubits": 0,
+        "bridges": 0,
+        "convert_miss": 0,
+        "physical_qubits": 21,
+        "max_chain": 3,
+        "extent_mean": 1.3333333333333333,
+        "extent_max": 3
+      },
+      "error": null,
+      "mm_calls": 0,
+      "mm_seconds": 0.0,
+      "load_at_start": [
+        4.0869140625,
+        6.98876953125,
+        8.6552734375
+      ],
+      "load_at_end": [
+        4.0869140625,
+        6.98876953125,
+        8.6552734375
+      ],
+      "completed_at": "2026-09-15T21:07:18.526003+00:00",
+      "code_hash": "c60f9af48965d3f0d1ae52e39454313d5fedeac0c748f59258e4207a88ddd7b2",
+      "asks": 2000,
+      "passes": 20,
+      "accepts": 1861,
+      "decode_calls": 21,
+      "dp_solves": 6043,
+      "dp_cells": 139135,
+      "direct_scores": 296,
+      "preparation_wall": 0.03476866916753352,
+      "transition_wall": 0.015214901533909142,
+      "dp_wall": 0.0051734569715335965,
+      "direct_wall": 0.00030459987465292215,
+      "interleave_wall": 0.06454414187464863,
+      "packing_wall": 0.00334703060798347,
+      "decode_wall": 0.007909463834948838,
+      "bookmark_asks": 408,
+      "bookmark_wall": 0.016375486040487885,
+      "stopped_by": "asks",
+      "reserved_qubits": 22,
+      "outside_reserved_qubits": 0,
+      "adopt_worse": 3,
+      "interrupted_asks": 0,
+      "strict_accepts": 13,
+      "neutral_accepts": 1848,
+      "borrowed_accepts": 721,
+      "whole_order_accepts": 51,
+      "current": {
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 22,
+        "decoder_complete": true,
+        "physical_qubits": 21,
+        "max_chain": 3,
+        "valid": true
+      },
+      "bookmark": {
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 22,
+        "decoder_complete": true,
+        "physical_qubits": 21,
+        "max_chain": 3,
+        "valid": true
+      },
+      "external_validation_seconds": 0.004789122031070292
+    },
+    {
+      "cell": "K100",
+      "suite": "fingerprint",
+      "source_spec": [
+        "complete",
+        100
+      ],
+      "target_m": 12,
+      "target_tile": 4,
+      "seed": 0,
+      "sched_seed": 0,
+      "max_asks": 10000,
+      "timeout_seconds": 900,
+      "input_sha256": "c3f02e1cdd9f52086bb0908e2aad7a8eeaf1d4a69231348a55953cf08237cd24",
+      "target_sha256": "3f15800e82925eb185c06311c59da112db8480ac092ba8393336a071c8a6e06c",
+      "n": 100,
+      "edges": 4950,
+      "input_loading_seconds": 0.045303997001610696,
+      "policy": "feedback",
+      "success": true,
+      "physical_qubits": 785,
+      "acl": 7.85,
+      "max_chain": 9,
+      "elapsed_seconds": 1.6887041049776599,
+      "compilation_seconds": 0.0,
+      "warm_timing_clean": true,
+      "diag": {
+        "mm_calls": 0,
+        "mm_skipped": true,
+        "certified": true,
+        "asks": 10000,
+        "accepts": 9714,
+        "passes": 10,
+        "readouts": 24,
+        "decode_calls": 11,
+        "bookmark_asks": 2166,
+        "bookmark_wall": 0.35759787703864276,
+        "stopped_by": "asks",
+        "adopt_worse": 0,
+        "infeasible": 0,
+        "accept_traj": [
+          1048,
+          1046,
+          1051,
+          1055,
+          1059,
+          1054,
+          1047,
+          1060,
+          1051,
+          243
+        ],
+        "accepted_by_order": [
+          3270,
+          3282,
+          3162
+        ],
+        "interleave_wall": 1.5840213414048776,
+        "packing_wall": 0.014402258209884167,
+        "decode_wall": 0.025766440900042653,
+        "flow_nodes": 25248,
+        "flow_arcs": 79406,
+        "trace": null,
+        "strict_accepts": 5,
+        "neutral_accepts": 9709,
+        "borrowed_accepts": 3483,
+        "whole_order_accepts": 21,
+        "accepted_by_donor": [
+          [
+            0,
+            2353,
+            917
+          ],
+          [
+            128,
+            0,
+            3154
+          ],
+          [
+            2263,
+            308,
+            591
+          ]
+        ],
+        "dp_solves": 31757,
+        "dp_cells": 13426187,
+        "direct_scores": 140,
+        "interrupted_asks": 0,
+        "preparation_wall": 1.4036917790072039,
+        "transition_wall": 1.016994504723698,
+        "dp_wall": 0.050508412066847086,
+        "direct_wall": 0.003858000971376896,
+        "sweep_traj": [
+          {
+            "pass_index": 0,
+            "ask": 0,
+            "wall": 0.0034556409809738398,
+            "current_score": [
+              0,
+              1337
+            ],
+            "bookmark_score": [
+              0,
+              1337
+            ],
+            "current_usable": true,
+            "changed": 0,
+            "strict": 0,
+            "neutral": 0,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 1,
+            "ask": 1083,
+            "wall": 0.18029093404766172,
+            "current_score": [
+              0,
+              833
+            ],
+            "bookmark_score": [
+              0,
+              833
+            ],
+            "current_usable": true,
+            "changed": 1048,
+            "strict": 3,
+            "neutral": 1045,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 2,
+            "ask": 2166,
+            "wall": 0.3576065970119089,
+            "current_score": [
+              0,
+              822
+            ],
+            "bookmark_score": [
+              0,
+              822
+            ],
+            "current_usable": true,
+            "changed": 1046,
+            "strict": 2,
+            "neutral": 1044,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 3,
+            "ask": 3249,
+            "wall": 0.5344670310150832,
+            "current_score": [
+              0,
+              822
+            ],
+            "bookmark_score": [
+              0,
+              822
+            ],
+            "current_usable": true,
+            "changed": 1051,
+            "strict": 0,
+            "neutral": 1051,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 4,
+            "ask": 4332,
+            "wall": 0.7119666140060872,
+            "current_score": [
+              0,
+              822
+            ],
+            "bookmark_score": [
+              0,
+              822
+            ],
+            "current_usable": true,
+            "changed": 1055,
+            "strict": 0,
+            "neutral": 1055,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 5,
+            "ask": 5415,
+            "wall": 0.8892870279960334,
+            "current_score": [
+              0,
+              822
+            ],
+            "bookmark_score": [
+              0,
+              822
+            ],
+            "current_usable": true,
+            "changed": 1059,
+            "strict": 0,
+            "neutral": 1059,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 6,
+            "ask": 6498,
+            "wall": 1.0660708410432562,
+            "current_score": [
+              0,
+              822
+            ],
+            "bookmark_score": [
+              0,
+              822
+            ],
+            "current_usable": true,
+            "changed": 1054,
+            "strict": 0,
+            "neutral": 1054,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 7,
+            "ask": 7581,
+            "wall": 1.2424422040348873,
+            "current_score": [
+              0,
+              822
+            ],
+            "bookmark_score": [
+              0,
+              822
+            ],
+            "current_usable": true,
+            "changed": 1047,
+            "strict": 0,
+            "neutral": 1047,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 8,
+            "ask": 8664,
+            "wall": 1.422509548952803,
+            "current_score": [
+              0,
+              822
+            ],
+            "bookmark_score": [
+              0,
+              822
+            ],
+            "current_usable": true,
+            "changed": 1060,
+            "strict": 0,
+            "neutral": 1060,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 9,
+            "ask": 9747,
+            "wall": 1.6015020329505205,
+            "current_score": [
+              0,
+              822
+            ],
+            "bookmark_score": [
+              0,
+              822
+            ],
+            "current_usable": true,
+            "changed": 1051,
+            "strict": 0,
+            "neutral": 1051,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 10,
+            "ask": 10000,
+            "wall": 1.6442628180375323,
+            "current_score": [
+              0,
+              822
+            ],
+            "bookmark_score": [
+              0,
+              822
+            ],
+            "current_usable": true,
+            "changed": 243,
+            "strict": 0,
+            "neutral": 243,
+            "complete": false,
+            "decode_complete": true,
+            "repeated_state": false
+          }
+        ],
+        "repeated_sweep_states": 0,
+        "decode_sweeps": 12,
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 822,
+        "active_horizontal": 99,
+        "active_vertical": 99,
+        "mixed_vertices": 98,
+        "pen": 0,
+        "stair": 822,
+        "bars": 198,
+        "misses": 0,
+        "best_expanded_score": [
+          0,
+          822
+        ],
+        "final_current_score": [
+          0,
+          822
+        ],
+        "final_current_usable": true,
+        "final_bookmark_score": [
+          0,
+          822
+        ],
+        "arrange_wall": 1.6442748579429463,
+        "stride": 2,
+        "native_physical_qubits": 785,
+        "legal_acl": 7.85,
+        "legal_max_chain": 9,
+        "deficit_edges": 0,
+        "corner_deficit": 0,
+        "extensions": 0,
+        "ext_qubits": 0,
+        "bridges": 0,
+        "convert_miss": 0,
+        "physical_qubits": 785,
+        "max_chain": 9,
+        "extent_mean": 6.94949494949495,
+        "extent_max": 13
+      },
+      "error": null,
+      "mm_calls": 0,
+      "mm_seconds": 0.0,
+      "load_at_start": [
+        4.0869140625,
+        6.98876953125,
+        8.6552734375
+      ],
+      "load_at_end": [
+        4.16015625,
+        6.95556640625,
+        8.63525390625
+      ],
+      "completed_at": "2026-09-15T21:07:20.787126+00:00",
+      "code_hash": "c60f9af48965d3f0d1ae52e39454313d5fedeac0c748f59258e4207a88ddd7b2",
+      "asks": 10000,
+      "passes": 10,
+      "accepts": 9714,
+      "decode_calls": 11,
+      "dp_solves": 31757,
+      "dp_cells": 13426187,
+      "direct_scores": 140,
+      "preparation_wall": 1.4036917790072039,
+      "transition_wall": 1.016994504723698,
+      "dp_wall": 0.050508412066847086,
+      "direct_wall": 0.003858000971376896,
+      "interleave_wall": 1.5840213414048776,
+      "packing_wall": 0.014402258209884167,
+      "decode_wall": 0.025766440900042653,
+      "bookmark_asks": 2166,
+      "bookmark_wall": 0.35759787703864276,
+      "stopped_by": "asks",
+      "reserved_qubits": 822,
+      "outside_reserved_qubits": 0,
+      "adopt_worse": 0,
+      "interrupted_asks": 0,
+      "strict_accepts": 5,
+      "neutral_accepts": 9709,
+      "borrowed_accepts": 3483,
+      "whole_order_accepts": 21,
+      "current": {
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 822,
+        "decoder_complete": true,
+        "physical_qubits": 781,
+        "max_chain": 9,
+        "valid": true
+      },
+      "bookmark": {
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 822,
+        "decoder_complete": true,
+        "physical_qubits": 785,
+        "max_chain": 9,
+        "valid": true
+      },
+      "external_validation_seconds": 0.09752531500998884
+    },
+    {
+      "cell": "K8",
+      "suite": "fingerprint",
+      "source_spec": [
+        "complete",
+        8
+      ],
+      "target_m": 3,
+      "target_tile": 4,
+      "seed": 0,
+      "sched_seed": 0,
+      "max_asks": 2000,
+      "timeout_seconds": 120,
+      "input_sha256": "cc3f6193034199fc1f096a3d2540b6df54e3cbf7e7c9c0dfa28660fc2b163467",
+      "target_sha256": "f5237004f0af478a7e2edcbacb70a376c05b7fb37d9da35817e2ce713ec77bf5",
+      "n": 8,
+      "edges": 28,
+      "input_loading_seconds": 0.0028421810129657388,
+      "policy": "feedback",
+      "success": true,
+      "physical_qubits": 14,
+      "acl": 1.75,
+      "max_chain": 2,
+      "elapsed_seconds": 0.07498490693978965,
+      "compilation_seconds": 0.0,
+      "warm_timing_clean": true,
+      "diag": {
+        "mm_calls": 0,
+        "mm_skipped": true,
+        "certified": true,
+        "asks": 2000,
+        "accepts": 1945,
+        "passes": 25,
+        "readouts": 52,
+        "decode_calls": 26,
+        "bookmark_asks": 0,
+        "bookmark_wall": 0.00029980007093399763,
+        "stopped_by": "asks",
+        "adopt_worse": 0,
+        "infeasible": 0,
+        "accept_traj": [
+          81,
+          76,
+          79,
+          78,
+          78,
+          78,
+          81,
+          79,
+          77,
+          79,
+          81,
+          80,
+          78,
+          77,
+          79,
+          80,
+          78,
+          77,
+          78,
+          79,
+          81,
+          78,
+          81,
+          77,
+          55
+        ],
+        "accepted_by_order": [
+          648,
+          645,
+          652
+        ],
+        "interleave_wall": 0.06188566028140485,
+        "packing_wall": 0.0020735508296638727,
+        "decode_wall": 0.004995491006411612,
+        "flow_nodes": 1560,
+        "flow_arcs": 2844,
+        "trace": null,
+        "strict_accepts": 0,
+        "neutral_accepts": 1945,
+        "borrowed_accepts": 854,
+        "whole_order_accepts": 75,
+        "accepted_by_donor": [
+          [
+            0,
+            627,
+            21
+          ],
+          [
+            18,
+            0,
+            627
+          ],
+          [
+            629,
+            23,
+            0
+          ]
+        ],
+        "dp_solves": 5985,
+        "dp_cells": 103953,
+        "direct_scores": 353,
+        "interrupted_asks": 0,
+        "preparation_wall": 0.03225755563471466,
+        "transition_wall": 0.013112990069203079,
+        "dp_wall": 0.004869684227742255,
+        "direct_wall": 0.0003115301951766014,
+        "sweep_traj": [
+          {
+            "pass_index": 0,
+            "ask": 0,
+            "wall": 0.00030317006167024374,
+            "current_score": [
+              0,
+              14
+            ],
+            "bookmark_score": [
+              0,
+              14
+            ],
+            "current_usable": true,
+            "changed": 0,
+            "strict": 0,
+            "neutral": 0,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 1,
+            "ask": 81,
+            "wall": 0.0033702810760587454,
+            "current_score": [
+              0,
+              14
+            ],
+            "bookmark_score": [
+              0,
+              14
+            ],
+            "current_usable": true,
+            "changed": 81,
+            "strict": 0,
+            "neutral": 81,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 2,
+            "ask": 162,
+            "wall": 0.006306572002358735,
+            "current_score": [
+              0,
+              14
+            ],
+            "bookmark_score": [
+              0,
+              14
+            ],
+            "current_usable": true,
+            "changed": 76,
+            "strict": 0,
+            "neutral": 76,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 3,
+            "ask": 243,
+            "wall": 0.00920679303817451,
+            "current_score": [
+              0,
+              14
+            ],
+            "bookmark_score": [
+              0,
+              14
+            ],
+            "current_usable": true,
+            "changed": 79,
+            "strict": 0,
+            "neutral": 79,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 4,
+            "ask": 324,
+            "wall": 0.012182454112917185,
+            "current_score": [
+              0,
+              14
+            ],
+            "bookmark_score": [
+              0,
+              14
+            ],
+            "current_usable": true,
+            "changed": 78,
+            "strict": 0,
+            "neutral": 78,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 5,
+            "ask": 405,
+            "wall": 0.015116365044377744,
+            "current_score": [
+              0,
+              14
+            ],
+            "bookmark_score": [
+              0,
+              14
+            ],
+            "current_usable": true,
+            "changed": 78,
+            "strict": 0,
+            "neutral": 78,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 6,
+            "ask": 486,
+            "wall": 0.01803848601412028,
+            "current_score": [
+              0,
+              14
+            ],
+            "bookmark_score": [
+              0,
+              14
+            ],
+            "current_usable": true,
+            "changed": 78,
+            "strict": 0,
+            "neutral": 78,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 7,
+            "ask": 567,
+            "wall": 0.02101646806113422,
+            "current_score": [
+              0,
+              14
+            ],
+            "bookmark_score": [
+              0,
+              14
+            ],
+            "current_usable": true,
+            "changed": 81,
+            "strict": 0,
+            "neutral": 81,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 8,
+            "ask": 648,
+            "wall": 0.023986758082173765,
+            "current_score": [
+              0,
+              14
+            ],
+            "bookmark_score": [
+              0,
+              14
+            ],
+            "current_usable": true,
+            "changed": 79,
+            "strict": 0,
+            "neutral": 79,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 9,
+            "ask": 729,
+            "wall": 0.026904399041086435,
+            "current_score": [
+              0,
+              14
+            ],
+            "bookmark_score": [
+              0,
+              14
+            ],
+            "current_usable": true,
+            "changed": 77,
+            "strict": 0,
+            "neutral": 77,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 10,
+            "ask": 810,
+            "wall": 0.029783051111735404,
+            "current_score": [
+              0,
+              14
+            ],
+            "bookmark_score": [
+              0,
+              14
+            ],
+            "current_usable": true,
+            "changed": 79,
+            "strict": 0,
+            "neutral": 79,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 11,
+            "ask": 891,
+            "wall": 0.03266696201171726,
+            "current_score": [
+              0,
+              14
+            ],
+            "bookmark_score": [
+              0,
+              14
+            ],
+            "current_usable": true,
+            "changed": 81,
+            "strict": 0,
+            "neutral": 81,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 12,
+            "ask": 972,
+            "wall": 0.03562672308180481,
+            "current_score": [
+              0,
+              14
+            ],
+            "bookmark_score": [
+              0,
+              14
+            ],
+            "current_usable": true,
+            "changed": 80,
+            "strict": 0,
+            "neutral": 80,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 13,
+            "ask": 1053,
+            "wall": 0.03854953311383724,
+            "current_score": [
+              0,
+              14
+            ],
+            "bookmark_score": [
+              0,
+              14
+            ],
+            "current_usable": true,
+            "changed": 78,
+            "strict": 0,
+            "neutral": 78,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 14,
+            "ask": 1134,
+            "wall": 0.04150199505966157,
+            "current_score": [
+              0,
+              14
+            ],
+            "bookmark_score": [
+              0,
+              14
+            ],
+            "current_usable": true,
+            "changed": 77,
+            "strict": 0,
+            "neutral": 77,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 15,
+            "ask": 1215,
+            "wall": 0.04444371606223285,
+            "current_score": [
+              0,
+              14
+            ],
+            "bookmark_score": [
+              0,
+              14
+            ],
+            "current_usable": true,
+            "changed": 79,
+            "strict": 0,
+            "neutral": 79,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 16,
+            "ask": 1296,
+            "wall": 0.04737873701378703,
+            "current_score": [
+              0,
+              14
+            ],
+            "bookmark_score": [
+              0,
+              14
+            ],
+            "current_usable": true,
+            "changed": 80,
+            "strict": 0,
+            "neutral": 80,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 17,
+            "ask": 1377,
+            "wall": 0.0502531680976972,
+            "current_score": [
+              0,
+              14
+            ],
+            "bookmark_score": [
+              0,
+              14
+            ],
+            "current_usable": true,
+            "changed": 78,
+            "strict": 0,
+            "neutral": 78,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 18,
+            "ask": 1458,
+            "wall": 0.05318344908300787,
+            "current_score": [
+              0,
+              14
+            ],
+            "bookmark_score": [
+              0,
+              14
+            ],
+            "current_usable": true,
+            "changed": 77,
+            "strict": 0,
+            "neutral": 77,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 19,
+            "ask": 1539,
+            "wall": 0.05612562003079802,
+            "current_score": [
+              0,
+              14
+            ],
+            "bookmark_score": [
+              0,
+              14
+            ],
+            "current_usable": true,
+            "changed": 78,
+            "strict": 0,
+            "neutral": 78,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 20,
+            "ask": 1620,
+            "wall": 0.05908505106344819,
+            "current_score": [
+              0,
+              14
+            ],
+            "bookmark_score": [
+              0,
+              14
+            ],
+            "current_usable": true,
+            "changed": 79,
+            "strict": 0,
+            "neutral": 79,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 21,
+            "ask": 1701,
+            "wall": 0.06205081206280738,
+            "current_score": [
+              0,
+              14
+            ],
+            "bookmark_score": [
+              0,
+              14
+            ],
+            "current_usable": true,
+            "changed": 81,
+            "strict": 0,
+            "neutral": 81,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 22,
+            "ask": 1782,
+            "wall": 0.06500567309558392,
+            "current_score": [
+              0,
+              14
+            ],
+            "bookmark_score": [
+              0,
+              14
+            ],
+            "current_usable": true,
+            "changed": 78,
+            "strict": 0,
+            "neutral": 78,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 23,
+            "ask": 1863,
+            "wall": 0.06785889400634915,
+            "current_score": [
+              0,
+              14
+            ],
+            "bookmark_score": [
+              0,
+              14
+            ],
+            "current_usable": true,
+            "changed": 81,
+            "strict": 0,
+            "neutral": 81,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 24,
+            "ask": 1944,
+            "wall": 0.07073633500840515,
+            "current_score": [
+              0,
+              14
+            ],
+            "bookmark_score": [
+              0,
+              14
+            ],
+            "current_usable": true,
+            "changed": 77,
+            "strict": 0,
+            "neutral": 77,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 25,
+            "ask": 2000,
+            "wall": 0.07288537605199963,
+            "current_score": [
+              0,
+              14
+            ],
+            "bookmark_score": [
+              0,
+              14
+            ],
+            "current_usable": true,
+            "changed": 55,
+            "strict": 0,
+            "neutral": 55,
+            "complete": false,
+            "decode_complete": true,
+            "repeated_state": false
+          }
+        ],
+        "repeated_sweep_states": 0,
+        "decode_sweeps": 26,
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 14,
+        "active_horizontal": 7,
+        "active_vertical": 7,
+        "mixed_vertices": 6,
+        "pen": 0,
+        "stair": 14,
+        "bars": 14,
+        "misses": 0,
+        "best_expanded_score": [
+          0,
+          14
+        ],
+        "final_current_score": [
+          0,
+          14
+        ],
+        "final_current_usable": true,
+        "final_bookmark_score": [
+          0,
+          14
+        ],
+        "arrange_wall": 0.07289415609557182,
+        "stride": 2,
+        "native_physical_qubits": 14,
+        "legal_acl": 1.75,
+        "legal_max_chain": 2,
+        "deficit_edges": 0,
+        "corner_deficit": 0,
+        "extensions": 0,
+        "ext_qubits": 0,
+        "bridges": 0,
+        "convert_miss": 0,
+        "physical_qubits": 14,
+        "max_chain": 2,
+        "extent_mean": 1.0,
+        "extent_max": 1
+      },
+      "error": null,
+      "mm_calls": 0,
+      "mm_seconds": 0.0,
+      "load_at_start": [
+        4.0869140625,
+        6.98876953125,
+        8.6552734375
+      ],
+      "load_at_end": [
+        4.0869140625,
+        6.98876953125,
+        8.6552734375
+      ],
+      "completed_at": "2026-09-15T21:07:18.416932+00:00",
+      "code_hash": "c60f9af48965d3f0d1ae52e39454313d5fedeac0c748f59258e4207a88ddd7b2",
+      "asks": 2000,
+      "passes": 25,
+      "accepts": 1945,
+      "decode_calls": 26,
+      "dp_solves": 5985,
+      "dp_cells": 103953,
+      "direct_scores": 353,
+      "preparation_wall": 0.03225755563471466,
+      "transition_wall": 0.013112990069203079,
+      "dp_wall": 0.004869684227742255,
+      "direct_wall": 0.0003115301951766014,
+      "interleave_wall": 0.06188566028140485,
+      "packing_wall": 0.0020735508296638727,
+      "decode_wall": 0.004995491006411612,
+      "bookmark_asks": 0,
+      "bookmark_wall": 0.00029980007093399763,
+      "stopped_by": "asks",
+      "reserved_qubits": 14,
+      "outside_reserved_qubits": 0,
+      "adopt_worse": 0,
+      "interrupted_asks": 0,
+      "strict_accepts": 0,
+      "neutral_accepts": 1945,
+      "borrowed_accepts": 854,
+      "whole_order_accepts": 75,
+      "current": {
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 14,
+        "decoder_complete": true,
+        "physical_qubits": 14,
+        "max_chain": 2,
+        "valid": true
+      },
+      "bookmark": {
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 14,
+        "decoder_complete": true,
+        "physical_qubits": 14,
+        "max_chain": 2,
+        "valid": true
+      },
+      "external_validation_seconds": 0.004223932046443224
+    },
+    {
+      "cell": "grid_200",
+      "suite": "fingerprint",
+      "source_spec": [
+        "gid",
+        1590
+      ],
+      "target_m": 12,
+      "target_tile": 4,
+      "seed": 0,
+      "sched_seed": 0,
+      "max_asks": 8000,
+      "timeout_seconds": 900,
+      "input_sha256": "51083c9479d1109aadb7f44b8b6ba1e6ce42e090a0017d5e4549442584282cbb",
+      "target_sha256": "3f15800e82925eb185c06311c59da112db8480ac092ba8393336a071c8a6e06c",
+      "n": 200,
+      "edges": 370,
+      "input_loading_seconds": 0.04300796694587916,
+      "policy": "feedback",
+      "success": true,
+      "physical_qubits": 315,
+      "acl": 1.575,
+      "max_chain": 3,
+      "elapsed_seconds": 0.9925629789941013,
+      "compilation_seconds": 0.0,
+      "warm_timing_clean": true,
+      "diag": {
+        "mm_calls": 0,
+        "mm_skipped": true,
+        "certified": true,
+        "asks": 8000,
+        "accepts": 5291,
+        "passes": 4,
+        "readouts": 30,
+        "decode_calls": 5,
+        "bookmark_asks": 8000,
+        "bookmark_wall": 0.9571885550394654,
+        "stopped_by": "asks",
+        "adopt_worse": 0,
+        "infeasible": 0,
+        "accept_traj": [
+          1637,
+          1512,
+          1315,
+          827
+        ],
+        "accepted_by_order": [
+          2119,
+          2118,
+          1054
+        ],
+        "interleave_wall": 0.8957899486413226,
+        "packing_wall": 0.024934761109761894,
+        "decode_wall": 0.03750109393149614,
+        "flow_nodes": 33571,
+        "flow_arcs": 119664,
+        "trace": null,
+        "strict_accepts": 2972,
+        "neutral_accepts": 2319,
+        "borrowed_accepts": 949,
+        "whole_order_accepts": 0,
+        "accepted_by_donor": [
+          [
+            830,
+            953,
+            336
+          ],
+          [
+            303,
+            773,
+            1042
+          ],
+          [
+            387,
+            155,
+            512
+          ]
+        ],
+        "dp_solves": 29625,
+        "dp_cells": 39505763,
+        "direct_scores": 60,
+        "interrupted_asks": 0,
+        "preparation_wall": 0.6814806737238541,
+        "transition_wall": 0.5722648398950696,
+        "dp_wall": 0.09763457858934999,
+        "direct_wall": 0.00027241045609116554,
+        "sweep_traj": [
+          {
+            "pass_index": 0,
+            "ask": 0,
+            "wall": 0.004842321039177477,
+            "current_score": [
+              0,
+              1834
+            ],
+            "bookmark_score": [
+              0,
+              1834
+            ],
+            "current_usable": true,
+            "changed": 0,
+            "strict": 0,
+            "neutral": 0,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 1,
+            "ask": 2178,
+            "wall": 0.27526565198786557,
+            "current_score": [
+              0,
+              532
+            ],
+            "bookmark_score": [
+              0,
+              532
+            ],
+            "current_usable": true,
+            "changed": 1637,
+            "strict": 1100,
+            "neutral": 537,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 2,
+            "ask": 4352,
+            "wall": 0.5327091879444197,
+            "current_score": [
+              0,
+              478
+            ],
+            "bookmark_score": [
+              0,
+              478
+            ],
+            "current_usable": true,
+            "changed": 1512,
+            "strict": 840,
+            "neutral": 672,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 3,
+            "ask": 6524,
+            "wall": 0.7897934629581869,
+            "current_score": [
+              0,
+              430
+            ],
+            "bookmark_score": [
+              0,
+              430
+            ],
+            "current_usable": true,
+            "changed": 1315,
+            "strict": 598,
+            "neutral": 717,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 4,
+            "ask": 8000,
+            "wall": 0.9571973950369284,
+            "current_score": [
+              0,
+              390
+            ],
+            "bookmark_score": [
+              0,
+              390
+            ],
+            "current_usable": true,
+            "changed": 827,
+            "strict": 434,
+            "neutral": 393,
+            "complete": false,
+            "decode_complete": true,
+            "repeated_state": false
+          }
+        ],
+        "repeated_sweep_states": 0,
+        "decode_sweeps": 15,
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 390,
+        "active_horizontal": 100,
+        "active_vertical": 100,
+        "mixed_vertices": 0,
+        "pen": 0,
+        "stair": 390,
+        "bars": 200,
+        "misses": 0,
+        "best_expanded_score": [
+          0,
+          390
+        ],
+        "final_current_score": [
+          0,
+          390
+        ],
+        "final_current_usable": true,
+        "final_bookmark_score": [
+          0,
+          390
+        ],
+        "arrange_wall": 0.957209164975211,
+        "stride": 2,
+        "native_physical_qubits": 315,
+        "legal_acl": 1.575,
+        "legal_max_chain": 3,
+        "deficit_edges": 0,
+        "corner_deficit": 0,
+        "extensions": 0,
+        "ext_qubits": 0,
+        "bridges": 0,
+        "convert_miss": 0,
+        "physical_qubits": 315,
+        "max_chain": 3,
+        "extent_mean": 2.25,
+        "extent_max": 5
+      },
+      "error": null,
+      "mm_calls": 0,
+      "mm_seconds": 0.0,
+      "load_at_start": [
+        5.0205078125,
+        6.89599609375,
+        8.5615234375
+      ],
+      "load_at_end": [
+        5.0205078125,
+        6.89599609375,
+        8.5615234375
+      ],
+      "completed_at": "2026-09-15T21:07:51.353931+00:00",
+      "code_hash": "c60f9af48965d3f0d1ae52e39454313d5fedeac0c748f59258e4207a88ddd7b2",
+      "asks": 8000,
+      "passes": 4,
+      "accepts": 5291,
+      "decode_calls": 5,
+      "dp_solves": 29625,
+      "dp_cells": 39505763,
+      "direct_scores": 60,
+      "preparation_wall": 0.6814806737238541,
+      "transition_wall": 0.5722648398950696,
+      "dp_wall": 0.09763457858934999,
+      "direct_wall": 0.00027241045609116554,
+      "interleave_wall": 0.8957899486413226,
+      "packing_wall": 0.024934761109761894,
+      "decode_wall": 0.03750109393149614,
+      "bookmark_asks": 8000,
+      "bookmark_wall": 0.9571885550394654,
+      "stopped_by": "asks",
+      "reserved_qubits": 390,
+      "outside_reserved_qubits": 0,
+      "adopt_worse": 0,
+      "interrupted_asks": 0,
+      "strict_accepts": 2972,
+      "neutral_accepts": 2319,
+      "borrowed_accepts": 949,
+      "whole_order_accepts": 0,
+      "current": {
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 390,
+        "decoder_complete": true,
+        "physical_qubits": 315,
+        "max_chain": 3,
+        "valid": true
+      },
+      "bookmark": {
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 390,
+        "decoder_complete": true,
+        "physical_qubits": 315,
+        "max_chain": 3,
+        "valid": true
+      },
+      "external_validation_seconds": 0.07044248597230762
+    },
+    {
+      "cell": "path60",
+      "suite": "fingerprint",
+      "source_spec": [
+        "path",
+        60
+      ],
+      "target_m": 12,
+      "target_tile": 4,
+      "seed": 0,
+      "sched_seed": 0,
+      "max_asks": 3000,
+      "timeout_seconds": 300,
+      "input_sha256": "ece20ac563a065315de68df99793f7c80f8dea52118ce8cb1390ece0a6294a70",
+      "target_sha256": "3f15800e82925eb185c06311c59da112db8480ac092ba8393336a071c8a6e06c",
+      "n": 60,
+      "edges": 59,
+      "input_loading_seconds": 0.1974519999930635,
+      "policy": "feedback",
+      "success": true,
+      "physical_qubits": 63,
+      "acl": 1.05,
+      "max_chain": 2,
+      "elapsed_seconds": 0.18220082495827228,
+      "compilation_seconds": 0.0,
+      "warm_timing_clean": true,
+      "diag": {
+        "mm_calls": 0,
+        "mm_skipped": true,
+        "certified": true,
+        "asks": 3000,
+        "accepts": 999,
+        "passes": 5,
+        "readouts": 36,
+        "decode_calls": 6,
+        "bookmark_asks": 2519,
+        "bookmark_wall": 0.12000460200943053,
+        "stopped_by": "asks",
+        "adopt_worse": 0,
+        "infeasible": 0,
+        "accept_traj": [
+          467,
+          306,
+          140,
+          66,
+          20
+        ],
+        "accepted_by_order": [
+          338,
+          382,
+          279
+        ],
+        "interleave_wall": 0.12345859478227794,
+        "packing_wall": 0.006920343730598688,
+        "decode_wall": 0.011658595059998333,
+        "flow_nodes": 22002,
+        "flow_arcs": 74450,
+        "trace": null,
+        "strict_accepts": 436,
+        "neutral_accepts": 563,
+        "borrowed_accepts": 156,
+        "whole_order_accepts": 2,
+        "accepted_by_donor": [
+          [
+            61,
+            239,
+            38
+          ],
+          [
+            43,
+            79,
+            260
+          ],
+          [
+            158,
+            26,
+            95
+          ]
+        ],
+        "dp_solves": 8134,
+        "dp_cells": 2484914,
+        "direct_scores": 75,
+        "interrupted_asks": 0,
+        "preparation_wall": 0.07950100139714777,
+        "transition_wall": 0.04920937609858811,
+        "dp_wall": 0.012005194323137403,
+        "direct_wall": 0.00011627923231571913,
+        "sweep_traj": [
+          {
+            "pass_index": 0,
+            "ask": 0,
+            "wall": 0.003374560968950391,
+            "current_score": [
+              0,
+              160
+            ],
+            "bookmark_score": [
+              0,
+              160
+            ],
+            "current_usable": true,
+            "changed": 0,
+            "strict": 0,
+            "neutral": 0,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 1,
+            "ask": 630,
+            "wall": 0.03573650191538036,
+            "current_score": [
+              0,
+              83
+            ],
+            "bookmark_score": [
+              0,
+              83
+            ],
+            "current_usable": true,
+            "changed": 467,
+            "strict": 229,
+            "neutral": 238,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 2,
+            "ask": 1260,
+            "wall": 0.06574035296216607,
+            "current_score": [
+              0,
+              70
+            ],
+            "bookmark_score": [
+              0,
+              70
+            ],
+            "current_usable": true,
+            "changed": 306,
+            "strict": 128,
+            "neutral": 178,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 3,
+            "ask": 1890,
+            "wall": 0.09310960292350501,
+            "current_score": [
+              0,
+              67
+            ],
+            "bookmark_score": [
+              0,
+              67
+            ],
+            "current_usable": true,
+            "changed": 140,
+            "strict": 46,
+            "neutral": 94,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 4,
+            "ask": 2519,
+            "wall": 0.12000921193975955,
+            "current_score": [
+              0,
+              65
+            ],
+            "bookmark_score": [
+              0,
+              65
+            ],
+            "current_usable": true,
+            "changed": 66,
+            "strict": 28,
+            "neutral": 38,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 5,
+            "ask": 3000,
+            "wall": 0.1416034899884835,
+            "current_score": [
+              0,
+              65
+            ],
+            "bookmark_score": [
+              0,
+              65
+            ],
+            "current_usable": true,
+            "changed": 20,
+            "strict": 5,
+            "neutral": 15,
+            "complete": false,
+            "decode_complete": true,
+            "repeated_state": false
+          }
+        ],
+        "repeated_sweep_states": 0,
+        "decode_sweeps": 18,
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 65,
+        "active_horizontal": 30,
+        "active_vertical": 30,
+        "mixed_vertices": 0,
+        "pen": 0,
+        "stair": 65,
+        "bars": 60,
+        "misses": 0,
+        "best_expanded_score": [
+          0,
+          65
+        ],
+        "final_current_score": [
+          0,
+          65
+        ],
+        "final_current_usable": true,
+        "final_bookmark_score": [
+          0,
+          65
+        ],
+        "arrange_wall": 0.14161558996420354,
+        "stride": 2,
+        "native_physical_qubits": 63,
+        "legal_acl": 1.05,
+        "legal_max_chain": 2,
+        "deficit_edges": 0,
+        "corner_deficit": 0,
+        "extensions": 0,
+        "ext_qubits": 0,
+        "bridges": 0,
+        "convert_miss": 0,
+        "physical_qubits": 63,
+        "max_chain": 2,
+        "extent_mean": 1.1333333333333333,
+        "extent_max": 3
+      },
+      "error": null,
+      "mm_calls": 0,
+      "mm_seconds": 0.0,
+      "load_at_start": [
+        4.0869140625,
+        6.98876953125,
+        8.6552734375
+      ],
+      "load_at_end": [
+        4.0869140625,
+        6.98876953125,
+        8.6552734375
+      ],
+      "completed_at": "2026-09-15T21:07:18.940102+00:00",
+      "code_hash": "c60f9af48965d3f0d1ae52e39454313d5fedeac0c748f59258e4207a88ddd7b2",
+      "asks": 3000,
+      "passes": 5,
+      "accepts": 999,
+      "decode_calls": 6,
+      "dp_solves": 8134,
+      "dp_cells": 2484914,
+      "direct_scores": 75,
+      "preparation_wall": 0.07950100139714777,
+      "transition_wall": 0.04920937609858811,
+      "dp_wall": 0.012005194323137403,
+      "direct_wall": 0.00011627923231571913,
+      "interleave_wall": 0.12345859478227794,
+      "packing_wall": 0.006920343730598688,
+      "decode_wall": 0.011658595059998333,
+      "bookmark_asks": 2519,
+      "bookmark_wall": 0.12000460200943053,
+      "stopped_by": "asks",
+      "reserved_qubits": 65,
+      "outside_reserved_qubits": 0,
+      "adopt_worse": 0,
+      "interrupted_asks": 0,
+      "strict_accepts": 436,
+      "neutral_accepts": 563,
+      "borrowed_accepts": 156,
+      "whole_order_accepts": 2,
+      "current": {
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 65,
+        "decoder_complete": true,
+        "physical_qubits": 63,
+        "max_chain": 2,
+        "valid": true
+      },
+      "bookmark": {
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 65,
+        "decoder_complete": true,
+        "physical_qubits": 63,
+        "max_chain": 2,
+        "valid": true
+      },
+      "external_validation_seconds": 0.06964649504516274
+    },
+    {
+      "cell": "turan_n162",
+      "suite": "fingerprint",
+      "source_spec": [
+        "gid",
+        2647
+      ],
+      "target_m": 12,
+      "target_tile": 4,
+      "seed": 0,
+      "sched_seed": 0,
+      "max_asks": 15000,
+      "timeout_seconds": 900,
+      "input_sha256": "8c9bf5f554675e11310048849180db6ae196d435180632a06aaaadac268af6e8",
+      "target_sha256": "3f15800e82925eb185c06311c59da112db8480ac092ba8393336a071c8a6e06c",
+      "n": 162,
+      "edges": 6561,
+      "input_loading_seconds": 0.40280143392737955,
+      "policy": "feedback",
+      "success": true,
+      "physical_qubits": 972,
+      "acl": 6.0,
+      "max_chain": 6,
+      "elapsed_seconds": 2.6799563029780984,
+      "compilation_seconds": 0.0,
+      "warm_timing_clean": true,
+      "diag": {
+        "mm_calls": 0,
+        "mm_skipped": true,
+        "certified": true,
+        "asks": 15000,
+        "accepts": 14711,
+        "passes": 11,
+        "readouts": 26,
+        "decode_calls": 12,
+        "bookmark_asks": 1398,
+        "bookmark_wall": 0.26604429609142244,
+        "stopped_by": "asks",
+        "adopt_worse": 0,
+        "infeasible": 0,
+        "accept_traj": [
+          1363,
+          1376,
+          1384,
+          1377,
+          1363,
+          1362,
+          1377,
+          1384,
+          1362,
+          1356,
+          1007
+        ],
+        "accepted_by_order": [
+          4877,
+          4867,
+          4967
+        ],
+        "interleave_wall": 2.5651841242797673,
+        "packing_wall": 0.003614161047153175,
+        "decode_wall": 0.014449506183154881,
+        "flow_nodes": 24928,
+        "flow_arcs": 69656,
+        "trace": null,
+        "strict_accepts": 1223,
+        "neutral_accepts": 13488,
+        "borrowed_accepts": 4147,
+        "whole_order_accepts": 11,
+        "accepted_by_donor": [
+          [
+            127,
+            4535,
+            215
+          ],
+          [
+            114,
+            150,
+            4603
+          ],
+          [
+            4706,
+            163,
+            98
+          ]
+        ],
+        "dp_solves": 41512,
+        "dp_cells": 53689840,
+        "direct_scores": 165,
+        "interrupted_asks": 0,
+        "preparation_wall": 2.2776748223695904,
+        "transition_wall": 1.619442717754282,
+        "dp_wall": 0.10932442278135568,
+        "direct_wall": 0.005755321821197867,
+        "sweep_traj": [
+          {
+            "pass_index": 0,
+            "ask": 0,
+            "wall": 0.00356342107988894,
+            "current_score": [
+              0,
+              3374
+            ],
+            "bookmark_score": [
+              0,
+              3374
+            ],
+            "current_usable": true,
+            "changed": 0,
+            "strict": 0,
+            "neutral": 0,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 1,
+            "ask": 1398,
+            "wall": 0.2660530360881239,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1363,
+            "strict": 417,
+            "neutral": 946,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 2,
+            "ask": 2795,
+            "wall": 0.5064122520852834,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1376,
+            "strict": 69,
+            "neutral": 1307,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 3,
+            "ask": 4191,
+            "wall": 0.7480184390442446,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1384,
+            "strict": 70,
+            "neutral": 1314,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 4,
+            "ask": 5587,
+            "wall": 0.9889377750223503,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1377,
+            "strict": 93,
+            "neutral": 1284,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 5,
+            "ask": 6984,
+            "wall": 1.233617773046717,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1363,
+            "strict": 127,
+            "neutral": 1236,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 6,
+            "ask": 8381,
+            "wall": 1.4782946010818705,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1362,
+            "strict": 115,
+            "neutral": 1247,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 7,
+            "ask": 9778,
+            "wall": 1.7229535990627483,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1377,
+            "strict": 110,
+            "neutral": 1267,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 8,
+            "ask": 11175,
+            "wall": 1.964469026075676,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1384,
+            "strict": 49,
+            "neutral": 1335,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 9,
+            "ask": 12572,
+            "wall": 2.2076698730234057,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1362,
+            "strict": 78,
+            "neutral": 1284,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 10,
+            "ask": 13969,
+            "wall": 2.45185841107741,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1356,
+            "strict": 77,
+            "neutral": 1279,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 11,
+            "ask": 15000,
+            "wall": 2.634600257035345,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1007,
+            "strict": 18,
+            "neutral": 989,
+            "complete": false,
+            "decode_complete": true,
+            "repeated_state": false
+          }
+        ],
+        "repeated_sweep_states": 0,
+        "decode_sweeps": 13,
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 972,
+        "active_horizontal": 81,
+        "active_vertical": 81,
+        "mixed_vertices": 0,
+        "pen": 0,
+        "stair": 972,
+        "bars": 162,
+        "misses": 0,
+        "best_expanded_score": [
+          0,
+          972
+        ],
+        "final_current_score": [
+          0,
+          972
+        ],
+        "final_current_usable": true,
+        "final_bookmark_score": [
+          0,
+          972
+        ],
+        "arrange_wall": 2.6346118870424107,
+        "stride": 2,
+        "native_physical_qubits": 972,
+        "legal_acl": 6.0,
+        "legal_max_chain": 6,
+        "deficit_edges": 0,
+        "corner_deficit": 0,
+        "extensions": 0,
+        "ext_qubits": 0,
+        "bridges": 0,
+        "convert_miss": 0,
+        "physical_qubits": 972,
+        "max_chain": 6,
+        "extent_mean": 11.0,
+        "extent_max": 11
+      },
+      "error": null,
+      "mm_calls": 0,
+      "mm_seconds": 0.0,
+      "load_at_start": [
+        4.16015625,
+        6.95556640625,
+        8.63525390625
+      ],
+      "load_at_end": [
+        4.16015625,
+        6.95556640625,
+        8.63525390625
+      ],
+      "completed_at": "2026-09-15T21:07:23.993998+00:00",
+      "code_hash": "c60f9af48965d3f0d1ae52e39454313d5fedeac0c748f59258e4207a88ddd7b2",
+      "asks": 15000,
+      "passes": 11,
+      "accepts": 14711,
+      "decode_calls": 12,
+      "dp_solves": 41512,
+      "dp_cells": 53689840,
+      "direct_scores": 165,
+      "preparation_wall": 2.2776748223695904,
+      "transition_wall": 1.619442717754282,
+      "dp_wall": 0.10932442278135568,
+      "direct_wall": 0.005755321821197867,
+      "interleave_wall": 2.5651841242797673,
+      "packing_wall": 0.003614161047153175,
+      "decode_wall": 0.014449506183154881,
+      "bookmark_asks": 1398,
+      "bookmark_wall": 0.26604429609142244,
+      "stopped_by": "asks",
+      "reserved_qubits": 972,
+      "outside_reserved_qubits": 0,
+      "adopt_worse": 0,
+      "interrupted_asks": 0,
+      "strict_accepts": 1223,
+      "neutral_accepts": 13488,
+      "borrowed_accepts": 4147,
+      "whole_order_accepts": 11,
+      "current": {
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 972,
+        "decoder_complete": true,
+        "physical_qubits": 972,
+        "max_chain": 6,
+        "valid": true
+      },
+      "bookmark": {
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 972,
+        "decoder_complete": true,
+        "physical_qubits": 972,
+        "max_chain": 6,
+        "valid": true
+      },
+      "external_validation_seconds": 0.1067767379572615
+    },
+    {
+      "cell": "turan_n162",
+      "suite": "fingerprint",
+      "source_spec": [
+        "gid",
+        2647
+      ],
+      "target_m": 12,
+      "target_tile": 4,
+      "seed": 1,
+      "sched_seed": 1,
+      "max_asks": 15000,
+      "timeout_seconds": 900,
+      "input_sha256": "8c9bf5f554675e11310048849180db6ae196d435180632a06aaaadac268af6e8",
+      "target_sha256": "3f15800e82925eb185c06311c59da112db8480ac092ba8393336a071c8a6e06c",
+      "n": 162,
+      "edges": 6561,
+      "input_loading_seconds": 0.051088517997413874,
+      "policy": "feedback",
+      "success": true,
+      "physical_qubits": 972,
+      "acl": 6.0,
+      "max_chain": 6,
+      "elapsed_seconds": 2.6655219310196117,
+      "compilation_seconds": 0.0,
+      "warm_timing_clean": true,
+      "diag": {
+        "mm_calls": 0,
+        "mm_skipped": true,
+        "certified": true,
+        "asks": 15000,
+        "accepts": 14737,
+        "passes": 11,
+        "readouts": 26,
+        "decode_calls": 12,
+        "bookmark_asks": 1398,
+        "bookmark_wall": 0.25505954201798886,
+        "stopped_by": "asks",
+        "adopt_worse": 0,
+        "infeasible": 0,
+        "accept_traj": [
+          1372,
+          1378,
+          1376,
+          1382,
+          1376,
+          1371,
+          1366,
+          1378,
+          1364,
+          1370,
+          1004
+        ],
+        "accepted_by_order": [
+          4892,
+          4882,
+          4963
+        ],
+        "interleave_wall": 2.5504876510240138,
+        "packing_wall": 0.0037007598439231515,
+        "decode_wall": 0.014702106942422688,
+        "flow_nodes": 24860,
+        "flow_arcs": 69444,
+        "trace": null,
+        "strict_accepts": 1174,
+        "neutral_accepts": 13563,
+        "borrowed_accepts": 4219,
+        "whole_order_accepts": 8,
+        "accepted_by_donor": [
+          [
+            125,
+            4516,
+            251
+          ],
+          [
+            128,
+            96,
+            4658
+          ],
+          [
+            4734,
+            155,
+            74
+          ]
+        ],
+        "dp_solves": 41524,
+        "dp_cells": 53640352,
+        "direct_scores": 155,
+        "interrupted_asks": 0,
+        "preparation_wall": 2.2673012148588896,
+        "transition_wall": 1.6102306207176298,
+        "dp_wall": 0.10757096845190972,
+        "direct_wall": 0.005395272863097489,
+        "sweep_traj": [
+          {
+            "pass_index": 0,
+            "ask": 0,
+            "wall": 0.0035602820571511984,
+            "current_score": [
+              0,
+              3394
+            ],
+            "bookmark_score": [
+              0,
+              3394
+            ],
+            "current_usable": true,
+            "changed": 0,
+            "strict": 0,
+            "neutral": 0,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 1,
+            "ask": 1398,
+            "wall": 0.2550694120582193,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1372,
+            "strict": 311,
+            "neutral": 1061,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 2,
+            "ask": 2795,
+            "wall": 0.49519826797768474,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1378,
+            "strict": 76,
+            "neutral": 1302,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 3,
+            "ask": 4191,
+            "wall": 0.7380591260734946,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1376,
+            "strict": 110,
+            "neutral": 1266,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 4,
+            "ask": 5588,
+            "wall": 0.9779584930511191,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1382,
+            "strict": 58,
+            "neutral": 1324,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 5,
+            "ask": 6985,
+            "wall": 1.2218487199861556,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1376,
+            "strict": 102,
+            "neutral": 1274,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 6,
+            "ask": 8382,
+            "wall": 1.4654288180172443,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1371,
+            "strict": 87,
+            "neutral": 1284,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 7,
+            "ask": 9779,
+            "wall": 1.7067582160234451,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1366,
+            "strict": 133,
+            "neutral": 1233,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 8,
+            "ask": 11176,
+            "wall": 1.955163135076873,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1378,
+            "strict": 79,
+            "neutral": 1299,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 9,
+            "ask": 12573,
+            "wall": 2.1980764530599117,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1364,
+            "strict": 81,
+            "neutral": 1283,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 10,
+            "ask": 13970,
+            "wall": 2.440807531005703,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1370,
+            "strict": 52,
+            "neutral": 1318,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 11,
+            "ask": 15000,
+            "wall": 2.6206180460285395,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1004,
+            "strict": 85,
+            "neutral": 919,
+            "complete": false,
+            "decode_complete": true,
+            "repeated_state": false
+          }
+        ],
+        "repeated_sweep_states": 0,
+        "decode_sweeps": 13,
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 972,
+        "active_horizontal": 81,
+        "active_vertical": 81,
+        "mixed_vertices": 0,
+        "pen": 0,
+        "stair": 972,
+        "bars": 162,
+        "misses": 0,
+        "best_expanded_score": [
+          0,
+          972
+        ],
+        "final_current_score": [
+          0,
+          972
+        ],
+        "final_current_usable": true,
+        "final_bookmark_score": [
+          0,
+          972
+        ],
+        "arrange_wall": 2.6206332460278645,
+        "stride": 2,
+        "native_physical_qubits": 972,
+        "legal_acl": 6.0,
+        "legal_max_chain": 6,
+        "deficit_edges": 0,
+        "corner_deficit": 0,
+        "extensions": 0,
+        "ext_qubits": 0,
+        "bridges": 0,
+        "convert_miss": 0,
+        "physical_qubits": 972,
+        "max_chain": 6,
+        "extent_mean": 11.0,
+        "extent_max": 11
+      },
+      "error": null,
+      "mm_calls": 0,
+      "mm_seconds": 0.0,
+      "load_at_start": [
+        4.16015625,
+        6.95556640625,
+        8.63525390625
+      ],
+      "load_at_end": [
+        4.2275390625,
+        6.9228515625,
+        8.61572265625
+      ],
+      "completed_at": "2026-09-15T21:07:26.851968+00:00",
+      "code_hash": "c60f9af48965d3f0d1ae52e39454313d5fedeac0c748f59258e4207a88ddd7b2",
+      "asks": 15000,
+      "passes": 11,
+      "accepts": 14737,
+      "decode_calls": 12,
+      "dp_solves": 41524,
+      "dp_cells": 53640352,
+      "direct_scores": 155,
+      "preparation_wall": 2.2673012148588896,
+      "transition_wall": 1.6102306207176298,
+      "dp_wall": 0.10757096845190972,
+      "direct_wall": 0.005395272863097489,
+      "interleave_wall": 2.5504876510240138,
+      "packing_wall": 0.0037007598439231515,
+      "decode_wall": 0.014702106942422688,
+      "bookmark_asks": 1398,
+      "bookmark_wall": 0.25505954201798886,
+      "stopped_by": "asks",
+      "reserved_qubits": 972,
+      "outside_reserved_qubits": 0,
+      "adopt_worse": 0,
+      "interrupted_asks": 0,
+      "strict_accepts": 1174,
+      "neutral_accepts": 13563,
+      "borrowed_accepts": 4219,
+      "whole_order_accepts": 8,
+      "current": {
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 972,
+        "decoder_complete": true,
+        "physical_qubits": 972,
+        "max_chain": 6,
+        "valid": true
+      },
+      "bookmark": {
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 972,
+        "decoder_complete": true,
+        "physical_qubits": 972,
+        "max_chain": 6,
+        "valid": true
+      },
+      "external_validation_seconds": 0.09863735490944237
+    },
+    {
+      "cell": "turan_n162",
+      "suite": "fingerprint",
+      "source_spec": [
+        "gid",
+        2647
+      ],
+      "target_m": 12,
+      "target_tile": 4,
+      "seed": 2,
+      "sched_seed": 2,
+      "max_asks": 15000,
+      "timeout_seconds": 900,
+      "input_sha256": "8c9bf5f554675e11310048849180db6ae196d435180632a06aaaadac268af6e8",
+      "target_sha256": "3f15800e82925eb185c06311c59da112db8480ac092ba8393336a071c8a6e06c",
+      "n": 162,
+      "edges": 6561,
+      "input_loading_seconds": 0.050119317951612175,
+      "policy": "feedback",
+      "success": true,
+      "physical_qubits": 972,
+      "acl": 6.0,
+      "max_chain": 6,
+      "elapsed_seconds": 2.676417039008811,
+      "compilation_seconds": 0.0,
+      "warm_timing_clean": true,
+      "diag": {
+        "mm_calls": 0,
+        "mm_skipped": true,
+        "certified": true,
+        "asks": 15000,
+        "accepts": 14560,
+        "passes": 11,
+        "readouts": 26,
+        "decode_calls": 12,
+        "bookmark_asks": 1398,
+        "bookmark_wall": 0.26508861500769854,
+        "stopped_by": "asks",
+        "adopt_worse": 0,
+        "infeasible": 0,
+        "accept_traj": [
+          1316,
+          1357,
+          1367,
+          1364,
+          1367,
+          1370,
+          1369,
+          1336,
+          1364,
+          1348,
+          1002
+        ],
+        "accepted_by_order": [
+          4795,
+          4809,
+          4956
+        ],
+        "interleave_wall": 2.561982543906197,
+        "packing_wall": 0.003656440880149603,
+        "decode_wall": 0.014707325142808259,
+        "flow_nodes": 24824,
+        "flow_arcs": 69350,
+        "trace": null,
+        "strict_accepts": 1340,
+        "neutral_accepts": 13220,
+        "borrowed_accepts": 4122,
+        "whole_order_accepts": 7,
+        "accepted_by_donor": [
+          [
+            145,
+            4442,
+            208
+          ],
+          [
+            135,
+            118,
+            4556
+          ],
+          [
+            4711,
+            165,
+            80
+          ]
+        ],
+        "dp_solves": 41255,
+        "dp_cells": 53491527,
+        "direct_scores": 160,
+        "interrupted_asks": 0,
+        "preparation_wall": 2.276549074682407,
+        "transition_wall": 1.6173626042436808,
+        "dp_wall": 0.10900322033558041,
+        "direct_wall": 0.005640522111207247,
+        "sweep_traj": [
+          {
+            "pass_index": 0,
+            "ask": 0,
+            "wall": 0.0036151810782030225,
+            "current_score": [
+              0,
+              3390
+            ],
+            "bookmark_score": [
+              0,
+              3390
+            ],
+            "current_usable": true,
+            "changed": 0,
+            "strict": 0,
+            "neutral": 0,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 1,
+            "ask": 1398,
+            "wall": 0.2650997450109571,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1316,
+            "strict": 347,
+            "neutral": 969,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 2,
+            "ask": 2795,
+            "wall": 0.5085786640411243,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1357,
+            "strict": 86,
+            "neutral": 1271,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 3,
+            "ask": 4191,
+            "wall": 0.7474680501036346,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1367,
+            "strict": 117,
+            "neutral": 1250,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 4,
+            "ask": 5588,
+            "wall": 0.9901275270385668,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1364,
+            "strict": 54,
+            "neutral": 1310,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 5,
+            "ask": 6985,
+            "wall": 1.231176765053533,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1367,
+            "strict": 149,
+            "neutral": 1218,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 6,
+            "ask": 8382,
+            "wall": 1.473490713047795,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1370,
+            "strict": 103,
+            "neutral": 1267,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 7,
+            "ask": 9779,
+            "wall": 1.7177792110014707,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1369,
+            "strict": 73,
+            "neutral": 1296,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 8,
+            "ask": 11176,
+            "wall": 1.9609585590660572,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1336,
+            "strict": 129,
+            "neutral": 1207,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 9,
+            "ask": 12573,
+            "wall": 2.2051085280254483,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1364,
+            "strict": 63,
+            "neutral": 1301,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 10,
+            "ask": 13970,
+            "wall": 2.4495805060723796,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1348,
+            "strict": 112,
+            "neutral": 1236,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 11,
+            "ask": 15000,
+            "wall": 2.6318841620814055,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1002,
+            "strict": 107,
+            "neutral": 895,
+            "complete": false,
+            "decode_complete": true,
+            "repeated_state": false
+          }
+        ],
+        "repeated_sweep_states": 0,
+        "decode_sweeps": 13,
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 972,
+        "active_horizontal": 81,
+        "active_vertical": 81,
+        "mixed_vertices": 0,
+        "pen": 0,
+        "stair": 972,
+        "bars": 162,
+        "misses": 0,
+        "best_expanded_score": [
+          0,
+          972
+        ],
+        "final_current_score": [
+          0,
+          972
+        ],
+        "final_current_usable": true,
+        "final_bookmark_score": [
+          0,
+          972
+        ],
+        "arrange_wall": 2.631896022008732,
+        "stride": 2,
+        "native_physical_qubits": 972,
+        "legal_acl": 6.0,
+        "legal_max_chain": 6,
+        "deficit_edges": 0,
+        "corner_deficit": 0,
+        "extensions": 0,
+        "ext_qubits": 0,
+        "bridges": 0,
+        "convert_miss": 0,
+        "physical_qubits": 972,
+        "max_chain": 6,
+        "extent_mean": 11.0,
+        "extent_max": 11
+      },
+      "error": null,
+      "mm_calls": 0,
+      "mm_seconds": 0.0,
+      "load_at_start": [
+        4.2275390625,
+        6.9228515625,
+        8.61572265625
+      ],
+      "load_at_end": [
+        4.2275390625,
+        6.9228515625,
+        8.61572265625
+      ],
+      "completed_at": "2026-09-15T21:07:29.711368+00:00",
+      "code_hash": "c60f9af48965d3f0d1ae52e39454313d5fedeac0c748f59258e4207a88ddd7b2",
+      "asks": 15000,
+      "passes": 11,
+      "accepts": 14560,
+      "decode_calls": 12,
+      "dp_solves": 41255,
+      "dp_cells": 53491527,
+      "direct_scores": 160,
+      "preparation_wall": 2.276549074682407,
+      "transition_wall": 1.6173626042436808,
+      "dp_wall": 0.10900322033558041,
+      "direct_wall": 0.005640522111207247,
+      "interleave_wall": 2.561982543906197,
+      "packing_wall": 0.003656440880149603,
+      "decode_wall": 0.014707325142808259,
+      "bookmark_asks": 1398,
+      "bookmark_wall": 0.26508861500769854,
+      "stopped_by": "asks",
+      "reserved_qubits": 972,
+      "outside_reserved_qubits": 0,
+      "adopt_worse": 0,
+      "interrupted_asks": 0,
+      "strict_accepts": 1340,
+      "neutral_accepts": 13220,
+      "borrowed_accepts": 4122,
+      "whole_order_accepts": 7,
+      "current": {
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 972,
+        "decoder_complete": true,
+        "physical_qubits": 972,
+        "max_chain": 6,
+        "valid": true
+      },
+      "bookmark": {
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 972,
+        "decoder_complete": true,
+        "physical_qubits": 972,
+        "max_chain": 6,
+        "valid": true
+      },
+      "external_validation_seconds": 0.10125871701166034
+    },
+    {
+      "cell": "turan_n162",
+      "suite": "fingerprint",
+      "source_spec": [
+        "gid",
+        2647
+      ],
+      "target_m": 12,
+      "target_tile": 4,
+      "seed": 3,
+      "sched_seed": 3,
+      "max_asks": 15000,
+      "timeout_seconds": 900,
+      "input_sha256": "8c9bf5f554675e11310048849180db6ae196d435180632a06aaaadac268af6e8",
+      "target_sha256": "3f15800e82925eb185c06311c59da112db8480ac092ba8393336a071c8a6e06c",
+      "n": 162,
+      "edges": 6561,
+      "input_loading_seconds": 0.051989618921652436,
+      "policy": "feedback",
+      "success": true,
+      "physical_qubits": 972,
+      "acl": 6.0,
+      "max_chain": 6,
+      "elapsed_seconds": 2.6711805899394676,
+      "compilation_seconds": 0.0,
+      "warm_timing_clean": true,
+      "diag": {
+        "mm_calls": 0,
+        "mm_skipped": true,
+        "certified": true,
+        "asks": 15000,
+        "accepts": 14691,
+        "passes": 11,
+        "readouts": 26,
+        "decode_calls": 12,
+        "bookmark_asks": 1398,
+        "bookmark_wall": 0.26382938609458506,
+        "stopped_by": "asks",
+        "adopt_worse": 0,
+        "infeasible": 0,
+        "accept_traj": [
+          1332,
+          1387,
+          1354,
+          1376,
+          1367,
+          1368,
+          1383,
+          1382,
+          1366,
+          1373,
+          1003
+        ],
+        "accepted_by_order": [
+          4877,
+          4854,
+          4960
+        ],
+        "interleave_wall": 2.553815070888959,
+        "packing_wall": 0.003671684069558978,
+        "decode_wall": 0.014789427863433957,
+        "flow_nodes": 24992,
+        "flow_arcs": 69814,
+        "trace": null,
+        "strict_accepts": 1147,
+        "neutral_accepts": 13544,
+        "borrowed_accepts": 4205,
+        "whole_order_accepts": 11,
+        "accepted_by_donor": [
+          [
+            104,
+            4524,
+            249
+          ],
+          [
+            163,
+            86,
+            4605
+          ],
+          [
+            4710,
+            162,
+            88
+          ]
+        ],
+        "dp_solves": 41275,
+        "dp_cells": 53299035,
+        "direct_scores": 165,
+        "interrupted_asks": 0,
+        "preparation_wall": 2.268655662308447,
+        "transition_wall": 1.6117362712975591,
+        "dp_wall": 0.10842264536768198,
+        "direct_wall": 0.005811062874272466,
+        "sweep_traj": [
+          {
+            "pass_index": 0,
+            "ask": 0,
+            "wall": 0.0034584110835567117,
+            "current_score": [
+              0,
+              3342
+            ],
+            "bookmark_score": [
+              0,
+              3342
+            ],
+            "current_usable": true,
+            "changed": 0,
+            "strict": 0,
+            "neutral": 0,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 1,
+            "ask": 1398,
+            "wall": 0.2638450460508466,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1332,
+            "strict": 271,
+            "neutral": 1061,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 2,
+            "ask": 2795,
+            "wall": 0.5059379730373621,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1387,
+            "strict": 53,
+            "neutral": 1334,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 3,
+            "ask": 4190,
+            "wall": 0.7490253120195121,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1354,
+            "strict": 166,
+            "neutral": 1188,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 4,
+            "ask": 5587,
+            "wall": 0.9889127890346572,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1376,
+            "strict": 43,
+            "neutral": 1333,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 5,
+            "ask": 6984,
+            "wall": 1.2326112870359793,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1367,
+            "strict": 75,
+            "neutral": 1292,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 6,
+            "ask": 8381,
+            "wall": 1.4749950850382447,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1368,
+            "strict": 76,
+            "neutral": 1292,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 7,
+            "ask": 9778,
+            "wall": 1.716271213022992,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1383,
+            "strict": 101,
+            "neutral": 1282,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 8,
+            "ask": 11175,
+            "wall": 1.9584889910183847,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1382,
+            "strict": 50,
+            "neutral": 1332,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 9,
+            "ask": 12572,
+            "wall": 2.202991760103032,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1366,
+            "strict": 136,
+            "neutral": 1230,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 10,
+            "ask": 13969,
+            "wall": 2.4438454480841756,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1373,
+            "strict": 62,
+            "neutral": 1311,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 11,
+            "ask": 15000,
+            "wall": 2.626368354074657,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1003,
+            "strict": 114,
+            "neutral": 889,
+            "complete": false,
+            "decode_complete": true,
+            "repeated_state": false
+          }
+        ],
+        "repeated_sweep_states": 0,
+        "decode_sweeps": 13,
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 972,
+        "active_horizontal": 81,
+        "active_vertical": 81,
+        "mixed_vertices": 0,
+        "pen": 0,
+        "stair": 972,
+        "bars": 162,
+        "misses": 0,
+        "best_expanded_score": [
+          0,
+          972
+        ],
+        "final_current_score": [
+          0,
+          972
+        ],
+        "final_current_usable": true,
+        "final_bookmark_score": [
+          0,
+          972
+        ],
+        "arrange_wall": 2.626380564062856,
+        "stride": 2,
+        "native_physical_qubits": 972,
+        "legal_acl": 6.0,
+        "legal_max_chain": 6,
+        "deficit_edges": 0,
+        "corner_deficit": 0,
+        "extensions": 0,
+        "ext_qubits": 0,
+        "bridges": 0,
+        "convert_miss": 0,
+        "physical_qubits": 972,
+        "max_chain": 6,
+        "extent_mean": 11.0,
+        "extent_max": 11
+      },
+      "error": null,
+      "mm_calls": 0,
+      "mm_seconds": 0.0,
+      "load_at_start": [
+        4.2275390625,
+        6.9228515625,
+        8.61572265625
+      ],
+      "load_at_end": [
+        4.208984375,
+        6.8740234375,
+        8.5908203125
+      ],
+      "completed_at": "2026-09-15T21:07:32.565012+00:00",
+      "code_hash": "c60f9af48965d3f0d1ae52e39454313d5fedeac0c748f59258e4207a88ddd7b2",
+      "asks": 15000,
+      "passes": 11,
+      "accepts": 14691,
+      "decode_calls": 12,
+      "dp_solves": 41275,
+      "dp_cells": 53299035,
+      "direct_scores": 165,
+      "preparation_wall": 2.268655662308447,
+      "transition_wall": 1.6117362712975591,
+      "dp_wall": 0.10842264536768198,
+      "direct_wall": 0.005811062874272466,
+      "interleave_wall": 2.553815070888959,
+      "packing_wall": 0.003671684069558978,
+      "decode_wall": 0.014789427863433957,
+      "bookmark_asks": 1398,
+      "bookmark_wall": 0.26382938609458506,
+      "stopped_by": "asks",
+      "reserved_qubits": 972,
+      "outside_reserved_qubits": 0,
+      "adopt_worse": 0,
+      "interrupted_asks": 0,
+      "strict_accepts": 1147,
+      "neutral_accepts": 13544,
+      "borrowed_accepts": 4205,
+      "whole_order_accepts": 11,
+      "current": {
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 972,
+        "decoder_complete": true,
+        "physical_qubits": 972,
+        "max_chain": 6,
+        "valid": true
+      },
+      "bookmark": {
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 972,
+        "decoder_complete": true,
+        "physical_qubits": 972,
+        "max_chain": 6,
+        "valid": true
+      },
+      "external_validation_seconds": 0.3304927210556343
+    },
+    {
+      "cell": "turan_n162",
+      "suite": "fingerprint",
+      "source_spec": [
+        "gid",
+        2647
+      ],
+      "target_m": 12,
+      "target_tile": 4,
+      "seed": 4,
+      "sched_seed": 4,
+      "max_asks": 15000,
+      "timeout_seconds": 900,
+      "input_sha256": "8c9bf5f554675e11310048849180db6ae196d435180632a06aaaadac268af6e8",
+      "target_sha256": "3f15800e82925eb185c06311c59da112db8480ac092ba8393336a071c8a6e06c",
+      "n": 162,
+      "edges": 6561,
+      "input_loading_seconds": 0.05019936803728342,
+      "policy": "feedback",
+      "success": true,
+      "physical_qubits": 972,
+      "acl": 6.0,
+      "max_chain": 6,
+      "elapsed_seconds": 2.6665367629611865,
+      "compilation_seconds": 0.0,
+      "warm_timing_clean": true,
+      "diag": {
+        "mm_calls": 0,
+        "mm_skipped": true,
+        "certified": true,
+        "asks": 15000,
+        "accepts": 14647,
+        "passes": 11,
+        "readouts": 26,
+        "decode_calls": 12,
+        "bookmark_asks": 1398,
+        "bookmark_wall": 0.25721212395001203,
+        "stopped_by": "asks",
+        "adopt_worse": 0,
+        "infeasible": 0,
+        "accept_traj": [
+          1354,
+          1360,
+          1360,
+          1375,
+          1357,
+          1385,
+          1370,
+          1372,
+          1360,
+          1356,
+          998
+        ],
+        "accepted_by_order": [
+          4848,
+          4829,
+          4970
+        ],
+        "interleave_wall": 2.5513528920710087,
+        "packing_wall": 0.003968550940044224,
+        "decode_wall": 0.015276607009582222,
+        "flow_nodes": 24824,
+        "flow_arcs": 69342,
+        "trace": null,
+        "strict_accepts": 1040,
+        "neutral_accepts": 13607,
+        "borrowed_accepts": 4151,
+        "whole_order_accepts": 10,
+        "accepted_by_donor": [
+          [
+            153,
+            4450,
+            245
+          ],
+          [
+            122,
+            140,
+            4567
+          ],
+          [
+            4710,
+            181,
+            79
+          ]
+        ],
+        "dp_solves": 41532,
+        "dp_cells": 53668090,
+        "direct_scores": 155,
+        "interrupted_asks": 0,
+        "preparation_wall": 2.2666232674382627,
+        "transition_wall": 1.6102442489936948,
+        "dp_wall": 0.10849041549954563,
+        "direct_wall": 0.0054631613893434405,
+        "sweep_traj": [
+          {
+            "pass_index": 0,
+            "ask": 0,
+            "wall": 0.0037629209691658616,
+            "current_score": [
+              0,
+              3346
+            ],
+            "bookmark_score": [
+              0,
+              3346
+            ],
+            "current_usable": true,
+            "changed": 0,
+            "strict": 0,
+            "neutral": 0,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 1,
+            "ask": 1398,
+            "wall": 0.25722304394003004,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1354,
+            "strict": 165,
+            "neutral": 1189,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 2,
+            "ask": 2795,
+            "wall": 0.4993700619088486,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1360,
+            "strict": 57,
+            "neutral": 1303,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 3,
+            "ask": 4192,
+            "wall": 0.7445511010009795,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1360,
+            "strict": 87,
+            "neutral": 1273,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 4,
+            "ask": 5589,
+            "wall": 0.9881216799840331,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1375,
+            "strict": 128,
+            "neutral": 1247,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 5,
+            "ask": 6986,
+            "wall": 1.2321748689282686,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1357,
+            "strict": 142,
+            "neutral": 1215,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 6,
+            "ask": 8383,
+            "wall": 1.4728654068894684,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1385,
+            "strict": 74,
+            "neutral": 1311,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 7,
+            "ask": 9779,
+            "wall": 1.7130490739364177,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1370,
+            "strict": 89,
+            "neutral": 1281,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 8,
+            "ask": 11175,
+            "wall": 1.9540571919642389,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1372,
+            "strict": 142,
+            "neutral": 1230,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 9,
+            "ask": 12572,
+            "wall": 2.194576938985847,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1360,
+            "strict": 67,
+            "neutral": 1293,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 10,
+            "ask": 13969,
+            "wall": 2.437746917945333,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1356,
+            "strict": 31,
+            "neutral": 1325,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 11,
+            "ask": 15000,
+            "wall": 2.622423385968432,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 998,
+            "strict": 58,
+            "neutral": 940,
+            "complete": false,
+            "decode_complete": true,
+            "repeated_state": false
+          }
+        ],
+        "repeated_sweep_states": 0,
+        "decode_sweeps": 13,
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 972,
+        "active_horizontal": 81,
+        "active_vertical": 81,
+        "mixed_vertices": 0,
+        "pen": 0,
+        "stair": 972,
+        "bars": 162,
+        "misses": 0,
+        "best_expanded_score": [
+          0,
+          972
+        ],
+        "final_current_score": [
+          0,
+          972
+        ],
+        "final_current_usable": true,
+        "final_bookmark_score": [
+          0,
+          972
+        ],
+        "arrange_wall": 2.6224387059919536,
+        "stride": 2,
+        "native_physical_qubits": 972,
+        "legal_acl": 6.0,
+        "legal_max_chain": 6,
+        "deficit_edges": 0,
+        "corner_deficit": 0,
+        "extensions": 0,
+        "ext_qubits": 0,
+        "bridges": 0,
+        "convert_miss": 0,
+        "physical_qubits": 972,
+        "max_chain": 6,
+        "extent_mean": 11.0,
+        "extent_max": 11
+      },
+      "error": null,
+      "mm_calls": 0,
+      "mm_seconds": 0.0,
+      "load_at_start": [
+        4.208984375,
+        6.8740234375,
+        8.5908203125
+      ],
+      "load_at_end": [
+        4.4326171875,
+        6.87646484375,
+        8.58203125
+      ],
+      "completed_at": "2026-09-15T21:07:35.641130+00:00",
+      "code_hash": "c60f9af48965d3f0d1ae52e39454313d5fedeac0c748f59258e4207a88ddd7b2",
+      "asks": 15000,
+      "passes": 11,
+      "accepts": 14647,
+      "decode_calls": 12,
+      "dp_solves": 41532,
+      "dp_cells": 53668090,
+      "direct_scores": 155,
+      "preparation_wall": 2.2666232674382627,
+      "transition_wall": 1.6102442489936948,
+      "dp_wall": 0.10849041549954563,
+      "direct_wall": 0.0054631613893434405,
+      "interleave_wall": 2.5513528920710087,
+      "packing_wall": 0.003968550940044224,
+      "decode_wall": 0.015276607009582222,
+      "bookmark_asks": 1398,
+      "bookmark_wall": 0.25721212395001203,
+      "stopped_by": "asks",
+      "reserved_qubits": 972,
+      "outside_reserved_qubits": 0,
+      "adopt_worse": 0,
+      "interrupted_asks": 0,
+      "strict_accepts": 1040,
+      "neutral_accepts": 13607,
+      "borrowed_accepts": 4151,
+      "whole_order_accepts": 10,
+      "current": {
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 972,
+        "decoder_complete": true,
+        "physical_qubits": 972,
+        "max_chain": 6,
+        "valid": true
+      },
+      "bookmark": {
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 972,
+        "decoder_complete": true,
+        "physical_qubits": 972,
+        "max_chain": 6,
+        "valid": true
+      },
+      "external_validation_seconds": 0.09606281493324786
+    },
+    {
+      "cell": "turan_n162",
+      "suite": "fingerprint",
+      "source_spec": [
+        "gid",
+        2647
+      ],
+      "target_m": 12,
+      "target_tile": 4,
+      "seed": 5,
+      "sched_seed": 5,
+      "max_asks": 15000,
+      "timeout_seconds": 900,
+      "input_sha256": "8c9bf5f554675e11310048849180db6ae196d435180632a06aaaadac268af6e8",
+      "target_sha256": "3f15800e82925eb185c06311c59da112db8480ac092ba8393336a071c8a6e06c",
+      "n": 162,
+      "edges": 6561,
+      "input_loading_seconds": 0.05054756801109761,
+      "policy": "feedback",
+      "success": true,
+      "physical_qubits": 972,
+      "acl": 6.0,
+      "max_chain": 6,
+      "elapsed_seconds": 2.6658827159553766,
+      "compilation_seconds": 0.0,
+      "warm_timing_clean": true,
+      "diag": {
+        "mm_calls": 0,
+        "mm_skipped": true,
+        "certified": true,
+        "asks": 15000,
+        "accepts": 14683,
+        "passes": 11,
+        "readouts": 24,
+        "decode_calls": 12,
+        "bookmark_asks": 1398,
+        "bookmark_wall": 0.2601345049915835,
+        "stopped_by": "asks",
+        "adopt_worse": 0,
+        "infeasible": 0,
+        "accept_traj": [
+          1363,
+          1359,
+          1360,
+          1374,
+          1358,
+          1385,
+          1365,
+          1377,
+          1355,
+          1378,
+          1009
+        ],
+        "accepted_by_order": [
+          4852,
+          4868,
+          4963
+        ],
+        "interleave_wall": 2.5534986052662134,
+        "packing_wall": 0.0033458328107371926,
+        "decode_wall": 0.013135704910382628,
+        "flow_nodes": 23914,
+        "flow_arcs": 66990,
+        "trace": null,
+        "strict_accepts": 1082,
+        "neutral_accepts": 13601,
+        "borrowed_accepts": 4120,
+        "whole_order_accepts": 3,
+        "accepted_by_donor": [
+          [
+            157,
+            4459,
+            236
+          ],
+          [
+            114,
+            128,
+            4626
+          ],
+          [
+            4697,
+            166,
+            100
+          ]
+        ],
+        "dp_solves": 41510,
+        "dp_cells": 53730208,
+        "direct_scores": 160,
+        "interrupted_asks": 0,
+        "preparation_wall": 2.2685882258228958,
+        "transition_wall": 1.612401019083336,
+        "dp_wall": 0.10908846859820187,
+        "direct_wall": 0.005620341515168548,
+        "sweep_traj": [
+          {
+            "pass_index": 0,
+            "ask": 0,
+            "wall": 0.002153550973162055,
+            "current_score": [
+              0,
+              3331
+            ],
+            "bookmark_score": [
+              0,
+              3331
+            ],
+            "current_usable": true,
+            "changed": 0,
+            "strict": 0,
+            "neutral": 0,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 1,
+            "ask": 1398,
+            "wall": 0.2601446049520746,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1363,
+            "strict": 452,
+            "neutral": 911,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 2,
+            "ask": 2795,
+            "wall": 0.5030608540400863,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1359,
+            "strict": 30,
+            "neutral": 1329,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 3,
+            "ask": 4192,
+            "wall": 0.7426710409345105,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1360,
+            "strict": 46,
+            "neutral": 1314,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 4,
+            "ask": 5589,
+            "wall": 0.9833283399930224,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1374,
+            "strict": 38,
+            "neutral": 1336,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 5,
+            "ask": 6986,
+            "wall": 1.2263283579377457,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1358,
+            "strict": 94,
+            "neutral": 1264,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 6,
+            "ask": 8383,
+            "wall": 1.4671527160098776,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1385,
+            "strict": 54,
+            "neutral": 1331,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 7,
+            "ask": 9780,
+            "wall": 1.7091994649963453,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1365,
+            "strict": 65,
+            "neutral": 1300,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 8,
+            "ask": 11177,
+            "wall": 1.9516015539411455,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1377,
+            "strict": 77,
+            "neutral": 1300,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 9,
+            "ask": 12574,
+            "wall": 2.196100704022683,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1355,
+            "strict": 73,
+            "neutral": 1282,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 10,
+            "ask": 13971,
+            "wall": 2.4415286829462275,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1378,
+            "strict": 78,
+            "neutral": 1300,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 11,
+            "ask": 15000,
+            "wall": 2.621626219013706,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1009,
+            "strict": 75,
+            "neutral": 934,
+            "complete": false,
+            "decode_complete": true,
+            "repeated_state": false
+          }
+        ],
+        "repeated_sweep_states": 0,
+        "decode_sweeps": 12,
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 972,
+        "active_horizontal": 81,
+        "active_vertical": 81,
+        "mixed_vertices": 0,
+        "pen": 0,
+        "stair": 972,
+        "bars": 162,
+        "misses": 0,
+        "best_expanded_score": [
+          0,
+          972
+        ],
+        "final_current_score": [
+          0,
+          972
+        ],
+        "final_current_usable": true,
+        "final_bookmark_score": [
+          0,
+          972
+        ],
+        "arrange_wall": 2.6216387490276247,
+        "stride": 2,
+        "native_physical_qubits": 972,
+        "legal_acl": 6.0,
+        "legal_max_chain": 6,
+        "deficit_edges": 0,
+        "corner_deficit": 0,
+        "extensions": 0,
+        "ext_qubits": 0,
+        "bridges": 0,
+        "convert_miss": 0,
+        "physical_qubits": 972,
+        "max_chain": 6,
+        "extent_mean": 11.0,
+        "extent_max": 11
+      },
+      "error": null,
+      "mm_calls": 0,
+      "mm_seconds": 0.0,
+      "load_at_start": [
+        4.4326171875,
+        6.87646484375,
+        8.58203125
+      ],
+      "load_at_end": [
+        4.4326171875,
+        6.87646484375,
+        8.58203125
+      ],
+      "completed_at": "2026-09-15T21:07:38.489810+00:00",
+      "code_hash": "c60f9af48965d3f0d1ae52e39454313d5fedeac0c748f59258e4207a88ddd7b2",
+      "asks": 15000,
+      "passes": 11,
+      "accepts": 14683,
+      "decode_calls": 12,
+      "dp_solves": 41510,
+      "dp_cells": 53730208,
+      "direct_scores": 160,
+      "preparation_wall": 2.2685882258228958,
+      "transition_wall": 1.612401019083336,
+      "dp_wall": 0.10908846859820187,
+      "direct_wall": 0.005620341515168548,
+      "interleave_wall": 2.5534986052662134,
+      "packing_wall": 0.0033458328107371926,
+      "decode_wall": 0.013135704910382628,
+      "bookmark_asks": 1398,
+      "bookmark_wall": 0.2601345049915835,
+      "stopped_by": "asks",
+      "reserved_qubits": 972,
+      "outside_reserved_qubits": 0,
+      "adopt_worse": 0,
+      "interrupted_asks": 0,
+      "strict_accepts": 1082,
+      "neutral_accepts": 13601,
+      "borrowed_accepts": 4120,
+      "whole_order_accepts": 3,
+      "current": {
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 972,
+        "decoder_complete": true,
+        "physical_qubits": 972,
+        "max_chain": 6,
+        "valid": true
+      },
+      "bookmark": {
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 972,
+        "decoder_complete": true,
+        "physical_qubits": 972,
+        "max_chain": 6,
+        "valid": true
+      },
+      "external_validation_seconds": 0.09739697596523911
+    },
+    {
+      "cell": "turan_n162",
+      "suite": "fingerprint",
+      "source_spec": [
+        "gid",
+        2647
+      ],
+      "target_m": 12,
+      "target_tile": 4,
+      "seed": 6,
+      "sched_seed": 6,
+      "max_asks": 15000,
+      "timeout_seconds": 900,
+      "input_sha256": "8c9bf5f554675e11310048849180db6ae196d435180632a06aaaadac268af6e8",
+      "target_sha256": "3f15800e82925eb185c06311c59da112db8480ac092ba8393336a071c8a6e06c",
+      "n": 162,
+      "edges": 6561,
+      "input_loading_seconds": 0.05107425898313522,
+      "policy": "feedback",
+      "success": true,
+      "physical_qubits": 972,
+      "acl": 6.0,
+      "max_chain": 6,
+      "elapsed_seconds": 2.667691119015217,
+      "compilation_seconds": 0.0,
+      "warm_timing_clean": true,
+      "diag": {
+        "mm_calls": 0,
+        "mm_skipped": true,
+        "certified": true,
+        "asks": 15000,
+        "accepts": 14670,
+        "passes": 11,
+        "readouts": 26,
+        "decode_calls": 12,
+        "bookmark_asks": 1398,
+        "bookmark_wall": 0.26551311707589775,
+        "stopped_by": "asks",
+        "adopt_worse": 0,
+        "infeasible": 0,
+        "accept_traj": [
+          1335,
+          1356,
+          1376,
+          1366,
+          1381,
+          1370,
+          1380,
+          1356,
+          1367,
+          1361,
+          1022
+        ],
+        "accepted_by_order": [
+          4886,
+          4827,
+          4957
+        ],
+        "interleave_wall": 2.551718950504437,
+        "packing_wall": 0.003925711149349809,
+        "decode_wall": 0.014976731967180967,
+        "flow_nodes": 24956,
+        "flow_arcs": 69750,
+        "trace": null,
+        "strict_accepts": 1041,
+        "neutral_accepts": 13629,
+        "borrowed_accepts": 4155,
+        "whole_order_accepts": 8,
+        "accepted_by_donor": [
+          [
+            116,
+            4530,
+            240
+          ],
+          [
+            134,
+            129,
+            4564
+          ],
+          [
+            4709,
+            170,
+            78
+          ]
+        ],
+        "dp_solves": 41376,
+        "dp_cells": 53483996,
+        "direct_scores": 165,
+        "interrupted_asks": 0,
+        "preparation_wall": 2.2679549840977415,
+        "transition_wall": 1.6129687238717452,
+        "dp_wall": 0.10832063085399568,
+        "direct_wall": 0.005795049713924527,
+        "sweep_traj": [
+          {
+            "pass_index": 0,
+            "ask": 0,
+            "wall": 0.0037316910456866026,
+            "current_score": [
+              0,
+              3323
+            ],
+            "bookmark_score": [
+              0,
+              3323
+            ],
+            "current_usable": true,
+            "changed": 0,
+            "strict": 0,
+            "neutral": 0,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 1,
+            "ask": 1398,
+            "wall": 0.26552746701054275,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1335,
+            "strict": 319,
+            "neutral": 1016,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 2,
+            "ask": 2795,
+            "wall": 0.508363226079382,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1356,
+            "strict": 65,
+            "neutral": 1291,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 3,
+            "ask": 4191,
+            "wall": 0.7504320850130171,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1376,
+            "strict": 108,
+            "neutral": 1268,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 4,
+            "ask": 5588,
+            "wall": 0.9913913629716262,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1366,
+            "strict": 68,
+            "neutral": 1298,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 5,
+            "ask": 6985,
+            "wall": 1.2361909439787269,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1381,
+            "strict": 61,
+            "neutral": 1320,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 6,
+            "ask": 8382,
+            "wall": 1.4768867320381105,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1370,
+            "strict": 56,
+            "neutral": 1314,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 7,
+            "ask": 9779,
+            "wall": 1.7174225500784814,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1380,
+            "strict": 52,
+            "neutral": 1328,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 8,
+            "ask": 11175,
+            "wall": 1.960401899064891,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1356,
+            "strict": 71,
+            "neutral": 1285,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 9,
+            "ask": 12572,
+            "wall": 2.204646609025076,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1367,
+            "strict": 87,
+            "neutral": 1280,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 10,
+            "ask": 13969,
+            "wall": 2.446738158003427,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1361,
+            "strict": 133,
+            "neutral": 1228,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 11,
+            "ask": 15000,
+            "wall": 2.622932882979512,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1022,
+            "strict": 21,
+            "neutral": 1001,
+            "complete": false,
+            "decode_complete": true,
+            "repeated_state": false
+          }
+        ],
+        "repeated_sweep_states": 0,
+        "decode_sweeps": 13,
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 972,
+        "active_horizontal": 81,
+        "active_vertical": 81,
+        "mixed_vertices": 0,
+        "pen": 0,
+        "stair": 972,
+        "bars": 162,
+        "misses": 0,
+        "best_expanded_score": [
+          0,
+          972
+        ],
+        "final_current_score": [
+          0,
+          972
+        ],
+        "final_current_usable": true,
+        "final_bookmark_score": [
+          0,
+          972
+        ],
+        "arrange_wall": 2.6229450430255383,
+        "stride": 2,
+        "native_physical_qubits": 972,
+        "legal_acl": 6.0,
+        "legal_max_chain": 6,
+        "deficit_edges": 0,
+        "corner_deficit": 0,
+        "extensions": 0,
+        "ext_qubits": 0,
+        "bridges": 0,
+        "convert_miss": 0,
+        "physical_qubits": 972,
+        "max_chain": 6,
+        "extent_mean": 11.0,
+        "extent_max": 11
+      },
+      "error": null,
+      "mm_calls": 0,
+      "mm_seconds": 0.0,
+      "load_at_start": [
+        4.4326171875,
+        6.87646484375,
+        8.58203125
+      ],
+      "load_at_end": [
+        5.119140625,
+        6.978515625,
+        8.60595703125
+      ],
+      "completed_at": "2026-09-15T21:07:41.341316+00:00",
+      "code_hash": "c60f9af48965d3f0d1ae52e39454313d5fedeac0c748f59258e4207a88ddd7b2",
+      "asks": 15000,
+      "passes": 11,
+      "accepts": 14670,
+      "decode_calls": 12,
+      "dp_solves": 41376,
+      "dp_cells": 53483996,
+      "direct_scores": 165,
+      "preparation_wall": 2.2679549840977415,
+      "transition_wall": 1.6129687238717452,
+      "dp_wall": 0.10832063085399568,
+      "direct_wall": 0.005795049713924527,
+      "interleave_wall": 2.551718950504437,
+      "packing_wall": 0.003925711149349809,
+      "decode_wall": 0.014976731967180967,
+      "bookmark_asks": 1398,
+      "bookmark_wall": 0.26551311707589775,
+      "stopped_by": "asks",
+      "reserved_qubits": 972,
+      "outside_reserved_qubits": 0,
+      "adopt_worse": 0,
+      "interrupted_asks": 0,
+      "strict_accepts": 1041,
+      "neutral_accepts": 13629,
+      "borrowed_accepts": 4155,
+      "whole_order_accepts": 8,
+      "current": {
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 972,
+        "decoder_complete": true,
+        "physical_qubits": 972,
+        "max_chain": 6,
+        "valid": true
+      },
+      "bookmark": {
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 972,
+        "decoder_complete": true,
+        "physical_qubits": 972,
+        "max_chain": 6,
+        "valid": true
+      },
+      "external_validation_seconds": 0.09661737503483891
+    },
+    {
+      "cell": "turan_n162",
+      "suite": "fingerprint",
+      "source_spec": [
+        "gid",
+        2647
+      ],
+      "target_m": 12,
+      "target_tile": 4,
+      "seed": 7,
+      "sched_seed": 7,
+      "max_asks": 15000,
+      "timeout_seconds": 900,
+      "input_sha256": "8c9bf5f554675e11310048849180db6ae196d435180632a06aaaadac268af6e8",
+      "target_sha256": "3f15800e82925eb185c06311c59da112db8480ac092ba8393336a071c8a6e06c",
+      "n": 162,
+      "edges": 6561,
+      "input_loading_seconds": 0.051511029014363885,
+      "policy": "feedback",
+      "success": true,
+      "physical_qubits": 972,
+      "acl": 6.0,
+      "max_chain": 6,
+      "elapsed_seconds": 2.9122771919937804,
+      "compilation_seconds": 0.0,
+      "warm_timing_clean": true,
+      "diag": {
+        "mm_calls": 0,
+        "mm_skipped": true,
+        "certified": true,
+        "asks": 15000,
+        "accepts": 14636,
+        "passes": 11,
+        "readouts": 26,
+        "decode_calls": 12,
+        "bookmark_asks": 1398,
+        "bookmark_wall": 0.2641169169219211,
+        "stopped_by": "asks",
+        "adopt_worse": 0,
+        "infeasible": 0,
+        "accept_traj": [
+          1341,
+          1371,
+          1374,
+          1349,
+          1369,
+          1372,
+          1376,
+          1381,
+          1331,
+          1356,
+          1016
+        ],
+        "accepted_by_order": [
+          4829,
+          4828,
+          4979
+        ],
+        "interleave_wall": 2.5589655087096617,
+        "packing_wall": 0.0038459820207208395,
+        "decode_wall": 0.01501039310824126,
+        "flow_nodes": 24860,
+        "flow_arcs": 69460,
+        "trace": null,
+        "strict_accepts": 1240,
+        "neutral_accepts": 13396,
+        "borrowed_accepts": 4167,
+        "whole_order_accepts": 13,
+        "accepted_by_donor": [
+          [
+            128,
+            4475,
+            226
+          ],
+          [
+            135,
+            117,
+            4576
+          ],
+          [
+            4755,
+            143,
+            81
+          ]
+        ],
+        "dp_solves": 41331,
+        "dp_cells": 53303011,
+        "direct_scores": 165,
+        "interrupted_asks": 0,
+        "preparation_wall": 2.274983701761812,
+        "transition_wall": 1.6192599600180984,
+        "dp_wall": 0.10791006602812558,
+        "direct_wall": 0.005844152648933232,
+        "sweep_traj": [
+          {
+            "pass_index": 0,
+            "ask": 0,
+            "wall": 0.0035358709283173084,
+            "current_score": [
+              0,
+              3329
+            ],
+            "bookmark_score": [
+              0,
+              3329
+            ],
+            "current_usable": true,
+            "changed": 0,
+            "strict": 0,
+            "neutral": 0,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 1,
+            "ask": 1398,
+            "wall": 0.2641284269047901,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1341,
+            "strict": 366,
+            "neutral": 975,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 2,
+            "ask": 2795,
+            "wall": 0.7409878219477832,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1371,
+            "strict": 75,
+            "neutral": 1296,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 3,
+            "ask": 4191,
+            "wall": 0.9819651409052312,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1374,
+            "strict": 78,
+            "neutral": 1296,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 4,
+            "ask": 5588,
+            "wall": 1.2251648199744523,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1349,
+            "strict": 94,
+            "neutral": 1255,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 5,
+            "ask": 6985,
+            "wall": 1.4734444309724495,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1369,
+            "strict": 80,
+            "neutral": 1289,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 6,
+            "ask": 8382,
+            "wall": 1.71905918198172,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1372,
+            "strict": 104,
+            "neutral": 1268,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 7,
+            "ask": 9778,
+            "wall": 1.9619323919760063,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1376,
+            "strict": 120,
+            "neutral": 1256,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 8,
+            "ask": 11175,
+            "wall": 2.2013737799134105,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1381,
+            "strict": 58,
+            "neutral": 1323,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 9,
+            "ask": 12572,
+            "wall": 2.4458420699229464,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1331,
+            "strict": 79,
+            "neutral": 1252,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 10,
+            "ask": 13969,
+            "wall": 2.6878966588992625,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1356,
+            "strict": 87,
+            "neutral": 1269,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 11,
+            "ask": 15000,
+            "wall": 2.867069355910644,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1016,
+            "strict": 99,
+            "neutral": 917,
+            "complete": false,
+            "decode_complete": true,
+            "repeated_state": false
+          }
+        ],
+        "repeated_sweep_states": 0,
+        "decode_sweeps": 13,
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 972,
+        "active_horizontal": 81,
+        "active_vertical": 81,
+        "mixed_vertices": 0,
+        "pen": 0,
+        "stair": 972,
+        "bars": 162,
+        "misses": 0,
+        "best_expanded_score": [
+          0,
+          972
+        ],
+        "final_current_score": [
+          0,
+          972
+        ],
+        "final_current_usable": true,
+        "final_bookmark_score": [
+          0,
+          972
+        ],
+        "arrange_wall": 2.8670818659011275,
+        "stride": 2,
+        "native_physical_qubits": 972,
+        "legal_acl": 6.0,
+        "legal_max_chain": 6,
+        "deficit_edges": 0,
+        "corner_deficit": 0,
+        "extensions": 0,
+        "ext_qubits": 0,
+        "bridges": 0,
+        "convert_miss": 0,
+        "physical_qubits": 972,
+        "max_chain": 6,
+        "extent_mean": 11.0,
+        "extent_max": 11
+      },
+      "error": null,
+      "mm_calls": 0,
+      "mm_seconds": 0.0,
+      "load_at_start": [
+        5.119140625,
+        6.978515625,
+        8.60595703125
+      ],
+      "load_at_end": [
+        5.119140625,
+        6.978515625,
+        8.60595703125
+      ],
+      "completed_at": "2026-09-15T21:07:44.435870+00:00",
+      "code_hash": "c60f9af48965d3f0d1ae52e39454313d5fedeac0c748f59258e4207a88ddd7b2",
+      "asks": 15000,
+      "passes": 11,
+      "accepts": 14636,
+      "decode_calls": 12,
+      "dp_solves": 41331,
+      "dp_cells": 53303011,
+      "direct_scores": 165,
+      "preparation_wall": 2.274983701761812,
+      "transition_wall": 1.6192599600180984,
+      "dp_wall": 0.10791006602812558,
+      "direct_wall": 0.005844152648933232,
+      "interleave_wall": 2.5589655087096617,
+      "packing_wall": 0.0038459820207208395,
+      "decode_wall": 0.01501039310824126,
+      "bookmark_asks": 1398,
+      "bookmark_wall": 0.2641169169219211,
+      "stopped_by": "asks",
+      "reserved_qubits": 972,
+      "outside_reserved_qubits": 0,
+      "adopt_worse": 0,
+      "interrupted_asks": 0,
+      "strict_accepts": 1240,
+      "neutral_accepts": 13396,
+      "borrowed_accepts": 4167,
+      "whole_order_accepts": 13,
+      "current": {
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 972,
+        "decoder_complete": true,
+        "physical_qubits": 972,
+        "max_chain": 6,
+        "valid": true
+      },
+      "bookmark": {
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 972,
+        "decoder_complete": true,
+        "physical_qubits": 972,
+        "max_chain": 6,
+        "valid": true
+      },
+      "external_validation_seconds": 0.10189127805642784
+    },
+    {
+      "cell": "turan_n162",
+      "suite": "fingerprint",
+      "source_spec": [
+        "gid",
+        2647
+      ],
+      "target_m": 12,
+      "target_tile": 4,
+      "seed": 8,
+      "sched_seed": 8,
+      "max_asks": 15000,
+      "timeout_seconds": 900,
+      "input_sha256": "8c9bf5f554675e11310048849180db6ae196d435180632a06aaaadac268af6e8",
+      "target_sha256": "3f15800e82925eb185c06311c59da112db8480ac092ba8393336a071c8a6e06c",
+      "n": 162,
+      "edges": 6561,
+      "input_loading_seconds": 0.05277921003289521,
+      "policy": "feedback",
+      "success": true,
+      "physical_qubits": 972,
+      "acl": 6.0,
+      "max_chain": 6,
+      "elapsed_seconds": 2.6927653149468824,
+      "compilation_seconds": 0.0,
+      "warm_timing_clean": true,
+      "diag": {
+        "mm_calls": 0,
+        "mm_skipped": true,
+        "certified": true,
+        "asks": 15000,
+        "accepts": 14653,
+        "passes": 11,
+        "readouts": 26,
+        "decode_calls": 12,
+        "bookmark_asks": 1398,
+        "bookmark_wall": 0.25929100497160107,
+        "stopped_by": "asks",
+        "adopt_worse": 0,
+        "infeasible": 0,
+        "accept_traj": [
+          1354,
+          1370,
+          1361,
+          1364,
+          1358,
+          1346,
+          1375,
+          1369,
+          1369,
+          1371,
+          1016
+        ],
+        "accepted_by_order": [
+          4813,
+          4877,
+          4963
+        ],
+        "interleave_wall": 2.576256212196313,
+        "packing_wall": 0.0037595301400870085,
+        "decode_wall": 0.014921711874194443,
+        "flow_nodes": 24824,
+        "flow_arcs": 69338,
+        "trace": null,
+        "strict_accepts": 1049,
+        "neutral_accepts": 13604,
+        "borrowed_accepts": 4102,
+        "whole_order_accepts": 13,
+        "accepted_by_donor": [
+          [
+            163,
+            4442,
+            208
+          ],
+          [
+            125,
+            152,
+            4600
+          ],
+          [
+            4690,
+            170,
+            103
+          ]
+        ],
+        "dp_solves": 41596,
+        "dp_cells": 53816190,
+        "direct_scores": 165,
+        "interrupted_asks": 0,
+        "preparation_wall": 2.2891208711080253,
+        "transition_wall": 1.6289495545206591,
+        "dp_wall": 0.10972468263935298,
+        "direct_wall": 0.0058670444414019585,
+        "sweep_traj": [
+          {
+            "pass_index": 0,
+            "ask": 0,
+            "wall": 0.00345691095571965,
+            "current_score": [
+              0,
+              3367
+            ],
+            "bookmark_score": [
+              0,
+              3367
+            ],
+            "current_usable": true,
+            "changed": 0,
+            "strict": 0,
+            "neutral": 0,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 1,
+            "ask": 1398,
+            "wall": 0.2593019650084898,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1354,
+            "strict": 262,
+            "neutral": 1092,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 2,
+            "ask": 2795,
+            "wall": 0.508551687002182,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1370,
+            "strict": 53,
+            "neutral": 1317,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 3,
+            "ask": 4192,
+            "wall": 0.7598582200007513,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1361,
+            "strict": 98,
+            "neutral": 1263,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 4,
+            "ask": 5589,
+            "wall": 1.00042290892452,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1364,
+            "strict": 95,
+            "neutral": 1269,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 5,
+            "ask": 6986,
+            "wall": 1.2433855589479208,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1358,
+            "strict": 106,
+            "neutral": 1252,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 6,
+            "ask": 8383,
+            "wall": 1.4874755389755592,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1346,
+            "strict": 69,
+            "neutral": 1277,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 7,
+            "ask": 9780,
+            "wall": 1.7350018909201026,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1375,
+            "strict": 101,
+            "neutral": 1274,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 8,
+            "ask": 11176,
+            "wall": 1.9763061699923128,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1369,
+            "strict": 68,
+            "neutral": 1301,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 9,
+            "ask": 12573,
+            "wall": 2.21944530995097,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1369,
+            "strict": 48,
+            "neutral": 1321,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 10,
+            "ask": 13970,
+            "wall": 2.4661836609011516,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1371,
+            "strict": 112,
+            "neutral": 1259,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 11,
+            "ask": 15000,
+            "wall": 2.6483406389597803,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1016,
+            "strict": 37,
+            "neutral": 979,
+            "complete": false,
+            "decode_complete": true,
+            "repeated_state": false
+          }
+        ],
+        "repeated_sweep_states": 0,
+        "decode_sweeps": 13,
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 972,
+        "active_horizontal": 81,
+        "active_vertical": 81,
+        "mixed_vertices": 0,
+        "pen": 0,
+        "stair": 972,
+        "bars": 162,
+        "misses": 0,
+        "best_expanded_score": [
+          0,
+          972
+        ],
+        "final_current_score": [
+          0,
+          972
+        ],
+        "final_current_usable": true,
+        "final_bookmark_score": [
+          0,
+          972
+        ],
+        "arrange_wall": 2.648353768978268,
+        "stride": 2,
+        "native_physical_qubits": 972,
+        "legal_acl": 6.0,
+        "legal_max_chain": 6,
+        "deficit_edges": 0,
+        "corner_deficit": 0,
+        "extensions": 0,
+        "ext_qubits": 0,
+        "bridges": 0,
+        "convert_miss": 0,
+        "physical_qubits": 972,
+        "max_chain": 6,
+        "extent_mean": 11.0,
+        "extent_max": 11
+      },
+      "error": null,
+      "mm_calls": 0,
+      "mm_seconds": 0.0,
+      "load_at_start": [
+        5.119140625,
+        6.978515625,
+        8.60595703125
+      ],
+      "load_at_end": [
+        5.109375,
+        6.9453125,
+        8.58642578125
+      ],
+      "completed_at": "2026-09-15T21:07:47.316550+00:00",
+      "code_hash": "c60f9af48965d3f0d1ae52e39454313d5fedeac0c748f59258e4207a88ddd7b2",
+      "asks": 15000,
+      "passes": 11,
+      "accepts": 14653,
+      "decode_calls": 12,
+      "dp_solves": 41596,
+      "dp_cells": 53816190,
+      "direct_scores": 165,
+      "preparation_wall": 2.2891208711080253,
+      "transition_wall": 1.6289495545206591,
+      "dp_wall": 0.10972468263935298,
+      "direct_wall": 0.0058670444414019585,
+      "interleave_wall": 2.576256212196313,
+      "packing_wall": 0.0037595301400870085,
+      "decode_wall": 0.014921711874194443,
+      "bookmark_asks": 1398,
+      "bookmark_wall": 0.25929100497160107,
+      "stopped_by": "asks",
+      "reserved_qubits": 972,
+      "outside_reserved_qubits": 0,
+      "adopt_worse": 0,
+      "interrupted_asks": 0,
+      "strict_accepts": 1049,
+      "neutral_accepts": 13604,
+      "borrowed_accepts": 4102,
+      "whole_order_accepts": 13,
+      "current": {
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 972,
+        "decoder_complete": true,
+        "physical_qubits": 972,
+        "max_chain": 6,
+        "valid": true
+      },
+      "bookmark": {
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 972,
+        "decoder_complete": true,
+        "physical_qubits": 972,
+        "max_chain": 6,
+        "valid": true
+      },
+      "external_validation_seconds": 0.09751343599054962
+    },
+    {
+      "cell": "turan_n162",
+      "suite": "fingerprint",
+      "source_spec": [
+        "gid",
+        2647
+      ],
+      "target_m": 12,
+      "target_tile": 4,
+      "seed": 9,
+      "sched_seed": 9,
+      "max_asks": 15000,
+      "timeout_seconds": 900,
+      "input_sha256": "8c9bf5f554675e11310048849180db6ae196d435180632a06aaaadac268af6e8",
+      "target_sha256": "3f15800e82925eb185c06311c59da112db8480ac092ba8393336a071c8a6e06c",
+      "n": 162,
+      "edges": 6561,
+      "input_loading_seconds": 0.05289585003629327,
+      "policy": "feedback",
+      "success": true,
+      "physical_qubits": 972,
+      "acl": 6.0,
+      "max_chain": 6,
+      "elapsed_seconds": 2.6921977179590613,
+      "compilation_seconds": 0.0,
+      "warm_timing_clean": true,
+      "diag": {
+        "mm_calls": 0,
+        "mm_skipped": true,
+        "certified": true,
+        "asks": 15000,
+        "accepts": 14555,
+        "passes": 11,
+        "readouts": 26,
+        "decode_calls": 12,
+        "bookmark_asks": 1398,
+        "bookmark_wall": 0.2719455510377884,
+        "stopped_by": "asks",
+        "adopt_worse": 0,
+        "infeasible": 0,
+        "accept_traj": [
+          1293,
+          1349,
+          1368,
+          1360,
+          1362,
+          1365,
+          1374,
+          1370,
+          1336,
+          1374,
+          1004
+        ],
+        "accepted_by_order": [
+          4768,
+          4841,
+          4946
+        ],
+        "interleave_wall": 2.5772240593796596,
+        "packing_wall": 0.003627261845394969,
+        "decode_wall": 0.01446300616953522,
+        "flow_nodes": 25056,
+        "flow_arcs": 70054,
+        "trace": null,
+        "strict_accepts": 1405,
+        "neutral_accepts": 13150,
+        "borrowed_accepts": 4092,
+        "whole_order_accepts": 9,
+        "accepted_by_donor": [
+          [
+            196,
+            4360,
+            212
+          ],
+          [
+            127,
+            112,
+            4602
+          ],
+          [
+            4681,
+            189,
+            76
+          ]
+        ],
+        "dp_solves": 41334,
+        "dp_cells": 53387006,
+        "direct_scores": 160,
+        "interrupted_asks": 0,
+        "preparation_wall": 2.2887655354570597,
+        "transition_wall": 1.627687721629627,
+        "dp_wall": 0.11021769477520138,
+        "direct_wall": 0.005646351957693696,
+        "sweep_traj": [
+          {
+            "pass_index": 0,
+            "ask": 0,
+            "wall": 0.0035137010272592306,
+            "current_score": [
+              0,
+              3267
+            ],
+            "bookmark_score": [
+              0,
+              3267
+            ],
+            "current_usable": true,
+            "changed": 0,
+            "strict": 0,
+            "neutral": 0,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 1,
+            "ask": 1398,
+            "wall": 0.27195644099265337,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1293,
+            "strict": 456,
+            "neutral": 837,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 2,
+            "ask": 2795,
+            "wall": 0.5147650609724224,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1349,
+            "strict": 104,
+            "neutral": 1245,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 3,
+            "ask": 4191,
+            "wall": 0.759153640945442,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1368,
+            "strict": 89,
+            "neutral": 1279,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 4,
+            "ask": 5588,
+            "wall": 1.0021369709866121,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1360,
+            "strict": 142,
+            "neutral": 1218,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 5,
+            "ask": 6985,
+            "wall": 1.2463198220357299,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1362,
+            "strict": 62,
+            "neutral": 1300,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 6,
+            "ask": 8382,
+            "wall": 1.4904320719651878,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1365,
+            "strict": 34,
+            "neutral": 1331,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 7,
+            "ask": 9779,
+            "wall": 1.7342702220194042,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1374,
+            "strict": 77,
+            "neutral": 1297,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 8,
+            "ask": 11176,
+            "wall": 1.9771150529850274,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1370,
+            "strict": 114,
+            "neutral": 1256,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 9,
+            "ask": 12573,
+            "wall": 2.2198455330217257,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1336,
+            "strict": 134,
+            "neutral": 1202,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 10,
+            "ask": 13970,
+            "wall": 2.4655095839407295,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1374,
+            "strict": 113,
+            "neutral": 1261,
+            "complete": true,
+            "decode_complete": true,
+            "repeated_state": false
+          },
+          {
+            "pass_index": 11,
+            "ask": 15000,
+            "wall": 2.6471598419593647,
+            "current_score": [
+              0,
+              972
+            ],
+            "bookmark_score": [
+              0,
+              972
+            ],
+            "current_usable": true,
+            "changed": 1004,
+            "strict": 80,
+            "neutral": 924,
+            "complete": false,
+            "decode_complete": true,
+            "repeated_state": false
+          }
+        ],
+        "repeated_sweep_states": 0,
+        "decode_sweeps": 13,
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 972,
+        "active_horizontal": 81,
+        "active_vertical": 81,
+        "mixed_vertices": 0,
+        "pen": 0,
+        "stair": 972,
+        "bars": 162,
+        "misses": 0,
+        "best_expanded_score": [
+          0,
+          972
+        ],
+        "final_current_score": [
+          0,
+          972
+        ],
+        "final_current_usable": true,
+        "final_bookmark_score": [
+          0,
+          972
+        ],
+        "arrange_wall": 2.6471717519452795,
+        "stride": 2,
+        "native_physical_qubits": 972,
+        "legal_acl": 6.0,
+        "legal_max_chain": 6,
+        "deficit_edges": 0,
+        "corner_deficit": 0,
+        "extensions": 0,
+        "ext_qubits": 0,
+        "bridges": 0,
+        "convert_miss": 0,
+        "physical_qubits": 972,
+        "max_chain": 6,
+        "extent_mean": 11.0,
+        "extent_max": 11
+      },
+      "error": null,
+      "mm_calls": 0,
+      "mm_seconds": 0.0,
+      "load_at_start": [
+        5.109375,
+        6.9453125,
+        8.58642578125
+      ],
+      "load_at_end": [
+        5.0205078125,
+        6.89599609375,
+        8.5615234375
+      ],
+      "completed_at": "2026-09-15T21:07:50.190460+00:00",
+      "code_hash": "c60f9af48965d3f0d1ae52e39454313d5fedeac0c748f59258e4207a88ddd7b2",
+      "asks": 15000,
+      "passes": 11,
+      "accepts": 14555,
+      "decode_calls": 12,
+      "dp_solves": 41334,
+      "dp_cells": 53387006,
+      "direct_scores": 160,
+      "preparation_wall": 2.2887655354570597,
+      "transition_wall": 1.627687721629627,
+      "dp_wall": 0.11021769477520138,
+      "direct_wall": 0.005646351957693696,
+      "interleave_wall": 2.5772240593796596,
+      "packing_wall": 0.003627261845394969,
+      "decode_wall": 0.01446300616953522,
+      "bookmark_asks": 1398,
+      "bookmark_wall": 0.2719455510377884,
+      "stopped_by": "asks",
+      "reserved_qubits": 972,
+      "outside_reserved_qubits": 0,
+      "adopt_worse": 0,
+      "interrupted_asks": 0,
+      "strict_accepts": 1405,
+      "neutral_accepts": 13150,
+      "borrowed_accepts": 4092,
+      "whole_order_accepts": 9,
+      "current": {
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 972,
+        "decoder_complete": true,
+        "physical_qubits": 972,
+        "max_chain": 6,
+        "valid": true
+      },
+      "bookmark": {
+        "outside_reserved_qubits": 0,
+        "reserved_qubits": 972,
+        "decoder_complete": true,
+        "physical_qubits": 972,
+        "max_chain": 6,
+        "valid": true
+      },
+      "external_validation_seconds": 0.09934372710995376
+    }
+  ],
+  "complete": true,
+  "load_at_end": [
+    5.0205078125,
+    6.89599609375,
+    8.5615234375
+  ]
+}

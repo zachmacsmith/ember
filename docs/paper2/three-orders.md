@@ -1,7 +1,10 @@
 # Three-order native core
 
-Design contract approved 2026-09-14; first native build implemented on `factored`.
-See [measured results](three-orders-results.md). This document is the resumption
+Native design approved 2026-09-14; bidirectional feedback approved 2026-09-15.
+The feedback implementation and its paired experiments are complete on `factored`.
+See [feedback results](feedback-results.md) for validation, measurements and limits,
+and [first-build results](three-orders-results.md) for the preceding implementation.
+This document is the resumption
 point; historical notes describe
 older algorithms and must not silently reinstate their rules.
 
@@ -19,8 +22,8 @@ Isolates require one unused physical qubit each.
 
 The owner explicitly selected **core first, abutment later**, and **packing
 once per sweep**, not once per accepted interleaving. A sweep freezes completed
-coordinate slots and changes their occupants and contact roles. Every strict
-winner under the common fixed-slot score is adopted. Its intermediate book
+coordinate slots and changes their occupants and contact roles. The selected changed canonical
+strand winner is adopted under the common fixed-slot score, including exact ties. Its intermediate book
 may violate capacity and is never returned as an embedding. After the sweep,
 decode its accumulated three-order proposal unconditionally, even if the
 decoded score worsens. Retain the best usable decoded bookmark. No legalization
@@ -93,7 +96,7 @@ Before an interleaver sweep, fill dormant positions by integer monotone
 interpolation between adjacent active coordinates; clamp open ends. Freeze
 all slots for that sweep, including dormant slots. Do not reinterpolate after
 a move. All three interleavers use the CURRENT contact order and book, so
-their strict improvements refer to one common proposal objective.
+their candidate scores refer to one common proposal objective.
 
 The deliberate approximation is that fixed-slot proposals do not optimize
 subsequent packing. Canonical decoding removes historical dormant positions
@@ -138,3 +141,90 @@ tests and [benchmark artifacts](three-orders-results.md) supersede these probes.
 - Abutment, defective hardware and Pegasus are deliberately outside this build.
   Conditional optimality is established by the stated subproblems and oracles;
   global packing optimality and universal superiority over MM are not claimed.
+
+
+## Bidirectional order feedback (approved 2026-09-15)
+
+For one destination and selected vertex set, keep the destination complement
+in its current order. Extract the selected strand from each current x/y/t
+order, forward and reversed, deduplicate, and solve each distinct oriented-strand merge problem.
+The destination-forward family contains the incumbent, so the completed
+candidate union cannot worsen (outside reservations, reservations, rank span).
+Adopt changed tied optima. The deterministic tie priorities are: changed over
+unchanged; genuinely borrowed over either destination strand; cyclic donor
+order (destination+1)%3, (destination+2)%3, destination; forward over reverse.
+An alias of a destination strand does not earn borrowed priority. Existing DP
+path ties stay unchanged. This is exact over the stated union of merges only.
+
+Retain dyadic blocks and distinct neighborhoods and include the whole vertex
+set once per destination. Whole-set transfers have no merge choices and use
+direct scoring. Donors are read from live proposal orders; frozen slots and
+once-per-sweep decoding are unchanged. There is no hard equality between t and
+either spatial order. A worse decoded sweep continues as the current state;
+its bookmark never controls acceptance.
+
+One ask remains one selected-group query, now containing up to six unique
+strand evaluations. Report actual DP solves/cells and preparation/fill time.
+Share invariant preparation within a query; use two value rows and traceback
+parents. Check deadlines between candidate kernels and retain the best
+completed candidate plus incumbent when interrupted. A complete unchanged
+sweep is a fixed point of these returned candidates; equal-cost changes may
+continue until the budget. timeout=0 still disables the wall limit, so setting
+max_asks=None together with timeout=0 permits unbounded exploration. Record current versus
+bookmark scores and recurring sweep states; do not infer convergence from a
+flat best-so-far curve. These state hashes cover orders and coordinates, not
+the schedule RNG, and do not prove a deterministic search cycle.
+
+The packer, reservation model, interval coloring, and bookmark selection are
+held fixed. Deferred work includes abutment, physical-cost-aware coloring, and
+simpler exact packing. The current packer can leave empty rows: conservative
+shared-brick capacity and endpoint parity both make skipping a row useful.
+
+Completed measurement protocol: preserve the strict native snapshot; compare it with neutral
+self-strand moves, whole-order-only borrowing, frozen t, one-way borrowing
+(spatial orders may borrow t but t keeps its own strands), and full feedback.
+Use the existing fingerprint and ten-case board, paired seeds 0/1/2, one worker,
+a common 10-second warm board limit, and separately recorded compilation.
+Repeat full-feedback initialization seed0 with schedule seeds1/2. Stock MM is a
+separate comparison; standalone runs forbid MM calls. These measurements must
+distinguish coordination from learned feedback rather than assume the latter.
+Baseline provenance is retained in data/feedback_baseline.json. The
+[feedback report](feedback-results.md) separates measured gains from unresolved
+mechanism claims: dense cases improve, sparse results are mixed, and full
+feedback does not establish an overall advantage over one-way borrowing.
+
+
+## Why the same two-prefix DP supports borrowed orders
+
+Fix the selected strand A and the destination complement B. At table entry
+(i,j), exactly the first i vertices of A and first j vertices of B have been
+emitted. That prefix SET is known regardless of the path taken to the entry.
+The two choices are to emit the next vertex of A or the next vertex of B:
+
+    F[0,0] = (0,0,0)
+    F[i,j] = min_lex(
+        F[i-1,j] + (outside_A, reserved_A, cut[i,j]),
+        F[i,j-1] + (outside_B, reserved_B, cut[i,j]))
+
+Omit predecessors outside the table. cut[i,j] counts source edges crossing
+the emitted prefix; summing these cuts gives moved-order edge rank span. The
+other two orders' spans are constant for this query.
+
+For a spatial move, slots are nondecreasing: charge each opposite bar at its
+first and last emitted contact. Their reserved-length contributions are
+1-floor((slot-1)/2) and floor(slot/2), respectively, with matching outside-chip
+charges. Its own-orientation bar's cost depends on its assigned slot. For a
+contact move, the known prefix determines the emitted vertex's earlier and
+later neighbors, so both complete arm hulls and any mixed corner can be
+charged immediately. These facts make (i,j) a sufficient state even when A
+comes from another order. Capacity and later packing are absent from this
+subproblem. Fixed parent ties return one canonical optimum per strand; the
+union compares those representatives without enumerating all tied paths.
+
+The DP keeps two value rows, but parents, cuts and transition tables still
+require O(|A||B|+n) memory. Per-query bounds and roles are shared among donors;
+transition tables depend on each particular strand and are rebuilt. Timing
+fields are nested: transition_wall is part of preparation_wall; dp_wall is
+fill plus traceback; direct_wall is whole-order scoring. interleave_wall also
+includes Python candidate selection and metadata overhead. packing_wall is
+part of decode_wall, so these totals must not be added twice.

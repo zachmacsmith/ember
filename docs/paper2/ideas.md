@@ -1,10 +1,12 @@
 # Ideas
 
-The first three-order native build is implemented on `factored` (2026-09-14).
+The three-order native build with bidirectional feedback is implemented on
+`factored` (2026-09-15).
 The [design contract](three-orders.md) is the authoritative resumption point;
-the [results report](three-orders-results.md) records tests
-and retained comparisons. Implementation does not establish superiority over
-MinorMiner.
+the [feedback results](feedback-results.md) record tests, paired controls and
+schedule sensitivity. The [first-build report](three-orders-results.md)
+retains earlier comparisons. Implementation does not establish superiority
+over MinorMiner.
 
 ## The current idea
 
@@ -23,10 +25,12 @@ required contacts. The objective is lexicographic outside-chip reserved volume,
 then total reserved volume. Conservative reservations may exceed physical
 qubit use; both are measured.
 
-The three interleavers search exact merges of selected subsequences against
-frozen coordinate slots and the same current book. Every strict improvement of
-the common fixed-slot objective, with rank span as an exact tie break, is
-accepted. Intermediate books need not satisfy capacity. After a sweep or work-budget exhaustion,
+The three interleavers borrow the selected subsequence from each current
+master order, forward and reversed, and compare their exact best merges into
+the destination complement. Whole-order transfers are included. The common
+objective uses frozen slots and current contact roles, with rank span as an
+exact tie break. Changed minimizing candidates, including equal-score moves,
+are adopted; the incumbent family guarantees the minimum cannot worsen. Intermediate books need not satisfy capacity. After a sweep or work-budget exhaustion,
 decode its accumulated orders from a canonical expanded feasible seed. Each
 conditional minimum cut optimizes one axis while enforcing both orientations'
 capacity; alternate until stable. Adopt the decoded state even if it is worse,
@@ -60,6 +64,51 @@ The next conclusions should come from the retained comparisons: where native
 solutions succeed, what prevents the remaining cases, and whether representation
 or search explains the cost gap. Evaluate common structural changes against
 that evidence before adding more mechanisms.
+
+The [clique diagnosis](clique-diagnosis.md) now establishes two specific issues:
+the source-edge rank-span tie breaker is constant on cliques, so equal-slot
+ordering can block useful moves; and conservative reservation cost plus greedy
+course allocation can prefer longer physical embeddings. The old clique
+embeddings remain representable. The general feedback response is implemented;
+see the current contract for its move family, tie rule and paired controls.
+
+Discussion on 2026-09-15 prioritizes the move family over random tie breaking.
+The plateau shuffles were a diagnostic, not evidence that noise is the remedy.
+Before this update, each selected group kept its destination-order sequence.
+The new family takes the sequence from any master order and weaves it into
+the destination complement; the same two-prefix kernel supports this.
+The full-order case gave K100 940→775 qubits in two deterministic proposals and
+one decode. This was a small diagnostic witness. The family is now implemented and measured in
+[the feedback report](feedback-results.md). [Probe](data/three_order_imported_strand_probe.py).
+
+The paired controls show dense gains and mixed sparse results. Optimizing
+contact order matters on the board, but borrowing spatial strands into that
+order has no demonstrated overall advantage over its own-strand optimization.
+Schedule changes still alter quality. Transition-cost construction consumes
+about 65% of full-feedback board time; packing consumes less than 1%. These
+measurements guide the next structural question without selecting a new remedy.
+
+"Reservation cost" must be explained as a conservative space envelope across
+the two staggered courses, not treated as a synonym for physical chain length.
+Meaningful convergence should be judged from the current trajectory as well
+as the best bookmark. Adopting tied DP optima removes one unnecessary gate;
+it does not by itself reconcile a capacity-relaxed proposal with feasible
+packing. Logical speed work should eliminate repeated preparation according
+to its lifetime (source, current contact requirements, partition), and exploit
+richer moves at the same DP state size. It should not introduce an intricate
+per-edge update apparatus or a graph-specific scheduling policy.
+
+The contact order can be understood as a geometrically informed assignment of
+contact responsibility: earlier endpoints supply H, later endpoints supply V,
+with choices priced using both spatial coordinates and shared bar hulls. Every
+prefix defines a consistently oriented cut. Borrowing this sequence for a
+spatial weave transfers that collective organization, in addition to the
+requirements already transmitted through the objective. This is an information
+channel interpretation, not a convergence theorem or a claim that contact rank
+is physical distance. Adjacent nonneighbors can swap without changing contacts.
+The clique witness establishes useful coordination, but cannot establish the
+stronger value of learning t from geometry: every clique order has nested
+prefix/suffix neighborhoods. That distinction needs testing on general inputs.
 
 For the history behind these choices, see [the chronicle](notes.md),
 [the old verdict ledger](attraction.md), [the old pipeline](anatomy.md), and
