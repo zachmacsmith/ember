@@ -1,6 +1,16 @@
 # Three-order native core
 
 Native design approved 2026-09-14; bidirectional feedback approved 2026-09-15.
+The **live reference / immediate packing / event-cost** change was approved
+2026-09-17 and is implemented and audited, with 635 regression tests passing.
+Its contract below supersedes stored
+nomination catalogues and once-per-sweep packing. See
+[live results](live-results.md) for implementation status and evidence.
+The shared-partition extension is implemented and audited on 2026-09-17; its
+merge-family contract supersedes selected-side-only borrowing rules.
+See the [partition audit](partition-results.md) for 611 tests, 75 embedding runs,
+and 2,520 query measurements. Exactness and native validity pass; overall
+embedding-quality improvement is not established.
 The feedback implementation and its paired experiments are complete on `factored`.
 See [feedback results](feedback-results.md) for validation, measurements and limits,
 and [first-build results](three-orders-results.md) for the preceding implementation.
@@ -20,14 +30,13 @@ determine bar existence. A mixed variable includes its own crossing in both
 hulls; a single bar has no obligation to reach an absent perpendicular bar.
 Isolates require one unused physical qubit each.
 
-The owner explicitly selected **core first, abutment later**, and **packing
-once per sweep**, not once per accepted interleaving. A sweep freezes completed
-coordinate slots and changes their occupants and contact roles. The selected changed canonical
-strand winner is adopted under the common fixed-slot score, including exact ties. Its intermediate book
-may violate capacity and is never returned as an embedding. After the sweep,
-decode its accumulated three-order proposal unconditionally, even if the
-decoded score worsens. Retain the best usable decoded bookmark. No legalization
-or feasibility-rejection cascade sits between these components.
+The owner selected **core first, abutment later**, and now **packing after each
+changed individual order query**. Each query freezes completed coordinate
+slots while comparing its full candidate family. Adopt its selected changed
+canonical winner, including exact ties, then decode unconditionally even if
+the decoded score worsens. Its intermediate book may violate capacity and is
+never returned as an embedding. Retain the best usable decoded bookmark. No
+legalization or feasibility-rejection cascade sits between these components.
 
 Score: lexicographic (outside-chip reserved qubits, total reserved qubits),
 with source-edge rank span across all three orders as the interleaver's exact
@@ -82,7 +91,7 @@ maxcount*floor(y/2) - mincount*floor((y-1)/2), plus active-bar constants.
 Outside-brick length is max(hi-m+1,0)-max(lo-m,0); bars on outside lanes count
 their whole reservation. This remains a unary objective under a fixed order.
 
-## Total decoder and sweep contracts
+## Total decoder and query contracts
 
 Every decoder starts anew: consecutive groups of at most C active arms per
 lane provide a feasible seed on an expanded ideal fabric. The extended m is
@@ -92,11 +101,14 @@ Select the componentwise-smallest optimum in each pack. Equal-score updates
 can only lower coordinates; stop when an entire sweep leaves them unchanged.
 Coordinates are derived from orders and fixed seed, not inherited search state.
 
-Before an interleaver sweep, fill dormant positions by integer monotone
+Before an interleaver query, fill dormant positions by integer monotone
 interpolation between adjacent active coordinates; clamp open ends. Freeze
-all slots for that sweep, including dormant slots. Do not reinterpolate after
-a move. All three interleavers use the CURRENT contact order and book, so
-their candidate scores refer to one common proposal objective.
+all slots for that query, including dormant slots. After a changed query,
+decode before nominating the next group. An unchanged query can reuse the
+same coordinate completion. Spatial candidates use fixed contact nets from
+the current contact order. Contact candidates derive their own requirements
+from their proposed sequence. All candidates share the same coordinate slots
+and objective.
 
 The deliberate approximation is that fixed-slot proposals do not optimize
 subsequent packing. Canonical decoding removes historical dormant positions
@@ -106,7 +118,7 @@ Alternating exact axis packing does not prove joint global optimality.
 ## Validation and evidence
 
 Retained tests include independent exhaustive merge/packing oracles, physical
-conversion checks, tests forbidding implicit MinorMiner, and sweep/adoption
+conversion checks, tests forbidding implicit MinorMiner, and query/adoption
 tests. The existing fingerprint cases and paired dense/sparse board record
 work, real elapsed time, compilation separately, success, physical qubits and
 chain lengths. Performance limitations warrant structural analysis, not a
@@ -123,9 +135,11 @@ tests and [benchmark artifacts](three-orders-results.md) supersede these probes.
 
 - `native_model.py`: source normalization, contact requirements, conservative
   books, dormant-coordinate interpolation and independent capacity check.
-- `order_dp.py`: compiled exact forward/reversed merges for all three orders.
+- `order_dp.py`: compiled exact forward/reversed merges for all three orders,
+  with sparse event costs, query-local strand caches and best-only traceback.
 - `packing.py`: separation constraints, threshold costs, checked integer flow.
-- `plane.py`: canonical decoding, frozen sweeps, unconditional adoption and
+- `plane.py`: live reference nominations, query-local frozen slots, immediate
+  canonical decoding after changes, unconditional adoption and
   finite bookmarks. A deadline is checked between kernels; a running kernel
   finishes, and the last valid decoder state and earlier bookmark survive.
 - `placement.py`: intact-Zephyr verification, interval coloring, physical runs,
@@ -144,6 +158,11 @@ tests and [benchmark artifacts](three-orders-results.md) supersede these probes.
 
 
 ## Bidirectional order feedback (approved 2026-09-15)
+
+This historical section records the first feedback implementation. The
+shared-partition extension below retains its accounting and replaces its
+nomination/query family. The live-reference contract supersedes both older
+schedulers, packing cadences and stopping rules.
 
 For one destination and selected vertex set, keep the destination complement
 in its current order. Extract the selected strand from each current x/y/t
@@ -228,3 +247,235 @@ fields are nested: transition_wall is part of preparation_wall; dp_wall is
 fill plus traceback; direct_wall is whole-order scoring. interleave_wall also
 includes Python candidate selection and metadata overhead. packing_wall is
 part of decode_wall, so these totals must not be added twice.
+
+
+## Shared partitions and either-side borrowing (2026-09-17)
+
+Historical nomination/sweep policy; the exact either-side merge family and
+canonical orientation remain current. Live nominations and per-query packing
+below supersede this section's scheduling rules.
+
+### Decisions and established subproblem
+
+At sweep start, nominate half-overlapping blocks from **all three** orders at
+the existing approximately halved sizes, open source neighborhoods N(v), and
+the whole vertex set. Each proper group defines an unordered partition S/T.
+Deduplicate both identical and complementary nominations globally, and offer
+each resulting partition once to every destination. Canonical identity is the
+smaller side; equal halves choose the lexicographically smaller sorted vertex
+tuple. Dense IDs start at zero, so that tie chooses the side containing zero.
+Compact bitsets make complement calculation cheap. Source neighborhoods are
+prepared once per search; order blocks are prepared once per sweep.
+
+For destination r and each current donor d in x/y/t, compare BOTH families:
+
+    merge(d|S forward/reversed, r|T)
+    merge(r|S, d|T forward/reversed)
+
+Only one strand borrows in any individual solve. The other keeps its current
+destination sequence. All candidates see the same query snapshot; compare them
+before adopting one winner. These are exact merges under frozen coordinate
+slots, not exact optimization of subsequent packing.
+
+Every solve puts the complement of the canonical smaller side in the first
+strand A and the smaller side in B. Deduplicate ordered (A_sequence,B_sequence)
+pairs in this fixed orientation. The DP's existing predecessor tie rule favors
+A; transposing arbitrary calls before deduplication could change their returned
+tracebacks. Canonical orientation deliberately makes complementary nominations
+return the same representative, while it can change historical tied outputs.
+
+Winner priority remains objective, changed result, genuinely borrowed sequence,
+cyclic donor, forward before reverse, then side A before B. Genuine borrowing
+excludes aliases of the destination's forward **or reversed** sequence on the
+side actually borrowed. Duplicate provenance uses those intrinsic priorities.
+Evaluate candidates in deterministic donor/direction/side order. Changed-result
+priority compares the canonical returned tracebacks, not all tied paths.
+
+There are at most 11 unique merge pairs: six nominations from each side share
+the destination/destination pair. Singleton/complement partitions need at most
+six. Their family contains ordinary singleton reinsertion, each whole-order
+transfer, and that transfer with the singleton optimally repositioned. This is
+a containment statement for the fixed-slot objective, not a runtime or physical
+quality dominance claim. Whole-set queries stay direct scores, distinct from
+empty standalone queries, which remain no-ops. They remain useful as cheap
+queries even though each singleton/complement family contains their candidates:
+direct scoring avoids the merge tables and traceback.
+
+### Implementation choices and boundaries
+
+Validation, baseline scoring, roles and bounds are shared across both borrowing
+directions. No cross-query cache may reuse requirements after live orders change.
+Keep the existing compiled transition construction and two-row DP. A deadline
+between candidates returns the best completed result including the incumbent.
+
+Sort canonical query identities before the seeded shuffle. Memberships stay
+fixed during a sweep while donor sequences are live. Packing remains once after
+a changed complete or budget-truncated sweep; worse decoded proposals continue,
+and only usable decoded layouts enter the independent bookmark. The schedule,
+packer, brick accounting, coloring and public attraction interface are unchanged.
+Simultaneous placement exchanges and scheduling-policy changes are deferred.
+
+One ask now means one destination/partition query. Diagnostics count unique
+partitions and duplicate sweep nominations, candidate pairs and duplicate pair
+descriptors, winning side/size, actual solves/cells, and nomination/preparation/
+DP/packing time. Unique-partition counts sum across sweeps; source neighborhood
+duplicates are removed once, not recounted on every pass. Side A is 0 and B is 1.
+
+Slots are row/column proposal values, not physical sites. An H-only variable's
+x value is dormant and does not anchor its H hull; a V-only variable's y value
+is likewise dormant. Complete dormant values once before the sweep so contact
+moves can price an appearing orientation. This remains a deliberate approximation.
+
+### Evidence and unresolved questions
+
+The baseline is commit 7a4214bc444012f70cd29af982358e5311ed22ae, with preserved
+source provenance in [partition_baseline.json](data/partition_baseline.json).
+Validation and paired speed measurements are recorded in
+[partition-results.md](partition-results.md). The completed audit verifies
+611 tests and native validity. All 63 paired frozen queries improve or tie;
+the 30-case board has unchanged success and 3.9% higher paired qubit use.
+Symmetric nomination and deterministic
+completed queries do not prove schedule-independent final layouts or convergence.
+
+## Outer-loop review: restore packing feedback (2026-09-17; not implemented)
+
+Historical proposal. The approved change below selects still more immediate
+feedback: fresh nomination and packing around each individual destination query.
+
+The original 0.13–0.47-second packing concern above came from a preliminary
+SciPy pilot. In the current paired board, complete decoding averages 4.29 ms
+over 348 calls, including construction and capacity checking; axis packing
+averages 2.24 ms per decode. These averages include budget-truncated calls and
+are not universal bounds. Full-sweep amortization has retained an obsolete
+cost premise while the nomination family has expanded.
+
+The architectural concern is that fixed-slot cost only estimates the cost after
+decoding. It can overprice spans that packing would collapse or underprice
+capacity conflicts. Optimizing it more thoroughly does not guarantee better
+decoded orders. A richer move catalogue should not automatically delay geometric
+feedback. This is independent of graph family or the sign of benchmark changes.
+
+The next proposed coordination unit is one partition queried once in each of
+x/y/contact, with live donors, followed by an unconditional decode if anything
+changed. Keep the nomination queue across those units, refreshing its membership
+catalogue after exhaustion. Thus nomination fairness and geometry refresh have
+separate boundaries, without an added numerical cadence parameter. An unchanged
+unit is not a convergence certificate. No claim is made that three queries
+always reach a clique template, or that the decoded objective always decreases.
+
+This outer-loop question precedes a substantial transition-kernel rewrite.
+Event-based cost construction remains a possible exact simplification; its
+speedup and final implementation were not established at that point. This
+proposal was superseded by the approved live-reference implementation below.
+
+## Live reference moves and streamed costs (approved 2026-09-17)
+
+### Decisions and boundaries
+
+This is the current implementation contract. Initialization still produces three
+independent permutations from the initialization seed. Scheduling uses a separate
+`SeedSequence([effective_sched_seed, 1])` stream; the effective schedule seed
+defaults to the initialization seed. Draw one reference permutation, a relation
+phase in 0..4, and a destination phase in 0..2. Store no catalogue of groups.
+
+At reference position i in round r, select relation
+`(i+r+relation_phase)%5` from source/x/y/contact/anchor. Start destinations at
+`(i+r+destination_phase)%3` and visit the other two cyclically. Before EVERY
+destination query, nominate from the current state: N(v), {v}, or a contiguous
+window of size max(1,n//2) in the selected current order. A window contains v;
+sample its start uniformly from all valid starts, without wrapping or clamping.
+The relation persists for a reference visit; membership does not.
+
+Each round opens with one whole-order query per destination, starting at
+`(r+destination_phase)%3`. These use direct scoring, while anchor-only queries
+provide the larger singleton/complement family containing whole transfers and
+optimal anchor reinsertion. All queries retain live donors, either-side borrowing,
+canonical strand orientation, pair deduplication and the existing winner ties.
+
+Decode immediately after EVERY changed individual query. Accept neutral changes
+and worse decoded scores. An unchanged query needs no duplicate decode. A new
+query completes dormant coordinates from the most recent decoded layout, so its
+slots are fixed only for that query. Partial queries retain their best completed
+candidate, and the existing deadline-aware total decoder and finite bookmark
+protect output validity. Packing, reservations, coloring and bookmark selection
+are unchanged. No graph-specific initializer, repair, or source-family rule is
+introduced.
+
+Here n counts nonisolated source vertices; isolates are assigned at conversion.
+Every complete round contains 3n+3 queries. Every vertex is a reference once per
+n reference visits, sees all five relations per five rounds and all fifteen
+relation/first-destination combinations per fifteen rounds. These are coverage
+statements in visits, not wall-time or convergence guarantees. A quiet sampled
+round cannot establish a fixed point; stop only on the existing work/time budget,
+disabled moves, or trivial input. Timeout zero and no ask budget remain unbounded.
+
+### Exact event recurrences
+
+Within a query, lazily cache each ordered strand's positions, same-strand earlier
+neighbor counts, and the appropriate contact-net extrema. Reversals are ordinary
+separate entries. Caches expire after the query; accepted moves cannot reuse stale
+roles or coordinates. Spatial slot coefficients and unchanged unary costs are
+prepared once. The candidate family and objective do not change.
+
+For A first and canonical smaller B second, let C(i,j) be the number of source
+edges crossing the emitted-prefix cut. Maintain C(i,0) and the number a[j] of
+emitted A neighbors of B[j]. Entering an A row updates only its B neighbors;
+then the cut across the row obeys
+
+    C(i,0) = C(i-1,0) + degree(A[i-1]) - 2*same_before(A[i-1]),
+    C(i,j) = C(i,j-1) + degree(B[j-1])
+                         - 2*(same_before(B[j-1]) + a[j-1]).
+
+Both predecessors into a cell add this same cut. Thus no dense cut table is
+needed. Two integer value rows and canonical parent ties still solve precisely
+the same merge problem. Summing cuts gives the destination's edge-rank span;
+the other two orders' spans are constant within this query and can be omitted
+without changing comparisons.
+
+For a contact move, a vertex with d opposite-strand neighbors has d+1 arm-cost
+states. Construct its neighbor sequence in opposite-strand order by adjacency
+scattering. Prefix-y and suffix-x extrema combine with fixed same-strand neighbors
+to price V and H respectively. Include the own crossing iff both orientations
+exist. Across an A row, change A's state only when crossing a B neighbor. Entering
+a row updates the B states of the newly emitted A vertex's neighbors. Bar birth
+and disappearance are therefore exact events, not separately repaired cases.
+
+For a spatial move, each contact net supplies endpoint threshold events. Its A
+minimum contributes while the B prefix has not passed bmin; its A maximum
+contributes after bmax. The transposed rules apply to B. Four counters distinguish
+minimum/maximum and inside/outside anchoring lanes. Count/distribute events by
+threshold and emission row in linear space; apply the existing brick-cost formula
+at the current slot inside the fill. No dense difference or transition grids
+remain. Shared brick boundaries and signed endpoint charges are unchanged.
+
+The parent matrix is the only quadratic candidate structure. Other preparation
+uses O(n+|E|) storage, and the DP still visits O(|A||B|+n) states. Sparse contacts
+reduce event work; they do not eliminate the merge grid. Including adjacency
+scans and event updates, fill work is O(|A||B|+n+|E|). A fixed-strand merge
+searches its binomial family exactly, not all permutations or subsequent packs.
+
+Avoid constructing a permutation for every candidate. Worse scores need no
+traceback; a score below the incumbent implies change. A tie at the incumbent
+uses a canonical parent walk to test equality. Retain winning parents/strands and
+materialize the winning order once. Keep at most current and best parent grids.
+Integer checks and between-kernel deadlines remain mandatory.
+
+### Evidence and diagnostics
+
+One ask is still one destination/partition query. Passes now count reference
+rounds started, with completed rounds and reference visits reported separately.
+Retired global nomination-uniqueness counters are unavailable. Default trajectories
+summarize reference rounds; optional tracing records each query and decoded result.
+Relation-attributed work and improvements are descriptive, not causal evidence.
+
+Event/state/update and traceback counts accompany existing solve/cell/time counters.
+The fused fill includes per-cell price application: its time cannot be compared
+to the old table-only fill without including old preparation too. Correctness
+requires differential score AND canonical-order agreement with a test-only dense
+reference, plus the independent physical and exhaustive optimization oracles.
+
+Baseline provenance and measurements are in [live-results.md](live-results.md).
+The completed audit retains 75 exact trajectory pairs, 2,520 query measurements,
+120 board runs and 15 valid fingerprints. Results remain separate from the
+decisions and exact statements above. Global convergence and universal quality
+or speed gains are not assumed.

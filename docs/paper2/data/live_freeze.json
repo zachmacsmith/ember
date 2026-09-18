@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "created_at": "2026-09-17T22:11:39.089935+00:00",
+  "production_source_sha256": "2903eb74adb3362309f3ac06d8ca9ddd99c33f37c30f67b2203c19b4be6bef23",
+  "baseline_record_sha256": "ae95060559ac583521648859ff62c9e5f93324ad43ee24d3737706a2910438fd",
+  "sources": {
+    "baseline": "/tmp/ember-live-baseline-fc4560cc5430/src",
+    "full": "/tmp/ember-live-full-2903eb74adb3/src",
+    "loop": "/tmp/ember-live-loop-2903eb74adb3/src"
+  },
+  "source_hashes": {
+    "baseline": "fc4560cc54307c562841b93601141f907bcbc502e504e7ffd6396aaa8df5b0d6",
+    "full": "2903eb74adb3362309f3ac06d8ca9ddd99c33f37c30f67b2203c19b4be6bef23",
+    "loop": "14e12d52a5ae76c7b48a3c28ee10b03706272bf06ad51404950b522388a1faaf"
+  },
+  "archives": {
+    "full": {
+      "path": "live_full_source.tar.gz",
+      "sha256": "b626fd701667b56598f05149bd82e274ae0d8dd082ba7158ffa6bfdb33a3242c"
+    },
+    "loop": {
+      "path": "live_loop_source.tar.gz",
+      "sha256": "9e318357752c4af27787a98b190c1c971727adf417f160407a170e5065dbc0db"
+    }
+  },
+  "loop_definition": "full source with only order_dp.py replaced by exact baseline bytes"
+}

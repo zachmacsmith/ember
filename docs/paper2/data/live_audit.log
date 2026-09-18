@@ -1,0 +1,1089 @@
+starting-live-stage equivalence-all
+equivalence loop clique
+equivalence loop path
+equivalence loop bipartite
+equivalence loop er
+equivalence loop disconnected
+done-live-equivalence /data/max/ember/docs/paper2/data/live_equivalence_loop.json
+equivalence full clique
+equivalence full path
+equivalence full bipartite
+equivalence full er
+equivalence full disconnected
+done-live-equivalence /data/max/ember/docs/paper2/data/live_equivalence_full.json
+fixed-work-equivalence: 75/75 exact
+starting-live-stage micro-baseline
+micro baseline ('K100', 0, 1): 0.0044s / 20 reps
+micro baseline ('K100', 0, 2): 0.0050s / 20 reps
+micro baseline ('K100', 0, 25): 0.0103s / 20 reps
+micro baseline ('K100', 0, 50): 0.0113s / 20 reps
+micro baseline ('K100', 0, 98): 0.0056s / 20 reps
+micro baseline ('K100', 0, 99): 0.0045s / 20 reps
+micro baseline ('K100', 0, 100): 0.0075s / 20 reps
+micro baseline ('K100', 1, 1): 0.0091s / 20 reps
+micro baseline ('K100', 1, 2): 0.0105s / 20 reps
+micro baseline ('K100', 1, 25): 0.0207s / 20 reps
+micro baseline ('K100', 1, 50): 0.0115s / 20 reps
+micro baseline ('K100', 1, 98): 0.0052s / 20 reps
+micro baseline ('K100', 1, 99): 0.0049s / 20 reps
+micro baseline ('K100', 1, 100): 0.0040s / 20 reps
+micro baseline ('K100', 2, 1): 0.0102s / 20 reps
+micro baseline ('K100', 2, 2): 0.0122s / 20 reps
+micro baseline ('K100', 2, 25): 0.0135s / 20 reps
+micro baseline ('K100', 2, 50): 0.0148s / 20 reps
+micro baseline ('K100', 2, 98): 0.0062s / 20 reps
+micro baseline ('K100', 2, 99): 0.0054s / 20 reps
+micro baseline ('K100', 2, 100): 0.0042s / 20 reps
+micro baseline ('ER100_d10', 0, 1): 0.0023s / 20 reps
+micro baseline ('ER100_d10', 0, 2): 0.0043s / 20 reps
+micro baseline ('ER100_d10', 0, 25): 0.0059s / 20 reps
+micro baseline ('ER100_d10', 0, 50): 0.0073s / 20 reps
+micro baseline ('ER100_d10', 0, 98): 0.0024s / 20 reps
+micro baseline ('ER100_d10', 0, 99): 0.0023s / 20 reps
+micro baseline ('ER100_d10', 0, 100): 0.0012s / 20 reps
+micro baseline ('ER100_d10', 1, 1): 0.0023s / 20 reps
+micro baseline ('ER100_d10', 1, 2): 0.0025s / 20 reps
+micro baseline ('ER100_d10', 1, 25): 0.0065s / 20 reps
+micro baseline ('ER100_d10', 1, 50): 0.0071s / 20 reps
+micro baseline ('ER100_d10', 1, 98): 0.0029s / 20 reps
+micro baseline ('ER100_d10', 1, 99): 0.0020s / 20 reps
+micro baseline ('ER100_d10', 1, 100): 0.0012s / 20 reps
+micro baseline ('ER100_d10', 2, 1): 0.0027s / 20 reps
+micro baseline ('ER100_d10', 2, 2): 0.0032s / 20 reps
+micro baseline ('ER100_d10', 2, 25): 0.0098s / 20 reps
+micro baseline ('ER100_d10', 2, 50): 0.0113s / 20 reps
+micro baseline ('ER100_d10', 2, 98): 0.0033s / 20 reps
+micro baseline ('ER100_d10', 2, 99): 0.0029s / 20 reps
+micro baseline ('ER100_d10', 2, 100): 0.0012s / 20 reps
+micro baseline ('grid_200', 0, 1): 0.0023s / 20 reps
+micro baseline ('grid_200', 0, 2): 0.0027s / 20 reps
+micro baseline ('grid_200', 0, 50): 0.0190s / 20 reps
+micro baseline ('grid_200', 0, 100): 0.0233s / 20 reps
+micro baseline ('grid_200', 0, 198): 0.0028s / 20 reps
+micro baseline ('grid_200', 0, 199): 0.0023s / 20 reps
+micro baseline ('grid_200', 0, 200): 0.0013s / 20 reps
+micro baseline ('grid_200', 1, 1): 0.0021s / 20 reps
+micro baseline ('grid_200', 1, 2): 0.0026s / 20 reps
+micro baseline ('grid_200', 1, 50): 0.0182s / 20 reps
+micro baseline ('grid_200', 1, 100): 0.0237s / 20 reps
+micro baseline ('grid_200', 1, 198): 0.0027s / 20 reps
+micro baseline ('grid_200', 1, 199): 0.0023s / 20 reps
+micro baseline ('grid_200', 1, 200): 0.0013s / 20 reps
+micro baseline ('grid_200', 2, 1): 0.0038s / 20 reps
+micro baseline ('grid_200', 2, 2): 0.0045s / 20 reps
+micro baseline ('grid_200', 2, 50): 0.0236s / 20 reps
+micro baseline ('grid_200', 2, 100): 0.0286s / 20 reps
+micro baseline ('grid_200', 2, 198): 0.0048s / 20 reps
+micro baseline ('grid_200', 2, 199): 0.0040s / 20 reps
+micro baseline ('grid_200', 2, 200): 0.0013s / 20 reps
+done-partition-micro /data/max/ember/docs/paper2/data/live_micro_baseline.json
+starting-live-stage micro-full
+micro full ('K100', 0, 1): 0.0056s / 20 reps
+micro full ('K100', 0, 2): 0.0058s / 20 reps
+micro full ('K100', 0, 25): 0.0103s / 20 reps
+micro full ('K100', 0, 50): 0.0134s / 20 reps
+micro full ('K100', 0, 98): 0.0060s / 20 reps
+micro full ('K100', 0, 99): 0.0055s / 20 reps
+micro full ('K100', 0, 100): 0.0081s / 20 reps
+micro full ('K100', 1, 1): 0.0105s / 20 reps
+micro full ('K100', 1, 2): 0.0114s / 20 reps
+micro full ('K100', 1, 25): 0.0208s / 20 reps
+micro full ('K100', 1, 50): 0.0103s / 20 reps
+micro full ('K100', 1, 98): 0.0063s / 20 reps
+micro full ('K100', 1, 99): 0.0054s / 20 reps
+micro full ('K100', 1, 100): 0.0041s / 20 reps
+micro full ('K100', 2, 1): 0.0063s / 20 reps
+micro full ('K100', 2, 2): 0.0074s / 20 reps
+micro full ('K100', 2, 25): 0.0154s / 20 reps
+micro full ('K100', 2, 50): 0.0176s / 20 reps
+micro full ('K100', 2, 98): 0.0072s / 20 reps
+micro full ('K100', 2, 99): 0.0068s / 20 reps
+micro full ('K100', 2, 100): 0.0042s / 20 reps
+micro full ('ER100_d10', 0, 1): 0.0027s / 20 reps
+micro full ('ER100_d10', 0, 2): 0.0027s / 20 reps
+micro full ('ER100_d10', 0, 25): 0.0106s / 20 reps
+micro full ('ER100_d10', 0, 50): 0.0087s / 20 reps
+micro full ('ER100_d10', 0, 98): 0.0033s / 20 reps
+micro full ('ER100_d10', 0, 99): 0.0047s / 20 reps
+micro full ('ER100_d10', 0, 100): 0.0016s / 20 reps
+micro full ('ER100_d10', 1, 1): 0.0023s / 20 reps
+micro full ('ER100_d10', 1, 2): 0.0028s / 20 reps
+micro full ('ER100_d10', 1, 25): 0.0078s / 20 reps
+micro full ('ER100_d10', 1, 50): 0.0085s / 20 reps
+micro full ('ER100_d10', 1, 98): 0.0029s / 20 reps
+micro full ('ER100_d10', 1, 99): 0.0027s / 20 reps
+micro full ('ER100_d10', 1, 100): 0.0014s / 20 reps
+micro full ('ER100_d10', 2, 1): 0.0028s / 20 reps
+micro full ('ER100_d10', 2, 2): 0.0028s / 20 reps
+micro full ('ER100_d10', 2, 25): 0.0079s / 20 reps
+micro full ('ER100_d10', 2, 50): 0.0085s / 20 reps
+micro full ('ER100_d10', 2, 98): 0.0032s / 20 reps
+micro full ('ER100_d10', 2, 99): 0.0024s / 20 reps
+micro full ('ER100_d10', 2, 100): 0.0017s / 20 reps
+micro full ('grid_200', 0, 1): 0.0026s / 20 reps
+micro full ('grid_200', 0, 2): 0.0034s / 20 reps
+micro full ('grid_200', 0, 50): 0.0192s / 20 reps
+micro full ('grid_200', 0, 100): 0.0230s / 20 reps
+micro full ('grid_200', 0, 198): 0.0035s / 20 reps
+micro full ('grid_200', 0, 199): 0.0029s / 20 reps
+micro full ('grid_200', 0, 200): 0.0015s / 20 reps
+micro full ('grid_200', 1, 1): 0.0029s / 20 reps
+micro full ('grid_200', 1, 2): 0.0031s / 20 reps
+micro full ('grid_200', 1, 50): 0.0192s / 20 reps
+micro full ('grid_200', 1, 100): 0.0235s / 20 reps
+micro full ('grid_200', 1, 198): 0.0039s / 20 reps
+micro full ('grid_200', 1, 199): 0.0031s / 20 reps
+micro full ('grid_200', 1, 200): 0.0014s / 20 reps
+micro full ('grid_200', 2, 1): 0.0027s / 20 reps
+micro full ('grid_200', 2, 2): 0.0034s / 20 reps
+micro full ('grid_200', 2, 50): 0.0133s / 20 reps
+micro full ('grid_200', 2, 100): 0.0164s / 20 reps
+micro full ('grid_200', 2, 198): 0.0030s / 20 reps
+micro full ('grid_200', 2, 199): 0.0028s / 20 reps
+micro full ('grid_200', 2, 200): 0.0014s / 20 reps
+done-partition-micro /data/max/ember/docs/paper2/data/live_micro_full.json
+starting-live-stage board-baseline
+baseline K100 init=0 sched=0: valid=True Q=792 max=9 seconds=10.012 asks=27625 dp=235668 MM=0 error=None
+baseline K100 init=1 sched=1: valid=True Q=782 max=9 seconds=10.013 asks=33943 dp=231954 MM=0 error=None
+baseline K100 init=2 sched=2: valid=True Q=794 max=9 seconds=10.012 asks=28869 dp=234835 MM=0 error=None
+baseline K140 init=0 sched=0: valid=True Q=1442 max=11 seconds=10.029 asks=19508 dp=138104 MM=0 error=None
+baseline K140 init=1 sched=1: valid=True Q=1450 max=11 seconds=10.029 asks=17674 dp=137943 MM=0 error=None
+baseline K140 init=2 sched=2: valid=True Q=1467 max=11 seconds=10.028 asks=17882 dp=137306 MM=0 error=None
+baseline ER100_d10 init=0 sched=0: valid=True Q=586 max=9 seconds=10.004 asks=47019 dp=430486 MM=0 error=None
+baseline ER100_d10 init=1 sched=1: valid=True Q=522 max=9 seconds=10.004 asks=47765 dp=441694 MM=0 error=None
+baseline ER100_d10 init=2 sched=2: valid=True Q=573 max=10 seconds=10.004 asks=48306 dp=439856 MM=0 error=None
+baseline turan_n162 init=0 sched=0: valid=True Q=972 max=6 seconds=10.013 asks=24106 dp=192314 MM=0 error=None
+baseline turan_n162 init=1 sched=1: valid=True Q=972 max=6 seconds=10.013 asks=23812 dp=193001 MM=0 error=None
+baseline turan_n162 init=2 sched=2: valid=True Q=972 max=6 seconds=10.013 asks=23839 dp=191913 MM=0 error=None
+baseline spin_glass_n163 init=0 sched=0: valid=True Q=1880 max=13 seconds=10.015 asks=17851 dp=150378 MM=0 error=None
+baseline spin_glass_n163 init=1 sched=1: valid=True Q=1871 max=13 seconds=10.015 asks=17923 dp=151176 MM=0 error=None
+baseline spin_glass_n163 init=2 sched=2: valid=True Q=1884 max=13 seconds=10.016 asks=17877 dp=151257 MM=0 error=None
+baseline regular_n316 init=0 sched=0: valid=True Q=1702 max=17 seconds=10.006 asks=26482 dp=228198 MM=0 error=None
+baseline regular_n316 init=1 sched=1: valid=True Q=1629 max=15 seconds=10.006 asks=26400 dp=227151 MM=0 error=None
+baseline regular_n316 init=2 sched=2: valid=True Q=1553 max=15 seconds=10.006 asks=26678 dp=229172 MM=0 error=None
+baseline ws_n486 init=0 sched=0: valid=False Q=None max=None seconds=10.001 asks=15584 dp=142785 MM=0 error=no native embedding fitting the chip was found within the budget
+baseline ws_n486 init=1 sched=1: valid=False Q=None max=None seconds=10.001 asks=15582 dp=142731 MM=0 error=no native embedding fitting the chip was found within the budget
+baseline ws_n486 init=2 sched=2: valid=False Q=None max=None seconds=10.001 asks=15562 dp=142208 MM=0 error=no native embedding fitting the chip was found within the budget
+baseline grid_200 init=0 sched=0: valid=True Q=347 max=4 seconds=10.004 asks=37255 dp=335974 MM=0 error=None
+baseline grid_200 init=1 sched=1: valid=True Q=331 max=5 seconds=10.005 asks=37774 dp=339840 MM=0 error=None
+baseline grid_200 init=2 sched=2: valid=True Q=344 max=4 seconds=10.005 asks=37505 dp=338124 MM=0 error=None
+baseline honeycomb_200 init=0 sched=0: valid=True Q=403 max=6 seconds=10.004 asks=38230 dp=344556 MM=0 error=None
+baseline honeycomb_200 init=1 sched=1: valid=True Q=429 max=6 seconds=10.004 asks=38295 dp=344067 MM=0 error=None
+baseline honeycomb_200 init=2 sched=2: valid=True Q=397 max=6 seconds=10.004 asks=38128 dp=344130 MM=0 error=None
+baseline king_graph_196 init=0 sched=0: valid=True Q=622 max=7 seconds=10.005 asks=31336 dp=286592 MM=0 error=None
+baseline king_graph_196 init=1 sched=1: valid=True Q=563 max=8 seconds=10.005 asks=31257 dp=287338 MM=0 error=None
+baseline king_graph_196 init=2 sched=2: valid=True Q=596 max=10 seconds=10.005 asks=30466 dp=279190 MM=0 error=None
+done-feedback /data/max/ember/docs/paper2/data/live_board_baseline.json
+starting-live-stage board-loop
+loop K100 init=0 sched=0: valid=True Q=773 max=9 seconds=10.013 asks=4128 dp=26859 MM=0 error=None
+loop K100 init=1 sched=1: valid=True Q=780 max=8 seconds=10.013 asks=2881 dp=19226 MM=0 error=None
+loop K100 init=2 sched=2: valid=True Q=777 max=8 seconds=10.012 asks=2872 dp=19358 MM=0 error=None
+loop K140 init=0 sched=0: valid=True Q=1432 max=11 seconds=10.029 asks=2756 dp=15930 MM=0 error=None
+loop K140 init=1 sched=1: valid=True Q=1437 max=11 seconds=10.028 asks=2610 dp=17739 MM=0 error=None
+loop K140 init=2 sched=2: valid=True Q=1435 max=11 seconds=10.027 asks=2605 dp=17645 MM=0 error=None
+loop ER100_d10 init=0 sched=0: valid=True Q=585 max=8 seconds=10.005 asks=2702 dp=22591 MM=0 error=None
+loop ER100_d10 init=1 sched=1: valid=True Q=589 max=8 seconds=10.004 asks=2719 dp=22790 MM=0 error=None
+loop ER100_d10 init=2 sched=2: valid=True Q=613 max=9 seconds=10.004 asks=2725 dp=22692 MM=0 error=None
+loop turan_n162 init=0 sched=0: valid=True Q=972 max=6 seconds=10.013 asks=4112 dp=33582 MM=0 error=None
+loop turan_n162 init=1 sched=1: valid=True Q=972 max=6 seconds=10.012 asks=4055 dp=32971 MM=0 error=None
+loop turan_n162 init=2 sched=2: valid=True Q=972 max=6 seconds=10.013 asks=4113 dp=33463 MM=0 error=None
+loop spin_glass_n163 init=0 sched=0: valid=True Q=1891 max=13 seconds=10.015 asks=2745 dp=27114 MM=0 error=None
+loop spin_glass_n163 init=1 sched=1: valid=True Q=1914 max=13 seconds=10.015 asks=2793 dp=27626 MM=0 error=None
+loop spin_glass_n163 init=2 sched=2: valid=True Q=1882 max=13 seconds=10.015 asks=2510 dp=24790 MM=0 error=None
+loop regular_n316 init=0 sched=0: valid=False Q=None max=None seconds=10.001 asks=1271 dp=11577 MM=0 error=no native embedding fitting the chip was found within the budget
+loop regular_n316 init=1 sched=1: valid=False Q=None max=None seconds=10.001 asks=1239 dp=11387 MM=0 error=no native embedding fitting the chip was found within the budget
+loop regular_n316 init=2 sched=2: valid=False Q=None max=None seconds=10.001 asks=1250 dp=11380 MM=0 error=no native embedding fitting the chip was found within the budget
+loop ws_n486 init=0 sched=0: valid=False Q=None max=None seconds=10.001 asks=630 dp=6052 MM=0 error=no native embedding fitting the chip was found within the budget
+loop ws_n486 init=1 sched=1: valid=False Q=None max=None seconds=10.002 asks=639 dp=6109 MM=0 error=no native embedding fitting the chip was found within the budget
+loop ws_n486 init=2 sched=2: valid=False Q=None max=None seconds=10.000 asks=641 dp=6142 MM=0 error=no native embedding fitting the chip was found within the budget
+loop grid_200 init=0 sched=0: valid=True Q=392 max=8 seconds=10.005 asks=1492 dp=13716 MM=0 error=None
+loop grid_200 init=1 sched=1: valid=True Q=354 max=5 seconds=10.004 asks=1523 dp=14214 MM=0 error=None
+loop grid_200 init=2 sched=2: valid=True Q=413 max=6 seconds=10.005 asks=1449 dp=13652 MM=0 error=None
+loop honeycomb_200 init=0 sched=0: valid=True Q=468 max=8 seconds=10.005 asks=1393 dp=13110 MM=0 error=None
+loop honeycomb_200 init=1 sched=1: valid=True Q=444 max=7 seconds=10.005 asks=1407 dp=13291 MM=0 error=None
+loop honeycomb_200 init=2 sched=2: valid=True Q=475 max=7 seconds=10.004 asks=1323 dp=12382 MM=0 error=None
+loop king_graph_196 init=0 sched=0: valid=True Q=617 max=7 seconds=10.004 asks=1849 dp=17834 MM=0 error=None
+loop king_graph_196 init=1 sched=1: valid=True Q=630 max=7 seconds=10.005 asks=1669 dp=16231 MM=0 error=None
+loop king_graph_196 init=2 sched=2: valid=True Q=618 max=9 seconds=10.006 asks=2364 dp=23127 MM=0 error=None
+done-feedback /data/max/ember/docs/paper2/data/live_board_loop.json
+starting-live-stage board-full
+full K100 init=0 sched=0: valid=True Q=773 max=9 seconds=10.013 asks=4003 dp=26047 MM=0 error=None
+full K100 init=1 sched=1: valid=True Q=780 max=8 seconds=10.014 asks=2813 dp=18760 MM=0 error=None
+full K100 init=2 sched=2: valid=True Q=777 max=8 seconds=10.013 asks=2800 dp=18873 MM=0 error=None
+full K140 init=0 sched=0: valid=True Q=1432 max=11 seconds=10.029 asks=2684 dp=15475 MM=0 error=None
+full K140 init=1 sched=1: valid=True Q=1437 max=11 seconds=10.027 asks=2531 dp=17240 MM=0 error=None
+full K140 init=2 sched=2: valid=True Q=1435 max=11 seconds=10.027 asks=2534 dp=17209 MM=0 error=None
+full ER100_d10 init=0 sched=0: valid=True Q=585 max=8 seconds=10.004 asks=2694 dp=22513 MM=0 error=None
+full ER100_d10 init=1 sched=1: valid=True Q=589 max=8 seconds=10.005 asks=2652 dp=22238 MM=0 error=None
+full ER100_d10 init=2 sched=2: valid=True Q=613 max=9 seconds=10.005 asks=2698 dp=22429 MM=0 error=None
+full turan_n162 init=0 sched=0: valid=True Q=972 max=6 seconds=10.013 asks=4204 dp=34362 MM=0 error=None
+full turan_n162 init=1 sched=1: valid=True Q=972 max=6 seconds=10.014 asks=4097 dp=33312 MM=0 error=None
+full turan_n162 init=2 sched=2: valid=True Q=972 max=6 seconds=10.013 asks=4181 dp=34019 MM=0 error=None
+full spin_glass_n163 init=0 sched=0: valid=True Q=1891 max=13 seconds=10.016 asks=2641 dp=26066 MM=0 error=None
+full spin_glass_n163 init=1 sched=1: valid=True Q=1914 max=13 seconds=10.015 asks=2697 dp=26678 MM=0 error=None
+full spin_glass_n163 init=2 sched=2: valid=True Q=1881 max=13 seconds=10.015 asks=2411 dp=23823 MM=0 error=None
+full regular_n316 init=0 sched=0: valid=False Q=None max=None seconds=10.001 asks=1354 dp=12326 MM=0 error=no native embedding fitting the chip was found within the budget
+full regular_n316 init=1 sched=1: valid=False Q=None max=None seconds=10.001 asks=1322 dp=12121 MM=0 error=no native embedding fitting the chip was found within the budget
+full regular_n316 init=2 sched=2: valid=False Q=None max=None seconds=10.001 asks=1334 dp=12168 MM=0 error=no native embedding fitting the chip was found within the budget
+full ws_n486 init=0 sched=0: valid=False Q=None max=None seconds=10.000 asks=684 dp=6545 MM=0 error=no native embedding fitting the chip was found within the budget
+full ws_n486 init=1 sched=1: valid=False Q=None max=None seconds=10.001 asks=690 dp=6601 MM=0 error=no native embedding fitting the chip was found within the budget
+full ws_n486 init=2 sched=2: valid=False Q=None max=None seconds=10.001 asks=693 dp=6640 MM=0 error=no native embedding fitting the chip was found within the budget
+full grid_200 init=0 sched=0: valid=True Q=392 max=8 seconds=10.004 asks=1543 dp=14186 MM=0 error=None
+full grid_200 init=1 sched=1: valid=True Q=359 max=6 seconds=10.004 asks=1578 dp=14729 MM=0 error=None
+full grid_200 init=2 sched=2: valid=True Q=413 max=6 seconds=10.005 asks=1481 dp=13956 MM=0 error=None
+full honeycomb_200 init=0 sched=0: valid=True Q=468 max=8 seconds=10.006 asks=1429 dp=13464 MM=0 error=None
+full honeycomb_200 init=1 sched=1: valid=True Q=444 max=7 seconds=10.005 asks=1398 dp=13215 MM=0 error=None
+full honeycomb_200 init=2 sched=2: valid=True Q=475 max=7 seconds=10.004 asks=1315 dp=12309 MM=0 error=None
+full king_graph_196 init=0 sched=0: valid=True Q=617 max=7 seconds=10.006 asks=1854 dp=17889 MM=0 error=None
+full king_graph_196 init=1 sched=1: valid=True Q=630 max=7 seconds=10.006 asks=1737 dp=16919 MM=0 error=None
+full king_graph_196 init=2 sched=2: valid=True Q=618 max=9 seconds=10.006 asks=2585 dp=25269 MM=0 error=None
+done-feedback /data/max/ember/docs/paper2/data/live_board_full.json
+starting-live-stage board-mm
+mm K100 init=0 sched=0: valid=True Q=1078 max=17 seconds=10.580 asks=None dp=None MM=1 error=None
+mm K100 init=1 sched=1: valid=True Q=1087 max=16 seconds=10.220 asks=None dp=None MM=1 error=None
+mm K100 init=2 sched=2: valid=True Q=1070 max=17 seconds=10.933 asks=None dp=None MM=1 error=None
+mm K140 init=0 sched=0: valid=False Q=None max=None seconds=16.431 asks=None dp=None MM=1 error=None
+mm K140 init=1 sched=1: valid=False Q=None max=None seconds=17.894 asks=None dp=None MM=1 error=None
+mm K140 init=2 sched=2: valid=True Q=3187 max=58 seconds=10.989 asks=None dp=None MM=1 error=None
+mm ER100_d10 init=0 sched=0: valid=True Q=500 max=9 seconds=3.041 asks=None dp=None MM=1 error=None
+mm ER100_d10 init=1 sched=1: valid=True Q=507 max=10 seconds=1.477 asks=None dp=None MM=1 error=None
+mm ER100_d10 init=2 sched=2: valid=True Q=485 max=9 seconds=1.671 asks=None dp=None MM=1 error=None
+mm turan_n162 init=0 sched=0: valid=True Q=1708 max=16 seconds=10.732 asks=None dp=None MM=1 error=None
+mm turan_n162 init=1 sched=1: valid=True Q=2197 max=27 seconds=10.727 asks=None dp=None MM=1 error=None
+mm turan_n162 init=2 sched=2: valid=True Q=1945 max=24 seconds=10.871 asks=None dp=None MM=1 error=None
+mm spin_glass_n163 init=0 sched=0: valid=False Q=None max=None seconds=11.921 asks=None dp=None MM=1 error=None
+mm spin_glass_n163 init=1 sched=1: valid=False Q=None max=None seconds=11.995 asks=None dp=None MM=1 error=None
+mm spin_glass_n163 init=2 sched=2: valid=False Q=None max=None seconds=11.651 asks=None dp=None MM=1 error=None
+mm regular_n316 init=0 sched=0: valid=True Q=1063 max=9 seconds=2.040 asks=None dp=None MM=1 error=None
+mm regular_n316 init=1 sched=1: valid=True Q=1078 max=10 seconds=2.142 asks=None dp=None MM=1 error=None
+mm regular_n316 init=2 sched=2: valid=True Q=1040 max=9 seconds=2.728 asks=None dp=None MM=1 error=None
+mm ws_n486 init=0 sched=0: valid=True Q=1571 max=11 seconds=2.658 asks=None dp=None MM=1 error=None
+mm ws_n486 init=1 sched=1: valid=True Q=1542 max=13 seconds=2.912 asks=None dp=None MM=1 error=None
+mm ws_n486 init=2 sched=2: valid=True Q=1371 max=11 seconds=4.099 asks=None dp=None MM=1 error=None
+mm grid_200 init=0 sched=0: valid=True Q=208 max=2 seconds=0.244 asks=None dp=None MM=1 error=None
+mm grid_200 init=1 sched=1: valid=True Q=231 max=2 seconds=0.405 asks=None dp=None MM=1 error=None
+mm grid_200 init=2 sched=2: valid=True Q=210 max=2 seconds=0.205 asks=None dp=None MM=1 error=None
+mm honeycomb_200 init=0 sched=0: valid=True Q=228 max=2 seconds=0.272 asks=None dp=None MM=1 error=None
+mm honeycomb_200 init=1 sched=1: valid=True Q=222 max=2 seconds=0.498 asks=None dp=None MM=1 error=None
+mm honeycomb_200 init=2 sched=2: valid=True Q=246 max=3 seconds=0.219 asks=None dp=None MM=1 error=None
+mm king_graph_196 init=0 sched=0: valid=True Q=370 max=4 seconds=0.587 asks=None dp=None MM=1 error=None
+mm king_graph_196 init=1 sched=1: valid=True Q=367 max=4 seconds=1.199 asks=None dp=None MM=1 error=None
+mm king_graph_196 init=2 sched=2: valid=True Q=298 max=3 seconds=0.963 asks=None dp=None MM=1 error=None
+done-feedback /data/max/ember/docs/paper2/data/live_board_mm.json
+starting-live-stage fingerprint-full
+full K8 init=0 sched=0: valid=True Q=14 max=2 seconds=0.508 asks=2000 dp=7740 MM=0 error=None
+full K10 init=0 sched=0: valid=True Q=21 max=3 seconds=0.830 asks=2000 dp=10269 MM=0 error=None
+full path60 init=0 sched=0: valid=True Q=63 max=2 seconds=2.226 asks=3000 dp=23770 MM=0 error=None
+full K100 init=0 sched=0: valid=True Q=773 max=9 seconds=25.003 asks=10000 dp=64872 MM=0 error=None
+full turan_n162 init=0 sched=0: valid=True Q=972 max=6 seconds=36.043 asks=15000 dp=122149 MM=0 error=None
+full turan_n162 init=1 sched=1: valid=True Q=972 max=6 seconds=35.455 asks=15000 dp=121983 MM=0 error=None
+full turan_n162 init=2 sched=2: valid=True Q=972 max=6 seconds=35.813 asks=15000 dp=122157 MM=0 error=None
+full turan_n162 init=3 sched=3: valid=True Q=972 max=6 seconds=36.159 asks=15000 dp=121917 MM=0 error=None
+full turan_n162 init=4 sched=4: valid=True Q=972 max=6 seconds=36.143 asks=15000 dp=121611 MM=0 error=None
+full turan_n162 init=5 sched=5: valid=True Q=972 max=6 seconds=35.810 asks=15000 dp=122349 MM=0 error=None
+full turan_n162 init=6 sched=6: valid=True Q=972 max=6 seconds=35.725 asks=15000 dp=122394 MM=0 error=None
+full turan_n162 init=7 sched=7: valid=True Q=972 max=6 seconds=35.821 asks=15000 dp=121875 MM=0 error=None
+full turan_n162 init=8 sched=8: valid=True Q=972 max=6 seconds=35.971 asks=15000 dp=121995 MM=0 error=None
+full turan_n162 init=9 sched=9: valid=True Q=972 max=6 seconds=35.732 asks=15000 dp=122347 MM=0 error=None
+full grid_200 init=0 sched=0: valid=True Q=338 max=5 seconds=40.010 asks=8000 dp=72650 MM=0 error=None
+done-feedback /data/max/ember/docs/paper2/data/live_fingerprint_full.json
+starting-live-stage summary
+{
+  "complete": true,
+  "board": {
+    "baseline": {
+      "cases": 30,
+      "successes": 27,
+      "elapsed_seconds": 300.28488994878717,
+      "physical_qubits": 25875,
+      "mean_acl": 5.925692493680102,
+      "mean_max_chain": 9.185185185185185,
+      "mm_calls": 0,
+      "asks": 860533,
+      "passes": 319,
+      "decode_calls": 349,
+      "dp_solves": 7469941,
+      "dp_cells": 10631474995,
+      "preparation_wall": 243.46667942637578,
+      "transition_wall": 212.58222184004262,
+      "dp_wall": 30.17432692204602,
+      "packing_wall": 0.7671646000817418,
+      "decode_wall": 1.4699078178964555,
+      "interleave_wall": 294.2083037206903,
+      "completed_rounds": null,
+      "reference_visits": null,
+      "event_states": null,
+      "event_updates": null,
+      "strand_preparations": null,
+      "traceback_checks": null,
+      "tracebacks": null,
+      "early_quality": {
+        "0.01": {
+          "successes": 0,
+          "physical_qubits": 0
+        },
+        "0.1": {
+          "successes": 22,
+          "physical_qubits": 47226
+        },
+        "1.0": {
+          "successes": 24,
+          "physical_qubits": 48200
+        },
+        "10.0": {
+          "successes": 27,
+          "physical_qubits": 25875
+        }
+      },
+      "relation_work": {}
+    },
+    "loop": {
+      "cases": 30,
+      "successes": 24,
+      "elapsed_seconds": 300.2668223606888,
+      "physical_qubits": 21435,
+      "mean_acl": 6.1269889090605565,
+      "mean_max_chain": 8.5,
+      "mm_calls": 0,
+      "asks": 66465,
+      "passes": 165,
+      "decode_calls": 60698,
+      "dp_solves": 554580,
+      "dp_cells": 3892453704,
+      "preparation_wall": 47.12940546637401,
+      "transition_wall": 43.23910170979798,
+      "dp_wall": 8.629892908968031,
+      "packing_wall": 106.96037902240641,
+      "decode_wall": 239.34885486308485,
+      "interleave_wall": 58.028329354012385,
+      "completed_rounds": 136,
+      "reference_visits": 21999,
+      "event_states": null,
+      "event_updates": null,
+      "strand_preparations": null,
+      "traceback_checks": null,
+      "tracebacks": null,
+      "early_quality": {
+        "0.01": {
+          "successes": 0,
+          "physical_qubits": 0
+        },
+        "0.1": {
+          "successes": 24,
+          "physical_qubits": 31038
+        },
+        "1.0": {
+          "successes": 24,
+          "physical_qubits": 25810
+        },
+        "10.0": {
+          "successes": 24,
+          "physical_qubits": 21435
+        }
+      },
+      "relation_work": {
+        "source": {
+          "asks": 13204,
+          "accepts": 12799,
+          "strict_accepts": 9137,
+          "neutral_accepts": 3662,
+          "dp_solves": 88576,
+          "dp_cells": 236507016,
+          "direct_scores": 0,
+          "candidate_pairs": 88577,
+          "candidate_duplicates": 69871,
+          "event_states": null,
+          "event_updates": null,
+          "strand_preparations": null,
+          "traceback_checks": null,
+          "tracebacks": null,
+          "nomination_wall": 0.008266238262876868,
+          "interleave_wall": 5.725597260054201,
+          "preparation_wall": 4.8582722074352205,
+          "transition_wall": 4.100352930137888,
+          "dp_wall": 0.5303266006521881,
+          "direct_wall": 0.0,
+          "traceback_wall": 0.0,
+          "decode_calls": 12799,
+          "decode_wall": 49.63458838383667,
+          "packing_wall": 21.623636326752603,
+          "decoded_improvements": 3187,
+          "decoded_worse": 1979,
+          "bookmark_improvements": 300
+        },
+        "x": {
+          "asks": 13179,
+          "accepts": 12242,
+          "strict_accepts": 8069,
+          "neutral_accepts": 4173,
+          "dp_solves": 125914,
+          "dp_cells": 1181479330,
+          "direct_scores": 0,
+          "candidate_pairs": 125921,
+          "candidate_duplicates": 32227,
+          "event_states": null,
+          "event_updates": null,
+          "strand_preparations": null,
+          "traceback_checks": null,
+          "tracebacks": null,
+          "nomination_wall": 0.07346734940074384,
+          "interleave_wall": 15.923510337946936,
+          "preparation_wall": 12.812322047539055,
+          "transition_wall": 12.011239429935813,
+          "dp_wall": 2.5869104685261846,
+          "direct_wall": 0.0,
+          "traceback_wall": 0.0,
+          "decode_calls": 12242,
+          "decode_wall": 48.906679758802056,
+          "packing_wall": 21.94623418711126,
+          "decoded_improvements": 2893,
+          "decoded_worse": 2324,
+          "bookmark_improvements": 303
+        },
+        "y": {
+          "asks": 13185,
+          "accepts": 12249,
+          "strict_accepts": 8016,
+          "neutral_accepts": 4233,
+          "dp_solves": 135159,
+          "dp_cells": 1223278676,
+          "direct_scores": 0,
+          "candidate_pairs": 135173,
+          "candidate_duplicates": 23047,
+          "event_states": null,
+          "event_updates": null,
+          "strand_preparations": null,
+          "traceback_checks": null,
+          "tracebacks": null,
+          "nomination_wall": 0.06989283976145089,
+          "interleave_wall": 16.621130008250475,
+          "preparation_wall": 13.403000271646306,
+          "transition_wall": 12.59583567851223,
+          "dp_wall": 2.6691217015031725,
+          "direct_wall": 0.0,
+          "traceback_wall": 0.0,
+          "decode_calls": 12249,
+          "decode_wall": 49.583311166614294,
+          "packing_wall": 22.455114726210013,
+          "decoded_improvements": 3114,
+          "decoded_worse": 2037,
+          "bookmark_improvements": 332
+        },
+        "contact": {
+          "asks": 13201,
+          "accepts": 12100,
+          "strict_accepts": 7796,
+          "neutral_accepts": 4304,
+          "dp_solves": 136109,
+          "dp_cells": 1227321728,
+          "direct_scores": 0,
+          "candidate_pairs": 136109,
+          "candidate_duplicates": 22303,
+          "event_states": null,
+          "event_updates": null,
+          "strand_preparations": null,
+          "traceback_checks": null,
+          "tracebacks": null,
+          "nomination_wall": 0.0698340367525816,
+          "interleave_wall": 16.723315199371427,
+          "preparation_wall": 13.468557056970894,
+          "transition_wall": 12.660575061105192,
+          "dp_wall": 2.703471085289493,
+          "direct_wall": 0.0,
+          "traceback_wall": 0.0,
+          "decode_calls": 12100,
+          "decode_wall": 48.41141558927484,
+          "packing_wall": 21.86614784412086,
+          "decoded_improvements": 3102,
+          "decoded_worse": 1907,
+          "bookmark_improvements": 351
+        },
+        "anchor": {
+          "asks": 13201,
+          "accepts": 10967,
+          "strict_accepts": 6961,
+          "neutral_accepts": 4006,
+          "dp_solves": 68822,
+          "dp_cells": 23866954,
+          "direct_scores": 0,
+          "candidate_pairs": 68822,
+          "candidate_duplicates": 89590,
+          "event_states": null,
+          "event_updates": null,
+          "strand_preparations": null,
+          "traceback_checks": null,
+          "tracebacks": null,
+          "nomination_wall": 0.014468703186139464,
+          "interleave_wall": 2.9561819832306355,
+          "preparation_wall": 2.55781038175337,
+          "transition_wall": 1.8710986101068556,
+          "dp_wall": 0.14006305299699306,
+          "direct_wall": 0.0,
+          "traceback_wall": 0.0,
+          "decode_calls": 10967,
+          "decode_wall": 41.71030827984214,
+          "packing_wall": 18.601096756290644,
+          "decoded_improvements": 2011,
+          "decoded_worse": 1405,
+          "bookmark_improvements": 123
+        },
+        "whole": {
+          "asks": 495,
+          "accepts": 311,
+          "strict_accepts": 208,
+          "neutral_accepts": 103,
+          "dp_solves": 0,
+          "dp_cells": 0,
+          "direct_scores": 1897,
+          "candidate_pairs": 2392,
+          "candidate_duplicates": 578,
+          "event_states": null,
+          "event_updates": null,
+          "strand_preparations": null,
+          "traceback_checks": null,
+          "tracebacks": null,
+          "nomination_wall": 0.00036475062370300293,
+          "interleave_wall": 0.07859456515870988,
+          "preparation_wall": 0.0294435010291636,
+          "transition_wall": 0.0,
+          "dp_wall": 0.0,
+          "direct_wall": 0.04226506035774946,
+          "traceback_wall": 0.0,
+          "decode_calls": 311,
+          "decode_wall": 0.9560171309858561,
+          "packing_wall": 0.4137947028502822,
+          "decoded_improvements": 94,
+          "decoded_worse": 36,
+          "bookmark_improvements": 48
+        }
+      }
+    },
+    "full": {
+      "cases": 30,
+      "successes": 24,
+      "elapsed_seconds": 300.2750351910945,
+      "physical_qubits": 21439,
+      "mean_acl": 6.127774952005342,
+      "mean_max_chain": 8.541666666666666,
+      "mm_calls": 0,
+      "asks": 66637,
+      "passes": 163,
+      "decode_calls": 60760,
+      "dp_solves": 557381,
+      "dp_cells": 4009247946,
+      "preparation_wall": 23.98831991921179,
+      "transition_wall": 20.031907338649035,
+      "dp_wall": 29.1779793696478,
+      "packing_wall": 108.2668304189574,
+      "decode_wall": 241.51333750248887,
+      "interleave_wall": 54.749689432792366,
+      "completed_rounds": 133,
+      "reference_visits": 22059,
+      "event_states": 818470049,
+      "event_updates": 1367162067,
+      "strand_preparations": 623533,
+      "traceback_checks": 48706,
+      "tracebacks": 60423,
+      "early_quality": {
+        "0.01": {
+          "successes": 0,
+          "physical_qubits": 0
+        },
+        "0.1": {
+          "successes": 20,
+          "physical_qubits": 25986
+        },
+        "1.0": {
+          "successes": 24,
+          "physical_qubits": 26157
+        },
+        "10.0": {
+          "successes": 24,
+          "physical_qubits": 21439
+        }
+      },
+      "relation_work": {
+        "source": {
+          "asks": 13241,
+          "accepts": 12804,
+          "strict_accepts": 9215,
+          "neutral_accepts": 3589,
+          "dp_solves": 89111,
+          "dp_cells": 236474672,
+          "direct_scores": 0,
+          "candidate_pairs": 89111,
+          "candidate_duplicates": 69781,
+          "event_states": 105167826,
+          "event_updates": 172068420,
+          "strand_preparations": 102352,
+          "traceback_checks": 6785,
+          "tracebacks": 12804,
+          "nomination_wall": 0.008171806810423732,
+          "interleave_wall": 6.355692634824663,
+          "preparation_wall": 3.924360384698957,
+          "transition_wall": 3.1537250650580972,
+          "dp_wall": 2.161628599045798,
+          "direct_wall": 0.0,
+          "traceback_wall": 0.021831374382600188,
+          "decode_calls": 12804,
+          "decode_wall": 50.04068467998877,
+          "packing_wall": 21.88745580543764,
+          "decoded_improvements": 3228,
+          "decoded_worse": 2003,
+          "bookmark_improvements": 299
+        },
+        "x": {
+          "asks": 13225,
+          "accepts": 12263,
+          "strict_accepts": 8173,
+          "neutral_accepts": 4090,
+          "dp_solves": 126736,
+          "dp_cells": 1221234539,
+          "direct_scores": 0,
+          "candidate_pairs": 126755,
+          "candidate_duplicates": 31945,
+          "event_states": 216700610,
+          "event_updates": 364914257,
+          "strand_preparations": 139963,
+          "traceback_checks": 9802,
+          "tracebacks": 12263,
+          "nomination_wall": 0.07575872051529586,
+          "interleave_wall": 14.404870158992708,
+          "preparation_wall": 5.478968145092949,
+          "transition_wall": 4.664306486025453,
+          "dp_wall": 8.58950095390901,
+          "direct_wall": 0.0,
+          "traceback_wall": 0.023995483526960015,
+          "decode_calls": 12263,
+          "decode_wall": 49.403731810394675,
+          "packing_wall": 22.246727351797745,
+          "decoded_improvements": 2944,
+          "decoded_worse": 2363,
+          "bookmark_improvements": 304
+        },
+        "y": {
+          "asks": 13225,
+          "accepts": 12272,
+          "strict_accepts": 8118,
+          "neutral_accepts": 4154,
+          "dp_solves": 135808,
+          "dp_cells": 1261557408,
+          "direct_scores": 0,
+          "candidate_pairs": 135819,
+          "candidate_duplicates": 22881,
+          "event_states": 230534828,
+          "event_updates": 389503901,
+          "strand_preparations": 149034,
+          "traceback_checks": 11066,
+          "tracebacks": 12272,
+          "nomination_wall": 0.07121789362281561,
+          "interleave_wall": 15.007525270106271,
+          "preparation_wall": 5.776028353255242,
+          "transition_wall": 4.955910325748846,
+          "dp_wall": 8.881663592532277,
+          "direct_wall": 0.0,
+          "traceback_wall": 0.024646942736580968,
+          "decode_calls": 12272,
+          "decode_wall": 50.06014832505025,
+          "packing_wall": 22.73555817641318,
+          "decoded_improvements": 3167,
+          "decoded_worse": 2077,
+          "bookmark_improvements": 333
+        },
+        "contact": {
+          "asks": 13230,
+          "accepts": 12116,
+          "strict_accepts": 7886,
+          "neutral_accepts": 4230,
+          "dp_solves": 136652,
+          "dp_cells": 1265734393,
+          "direct_scores": 0,
+          "candidate_pairs": 136654,
+          "candidate_duplicates": 22106,
+          "event_states": 242366891,
+          "event_updates": 418418925,
+          "strand_preparations": 149883,
+          "traceback_checks": 11909,
+          "tracebacks": 12116,
+          "nomination_wall": 0.07122911931946874,
+          "interleave_wall": 15.176721208030358,
+          "preparation_wall": 5.867429995210841,
+          "transition_wall": 5.046698882943019,
+          "dp_wall": 8.957275812514126,
+          "direct_wall": 0.0,
+          "traceback_wall": 0.0246122304815799,
+          "decode_calls": 12116,
+          "decode_wall": 48.84512462792918,
+          "packing_wall": 22.105088530341163,
+          "decoded_improvements": 3146,
+          "decoded_worse": 1944,
+          "bookmark_improvements": 350
+        },
+        "anchor": {
+          "asks": 13227,
+          "accepts": 10968,
+          "strict_accepts": 7046,
+          "neutral_accepts": 3922,
+          "dp_solves": 69074,
+          "dp_cells": 24246934,
+          "direct_scores": 0,
+          "candidate_pairs": 69074,
+          "candidate_duplicates": 89650,
+          "event_states": 23699894,
+          "event_updates": 22256564,
+          "strand_preparations": 82301,
+          "traceback_checks": 9144,
+          "tracebacks": 10968,
+          "nomination_wall": 0.014584158547222614,
+          "interleave_wall": 3.7303861202672124,
+          "preparation_wall": 2.9123977420385927,
+          "transition_wall": 2.2112665788736194,
+          "dp_wall": 0.5879104116465896,
+          "direct_wall": 0.0,
+          "traceback_wall": 0.019992314977571368,
+          "decode_calls": 10968,
+          "decode_wall": 42.077945390483364,
+          "packing_wall": 18.82557860761881,
+          "decoded_improvements": 2030,
+          "decoded_worse": 1429,
+          "bookmark_improvements": 123
+        },
+        "whole": {
+          "asks": 489,
+          "accepts": 307,
+          "strict_accepts": 208,
+          "neutral_accepts": 99,
+          "dp_solves": 0,
+          "dp_cells": 0,
+          "direct_scores": 1871,
+          "candidate_pairs": 2360,
+          "candidate_duplicates": 574,
+          "event_states": 0,
+          "event_updates": 0,
+          "strand_preparations": 0,
+          "traceback_checks": 0,
+          "tracebacks": 0,
+          "nomination_wall": 0.00036118109710514545,
+          "interleave_wall": 0.07449404057115316,
+          "preparation_wall": 0.029135298915207386,
+          "transition_wall": 0.0,
+          "dp_wall": 0.0,
+          "direct_wall": 0.04054602887481451,
+          "traceback_wall": 0.0,
+          "decode_calls": 307,
+          "decode_wall": 0.9399999433662742,
+          "packing_wall": 0.4120057332329452,
+          "decoded_improvements": 94,
+          "decoded_worse": 36,
+          "bookmark_improvements": 48
+        }
+      }
+    },
+    "mm": {
+      "cases": 30,
+      "successes": 25,
+      "elapsed_seconds": 172.3046488855034,
+      "physical_qubits": 23809,
+      "mean_acl": 5.4977520886022795,
+      "mean_max_chain": 11.6,
+      "mm_calls": 30,
+      "asks": null,
+      "passes": null,
+      "decode_calls": null,
+      "dp_solves": null,
+      "dp_cells": null,
+      "preparation_wall": null,
+      "transition_wall": null,
+      "dp_wall": null,
+      "packing_wall": null,
+      "decode_wall": null,
+      "interleave_wall": null,
+      "completed_rounds": null,
+      "reference_visits": null,
+      "event_states": null,
+      "event_updates": null,
+      "strand_preparations": null,
+      "traceback_checks": null,
+      "tracebacks": null,
+      "early_quality": {
+        "0.01": null,
+        "0.1": null,
+        "1.0": null,
+        "10.0": null
+      },
+      "relation_work": {}
+    }
+  },
+  "pairs": {
+    "baseline_to_loop": {
+      "paired_successes": 24,
+      "before_physical_qubits": 20991,
+      "after_physical_qubits": 21435,
+      "qubit_ratio": 1.021151922252394,
+      "wins": 9,
+      "ties": 3,
+      "losses": 12
+    },
+    "baseline_to_full": {
+      "paired_successes": 24,
+      "before_physical_qubits": 20991,
+      "after_physical_qubits": 21439,
+      "qubit_ratio": 1.0213424801105235,
+      "wins": 9,
+      "ties": 3,
+      "losses": 12
+    },
+    "loop_to_full": {
+      "paired_successes": 24,
+      "before_physical_qubits": 21435,
+      "after_physical_qubits": 21439,
+      "qubit_ratio": 1.0001866106834616,
+      "wins": 1,
+      "ties": 22,
+      "losses": 1
+    },
+    "mm_to_full": {
+      "paired_successes": 19,
+      "before_physical_qubits": 16144,
+      "after_physical_qubits": 12884,
+      "qubit_ratio": 0.7980673934588701,
+      "wins": 7,
+      "ties": 0,
+      "losses": 12
+    }
+  },
+  "fingerprints": {
+    "cases": 15,
+    "successes": 15,
+    "elapsed_seconds": 427.2492000097409,
+    "physical_qubits": 10929,
+    "mean_acl": 4.954666666666666,
+    "mean_max_chain": 5.4,
+    "mm_calls": 0,
+    "asks": 175000,
+    "passes": 511,
+    "decode_calls": 170717,
+    "dp_solves": 1400078,
+    "dp_cells": 7979493659,
+    "preparation_wall": 65.38820264325477,
+    "transition_wall": 53.94385276315734,
+    "dp_wall": 50.80710861389525,
+    "packing_wall": 119.15057170530781,
+    "decode_wall": 301.94759326032363,
+    "interleave_wall": 120.15800297632813,
+    "completed_rounds": 496,
+    "reference_visits": 57824,
+    "event_states": 3864532372,
+    "event_updates": 7175125341,
+    "strand_preparations": 1573548,
+    "traceback_checks": 86623,
+    "tracebacks": 169401,
+    "early_quality": {
+      "0.01": {
+        "successes": 2,
+        "physical_qubits": 35
+      },
+      "0.1": {
+        "successes": 14,
+        "physical_qubits": 11119
+      },
+      "1.0": {
+        "successes": 15,
+        "physical_qubits": 11461
+      },
+      "10.0": {
+        "successes": 15,
+        "physical_qubits": 10983
+      }
+    },
+    "relation_work": {
+      "source": {
+        "asks": 34692,
+        "accepts": 33869,
+        "strict_accepts": 31026,
+        "neutral_accepts": 2843,
+        "dp_solves": 162524,
+        "dp_cells": 931535706,
+        "direct_scores": 0,
+        "candidate_pairs": 162524,
+        "candidate_duplicates": 253780,
+        "event_states": 626693596,
+        "event_updates": 1221895552,
+        "strand_preparations": 197216,
+        "traceback_checks": 7422,
+        "tracebacks": 33869,
+        "nomination_wall": 0.020426510367542505,
+        "interleave_wall": 16.1311598054599,
+        "preparation_wall": 9.622525438433513,
+        "transition_wall": 7.353106422582641,
+        "dp_wall": 5.927771702874452,
+        "direct_wall": 0.0,
+        "traceback_wall": 0.048829082399606705,
+        "decode_calls": 33869,
+        "decode_wall": 56.38690690253861,
+        "packing_wall": 21.628300867741928,
+        "decoded_improvements": 10740,
+        "decoded_worse": 4955,
+        "bookmark_improvements": 51
+      },
+      "x": {
+        "asks": 34694,
+        "accepts": 33974,
+        "strict_accepts": 25106,
+        "neutral_accepts": 8868,
+        "dp_solves": 338614,
+        "dp_cells": 2222604573,
+        "direct_scores": 0,
+        "candidate_pairs": 338614,
+        "candidate_duplicates": 77714,
+        "event_states": 1026203274,
+        "event_updates": 1885415376,
+        "strand_preparations": 373308,
+        "traceback_checks": 20082,
+        "tracebacks": 33974,
+        "nomination_wall": 0.18630420067347586,
+        "interleave_wall": 30.20184870203957,
+        "preparation_wall": 15.585348455933854,
+        "transition_wall": 13.272271272027865,
+        "dp_wall": 13.754913695855066,
+        "direct_wall": 0.0,
+        "traceback_wall": 0.05787747539579868,
+        "decode_calls": 33974,
+        "decode_wall": 60.35892149573192,
+        "packing_wall": 23.03641479415819,
+        "decoded_improvements": 5447,
+        "decoded_worse": 5609,
+        "bookmark_improvements": 45
+      },
+      "y": {
+        "asks": 34698,
+        "accepts": 33981,
+        "strict_accepts": 24588,
+        "neutral_accepts": 9393,
+        "dp_solves": 365654,
+        "dp_cells": 2384566849,
+        "direct_scores": 0,
+        "candidate_pairs": 365654,
+        "candidate_duplicates": 50722,
+        "event_states": 1013198450,
+        "event_updates": 1855117969,
+        "strand_preparations": 400352,
+        "traceback_checks": 19703,
+        "tracebacks": 33981,
+        "nomination_wall": 0.17394095729105175,
+        "interleave_wall": 31.81172156170942,
+        "preparation_wall": 16.167359362123534,
+        "transition_wall": 13.817327596014366,
+        "dp_wall": 14.747281982330605,
+        "direct_wall": 0.0,
+        "traceback_wall": 0.057708128821104765,
+        "decode_calls": 33981,
+        "decode_wall": 61.15846802527085,
+        "packing_wall": 24.295787509763613,
+        "decoded_improvements": 6947,
+        "decoded_worse": 3767,
+        "bookmark_improvements": 49
+      },
+      "contact": {
+        "asks": 34694,
+        "accepts": 33913,
+        "strict_accepts": 24338,
+        "neutral_accepts": 9575,
+        "dp_solves": 366572,
+        "dp_cells": 2388860445,
+        "direct_scores": 0,
+        "candidate_pairs": 366572,
+        "candidate_duplicates": 49756,
+        "event_states": 1144016696,
+        "event_updates": 2157335786,
+        "strand_preparations": 401266,
+        "traceback_checks": 24164,
+        "tracebacks": 33913,
+        "nomination_wall": 0.1722468517255038,
+        "interleave_wall": 32.57680191588588,
+        "preparation_wall": 16.825661490671337,
+        "transition_wall": 14.475188560551032,
+        "dp_wall": 14.845437917625532,
+        "direct_wall": 0.0,
+        "traceback_wall": 0.05949218128807843,
+        "decode_calls": 33913,
+        "decode_wall": 59.252128806198016,
+        "packing_wall": 23.917529211379588,
+        "decoded_improvements": 6501,
+        "decoded_worse": 3839,
+        "bookmark_improvements": 37
+      },
+      "anchor": {
+        "asks": 34692,
+        "accepts": 33664,
+        "strict_accepts": 28483,
+        "neutral_accepts": 5181,
+        "dp_solves": 166714,
+        "dp_cells": 51926086,
+        "direct_scores": 0,
+        "candidate_pairs": 166714,
+        "candidate_duplicates": 249590,
+        "event_states": 54420356,
+        "event_updates": 55360658,
+        "strand_preparations": 201406,
+        "traceback_checks": 15252,
+        "tracebacks": 33664,
+        "nomination_wall": 0.0364676455501467,
+        "interleave_wall": 9.201458149356768,
+        "preparation_wall": 7.105395775754005,
+        "transition_wall": 5.025958911981434,
+        "dp_wall": 1.5317033152095973,
+        "direct_wall": 0.0,
+        "traceback_wall": 0.05265470081940293,
+        "decode_calls": 33664,
+        "decode_wall": 63.0867944941856,
+        "packing_wall": 25.653532057302073,
+        "decoded_improvements": 6272,
+        "decoded_worse": 6340,
+        "bookmark_improvements": 17
+      },
+      "whole": {
+        "asks": 1530,
+        "accepts": 1301,
+        "strict_accepts": 842,
+        "neutral_accepts": 459,
+        "dp_solves": 0,
+        "dp_cells": 0,
+        "direct_scores": 5426,
+        "candidate_pairs": 6956,
+        "candidate_duplicates": 2224,
+        "event_states": 0,
+        "event_updates": 0,
+        "strand_preparations": 0,
+        "traceback_checks": 0,
+        "tracebacks": 0,
+        "nomination_wall": 0.0010340898297727108,
+        "interleave_wall": 0.2350128418765962,
+        "preparation_wall": 0.08191212033852935,
+        "transition_wall": 0.0,
+        "dp_wall": 0.0,
+        "direct_wall": 0.13827883079648018,
+        "traceback_wall": 0.0,
+        "decode_calls": 1301,
+        "decode_wall": 1.6599620361812413,
+        "packing_wall": 0.605317966081202,
+        "decoded_improvements": 174,
+        "decoded_worse": 83,
+        "bookmark_improvements": 26
+      }
+    }
+  },
+  "equivalence": {
+    "complete": true,
+    "cases": 75,
+    "exact_matching_cases": 75,
+    "sources": {
+      "loop": "14e12d52a5ae76c7b48a3c28ee10b03706272bf06ad51404950b522388a1faaf",
+      "full": "2903eb74adb3362309f3ac06d8ca9ddd99c33f37c30f67b2203c19b4be6bef23"
+    },
+    "artifacts_sha256": "5e1e510800fd8941bc8bbbc32d899e2f81a4a8a873c2570b527999318d49bd99",
+    "compared": "current and bookmark coordinates/orders/scores plus all non-timing shared diagnostics"
+  }
+}
+micro seconds baseline/full: 0.442584607983008 0.436841974966228
+median micro speedup: 0.973247046536937

@@ -1,0 +1,9 @@
+{
+  "commit": "7a4214bc444012f70cd29af982358e5311ed22ae",
+  "source_sha256": "c60f9af48965d3f0d1ae52e39454313d5fedeac0c748f59258e4207a88ddd7b2",
+  "snapshot_src": "/tmp/ember-partition-baseline-7a4214bc4440/src",
+  "source_root": "packages/ember-qc/src",
+  "branch": "factored",
+  "hash_convention": "SHA256 sorted factored/*.py filenames followed by bytes",
+  "replay": "Use this snapshot, or extract packages/ember-qc/src from the recorded commit."
+}

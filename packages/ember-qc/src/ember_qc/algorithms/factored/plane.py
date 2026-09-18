@@ -1,4 +1,4 @@
-"""Three-order search with fixed-slot proposal sweeps and native decoding.
+"""Live reference moves with per-query fixed slots and immediate native decoding.
 
 See docs/paper2/three-orders.md for the design contract and its exactness limits.
 Capacity belongs to the total decoder; a proposal never invokes legalization.
@@ -85,53 +85,44 @@ def decode(orders, source, chip_m, tile, *, seed=0, deadline=None, info=None):
     return Layout(orders.copy(), coords, book, extent_m, finished)
 
 
-def units(orders, source, rng, *, whole=True):
-    """One deduplicated seeded bag, using only general order/neighbor sets."""
-    n = orders.shape[1]
-    scales = []
-    scale = n // 2
-    while scale >= 2:
-        scales.append(scale)
-        scale //= 2
-    scales.append(1)
-    neighborhoods = []
-    for v in range(n):
-        neighbors = source.indices[source.indptr[v]:source.indptr[v + 1]]
-        if 0 < len(neighbors) < n:
-            neighborhoods.append(tuple(int(u) for u in neighbors))
-    result = []
-    for axis in range(3):
-        seen = set()
-        candidates = []
-        for scale in scales:
-            for start in range(0, n, max(1, scale // 2)):
-                candidates.append(tuple(sorted(int(v) for v in orders[axis, start:start + scale])))
-        candidates.extend(neighborhoods)
-        if whole:
-            candidates.append(tuple(range(n)))
-        for unit in candidates:
-            if 0 < len(unit) <= n and (whole or len(unit) < n) and unit not in seen:
-                seen.add(unit)
-                result.append((axis, unit))
-    return [result[int(i)] for i in rng.permutation(len(result))]
+
+RELATIONS = ("source", "x", "y", "contact", "anchor", "whole")
+SCHEDULER_VERSION = "live-reference-v1"
+
+
+def nominate(orders, source, reference, relation, rng):
+    """Read a fresh group from the current state; no membership survives a query."""
+    if relation == 0:
+        return source.indices[source.indptr[reference]:source.indptr[reference + 1]]
+    if relation == 4:
+        return np.asarray([reference], dtype=np.int64)
+    order = orders[relation - 1]
+    n = len(order)
+    size = max(1, n // 2)
+    position = int(np.flatnonzero(order == reference)[0])
+    # Every admissible start is equally likely, including clipped end ranges.
+    start = int(rng.integers(max(0, position - size + 1),
+                             min(position, n - size) + 1))
+    return order[start:start + size]
 
 
 def arrange(source: Source, chip_m: int, tile: int, *, seed: int = 0,
             max_asks: Optional[int] = None, deadline: Optional[float] = None,
             sched_seed: Optional[int] = None, trace: bool = False,
-            moves: bool = True, target_qubits: Optional[int] = None,
-            _policy: str = "feedback"):
-    """Explore complete sweeps, adopt them unconditionally, return a native bookmark."""
+            moves: bool = True, target_qubits: Optional[int] = None):
+    """Reorganize one order, squish, and retain an independent usable bookmark.
+
+    Reference rounds provide visit coverage, never a convergence certificate.
+    An unlimited search therefore runs until its caller interrupts it.
+    """
     started = time.perf_counter()
-    # Internal mechanism controls for the retained benchmark, not public
-    # algorithm modes. Every production call uses the complete move family.
-    if _policy not in ("feedback", "neutral", "macro", "frozen", "oneway"):
-        raise ValueError("unknown internal feedback policy")
     n = len(source.labels)
     target_qubits = (4 * tile * chip_m * (2 * chip_m + 1)
                      if target_qubits is None else target_qubits)
-    info = dict(asks=0, accepts=0, passes=0, readouts=0, decode_calls=0,
+    info = dict(asks=0, accepts=0, passes=0, completed_rounds=0,
+                reference_visits=0, readouts=0, decode_calls=0,
                 bookmark_asks=0, bookmark_wall=0.0, stopped_by=None,
+                scheduler_version=SCHEDULER_VERSION, last_query=None,
                 adopt_worse=0, infeasible=0, accept_traj=[],
                 accepted_by_order=[0, 0, 0], interleave_wall=0.0,
                 packing_wall=0.0, decode_wall=0.0, flow_nodes=0,
@@ -140,11 +131,31 @@ def arrange(source: Source, chip_m: int, tile: int, *, seed: int = 0,
                 whole_order_accepts=0, accepted_by_donor=[[0] * 3 for _ in range(3)],
                 dp_solves=0, dp_cells=0, direct_scores=0, interrupted_asks=0,
                 preparation_wall=0.0, transition_wall=0.0,
-                dp_wall=0.0, direct_wall=0.0, sweep_traj=[],
-                repeated_sweep_states=0)
+                dp_wall=0.0, direct_wall=0.0, traceback_wall=0.0, sweep_traj=[],
+                repeated_sweep_states=0, unique_partitions=None,
+                nomination_duplicates=None, nomination_wall=0.0,
+                candidate_pairs=0, candidate_duplicates=0,
+                accepted_by_side=[0, 0], event_states=0, event_updates=0,
+                strand_preparations=0, traceback_checks=0, tracebacks=0,
+                nomination_counts=dict.fromkeys(RELATIONS, 0),
+                relation_work={})
+    for name in RELATIONS:
+        info["relation_work"][name] = dict(
+            asks=0, accepts=0, strict_accepts=0, neutral_accepts=0,
+            dp_solves=0, dp_cells=0, direct_scores=0, candidate_pairs=0,
+            candidate_duplicates=0, event_states=0, event_updates=0,
+            strand_preparations=0, traceback_checks=0, tracebacks=0,
+            nomination_wall=0.0, interleave_wall=0.0, preparation_wall=0.0,
+            transition_wall=0.0, dp_wall=0.0, direct_wall=0.0, traceback_wall=0.0,
+            decode_calls=0, decode_wall=0.0, packing_wall=0.0,
+            decoded_improvements=0, decoded_worse=0, bookmark_improvements=0)
     rng = np.random.default_rng(seed)
     orders = np.asarray([rng.permutation(n) for _ in range(3)], dtype=np.int64)
-    rng = np.random.default_rng(seed if sched_seed is None else sched_seed)
+    effective_sched_seed = seed if sched_seed is None else sched_seed
+    rng = np.random.default_rng(np.random.SeedSequence([effective_sched_seed, 1]))
+    references = rng.permutation(n)
+    relation_phase = int(rng.integers(5))
+    destination_phase = int(rng.integers(3))
     current = decode(orders, source, chip_m, tile, seed=seed, deadline=deadline, info=info)
     best = None
     best_expanded = current.book.score
@@ -162,9 +173,11 @@ def arrange(source: Source, chip_m: int, tile: int, *, seed: int = 0,
             best = layout
             info["bookmark_asks"] = info["asks"]
             info["bookmark_wall"] = time.perf_counter() - started
+            return True
+        return False
 
-    def record_sweep(changes=0, strict=0, complete=True):
-        # Observe recurrence without rejecting a state or steering the search.
+    def record_round(changes=0, strict=0, complete=True):
+        # Observation only: recurrence neither rejects a state nor stops search.
         digest = hashlib.blake2b(digest_size=16)
         digest.update(current.orders.tobytes())
         digest.update(current.coords.tobytes())
@@ -173,6 +186,7 @@ def arrange(source: Source, chip_m: int, tile: int, *, seed: int = 0,
         seen_states.add(state)
         info["repeated_sweep_states"] += int(repeated)
         info["sweep_traj"].append(dict(
+            scheduler_version=SCHEDULER_VERSION,
             pass_index=info["passes"], ask=info["asks"],
             wall=time.perf_counter() - started,
             current_score=current.book.score,
@@ -188,95 +202,149 @@ def arrange(source: Source, chip_m: int, tile: int, *, seed: int = 0,
             return "deadline"
         return None
 
-    bookmark(current)
-    record_sweep(complete=current.complete)
-    while n > 1 and moves and not expired():
-        info["passes"] += 1
-        changes = 0
-        strict_changes = 0
-        completed_sweep = True
+    def query(axis, reference=None, relation=5):
+        nonlocal current, checked
+        name = RELATIONS[relation]
+        work = info["relation_work"][name]
+        nomination_start = time.perf_counter()
+        unit = (np.arange(n, dtype=np.int64) if relation == 5 else
+                nominate(current.orders, source, reference, relation, rng))
+        nomination_wall = time.perf_counter() - nomination_start
+        info["nomination_wall"] += nomination_wall
+        work["nomination_wall"] += nomination_wall
+        info["nomination_counts"][name] += 1
         proposal = current.orders.copy()
         coords = complete_coordinates(proposal, current.coords,
                                       current.book.active, 2 * tile)
-        slots = np.asarray([coords[axis, proposal[axis]].copy() for axis in range(2)])
         if not checked:
             _check_inputs(proposal, coords, source.indptr, source.indices, chip_m)
             checked = True
         else:
-            check_cost_bounds(n, source.indices.size // 2, chip_m, int(slots.max()))
-        bag = units(proposal, source, rng, whole=_policy != "neutral")
-        if _policy == "frozen":
-            bag = [(axis, unit) for axis, unit in bag if axis != 2]
-        for axis, unit in bag:
-            if expired():
-                completed_sweep = False
-                break
-            info["asks"] += 1
-            self_only = (_policy == "neutral" or
-                         (_policy == "macro" and len(unit) < n) or
-                         (_policy == "oneway" and axis == 2))
-            query = {}
-            t0 = time.perf_counter()
-            order, flipped = interleave(proposal, coords, source.indptr,
-                                         source.indices, axis, unit, chip_m,
-                                         donors=(axis,) if self_only else None,
-                                         deadline=deadline, info=query, checked=False)
-            info["interleave_wall"] += time.perf_counter() - t0
-            for name, query_name in (("dp_solves", "strand_solves"),
-                                     ("dp_cells", "dp_cells"),
-                                     ("direct_scores", "direct_scores"),
-                                     ("preparation_wall", "preparation_wall"),
-                                     ("transition_wall", "transition_wall"),
-                                     ("dp_wall", "dp_wall"),
-                                     ("direct_wall", "direct_wall")):
-                info[name] += query.get(query_name, 0)
-            interrupted = not query.get("complete", True)
-            info["interrupted_asks"] += int(interrupted)
-            if interrupted:
-                completed_sweep = False
-            if order is None:
-                if interrupted:
-                    break
-                continue
+            check_cost_bounds(n, source.indices.size // 2, chip_m, int(coords.max()))
+        info["last_query"] = dict(reference=reference, relation=RELATIONS[relation],
+                                  axis=axis, size=len(unit))
+        info["asks"] += 1
+        work["asks"] += 1
+        metrics = {}
+        t0 = time.perf_counter()
+        order, flipped = interleave(proposal, coords, source.indptr,
+                                   source.indices, axis, unit, chip_m,
+                                   deadline=deadline, info=metrics, checked=False)
+        elapsed = time.perf_counter() - t0
+        info["interleave_wall"] += elapsed
+        work["interleave_wall"] += elapsed
+        for name, query_name in (("dp_solves", "strand_solves"),
+                                 ("dp_cells", "dp_cells"),
+                                 ("candidate_pairs", "candidate_pairs"),
+                                 ("candidate_duplicates", "candidate_duplicates"),
+                                 ("direct_scores", "direct_scores"),
+                                 ("preparation_wall", "preparation_wall"),
+                                 ("transition_wall", "transition_wall"),
+                                 ("dp_wall", "dp_wall"),
+                                 ("direct_wall", "direct_wall"),
+                                 ("traceback_wall", "traceback_wall"),
+                                 ("event_states", "event_states"),
+                                 ("event_updates", "event_updates"),
+                                 ("strand_preparations", "strand_preparations"),
+                                 ("traceback_checks", "traceback_checks"),
+                                 ("tracebacks", "tracebacks")):
+            value = metrics.get(query_name, 0)
+            info[name] += value
+            work[name] += value
+        interrupted = not metrics.get("complete", True)
+        info["interrupted_asks"] += int(interrupted)
+        changed = order is not None
+        strict = changed and bool(metrics.get("strict", False))
+        before = current.book.score
+        if changed:
             proposal[axis] = order
-            if axis < 2:
-                coords[axis, order] = slots[axis]
             info["accepts"] += 1
+            work["accepts"] += 1
             info["accepted_by_order"][axis] += 1
-            strict = bool(query.get("strict", False))
-            donor = int(query.get("donor", axis))
+            donor = int(metrics.get("donor", axis))
             info["accepted_by_donor"][axis][donor] += 1
-            info["strict_accepts"] += int(strict)
-            info["neutral_accepts"] += int(not strict)
-            info["borrowed_accepts"] += int(query.get("borrowed", False))
+            side = int(metrics.get("borrow_side", 0))
+            info["accepted_by_side"][side] += 1
+            for key, value in (("strict_accepts", int(strict)),
+                               ("neutral_accepts", int(not strict))):
+                info[key] += value
+                work[key] += value
+            info["borrowed_accepts"] += int(metrics.get("borrowed", False))
             info["whole_order_accepts"] += int(len(unit) == n)
-            strict_changes += int(strict)
-            changes += 1
-            if trace:
-                info["trace"].append(dict(ask=info["asks"], order=axis,
-                                           size=len(unit), flipped=bool(flipped),
-                                           donor=donor, donor_mask=query.get("donor_mask"),
-                                           borrowed=query.get("borrowed", False),
-                                           strict=strict, complete=not interrupted,
-                                           before=query.get("baseline_score"),
-                                           after=query.get("score")))
-            if interrupted:
+            decode_before = {key: info[key] for key in
+                             ("decode_calls", "decode_wall", "packing_wall")}
+            # Even an interrupted query gets a total, capacity-valid decode.
+            # There is no decoded-score veto and no later batched boundary.
+            current = decode(proposal, source, chip_m, tile, seed=seed,
+                             deadline=deadline, info=info)
+            for key, old in decode_before.items():
+                work[key] += info[key] - old
+            worse = current.book.score > before
+            info["adopt_worse"] += int(worse)
+            work["decoded_worse"] += int(worse)
+            work["decoded_improvements"] += int(current.book.score < before)
+            work["bookmark_improvements"] += int(bookmark(current))
+        if trace:
+            info["trace"].append(dict(
+                ask=info["asks"], reference=reference, relation=RELATIONS[relation],
+                order=axis, size=len(unit), flipped=bool(flipped), changed=changed,
+                donor=metrics.get("donor"), donor_mask=metrics.get("donor_mask"),
+                borrow_side=metrics.get("borrow_side", -1),
+                borrow_size=metrics.get("borrow_size", 0),
+                borrowed=metrics.get("borrowed", False), strict=strict,
+                complete=not interrupted, before=metrics.get("baseline_score"),
+                after=metrics.get("score"), decoded_before=before,
+                current_score=current.book.score,
+                bookmark_score=None if best is None else best.book.score,
+                decode_complete=current.complete))
+        return int(changed), int(strict), interrupted
+
+    bookmark(current)
+    record_round(complete=current.complete)
+    while n > 1 and moves and not expired():
+        round_index = info["passes"]
+        info["passes"] += 1
+        changes = strict_changes = 0
+        complete = True
+        first_axis = (round_index + destination_phase) % 3
+        for offset in range(3):
+            if expired():
+                complete = False
                 break
+            changed, strict, interrupted = query((first_axis + offset) % 3)
+            changes += changed
+            strict_changes += strict
+            if interrupted:
+                complete = False
+                break
+        if complete:
+            for i, vertex in enumerate(references):
+                if expired():
+                    complete = False
+                    break
+                info["reference_visits"] += 1
+                relation = (i + round_index + relation_phase) % 5
+                first_axis = (i + round_index + destination_phase) % 3
+                for offset in range(3):
+                    if expired():
+                        complete = False
+                        break
+                    changed, strict, interrupted = query(
+                        (first_axis + offset) % 3, int(vertex), relation)
+                    changes += changed
+                    strict_changes += strict
+                    if interrupted:
+                        complete = False
+                        break
+                if not complete:
+                    break
         info["accept_traj"].append(changes)
-        if changes:
-            # One compound proposal, one decoder boundary. There is no veto
-            # based on its decoded score or its intermediate capacity.
-            candidate = decode(proposal, source, chip_m, tile, seed=seed,
-                               deadline=deadline, info=info)
-            info["adopt_worse"] += int(candidate.book.score > current.book.score)
-            current = candidate
-            bookmark(current)
-        record_sweep(changes, strict_changes, completed_sweep)
-        if not changes and completed_sweep and not expired():
-            info["stopped_by"] = "fixpoint"
+        info["completed_rounds"] += int(complete)
+        record_round(changes, strict_changes, complete)
+        if not complete:
             break
-    if info["stopped_by"] is None:
-        info["stopped_by"] = expired() or ("moves-off" if not moves else "trivial")
+    info["stopped_by"] = expired() or ("moves-off" if not moves else
+                                      "trivial" if n <= 1 else "interrupted")
     shown = best.book if best is not None else current.book
     info.update(outside_reserved_qubits=shown.outside,
                 reserved_qubits=shown.reserved + len(source.isolates),

@@ -1,12 +1,15 @@
 # Ideas
 
-The three-order native build with bidirectional feedback is implemented on
-`factored` (2026-09-15).
-The [design contract](three-orders.md) is the authoritative resumption point;
-the [feedback results](feedback-results.md) record tests, paired controls and
-schedule sensitivity. The [first-build report](three-orders-results.md)
-retains earlier comparisons. Implementation does not establish superiority
-over MinorMiner.
+The live-reference / immediate-packing / streamed-cost implementation and
+[audit](live-results.md) are complete (2026-09-17): 635 tests, 75 exact fixed-work
+trajectory pairs, 2,520 query measurements, 120 board runs and 15 valid native
+fingerprints. K100's final bookmark arrives after two or three queries (~40 ms).
+The board succeeds on 24/30 versus baseline 27/30 and stock MM 25/30. Query
+timing is roughly flat overall; complete decoding now consumes 80% of runtime.
+The [design contract](three-orders.md) is the authoritative resumption point.
+[Partition](partition-results.md), [feedback](feedback-results.md) and
+[first-build](three-orders-results.md) reports retain historical comparisons.
+Implementation does not establish universal superiority or convergence.
 
 ## The current idea
 
@@ -25,17 +28,26 @@ required contacts. The objective is lexicographic outside-chip reserved volume,
 then total reserved volume. Conservative reservations may exceed physical
 qubit use; both are measured.
 
-The three interleavers borrow the selected subsequence from each current
-master order, forward and reversed, and compare their exact best merges into
-the destination complement. Whole-order transfers are included. The common
+Reference vertices rotate through source neighbors, current x/y/contact half-order
+windows, and anchor-only groups. Renominate before each destination query, then
+pack immediately if it changes an order. Each round also tries direct whole-order
+transfers. These nominations define unordered partitions; either side borrows its
+sequence from any current master order while fixing the other side in destination
+order. Compare the exact best merges across both directions before one adoption.
+Whole-order transfers are included. The common
 objective uses frozen slots and current contact roles, with rank span as an
 exact tie break. Changed minimizing candidates, including equal-score moves,
-are adopted; the incumbent family guarantees the minimum cannot worsen. Intermediate books need not satisfy capacity. After a sweep or work-budget exhaustion,
-decode its accumulated orders from a canonical expanded feasible seed. Each
+are adopted; the incumbent family guarantees the minimum cannot worsen.
+Intermediate books need not satisfy capacity. Decode each changed query's
+orders from a canonical expanded feasible seed. Each
 conditional minimum cut optimizes one axis while enforcing both orientations'
 capacity; alternate until stable. Adopt the decoded state even if it is worse,
-and retain the best finite native bookmark. Packing runs once per sweep, with
-no per-proposal feasibility rejection cascade.
+and retain the best finite native bookmark. An unchanged query needs no redundant
+pack. No per-proposal feasibility rejection cascade is introduced.
+
+Cost preparation streams changes attached to actual contacts and
+endpoint thresholds. The exact DP still visits its merge grid; sparse event work
+does not imply a sparse DP or eliminate the cost of balanced windows.
 
 ## What this commits us to
 
@@ -84,9 +96,9 @@ one decode. This was a small diagnostic witness. The family is now implemented a
 The paired controls show dense gains and mixed sparse results. Optimizing
 contact order matters on the board, but borrowing spatial strands into that
 order has no demonstrated overall advantage over its own-strand optimization.
-Schedule changes still alter quality. Transition-cost construction consumes
-about 65% of full-feedback board time; packing consumes less than 1%. These
-measurements guide the next structural question without selecting a new remedy.
+Schedule changes still alter quality. In that preceding full-feedback scheduler,
+transition-cost construction consumed about 65% of board time and packing less
+than 1%. These are historical figures, not the cost profile of the live loop.
 
 "Reservation cost" must be explained as a conservative space envelope across
 the two staggered courses, not treated as a synonym for physical chain length.

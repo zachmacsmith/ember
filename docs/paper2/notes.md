@@ -1,10 +1,11 @@
 # Notes — the chronological record (condensed)
 
-**Current implementation (2026-09-14):** read the
+**Current implementation (2026-09-17):** read the
 [three-order design contract](three-orders.md) and
-[measured results](three-orders-results.md). These supersede historical
-two-order state, mandatory crosses, per-proposal packing and feasibility
-rejection rules. The implementation has standalone output; abutment remains
+[live audit](live-results.md). Live reference nominations and immediate packing
+after every changed query supersede the stored catalogue and sweep cadence.
+The implementation has three orders, contact-derived bars, exact event-based
+merge costs and standalone output; abutment remains
 deferred. `ideas.md` is the current concise summary.
 
 Condensed 2026-08-06 at Max's directive: the notebook had grown 3,900
@@ -2835,3 +2836,71 @@ demonstrated overall benefit over the one-way control. Quality remains
 schedule-sensitive. Transition preparation dominates runtime; packing accounts
 for less than 1% on this board. The earlier clique witness alone does not
 establish learned contact feedback.
+
+
+# Shared partition nominations (2026-09-17)
+
+The owner approved sharing block nominations from x/y/contact order across
+all destinations, plus borrowing either side of each nominated partition.
+Implementation passes 611 regression tests; the timed audit is complete. The
+[current contract](three-orders.md#shared-partitions-and-either-side-borrowing-2026-09-17)
+and [focused audit](partition-results.md) are the resumption points.
+
+The key containment argument is that borrowing everyone except v includes
+ordinary singleton reinsertion and whole-order transfer, as well as that transfer
+with v repositioned optimally. This uses a linear-sized merge grid per donor;
+it is not a claim that every large query is cheap or that physical quality must
+improve. Canonical pairs prevent repeated work when complementary or identical
+groups were nominated. The existing shuffle and once-per-sweep packing remain.
+
+The design is justified by the expanded exact move family and reuse of current
+organization. Timing and output measurements audit its implementation; they do
+not select graph-specific patches. The packer, conservative bricks, coloring,
+and bookmark rules are deliberately unchanged.
+
+Measured: 63 paired queries, twenty repetitions each, improve 31 fixed-slot
+objectives and tie 32. The paired ten-case board (seeds 0/1/2, 10 warm seconds)
+succeeds on 27/30 in both versions; new qubit use wins/ties/loses 5/3/19, with
+3.9% higher paired geometric mean. All 15 new fingerprints are valid. No
+measured native call uses MinorMiner, and no timed call compiles. The broader
+family raises DP cells from 9.792B to 10.624B within the same board time, while
+full sweeps fall from 1,064 to 288. Transition preparation remains dominant.
+These are coupled search/cadence observations, not graph-specific prescriptions
+or a proof of convergence. Source hashes and complete stage/work records are
+in the focused audit; preceding artifacts remain separately labeled.
+
+
+# Live reference moves and immediate packing (2026-09-17)
+
+The owner approved removing the nomination catalogue, using fresh groups around
+reference vertices, packing after each changed individual destination query, and
+replacing dense transition tables with exact streamed event costs. Implementation
+passes 635 regression tests and all 75 fixed-work comparisons against frozen old
+kernels. The timed audit is complete. The [current contract](three-orders.md#live-reference-moves-and-streamed-costs-approved-2026-09-17)
+and [live audit](live-results.md) are the resumption points. The preceding
+uncommitted source is preserved by an archive and a verified reconstructable patch.
+
+The fixed reference permutation cycles through source/x/y/contact/anchor relations.
+Order groups are balanced half-order windows; source groups are N(v); anchor-only
+groups retain all-but-one reinsertion. Whole-order queries remain once per
+destination per round. Membership is regenerated before EVERY query, even within
+one vertex's three destination turns. Each changed order is squished immediately;
+the decoded proposal is still adopted unconditionally and the bookmark stays
+independent. No quiet sampled round proves convergence.
+
+This restores geometric feedback without a tuned packing interval. The old
+half-second concern came from a preliminary SciPy pilot; the previous production
+board's complete decoder averaged about 4.3 ms. Event-based costs preserve the
+same integer merge objective and canonical ties; only the parent matrix remains
+quadratic. Sparse contacts reduce preparation events, but balanced merge grids
+remain quadratic. These are structural choices and exact subproblem claims;
+speed and embedding quality are measured separately.
+
+The completed audit retains 2,520 exact query comparisons, 120 board runs and
+15 valid native fingerprints. K100 reaches its final reservation bookmark in
+two or three queries (~40 ms). Board success is 24/30, versus baseline 27/30
+and stock MM 25/30; the new loop loses the three regular316 successes with
+either old or streamed kernels. Query timing is roughly flat overall and
+complete decoding now consumes 80.4% of full-board time. All native outputs
+and captured usable bookmarks validate; no native call uses MM. These outcomes
+leave the structural questions open without adding graph-specific remedies.

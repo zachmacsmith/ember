@@ -1,0 +1,12 @@
+{
+  "commit": "7a4214bc444012f70cd29af982358e5311ed22ae",
+  "source_sha256": "fc4560cc54307c562841b93601141f907bcbc502e504e7ffd6396aaa8df5b0d6",
+  "snapshot_src": "/tmp/ember-live-baseline-fc4560cc5430/src",
+  "branch": "factored",
+  "archive": "live_baseline.tar.gz",
+  "archive_sha256": "dd8b95f044f2ba63a6919ceb231995af4cf61e940668e9014702795b144e33e5",
+  "patch": "live_baseline.patch",
+  "patch_sha256": "9f8511ab3d3de4d6faaa40ec79f2e430c0c57be543047301466176d0bf7f3a30",
+  "hash_convention": "SHA256 sorted factored/*.py filenames followed by bytes",
+  "replay": "Extract archive for the exact source, or checkout commit and apply patch."
+}

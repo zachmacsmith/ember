@@ -1,0 +1,22 @@
+{
+  "pid": 1146232,
+  "phase": "complete",
+  "command": [
+    "/data/max/ember/.venv/bin/pytest",
+    "-q",
+    "tests/algorithms",
+    "tests/test_registry.py",
+    "tests/test_embedding_backend.py"
+  ],
+  "started_at": "2026-09-17T22:11:02.242705+00:00",
+  "log": "/tmp/ember-live-tests.log",
+  "exit_code": 0,
+  "finished_at": "2026-09-17T22:11:15.505821+00:00",
+  "source_sha256": "2903eb74adb3362309f3ac06d8ca9ddd99c33f37c30f67b2203c19b4be6bef23",
+  "passed": 635,
+  "warnings": 1,
+  "pytest_seconds": 12.82,
+  "standalone_mm_forbidden": true,
+  "preservation": "All factored modules except plane.py and order_dp.py byte-identical to baseline; decode function unchanged.",
+  "frozen_dense_source_sha256": "ceab4cea1e9c5632f072e32686a91540f31fbbf63c11f3fa41c09fe7198fd46d"
+}

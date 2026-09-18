@@ -1,0 +1,12 @@
+{
+  "source_sha256": "fc4560cc54307c562841b93601141f907bcbc502e504e7ffd6396aaa8df5b0d6",
+  "baseline_commit": "7a4214bc444012f70cd29af982358e5311ed22ae",
+  "command": ".venv/bin/pytest -q tests/algorithms tests/test_registry.py tests/test_embedding_backend.py",
+  "passed": 611,
+  "elapsed_seconds": 14.24,
+  "unchanged_native_files": [
+    "packing.py",
+    "native_model.py",
+    "placement.py"
+  ]
+}

@@ -1,0 +1,351 @@
+diff --git a/packages/ember-qc/src/ember_qc/algorithms/factored/order_dp.py b/packages/ember-qc/src/ember_qc/algorithms/factored/order_dp.py
+index bf76cfa6..fcef80a8 100644
+--- a/packages/ember-qc/src/ember_qc/algorithms/factored/order_dp.py
++++ b/packages/ember-qc/src/ember_qc/algorithms/factored/order_dp.py
+@@ -1,7 +1,7 @@
+ """Exact interleavings in the native embedder's frozen coordinate picture.
+ 
+-An order is merged with a selected strand borrowed from any of the three
+-orders, forward or reversed, with identical oriented strands solved once. The
++A partition may borrow either side from any of the three orders, forward or
++reversed, with identical canonically oriented strand pairs solved once. The
+ three integer costs are outside-chip reserved volume, reserved volume, and
+ source-edge rank span.  No packing, capacity test, or physical conversion
+ occurs here.  Coordinates belong to the current occupants of fixed slots;
+@@ -481,24 +481,27 @@ def _direct_score(orders, coords, indptr, indices, axis, candidate, chip_m):
+ def interleave(orders, coords, indptr, indices, axis, unit, chip_m, *,
+                donors=None, accept_equal=True, deadline=None, info=None,
+                checked=True):
+-    """Compare one canonical optimal traceback per distinct donor strand.
+-
+-    ``orders`` has rows x, y, contact; ``coords`` has x/y rows indexed by
+-    vertex.  Spatial coordinates must be nondecreasing in their orders and
+-    positive.  The source is a simple undirected graph in symmetric CSR.
+-    The unit is restricted from each donor's CURRENT order. The receiver's
+-    complement remains fixed. Destination strands are always included, even
+-    when ``donors`` restricts borrowing, so the incumbent remains available.
+-
+-    Equal-cost returned tracebacks prefer change, then genuinely borrowed
+-    strands, then cyclic donor order and forward orientation. DP path ties
+-    are fixed: a strand can return the incumbent even when another tied
+-    traceback in that family would change it. Those ties are not enumerated.
++    """Compare canonical optimal tracebacks while borrowing either partition side.
++
++    Proper ``unit`` and its complement name the same query. Canonical side B
++    is smaller (lexicographically smaller sorted vertices on ties); A is its
++    complement. All solves use A first and B second, fixing DP traceback ties
++    and minimizing rolling-row width independently of the nomination side.
++    Borrow one side's sequence from a CURRENT donor order, forward or reversed;
++    keep the other side in destination order. Complete ordered pairs are solved
++    once; we never borrow both sides in one solve.
++
++    Equal-cost tracebacks prefer change, genuine borrowing, cyclic donor order,
++    forward direction, then borrowed side A before B. A sequence matching either
++    destination direction has no borrowed priority. Only each DP's canonical
++    traceback is considered, not every tied path. Empty nominations and n <= 1
++    are no-ops; whole-set nominations use direct scoring. Destination strands
++    are always included, even when ``donors`` restricts borrowing.
++
+     ``accept_equal=False`` retains strict-only adoption for controlled probes.
+-    Deadlines are checked between candidate kernels; interrupted queries
+-    return their best completed candidate, including the initial incumbent.
+-    ``checked=False`` is for validated, construction-preserving search callers
+-    that have already called :func:`check_cost_bounds` for their frozen slots.
++    Deadlines are checked between candidate kernels; interrupted queries return
++    their best completed candidate, including the initial incumbent.
++    ``checked=False`` requires validated inputs and checked cost bounds.
+     Input arrays are never modified.
+     """
+     preparation_start = time.perf_counter()
+@@ -522,52 +525,84 @@ def interleave(orders, coords, indptr, indices, axis, unit, chip_m, *,
+         if not 0 <= int(v) < n:
+             raise ValueError("unit contains an invalid vertex")
+         selected[int(v)] = True
++    size = int(np.count_nonzero(selected))
++    whole = size == n and n > 1
++    if whole:
++        selected[:] = False  # special query: A = V, B = empty
++    elif 0 < size < n:
++        # Equal-size complements are disjoint: the one containing zero is
++        # lexicographically smaller when each side is sorted by vertex id.
++        if 2 * size > n or (2 * size == n and not selected[0]):
++            selected = ~selected
+     order = orders[axis]
+-    own = np.ascontiguousarray(order[selected[order]])
+-    rest = np.ascontiguousarray(order[~selected[order]])
+-    # These coordinates, roles, and baseline stay fixed across every strand
+-    # solve in this query. Reuse their bounds rather than rescanning per donor.
++    own = (np.ascontiguousarray(order[~selected[order]]),
++           np.ascontiguousarray(order[selected[order]]))
++    own_pair = (own[0].tobytes(), own[1].tobytes())
++    own_keys = [{strand.tobytes(), strand[::-1].tobytes()} for strand in own]
++    # Roles, spatial bounds and baseline stay fixed across both directions.
+     trank = _ranks(orders[2])
+     lo, hi = _bounds(orders, coords, indptr, indices)
+     baseline = tuple(int(v) for v in _score_from_bounds(
+         orders, coords, indptr, indices, chip_m, axis, lo, hi))
+     metrics = dict(baseline_score=baseline, score=baseline, donor=axis,
+                    donor_mask=1 << axis, borrowed=False, strict=False,
+-                   complete=True, strand_solves=0, dp_cells=0,
++                   borrow_side=-1, borrow_size=0, candidate_pairs=0,
++                   candidate_duplicates=0, complete=True, strand_solves=0, dp_cells=0,
+                    direct_scores=0, preparation_wall=0.0, dp_wall=0.0,
+                    transition_wall=0.0, direct_wall=0.0)
+     if info is None:
+         info = {}
+-    own_keys = {own.tobytes(), own[::-1].tobytes()}
+     donor_order = ((axis + 1) % 3, (axis + 2) % 3, axis)
+     candidates = {}
+-    if own.size and n > 1:
++    if size and n > 1:
++        sides = (0,) if whole else (0, 1)
+         for priority, donor in enumerate(donor_order):
+             if donor not in allowed:
+                 continue
+-            strand = orders[donor, selected[orders[donor]]]
++            donor_ordered = orders[donor]
++            strands = (donor_ordered[~selected[donor_ordered]],
++                       donor_ordered[selected[donor_ordered]])
+             for flipped in (False, True):
+-                part = np.ascontiguousarray(strand[::-1] if flipped else strand)
+-                key = part.tobytes()
+-                if key in candidates:
+-                    candidates[key]["mask"] |= 1 << donor
+-                else:
+-                    candidates[key] = dict(part=part, donor=donor,
+-                                           priority=priority, flipped=flipped,
+-                                           mask=1 << donor, borrowed=key not in own_keys)
++                for side in sides:
++                    strand = strands[side]
++                    strand = np.ascontiguousarray(strand[::-1] if flipped else strand)
++                    strand_key = strand.tobytes()
++                    key = ((strand_key, own_pair[1]) if side == 0 else
++                           (own_pair[0], strand_key))
++                    borrowed = strand_key not in own_keys[side]
++                    provenance = (not borrowed, priority, flipped, side)
++                    previous = candidates.get(key)
++                    mask = 1 << donor
++                    if previous is not None:
++                        metrics["candidate_duplicates"] += 1
++                        mask |= previous["mask"]
++                        if provenance >= previous["provenance"]:
++                            previous["mask"] = mask
++                            continue
++                    candidates[key] = dict(
++                        part=strand if side == 0 else own[0],
++                        rest=strand if side == 1 else own[1], donor=donor,
++                        priority=priority, flipped=flipped, side=side,
++                        size=strand.size, mask=mask, borrowed=borrowed,
++                        provenance=provenance, incumbent_family=key == own_pair,
++                    )
++    metrics["candidate_pairs"] = len(candidates)
++    # Enumeration follows the selected provenance, not the first pair alias.
++    candidates = sorted(candidates.values(), key=lambda c:
++                        (c["priority"], c["flipped"], c["side"]))
+     metrics["preparation_wall"] = time.perf_counter() - preparation_start
+     best, result, chosen = baseline, None, None
+-    best_tie = (1, 1, 2, False)  # the unchanged incumbent
+-    for candidate in candidates.values():
+-        part = candidate["part"]
++    best_tie = (1, 1, 2, False, 0)  # the unchanged incumbent
++    for candidate in candidates:
++        part, rest = candidate["part"], candidate["rest"]
+         # The full-set incumbent score is already known and needs no kernel.
+-        if not rest.size and np.array_equal(part, order):
++        if whole and candidate["incumbent_family"]:
+             proposed, cost = part, baseline
+         else:
+             if deadline is not None and time.perf_counter() >= deadline:
+                 metrics["complete"] = False
+                 break
+-            if not rest.size:
++            if whole:
+                 direct_start = time.perf_counter()
+                 proposed = part
+                 cost = _direct_score(orders, coords, indptr, indices, axis, part, chip_m)
+@@ -588,11 +623,11 @@ def interleave(orders, coords, indptr, indices, axis, unit, chip_m, *,
+                 metrics["strand_solves"] += 1
+                 metrics["dp_cells"] += (part.size + 1) * (rest.size + 1) - 1
+             cost = tuple(int(v) for v in cost)
+-        if np.array_equal(part, own) and cost > baseline:
++        if candidate["incumbent_family"] and cost > baseline:
+             raise AssertionError("destination merge lost its available incumbent")
+         changed = not np.array_equal(proposed, order)
+         tie = (not changed, not candidate["borrowed"], candidate["priority"],
+-               candidate["flipped"])
++               candidate["flipped"], candidate["side"])
+         if cost < best or (cost == best and tie < best_tie):
+             best, result, chosen, best_tie = cost, proposed, candidate, tie
+     strict = best < baseline
+@@ -601,6 +636,7 @@ def interleave(orders, coords, indptr, indices, axis, unit, chip_m, *,
+         info.update(metrics)
+         return None, False
+     metrics.update(score=best, donor=chosen["donor"], donor_mask=chosen["mask"],
+-                   borrowed=chosen["borrowed"], strict=strict)
++                   borrowed=chosen["borrowed"], strict=strict,
++                   borrow_side=chosen["side"], borrow_size=chosen["size"])
+     info.update(metrics)
+     return result, bool(chosen["flipped"])
+diff --git a/packages/ember-qc/src/ember_qc/algorithms/factored/plane.py b/packages/ember-qc/src/ember_qc/algorithms/factored/plane.py
+index a11ff756..0b38a9be 100644
+--- a/packages/ember-qc/src/ember_qc/algorithms/factored/plane.py
++++ b/packages/ember-qc/src/ember_qc/algorithms/factored/plane.py
+@@ -85,34 +85,76 @@ def decode(orders, source, chip_m, tile, *, seed=0, deadline=None, info=None):
+     return Layout(orders.copy(), coords, book, extent_m, finished)
+ 
+ 
+-def units(orders, source, rng, *, whole=True):
+-    """One deduplicated seeded bag, using only general order/neighbor sets."""
++def _partition_key(mask, n):
++    """Smaller membership side; equal halves choose the side containing ID 0."""
++    size = mask.bit_count()
++    if size > n - size or (size == n - size and not mask & 1):
++        mask ^= (1 << n) - 1
++    return mask
++
++
++def neighborhood_partitions(source):
++    """Immutable source nominations, prepared once rather than every sweep."""
++    n = len(source.labels)
++    result = set()
++    for v in range(n):
++        mask = 0
++        for u in source.indices[source.indptr[v]:source.indptr[v + 1]]:
++            mask |= 1 << int(u)
++        if mask:
++            result.add(_partition_key(mask, n))
++    return frozenset(result)
++
++
++def units(orders, source, rng, *, whole=True, neighborhoods=None, info=None):
++    """Shared unordered partitions, sorted before the seeded query shuffle.
++
++    Proper queries carry their canonical smaller side. Key zero represents
++    the whole-order query and is emitted as V, never as an empty unit.
++    """
+     n = orders.shape[1]
++    if not n:
++        if info is not None:
++            info.update(unique_partitions=0, nomination_duplicates=0)
++        return []
++    if neighborhoods is None:
++        neighborhoods = neighborhood_partitions(source)
++    partitions = set(neighborhoods)
++    nominations = len(partitions)
+     scales = []
+     scale = n // 2
+     while scale >= 2:
+         scales.append(scale)
+         scale //= 2
+     scales.append(1)
+-    neighborhoods = []
+-    for v in range(n):
+-        neighbors = source.indices[source.indptr[v]:source.indptr[v + 1]]
+-        if 0 < len(neighbors) < n:
+-            neighborhoods.append(tuple(int(u) for u in neighbors))
+-    result = []
+     for axis in range(3):
+-        seen = set()
+-        candidates = []
+         for scale in scales:
+             for start in range(0, n, max(1, scale // 2)):
+-                candidates.append(tuple(sorted(int(v) for v in orders[axis, start:start + scale])))
+-        candidates.extend(neighborhoods)
+-        if whole:
+-            candidates.append(tuple(range(n)))
+-        for unit in candidates:
+-            if 0 < len(unit) <= n and (whole or len(unit) < n) and unit not in seen:
+-                seen.add(unit)
+-                result.append((axis, unit))
++                mask = 0
++                for v in orders[axis, start:start + scale]:
++                    mask |= 1 << int(v)
++                partitions.add(_partition_key(mask, n))
++                nominations += 1
++    if whole:
++        partitions.add(0)
++        nominations += 1
++    else:
++        partitions.discard(0)
++    groups = []
++    for mask in partitions:
++        if not mask:
++            groups.append(tuple(range(n)))
++            continue
++        vertices = []
++        while mask:
++            bit = mask & -mask
++            vertices.append(bit.bit_length() - 1)
++            mask ^= bit
++        groups.append(tuple(vertices))
++    result = [(axis, unit) for axis in range(3) for unit in sorted(groups)]
++    if info is not None:
++        info.update(unique_partitions=len(partitions),
++                    nomination_duplicates=nominations - len(partitions))
+     return [result[int(i)] for i in rng.permutation(len(result))]
+ 
+ 
+@@ -141,7 +183,10 @@ def arrange(source: Source, chip_m: int, tile: int, *, seed: int = 0,
+                 dp_solves=0, dp_cells=0, direct_scores=0, interrupted_asks=0,
+                 preparation_wall=0.0, transition_wall=0.0,
+                 dp_wall=0.0, direct_wall=0.0, sweep_traj=[],
+-                repeated_sweep_states=0)
++                repeated_sweep_states=0, unique_partitions=0,
++                nomination_duplicates=0, nomination_wall=0.0,
++                candidate_pairs=0, candidate_duplicates=0,
++                accepted_by_side=[0, 0])
+     rng = np.random.default_rng(seed)
+     orders = np.asarray([rng.permutation(n) for _ in range(3)], dtype=np.int64)
+     rng = np.random.default_rng(seed if sched_seed is None else sched_seed)
+@@ -150,6 +195,7 @@ def arrange(source: Source, chip_m: int, tile: int, *, seed: int = 0,
+     best_expanded = current.book.score
+     seen_states = set()
+     checked = False
++    neighborhoods = None
+ 
+     def usable(layout):
+         return (layout.book.outside == 0 and
+@@ -204,7 +250,15 @@ def arrange(source: Source, chip_m: int, tile: int, *, seed: int = 0,
+             checked = True
+         else:
+             check_cost_bounds(n, source.indices.size // 2, chip_m, int(slots.max()))
+-        bag = units(proposal, source, rng, whole=_policy != "neutral")
++        nomination_start = time.perf_counter()
++        if neighborhoods is None:
++            neighborhoods = neighborhood_partitions(source)
++        nominations = {}
++        bag = units(proposal, source, rng, whole=_policy != "neutral",
++                    neighborhoods=neighborhoods, info=nominations)
++        info["nomination_wall"] += time.perf_counter() - nomination_start
++        for name in ("unique_partitions", "nomination_duplicates"):
++            info[name] += nominations.get(name, 0)
+         if _policy == "frozen":
+             bag = [(axis, unit) for axis, unit in bag if axis != 2]
+         for axis, unit in bag:
+@@ -224,6 +278,8 @@ def arrange(source: Source, chip_m: int, tile: int, *, seed: int = 0,
+             info["interleave_wall"] += time.perf_counter() - t0
+             for name, query_name in (("dp_solves", "strand_solves"),
+                                      ("dp_cells", "dp_cells"),
++                                     ("candidate_pairs", "candidate_pairs"),
++                                     ("candidate_duplicates", "candidate_duplicates"),
+                                      ("direct_scores", "direct_scores"),
+                                      ("preparation_wall", "preparation_wall"),
+                                      ("transition_wall", "transition_wall"),
+@@ -246,6 +302,8 @@ def arrange(source: Source, chip_m: int, tile: int, *, seed: int = 0,
+             strict = bool(query.get("strict", False))
+             donor = int(query.get("donor", axis))
+             info["accepted_by_donor"][axis][donor] += 1
++            side = int(query.get("borrow_side", 0))
++            info["accepted_by_side"][side] += 1
+             info["strict_accepts"] += int(strict)
+             info["neutral_accepts"] += int(not strict)
+             info["borrowed_accepts"] += int(query.get("borrowed", False))
+@@ -256,6 +314,8 @@ def arrange(source: Source, chip_m: int, tile: int, *, seed: int = 0,
+                 info["trace"].append(dict(ask=info["asks"], order=axis,
+                                            size=len(unit), flipped=bool(flipped),
+                                            donor=donor, donor_mask=query.get("donor_mask"),
++                                           borrow_side=side,
++                                           borrow_size=query.get("borrow_size", len(unit)),
+                                            borrowed=query.get("borrowed", False),
+                                            strict=strict, complete=not interrupted,
+                                            before=query.get("baseline_score"),

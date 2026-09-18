@@ -1,0 +1,129 @@
+{
+  "pid": 1147576,
+  "pgid": 1147576,
+  "commands": [
+    [
+      "equivalence-all",
+      [
+        "/data/max/ember/.venv/bin/python",
+        "/data/max/ember/docs/paper2/data/live_bench.py",
+        "--suite",
+        "equivalence",
+        "--policy",
+        "all",
+        "--cold-cache"
+      ]
+    ],
+    [
+      "micro-baseline",
+      [
+        "/data/max/ember/.venv/bin/python",
+        "/data/max/ember/docs/paper2/data/live_bench.py",
+        "--suite",
+        "micro",
+        "--policy",
+        "baseline",
+        "--cold-cache"
+      ]
+    ],
+    [
+      "micro-full",
+      [
+        "/data/max/ember/.venv/bin/python",
+        "/data/max/ember/docs/paper2/data/live_bench.py",
+        "--suite",
+        "micro",
+        "--policy",
+        "full",
+        "--cold-cache"
+      ]
+    ],
+    [
+      "board-baseline",
+      [
+        "/data/max/ember/.venv/bin/python",
+        "/data/max/ember/docs/paper2/data/live_bench.py",
+        "--suite",
+        "board",
+        "--policy",
+        "baseline",
+        "--cold-cache"
+      ]
+    ],
+    [
+      "board-loop",
+      [
+        "/data/max/ember/.venv/bin/python",
+        "/data/max/ember/docs/paper2/data/live_bench.py",
+        "--suite",
+        "board",
+        "--policy",
+        "loop",
+        "--cold-cache"
+      ]
+    ],
+    [
+      "board-full",
+      [
+        "/data/max/ember/.venv/bin/python",
+        "/data/max/ember/docs/paper2/data/live_bench.py",
+        "--suite",
+        "board",
+        "--policy",
+        "full",
+        "--cold-cache"
+      ]
+    ],
+    [
+      "board-mm",
+      [
+        "/data/max/ember/.venv/bin/python",
+        "/data/max/ember/docs/paper2/data/live_bench.py",
+        "--suite",
+        "board",
+        "--policy",
+        "mm",
+        "--cold-cache"
+      ]
+    ],
+    [
+      "fingerprint-full",
+      [
+        "/data/max/ember/.venv/bin/python",
+        "/data/max/ember/docs/paper2/data/live_bench.py",
+        "--suite",
+        "fingerprint",
+        "--policy",
+        "full",
+        "--cold-cache"
+      ]
+    ],
+    [
+      "summary",
+      [
+        "/data/max/ember/.venv/bin/python",
+        "/data/max/ember/docs/paper2/data/live_summary.py"
+      ]
+    ]
+  ],
+  "log": "/tmp/ember-live-audit.log",
+  "started_at": "2026-09-17T22:11:50.574067+00:00",
+  "phase": "complete",
+  "completed": [
+    "equivalence-all",
+    "micro-baseline",
+    "micro-full",
+    "board-baseline",
+    "board-loop",
+    "board-full",
+    "board-mm",
+    "fingerprint-full",
+    "summary"
+  ],
+  "command": [
+    "/data/max/ember/.venv/bin/python",
+    "/data/max/ember/docs/paper2/data/live_summary.py"
+  ],
+  "exit_code": 0,
+  "finished_at": "2026-09-17T22:41:41.435652+00:00"
+}

@@ -1,13 +1,20 @@
 # Ember — `factored` branch
 
-The **three-order native core with bidirectional order feedback is implemented**
-as of 2026-09-15. Start with the [design contract](docs/paper2/three-orders.md),
-then the [feedback results](docs/paper2/feedback-results.md): 590 tests and 245
-timed cases, including paired mechanism controls and schedule sensitivity.
-Dense results improve; sparse results are mixed, and full feedback does not
-establish an overall advantage over one-way borrowing. Universal quality or
-speed superiority over MinorMiner has not been established. The
-[first-build report](docs/paper2/three-orders-results.md) retains earlier results.
+The **live-reference / immediate-packing / streamed-cost** implementation and
+audit are complete (2026-09-17). Start with the
+[design contract](docs/paper2/three-orders.md) and
+[live audit](docs/paper2/live-results.md): 635 regression tests, 75 exact
+fixed-work trajectory pairs, 2,520 query measurements, 120 board runs and 15
+valid native fingerprints. K100 reaches its final reservation bookmark in two
+or three queries (~40 ms). The board succeeds on 24/30 versus baseline 27/30
+and stock MM 25/30. Query timing is roughly flat overall; complete decoding
+now consumes 80% of native board time. Universal speed, quality and convergence
+claims remain unproved.
+
+The [partition](docs/paper2/partition-results.md),
+[feedback](docs/paper2/feedback-results.md) and
+[first-build](docs/paper2/three-orders-results.md) reports preserve earlier
+implementations and measurements; their older scheduling rules are historical.
 
 The [clique diagnosis](docs/paper2/clique-diagnosis.md) establishes order
 plateaus and physical losses in course assignment/bookmark ties. The old clique
@@ -34,17 +41,23 @@ conservative model supports a sound interval-coloring conversion on intact
 Zephyr. Search minimizes outside-chip reserved volume, then total reserved
 volume; reservations and actual physical qubits are reported separately.
 
-For each selected group, the interleavers compare sequences borrowed from all
-three current orders, forward and reversed, keeping the destination complement
-fixed. Duplicate strands are solved once; whole-order transfers are included.
-Coordinate slots stay frozen for the sweep. Changed minimizing candidates,
+Live groups around reference vertices define unordered partitions. A fixed
+seeded reference permutation and rotating source/x/y/contact/anchor relation
+provide coverage. Order windows have size floor(n/2); source groups are N(v),
+anchor groups are {v}. Renominate from current state before every destination
+query. Each round also opens with whole-order queries. Either
+side can borrow a sequence from any current order, forward or reversed, while
+the other side keeps its destination sequence. Compare the union before one
+adoption. Duplicate pairs are solved once; whole-order transfers are included.
+Coordinate slots stay frozen for one query. Changed minimizing candidates,
 including exact ties after the rank-span tie break, are adopted. The incumbent
 family guarantees a nonworsening fixed-slot score; no donor equality is imposed.
-Packing happens **once per sweep**, including a sweep cut short by its budget:
+Packing happens **after each changed individual query**, including a query
+interrupted between completed candidates:
 a canonical feasible expanded
 seed is packed by alternating exact conditional minimum cuts. Each conditional
 pack enforces capacity in both orientations. This is not a joint global x/y
-optimality claim. The decoded sweep is adopted even when its score worsens;
+optimality claim. The decoded proposal is adopted even when its score worsens;
 the best finite native bookmark is retained for output.
 
 The public entry point is `attract_embed` in `placement.py`; `plane.py` owns
@@ -61,10 +74,14 @@ fallback.
   decoding. Same-lane abutment is deferred until after this core.
 - Keep proposal, packing, and conversion accounting consistent. Use exact
   lexicographic comparisons, not tunable penalties or floating tolerances.
-- `max_asks` counts selected-group queries, each now comparing up to six
-  distinct strands. Report actual DP solves/cells and preparation/fill time,
+- `max_asks` counts destination/partition queries, each comparing at most 11
+  distinct merge pairs (at most six for singleton/complement partitions).
+  Report actual DP solves/cells and nomination/preparation/fill time,
   elapsed time, and compilation separately. Initialization and schedule robustness are
   measured goals, not theorems or assumed acceptance criteria.
+- No group catalogue or sampled-no-op stopping rule. Each vertex is seen once
+  per n reference visits; a reference visit contains three fresh destination
+  nominations. Event-based costs retain the exact fixed-strand merge problem.
 - Check changes with independent optimization oracles, physical embedding
   validation, and paired dense/sparse measurements. Historical fingerprint
   numbers are comparison evidence, not mandatory targets for the new model.

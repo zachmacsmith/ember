@@ -1,3 +1,6 @@
+# Frozen dense reference: factored source hash
+# fc4560cc54307c562841b93601141f907bcbc502e504e7ffd6396aaa8df5b0d6.
+# Preserved verbatim below for differential tests; never used by production.
 """Exact interleavings in the native embedder's frozen coordinate picture.
 
 A partition may borrow either side from any of the three orders, forward or
@@ -9,9 +12,9 @@ the caller applies the returned order to those slots.
 
 Spatial moves charge interval starts and ends when their endpoints are
 emitted.  Contact-order moves charge a vertex's complete arms when it is
-emitted.  In both cases a prefix pair is a sufficient state.  Preparation is O(n + |E|); the merge grid takes O(|unit| * |rest|)
-work. Only the byte traceback grid is quadratic storage. Neighbor crossings
-and endpoint events supply costs directly to two integer value rows.
+emitted.  In both cases a prefix pair is a sufficient state.  Preparation
+and the dynamic program take O(|unit| * |rest| + n + |E|) work and use
+separate int64 cost components rather than a scalar lexicographic weight.
 """
 
 from __future__ import annotations
@@ -189,410 +192,275 @@ def score_layout(orders, coords, indptr, indices, chip_m):
 
 
 @njit(cache=True)
-def _strand_summary(sequence, n, coords, indptr, indices, axis, trank, lo):
-    """Facts depending on one ordered strand; cached for the whole query."""
-    positions = np.full(n, -1, dtype=np.int64)
-    before = np.zeros(sequence.size, dtype=np.int64)
-    hull = np.full((sequence.size, 4), -1, dtype=np.int64)
-    extrema = np.empty((n, 2), dtype=np.int64)
-    extrema[:, 0] = sequence.size
-    extrema[:, 1] = -1
-    for i in range(sequence.size):
-        positions[sequence[i]] = i
-    for i in range(sequence.size):
-        v = sequence[i]
+def _partition_positions(n, part, rest):
+    pa = np.full(n, -1, dtype=np.int64)
+    pb = np.full(n, -1, dtype=np.int64)
+    for i in range(part.size):
+        pa[part[i]] = i
+    for j in range(rest.size):
+        pb[rest[j]] = j
+    return pa, pb
+
+
+@njit(cache=True)
+def _cut_costs(part, rest, pa, pb, indptr, indices):
+    """Rank span is the sum of source-edge cuts after successive emissions."""
+    p, q = part.size, rest.size
+    before_a = np.zeros((q, p + 1), dtype=np.int64)
+    before_b = np.zeros(q, dtype=np.int64)
+    for j in range(q):
+        v = rest[j]
         for e in range(indptr[v], indptr[v + 1]):
             u = indices[e]
-            position = positions[u]
-            if position < 0:
-                continue
-            early = position < i
-            if early:
-                before[i] += 1
-            if axis == 2:
-                offset = 0 if early else 2
-                value = coords[1 if early else 0, u]
-                if hull[i, offset] < 0:
-                    hull[i, offset] = value
+            if pa[u] >= 0:
+                before_a[j, pa[u] + 1] += 1
+            elif pb[u] < j:
+                before_b[j] += 1
+        for i in range(1, p + 1):
+            before_a[j, i] += before_a[j, i - 1]
+    cuts = np.zeros((p + 1, q + 1), dtype=np.int64)
+    for i in range(1, p + 1):
+        v = part[i - 1]
+        prior = 0
+        for e in range(indptr[v], indptr[v + 1]):
+            u = indices[e]
+            if 0 <= pa[u] < i - 1:
+                prior += 1
+        cuts[i, 0] = cuts[i - 1, 0] + indptr[v + 1] - indptr[v] - 2 * prior
+    for i in range(p + 1):
+        for j in range(1, q + 1):
+            v = rest[j - 1]
+            cuts[i, j] = (cuts[i, j - 1] + indptr[v + 1] - indptr[v]
+                          - 2 * (before_b[j - 1] + before_a[j - 1, i]))
+    return cuts
+
+
+@njit(cache=True)
+def _contact_costs(part, rest, pa, pb, coords, indptr, indices, chip_m):
+    """Costs indexed by emitted part index and consumed-rest count."""
+    p, q = part.size, rest.size
+    costs = np.zeros((p, q + 1, 2), dtype=np.int64)
+    for i in range(p):
+        v = part[i]
+        # Earlier neighbors supply horizontal arms; later neighbors vertical.
+        early_count = np.zeros(q + 1, dtype=np.int64)
+        early_min = np.full(q + 1, -1, dtype=np.int64)
+        early_max = np.full(q + 1, -1, dtype=np.int64)
+        late_count = np.zeros(q + 1, dtype=np.int64)
+        late_min = np.full(q + 1, -1, dtype=np.int64)
+        late_max = np.full(q + 1, -1, dtype=np.int64)
+        ne, nl = 0, 0
+        emin, emax, lmin, lmax = -1, -1, -1, -1
+        for e in range(indptr[v], indptr[v + 1]):
+            u = indices[e]
+            if pa[u] >= 0:
+                if pa[u] < i:
+                    value = coords[1, u]
+                    emin = value if ne == 0 else min(emin, value)
+                    emax = max(emax, value)
+                    ne += 1
                 else:
-                    hull[i, offset] = min(hull[i, offset], value)
-                hull[i, offset + 1] = max(hull[i, offset + 1], value)
-    if axis < 2:
-        changing = 1 - axis
-        for v in range(n):
-            if lo[changing, v] < 0:
-                continue
-            for e in range(indptr[v], indptr[v + 1]):
-                u = indices[e]
-                endpoint = trank[v] < trank[u] if axis == 0 else trank[u] < trank[v]
-                position = positions[u]
-                if endpoint and position >= 0:
-                    extrema[v, 0] = min(extrema[v, 0], position)
-                    extrema[v, 1] = max(extrema[v, 1], position)
-            position = positions[v]
-            if lo[0, v] >= 0 and lo[1, v] >= 0 and position >= 0:
-                extrema[v, 0] = min(extrema[v, 0], position)
-                extrema[v, 1] = max(extrema[v, 1], position)
-    return positions, before, hull, extrema
-
-
-@njit(cache=True)
-def _ordered_cross(sequence, opposite, positions, indptr, indices):
-    """Scatter adjacency in opposite order; no sorting or dense prefix grid."""
-    offsets = np.zeros(sequence.size + 1, dtype=np.int64)
-    for u in opposite:
-        for e in range(indptr[u], indptr[u + 1]):
-            i = positions[indices[e]]
-            if i >= 0:
-                offsets[i + 1] += 1
-    for i in range(sequence.size):
-        offsets[i + 1] += offsets[i]
-    cursor = offsets[:-1].copy()
-    neighbors = np.empty(offsets[-1], dtype=np.int64)
-    for j in range(opposite.size):
-        u = opposite[j]
-        for e in range(indptr[u], indptr[u + 1]):
-            i = positions[indices[e]]
-            if i >= 0:
-                neighbors[cursor[i]] = j
-                cursor[i] += 1
-    return offsets, neighbors
-
-
-@njit(cache=True)
-def _contact_events(sequence, opposite, positions, same_hull, coords,
-                    indptr, indices, chip_m):
-    """d cross-neighbors give exactly d+1 complete arm-cost states."""
-    offsets, crossings = _ordered_cross(sequence, opposite, positions, indptr, indices)
-    state_offsets = offsets + np.arange(sequence.size + 1)
-    costs = np.zeros((state_offsets[-1], 2), dtype=np.int64)
-    # One reusable suffix workspace; total visits are linear in cross edges.
-    suffix_min = np.empty(crossings.size + 1, dtype=np.int64)
-    suffix_max = np.empty(crossings.size + 1, dtype=np.int64)
-    for i in range(sequence.size):
-        v = sequence[i]
-        start, end = offsets[i], offsets[i + 1]
-        suffix_min[end], suffix_max[end] = same_hull[i, 2], same_hull[i, 3]
-        for k in range(end - 1, start - 1, -1):
-            value = coords[0, opposite[crossings[k]]]
-            suffix_min[k] = value if suffix_min[k + 1] < 0 else min(value, suffix_min[k + 1])
-            suffix_max[k] = max(value, suffix_max[k + 1])
-        early_min, early_max = same_hull[i, 0], same_hull[i, 1]
-        for k in range(start, end + 1):
-            late_min, late_max = suffix_min[k], suffix_max[k]
-            has_v, has_h = early_min >= 0, late_min >= 0
+                    value = coords[0, u]
+                    lmin = value if nl == 0 else min(lmin, value)
+                    lmax = max(lmax, value)
+                    nl += 1
+            else:
+                j = pb[u]
+                early_count[j + 1] = 1
+                early_min[j + 1] = coords[1, u]
+                early_max[j + 1] = coords[1, u]
+                late_count[j] = 1
+                late_min[j] = coords[0, u]
+                late_max[j] = coords[0, u]
+        for j in range(1, q + 1):
+            if early_count[j - 1]:
+                if early_count[j]:
+                    early_min[j] = min(early_min[j], early_min[j - 1])
+                    early_max[j] = max(early_max[j], early_max[j - 1])
+                else:
+                    early_min[j] = early_min[j - 1]
+                    early_max[j] = early_max[j - 1]
+                early_count[j] += early_count[j - 1]
+        for j in range(q - 1, -1, -1):
+            if late_count[j + 1]:
+                if late_count[j]:
+                    late_min[j] = min(late_min[j], late_min[j + 1])
+                    late_max[j] = max(late_max[j], late_max[j + 1])
+                else:
+                    late_min[j] = late_min[j + 1]
+                    late_max[j] = late_max[j + 1]
+                late_count[j] += late_count[j + 1]
+        for j in range(q + 1):
+            has_v = ne + early_count[j] > 0
+            has_h = nl + late_count[j] > 0
             outside, volume = 0, 0
             if has_v:
-                low, high = early_min, early_max
+                low, high = emin, emax
+                if early_count[j]:
+                    low = early_min[j] if ne == 0 else min(low, early_min[j])
+                    high = max(high, early_max[j])
                 if has_h:
-                    low, high = min(low, coords[1, v]), max(high, coords[1, v])
+                    low = min(low, coords[1, v])
+                    high = max(high, coords[1, v])
                 out, size = _interval_cost(low, high, coords[0, v], chip_m)
                 outside += out
                 volume += size
             if has_h:
-                low, high = late_min, late_max
+                low, high = lmin, lmax
+                if late_count[j]:
+                    low = late_min[j] if nl == 0 else min(low, late_min[j])
+                    high = max(high, late_max[j])
                 if has_v:
-                    low, high = min(low, coords[0, v]), max(high, coords[0, v])
+                    low = min(low, coords[0, v])
+                    high = max(high, coords[0, v])
                 out, size = _interval_cost(low, high, coords[1, v], chip_m)
                 outside += out
                 volume += size
-            costs[k + i, 0], costs[k + i, 1] = outside, volume
-            if k < end:
-                value = coords[1, opposite[crossings[k]]]
-                early_min = value if early_min < 0 else min(early_min, value)
-                early_max = max(early_max, value)
-    return offsets, crossings, state_offsets, costs
+            costs[i, j, 0] = outside
+            costs[i, j, 1] = volume
+    return costs
 
 
 @njit(cache=True)
-def _spatial_unary(orders, coords, axis, lo, hi, chip_m):
+def _spatial_costs(orders, coords, indptr, indices, axis,
+                   part, rest, pa, pb, chip_m, trank, lo, hi):
+    p, q = part.size, rest.size
     n = orders.shape[1]
-    coefficients = np.empty((n, 6), dtype=np.int64)
-    unary = np.zeros((n, 2), dtype=np.int64)
-    outside = np.empty(n, dtype=np.bool_)
-    for k in range(n):
-        value = coords[axis, orders[axis, k]]
-        first, last = (value - 1) // 2, value // 2
-        coefficients[k, 0] = 1 - first
-        coefficients[k, 1] = last
-        coefficients[k, 2] = -max(0, first - chip_m)
-        coefficients[k, 3] = 1 - first
-        coefficients[k, 4] = max(0, last - chip_m + 1)
-        coefficients[k, 5] = last
-        outside[k] = value > 2 * chip_m - 1
-        if lo[axis, k] >= 0:
-            unary[k, 0], unary[k, 1] = _interval_cost(lo[axis, k], hi[axis, k], 1, chip_m)
-    return coefficients, unary, outside
-
-
-@njit(cache=True)
-def _spatial_events(own, other, coords, axis, own_size, other_size, chip_m, by_owner):
-    """At most three endpoint-counter events per contact net on one strand.
-
-    Counting redistribution orders A events by (vertex, opposite prefix) and
-    B events by opposite prefix. Thus the fill only visits actual events.
-    """
-    n = own.shape[0]
-    owners = np.empty(3 * n, dtype=np.int64)
-    thresholds = np.empty(3 * n, dtype=np.int64)
-    kinds = np.empty(3 * n, dtype=np.int64)
-    changes = np.empty(3 * n, dtype=np.int64)
-    used = 0
+    # For each part: prefix/suffix range differences, separated by whether
+    # the net's (fixed) anchoring lane is outside the chip.
+    da = np.zeros((p, q + 2, 4), dtype=np.int64)
+    db = np.zeros((q, p + 2, 4), dtype=np.int64)
+    changing = 1 - axis
     for v in range(n):
-        first, last = own[v, 0], own[v, 1]
-        if last < 0:
+        if lo[changing, v] < 0:
             continue
-        outside = 1 if coords[1 - axis, v] > 2 * chip_m - 1 else 0
-        owners[used], thresholds[used] = first, 0
-        kinds[used], changes[used] = outside, 1
-        used += 1
-        threshold = other[v, 0] + 1
-        if threshold <= other_size:
-            owners[used], thresholds[used] = first, threshold
-            kinds[used], changes[used] = outside, -1
-            used += 1
-        owners[used], thresholds[used] = last, other[v, 1] + 1
-        kinds[used], changes[used] = 2 + outside, 1
-        used += 1
-    # Stable threshold buckets, followed by owner buckets when A needs both.
-    threshold_ptr = np.zeros(other_size + 2, dtype=np.int64)
-    for e in range(used):
-        threshold_ptr[thresholds[e] + 1] += 1
-    for j in range(other_size + 1):
-        threshold_ptr[j + 1] += threshold_ptr[j]
-    cursor = threshold_ptr[:-1].copy()
-    ordered = np.empty(used, dtype=np.int64)
-    for e in range(used):
-        at = cursor[thresholds[e]]
-        ordered[at] = e
-        cursor[thresholds[e]] += 1
-    if by_owner:
-        offsets = np.zeros(own_size + 1, dtype=np.int64)
-        for e in range(used):
-            offsets[owners[e] + 1] += 1
-        for i in range(own_size):
-            offsets[i + 1] += offsets[i]
-        cursor = offsets[:-1].copy()
-        result = np.empty((used, 3), dtype=np.int64)
-        for k in range(used):
-            e = ordered[k]
-            at = cursor[owners[e]]
-            result[at, 0] = thresholds[e]
-            result[at, 1] = kinds[e]
-            result[at, 2] = changes[e]
-            cursor[owners[e]] += 1
+        amin, amax, bmin, bmax = p, -1, q, -1
+        for e in range(indptr[v], indptr[v + 1]):
+            u = indices[e]
+            endpoint = trank[v] < trank[u] if axis == 0 else trank[u] < trank[v]
+            if endpoint:
+                if pa[u] >= 0:
+                    amin = min(amin, pa[u])
+                    amax = max(amax, pa[u])
+                else:
+                    bmin = min(bmin, pb[u])
+                    bmax = max(bmax, pb[u])
+        if lo[0, v] >= 0 and lo[1, v] >= 0:
+            if pa[v] >= 0:
+                amin = min(amin, pa[v])
+                amax = max(amax, pa[v])
+            else:
+                bmin = min(bmin, pb[v])
+                bmax = max(bmax, pb[v])
+        outside = 1 if coords[changing, v] > 2 * chip_m - 1 else 0
+        if amax >= 0:
+            da[amin, 0, outside] += 1
+            da[amin, bmin + 1, outside] -= 1
+            da[amax, bmax + 1, 2 + outside] += 1
+        if bmax >= 0:
+            db[bmin, 0, outside] += 1
+            db[bmin, amin + 1, outside] -= 1
+            db[bmax, amax + 1, 2 + outside] += 1
+    slots = coords[axis, orders[axis]]
+    ca = np.zeros((p, q + 1, 2), dtype=np.int64)
+    cb = np.zeros((q, p + 1, 2), dtype=np.int64)
+    for side in range(2):
+        sequence = part if side == 0 else rest
+        diff = da if side == 0 else db
+        cost = ca if side == 0 else cb
+        opposite_size = q if side == 0 else p
+        for i in range(sequence.size):
+            v = sequence[i]
+            counts = np.zeros(4, dtype=np.int64)
+            unary_inside, unary_size = 0, 0
+            if lo[axis, v] >= 0:
+                unary_inside, unary_size = _interval_cost(
+                    lo[axis, v], hi[axis, v], 1, chip_m,
+                )
+            for j in range(opposite_size + 1):
+                for kind in range(4):
+                    counts[kind] += diff[i, j, kind]
+                value = slots[i + j]
+                first = (value - 1) // 2
+                last = value // 2
+                volume = ((counts[0] + counts[1]) * (1 - first)
+                          + (counts[2] + counts[3]) * last + unary_size)
+                outside = (-counts[0] * max(0, first - chip_m)
+                           + counts[1] * (1 - first)
+                           + counts[2] * max(0, last - chip_m + 1)
+                           + counts[3] * last)
+                outside += unary_size if value > 2 * chip_m - 1 else unary_inside
+                cost[i, j, 0] = outside
+                cost[i, j, 1] = volume
+    return ca, cb
+
+
+@njit(cache=True)
+def _prepare_transitions(orders, coords, indptr, indices, axis, part, rest,
+                          chip_m, trank, lo, hi):
+    p, q = part.size, rest.size
+    pa, pb = _partition_positions(p + q, part, rest)
+    cuts = _cut_costs(part, rest, pa, pb, indptr, indices)
+    if axis == 2:
+        ca = _contact_costs(part, rest, pa, pb, coords, indptr, indices, chip_m)
+        cb = _contact_costs(rest, part, pb, pa, coords, indptr, indices, chip_m)
     else:
-        offsets = threshold_ptr
-        result = np.empty((used, 3), dtype=np.int64)
-        for k in range(used):
-            e = ordered[k]
-            result[k, 0] = owners[e]
-            result[k, 1] = kinds[e]
-            result[k, 2] = changes[e]
-    return offsets, result
+        ca, cb = _spatial_costs(
+            orders, coords, indptr, indices, axis, part, rest, pa, pb, chip_m,
+            trank, lo, hi,
+        )
+    return cuts, ca, cb
 
 
 @njit(cache=True)
-def _spatial_price(counts, coefficients, unary, slot_outside):
-    volume = ((counts[0] + counts[1]) * coefficients[0]
-              + (counts[2] + counts[3]) * coefficients[1] + unary[1])
-    outside = (counts[0] * coefficients[2] + counts[1] * coefficients[3]
-               + counts[2] * coefficients[4] + counts[3] * coefficients[5])
-    outside += unary[1] if slot_outside else unary[0]
-    return outside, volume
-
-
-@njit(cache=True)
-def _fill_contact(part, rest, before_a, before_b, pb, indptr, indices,
-                  a_offsets, a_cross, a_states, a_cost, b_states, b_cost):
+def _fill(part, rest, cuts, ca, cb):
+    """Fill the merge grid and trace its exact winner; no graph preparation."""
     p, q = part.size, rest.size
+    # Only the preceding value row is live; retain parents for traceback.
     values = np.zeros((2, q + 1, 3), dtype=np.int64)
     parent = np.zeros((p + 1, q + 1), dtype=np.uint8)
-    emitted_a = np.zeros(q, dtype=np.int64)
-    cut_a = np.int64(0)
-    updates = 0
     for i in range(p + 1):
         row, previous = i % 2, 1 - i % 2
-        if i:
-            v = part[i - 1]
-            cut_a += indptr[v + 1] - indptr[v] - 2 * before_a[i - 1]
-            for e in range(indptr[v], indptr[v + 1]):
-                j = pb[indices[e]]
-                if j >= 0:
-                    emitted_a[j] += 1
-                    updates += 1
-            a_cursor, a_end = a_offsets[i - 1], a_offsets[i]
-        else:
-            a_cursor, a_end = 0, 0
-        cut = cut_a
         for j in range(q + 1):
-            if j:
-                v = rest[j - 1]
-                cut += indptr[v + 1] - indptr[v] - 2 * (before_b[j - 1] + emitted_a[j - 1])
             if i == 0 and j == 0:
                 continue
-            if i:
-                while a_cursor < a_end and a_cross[a_cursor] < j:
-                    a_cursor += 1
-                    updates += 1
-                state = a_states[i - 1] + a_cursor - a_offsets[i - 1]
-                out = values[previous, j, 0] + a_cost[state, 0]
-                size = values[previous, j, 1] + a_cost[state, 1]
-                span = values[previous, j, 2] + cut
+            if i > 0:
+                out = values[previous, j, 0] + ca[i - 1, j, 0]
+                size = values[previous, j, 1] + ca[i - 1, j, 1]
+                span = values[previous, j, 2] + cuts[i, j]
             else:
                 out, size, span = 0, 0, 0
-            if j:
-                state = b_states[j - 1] + emitted_a[j - 1]
-                bo = values[row, j - 1, 0] + b_cost[state, 0]
-                bs = values[row, j - 1, 1] + b_cost[state, 1]
-                br = values[row, j - 1, 2] + cut
+            if j > 0:
+                bo = values[row, j - 1, 0] + cb[j - 1, i, 0]
+                bs = values[row, j - 1, 1] + cb[j - 1, i, 1]
+                br = values[row, j - 1, 2] + cuts[i, j]
                 if i == 0 or _less(bo, bs, br, out, size, span):
                     out, size, span = bo, bs, br
                     parent[i, j] = 1
-            values[row, j, 0], values[row, j, 1], values[row, j, 2] = out, size, span
-    return parent, values[p % 2, q].copy(), updates
-
-
-@njit(cache=True)
-def _fill_spatial(part, rest, before_a, before_b, pb, indptr, indices,
-                  a_offsets, a_events, b_offsets, b_events, coefficients, unary, slot_outside):
-    p, q = part.size, rest.size
-    values = np.zeros((2, q + 1, 3), dtype=np.int64)
-    parent = np.zeros((p + 1, q + 1), dtype=np.uint8)
-    emitted_a = np.zeros(q, dtype=np.int64)
-    b_counts = np.zeros((q, 4), dtype=np.int64)
-    a_counts = np.zeros(4, dtype=np.int64)
-    cut_a = np.int64(0)
-    updates = 0
-    for i in range(p + 1):
-        row, previous = i % 2, 1 - i % 2
-        if i:
-            v = part[i - 1]
-            cut_a += indptr[v + 1] - indptr[v] - 2 * before_a[i - 1]
-            for e in range(indptr[v], indptr[v + 1]):
-                j = pb[indices[e]]
-                if j >= 0:
-                    emitted_a[j] += 1
-                    updates += 1
-            a_cursor, a_end = a_offsets[i - 1], a_offsets[i]
-            a_counts[:] = 0
-        else:
-            a_cursor, a_end = 0, 0
-        for e in range(b_offsets[i], b_offsets[i + 1]):
-            b_counts[b_events[e, 0], b_events[e, 1]] += b_events[e, 2]
-            updates += 1
-        cut = cut_a
-        for j in range(q + 1):
-            if j:
-                v = rest[j - 1]
-                cut += indptr[v + 1] - indptr[v] - 2 * (before_b[j - 1] + emitted_a[j - 1])
-            if i == 0 and j == 0:
-                continue
-            k = i + j - 1
-            if i:
-                while a_cursor < a_end and a_events[a_cursor, 0] <= j:
-                    a_counts[a_events[a_cursor, 1]] += a_events[a_cursor, 2]
-                    a_cursor += 1
-                    updates += 1
-                ao, av = _spatial_price(a_counts, coefficients[k], unary[part[i - 1]], slot_outside[k])
-                out = values[previous, j, 0] + ao
-                size = values[previous, j, 1] + av
-                span = values[previous, j, 2] + cut
-            else:
-                out, size, span = 0, 0, 0
-            if j:
-                bo, bv = _spatial_price(b_counts[j - 1], coefficients[k], unary[rest[j - 1]], slot_outside[k])
-                bo += values[row, j - 1, 0]
-                bs = values[row, j - 1, 1] + bv
-                br = values[row, j - 1, 2] + cut
-                if i == 0 or _less(bo, bs, br, out, size, span):
-                    out, size, span = bo, bs, br
-                    parent[i, j] = 1
-            values[row, j, 0], values[row, j, 1], values[row, j, 2] = out, size, span
-    return parent, values[p % 2, q].copy(), updates
-
-
-@njit(cache=True)
-def _trace_differs(part, rest, parent, order):
-    i, j = part.size, rest.size
-    for k in range(order.size - 1, -1, -1):
-        if parent[i, j] == 0:
-            i -= 1
-            v = part[i]
-        else:
-            j -= 1
-            v = rest[j]
-        if v != order[k]:
-            return True
-    return False
-
-
-@njit(cache=True)
-def _traceback(part, rest, parent):
-    result = np.empty(part.size + rest.size, dtype=np.int64)
-    i, j = part.size, rest.size
-    for k in range(result.size - 1, -1, -1):
+            values[row, j, 0] = out
+            values[row, j, 1] = size
+            values[row, j, 2] = span
+    result = np.empty(p + q, dtype=np.int64)
+    i, j = p, q
+    for k in range(p + q - 1, -1, -1):
         if parent[i, j] == 0:
             i -= 1
             result[k] = part[i]
         else:
             j -= 1
             result[k] = rest[j]
-    return result
+    return result, values[p % 2, q].copy()
 
 
-def _prepare_transitions(orders, coords, indptr, indices, axis, part, rest,
-                         chip_m, trank, lo, hi, cache=None, deadline=None):
-    """Linear event preparation, with summaries shared across donor candidates."""
-    if cache is None:
-        cache = {}
-    def expired():
-        return deadline is not None and time.perf_counter() >= deadline
-
-    summaries = []
-    for strand in (part, rest):
-        if expired():
-            return None
-        key = strand.tobytes()
-        if key not in cache:
-            cache[key] = _strand_summary(strand, orders.shape[1], coords, indptr,
-                                         indices, axis, trank, lo)
-        summaries.append(cache[key])
-    if expired():
-        return None
-    sa, sb = summaries
-    common = (sa[1], sb[1], sb[0], indptr, indices)
-    if axis == 2:
-        a = _contact_events(part, rest, sa[0], sa[2], coords, indptr, indices, chip_m)
-        if expired():
-            return None
-        b = _contact_events(rest, part, sb[0], sb[2], coords, indptr, indices, chip_m)
-        return axis, common, (a[0], a[1], a[2], a[3], b[2], b[3]), a[3].shape[0] + b[3].shape[0]
-    if "unary" not in cache:
-        cache["unary"] = _spatial_unary(orders, coords, axis, lo, hi, chip_m)
-    if expired():
-        return None
-    a = _spatial_events(sa[3], sb[3], coords, axis, part.size, rest.size, chip_m, True)
-    if expired():
-        return None
-    b = _spatial_events(sb[3], sa[3], coords, axis, rest.size, part.size, chip_m, False)
-    return axis, common, (*a, *b, *cache["unary"]), a[1].shape[0] + b[1].shape[0]
-
-
-def _fill(part, rest, prepared):
-    axis, common, events, _ = prepared
-    kernel = _fill_contact if axis == 2 else _fill_spatial
-    return kernel(part, rest, *common, *events)
-
-
+@njit(cache=True)
 def _solve_prepared(orders, coords, indptr, indices, axis, part, rest, chip_m,
                     trank, lo, hi):
-    prepared = _prepare_transitions(orders, coords, indptr, indices, axis, part,
-                                    rest, chip_m, trank, lo, hi)
-    parent, cost, _ = _fill(part, rest, prepared)
-    return _traceback(part, rest, parent), cost
+    cuts, ca, cb = _prepare_transitions(
+        orders, coords, indptr, indices, axis, part, rest, chip_m, trank, lo, hi)
+    return _fill(part, rest, cuts, ca, cb)
 
 
+@njit(cache=True)
 def _solve(orders, coords, indptr, indices, axis, part, rest, chip_m):
     """Compatibility entry point for a single fixed-strand merge and probes."""
     trank = _ranks(orders[2])
@@ -683,10 +551,7 @@ def interleave(orders, coords, indptr, indices, axis, unit, chip_m, *,
                    donor_mask=1 << axis, borrowed=False, strict=False,
                    borrow_side=-1, borrow_size=0, candidate_pairs=0,
                    candidate_duplicates=0, complete=True, strand_solves=0, dp_cells=0,
-                   direct_scores=0, event_states=0, event_updates=0,
-                   strand_preparations=0, traceback_checks=0, tracebacks=0,
-                   traceback_wall=0.0,
-                   preparation_wall=0.0, dp_wall=0.0,
+                   direct_scores=0, preparation_wall=0.0, dp_wall=0.0,
                    transition_wall=0.0, direct_wall=0.0)
     if info is None:
         info = {}
@@ -730,12 +595,9 @@ def interleave(orders, coords, indptr, indices, axis, unit, chip_m, *,
                         (c["priority"], c["flipped"], c["side"]))
     metrics["preparation_wall"] = time.perf_counter() - preparation_start
     best, result, chosen = baseline, None, None
-    best_parent, best_strands = None, None
-    cache = {}
     best_tie = (1, 1, 2, False, 0)  # the unchanged incumbent
     for candidate in candidates:
         part, rest = candidate["part"], candidate["rest"]
-        parent = None
         # The full-set incumbent score is already known and needs no kernel.
         if whole and candidate["incumbent_family"]:
             proposed, cost = part, baseline
@@ -751,57 +613,31 @@ def interleave(orders, coords, indptr, indices, axis, unit, chip_m, *,
                 metrics["direct_scores"] += 1
             else:
                 transition_start = time.perf_counter()
-                prepared = _prepare_transitions(
+                cuts, ca, cb = _prepare_transitions(
                     orders, coords, indptr, indices, axis, part, rest, chip_m,
-                    trank, lo, hi, cache, deadline,
+                    trank, lo, hi,
                 )
                 elapsed = time.perf_counter() - transition_start
                 metrics["transition_wall"] += elapsed
                 metrics["preparation_wall"] += elapsed
-                if prepared is None:
-                    metrics["complete"] = False
-                    break
-                metrics["event_states"] += prepared[3]
-                if deadline is not None and time.perf_counter() >= deadline:
-                    metrics["complete"] = False
-                    break
                 dp_start = time.perf_counter()
-                parent, cost, updates = _fill(part, rest, prepared)
+                proposed, cost = _fill(part, rest, cuts, ca, cb)
                 metrics["dp_wall"] += time.perf_counter() - dp_start
-                metrics["event_updates"] += updates
                 metrics["strand_solves"] += 1
                 metrics["dp_cells"] += (part.size + 1) * (rest.size + 1) - 1
             cost = tuple(int(v) for v in cost)
         if candidate["incumbent_family"] and cost > baseline:
             raise AssertionError("destination merge lost its available incumbent")
-        if cost > best:
-            continue
-        if whole:
-            changed = not np.array_equal(proposed, order)
-        elif cost < baseline:
-            changed = True
-        else:
-            metrics["traceback_checks"] += 1
-            trace_start = time.perf_counter()
-            changed = _trace_differs(part, rest, parent, order)
-            metrics["traceback_wall"] += time.perf_counter() - trace_start
+        changed = not np.array_equal(proposed, order)
         tie = (not changed, not candidate["borrowed"], candidate["priority"],
                candidate["flipped"], candidate["side"])
         if cost < best or (cost == best and tie < best_tie):
-            best, chosen, best_tie = cost, candidate, tie
-            result = proposed if whole else None
-            best_parent, best_strands = parent, (part, rest)
-    metrics["strand_preparations"] = sum(isinstance(key, bytes) for key in cache)
+            best, result, chosen, best_tie = cost, proposed, candidate, tie
     strict = best < baseline
-    if chosen is None or best_tie[0] or (not accept_equal and not strict):
+    if result is None or np.array_equal(result, order) or (not accept_equal and not strict):
         metrics["score"] = baseline
         info.update(metrics)
         return None, False
-    if not whole:
-        trace_start = time.perf_counter()
-        result = _traceback(*best_strands, best_parent)
-        metrics["traceback_wall"] += time.perf_counter() - trace_start
-        metrics["tracebacks"] = 1
     metrics.update(score=best, donor=chosen["donor"], donor_mask=chosen["mask"],
                    borrowed=chosen["borrowed"], strict=strict,
                    borrow_side=chosen["side"], borrow_size=chosen["size"])

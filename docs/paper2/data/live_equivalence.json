@@ -1,0 +1,11 @@
+{
+  "complete": true,
+  "cases": 75,
+  "exact_matching_cases": 75,
+  "sources": {
+    "loop": "14e12d52a5ae76c7b48a3c28ee10b03706272bf06ad51404950b522388a1faaf",
+    "full": "2903eb74adb3362309f3ac06d8ca9ddd99c33f37c30f67b2203c19b4be6bef23"
+  },
+  "artifacts_sha256": "5e1e510800fd8941bc8bbbc32d899e2f81a4a8a873c2570b527999318d49bd99",
+  "compared": "current and bookmark coordinates/orders/scores plus all non-timing shared diagnostics"
+}
